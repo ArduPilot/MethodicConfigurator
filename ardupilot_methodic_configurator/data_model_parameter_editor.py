@@ -13,7 +13,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from csv import writer as csv_writer
+from dataclasses import dataclass
+from enum import Enum
 from logging import error as logging_error
+from logging import exception as logging_exception
 from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
@@ -26,7 +29,11 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
-from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
+    ArduPilotParameter,
+    ParameterOutOfRangeError,
+    ParameterUnchangedError,
+)
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
@@ -50,6 +57,24 @@ class OperationNotPossibleError(Exception):
 
 class InvalidParameterNameError(Exception):
     """Raised when a parameter name is invalid or already exists."""
+
+
+class ParameterValueUpdateStatus(Enum):
+    """Possible outcomes when updating a parameter value."""
+
+    UPDATED = "updated"
+    UNCHANGED = "unchanged"
+    ERROR = "error"
+    CONFIRM_OUT_OF_RANGE = "confirm_out_of_range"
+
+
+@dataclass
+class ParameterValueUpdateResult:
+    """Presenter-friendly response describing the outcome of a parameter update attempt."""
+
+    status: ParameterValueUpdateStatus
+    title: Optional[str] = None
+    message: Optional[str] = None
 
 
 # pylint: disable=too-many-lines
@@ -1454,6 +1479,48 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     del self.current_step_parameters[old_name]
 
         return ui_errors, ui_infos
+
+    def update_parameter_value(
+        self,
+        param_name: str,
+        new_value: str,
+        *,
+        include_range_check: bool = True,
+    ) -> ParameterValueUpdateResult:
+        """Update a parameter value and describe the outcome for the UI layer."""
+        param = self.current_step_parameters.get(param_name)
+        if param is None:
+            return ParameterValueUpdateResult(
+                ParameterValueUpdateStatus.ERROR,
+                title=_("Parameter not found"),
+                message=_("Parameter {param_name} could not be located.").format(param_name=param_name),
+            )
+
+        try:
+            param.set_new_value(new_value, ignore_out_of_range=not include_range_check)
+            return ParameterValueUpdateResult(ParameterValueUpdateStatus.UPDATED)
+        except ParameterUnchangedError:
+            return ParameterValueUpdateResult(ParameterValueUpdateStatus.UNCHANGED)
+        except ParameterOutOfRangeError as exc:
+            if include_range_check:
+                return ParameterValueUpdateResult(
+                    ParameterValueUpdateStatus.CONFIRM_OUT_OF_RANGE,
+                    title=_("Out-of-range value"),
+                    message=str(exc),
+                )
+            logging_exception(_("Parameter %s out of range: %s"), param_name, exc)
+            return ParameterValueUpdateResult(
+                ParameterValueUpdateStatus.ERROR,
+                title=_("Out-of-range value"),
+                message=str(exc),
+            )
+        except (ValueError, TypeError) as exc:
+            logging_exception(_("Invalid value for %s: %s"), param_name, exc)
+            return ParameterValueUpdateResult(
+                ParameterValueUpdateStatus.ERROR,
+                title=_("Invalid value"),
+                message=str(exc),
+            )
 
     def get_different_parameters(self) -> dict[str, ArduPilotParameter]:
         """
