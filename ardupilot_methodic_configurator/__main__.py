@@ -27,7 +27,6 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from sys import exit as sys_exit
 from typing import Union
-from webbrowser import open as webbrowser_open
 
 import argcomplete
 
@@ -36,7 +35,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.backend_internet import verify_and_open_url
+from ardupilot_methodic_configurator.backend_internet import verify_and_open_url, webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
@@ -175,7 +174,7 @@ def display_first_use_documentation() -> None:
         "https://ardupilot.github.io/MethodicConfigurator/USECASES.html"
         "#use-the-ardupilot-methodic-configurator-software-for-the-first-time"
     )
-    webbrowser_open(url=url, new=0, autoraise=True)
+    webbrowser_open_url(url=url, new=0, autoraise=True)
 
 
 def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:

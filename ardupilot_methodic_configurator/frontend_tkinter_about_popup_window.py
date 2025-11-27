@@ -14,10 +14,9 @@ import tkinter as tk
 from tkinter import ttk
 
 # from logging import critical as logging_critical
-from webbrowser import open as webbrowser_open  # to open the blog post documentation
-
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
 )
@@ -81,25 +80,29 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
     user_manual_button = ttk.Button(
         main_frame,
         text=_("User Manual"),
-        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"),
+        command=lambda: webbrowser_open_url("https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md"),
     )
     support_forum_button = ttk.Button(
         main_frame,
         text=_("Support Forum"),
-        command=lambda: webbrowser_open("http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1"),
+        command=lambda: webbrowser_open_url("http://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038/1"),
     )
     report_bug_button = ttk.Button(
         main_frame,
         text=_("Report a Bug"),
-        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose"),
+        command=lambda: webbrowser_open_url("https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose"),
     )
     licenses_button = ttk.Button(
         main_frame,
         text=_("Licenses"),
-        command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"),
+        command=lambda: webbrowser_open_url(
+            "https://github.com/ArduPilot/MethodicConfigurator/blob/master/credits/CREDITS.md"
+        ),
     )
     source_button = ttk.Button(
-        main_frame, text=_("Source Code"), command=lambda: webbrowser_open("https://github.com/ArduPilot/MethodicConfigurator")
+        main_frame,
+        text=_("Source Code"),
+        command=lambda: webbrowser_open_url("https://github.com/ArduPilot/MethodicConfigurator"),
     )
 
     # Place buttons using grid for equal spacing and better control over layout

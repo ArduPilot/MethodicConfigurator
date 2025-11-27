@@ -148,7 +148,7 @@ class TestDocumentationDisplayBehavior:
 class TestDocumentationInteractionBehavior:
     """Test user interactions with documentation elements."""
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.webbrowser_open")
+    @patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame.webbrowser_open_url")
     def test_user_can_click_documentation_links_to_open_in_browser(self, mock_webbrowser_open, documentation_frame) -> None:
         """
         User can click on documentation links to open them in web browser.

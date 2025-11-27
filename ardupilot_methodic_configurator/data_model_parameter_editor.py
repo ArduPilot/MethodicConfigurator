@@ -22,13 +22,12 @@ from logging import warning as logging_warning
 from pathlib import Path
 from time import time
 from typing import Callable, Literal, Optional
-from webbrowser import open as webbrowser_open  # to open the web documentation
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.backend_internet import download_file_from_url
+from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
     ParameterOutOfRangeError,
@@ -1748,11 +1747,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         _wiki_text, wiki_url = self.get_documentation_text_and_url("wiki", filename)
         _external_tool_text, external_tool_url = self.get_documentation_text_and_url("external_tool", filename)
         if wiki_url:
-            webbrowser_open(url=wiki_url, new=0, autoraise=False)
+            webbrowser_open_url(url=wiki_url, new=0, autoraise=False)
         if external_tool_url:
-            webbrowser_open(url=external_tool_url, new=0, autoraise=False)
+            webbrowser_open_url(url=external_tool_url, new=0, autoraise=False)
         if blog_url:
-            webbrowser_open(url=blog_url, new=0, autoraise=True)
+            webbrowser_open_url(url=blog_url, new=0, autoraise=True)
 
     # frontend_tkinter_parameter_editor_table.py API end
 

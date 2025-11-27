@@ -11,10 +11,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from platform import system as platform_system
 from tkinter import ttk
-from webbrowser import open as webbrowser_open  # to open the web documentation
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
@@ -141,7 +141,7 @@ class DocumentationFrame:
             # Create a font with underline attribute
             underlined_font = (font_family, font_size, "underline")
             label.config(text=text, foreground="blue", cursor="hand2", font=underlined_font)
-            label.bind("<Button-1>", lambda event: webbrowser_open(url))  # noqa: ARG005
+            label.bind("<Button-1>", lambda event: webbrowser_open_url(url))  # noqa: ARG005
             show_tooltip(label, url)
         else:
             # Use regular font without underline

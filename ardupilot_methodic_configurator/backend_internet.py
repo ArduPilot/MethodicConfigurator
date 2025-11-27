@@ -290,3 +290,16 @@ def verify_and_open_url(url: str) -> bool:
             url_found = False
 
     return url_found
+
+
+def webbrowser_open_url(url: str, new: int = 0, autoraise: bool = True) -> bool:
+    """
+    Open a URL in the default web browser.
+
+    Args:
+        url: The URL to open
+        new: 0 - same window, 1 - new window, 2 - new tab
+        autoraise: Whether to raise the window
+
+    """
+    return webbrowser_open(url=url, new=new, autoraise=autoraise)

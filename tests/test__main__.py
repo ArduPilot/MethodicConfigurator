@@ -218,7 +218,7 @@ class TestDocumentationBehavior:
         # Arrange: Auto-open documentation enabled
         with (
             patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value=True),
-            patch("ardupilot_methodic_configurator.__main__.webbrowser_open") as mock_browser,
+            patch("ardupilot_methodic_configurator.__main__.webbrowser_open_url") as mock_browser,
         ):
             # Act: User starts application
             display_first_use_documentation()
@@ -243,7 +243,7 @@ class TestDocumentationBehavior:
         # Arrange: Auto-open documentation disabled
         with (
             patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value=False) as mock_setting,
-            patch("ardupilot_methodic_configurator.__main__.webbrowser_open") as mock_browser,
+            patch("ardupilot_methodic_configurator.__main__.webbrowser_open_url") as mock_browser,
             patch("ardupilot_methodic_configurator.__main__.display_first_use_documentation") as mock_display_doc,
         ):
             # Test the conditional logic - simulate the main function behavior
