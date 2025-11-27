@@ -131,6 +131,24 @@ class TestApplicationResourcePaths:
         # Path should exist when running from source or installed package
         assert os_path.exists(result), f"Logo file should exist at {result}"
 
+    def test_user_can_get_workflow_image_filepath_using_importlib_resources(self) -> None:
+        """
+        User can retrieve workflow image filepath using modern importlib.resources method.
+
+        GIVEN: Python 3.9+ with importlib.resources.files available
+        WHEN: User requests the workflow image filepath for popup display
+        THEN: The path should be retrieved using importlib.resources
+        AND: The path should exist and end with AMC_general_workflow.png
+        """
+        # Act: Get workflow image filepath (uses importlib.resources in Python 3.9+)
+        result = ProgramSettings.workflow_image_filepath()
+
+        # Assert: Path is valid and ends with expected filename
+        assert result.endswith("AMC_general_workflow.png")
+        assert "images" in result
+        # Path should exist when running from source or installed package
+        assert os_path.exists(result), f"Workflow image file should exist at {result}"
+
 
 class TestDirectoryManagement:
     """Test user directory creation and validation workflows."""
@@ -386,6 +404,7 @@ class TestSettingsFileOperations:
         expected_result["gui_complexity"] = "simple"  # Added by default
         expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
         expected_result["display_usage_popup"]["component_editor_validation"] = True  # Added by default
+        expected_result["display_usage_popup"]["workflow_explanation"] = True  # Added by default
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")

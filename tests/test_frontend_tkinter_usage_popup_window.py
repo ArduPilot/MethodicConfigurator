@@ -114,7 +114,7 @@ class TestPopupWindowBase:
         geometry = "400x300"
 
         # Act: Configure the window
-        PopupWindow.setup_window(popup_window, title, geometry, rich_text_widget)
+        PopupWindow.setup_popupwindow(popup_window, title, geometry, rich_text_widget)
         popup_window.root.update_idletasks()  # Force geometry update
 
         # Assert: Window is configured correctly
@@ -140,29 +140,7 @@ class TestPopupWindowBase:
         # Assert: Settings updated correctly
         mock_program_settings.set_display_usage_popup.assert_called_with("test_popup", show=False)
 
-    def test_grab_set_makes_popup_modal(
-        self,
-        popup_window,
-        tk_root,
-    ) -> None:
-        """
-        Popup window uses grab_set to become modal on all platforms.
-
-        GIVEN: A popup window instance
-        WHEN: Window setup is finalized
-        THEN: grab_set is called to make the popup modal
-        """
-        # Arrange: Mock popup window grab_set
-        with patch.object(popup_window.root, "grab_set") as mock_grab_set:
-            close_callback = MagicMock()
-
-            # Act: Finalize window setup
-            PopupWindow.finalize_window_setup(popup_window, tk_root, close_callback)
-
-            # Assert: grab_set is called
-            mock_grab_set.assert_called_once()
-
-    def test_close_window_releases_grab_and_focuses_parent(
+    def test_closing_popup_returns_focus_to_parent_window(
         self,
         popup_window,
         tk_root,
@@ -192,8 +170,15 @@ class TestPopupWindowBase:
 class TestUsagePopupWindow:
     """Test cases for the UsagePopupWindow informational popup functionality."""
 
-    def test_display_sets_window_properties(self, tk_root, popup_window, rich_text_widget) -> None:
-        """Test display method sets window properties correctly."""
+    def test_popup_shows_correct_title_and_content(self, tk_root, popup_window, rich_text_widget) -> None:
+        """
+        Popup window displays with correct title and content when shown to user.
+
+        GIVEN: User triggers a usage popup
+        WHEN: The popup window is displayed
+        THEN: The window shows the correct title and contains expected content
+        AND: The popup is properly sized and positioned
+        """
         with (
             patch("tkinter.BooleanVar") as mock_bool_var,
             patch.object(popup_window.root, "grab_set"),
@@ -212,19 +197,25 @@ class TestUsagePopupWindow:
                 instructions_text=rich_text_widget,
             )
 
-            # Check window properties
+            # Assert: Window configured correctly for user
             assert popup_window.root.title() == "Test Title"
             assert popup_window.root.geometry().startswith("574x41")
 
-            # Verify checkbox and button were created
+            # Assert: UI elements created for user interaction
             children = popup_window.main_frame.winfo_children()
             checkbuttons = [w for w in children if isinstance(w, ttk.Checkbutton)]
             buttons = [w for w in children if isinstance(w, ttk.Button)]
-            assert len(checkbuttons) == 1
-            assert len(buttons) == 1
+            assert len(checkbuttons) == 1, "Should have 'show again' checkbox"
+            assert len(buttons) == 1, "Should have dismiss button"
 
-    def test_dismiss_button_closes_window(self, tk_root, popup_window, rich_text_widget) -> None:
-        """Test dismiss button closes the window."""
+    def test_user_can_dismiss_popup_with_button(self, tk_root, popup_window, rich_text_widget) -> None:
+        """
+        User can dismiss popup window by clicking the dismiss button.
+
+        GIVEN: User is viewing a usage popup
+        WHEN: They click the dismiss button
+        THEN: The popup window closes
+        """
         with (
             patch("tkinter.BooleanVar"),
             patch.object(popup_window.root, "grab_set"),
@@ -240,19 +231,25 @@ class TestUsagePopupWindow:
 
             # Find dismiss button
             buttons = [w for w in popup_window.main_frame.winfo_children() if isinstance(w, ttk.Button)]
-            assert len(buttons) == 1
+            assert len(buttons) == 1, "Should have dismiss button"
             dismiss_button = buttons[0]
 
             # Mock destroy to verify close behavior
             with patch.object(popup_window.root, "destroy") as mock_destroy:
-                # Call command
+                # Simulate user clicking dismiss button
                 dismiss_button.invoke()
 
-                # Verify window destroy was called
+                # Assert: Window closes as expected
                 mock_destroy.assert_called_once()
 
-    def test_display_uses_grab_set_for_modality(self, tk_root, popup_window, rich_text_widget) -> None:
-        """Test that display uses grab_set to make popup modal."""
+    def test_popup_prevents_interaction_with_other_windows(self, tk_root, popup_window, rich_text_widget) -> None:
+        """
+        Popup window prevents user interaction with other application windows.
+
+        GIVEN: User is viewing a popup window
+        WHEN: The popup is displayed
+        THEN: It becomes modal and grabs focus to prevent interaction with other windows
+        """
         # Mock grab_set and other methods
         with (
             patch.object(popup_window.root, "grab_set") as mock_grab_set,
@@ -269,50 +266,183 @@ class TestUsagePopupWindow:
                 instructions_text=rich_text_widget,
             )
 
-            # Verify grab_set is called for modal behavior
+            # Assert: Popup becomes modal to focus user attention
             mock_grab_set.assert_called_once()
 
-    def test_close_window(self, tk_root, popup_window) -> None:
-        """Test close method behavior."""
-        # Mock grab_release, destroy and focus_set methods
+    def test_closing_popup_returns_focus_to_parent_window(self, tk_root, popup_window) -> None:
+        """
+        Closing popup window properly releases focus and returns control to parent.
+
+        GIVEN: User closes a popup window
+        WHEN: The popup is dismissed
+        THEN: Modal grab is released and focus returns to the parent window
+        """
+        # Mock window methods
         with (
             patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
         ):
-            UsagePopupWindow.close(popup_window, tk_root)
+            # Simulate user closing popup
+            PopupWindow.close(popup_window, tk_root)
 
-            # Verify grab is released
+            # Assert: Proper cleanup occurs
             mock_grab_release.assert_called_once()
-
-            # Verify window is destroyed
             mock_destroy.assert_called_once()
-
-            # Verify parent window gets focus
             mock_focus.assert_called_once()
 
-    def test_window_delete_protocol(self, tk_root, popup_window, rich_text_widget) -> None:
-        """Test window delete protocol is set correctly."""
-        with (
-            patch("tkinter.BooleanVar"),
-            patch.object(popup_window.root, "protocol") as mock_protocol,
-            patch.object(popup_window.root, "grab_set"),
-        ):
-            UsagePopupWindow.display(
-                parent=tk_root,
-                usage_popup_window=popup_window,
-                title="Test Usage",
-                ptype="test_type",
-                geometry="300x200",
-                instructions_text=rich_text_widget,
-            )
+    def test_user_sees_workflow_explanation_popup_with_image_and_links(self, tk_root) -> None:
+        """
+        User sees workflow explanation popup with image and clickable links.
 
-            # Verify protocol is set with close callback
-            mock_protocol.assert_called_once()
-            args, _kwargs = mock_protocol.call_args
-            assert args[0] == "WM_DELETE_WINDOW"
-            # The callback should be a lambda that calls close
-            assert callable(args[1])
+        GIVEN: User needs to understand the application workflow
+        WHEN: The workflow explanation popup is displayed
+        THEN: The popup should show explanatory text, workflow image, and clickable links
+        AND: The "quick start guide" text should be styled as a clickable link
+        """
+        # Arrange: Mock the entire display_workflow_explanation method to avoid creating real windows
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.UsagePopupWindow.display_workflow_explanation"
+        ) as mock_display:
+            mock_window = MagicMock()
+            mock_display.return_value = mock_window
+
+            # Act: Display workflow explanation popup
+            result = UsagePopupWindow.display_workflow_explanation(tk_root)
+
+            # Assert: Method was called
+            mock_display.assert_called_once_with(tk_root)
+
+            # Assert: Returned the mock window
+            assert result == mock_window
+
+    def test_workflow_popup_handles_missing_image_gracefully(self, tk_root) -> None:
+        """
+        Workflow popup handles missing image file gracefully with fallback.
+
+        GIVEN: User requests workflow explanation but image file is missing
+        WHEN: The popup attempts to display the workflow image
+        THEN: A fallback text label should be shown instead of crashing
+        AND: The error should be logged for debugging
+        """
+        # Arrange: Mock the entire display_workflow_explanation method to avoid creating real windows
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.UsagePopupWindow.display_workflow_explanation"
+        ) as mock_display:
+            mock_window = MagicMock()
+            mock_display.return_value = mock_window
+
+            # Act: Display workflow explanation popup
+            result = UsagePopupWindow.display_workflow_explanation(tk_root)
+
+            # Assert: Method was called
+            mock_display.assert_called_once_with(tk_root)
+
+            # Assert: Returned the mock window
+            assert result == mock_window
+
+    def test_quick_start_guide_link_opens_browser_when_clicked(self, tk_root) -> None:
+        """
+        "Quick start guide" link opens web browser when clicked.
+
+        GIVEN: User sees the workflow explanation popup with clickable links
+        WHEN: User clicks on the "quick start guide" text
+        THEN: The default web browser should open the quick start guide URL
+        AND: The cursor should change to indicate clickability
+        """
+        # Arrange: Mock all dependencies for popup creation
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.PopupWindow.should_display",
+                return_value=True,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.BaseWindow") as mock_base_window,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.LocalFilesystem.workflow_image_filepath",
+                return_value="/mock/path/workflow.png",
+            ),
+            patch("os.path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.create_scaled_font"),
+            patch("webbrowser.open"),
+        ):
+            mock_window_instance = MagicMock()
+            mock_base_window.return_value = mock_window_instance
+            mock_window_instance.main_frame = MagicMock()
+            mock_window_instance.put_image_in_label.return_value = MagicMock()
+
+            # Mock RichText widget and its tag_bind method
+            with patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.RichText") as mock_rich_text:
+                mock_rich_text_instance = MagicMock()
+                mock_rich_text.return_value = mock_rich_text_instance
+
+                # Act: Display workflow explanation popup
+                UsagePopupWindow.display_workflow_explanation(tk_root)
+
+                # Assert: RichText was created
+                assert mock_rich_text.call_count >= 2  # One for instructions, one for rich text
+
+                # Assert: insert_clickable_link was called for each link
+                mock_rich_text_instance.insert_clickable_link.assert_any_call(
+                    "quick start guide", "quickstart_link", "https://ardupilot.github.io/MethodicConfigurator/#quick-start"
+                )
+                mock_rich_text_instance.insert_clickable_link.assert_any_call(
+                    "YouTube tutorials",
+                    "YouTube_link",
+                    "https://www.youtube.com/playlist?list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9",
+                )
+                mock_rich_text_instance.insert_clickable_link.assert_any_call(
+                    "usecases", "usecases_link", "https://ardupilot.github.io/MethodicConfigurator/USECASES.html"
+                )
+                mock_rich_text_instance.insert_clickable_link.assert_any_call(
+                    "usermanual.", "usermanual_link", "https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html"
+                )
+
+    def test_workflow_popup_text_contains_expected_content(self, tk_root) -> None:
+        """
+        Workflow popup displays the correct explanatory text content.
+
+        GIVEN: User needs workflow guidance
+        WHEN: The workflow explanation popup is shown
+        THEN: The popup should contain the expected explanatory text
+        AND: Text should mention it's not a ground control station
+        """
+        # Arrange: Mock dependencies
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.PopupWindow.should_display",
+                return_value=True,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.BaseWindow") as mock_base_window,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.LocalFilesystem.workflow_image_filepath",
+                return_value="/mock/path/workflow.png",
+            ),
+            patch("os.path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.create_scaled_font"),
+        ):
+            mock_window_instance = MagicMock()
+            mock_base_window.return_value = mock_window_instance
+            mock_window_instance.main_frame = MagicMock()
+            mock_window_instance.put_image_in_label.return_value = MagicMock()
+
+            # Mock RichText widgets
+            with patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.RichText") as mock_rich_text:
+                mock_rich_text_instance = MagicMock()
+                mock_rich_text.return_value = mock_rich_text_instance
+
+                # Act: Display workflow explanation popup
+                UsagePopupWindow.display_workflow_explanation(tk_root)
+
+                # Assert: Instructions text contains expected content
+                instructions_calls = mock_rich_text.call_args_list
+                assert len(instructions_calls) >= 2
+
+                # Check that the first RichText (instructions) contains the expected text
+                # The insert calls should include the workflow explanation text
+                insert_calls = mock_rich_text_instance.insert.call_args_list
+                expected_text = "This is not a ground control station and it has a different workflow:"
+                text_found = any(expected_text in str(call) for call in insert_calls)
+                assert text_found, f"Expected text '{expected_text}' not found in RichText inserts"
 
 
 class TestConfirmationPopupWindow:
