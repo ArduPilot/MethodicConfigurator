@@ -59,7 +59,7 @@ class Tooltip:
     Creates a tooltip that appears when the mouse hovers over a widget and disappears when the mouse leaves the widget.
     """
 
-    def __init__(self, widget: tk.Widget, text: str, position_below: bool = True) -> None:
+    def __init__(self, widget: tk.Widget, text: str, position_below: bool = True, tag_name: str = "") -> None:
         self.widget: tk.Widget = widget
         self.text: str = text
         self.tooltip: Optional[tk.Toplevel] = None
@@ -68,11 +68,19 @@ class Tooltip:
         # Bind the <Enter> and <Leave> events to show and hide the tooltip
         if platform_system() == "Darwin":
             # On macOS, only create the tooltip when the mouse enters the widget
-            self.widget.bind("<Enter>", self.create_show)
-            self.widget.bind("<Leave>", self.destroy_hide)
+            if tag_name and isinstance(self.widget, tk.Text):
+                self.widget.tag_bind(tag_name, "<Enter>", self.create_show, "+")
+                self.widget.tag_bind(tag_name, "<Leave>", self.destroy_hide, "+")
+            else:
+                self.widget.bind("<Enter>", self.create_show, "+")
+                self.widget.bind("<Leave>", self.destroy_hide, "+")
         else:
-            self.widget.bind("<Enter>", self.show)
-            self.widget.bind("<Leave>", self.hide)
+            if tag_name and isinstance(self.widget, tk.Text):
+                self.widget.tag_bind(tag_name, "<Enter>", self.show, "+")
+                self.widget.tag_bind(tag_name, "<Leave>", self.hide, "+")
+            else:
+                self.widget.bind("<Enter>", self.show, "+")
+                self.widget.bind("<Leave>", self.hide, "+")
             # On non-macOS, create the tooltip immediately and show/hide it on events
             self.tooltip = tk.Toplevel(widget)
             self.tooltip.wm_overrideredirect(boolean=True)
@@ -134,4 +142,8 @@ class Tooltip:
 
 
 def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> Tooltip:
-    return Tooltip(widget, text, position_below=position_below)
+    return Tooltip(widget, text, position_below=position_below, tag_name="")
+
+
+def show_tooltip_on_richtext_tag(widget: tk.Text, text: str, tag_name: str, position_below: bool = True) -> Tooltip:
+    return Tooltip(widget, text, position_below=position_below, tag_name=tag_name)

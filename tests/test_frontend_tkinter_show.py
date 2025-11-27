@@ -132,7 +132,7 @@ def test_show_tooltip(mock_widget) -> None:
         assert tooltip is mock_tooltip_instance
 
         # Verify Tooltip was called with correct parameters (position_below=True is the default)
-        mock_tooltip_class.assert_called_once_with(mock_widget, "Test Tooltip Message", position_below=True)
+        mock_tooltip_class.assert_called_once_with(mock_widget, "Test Tooltip Message", position_below=True, tag_name="")
 
 
 # Tests for Tooltip class
@@ -154,8 +154,8 @@ def test_tooltip_init(mock_widget) -> None:
         assert tooltip.position_below is True
 
         # Verify event bindings for non-macOS
-        mock_widget.bind.assert_any_call("<Enter>", tooltip.show)
-        mock_widget.bind.assert_any_call("<Leave>", tooltip.hide)
+        mock_widget.bind.assert_any_call("<Enter>", tooltip.show, "+")
+        mock_widget.bind.assert_any_call("<Leave>", tooltip.hide, "+")
 
         # Verify that Toplevel was created and configured
         mock_toplevel.assert_called_once_with(mock_widget)
@@ -174,8 +174,8 @@ def test_tooltip_init_macos(mock_widget) -> None:
         assert tooltip.position_below is True
 
         # Verify event bindings for macOS
-        mock_widget.bind.assert_any_call("<Enter>", tooltip.create_show)
-        mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide)
+        mock_widget.bind.assert_any_call("<Enter>", tooltip.create_show, "+")
+        mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide, "+")
 
 
 def test_tooltip_show(mock_widget, mock_toplevel, mock_label) -> None:
@@ -279,8 +279,8 @@ def test_tooltip_show_hide_event_handling(mock_widget) -> None:
         tooltip = Tooltip(mock_widget, "Test tooltip")
 
         # Verify the widget was bound to the correct events
-        mock_widget.bind.assert_any_call("<Enter>", tooltip.show)
-        mock_widget.bind.assert_any_call("<Leave>", tooltip.hide)
+        mock_widget.bind.assert_any_call("<Enter>", tooltip.show, "+")
+        mock_widget.bind.assert_any_call("<Leave>", tooltip.hide, "+")
 
         # Test show method with event
         mock_event = MagicMock()
@@ -306,8 +306,8 @@ def test_tooltip_macos_event_handling(mock_widget) -> None:
         tooltip = Tooltip(mock_widget, "Test tooltip")
 
         # Verify the widget was bound to the correct events for macOS
-        mock_widget.bind.assert_any_call("<Enter>", tooltip.create_show)
-        mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide)
+        mock_widget.bind.assert_any_call("<Enter>", tooltip.create_show, "+")
+        mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide, "+")
 
         # Verify tooltip is initially None on macOS
         assert tooltip.tooltip is None
@@ -366,7 +366,7 @@ def test_tooltip_show_tooltip_function_with_different_positions(mock_widget) -> 
 
         # Test with position_below=True (default)
         tooltip1 = show_tooltip(mock_widget, "Test message 1")
-        mock_tooltip_class.assert_called_with(mock_widget, "Test message 1", position_below=True)
+        mock_tooltip_class.assert_called_with(mock_widget, "Test message 1", position_below=True, tag_name="")
         assert tooltip1 is mock_tooltip_instance
 
         # Reset mock for next test
@@ -374,7 +374,7 @@ def test_tooltip_show_tooltip_function_with_different_positions(mock_widget) -> 
 
         # Test with position_below=False
         tooltip2 = show_tooltip(mock_widget, "Test message 2", position_below=False)
-        mock_tooltip_class.assert_called_with(mock_widget, "Test message 2", position_below=False)
+        mock_tooltip_class.assert_called_with(mock_widget, "Test message 2", position_below=False, tag_name="")
         assert tooltip2 is mock_tooltip_instance
 
 
@@ -667,5 +667,5 @@ def test_show_tooltip_function_stress_test(mock_widget) -> None:
 
             # Verify correct call
             expected_position = i % 2 == 0
-            mock_tooltip_class.assert_called_with(mock_widget, f"Tooltip {i}", position_below=expected_position)
+            mock_tooltip_class.assert_called_with(mock_widget, f"Tooltip {i}", position_below=expected_position, tag_name="")
             mock_tooltip_class.reset_mock()
