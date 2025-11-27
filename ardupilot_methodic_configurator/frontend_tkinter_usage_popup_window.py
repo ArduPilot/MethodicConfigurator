@@ -15,7 +15,7 @@ import tkinter as tk
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from tkinter import BooleanVar, ttk
-from typing import Callable
+from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -43,7 +43,7 @@ class PopupWindow:
         return ProgramSettings.display_usage_popup(ptype)
 
     @staticmethod
-    def setup_window(
+    def setup_popupwindow(
         popup_window: BaseWindow,
         title: str,
         geometry: str,
@@ -52,7 +52,7 @@ class PopupWindow:
         """Set up the basic window properties and add the instructions text."""
         popup_window.root.title(title)
         popup_window.root.geometry(geometry)
-        instructions_text.config(borderwidth=0, relief="flat", highlightthickness=0)
+        instructions_text.config(borderwidth=0, relief="flat", highlightthickness=0, state=tk.DISABLED)
         instructions_text.pack(padx=6, pady=10)
 
     @staticmethod
@@ -77,7 +77,11 @@ class PopupWindow:
         return show_again_var
 
     @staticmethod
-    def finalize_window_setup(popup_window: BaseWindow, parent: tk.Tk, close_callback: Callable[[], None]) -> None:
+    def finalize_setup_popupwindow(
+        popup_window: BaseWindow,
+        parent: Optional[tk.Tk],
+        close_callback: Callable[[], None],
+    ) -> None:
         """Finalize window setup: center, make topmost, disable parent, set close handler."""
         # Resize window height to ensure all widgets are fully visible
         # as some Linux Window managers like KDE, like to change font sizes and padding.
@@ -87,7 +91,10 @@ class PopupWindow:
         req_width = popup_window.root.winfo_reqwidth()
         popup_window.root.geometry(f"{req_width}x{req_height}")
 
-        BaseWindow.center_window(popup_window.root, parent)
+        if parent:  # If parent exists center on parent
+            BaseWindow.center_window(popup_window.root, parent)
+        # For parent-less, center on screen
+
         popup_window.root.deiconify()  # Show the window now that it's positioned
         popup_window.root.attributes("-topmost", True)  # noqa: FBT003
         popup_window.root.grab_set()  # Make the popup modal
@@ -95,12 +102,13 @@ class PopupWindow:
         popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
 
     @staticmethod
-    def close(popup_window: BaseWindow, parent: tk.Tk) -> None:
+    def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
         """Close the popup window and re-enable the parent window."""
         popup_window.root.grab_release()  # Release the modal grab
         popup_window.root.destroy()
-        parent.focus_set()
-        parent.lift()
+        if parent:
+            parent.focus_set()
+            parent.lift()
 
 
 class UsagePopupWindow(PopupWindow):
@@ -112,6 +120,46 @@ class UsagePopupWindow(PopupWindow):
     """
 
     @staticmethod
+    def setup_window(
+        usage_popup_window: BaseWindow,
+        title: str,
+        geometry: str,
+        instructions_text: RichText,
+    ) -> None:
+        """Setup a usage popup window for display."""
+        # Hide the window until it's properly positioned
+        usage_popup_window.root.withdraw()
+
+        # Set up the window
+        PopupWindow.setup_popupwindow(usage_popup_window, title, geometry, instructions_text)
+
+    @staticmethod
+    def finalize_setup_window(
+        parent: Optional[tk.Tk],
+        usage_popup_window: BaseWindow,
+        ptype: str,
+        dismiss_text: str = _("Dismiss"),
+    ) -> None:
+        """Finalize a usage popup window display."""
+        # Add show again checkbox
+        PopupWindow.add_show_again_checkbox(usage_popup_window, ptype)
+
+        # Add dismiss button
+        dismiss_button = ttk.Button(
+            usage_popup_window.main_frame,
+            text=dismiss_text,
+            command=lambda: PopupWindow.close(usage_popup_window, parent),
+        )
+        dismiss_button.pack(pady=10)
+
+        # Finalize window setup
+        PopupWindow.finalize_setup_popupwindow(
+            usage_popup_window,
+            parent,
+            lambda: PopupWindow.close(usage_popup_window, parent),
+        )
+
+    @staticmethod
     def display(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         parent: tk.Tk,
         usage_popup_window: BaseWindow,
@@ -121,25 +169,8 @@ class UsagePopupWindow(PopupWindow):
         instructions_text: RichText,
     ) -> None:
         """Display a usage popup with a Dismiss button."""
-        # Hide the window until it's properly positioned
-        usage_popup_window.root.withdraw()
-
-        # Set up the window
-        PopupWindow.setup_window(usage_popup_window, title, geometry, instructions_text)
-
-        # Add show again checkbox
-        PopupWindow.add_show_again_checkbox(usage_popup_window, ptype)
-
-        # Add dismiss button
-        dismiss_button = ttk.Button(
-            usage_popup_window.main_frame,
-            text=_("Dismiss"),
-            command=lambda: PopupWindow.close(usage_popup_window, parent),
-        )
-        dismiss_button.pack(pady=10)
-
-        # Finalize window setup
-        PopupWindow.finalize_window_setup(usage_popup_window, parent, lambda: PopupWindow.close(usage_popup_window, parent))
+        UsagePopupWindow.setup_window(usage_popup_window, title, geometry, instructions_text)
+        UsagePopupWindow.finalize_setup_window(parent, usage_popup_window, ptype)
 
 
 class ConfirmationPopupWindow(PopupWindow):
@@ -178,7 +209,7 @@ class ConfirmationPopupWindow(PopupWindow):
         usage_popup_window.root.withdraw()
 
         # Set up the window
-        PopupWindow.setup_window(usage_popup_window, title, geometry, instructions_text)
+        PopupWindow.setup_popupwindow(usage_popup_window, title, geometry, instructions_text)
 
         # Add show again checkbox
         PopupWindow.add_show_again_checkbox(usage_popup_window, ptype)
@@ -205,7 +236,11 @@ class ConfirmationPopupWindow(PopupWindow):
         no_button.pack(side=tk.LEFT, padx=5)
 
         # Finalize window setup
-        PopupWindow.finalize_window_setup(usage_popup_window, parent, lambda: PopupWindow.close(usage_popup_window, parent))
+        PopupWindow.finalize_setup_popupwindow(
+            usage_popup_window,
+            parent,
+            lambda: PopupWindow.close(usage_popup_window, parent),
+        )
 
         # Wait for the window to be closed (modal behavior)
         parent.wait_window(usage_popup_window.root)
