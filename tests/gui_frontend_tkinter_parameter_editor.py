@@ -132,7 +132,7 @@ class TestParameterEditorWindow:
 
         try:
             # Mock webbrowser.open to avoid actually opening URLs
-            mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_about_popup_window.webbrowser_open")
+            mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_about_popup_window.webbrowser_open_url")
 
             # Call the function
             show_about_window(root, "1.0.0")  # type: ignore[arg-type]

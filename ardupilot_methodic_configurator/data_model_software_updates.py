@@ -19,7 +19,6 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
 from typing import Any, Optional
-from webbrowser import open as webbrowser_open
 
 from packaging import version
 from requests import RequestException as requests_RequestException
@@ -31,6 +30,7 @@ from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
     download_and_install_pip_release,
     get_release_info,
+    webbrowser_open_url,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
 
@@ -111,7 +111,7 @@ class UpdateManager:
                 current_version_str, latest_version, latest_release.get("body", _("No changes listed"))
             )
             url = "https://github.com/ArduPilot/MethodicConfigurator/releases"
-            webbrowser_open(url=url, new=0, autoraise=True)
+            webbrowser_open_url(url=url, new=0, autoraise=True)
 
             self.dialog = UpdateDialog(version_info, download_callback=lambda: self._perform_download(latest_release))
             return self.dialog.show()

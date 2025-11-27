@@ -211,7 +211,7 @@ def test_update_manager_newer_version(update_manager) -> None:  # pylint: disabl
     current_version = "1.0.0"
 
     with (
-        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
         patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
         patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
@@ -323,7 +323,7 @@ def test_update_manager_check_and_update_user_cancels(update_manager) -> None:  
     current_version = "1.0.0"
 
     with (
-        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
         patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
     ):
         mock_dialog = Mock()
@@ -459,7 +459,7 @@ def test_update_manager_with_complex_release_data(update_manager) -> None:  # py
     current_version = "1.0.0"
 
     with (
-        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url"),
         patch("ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog") as mock_update_dialog_class,
     ):
         mock_dialog = Mock()
@@ -498,7 +498,7 @@ def test_update_manager_with_prerelease_versions(update_manager) -> None:  # pyl
         if should_update:
             # Test path where update should happen
             with (
-                patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open") as mock_browser,
+                patch("ardupilot_methodic_configurator.data_model_software_updates.webbrowser_open_url") as mock_browser,
                 patch(
                     "ardupilot_methodic_configurator.data_model_software_updates.UpdateDialog",
                     return_value=Mock(show=lambda: True),
