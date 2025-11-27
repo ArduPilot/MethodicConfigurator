@@ -22,7 +22,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
 )
 
 
-def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disable=too-many-locals
+def show_about_window(root: ttk.Frame, _version: str) -> None:
     # Create a new window for the custom "About" message
     about_window = tk.Toplevel(root)
     about_window.title(_("About"))
@@ -47,34 +47,20 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:  # pylint: disabl
     usage_popup_label = ttk.Label(usage_popup_frame, text=_("Display usage popup"))
     usage_popup_label.pack(side=tk.TOP, anchor=tk.W)
 
-    component_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("component_editor"))
-    component_editor_checkbox = ttk.Checkbutton(
-        usage_popup_frame,
-        text=_("Component editor window introduction"),
-        variable=component_editor_var,
-        command=lambda: ProgramSettings.set_display_usage_popup("component_editor", component_editor_var.get()),
-    )
-    component_editor_checkbox.pack(side=tk.TOP, anchor=tk.W)
+    def _create_usage_popup_checkbox(popup_type: str, text: str) -> None:
+        """Create a usage popup checkbox for the given popup type."""
+        var = tk.BooleanVar(value=ProgramSettings.display_usage_popup(popup_type))
+        checkbox = ttk.Checkbutton(
+            usage_popup_frame,
+            text=text,
+            variable=var,
+            command=lambda: ProgramSettings.set_display_usage_popup(popup_type, var.get()),
+        )
+        checkbox.pack(side=tk.TOP, anchor=tk.W)
 
-    component_editor_validation_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("component_editor_validation"))
-    component_editor_validation_checkbox = ttk.Checkbutton(
-        usage_popup_frame,
-        text=_("Component editor window data validation"),
-        variable=component_editor_validation_var,
-        command=lambda: ProgramSettings.set_display_usage_popup(
-            "component_editor_validation", component_editor_validation_var.get()
-        ),
-    )
-    component_editor_validation_checkbox.pack(side=tk.TOP, anchor=tk.W)
-
-    parameter_editor_var = tk.BooleanVar(value=ProgramSettings.display_usage_popup("parameter_editor"))
-    parameter_editor_checkbox = ttk.Checkbutton(
-        usage_popup_frame,
-        text=_("Parameter file editor and uploader window"),
-        variable=parameter_editor_var,
-        command=lambda: ProgramSettings.set_display_usage_popup("parameter_editor", parameter_editor_var.get()),
-    )
-    parameter_editor_checkbox.pack(side=tk.TOP, anchor=tk.W)
+    _create_usage_popup_checkbox("component_editor", _("Component editor window introduction"))
+    _create_usage_popup_checkbox("component_editor_validation", _("Component editor window data validation"))
+    _create_usage_popup_checkbox("parameter_editor", _("Parameter file editor and uploader window"))
 
     # Create buttons for each action
     user_manual_button = ttk.Button(
