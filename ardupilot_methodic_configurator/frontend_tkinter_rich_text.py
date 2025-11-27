@@ -14,7 +14,9 @@ import tkinter as tk
 from tkinter import font as tkFont  # noqa: N812
 from tkinter import ttk
 
+from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config, safe_font_nametofont
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip_on_richtext_tag
 
 
 class RichText(tk.Text):  # pylint: disable=too-many-ancestors
@@ -68,6 +70,24 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
         self.tag_configure("bold", font=bold_font)
         self.tag_configure("italic", font=italic_font)
         self.tag_configure("h1", font=h1_font, spacing3=default_size)
+
+    def insert_clickable_link(self, text: str, unique_name: str, url: str, index: str = tk.END) -> None:
+        """
+        Insert a clickable link into the RichText widget.
+
+        Args:
+            text: The display text for the link.
+            unique_name: A unique name for the link tag to avoid conflicts.
+            url: The URL that the link points to.
+            index: The index at which to insert the link.
+
+        """
+        self.insert(index, text, (unique_name,))
+        self.tag_configure(unique_name, foreground="blue", underline=True)
+        self.tag_bind(unique_name, "<Button-1>", lambda _: webbrowser_open_url(url))
+        self.tag_bind(unique_name, "<Enter>", lambda _: self.config(cursor="hand2"))
+        self.tag_bind(unique_name, "<Leave>", lambda _: self.config(cursor=""))
+        show_tooltip_on_richtext_tag(self, url, unique_name)
 
 
 def get_widget_font_family_and_size(widget: tk.Widget) -> tuple[str, int]:
