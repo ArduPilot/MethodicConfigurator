@@ -58,6 +58,7 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:
         )
         checkbox.pack(side=tk.TOP, anchor=tk.W)
 
+    _create_usage_popup_checkbox("workflow_explanation", _("General AMC workflow"))
     _create_usage_popup_checkbox("component_editor", _("Component editor window introduction"))
     _create_usage_popup_checkbox("component_editor_validation", _("Component editor window data validation"))
     _create_usage_popup_checkbox("parameter_editor", _("Parameter file editor and uploader window"))

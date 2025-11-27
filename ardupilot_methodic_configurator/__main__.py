@@ -47,6 +47,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info impo
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow, UsagePopupWindow
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
@@ -565,6 +566,11 @@ def main() -> None:
     # Check for software updates
     if check_updates(state):
         sys_exit(0)  # user asked to update, exit the old version
+
+    # Display workflow explanation popup
+    if PopupWindow.should_display("workflow_explanation"):
+        popup_window = UsagePopupWindow.display_workflow_explanation()
+        popup_window.root.mainloop()
 
     # Validate that all configured plugins are registered
     if state.local_filesystem:

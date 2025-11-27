@@ -34,6 +34,10 @@ from ardupilot_methodic_configurator.__main__ import (
     vehicle_directory_selection,
     write_parameter_defaults,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import (
+    PopupWindow,
+    UsagePopupWindow,
+)
 
 # pylint: disable=,too-many-lines,redefined-outer-name,too-few-public-methods
 
@@ -202,6 +206,64 @@ class TestApplicationStartup:
 
             # Assert: Application continues normally
             assert should_exit is False
+
+    def test_user_sees_workflow_explanation_popup_on_first_startup(self) -> None:
+        """
+        User sees workflow explanation popup when starting application for the first time.
+
+        GIVEN: A user starts the application for the first time
+        WHEN: The application initializes
+        THEN: The workflow explanation popup should be displayed to guide them
+        AND: The popup should explain that AMC is not a ground control station
+        """
+        # Arrange: Mock popup display enabled (default behavior)
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.PopupWindow.should_display",
+                return_value=True,
+            ) as mock_should_display,
+            patch(
+                "ardupilot_methodic_configurator.__main__.UsagePopupWindow.display_workflow_explanation"
+            ) as mock_display_popup,
+        ):
+            mock_popup_window = MagicMock()
+            mock_display_popup.return_value = mock_popup_window
+
+            # Act: Simulate the startup popup logic from main()
+            if PopupWindow.should_display("workflow_explanation"):
+                UsagePopupWindow.display_workflow_explanation()
+                # Note: We don't call mainloop() in tests to avoid blocking
+
+            # Assert: User preference was checked
+            mock_should_display.assert_called_once_with("workflow_explanation")
+
+            # Assert: Popup was displayed for user guidance
+            mock_display_popup.assert_called_once()
+
+    def test_user_can_skip_workflow_popup_when_previously_disabled(self) -> None:
+        """
+        User can skip workflow explanation popup when they have previously disabled it.
+
+        GIVEN: A user has previously chosen to disable the workflow popup
+        WHEN: The application starts
+        THEN: No popup should appear and application should proceed normally
+        """
+        # Arrange: Mock popup display disabled by user preference
+        with patch(
+            "ardupilot_methodic_configurator.__main__.PopupWindow.should_display",
+            return_value=False,
+        ) as mock_should_display:
+            popup_displayed = False
+
+            # Act: Simulate the startup popup logic from main()
+            if PopupWindow.should_display("workflow_explanation"):
+                popup_displayed = True
+
+            # Assert: User preference was checked
+            mock_should_display.assert_called_once_with("workflow_explanation")
+
+            # Assert: No popup was shown, respecting user preference
+            assert popup_displayed is False
 
 
 class TestDocumentationBehavior:

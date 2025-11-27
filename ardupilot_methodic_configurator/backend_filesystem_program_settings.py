@@ -58,6 +58,7 @@ class ProgramSettings:
         return {
             "Format version": 1,
             "display_usage_popup": {
+                "workflow_explanation": True,
                 "component_editor": True,
                 "component_editor_validation": True,
                 "parameter_editor": True,
@@ -126,6 +127,11 @@ class ProgramSettings:
     def application_logo_filepath() -> str:
         package_path = importlib_files("ardupilot_methodic_configurator")
         return str(package_path / "images" / "ArduPilot_logo.png")
+
+    @staticmethod
+    def workflow_image_filepath() -> str:
+        package_path = importlib_files("ardupilot_methodic_configurator")
+        return str(package_path / "images" / "AMC_general_workflow.png")
 
     @staticmethod
     def create_new_vehicle_dir(new_vehicle_dir: str) -> str:
@@ -305,7 +311,7 @@ class ProgramSettings:
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool) -> None:
-        if ptype in {"component_editor", "component_editor_validation", "parameter_editor"}:
+        if ptype in {"workflow_explanation", "component_editor", "component_editor_validation", "parameter_editor"}:
             settings = ProgramSettings._get_settings_as_dict()
             settings["display_usage_popup"][ptype] = value
             ProgramSettings._set_settings_from_dict(settings)
