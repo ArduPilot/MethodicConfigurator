@@ -10,6 +10,8 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
@@ -199,7 +201,17 @@ class TestUsagePopupWindow:
 
             # Assert: Window configured correctly for user
             assert popup_window.root.title() == "Test Title"
-            assert popup_window.root.geometry().startswith("574x41")
+            # On Windows (including CI runners on windows) Tk reports a different
+            # geometry so we expect the larger size there. On GitHub Actions
+            # (ubuntu-latest) use the GitHub-specific env var. Otherwise keep the
+            # local expected geometry.
+            if sys.platform.startswith("win"):
+                expected_geometry = "814x594"
+            elif os.getenv("CI", "").lower() in ("true", "1"):
+                expected_geometry = "654x490"
+            else:
+                expected_geometry = "574x41"
+            assert popup_window.root.geometry().startswith(expected_geometry)
 
             # Assert: UI elements created for user interaction
             children = popup_window.main_frame.winfo_children()
