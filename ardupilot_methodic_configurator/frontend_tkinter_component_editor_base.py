@@ -308,7 +308,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             height=6,
             bd=0,
             background=style.lookup("TLabel", "background"),
-            font=create_scaled_font(get_safe_font_config(), 1.2),
+            font=create_scaled_font(get_safe_font_config(), 1.5),
         )
         # pylint: enable=duplicate-code
         instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))
@@ -552,9 +552,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         validation_popup_window = BaseWindow(cast("tk.Tk", self.root))
         style = ttk.Style()
 
-        # Create a 20% larger font
+        # Create a 50% larger font
         font_config = get_safe_font_config()
-        larger_font = create_scaled_font(font_config, 1.2)
+        larger_font = create_scaled_font(font_config, 1.5)
 
         confirmation_text = RichText(
             validation_popup_window.main_frame,

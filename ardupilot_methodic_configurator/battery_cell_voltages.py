@@ -53,6 +53,20 @@ battery_cell_voltages = {
         "recommended_low": 3.5,
         "recommended_crit": 3.2,
     },
+    "NiCd": {
+        "absolute_max": 1.45,
+        "absolute_min": 1.0,
+        "recommended_max": 1.4,
+        "recommended_low": 1.2,
+        "recommended_crit": 1.1,
+    },
+    "NiMH": {
+        "absolute_max": 1.45,
+        "absolute_min": 1.0,
+        "recommended_max": 1.4,
+        "recommended_low": 1.2,
+        "recommended_crit": 1.1,
+    },
     # Add more chemistries as needed
 }
 
