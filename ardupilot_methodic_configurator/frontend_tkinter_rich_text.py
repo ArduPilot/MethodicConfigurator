@@ -47,7 +47,7 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        default_font = kwargs.get("font", None) or safe_font_nametofont()
+        default_font = kwargs.get("font") or safe_font_nametofont()
         if default_font:
             # Use the actual font configuration if available
             bold_font = tkFont.Font(**default_font.configure())  # type: ignore[arg-type]
