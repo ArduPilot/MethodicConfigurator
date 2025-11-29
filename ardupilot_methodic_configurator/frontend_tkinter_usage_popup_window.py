@@ -192,7 +192,7 @@ class UsagePopupWindow(PopupWindow):
             height=1,
             bd=0,
             background=ttk.Style(popup_window.root).lookup("TLabel", "background"),
-            font=create_scaled_font(get_safe_font_config(), 1.2),
+            font=create_scaled_font(get_safe_font_config(), 1.5),
         )
         instructions.insert(tk.END, _("This is not a ground control station and it has a different workflow:"))
         UsagePopupWindow.setup_window(
@@ -219,7 +219,7 @@ class UsagePopupWindow(PopupWindow):
             height=1,
             bd=0,
             background=ttk.Style(popup_window.root).lookup("TLabel", "background"),
-            font=create_scaled_font(get_safe_font_config(), 1.2),
+            font=create_scaled_font(get_safe_font_config(), 1.5),
         )
         rich_text.insert(tk.END, _("see "))
         rich_text.insert_clickable_link(
