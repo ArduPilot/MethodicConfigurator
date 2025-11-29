@@ -30,12 +30,13 @@ jobs:
       fail-fast: false
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         # python-version: ["3.9", "3.10", "3.11", "3.12", "pypy3.9", "pypy3.10"]
-        os: [ubuntu-latest]
         python-version: ["3.9", "3.14", "3.14t"]
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
+        if: matrix.os != 'windows-latest'
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: audit
@@ -50,12 +51,22 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
 
-      - name: Install system dependencies for GUI testing
+      - name: Install system dependencies for GUI testing on linux
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot tcl8.6 tk8.6 libtcl8.6 libtk8.6
 
+      - name: Install system dependencies for GUI testing on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          # XQuartz is pre-installed on macOS runners for X11 support
+          # Tkinter is available with Python installation
+          # PyAutoGUI uses Quartz for screenshots and input on macOS
+          # No additional system dependencies needed
+
       - name: Ensure Tcl/Tk search paths
+        if: matrix.os == 'ubuntu-latest'
         run: |
           echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
           echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
@@ -66,6 +77,7 @@ jobs:
           uv pip install --editable .[dev,ci_headless_tests]
 
       - name: Download ArduCopter SITL (if available)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           # Create cache key based on current quarter (YYYY-Q)
           CURRENT_YEAR=$(date +%Y)
@@ -145,23 +157,23 @@ jobs:
         if: ${{ always() }}
 
       - name: Upload coverage xml report
+        # Use always() to always run this step to publish test results when there are test failures
+        if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
             name: coverage-${{ matrix.python-version }}-xml
             path: tests/*.xml
             retention-days: 1
-        # Use always() to always run this step to publish test results when there are test failures
-        if: ${{ always() }}
 
       - name: Upload coverage report
+        # Use always() to always run this step to publish test results when there are test failures
+        if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
             name: coverage-${{ matrix.python-version }}
             path: .coverage
             include-hidden-files: true
             retention-days: 1
-        # Use always() to always run this step to publish test results when there are test failures
-        if: ${{ always() }}
 
   upload_coverage_to_coveralls:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') && (success() || failure())
