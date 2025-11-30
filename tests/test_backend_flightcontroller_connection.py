@@ -17,6 +17,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import serial.tools.list_ports_common
+from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
@@ -33,7 +34,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
 )
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-lines
 
 
 class TestFlightControllerConnectionServiceInjection:
@@ -980,6 +981,36 @@ class TestConnectionStateManagement:
 
         # Then: Comport should be None initially
         assert connection.comport is None
+
+
+def test_select_supported_autopilot_with_string_ids_does_not_raise() -> None:
+    """
+    Ensure that system/component IDs stored as strings do not cause logging to raise (previously %d was used).
+
+    This is to prevent future regressions
+    GIVEN: FlightControllerConnection and a detected vehicle
+    WHEN: _select_supported_autopilot is called and FlightControllerInfo stores
+          string IDs
+    THEN: The function returns success and does not raise
+    """
+    connection = FlightControllerConnection(info=FlightControllerInfo())
+
+    # Minimal dummy heartbeat message - use supported autopilot constant
+    class DummyHeartbeat:  # pylint: disable=too-few-public-methods
+        """Dummy MAVLink heartbeat used as input to _select_supported_autopilot."""
+
+        autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+        type = mavutil.mavlink.MAV_TYPE_GROUND_ROVER
+
+    dummy = DummyHeartbeat()
+
+    # Call with integer keys (function converts to strings internally) and ensure no exception
+    result = connection._select_supported_autopilot({(1, 1): dummy})
+
+    # Successful selection returns empty string and system/component IDs are stored as strings
+    assert result == ""
+    assert connection.info.system_id == "1"
+    assert connection.info.component_id == "1"
 
 
 if __name__ == "__main__":
