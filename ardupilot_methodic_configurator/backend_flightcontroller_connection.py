@@ -393,7 +393,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         for (sysid, compid), m in detected_vehicles.items():
             self.info.set_system_id_and_component_id(str(sysid), str(compid))
             logging_debug(
-                _("Connection established with systemID %d, componentID %d."), self.info.system_id, self.info.component_id
+                _("Connection established with systemID %s, componentID %s."), self.info.system_id, self.info.component_id
             )
             self.info.set_autopilot(m.autopilot)
             if self.info.is_supported:
