@@ -14,7 +14,7 @@ import os
 import sys
 import tkinter as tk
 from tkinter import ttk
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -579,6 +579,40 @@ class TestConfirmationPopupWindow:
 
             # Assert: Result defaults to False
             assert result is False, "Should default to False when closed without confirmation"
+
+
+def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
+    """Ensure finalize_setup_popupwindow doesn't raise if Tk has been destroyed and deiconify() raises tk.TclError."""
+
+    class FakePopup:  # pylint: disable=too-few-public-methods
+        """Fake popup window simulating destroyed Tk."""
+
+        def __init__(self) -> None:
+            self.root = Mock()
+            # Minimal methods used by finalize_setup_popupwindow
+            self.root.update_idletasks = Mock(return_value=None)
+            self.root.winfo_reqheight = Mock(return_value=10)
+            self.root.winfo_reqwidth = Mock(return_value=20)
+            self.root.geometry = Mock()
+
+            # Simulate a destroyed Tk: deiconify raises TclError
+            self.root.deiconify = Mock(side_effect=tk.TclError("application has been destroyed"))
+            # These should not be invoked after deiconify fails
+            self.root.attributes = Mock()
+            self.root.grab_set = Mock()
+            self.root.protocol = Mock()
+
+    fake = FakePopup()
+
+    # Should not raise even though deiconify raises
+    PopupWindow.finalize_setup_popupwindow(fake, parent=None, close_callback=lambda: None)
+
+    # deiconify was attempted
+    fake.root.deiconify.assert_called_once()
+    # attributes/grab_set/protocol should not be called because deiconify failed
+    assert not fake.root.attributes.called
+    assert not fake.root.grab_set.called
+    assert not fake.root.protocol.called
 
 
 if __name__ == "__main__":
