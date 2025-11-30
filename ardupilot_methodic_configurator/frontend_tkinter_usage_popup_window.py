@@ -21,10 +21,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_font import (
-    create_scaled_font,
-    get_safe_font_config,
-)
+from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 
 
@@ -100,11 +97,19 @@ class PopupWindow:
             BaseWindow.center_window(popup_window.root, parent)
         # For parent-less, center on screen
 
-        popup_window.root.deiconify()  # Show the window now that it's positioned
-        popup_window.root.attributes("-topmost", True)  # noqa: FBT003
-        popup_window.root.grab_set()  # Make the popup modal
+        try:
+            # Show the window now that it's positioned. Calls may fail if the
+            # main application has been destroyed (for example during shutdown)
+            # — guard against tk.TclError so the caller doesn't crash the app.
+            popup_window.root.deiconify()
+            popup_window.root.attributes("-topmost", True)  # noqa: FBT003
+            popup_window.root.grab_set()  # Make the popup modal
 
-        popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
+            popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
+        except tk.TclError:
+            # Application / interpreter has been destroyed or the underlying
+            # Tk root is no longer available; there's nothing more to do.
+            pass
 
     @staticmethod
     def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
