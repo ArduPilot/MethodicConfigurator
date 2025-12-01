@@ -236,7 +236,7 @@ jobs:
 
       - name: Run AI translation
         id: ai_translate
-        uses: actions/ai-inference@5022b33bc1431add9b2831934daf8147a2ad9331 # v2.0.1
+        uses: actions/ai-inference@334892bb203895caaed82ec52d23c1ed9385151e # v2.0.4
         with:
           system-prompt-file: .github/prompts/ai-translation-system.prompt.yml
           prompt-file: .github/prompts/ai-translation-user.prompt.yml
@@ -246,7 +246,8 @@ jobs:
             translation_file: ${{ matrix.file }}
           file_input: |
             translation_content: ${{ matrix.file }}
-          enable-github-mcp: false
+          enable-github-mcp: true
+          github-mcp-toolsets: "context,repos"
           model: openai/gpt-4.1
           max-tokens: 8000
           token: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}
