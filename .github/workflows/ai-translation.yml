@@ -207,7 +207,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.extract_strings.outputs.translation-matrix) }}
       fail-fast: false  # Continue processing other languages even if one fails
-      max-parallel: 5   # Limit concurrent AI requests
+      max-parallel: 1   # Limit concurrent AI requests to avoid rate limiting
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -236,6 +236,15 @@ jobs:
           echo "📊 Translation file size: $file_size bytes"
           echo "✅ Translation file validation completed successfully"
 
+      - name: Prepare translation content
+        id: translation_content
+        run: |
+          # Read file and indent each line by 2 spaces (except the first)
+          awk 'NR==1 {print} NR>1 {print "  " $0}' "${{ matrix.file }}" > indented_content.txt
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          cat indented_content.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Run AI translation
         id: ai_translate
         uses: actions/ai-inference@334892bb203895caaed82ec52d23c1ed9385151e # v2.0.4
@@ -246,10 +255,8 @@ jobs:
             language: ${{ matrix.language }}
             lang_code: ${{ matrix.lang_code }}
             translation_file: ${{ matrix.file }}
-          file_input: |
-            translation_content: ${{ matrix.file }}
-          enable-github-mcp: true
-          github-mcp-toolsets: "context,repos"
+            translation_content: |
+              ${{ steps.translation_content.outputs.content }}
           model: openai/gpt-4.1
           max-tokens: 8000
           token: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}
@@ -308,22 +315,32 @@ jobs:
           # Save the AI response back to the original translation file
           if [ "${{ steps.check_translation.outputs.output_method }}" = "file" ]; then
             echo "📄 Using response file: ${{ steps.ai_translate.outputs.response-file }}"
-            cp "${{ steps.ai_translate.outputs.response-file }}" "${{ matrix.file }}"
+            cp "${{ steps.ai_translate.outputs.response-file }}" "${{ matrix.file }}.raw"
           elif [ "${{ steps.check_translation.outputs.output_method }}" = "content" ]; then
             echo "📝 Using response content"
-            echo "${{ steps.ai_translate.outputs.response }}" > "${{ matrix.file }}"
+            echo "${{ steps.ai_translate.outputs.response }}" > "${{ matrix.file }}.raw"
           else
             echo "❌ Unexpected output method: ${{ steps.check_translation.outputs.output_method }}"
             exit 1
           fi
 
-          # Validate the saved file
+          # Clean up AI output: keep only lines starting with number followed by colon
+          echo "🧹 Cleaning AI output..."
+          grep -E '^[0-9]+:' "${{ matrix.file }}.raw" > "${{ matrix.file }}" || {
+            echo "❌ Failed to extract valid translations from AI output"
+            echo "Raw output preview:"
+            head -20 "${{ matrix.file }}.raw"
+            exit 1
+          }
+
+          # Validate the cleaned file
           if [ -f "${{ matrix.file }}" ] && [ -s "${{ matrix.file }}" ]; then
-            echo "✅ AI translation saved successfully for ${{ matrix.language }} (${{ matrix.file }})"
-            echo "📊 File size: $(wc -c < "${{ matrix.file }}") bytes"
-            echo "📊 Line count: $(wc -l < "${{ matrix.file }}") lines"
+            echo "✅ AI translation saved and cleaned successfully for ${{ matrix.language }}"
+            echo "📊 Raw file size: $(wc -c < "${{ matrix.file }}.raw") bytes"
+            echo "📊 Cleaned file size: $(wc -c < "${{ matrix.file }}") bytes"
+            echo "📊 Valid translation lines: $(wc -l < "${{ matrix.file }}") lines"
           else
-            echo "❌ Translation file is empty or missing: ${{ matrix.file }}"
+            echo "❌ Translation file is empty or missing after cleanup: ${{ matrix.file }}"
             exit 1
           fi
 
