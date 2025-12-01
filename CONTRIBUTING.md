@@ -127,6 +127,7 @@ The review includes both automated checks and manual inspection.
   [Pyright](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pyright.yml) validation
 * **Security Scanning**: Automated vulnerability detection via [CodeQL](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/codeql.yml) and dependency reviews
 * **Testing**: Comprehensive test suite execution with [pytest](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pytest.yml)
+* **Git branching conventions**: Is the [pull request branch free of merge commits](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/test_branch_conventions.yml)?
 
 ### Manual Review Criteria
 
@@ -142,7 +143,6 @@ We manually verify the following aspects:
 * Do the [git commit messages follow conventional commit standards](https://www.conventionalcommits.org/en/v1.0.0/)?
 * Is at least the last commit in the pull request branch [signed off](https://developercertificate.org/) by the contributor?
 * Does the pull request have a clear description of the changes and their rationale?
-* Is the pull request branch free of merge commits?
 
 #### Architecture & Design
 
