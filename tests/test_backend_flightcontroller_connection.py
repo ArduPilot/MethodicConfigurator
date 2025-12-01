@@ -1013,5 +1013,42 @@ def test_select_supported_autopilot_with_string_ids_does_not_raise() -> None:
     assert connection.info.component_id == "1"
 
 
+def test_detect_vehicles_handles_recv_match_type_error() -> None:
+    """Ensure _detect_vehicles_from_heartbeats swallows transient TypeError and recovers."""
+    connection = FlightControllerConnection(info=FlightControllerInfo())
+
+    class DummyMsg:
+        def __init__(self, sysid: int, compid: int) -> None:
+            self._sysid = sysid
+            self._compid = compid
+            self.autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+            self.type = mavutil.mavlink.MAV_TYPE_GROUND_ROVER
+
+        def get_srcSystem(self) -> int:  # noqa: N802 - mimic pymavlink camelCase API
+            return self._sysid
+
+        def get_srcComponent(self) -> int:  # noqa: N802 - mimic pymavlink camelCase API
+            return self._compid
+
+    calls = [TypeError("broken internal state"), DummyMsg(42, 17), None]
+
+    def fake_recv_match(*_args, **_kwargs) -> object:
+        """Return next queued value, raise if it's Exception, otherwise None when exhausted."""
+        if not calls:
+            return None
+        val = calls.pop(0)
+        if isinstance(val, Exception):
+            raise val
+        return val
+
+    # Attach a dummy master object with the fake recv_match
+    connection.master = type("M", (), {"recv_match": staticmethod(fake_recv_match)})()
+
+    detected = connection._detect_vehicles_from_heartbeats(timeout=1)
+
+    # Should have recovered and collected our DummyMsg
+    assert (42, 17) in detected
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
