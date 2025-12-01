@@ -101,7 +101,7 @@ win_dist = [
     "wheel==0.45.1",
     "pip==25.3",
     "pywin32==311",
-    "pyinstaller==6.16.0",
+    "pyinstaller==6.17.0",
     "packaging==25.0",
 ]
 
