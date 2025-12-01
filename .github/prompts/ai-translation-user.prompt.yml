@@ -8,3 +8,6 @@ messages:
       Please read the translation file "{{translation_file}}" and translate all the strings from English to {{language}}.
 
       The file contains strings in the format "line_number:English text" - please translate only the text after the colon while preserving the exact line number and colon format.
+
+      Translation strings to process:
+      {{translation_content}}
