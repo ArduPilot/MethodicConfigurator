@@ -359,13 +359,21 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         detected_vehicles: dict[tuple[int, int], Any] = {}
 
         while time_time() - start_time < timeout:
-            m = (
-                self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                    type="HEARTBEAT", blocking=False
+            try:
+                m = (
+                    self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                        type="HEARTBEAT", blocking=False
+                    )
+                    if self.master
+                    else None
                 )
-                if self.master
-                else None
-            )
+            except TypeError:
+                # pymavlink internals may occasionally raise TypeError while
+                # processing incoming messages (e.g. message dicts not fully
+                # initialized). Treat this as a transient error and keep polling
+                # until we either get a message or timeout.
+                time_sleep(self.HEARTBEAT_POLL_DELAY)
+                continue
             if m is None:
                 time_sleep(self.HEARTBEAT_POLL_DELAY)
                 continue
