@@ -1,0 +1,18 @@
+ATC_ACCEL_P_MAX,221000
+ATC_ACCEL_R_MAX,221000
+ATC_ACCEL_Y_MAX,35100
+ATC_ANG_YAW_P,5.8
+ATC_RAT_PIT_FLTD,144.5
+ATC_RAT_PIT_FLTE,0
+ATC_RAT_PIT_FLTT,144.5
+ATC_RAT_RLL_FLTD,144.5
+ATC_RAT_RLL_FLTE,0
+ATC_RAT_RLL_FLTT,144.5
+ATC_RAT_YAW_FLTD,0
+ATC_RAT_YAW_FLTE,2
+ATC_RAT_YAW_FLTT,144.5
+ATC_THR_MIX_MAN,0.1
+INS_ACCEL_FILTER,10  # The default is 20Hz but that is too high in most situations
+INS_GYRO_FILTER,115  # Derived from vehicle component editor propeller size
+MOT_THST_EXPO,0.41  # Derived from vehicle component editor propeller size
+MOT_THST_HOVER,0.2
