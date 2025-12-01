@@ -199,7 +199,9 @@ jobs:
     needs: extract_strings
     if: needs.extract_strings.outputs.translations-to-process == 'true'
     permissions:
-      models: read          # for AI inference
+      actions: read        # needed for downloading artifacts
+      contents: read       # required by checkout
+      models: read         # for AI inference
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -363,6 +365,7 @@ jobs:
     needs: [extract_strings, ai_translate]
     if: needs.extract_strings.outputs.po-files-changed == 'true'
     permissions:
+      actions: read         # needed for downloading translated artifacts
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
     runs-on: ubuntu-latest
