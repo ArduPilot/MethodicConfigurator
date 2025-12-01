@@ -1,0 +1,4 @@
+INS_FAST_SAMPLE,7
+INS_GYRO_RATE,1
+INS_HNTCH_ENABLE,1  # Use the first notch filter to filter the noise created by the motors/propellers
+INS_HNTCH_FREQ,5.6
