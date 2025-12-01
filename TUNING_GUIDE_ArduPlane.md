@@ -67,18 +67,18 @@ It uses the following components:
 <!-- markdown-link-check-disable -->
 
 | Type | Part |
-|:---|:----|
-|Frame | [Diatone Taycan MX-C](https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone) |
-|Flight Controller | [Matek H743 SLIM V3](http://www.mateksys.com/?portfolio=h743-slim) |
-|ESC | [Mamba System F45_128k 4in1 ESC](https://www.diatone.us/products/mb-f45_128k-bl32-esc) |
-|Motors | 4x [T-Motor 15507 3800kv](https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s) |
-|Propeller | 4x [CineWhoop 3\", 8-Blade](https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau) |
-|BEC with voltage/current monitor | [Holybro PM02 V3](https://holybro.com/products/pm02-v3-12s-power-module) |
-|Battery | [SLS X-Cube 4S 1800mAh 40C/80C](https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html) |
-|GNSS Receiver | [Holybro H-RTK F9P Helical](https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445) |
-|SDCard | Any FAT32 or exFAT formatted fast Micro-SDCard > 8 GiB |
-|RC Receiver | [TBS Crossfire Nano RX se](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
-|RC Transmitter | [Radiomaster TX16S](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) with [EdgeTx](https://edgetx.org/) and [Yaapu scripts](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS) |
+| :--- | :--- |
+| Frame | [Diatone Taycan MX-C](https://www.diatone.us/products/diatone-mxc-taycan-duct-3-inch-cinewhoop-fpv-drone) |
+| Flight Controller | [Matek H743 SLIM V3](http://www.mateksys.com/?portfolio=h743-slim) |
+| ESC | [Mamba System F45_128k 4in1 ESC](https://www.diatone.us/products/mb-f45_128k-bl32-esc) |
+| Motors | 4x [T-Motor 15507 3800kv](https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s) |
+| Propeller | 4x [CineWhoop 3\", 8-Blade](https://shop.rc-hangar15.de/HQProp-76mm-CineWhoop-3-8-Blatt-Propeller-grau) |
+| BEC with voltage/current monitor | [Holybro PM02 V3](https://holybro.com/products/pm02-v3-12s-power-module) |
+| Battery | [SLS X-Cube 4S 1800mAh 40C/80C](https://www.stefansliposhop.de/akkus/sls-x-cube/sls-x-cube-40c/sls-x-cube-1800mah-4s1p-14-8v-40c-80c::1568.html) |
+| GNSS Receiver | [Holybro H-RTK F9P Helical](https://holybro.com/products/h-rtk-f9p-gnss-series?variant=41466787168445) |
+| SDCard | Any FAT32 or exFAT formatted fast Micro-SDCard > 8 GiB |
+| RC Receiver | [TBS Crossfire Nano RX se](https://www.team-blacksheep.com/products/prod:crossfire_nano_se) |
+| RC Transmitter | [Radiomaster TX16S](https://www.radiomasterrc.com/products/tx16s-mark-ii-radio-controller) with [EdgeTx](https://edgetx.org/) and [Yaapu scripts](https://github.com/yaapu/FrskyTelemetryScript/wiki/Passthrough-over-CRSF-and-ExpressLRS) |
 | Remote ID transmitter | [Holybro Remote ID transmitter](https://holybro.com/products/remote-id) |
 
 <!-- markdown-link-check-enable -->
@@ -100,7 +100,7 @@ Use Mission Planner to flash the latest stable [ArduCopter](https://firmware.ard
 The table below summarizes the software used in this guide. Download and install them as you progress in the guide.
 
 | Software | Version | Description |
-|:----|:----|:----|
+| :---- | :---- | :---- |
 | [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/MissionPlanner-latest.msi) | latest beta | Ground control station (PC software) used for configuring and operating the vehicle |
 | [ArduPilot Methodic Configurator](https://github.com/ArduPilot/MethodicConfigurator) | latest | A clear ArduPilot configuration sequence |
 | [ArduCopter](https://firmware.ardupilot.org/Copter/stable/) | 4.4.4 or 4.5.7 | Flight controller firmware |
@@ -196,11 +196,11 @@ We connected the components as depicted below.
 The figure excludes the LiPo battery and the PM02 BEC with a voltage/current monitor.
 
 | Component | [Flight controller connections](http://www.mateksys.com/?portfolio=h743-slim#tab-id-5) |
-|:---|:----|
-|T-Motor F45 4in1 ESC V2 | `G`, `G`, `Vbat`, not Connected, `S4`, `S3`, `S2`, `S1`, `Cur`, `Rx8` (SERIAL5) |
-|Holybro PM02 V3 | not connected, `G`, `Vbat2`, `Curr2`, not Connected, not Connected |
-|Holybro H-RTK F9P Helical | `5V`, `Tx2`, `Rx2`, `CL1`, `DA1`, not connected, not connected, `3V3`, `Buzz`, `G` |
-|TBS Crossfire Nano RX se | `G`, `5V`, `Rx6`, `Tx6` |
+| :--- | :---- |
+| T-Motor F45 4in1 ESC V2 | `G`, `G`, `Vbat`, not Connected, `S4`, `S3`, `S2`, `S1`, `Cur`, `Rx8` (SERIAL5) |
+| Holybro PM02 V3 | not connected, `G`, `Vbat2`, `Curr2`, not Connected, not Connected |
+| Holybro H-RTK F9P Helical | `5V`, `Tx2`, `Rx2`, `CL1`, `DA1`, not connected, not connected, `3V3`, `Buzz`, `G` |
+| TBS Crossfire Nano RX se | `G`, `5V`, `Rx6`, `Tx6` |
 
 ![Matek H743, Holobro F9p, T-Motor F45 4in1 ESC and TBS Crossfire Nano rx se connections](images/blog/matek_h743_schaltplan.png)
 
@@ -1164,7 +1164,7 @@ The number of test flights was reduced to a minimum, and their order was optimiz
 This process was developed for our specific multicopter, but **it can be tailored to any other ArduPilot vehicle**.
 
 | PID controller | Intermediate parameter file(s) used to configure and tune it |
-|----|----|
+| ---- | ---- |
 | Position Z acceleration | `20_throttle_controller.param` |
 | Roll rate | `31_autotune_roll_results.param`, `39_autotune_roll_pitch_retune_results.param` |
 | Pitch rate | `33_autotune_pitch_results.param`, `39_autotune_roll_pitch_retune_results.param` |
