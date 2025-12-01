@@ -246,7 +246,8 @@ jobs:
             translation_file: ${{ matrix.file }}
           file_input: |
             translation_content: ${{ matrix.file }}
-          enable-github-mcp: false
+          enable-github-mcp: true
+          github-mcp-toolsets: "context,repos"
           model: openai/gpt-4.1
           max-tokens: 8000
           token: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}
