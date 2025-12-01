@@ -483,7 +483,41 @@ jobs:
 
             if [ $successful_translations -gt 0 ]; then
               echo "🔄 Processing successful translations with insert_missing_translations.py"
-              python insert_missing_translations.py
+
+              # Show files that will be processed
+              echo "Files to process:"
+              ls -lh missing_translations_*.txt
+
+              # Validate file format before processing
+              echo "Validating translation file format..."
+              for file in missing_translations_*.txt; do
+                echo "Checking $file:"
+                if ! grep -qE '^[0-9]+:' "$file"; then
+                  echo "❌ ERROR: File $file does not contain valid translation lines (format: number:text)"
+                  echo "File contents:"
+                  cat "$file"
+                  exit 1
+                fi
+
+                # Show file preview
+                echo "First 5 lines of $file:"
+                head -5 "$file"
+                echo "---"
+              done
+
+              # Run with full error output captured
+              set +e  # Temporarily disable exit on error to capture output
+              output=$(python insert_missing_translations.py 2>&1)
+              exit_code=$?
+              set -e  # Re-enable exit on error
+
+              echo "$output"
+
+              if [ $exit_code -ne 0 ]; then
+                echo "❌ insert_missing_translations.py failed with exit code $exit_code"
+                exit 1
+              fi
+
               echo "✅ AI translations inserted into .po files"
             else
               echo "⚠️ No successful translations to process"
