@@ -65,6 +65,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 
 ; Remove Rover template files
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\AION_R1";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\Carisma_SCA-1E";
 
 ; Remove Outdated files
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduCopter_configuration_steps.json";
