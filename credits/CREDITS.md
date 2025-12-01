@@ -92,3 +92,5 @@ These books helped shape this software:
 - [Modern Software Engineering by David Farley](https://www.oreilly.com/library/view/modern-software-engineering/9780137314942/)
 - [The DevOps Handbook by Gene Kim, Patrick Debois, John Willis, and Jez Humble](https://www.oreilly.com/library/view/the-devsecops-handbook/9781098182281/)
 - [Fundamentals of Software Architecture by Mark Richards, Neal Ford](https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/)
+- [The Pragmatic Programmer: 20th Anniversary Edition, 2nd Edition by David Thomas, Andrew Hunt](https://www.audible.com/pd/The-Pragmatic-Programmer-20th-Anniversary-Edition-2nd-Edition-Audiobook/B0833FMYH9)
+- [The Clean Coder: A Code of Conduct for Professional Programmers by Robert C. Martin](https://www.oreilly.com/library/view/clean-coder-the/9780132542913/)
