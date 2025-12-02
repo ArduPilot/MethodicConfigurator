@@ -1,17 +1,17 @@
-447:Validierungsfehler  
-812:Verbindung hergestellt mit SystemID %s, KomponentenID %s.  
-3903:Parameter nicht gefunden  
-3907:Parameter {param_name} konnte nicht gefunden werden.  
-4592:Allgemeiner AMC-Arbeitsablauf  
-5196:Fehler beim Herunterladen der Parameter  
-6122:Unbekannter Fehler.  
-6572:Dies ist keine Bodenstation und sie hat einen anderen Arbeitsablauf:  
-6576:ArduPilot Methodischer Konfigurator - Arbeitsablauf  
-6580:[Bild nicht gefunden: AMC_general_workflow.png]  
-6584:siehe  
-6588:Schnellstartanleitung  
-6593:,  
-6597:YouTube-Tutorials  
-6601:Anwendungsfälle  
-6605:Benutzerhandbuch.  
-6609:Ich verstehe das  
+447:Validierungsfehler
+812:Verbindung hergestellt mit SystemID %s, KomponentenID %s.
+3903:Parameter nicht gefunden
+3907:Parameter {param_name} konnte nicht gefunden werden.
+4592:Allgemeiner AMC-Arbeitsablauf
+5196:Fehler beim Herunterladen der Parameter
+6122:Unbekannter Fehler.
+6572:Dies ist keine Bodenstation und sie hat einen anderen Arbeitsablauf:
+6576:ArduPilot Methodischer Konfigurator - Arbeitsablauf
+6580:[Bild nicht gefunden: AMC_general_workflow.png]
+6584:siehe
+6588:Schnellstartanleitung
+6593:,
+6597:YouTube-Tutorials
+6601:Anwendungsfälle
+6605:Benutzerhandbuch.
+6609:Ich verstehe das

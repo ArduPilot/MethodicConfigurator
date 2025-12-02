@@ -8,9 +8,9 @@
 6598:Questo non è una stazione di controllo a terra e ha un workflow diverso:
 6602:ArduPilot Methodic Configurator - Workflow
 6606:[Immagine non trovata: AMC_general_workflow.png]
-6610:vedi 
+6610:vedi
 6614:guida rapida
-6619:, 
+6619:,
 6623:tutorial su YouTube
 6627:casistiche d’uso
 6631:manuale utente.

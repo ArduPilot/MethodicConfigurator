@@ -1,17 +1,17 @@
-446:Erro de validação  
-815:Conexão estabelecida com systemID %s, componentID %s.  
-3903:Parâmetro não encontrado  
-3907:Não foi possível localizar o parâmetro {param_name}.  
-4588:Fluxo geral de trabalho AMC  
-5181:Falha ao descarregar parâmetros  
-6094:Erro desconhecido.  
-6544:Isto não é uma estação de controlo central e tem um fluxo de trabalho diferente:  
-6548:Configurador Metódico ArduPilot - Fluxo de trabalho  
-6552:[Imagem não encontrada: AMC_general_workflow.png]  
-6556:ver  
-6560:guia de iniciação rápida  
-6565:,  
-6569:tutoriais YouTube  
-6573:casos de utilização  
-6577:manual do utilizador.  
-6581:Compreendo isto  
+446:Erro de validação
+815:Conexão estabelecida com systemID %s, componentID %s.
+3903:Parâmetro não encontrado
+3907:Não foi possível localizar o parâmetro {param_name}.
+4588:Fluxo geral de trabalho AMC
+5181:Falha ao descarregar parâmetros
+6094:Erro desconhecido.
+6544:Isto não é uma estação de controlo central e tem um fluxo de trabalho diferente:
+6548:Configurador Metódico ArduPilot - Fluxo de trabalho
+6552:[Imagem não encontrada: AMC_general_workflow.png]
+6556:ver
+6560:guia de iniciação rápida
+6565:,
+6569:tutoriais YouTube
+6573:casos de utilização
+6577:manual do utilizador.
+6581:Compreendo isto
