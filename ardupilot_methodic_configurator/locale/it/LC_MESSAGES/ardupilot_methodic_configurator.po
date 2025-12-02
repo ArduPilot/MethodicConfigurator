@@ -448,6 +448,7 @@ msgstr "Impossibile caricare lo schema di validazione"
 msgid "Invalid JSON file '%s': %s"
 msgstr "File JSON non valido '%s': %s"
 
+msgstr "Errore di validazione"
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:103
 msgid "File '%s' not found in %s."
 msgstr "File '%s' non trovato in %s."
@@ -823,6 +824,7 @@ msgstr ""
 "Tipo di veicolo: {self.info.mav_type} con firmware {self.info.vehicle_type}"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:406
+msgstr "Connessione stabilita con systemID %s, componentID %s."
 msgid "Unsupported autopilot type {self.info.autopilot}"
 msgstr "Tipo di autopilota non supportato {self.info.autopilot}"
 
@@ -3943,10 +3945,12 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1703
 msgid "Why: "
+msgstr "Parametro non trovato"
 msgstr "Perché: "
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1705
 msgid "Why now: "
+msgstr "Impossibile trovare il parametro {param_name}."
 msgstr "Perché ora: "
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1710
@@ -4633,6 +4637,7 @@ msgstr "L'altezza dell'immagine deve essere positiva"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:346
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:372
+msgstr "Workflow generale AMC"
 msgid "Image file not found: %s"
 msgstr "File immagine non trovato: %s"
 
@@ -5228,6 +5233,7 @@ msgstr "3. Configurazione Arm e Acceleratore Min"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:237
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:518
 msgid "Set Motor Spin Arm"
+msgstr "Impossibile scaricare i parametri"
 msgstr "Imposta Rotazione Motore Arm"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:242
@@ -6147,6 +6153,7 @@ msgstr ""
 msgid "Error getting {param_name} checked keys: %s"
 msgstr "Errore nell'ottenere le chiavi verificate di {param_name}: %s"
 
+msgstr "Errore sconosciuto."
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
 msgid "Could not get {param_name} checked keys. Please try again."
 msgstr "Impossibile ottenere le chiavi verificate di {param_name}. Riprova."
@@ -6597,43 +6604,53 @@ msgid "GNSS Receiver"
 msgstr "Ricevitore GNSS"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
+msgstr "Questo non è una stazione di controllo a terra e ha un workflow diverso:"
 msgid "Manufacturer"
 msgstr "Produttore"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:36
+msgstr "ArduPilot Methodic Configurator - Workflow"
 msgid "Model"
 msgstr "Modello"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:37
+msgstr "[Immagine non trovata: AMC_general_workflow.png]"
 msgid "Motors"
 msgstr "Motori"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:38
+msgstr "vedi"
 msgid "Notes"
 msgstr "Note"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:39
+msgstr "guida rapida"
 msgid "Number of cells"
 msgstr "Numero di celle"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:40
 msgid "Poles"
+msgstr ","
 msgstr "Poli"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:41
 msgid "Product"
+msgstr "tutorial su YouTube"
 msgstr "Prodotto"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:42
 msgid "Program version"
+msgstr "casistiche d’uso"
 msgstr "Versione del programma"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:43
 msgid "Propellers"
+msgstr "manuale utente."
 msgstr "Eliche"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:44
 msgid "Protocol"
+msgstr "Ho capito questo"
 msgstr "Protocollo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:45

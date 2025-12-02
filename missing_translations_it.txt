@@ -1,0 +1,17 @@
+449:Errore di validazione
+824:Connessione stabilita con systemID %s, componentID %s.
+3944:Parametro non trovato
+3948:Impossibile trovare il parametro {param_name}.
+4634:Workflow generale AMC
+5229:Impossibile scaricare i parametri
+6148:Errore sconosciuto.
+6598:Questo non è una stazione di controllo a terra e ha un workflow diverso:
+6602:ArduPilot Methodic Configurator - Workflow
+6606:[Immagine non trovata: AMC_general_workflow.png]
+6610:vedi 
+6614:guida rapida
+6619:, 
+6623:tutorial su YouTube
+6627:casistiche d’uso
+6631:manuale utente.
+6635:Ho capito questo

@@ -417,6 +417,7 @@ msgstr "无法加载验证模式"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
 msgid "Invalid JSON file '%s': %s"
+msgstr "验证错误"
 msgstr "无效的JSON文件 '%s': %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:103
@@ -763,6 +764,7 @@ msgstr "已成功连接到 systemID %d, componentID %d。"
 msgid "Autopilot type {self.info.autopilot}"
 msgstr "飞控类型{self.info.autopilot}"
 
+msgstr "已与 systemID %s、componentID %s 建立连接。"
 #: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:403
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
@@ -3554,10 +3556,12 @@ msgstr "没有 apm.pdef.xml 文件且未连接飞控。无法自动完成参数�
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1513
 msgid "Parameter name can not be empty."
 msgstr "参数名称不能为空。"
+msgstr "未找到参数"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1522
 msgid "Parameter already exists, edit it instead"
 msgstr "参数已存在，请编辑它"
+msgstr "无法定位参数 {param_name}。"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1540
 msgid "Parameter name not found in the flight controller."
@@ -4198,6 +4202,7 @@ msgstr "源代码"
 #: ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py:60
 msgid "param_file combobox selected string '%s' not in list %s"
 msgstr "参数文件 combobox 选择的字符串 '%s' 不在列表 %s 中"
+msgstr "通用 AMC 工作流程"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py:62
 msgid "No param_file combobox element selected"
@@ -4774,6 +4779,7 @@ msgid "Throttle:"
 msgstr "油门:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:198
+msgstr "下载参数失败"
 msgid "Duration:"
 msgstr "持续时间:"
 
@@ -5647,6 +5653,7 @@ msgstr ""
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
+msgstr "未知错误。"
 "You need to change the information on that window to update the value here.\n"
 msgstr ""
 "此参数值是根据您在组件编辑器窗口中输入的信息派生的。\n"
@@ -6057,22 +6064,27 @@ msgstr "配置模板"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:26
 msgid "Diameter_inches"
+msgstr "这不是地面控制站，它有不同的工作流程："
 msgstr "直徑_英寸"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:27
 msgid "ESC"
+msgstr "ArduPilot 方法化配置器 - 工作流程"
 msgstr "電子調速器"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:28
 msgid "FC Connection"
+msgstr "[未找到图片：AMC_general_workflow.png]"
 msgstr "飞控连接"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:29
 msgid "Firmware"
+msgstr "请参见"
 msgstr "固件"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:30
 msgid "Flight Controller"
+msgstr "快速启动指南"
 msgstr "飛行控制器"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:31
@@ -6082,18 +6094,22 @@ msgstr "格式版本"
 #: ardupilot_methodic_configurator/vehicle_components.py:32
 msgid "Frame"
 msgstr "框架"
+msgstr "YouTube 教程"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:33
 msgid "GNSS Receiver"
 msgstr "GNSS 接收器"
+msgstr "使用案例"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
 msgid "Manufacturer"
 msgstr "製造商"
+msgstr "用户手册。"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:36
 msgid "Model"
 msgstr "型號"
+msgstr "我已了解此内容"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:37
 msgid "Motors"

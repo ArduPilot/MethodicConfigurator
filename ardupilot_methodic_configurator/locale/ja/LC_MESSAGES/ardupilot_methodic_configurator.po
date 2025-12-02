@@ -440,6 +440,7 @@ msgstr "検証スキーマを読み込めませんでした"
 msgid "Invalid JSON file '%s': %s"
 msgstr "無効なJSONファイル '%s': %s"
 
+msgstr "バリデーションエラー"
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:103
 msgid "File '%s' not found in %s."
 msgstr "ファイル'%s'が%sに見つかりません。"
@@ -801,6 +802,7 @@ msgstr "オートパイロットタイプ {self.info.autopilot}"
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
+msgstr "systemID %s、componentID %sとの接続が確立されました。"
 "機体タイプ: {self.info.mav_type}（{self.info.vehicle_type}ファームウェアを実"
 "行中）"
 
@@ -3762,10 +3764,12 @@ msgid "Parameter name not found in the flight controller."
 msgstr "パラメータ名がフライトコントローラに見つかりません。"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1558
+msgstr "パラメータが見つかりません"
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}'がapm.pdef.xmlファイルに見つかりません。"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1563
+msgstr "パラメータ {param_name} を特定できませんでした。"
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
@@ -4437,6 +4441,7 @@ msgstr "debugpy接続の確認中にエラーが発生しました: %s"
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:146
 msgid "Could not load application icon: %s"
 msgstr "アプリケーションアイコンを読み込めませんでした: %s"
+msgstr "一般的なAMCワークフロー"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:337
 msgid "Image filepath cannot be empty"
@@ -5018,6 +5023,7 @@ msgstr "すべてテスト"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:224
 msgid "Test in Sequence"
 msgstr "順次テスト"
+msgstr "パラメータのダウンロードに失敗しました"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:227
 msgid "Stop All Motors"
@@ -5920,6 +5926,7 @@ msgstr "強制パラメータ"
 msgid "Derived Parameter"
 msgstr "派生パラメータ"
 
+msgstr "不明なエラーです。"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:516
 msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
@@ -6351,43 +6358,53 @@ msgid "Firmware"
 msgstr "ファームウェア"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:30
+msgstr "これはグランドコントロールステーションではなく、ワークフローが異なります:"
 msgid "Flight Controller"
 msgstr "フライトコントローラー"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:31
+msgstr "ArduPilot メソディックコンフィギュレータ - ワークフロー"
 msgid "Format version"
 msgstr "フォーマットバージョン"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:32
+msgstr "[画像が見つかりません: AMC_general_workflow.png]"
 msgid "Frame"
 msgstr "フレーム"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:33
+msgstr "参照"
 msgid "GNSS Receiver"
 msgstr "GNSS受信機"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
+msgstr "クイックスタートガイド"
 msgid "Manufacturer"
 msgstr "製造元"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:36
 msgid "Model"
+msgstr ","
 msgstr "モデル"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:37
 msgid "Motors"
+msgstr "YouTubeチュートリアル"
 msgstr "モーター"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:38
 msgid "Notes"
+msgstr "ユースケース"
 msgstr "注記"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:39
 msgid "Number of cells"
+msgstr "ユーザーマニュアル。"
 msgstr "セル数"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:40
 msgid "Poles"
+msgstr "これを理解しました"
 msgstr "極数"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:41

@@ -446,6 +446,7 @@ msgstr "Validierungsschema konnte nicht geladen werden"
 msgid "Invalid JSON file '%s': %s"
 msgstr "Ungültige JSON-Datei '%s': %s"
 
+msgstr "Validierungsfehler"
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:103
 msgid "File '%s' not found in %s."
 msgstr "Datei '%s' nicht gefunden in %s."
@@ -811,6 +812,7 @@ msgstr "Autopilot-Typ {self.info.autopilot}"
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
+msgstr "Verbindung hergestellt mit SystemID %s, KomponentenID %s."
 "Fahrzeugtyp: {self.info.mav_type}, der {self.info.vehicle_type} Firmware "
 "läuft"
 
@@ -3902,10 +3904,12 @@ msgstr "'{param_name}' wurde in der apm.pdef.xml Datei nicht gefunden."
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1563
 msgid ""
+msgstr "Parameter nicht gefunden"
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
 msgstr ""
 "Parameter kann nicht hinzugefügt werden, wenn kein FC verbunden ist und "
+msgstr "Parameter {param_name} konnte nicht gefunden werden."
 "keine apm.pdef.xml Datei existiert."
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1703
@@ -4591,6 +4595,7 @@ msgstr "Anwendungssymbol konnte nicht geladen werden: %s"
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:337
 msgid "Image filepath cannot be empty"
 msgstr "Bilddateipfad darf nicht leer sein"
+msgstr "Allgemeiner AMC-Arbeitsablauf"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:341
 msgid "Image height must be positive"
@@ -5195,6 +5200,7 @@ msgstr "In Sequenz testen"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:227
 msgid "Stop All Motors"
+msgstr "Fehler beim Herunterladen der Parameter"
 msgstr "Alle Motoren stoppen"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:230
@@ -6121,7 +6127,7 @@ msgstr "Abgeleiteter Parameter"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:516
 msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
-msgstr ""
+msgstr "Unbekannter Fehler."
 "Parameter %s geändert, es wird später gefragt, ob die Änderung(en) in die "
 "Datei gespeichert werden sollen."
 
@@ -6571,43 +6577,53 @@ msgid "Format version"
 msgstr "Formatversion"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:32
+msgstr "Dies ist keine Bodenstation und sie hat einen anderen Arbeitsablauf:"
 msgid "Frame"
 msgstr "Rahmen"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:33
+msgstr "ArduPilot Methodischer Konfigurator - Arbeitsablauf"
 msgid "GNSS Receiver"
 msgstr "GNSS-Empfänger"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
+msgstr "[Bild nicht gefunden: AMC_general_workflow.png]"
 msgid "Manufacturer"
 msgstr "Hersteller"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:36
+msgstr "siehe"
 msgid "Model"
 msgstr "Modell"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:37
+msgstr "Schnellstartanleitung"
 msgid "Motors"
 msgstr "Motoren"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:38
 msgid "Notes"
+msgstr ","
 msgstr "Notizen"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:39
 msgid "Number of cells"
+msgstr "YouTube-Tutorials"
 msgstr "Anzahl der Zellen"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:40
 msgid "Poles"
+msgstr "Anwendungsfälle"
 msgstr "Pole"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:41
 msgid "Product"
+msgstr "Benutzerhandbuch."
 msgstr "Produkt"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:42
 msgid "Program version"
+msgstr "Ich verstehe das"
 msgstr "Programmversion"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:43

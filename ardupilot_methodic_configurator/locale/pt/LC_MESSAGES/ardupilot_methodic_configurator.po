@@ -445,6 +445,7 @@ msgstr "Não foi possível carregar o esquema de validação"
 msgid "Invalid JSON file '%s': %s"
 msgstr "Ficheiro JSON inválido '%s': %s"
 
+msgstr "Erro de validação"
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:103
 msgid "File '%s' not found in %s."
 msgstr "Arquivo '%s' não encontrado em %s."
@@ -814,6 +815,7 @@ msgid ""
 msgstr ""
 "Tipo de veículo: {self.info.mav_type} rodando firmware {self.info."
 "vehicle_type}"
+msgstr "Conexão estabelecida com systemID %s, componentID %s."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:406
 msgid "Unsupported autopilot type {self.info.autopilot}"
@@ -3902,10 +3904,12 @@ msgid ""
 "exists."
 msgstr ""
 "Não é possível adicionar parâmetro quando não há conexão com o FC e o "
+msgstr "Parâmetro não encontrado"
 "ficheiro apm.pdef.xml não existe."
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1703
 msgid "Why: "
+msgstr "Não foi possível localizar o parâmetro {param_name}."
 msgstr "Porquê:"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1705
@@ -4587,6 +4591,7 @@ msgstr "O caminho do ficheiro de imagem não pode estar vazio"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:341
 msgid "Image height must be positive"
+msgstr "Fluxo geral de trabalho AMC"
 msgstr "A altura da imagem deve ser positiva"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:346
@@ -5180,6 +5185,7 @@ msgstr "Parar Todos os Motores"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:230
 msgid "3. Arm and Min Throttle Configuration"
 msgstr "3. Configuração de Armar e Aceleração Mínima"
+msgstr "Falha ao descarregar parâmetros"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:237
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:518
@@ -6093,6 +6099,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:561
 msgid "Error getting {param_name} checked keys: %s"
 msgstr "Erro ao obter chaves verificadas de {param_name}: %s"
+msgstr "Erro desconhecido."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
 msgid "Could not get {param_name} checked keys. Please try again."
@@ -6543,43 +6550,53 @@ msgstr "Frame"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:33
 msgid "GNSS Receiver"
+msgstr "Isto não é uma estação de controlo central e tem um fluxo de trabalho diferente:"
 msgstr "Recetor GNSS"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
 msgid "Manufacturer"
+msgstr "Configurador Metódico ArduPilot - Fluxo de trabalho"
 msgstr "Fabricante"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:36
 msgid "Model"
+msgstr "[Imagem não encontrada: AMC_general_workflow.png]"
 msgstr "Modelo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:37
 msgid "Motors"
+msgstr "ver"
 msgstr "Motores"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:38
 msgid "Notes"
+msgstr "guia de iniciação rápida"
 msgstr "Notas"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:39
 msgid "Number of cells"
 msgstr "Número de células"
+msgstr ","
 
 #: ardupilot_methodic_configurator/vehicle_components.py:40
 msgid "Poles"
 msgstr "Nr. de pólos"
+msgstr "tutoriais YouTube"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:41
 msgid "Product"
 msgstr "Produto"
+msgstr "casos de utilização"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:42
 msgid "Program version"
 msgstr "Versão do programa"
+msgstr "manual do utilizador."
 
 #: ardupilot_methodic_configurator/vehicle_components.py:43
 msgid "Propellers"
 msgstr "Hélices"
+msgstr "Compreendo isto"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:44
 msgid "Protocol"
