@@ -70,6 +70,26 @@ We need contributors to help realize this roadmap! Here's how you can get involv
 
 *Note: Timeline is indicative and depends on contributor availability and project priorities.*
 
+## Reached Milestones
+
+- 2025.11.26 - 83% of [Gold OSS best practices](https://www.bestpractices.dev/en/projects/9101?criteria_level=2) reached
+- 2025.11.25 - [91% test coverage](https://coveralls.io/builds/76659097)
+- 2025.11.22 - 100 Github stars
+- 2025.11.06 - [Motor test plugin](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/v2.7.2)
+- 2025.10.05 - [80% test coverage](https://coveralls.io/builds/75828379)
+- 2025.09.25 - Added [download last flight log button](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/v2.3.0)
+- 2025.09.04 - Added [empty, unopinionated vehicle templates](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/v2.1.0)
+- 2025.08.28 - Option to [reset all parameters to their defaults before starting the configuration](https://github.com/ArduPilot/MethodicConfigurator/releases/tag/v2.0.6)
+- 2025.07.16 - [YouTube beginners Tutorial](https://www.youtube.com/watch?v=tM8EznlNhgs&list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9)
+- 2025.06.15 - The tunning guide is the [single most liked post in the ArduPilot forum](https://discuss.ardupilot.org/badges/20/great-topic)
+- 2025.04.26 - [First YouTube video Tutorial](https://www.youtube.com/watch?v=47RjQ_GarvE)
+- 2025.04.02 - Initial ArduPlane template and support
+- 2025.02.20 - [AI powered, ArduPilot trained chatbot](https://gurubase.io/g/ardupilot)
+- 2025.01.27 - [40% test coverage](https://coveralls.io/builds/71941955)
+- 2024.12.18 - Reached all initially defined project features
+- 2024.03.14 - [First public release](https://discuss.ardupilot.org/t/new-ardupilot-methodic-configurator-gui/115038)
+- 2023.12.15 - Posted the [tunning guide](https://discuss.ardupilot.org/t/how-to-methodically-configure-and-tune-any-arducopter/110842)
+
 <!-- Gurubase Widget -->
 <script async src="https://widget.gurubase.io/widget.latest.min.js"
     data-widget-id="uE4kxEE4LY3ZSyfNsF5bU6gIOnWGTBOL_e16KwDH-0g"
