@@ -470,12 +470,12 @@ jobs:
               if [ -f "$file" ]; then
                 if grep -q "# Translation failed" "$file" 2>/dev/null; then
                   echo "⚠️ Found failed translation: $file"
-                  ((failed_translations++))
+                  failed_translations=$((failed_translations + 1))
                   # Remove failed translation files so they don't get processed
                   rm "$file"
                 else
                   echo "✅ Found successful translation: $file"
-                  ((successful_translations++))
+                  successful_translations=$((successful_translations + 1))
                 fi
               fi
             done
