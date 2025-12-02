@@ -454,7 +454,10 @@ jobs:
 
       - name: Insert AI translations into .po files
         if: needs.extract_strings.outputs.translations-to-process == 'true'
+        shell: bash  # Don't use -e flag to prevent premature exit
         run: |
+          set -x  # Enable command tracing for debugging
+
           # Check if we have any translated files
           if ls missing_translations_*.txt 1> /dev/null 2>&1; then
             echo "📥 Processing AI translations..."
@@ -492,7 +495,9 @@ jobs:
               echo "Validating translation file format..."
               for file in missing_translations_*.txt; do
                 echo "Checking $file:"
-                if ! grep -qE '^[0-9]+:' "$file"; then
+                if grep -qE '^[0-9]+:' "$file"; then
+                  echo "✅ File format is valid"
+                else
                   echo "❌ ERROR: File $file does not contain valid translation lines (format: number:text)"
                   echo "File contents:"
                   cat "$file"
@@ -506,19 +511,14 @@ jobs:
               done
 
               # Run with full error output captured
-              set +e  # Temporarily disable exit on error to capture output
-              output=$(python insert_missing_translations.py 2>&1)
-              exit_code=$?
-              set -e  # Re-enable exit on error
-
-              echo "$output"
-
-              if [ $exit_code -ne 0 ]; then
+              echo "Running insert_missing_translations.py..."
+              if python insert_missing_translations.py 2>&1; then
+                echo "✅ AI translations inserted into .po files"
+              else
+                exit_code=$?
                 echo "❌ insert_missing_translations.py failed with exit code $exit_code"
-                exit 1
+                exit $exit_code
               fi
-
-              echo "✅ AI translations inserted into .po files"
             else
               echo "⚠️ No successful translations to process"
             fi
