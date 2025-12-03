@@ -1,0 +1,17 @@
+446:Erro de validação
+815:Ligação estabelecida com systemID %s, componentID %s.
+3903:Parâmetro não encontrado
+3907:O parâmetro {param_name} não pôde ser localizado.
+4588:Fluxo de trabalho geral AMC
+5181:Falha ao descarregar parâmetros
+6094:Erro desconhecido.
+6544:Isto não é uma estação de controlo terrestre e tem um fluxo de trabalho diferente:
+6548:ArduPilot Configurador Metódico - Fluxo de trabalho
+6552:[Imagem não encontrada: AMC_general_workflow.png]
+6556:ver
+6560:guia rápido de iniciação
+6565:,
+6569:tutoriais YouTube
+6573:casos de utilização
+6577:manual do utilizador.
+6581:Compreendo isto
