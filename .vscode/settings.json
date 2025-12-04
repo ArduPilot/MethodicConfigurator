@@ -15,7 +15,9 @@
     ],
     "cSpell.words": [
       "ADSB",
+      "Amilcar",
       "Ardu",
+      "ardupilot",
       "argparse",
       "autotune",
       "bdshot",
@@ -30,6 +32,7 @@
       "configurator",
       "Coverity",
       "CUAV",
+      "deiconified",
       "Drotek",
       "Durandal",
       "flightcontroller",
