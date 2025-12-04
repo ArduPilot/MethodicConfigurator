@@ -18,15 +18,12 @@ permissions:
   contents: read
 
 jobs:
-  extract_strings:
+  translate_and_create_pr:
     permissions:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
+      models: read          # for AI inference
     runs-on: ubuntu-latest
-    outputs:
-      po-files-changed: ${{ steps.check-changes.outputs.po-files-changed }}
-      translations-to-process: ${{ steps.prepare-translations.outputs.translations-to-process }}
-      translation-matrix: ${{ steps.prepare-translations.outputs.translation-matrix }}
     env:
       PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
       PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
@@ -63,18 +60,14 @@ jobs:
           sudo apt-get install -y gettext=0.21-14ubuntu2
 
       - name: Install python-gettext requirement
-        id: install_deps
         continue-on-error: true
         run: |
-          WARNINGS=0
-
           export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
           export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
 
           if [ -z "$PIP_VERSION" ]; then
             echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
             PIP_INSTALL="pip"
-            WARNINGS=1
           else
             echo "Will install pip version $PIP_VERSION."
             PIP_INSTALL="pip==$PIP_VERSION"
@@ -83,399 +76,363 @@ jobs:
           if [ -z "$PYTHON_GETTEXT_VERSION" ]; then
             echo "::warning::Could not detect python-gettext version in pyproject.toml; falling back to 5.0."
             PYTHON_GETTEXT_INSTALL="python-gettext==5.0"
-            WARNINGS=1
           else
             echo "Will install python-gettext version $PYTHON_GETTEXT_VERSION."
             PYTHON_GETTEXT_INSTALL="python-gettext==$PYTHON_GETTEXT_VERSION"
           fi
 
           python -m pip install "$PIP_INSTALL" "$PYTHON_GETTEXT_INSTALL"
-
-          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
-          if [ "$WARNINGS" -eq 1 ]; then
-            exit 1
-          fi
 
       - name: Extract strings
         run: |
           python create_pot_file.py
 
-      - name: Stage changes and check for updates
+      - name: Merge strings into .po files
         id: check-changes
         run: |
-          git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
-          if [ -n "$(git status --porcelain)" ]; then
-            CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
-            if [ $CHANGED_LINES -gt 4 ]; then
-              python merge_pot_file.py
-              # Check if any .po files were modified
-              git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
-              PO_CHANGES=$(git status --porcelain | grep -E "\.po$" | wc -l)
-              if [ $PO_CHANGES -gt 0 ]; then
-                echo "po-files-changed=true" >> $GITHUB_OUTPUT
-                echo "✅ PO files have been updated with new strings"
-              else
-                echo "po-files-changed=false" >> $GITHUB_OUTPUT
-                echo "No PO file changes detected"
-              fi
-            else
-              echo "po-files-changed=false" >> $GITHUB_OUTPUT
-              echo "Not enough changes to commit (only $CHANGED_LINES lines changed)"
-            fi
+          python merge_pot_file.py
+
+          # Check if any .po files were modified
+          if [ -n "$(git status --porcelain -- $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po)" ]; then
+            echo "po-files-changed=true" >> $GITHUB_OUTPUT
+            echo "✅ PO files have been updated with new strings"
           else
             echo "po-files-changed=false" >> $GITHUB_OUTPUT
-            echo "No changes to commit"
+            echo "No PO file changes detected - stopping workflow"
+            exit 0
           fi
 
-      - name: Prepare translation matrix
-        id: prepare-translations
+      - name: Extract missing translations
         if: steps.check-changes.outputs.po-files-changed == 'true'
         run: |
-          python extract_missing_translations.py --lang-code all --max-translations 25 --max-characters 4500
+          python extract_missing_translations.py --lang-code all --max-translations 50 --max-characters 8000
 
           # Check if any missing translation files were created
-          if ls missing_translations_*.txt 1> /dev/null 2>&1; then
-            echo "translations-to-process=true" >> $GITHUB_OUTPUT
-            echo "✅ Found missing translation files to process with AI"
+          if ! ls missing_translations_*.txt 1> /dev/null 2>&1; then
+            echo "No missing translations found - stopping workflow"
+            exit 0
+          fi
 
-            # Create matrix configuration for all translation files
-            matrix_entries="["
-            first_entry=true
+          echo "✅ Found missing translation files to process with AI"
 
-            for file in missing_translations_*.txt; do
-              if [ -f "$file" ]; then
-                # Extract language code and file number from filename
-                base_name=$(basename "$file" .txt)
-                if [[ "$base_name" =~ missing_translations_([a-zA-Z_]+)(_[0-9]+)?$ ]]; then
-                  lang_code="${BASH_REMATCH[1]}"
-                  file_suffix="${BASH_REMATCH[2]:-}"
+      - name: Translate Portuguese
+        if: steps.check-changes.outputs.po-files-changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f missing_translations_pt.txt ]; then
+            echo "No Portuguese translations needed"
+            exit 0
+          fi
 
-                  # Define language name for better context
-                  case $lang_code in
-                    "pt") language="Portuguese (Portugal)";;
-                    "de") language="German";;
-                    "it") language="Italian";;
-                    "ja") language="Japanese";;
-                    "zh_CN") language="Chinese (Simplified)";;
-                    *) language="$lang_code";;
-                  esac
+          echo "🤖 Translating Portuguese..."
+          content=$(cat missing_translations_pt.txt)
 
-                  if [ "$first_entry" = true ]; then
-                    first_entry=false
-                  else
-                    matrix_entries+=","
-                  fi
+          # Build JSON payload using jq to ensure proper escaping
+          payload=$(jq -n --arg content "$content" '{
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a professional translator for technical aviation and drone software documentation."
+              },
+              {
+                "role": "user",
+                "content": "Translate the following English strings to Portuguese (Portugal), following these guidelines:\n- Maintain technical accuracy for aviation/drone terms\n- Use formal register appropriate for technical documentation\n- Preserve all placeholders exactly as they appear (e.g., {variable_name})\n- Keep the numbered format: each line starts with a number followed by colon\n- Do not translate variable names, file extensions, or code elements\n- Use European Portuguese conventions\n\nInput format (number: English text):\n\($content)\n\nOutput only the translated strings in the same numbered format. Do not include explanations or notes."
+              }
+            ],
+            "model": "gpt-4o",
+            "temperature": 0.3,
+            "max_tokens": 4000
+          }')
 
-                  matrix_entries+="{\"lang_code\":\"$lang_code\",\"language\":\"$language\",\"file\":\"$file\",\"suffix\":\"$file_suffix\"}"
-                fi
-              fi
-            done
-            matrix_entries+="]"
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            https://models.inference.ai.azure.com/chat/completions \
+            -d "$payload")
 
-            echo "translation-matrix=$matrix_entries" >> $GITHUB_OUTPUT
-            echo "Matrix configuration: $matrix_entries"
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          if [ "$http_code" != "200" ]; then
+            echo "❌ API request failed with HTTP $http_code"
+            echo "Response: $body"
+            rm missing_translations_pt.txt
+            exit 0
+          fi
+
+          translated=$(echo "$body" | jq -r '.choices[0].message.content // empty')
+          if [ -n "$translated" ]; then
+            echo "$translated" > missing_translations_pt.txt
+            echo "✅ Portuguese translation completed"
           else
-            echo "translations-to-process=false" >> $GITHUB_OUTPUT
-            echo "translation-matrix=[]" >> $GITHUB_OUTPUT
-            echo "No missing translations found"
+            echo "⚠️ Portuguese translation failed - empty response"
+            echo "API Response: $body"
+            rm missing_translations_pt.txt
           fi
 
-      - name: Upload translation files as artifacts
-        if: steps.prepare-translations.outputs.translations-to-process == 'true'
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: translation-files
-          path: |
-            missing_translations_*.txt
-          retention-days: 1
-
-  # Matrix job to process translations in parallel for all languages and numbered files
-  # This approach scales to handle large translation batches by:
-  # 1. Splitting translations into chunks of 50 strings per file (configurable in extract_missing_translations.py)
-  # 2. Processing each chunk in parallel using GitHub Actions matrix strategy
-  # 3. Using consistent terminology guidelines across all chunks for the same language
-  # 4. Properly escaping YAML content to avoid parsing issues with colons in translation strings
-  ai_translate:
-    needs: extract_strings
-    if: needs.extract_strings.outputs.translations-to-process == 'true'
-    permissions:
-      actions: read        # needed for downloading artifacts
-      contents: read       # required by checkout
-      models: read         # for AI inference
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.extract_strings.outputs.translation-matrix) }}
-      fail-fast: false  # Continue processing other languages even if one fails
-      max-parallel: 1   # Limit concurrent AI requests to avoid rate limiting
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-
-      - name: Download translation files
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          name: translation-files
-
-      - name: Validate translation file exists
+      - name: Translate German
+        if: steps.check-changes.outputs.po-files-changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          translation_file="${{ matrix.file }}"
-          echo "🔍 Validating translation file: $translation_file"
-
-          if [ ! -f "$translation_file" ]; then
-            echo "❌ Error: Translation file '$translation_file' not found"
-            exit 1
+          if [ ! -f missing_translations_de.txt ]; then
+            echo "No German translations needed"
+            exit 0
           fi
 
-          file_size=$(wc -c < "$translation_file")
-          echo "📊 Translation file size: $file_size bytes"
-          echo "✅ Translation file validation completed successfully"
+          echo "🤖 Translating German..."
+          content=$(cat missing_translations_de.txt)
 
-      - name: Prepare translation content
-        id: translation_content
-        run: |
-          # Read file and indent each line by 2 spaces (except the first)
-          awk 'NR==1 {print} NR>1 {print "  " $0}' "${{ matrix.file }}" > indented_content.txt
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          cat indented_content.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Build JSON payload using jq to ensure proper escaping
+          payload=$(jq -n --arg content "$content" '{
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a professional translator for technical aviation and drone software documentation."
+              },
+              {
+                "role": "user",
+                "content": "Translate the following English strings to German, following these guidelines:\n- Maintain technical accuracy for aviation/drone terms\n- Use formal register appropriate for technical documentation\n- Preserve all placeholders exactly as they appear (e.g., {variable_name})\n- Keep the numbered format: each line starts with a number followed by colon\n- Do not translate variable names, file extensions, or code elements\n- Use formal German (Sie form)\n\nInput format (number: English text):\n\($content)\n\nOutput only the translated strings in the same numbered format. Do not include explanations or notes."
+              }
+            ],
+            "model": "gpt-4o",
+            "temperature": 0.3,
+            "max_tokens": 4000
+          }')
 
-      - name: Run AI translation
-        id: ai_translate
-        uses: actions/ai-inference@334892bb203895caaed82ec52d23c1ed9385151e # v2.0.4
-        with:
-          system-prompt-file: .github/prompts/ai-translation-system.prompt.yml
-          prompt-file: .github/prompts/ai-translation-user.prompt.yml
-          input: |
-            language: ${{ matrix.language }}
-            lang_code: ${{ matrix.lang_code }}
-            translation_file: ${{ matrix.file }}
-            translation_content: |
-              ${{ steps.translation_content.outputs.content }}
-          model: openai/gpt-4.1
-          max-tokens: 8000
-          token: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}
-        continue-on-error: true
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            https://models.inference.ai.azure.com/chat/completions \
+            -d "$payload")
 
-      - name: Check AI translation success
-        id: check_translation
-        run: |
-          # Check if the AI translation step succeeded
-          if [ "${{ steps.ai_translate.outcome }}" != "success" ]; then
-            echo "❌ AI translation step failed for ${{ matrix.file }}"
-            echo "Step outcome: ${{ steps.ai_translate.outcome }}"
-            echo "Step conclusion: ${{ steps.ai_translate.conclusion }}"
-            echo "Language: ${{ matrix.language }} (${{ matrix.lang_code }})"
-            echo "File: ${{ matrix.file }}"
-            echo "Suffix: ${{ matrix.suffix }}"
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
 
-            # Check if prompt file exists for debugging
-            prompt_file="translate_${{ matrix.lang_code }}${{ matrix.suffix }}.prompt.yml"
-            if [ -f "$prompt_file" ]; then
-              echo "✅ Prompt file exists and is $(wc -c < "$prompt_file") bytes"
-            else
-              echo "❌ Prompt file missing: $prompt_file"
-            fi
-
-            echo "translation_successful=false" >> $GITHUB_OUTPUT
-            exit 0  # Don't fail the workflow, just mark as unsuccessful
+          if [ "$http_code" != "200" ]; then
+            echo "❌ API request failed with HTTP $http_code"
+            echo "Response: $body"
+            rm missing_translations_de.txt
+            exit 0
           fi
 
-          # Debug: Show available outputs
-          echo "🔍 Available AI action outputs:"
-          echo "Response file output: '${{ steps.ai_translate.outputs.response-file }}'"
-          echo "Response output exists: ${{ steps.ai_translate.outputs.response != '' }}"
-
-          # Check if we have any usable output
-          if [ -n "${{ steps.ai_translate.outputs.response-file }}" ] && [ -f "${{ steps.ai_translate.outputs.response-file }}" ]; then
-            echo "✅ Response file found: ${{ steps.ai_translate.outputs.response-file }}"
-            echo "translation_successful=true" >> $GITHUB_OUTPUT
-            echo "output_method=file" >> $GITHUB_OUTPUT
-          elif [ -n "${{ steps.ai_translate.outputs.response }}" ]; then
-            response_length=$(echo "${{ steps.ai_translate.outputs.response }}" | wc -c)
-            echo "✅ Response content found (length: ${response_length})"
-            echo "translation_successful=true" >> $GITHUB_OUTPUT
-            echo "output_method=content" >> $GITHUB_OUTPUT
+          translated=$(echo "$body" | jq -r '.choices[0].message.content // empty')
+          if [ -n "$translated" ]; then
+            echo "$translated" > missing_translations_de.txt
+            echo "✅ German translation completed"
           else
-            echo "❌ No usable AI response found for ${{ matrix.file }}"
-            echo "Available outputs:"
-            echo "  - response-file: '${{ steps.ai_translate.outputs.response-file }}'"
-            echo "  - response: '${{ steps.ai_translate.outputs.response }}'"
-            echo "translation_successful=false" >> $GITHUB_OUTPUT
+            echo "⚠️ German translation failed - empty response"
+            echo "API Response: $body"
+            rm missing_translations_de.txt
           fi
 
-      - name: Save translation result
-        if: steps.check_translation.outputs.translation_successful == 'true'
+          echo "⏳ Rate limit delay..."
+          sleep 15
+
+      - name: Translate Italian
+        if: steps.check-changes.outputs.po-files-changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Save the AI response back to the original translation file
-          if [ "${{ steps.check_translation.outputs.output_method }}" = "file" ]; then
-            echo "📄 Using response file: ${{ steps.ai_translate.outputs.response-file }}"
-            cp "${{ steps.ai_translate.outputs.response-file }}" "${{ matrix.file }}.raw"
-          elif [ "${{ steps.check_translation.outputs.output_method }}" = "content" ]; then
-            echo "📝 Using response content"
-            echo "${{ steps.ai_translate.outputs.response }}" > "${{ matrix.file }}.raw"
-          else
-            echo "❌ Unexpected output method: ${{ steps.check_translation.outputs.output_method }}"
-            exit 1
+          if [ ! -f missing_translations_it.txt ]; then
+            echo "No Italian translations needed"
+            exit 0
           fi
 
-          # Clean up AI output: keep only lines starting with number followed by colon
-          echo "🧹 Cleaning AI output..."
-          grep -E '^[0-9]+:' "${{ matrix.file }}.raw" > "${{ matrix.file }}" || {
-            echo "❌ Failed to extract valid translations from AI output"
-            echo "Raw output preview:"
-            head -20 "${{ matrix.file }}.raw"
-            exit 1
-          }
+          echo "🤖 Translating Italian..."
+          content=$(cat missing_translations_it.txt)
 
-          # Validate the cleaned file
-          if [ -f "${{ matrix.file }}" ] && [ -s "${{ matrix.file }}" ]; then
-            echo "✅ AI translation saved and cleaned successfully for ${{ matrix.language }}"
-            echo "📊 Raw file size: $(wc -c < "${{ matrix.file }}.raw") bytes"
-            echo "📊 Cleaned file size: $(wc -c < "${{ matrix.file }}") bytes"
-            echo "📊 Valid translation lines: $(wc -l < "${{ matrix.file }}") lines"
-          else
-            echo "❌ Translation file is empty or missing after cleanup: ${{ matrix.file }}"
-            exit 1
+          # Build JSON payload using jq to ensure proper escaping
+          payload=$(jq -n --arg content "$content" '{
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a professional translator for technical aviation and drone software documentation."
+              },
+              {
+                "role": "user",
+                "content": "Translate the following English strings to Italian, following these guidelines:\n- Maintain technical accuracy for aviation/drone terms\n- Use formal register appropriate for technical documentation\n- Preserve all placeholders exactly as they appear (e.g., {variable_name})\n- Keep the numbered format: each line starts with a number followed by colon\n- Do not translate variable names, file extensions, or code elements\n- Use formal Italian\n\nInput format (number: English text):\n\($content)\n\nOutput only the translated strings in the same numbered format. Do not include explanations or notes."
+              }
+            ],
+            "model": "gpt-4o",
+            "temperature": 0.3,
+            "max_tokens": 4000
+          }')
+
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            https://models.inference.ai.azure.com/chat/completions \
+            -d "$payload")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          if [ "$http_code" != "200" ]; then
+            echo "❌ API request failed with HTTP $http_code"
+            echo "Response: $body"
+            rm missing_translations_it.txt
+            exit 0
           fi
 
-      - name: Handle translation failure
-        if: steps.check_translation.outputs.translation_successful != 'true'
+          translated=$(echo "$body" | jq -r '.choices[0].message.content // empty')
+          if [ -n "$translated" ]; then
+            echo "$translated" > missing_translations_it.txt
+            echo "✅ Italian translation completed"
+          else
+            echo "⚠️ Italian translation failed - empty response"
+            echo "API Response: $body"
+            rm missing_translations_it.txt
+          fi
+
+          echo "⏳ Rate limit delay..."
+          sleep 15
+
+      - name: Translate Japanese
+        if: steps.check-changes.outputs.po-files-changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "⚠️ AI translation failed for ${{ matrix.language }} (${{ matrix.file }})"
-          echo "Language: ${{ matrix.language }} (code: ${{ matrix.lang_code }})"
-          echo "File chunk: ${{ matrix.file }}${{ matrix.suffix }}"
-          echo "Creating placeholder file to avoid breaking the workflow"
-          touch "${{ matrix.file }}"
-          echo "# Translation failed for ${{ matrix.language }} (chunk${{ matrix.suffix }})" > "${{ matrix.file }}"
-          echo "# File: ${{ matrix.file }}" >> "${{ matrix.file }}"
-          echo "# Please translate manually or retry the workflow" >> "${{ matrix.file }}"
-          echo "# This was part of a chunked translation batch for scalability" >> "${{ matrix.file }}"
-
-      - name: Upload translated file
-        if: always()  # Upload even if translation failed, for debugging
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: translated-${{ matrix.lang_code }}${{ matrix.suffix }}
-          path: ${{ matrix.file }}
-          retention-days: 1
-
-      - name: Report translation status
-        if: always()
-        run: |
-          if [ "${{ steps.check_translation.outputs.translation_successful }}" = "true" ]; then
-            echo "✅ Successfully translated ${{ matrix.file }} for ${{ matrix.language }}"
-            echo "📊 Chunk: ${{ matrix.suffix || 'single file' }}"
-          else
-            echo "❌ Failed to translate ${{ matrix.file }} for ${{ matrix.language }}"
-            echo "📊 Chunk: ${{ matrix.suffix || 'single file' }}"
-            echo "::warning::AI translation failed for ${{ matrix.language }}${{ matrix.suffix }}. Manual translation may be required."
+          if [ ! -f missing_translations_ja.txt ]; then
+            echo "No Japanese translations needed"
+            exit 0
           fi
 
-  # Job to collect all translations and create the final PR
-  finalize_translations:
-    needs: [extract_strings, ai_translate]
-    if: needs.extract_strings.outputs.po-files-changed == 'true'
-    permissions:
-      actions: read         # needed for downloading translated artifacts
-      contents: write       # for creating branches and commits
-      pull-requests: write  # for creating PRs
-    runs-on: ubuntu-latest
-    env:
-      PYGETTEXT_DOMAIN: ardupilot_methodic_configurator
-      PYGETTEXT_LOCALEDIR: ardupilot_methodic_configurator/locale
+          echo "🤖 Translating Japanese..."
+          content=$(cat missing_translations_ja.txt)
 
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
-        with:
-          egress-policy: audit
+          # Build JSON payload using jq to ensure proper escaping
+          payload=$(jq -n --arg content "$content" '{
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a professional translator for technical aviation and drone software documentation."
+              },
+              {
+                "role": "user",
+                "content": "Translate the following English strings to Japanese, following these guidelines:\n- Maintain technical accuracy for aviation/drone terms\n- Use formal register appropriate for technical documentation\n- Preserve all placeholders exactly as they appear (e.g., {variable_name})\n- Keep the numbered format: each line starts with a number followed by colon\n- Do not translate variable names, file extensions, or code elements\n- Use formal Japanese (desu/masu form)\n\nInput format (number: English text):\n\($content)\n\nOutput only the translated strings in the same numbered format. Do not include explanations or notes."
+              }
+            ],
+            "model": "gpt-4o",
+            "temperature": 0.3,
+            "max_tokens": 4000
+          }')
 
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            https://models.inference.ai.azure.com/chat/completions \
+            -d "$payload")
 
-      - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
-        with:
-          python-version: '3.x'
-          cache: 'pip'
-          cache-dependency-path: 'pyproject.toml'
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
 
-      - name: Cache apt packages
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: |
-            /var/cache/apt/archives/*.deb
-            /var/lib/apt/lists/*
-          key: ${{ runner.os }}-apt-gettext-ubuntu2204
-          restore-keys: |
-            ${{ runner.os }}-apt-gettext-
-            ${{ runner.os }}-apt-
-
-      - name: Install apt gettext package
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gettext=0.21-14ubuntu2
-
-      - name: Install python-gettext requirement
-        continue-on-error: true
-        run: |
-          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
-          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
-
-          if [ -z "$PIP_VERSION" ]; then
-            echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
-            PIP_INSTALL="pip"
-          else
-            echo "Will install pip version $PIP_VERSION."
-            PIP_INSTALL="pip==$PIP_VERSION"
+          if [ "$http_code" != "200" ]; then
+            echo "❌ API request failed with HTTP $http_code"
+            echo "Response: $body"
+            rm missing_translations_ja.txt
+            exit 0
           fi
 
-          if [ -z "$PYTHON_GETTEXT_VERSION" ]; then
-            echo "::warning::Could not detect python-gettext version in pyproject.toml; falling back to 5.0."
-            PYTHON_GETTEXT_INSTALL="python-gettext==5.0"
+          translated=$(echo "$body" | jq -r '.choices[0].message.content // empty')
+          if [ -n "$translated" ]; then
+            echo "$translated" > missing_translations_ja.txt
+            echo "✅ Japanese translation completed"
           else
-            echo "Will install python-gettext version $PYTHON_GETTEXT_VERSION."
-            PYTHON_GETTEXT_INSTALL="python-gettext==$PYTHON_GETTEXT_VERSION"
+            echo "⚠️ Japanese translation failed - empty response"
+            echo "API Response: $body"
+            rm missing_translations_ja.txt
           fi
 
-          python -m pip install "$PIP_INSTALL" "$PYTHON_GETTEXT_INSTALL"
+          echo "⏳ Rate limit delay..."
+          sleep 15
 
-      - name: Download all translated files
-        if: needs.extract_strings.outputs.translations-to-process == 'true'
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          pattern: translated-*
-          merge-multiple: true
+      - name: Translate Chinese Simplified
+        if: steps.check-changes.outputs.po-files-changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f missing_translations_zh_CN.txt ]; then
+            echo "No Chinese translations needed"
+            exit 0
+          fi
+
+          echo "🤖 Translating Chinese Simplified..."
+          content=$(cat missing_translations_zh_CN.txt)
+
+          # Build JSON payload using jq to ensure proper escaping
+          payload=$(jq -n --arg content "$content" '{
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are a professional translator for technical aviation and drone software documentation."
+              },
+              {
+                "role": "user",
+                "content": "Translate the following English strings to Chinese (Simplified), following these guidelines:\n- Maintain technical accuracy for aviation/drone terms\n- Use formal register appropriate for technical documentation\n- Preserve all placeholders exactly as they appear (e.g., {variable_name})\n- Keep the numbered format: each line starts with a number followed by colon\n- Do not translate variable names, file extensions, or code elements\n- Use Simplified Chinese characters\n\nInput format (number: English text):\n\($content)\n\nOutput only the translated strings in the same numbered format. Do not include explanations or notes."
+              }
+            ],
+            "model": "gpt-4o",
+            "temperature": 0.3,
+            "max_tokens": 4000
+          }')
+
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            https://models.inference.ai.azure.com/chat/completions \
+            -d "$payload")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          if [ "$http_code" != "200" ]; then
+            echo "❌ API request failed with HTTP $http_code"
+            echo "Response: $body"
+            rm missing_translations_zh_CN.txt
+            exit 0
+          fi
+
+          translated=$(echo "$body" | jq -r '.choices[0].message.content // empty')
+          if [ -n "$translated" ]; then
+            echo "$translated" > missing_translations_zh_CN.txt
+            echo "✅ Chinese translation completed"
+          else
+            echo "⚠️ Chinese translation failed - empty response"
+            echo "API Response: $body"
+            rm missing_translations_zh_CN.txt
+          fi
 
       - name: Insert AI translations into .po files
-        if: needs.extract_strings.outputs.translations-to-process == 'true'
-        shell: bash  # Don't use -e flag to prevent premature exit
+        if: steps.check-changes.outputs.po-files-changed == 'true'
         run: |
-          set -x  # Enable command tracing for debugging
+          # Check if we have any translated files (for now, skip this step)
+          # This will be activated once AI translation is properly implemented
 
-          # Check if we have any translated files
           if ls missing_translations_*.txt 1> /dev/null 2>&1; then
             echo "📥 Processing AI translations..."
 
-            # Check for failed translations (files with failure markers)
-            failed_translations=0
+            # Validate and process successful translations
             successful_translations=0
+            failed_translations=0
 
             for file in missing_translations_*.txt; do
               if [ -f "$file" ]; then
                 if grep -q "# Translation failed" "$file" 2>/dev/null; then
                   echo "⚠️ Found failed translation: $file"
                   failed_translations=$((failed_translations + 1))
-                  # Remove failed translation files so they don't get processed
-                  rm "$file"
+                  rm "$file"  # Remove failed translations
                 else
-                  echo "✅ Found successful translation: $file"
-                  successful_translations=$((successful_translations + 1))
+                  # Validate file format
+                  if grep -qE '^[0-9]+:' "$file"; then
+                    echo "✅ Found successful translation: $file"
+                    successful_translations=$((successful_translations + 1))
+                  else
+                    echo "⚠️ Invalid format in $file, skipping"
+                    failed_translations=$((failed_translations + 1))
+                    rm "$file"
+                  fi
                 fi
               fi
             done
@@ -485,95 +442,54 @@ jobs:
             echo "  - Failed: $failed_translations"
 
             if [ $successful_translations -gt 0 ]; then
-              echo "🔄 Processing successful translations with insert_missing_translations.py"
-
-              # Show files that will be processed
-              echo "Files to process:"
-              ls -lh missing_translations_*.txt
-
-              # Validate file format before processing
-              echo "Validating translation file format..."
-              for file in missing_translations_*.txt; do
-                echo "Checking $file:"
-                if grep -qE '^[0-9]+:' "$file"; then
-                  echo "✅ File format is valid"
-                else
-                  echo "❌ ERROR: File $file does not contain valid translation lines (format: number:text)"
-                  echo "File contents:"
-                  cat "$file"
-                  exit 1
-                fi
-
-                # Show file preview
-                echo "First 5 lines of $file:"
-                head -5 "$file"
-                echo "---"
-              done
-
-              # Run with full error output captured
-              echo "Running insert_missing_translations.py..."
-              if python insert_missing_translations.py 2>&1; then
-                echo "✅ AI translations inserted into .po files"
-              else
-                exit_code=$?
-                echo "❌ insert_missing_translations.py failed with exit code $exit_code"
-                exit $exit_code
-              fi
+              echo "🔄 Inserting translations into .po files..."
+              python insert_missing_translations.py
+              echo "✅ AI translations inserted into .po files"
             else
               echo "⚠️ No successful translations to process"
             fi
 
             if [ $failed_translations -gt 0 ]; then
-              echo "::warning::$failed_translations translation(s) failed and will need manual translation"
+              echo "::warning::$failed_translations translation(s) failed"
             fi
           else
             echo "ℹ️ No AI translations to process"
           fi
 
       - name: Compile .mo files
+        if: steps.check-changes.outputs.po-files-changed == 'true'
         run: |
           python create_mo_files.py
           echo "✅ .mo files compiled successfully"
 
-      - name: Stage all changes
+      - name: Clean up temporary files
+        if: steps.check-changes.outputs.po-files-changed == 'true'
         run: |
+          # Remove temporary translation files - these should not be committed
+          rm -f missing_translations_*.txt
+          rm -f missing_translations_*.txt.input
+          rm -f missing_translations_*.txt.ai-input.yml
+          rm -f translation_files_to_process.txt
+          echo "🧹 Cleaned up temporary translation files"
+
+      - name: Stage changes for commit
+        if: steps.check-changes.outputs.po-files-changed == 'true'
+        run: |
+          # Stage the .pot file and all .po and .mo files
           git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
           git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
           git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.mo
 
-      - name: Prepare PR summary
-        id: pr_summary
-        run: |
-          # Count successful and failed translations from job artifacts metadata
-          total_files=0
-          successful_files=0
-          failed_files=0
-
-          # Count translation files that were processed
-          if ls missing_translations_*.txt 1> /dev/null 2>&1; then
-            total_files=$(ls missing_translations_*.txt 2>/dev/null | wc -l)
-            successful_files=$total_files  # Since failed ones were removed earlier
+          # Verify that missing_translations_*.txt files are NOT staged
+          if git status --porcelain | grep -q "missing_translations_"; then
+            echo "❌ ERROR: Translation temp files are staged - removing from staging"
+            git reset HEAD missing_translations_*.txt 2>/dev/null || true
           fi
 
-          # Calculate failed files based on matrix jobs (this is approximate)
-          # In a real scenario, you'd want to pass this info through job outputs
-
-          echo "translation_summary<<EOF" >> $GITHUB_OUTPUT
-          echo "## 📊 Translation Processing Summary" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "- **Total translation files processed**: $total_files" >> $GITHUB_OUTPUT
-          echo "- **Successfully translated**: $successful_files" >> $GITHUB_OUTPUT
-          echo "- **Failed translations**: $failed_files" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-
-          if [ $failed_files -gt 0 ]; then
-            echo "⚠️ **Note**: Some translations failed and will need manual review." >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-          fi
-
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "✅ Staged translation files for commit"
 
       - name: Create Pull Request
+        if: steps.check-changes.outputs.po-files-changed == 'true'
         uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
         with:
           labels: i18n, automated-pr
@@ -582,39 +498,40 @@ jobs:
           title: "Merge new un-translated string(s) to existing .po files with AI translations"
           commit-message: "chore(translations): merge new un-translated string(s) to existing .po files with AI translations"
           body: |
-            Update .pot file with new un-translated string(s) from the source code
-            Merge .pot file strings into existing .po files
+            ## Automated Translation Update
 
-            🤖 **AI-Powered Translation Applied with Enhanced Matrix Processing**:
-            - Automatically extracted missing translations using `extract_missing_translations.py`
-            - Applied AI-powered translations using GitHub Models (GPT-4o) for multiple languages
-            - Supports processing unlimited translations per language with automatic chunking
-            - Inserted translated strings into .po files using `insert_missing_translations.py`
-            - Compiled binary .mo files for immediate use
+            This PR updates translation files with new untranslated strings from the source code.
 
-            ${{ steps.pr_summary.outputs.translation_summary }}
+            ### Workflow Steps
 
-            **Languages processed**: Portuguese (pt), German (de), Italian (it), Japanese (ja), Chinese Simplified (zh_CN)
+            1. **Extract strings**: Ran `create_pot_file.py` to extract all translatable strings from Python source code
+            2. **Merge strings**: Ran `merge_pot_file.py` to merge new strings into existing `.po` files
+            3. **Extract missing**: Ran `extract_missing_translations.py --lang-code all --max-translations 50 --max-characters 8000`
+            4. **AI Translation**: Applied translations using GitHub Models API (GPT-4o) via sequential curl requests
+            5. **Insert translations**: Ran `insert_missing_translations.py` to update `.po` files with AI translations
+            6. **Compile**: Ran `create_mo_files.py` to compile `.mo` binary files
 
-            **Enhanced Matrix Processing & Scaling**:
-            - ✅ **Automatic chunking** when >50 strings per language (configurable)
-            - ✅ **Robust error handling** for failed AI translation requests with detailed debugging
-            - ✅ **File validation** before and after AI processing
-            - ✅ **Consistent terminology** guidelines applied across all chunks for each language
-            - Robust error handling for failed AI translation requests
+            ### Languages Processed
 
-            **Translation Guidelines Applied**:
-            - Technical aviation/drone context preservation
+            Portuguese (pt), German (de), Italian (it), Japanese (ja), Chinese Simplified (zh_CN)
+
+            ### Translation Guidelines Applied
+
+            - Technical aviation/drone terminology accuracy
             - Formal register for technical documentation
-            - Language-specific conventions (e.g., European Portuguese, formal German)
-            - Consistent terminology maintenance across chunks
-            - Placeholder preservation ({variable_name} patterns)
+            - Language-specific conventions:
+              - Portuguese: European Portuguese (not Brazilian)
+              - German: Formal Sie form
+              - Japanese: Formal desu/masu form
+            - Preserved all placeholders: `{variable_name}` patterns
+            - Maintained numbered format: `line_number:translated_text`
+            - Did not translate: variable names, file extensions, code elements
 
-            **Quality Assurance**:
-            - Validation of AI action outputs before processing
-            - Graceful handling of AI service failures
-            - File size and content validation after translation
-            - Comprehensive error reporting and debugging information
+            ### Review Checklist
 
-            Please review the AI-generated translations for accuracy and cultural appropriateness before merging.
+            - [ ] Review AI-generated translations for technical accuracy
+            - [ ] Check placeholder preservation in translations
+            - [ ] Verify cultural appropriateness for each language
+            - [ ] Test translations in the application GUI
+
           delete-branch: true
