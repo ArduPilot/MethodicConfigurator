@@ -478,19 +478,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def get_vehicle_directory_name(self) -> str:
         return self.get_directory_name_from_full_path(self.vehicle_dir)
 
-    def zip_file_path(self) -> str:
+    def zip_file_path(self, zip_file_name: str = "") -> str:
         vehicle_name = self.get_vehicle_directory_name()
-        return os_path.join(self.vehicle_dir, f"{vehicle_name}.zip")
+        return os_path.join(self.vehicle_dir, zip_file_name if zip_file_name else f"{vehicle_name}.zip")
 
-    def zip_file_exists(self) -> bool:
-        zip_file_path = self.zip_file_path()
+    def zip_file_exists(self, zip_file_name: str = "") -> bool:
+        zip_file_path = self.zip_file_path(zip_file_name)
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
     def add_configuration_file_to_zip(self, zipf: ZipFile, filename: str) -> None:
         if self.vehicle_configuration_file_exists(filename):
             zipf.write(os_path.join(self.vehicle_dir, filename), arcname=filename)
 
-    def zip_files(self, files_to_zip: list[tuple[bool, str]]) -> None:
+    def zip_files(self, files_to_zip: list[tuple[bool, str]], zip_file_name: str = "", include_apm_pdef: bool = True) -> str:
         """
         Zips the intermediate parameter files that were written to, including specific summary files.
 
@@ -502,9 +502,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Args:
           files_to_zip (List[Tuple[bool, str]]): A list of tuples, where each tuple contains a boolean
                                             indicating if the file was written and a string for the filename.
+          zip_file_name (str, optional): The name where the zip file will be saved.
+                                         If empty, defaults to the path returned by self.zip_file_path().
+          include_apm_pdef (bool): Whether to include the 'apm.pdef.xml' file in the zip archive. Default is True.
 
         """
-        zip_file_path = self.zip_file_path()
+        zip_file_path = self.zip_file_path(zip_file_name)
         with ZipFile(zip_file_path, "w") as zipf:
             # Add all intermediate parameter files
             for file_name in self.file_parameters:
@@ -516,14 +519,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             # Check for and add specific files if they exist
             specific_files = [
                 "00_default.param",
-                "apm.pdef.xml",
                 self.configuration_steps_filename,
                 self.vehicle_components_fs.json_filename,
                 "vehicle.jpg",
                 "last_uploaded_filename.txt",
                 "tempcal_gyro.png",
                 "tempcal_acc.png",
+                "tuning_report.csv",
             ]
+            if include_apm_pdef:
+                specific_files.append("apm.pdef.xml")
             for file_name in specific_files:
                 self.add_configuration_file_to_zip(zipf, file_name)
 
@@ -532,6 +537,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.add_configuration_file_to_zip(zipf, filename)
 
         logging_info(_("Intermediate parameter files and summary files zipped to %s"), zip_file_path)
+        return zip_file_path
 
     def vehicle_image_filepath(self) -> str:
         return os_path.join(self.vehicle_dir, "vehicle.jpg")
