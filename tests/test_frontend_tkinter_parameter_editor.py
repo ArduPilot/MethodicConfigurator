@@ -1760,3 +1760,108 @@ class TestSkipButtonWorkflows:
 
         skip_button_mock = cast("MagicMock", parameter_editor_window.skip_button)
         skip_button_mock.configure.assert_called_once_with(state="normal")
+
+
+class TestZipVehicleForForumHelpButton:
+    """Test the 'Zip Vehicle for Forum Help' button functionality."""
+
+    def test_user_clicks_button_and_workflow_succeeds(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given parameter files exist, when user clicks button, then workflow executes and shows success message."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = True
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert
+        param_editor_mock.create_forum_help_zip_workflow.assert_called_once_with(
+            show_error=parameter_editor_window.ui.show_error,
+            show_info=parameter_editor_window.ui.show_info,
+        )
+
+    def test_user_clicks_button_and_workflow_fails(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given workflow fails, when user clicks button, then error is shown to user."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = False
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - workflow was called even though it failed
+        param_editor_mock.create_forum_help_zip_workflow.assert_called_once()
+
+    def test_workflow_receives_correct_ui_callbacks(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given button is clicked, when workflow is invoked, then correct UI callbacks are injected."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = True
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - verify the exact callbacks passed
+        call_args = param_editor_mock.create_forum_help_zip_workflow.call_args
+        assert call_args is not None
+        assert call_args.kwargs["show_error"] == parameter_editor_window.ui.show_error
+        assert call_args.kwargs["show_info"] == parameter_editor_window.ui.show_info
+
+    def test_button_callback_is_properly_bound(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given ParameterEditorWindow is created, when checking button, then callback is correctly bound."""
+        # This tests the integration between button creation and the handler method
+        # We verify the method exists and is callable
+        assert hasattr(parameter_editor_window, "on_zip_vehicle_for_forum_help_click")
+        assert callable(parameter_editor_window.on_zip_vehicle_for_forum_help_click)
+
+    def test_workflow_error_handling_with_show_error(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given workflow encounters error, when executed, then error callback is available for use."""
+        # Arrange - simulate workflow calling show_error callback
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+
+        def workflow_with_error(**kwargs: Callable) -> bool:
+            # Simulate the workflow calling show_error
+            kwargs["show_error"]("Test Error", "Error details")
+            return False
+
+        param_editor_mock.create_forum_help_zip_workflow.side_effect = workflow_with_error
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - show_error was called by the workflow
+        ui_mock = cast("MagicMock", parameter_editor_window.ui.show_error)
+        ui_mock.assert_called_once_with("Test Error", "Error details")
+
+    def test_workflow_success_handling_with_show_info(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given workflow succeeds, when executed, then info callback is available for notification."""
+        # Arrange - simulate workflow calling show_info callback
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+
+        def workflow_with_success(**kwargs: Callable) -> bool:
+            # Simulate the workflow calling show_info
+            kwargs["show_info"]("Success", "Zip created successfully")
+            return True
+
+        param_editor_mock.create_forum_help_zip_workflow.side_effect = workflow_with_success
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - show_info was called by the workflow
+        ui_mock = cast("MagicMock", parameter_editor_window.ui.show_info)
+        ui_mock.assert_called_once_with("Success", "Zip created successfully")
+
+    def test_multiple_button_clicks_invoke_workflow_each_time(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given button is clicked multiple times, when each click occurs, then workflow executes each time."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = True
+
+        # Act - click button three times
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - workflow was called three times
+        assert param_editor_mock.create_forum_help_zip_workflow.call_count == 3

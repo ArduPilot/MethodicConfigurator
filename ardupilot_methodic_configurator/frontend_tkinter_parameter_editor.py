@@ -375,7 +375,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create upload button
         upload_selected_button = ttk.Button(
             buttons_frame,
-            text=_("Upload selected params to FC, and advance to next param file"),
+            text=_("Upload selected params to FC,\nand advance to next param file"),
             command=self.on_upload_selected_click,
         )
         upload_selected_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
@@ -413,6 +413,23 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
+        )
+
+        # Create Zip file for forum button
+        zip_vehicle_for_forum_button = ttk.Button(
+            buttons_frame,
+            text=_("Zip Vehicle for Forum Help"),
+            command=self.on_zip_vehicle_for_forum_help_click,
+        )
+        zip_vehicle_for_forum_button.configure(state=("normal" if self.parameter_editor.parameter_files() else "disabled"))
+        zip_vehicle_for_forum_button.pack(
+            side=tk.LEFT, padx=(8, 8)
+        )  # Add padding on both sides of the Create Zip file for forum button
+        show_tooltip(
+            zip_vehicle_for_forum_button,
+            _("Creates a .zip file of the configuration files\nso that they can be easily shared for forum help")
+            if self.parameter_editor.parameter_files()
+            else _("No intermediate parameter files available"),
         )
 
         # Create skip button
@@ -1113,6 +1130,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             progress_callback=progress_window.update_progress_bar,
         )
         progress_window.destroy()
+
+    def on_zip_vehicle_for_forum_help_click(self) -> None:
+        """Handle the zip vehicle for forum help button click."""
+        self.parameter_editor.create_forum_help_zip_workflow(
+            show_error=self.ui.show_error,
+            show_info=self.ui.show_info,
+        )
 
     def _update_skip_button_state(self) -> None:
         """Update the skip button state based on whether the current configuration step is optional."""
