@@ -90,6 +90,40 @@ To semi-automate the steps and processes on that guide the following *system des
   vehicles [PR #175](https://github.com/ArduPilot/MethodicConfigurator/pull/175)
   - The AI assistant should be able to answer questions about the parameters and the configuration process
   - The AI assistant should be able to provide guidance on how to resolve common issues that may arise during the configuration process
+- The software must have a "Zip Vehicle for Forum Help" button that creates a support package:
+  - **Button location**: The button must be placed on the parameter editor window, positioned between the "Download .bin" button and the "Skip Step" button
+  - **Button label**: The default English label must read "Zip Vehicle for Forum Help" while still allowing translations for other locales
+  - **Files to include**: The button must create a zip archive containing:
+    - All intermediate parameter files (numbered configuration step files like `01_setup.param`, `02_config.param`, etc.)
+    - The file `00_default.param` if it exists
+    - The file `vehicle.jpg` if it exists
+    - The file `vehicle_components.json` if it exists
+    - The file `last_uploaded_filename.txt` if it exists
+    - The file `tempcal_gyro.png` if it exists
+    - The file `tempcal_acc.png` if it exists
+    - The file `tuning_report.csv` if it exists
+    - The configuration steps documentation file for the current vehicle type (e.g., `configuration_steps_ArduCopter.json`)
+    - All step-specific documentation metadata files (`.pdef.xml` files corresponding to each parameter file)
+  - **Zip size constraint**: The generated archive must stay below 100 KiB so it can be uploaded to the ArduPilot
+    forum. To achieve this, the software must automatically exclude heavyweight helper files such as
+    `apm.pdef.xml` while still bundling the step-specific `.pdef.xml` files listed above.
+  - **Zip filename format**: The created zip file must be named using the format `<vehicle_name>_YYYYMMDD_HHMMSSUTC.zip` where:
+    - `<vehicle_name>` is the name of the current vehicle directory
+    - `YYYYMMDD` is the current date in UTC (4-digit year, 2-digit month, 2-digit day)
+    - `HHMMSS` is the current time in UTC (2-digit hour in 24-hour format, 2-digit minute, 2-digit second)
+    - Example: `MyDrone_20231215_143052UTC.zip`
+  - **Zip file location**: The zip file must be saved in the current vehicle directory
+  - **User notification**: After creating the zip file, the software must display an informational popup that:
+    - Shows the full path and filename of the created zip file
+    - Instructs the user to upload the zip file to the ArduPilot forum at <https://discuss.ardupilot.org> to
+      receive help
+    - Instructs the user that if they have a problem during flight, they should also upload one single .bin
+      file from a problematic flight to a file sharing service and post a link to it in the support forum
+    - Is a standard information dialog that the user must acknowledge
+  - **Browser action**: After the user acknowledges the notification popup, the software must
+    automatically open the URL <https://discuss.ardupilot.org> in the system's default web browser
+  - **Error handling**: If the zip creation fails (e.g., due to file permission issues or disk space),
+    the software must display an error message explaining the failure and must not open the browser URL
 
 ## 5. Error Handling and Logging
 

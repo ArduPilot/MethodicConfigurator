@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from csv import writer as csv_writer
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from logging import error as logging_error
 from logging import exception as logging_exception
@@ -1402,6 +1403,84 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_info(_("Parameter files zipped"), msg.format(zip_file_path=zip_file_path))
 
         return should_write_file
+
+    def create_forum_help_zip_workflow(
+        self,
+        show_info: ShowInfoCallback,
+        show_error: ShowErrorCallback,
+    ) -> bool:
+        """
+        Complete workflow for creating forum help zip file (< 100 KiB) with user interaction.
+
+        This method orchestrates the complete forum help zip creation process including:
+        - Creating the zip file with relevant files and small enough for forum upload
+        - Displaying notification with file location and instructions
+        - Opening the ArduPilot forum in browser
+
+        Args:
+            show_info: Callback to show information messages to the user.
+            show_error: Callback to show error messages to the user.
+
+        Returns:
+            bool: True if workflow completed successfully, False if an error occurred.
+
+        """
+        try:
+            vehicle_dir = Path(self._local_filesystem.vehicle_dir)
+
+            # Verify at least one intermediate parameter file exists in file_parameters
+            if not self._local_filesystem.file_parameters:
+                msg = f"No intermediate parameter files found in {vehicle_dir}"
+                raise FileNotFoundError(msg)
+
+            # Generate zip filename with UTC timestamp
+            now_utc = datetime.now(timezone.utc)
+            timestamp = now_utc.strftime("%Y%m%d_%H%M%S")
+            vehicle_name = vehicle_dir.name
+            zip_filename = f"{vehicle_name}_{timestamp}UTC.zip"
+
+            # Build list of additional files to include (beyond what zip_files automatically includes)
+            # The zip_files method already includes all files from file_parameters and common files
+            # like vehicle.jpg, vehicle_components.json, last_uploaded_filename.txt, tempcal files, etc.
+            # We just need to specify any extra files as empty list since zip_files handles them
+            files_to_zip: list[tuple[bool, str]] = []
+
+            # Use the filesystem's zip_files method with custom filename and without apm.pdef.xml
+            # apm.pdef.xml is excluded to keep the zip file size small for forum upload
+            # zip_files returns the full path to the created zip file
+            zip_path = self._local_filesystem.zip_files(files_to_zip, zip_file_name=zip_filename, include_apm_pdef=False)
+
+            logging_info("Created forum help zip file: %s", zip_path)
+
+            webbrowser_open_url("https://discuss.ardupilot.org")
+
+            # Show success notification to user
+            show_info(
+                _("Zip file successfully created"),
+                _(
+                    "Zipped all vehicle configuration files into the file \n"
+                    "{zip_fullpath}\n\n"
+                    "Upload this file to the ArduPilot support forum to receive help\n"
+                    "from the community.\n\n"
+                    "If you have a problem during flight, also upload one single .bin file\n"
+                    "from a problematic flight to a file sharing service and post a link\n"
+                    "to it in the ArduPilot support forum."
+                ).format(zip_fullpath=str(zip_path)),
+            )
+
+            return True
+
+        except FileNotFoundError as e:
+            error_msg = _("Failed to create zip file: {error}").format(error=str(e))
+            logging_error(error_msg)
+            show_error(_("Zip file creation failed"), error_msg)
+            return False
+
+        except (PermissionError, OSError) as e:
+            error_msg = _("Failed to create zip file due to file system error: {error}").format(error=str(e))
+            logging_error(error_msg)
+            show_error(_("Zip file creation failed"), error_msg)
+            return False
 
     # frontend_tkinter_parameter_editor.py API end
 
