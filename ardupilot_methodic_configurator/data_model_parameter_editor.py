@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from csv import writer as csv_writer
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from logging import error as logging_error
 from logging import exception as logging_exception
@@ -1402,6 +1403,139 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_info(_("Parameter files zipped"), msg.format(zip_file_path=zip_file_path))
 
         return should_write_file
+
+    # Forum help zip file API begin
+
+    def _create_forum_help_zip(self) -> Path:
+        """
+        Create a zip file containing vehicle configuration files for forum help.
+
+        Creates a forum help zip file (< 100 KiB) with:
+        - All intermediate parameter files (numbered configuration steps)
+        - 00_default.param (if exists)
+        - vehicle.jpg (if exists)
+        - vehicle_components.json (if exists)
+        - last_uploaded_filename.txt (if exists)
+        - tempcal_gyro.png (if exists)
+        - tempcal_acc.png (if exists)
+        - tuning_report.csv (if exists)
+        - configuration_steps_*.json files
+        - Step-specific documentation metadata (.pdef.xml files)
+
+        Returns:
+            Path to the created zip file
+
+        Raises:
+            FileNotFoundError: If vehicle directory doesn't exist or no parameter files found
+            PermissionError: If unable to write zip file
+            OSError: If disk space or other I/O errors occur
+
+        """
+        vehicle_dir = Path(self._local_filesystem.vehicle_dir)
+
+        # Verify at least one intermediate parameter file exists in file_parameters
+        if not self._local_filesystem.file_parameters:
+            msg = f"No intermediate parameter files found in {vehicle_dir}"
+            raise FileNotFoundError(msg)
+
+        # Generate zip filename with UTC timestamp
+        now_utc = datetime.now(timezone.utc)
+        timestamp = now_utc.strftime("%Y%m%d_%H%M%S")
+        vehicle_name = vehicle_dir.name
+        zip_filename = f"{vehicle_name}_{timestamp}UTC.zip"
+
+        # Build list of additional files to include (beyond what zip_files automatically includes)
+        # The zip_files method already includes all files from file_parameters and common files
+        # like vehicle.jpg, vehicle_components.json, last_uploaded_filename.txt, tempcal files, etc.
+        # We just need to specify any extra files as empty list since zip_files handles them
+        files_to_zip: list[tuple[bool, str]] = []
+
+        # Use the filesystem's zip_files method with custom filename and without apm.pdef.xml
+        # apm.pdef.xml is excluded to keep the zip file size small for forum upload
+        # zip_files returns the full path to the created zip file
+        zip_path = self._local_filesystem.zip_files(files_to_zip, zip_file_name=zip_filename, include_apm_pdef=False)
+
+        logging_info("Created forum help zip file: %s", zip_path)
+        return Path(zip_path)
+
+    def _get_forum_help_notification(self, zip_path: Path) -> str:
+        """
+        Get notification details for the forum help zip file.
+
+        Args:
+            zip_path: Path to the created zip file
+
+        Returns:
+            - message: Notification message with path and instructions
+
+        """
+        return _(
+            "Zipped all vehicle configuration files into the file \n"
+            "{zip_fullpath}\n\n"
+            "Please upload this file to the ArduPilot support forum at\n"
+            "https://discuss.ardupilot.org to receive help from the community.\n\n"
+            "If you have a problem during flight, also upload one single .bin file\n"
+            "from a problematic flight to a file sharing service and post a link\n"
+            "to it in the ArduPilot support forum."
+        ).format(zip_fullpath=str(zip_path))
+
+    def _open_forum_after_notification_dismissed(self) -> None:
+        """
+        Open the ArduPilot forum in the default web browser.
+
+        This method should be called after the user acknowledges the forum help notification.
+        """
+        webbrowser_open_url("https://discuss.ardupilot.org")
+
+    def create_forum_help_zip_workflow(
+        self,
+        show_info: ShowInfoCallback,
+        show_error: ShowErrorCallback,
+    ) -> bool:
+        """
+        Complete workflow for creating forum help zip file (< 100 KiB) with user interaction.
+
+        This method orchestrates the complete forum help zip creation process including:
+        - Creating the zip file with relevant files and small enough for forum upload
+        - Displaying notification with file location and instructions
+        - Opening the ArduPilot forum in browser
+
+        Args:
+            show_info: Callback to show information messages to the user.
+            show_error: Callback to show error messages to the user.
+
+        Returns:
+            bool: True if workflow completed successfully, False if an error occurred.
+
+        """
+        try:
+            # Create the forum help zip file
+            zip_path = self._create_forum_help_zip()
+
+            # Get notification details
+            notification = self._get_forum_help_notification(zip_path)
+
+            # Show success notification to user
+            show_info(_("Zip file successfully created"), notification)
+
+            # Open forum in browser after user acknowledges notification
+            self._open_forum_after_notification_dismissed()
+
+            return True
+
+        except FileNotFoundError as e:
+            error_msg = _("Failed to create zip file: {error}").format(error=str(e))
+            logging_error(error_msg)
+            show_error(_("Zip file creation failed"), error_msg)
+            return False
+
+        except (PermissionError, OSError) as e:
+            error_msg = _("Failed to create zip file due to file system error: {error}").format(error=str(e))
+            logging_error(error_msg)
+            show_error(_("Zip file creation failed"), error_msg)
+            return False
+
+    # Forum help zip file API end
 
     # frontend_tkinter_parameter_editor.py API end
 
