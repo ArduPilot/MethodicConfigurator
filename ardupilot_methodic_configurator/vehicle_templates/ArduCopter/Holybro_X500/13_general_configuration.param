@@ -20,9 +20,6 @@ RTL_ALT,500  # RTL at 5m is needed inside the hangar
 RTL_LOIT_TIME,2000  # The default is too long. This reduces the time
 SCHED_LOOP_RATE,400  # Stay on default loop rate, this is a slow vehicle
 SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation
-SERIAL2_BAUD,57  # The FrSky Archer R6 telemetry baudrate
-SERIAL2_OPTIONS,7  # The FrSky Archer R6 telemetry needs this to work
-SERIAL2_PROTOCOL,10  # The FrSky Archer R6 telemetry protocol
 SERIAL4_BAUD,230
 SERIAL4_PROTOCOL,-1
 SERIAL7_BAUD,115

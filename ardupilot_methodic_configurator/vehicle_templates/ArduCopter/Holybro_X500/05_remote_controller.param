@@ -7,4 +7,7 @@ RC6_OPTION,17  # To control PID autotune, after quicktune is done
 RC7_OPTION,300  # To trigger PID quicktune
 RC8_OPTION,31  # For emergencies, be able to stop all motors at once
 RC9_OPTION,0
-RSSI_TYPE,0
+RSSI_TYPE,3  # FrSky FPort protocol supports RSSI to report RF link quality
+SERIAL2_BAUD,57  # The FrSky Archer R6 telemetry baudrate
+SERIAL2_OPTIONS,7  # Required for the FrSky Archer R6 telemetry link to work electrically
+SERIAL2_PROTOCOL,10  # send FrSky SPort passthru telemetry to the RC controller
