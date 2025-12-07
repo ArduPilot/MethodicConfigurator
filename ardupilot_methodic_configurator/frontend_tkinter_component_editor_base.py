@@ -504,7 +504,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         if error_msg:
             show_error_message(_("Error"), error_msg)
             return
-        if not ConfirmationPopupWindow.should_display("component_editor_validation") or confirm_component_properties(
+        if (not ConfirmationPopupWindow.should_display("component_editor_validation")) or confirm_component_properties(
             cast("tk.Tk", self.root)
         ):
             self.save_component_json()

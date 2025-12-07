@@ -13,10 +13,25 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from tkinter import font as tkFont  # noqa: N812
 from tkinter import ttk
+from typing import Optional
 
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config, safe_font_nametofont
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip_on_richtext_tag
+
+
+def _get_ttk_label_color(widget: Optional[tk.Misc], option: str, fallback: str) -> str:
+    """Return a ttk label color or a safe fallback."""
+    style = ttk.Style(widget)
+    color = style.lookup("TLabel", option)
+
+    if not color and widget:
+        try:
+            color = widget.cget(option)
+        except tk.TclError:
+            color = ""
+
+    return color or fallback
 
 
 class RichText(tk.Text):  # pylint: disable=too-many-ancestors
@@ -45,6 +60,12 @@ class RichText(tk.Text):  # pylint: disable=too-many-ancestors
     """
 
     def __init__(self, *args, **kwargs) -> None:
+        master = args[0] if args else kwargs.get("master")
+        if not (kwargs.get("background") or kwargs.get("bg")):
+            kwargs["background"] = _get_ttk_label_color(master, "background", "white")
+        if not (kwargs.get("foreground") or kwargs.get("fg")):
+            kwargs["foreground"] = _get_ttk_label_color(master, "foreground", "black")
+
         super().__init__(*args, **kwargs)
 
         default_font = kwargs.get("font") or safe_font_nametofont()
