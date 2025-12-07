@@ -33,7 +33,7 @@ from typing import Optional, Union
 from PIL import Image
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_size
 
 
@@ -139,7 +139,7 @@ class BaseWindow:
 
         # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
         try:
-            icon_path = LocalFilesystem.application_icon_filepath()
+            icon_path = ProgramSettings.application_icon_filepath()
             self.root.iconphoto(True, tk.PhotoImage(file=icon_path))  # noqa: FBT003
         except (tk.TclError, FileNotFoundError) as e:
             # Silently ignore icon loading errors (common in test environments)

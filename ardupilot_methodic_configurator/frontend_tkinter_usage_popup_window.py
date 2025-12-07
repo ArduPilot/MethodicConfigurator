@@ -18,10 +18,8 @@ from tkinter import BooleanVar, ttk
 from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 
 
@@ -181,72 +179,6 @@ class UsagePopupWindow(PopupWindow):
         """Display a usage popup with a Dismiss button."""
         UsagePopupWindow.setup_window(usage_popup_window, title, geometry, instructions_text)
         UsagePopupWindow.finalize_setup_window(parent, usage_popup_window, ptype)
-
-    @staticmethod
-    def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> BaseWindow:
-        """
-        Display the workflow explanation popup window.
-
-        This popup explains that AMC is not a ground control station and has a different workflow.
-        """
-        # Create the popup window
-        popup_window = BaseWindow()
-        instructions = RichText(
-            popup_window.main_frame,
-            wrap=tk.WORD,
-            height=1,
-            bd=0,
-            background=ttk.Style(popup_window.root).lookup("TLabel", "background"),
-            font=create_scaled_font(get_safe_font_config(), 1.5),
-        )
-        instructions.insert(tk.END, _("This is not a ground control station and it has a different workflow:"))
-        UsagePopupWindow.setup_window(
-            popup_window,
-            _("ArduPilot Methodic Configurator - Workflow"),
-            "490x362",
-            instructions,
-        )
-
-        # Add the image
-        image_path = LocalFilesystem.workflow_image_filepath()
-        try:
-            image_label = popup_window.put_image_in_label(popup_window.main_frame, image_path, image_height=141)
-            image_label.pack(pady=(0, 10))
-        except FileNotFoundError:
-            # Fallback if image not found
-            fallback_label = ttk.Label(popup_window.main_frame, text=_("[Image not found: AMC_general_workflow.png]"))
-            fallback_label.pack(pady=(0, 10))
-
-        # Add the rich text
-        rich_text = RichText(
-            popup_window.main_frame,
-            wrap=tk.WORD,
-            height=1,
-            bd=0,
-            background=ttk.Style(popup_window.root).lookup("TLabel", "background"),
-            font=create_scaled_font(get_safe_font_config(), 1.5),
-        )
-        rich_text.insert(tk.END, _("see "))
-        rich_text.insert_clickable_link(
-            _("quick start guide"), "quickstart_link", "https://ardupilot.github.io/MethodicConfigurator/#quick-start"
-        )
-        rich_text.insert(tk.END, _(", "))
-        rich_text.insert_clickable_link(
-            _("YouTube tutorials"), "YouTube_link", "https://www.youtube.com/playlist?list=PL1oa0qoJ9W_89eMcn4x2PB6o3fyPbheA9"
-        )
-        rich_text.insert(tk.END, _(", "))
-        rich_text.insert_clickable_link(
-            _("usecases"), "usecases_link", "https://ardupilot.github.io/MethodicConfigurator/USECASES.html"
-        )
-        rich_text.insert(tk.END, _(" and "))
-        rich_text.insert_clickable_link(
-            _("usermanual."), "usermanual_link", "https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html"
-        )
-        rich_text.config(borderwidth=0, relief="flat", highlightthickness=0, state=tk.DISABLED)
-        rich_text.pack(padx=6, pady=10)
-
-        UsagePopupWindow.finalize_setup_window(parent, popup_window, "workflow_explanation", _("I understand this"))
-        return popup_window
 
 
 class ConfirmationPopupWindow(PopupWindow):
