@@ -16,7 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from dataclasses import dataclass
 from tkinter import ttk
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -25,7 +25,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import ConfirmationPopupWindow, UsagePopupWindow
 
-PopupDisplayFn = Callable[[tk.Tk], object]
+PopupDisplayFn = Callable[[Optional[tk.Tk]], Union[Union[BaseWindow, None], bool]]
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,7 @@ def _validate_parent(parent: tk.Tk) -> bool:
     return bool(parent and parent.winfo_exists())
 
 
-def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> BaseWindow:
+def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> Union[BaseWindow, None]:
     """
     Display the workflow explanation popup window.
 
@@ -53,7 +53,6 @@ def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> BaseWindow:
         wrap=tk.WORD,
         height=1,
         bd=0,
-        background=ttk.Style(popup_window.root).lookup("TLabel", "background"),
         font=create_scaled_font(get_safe_font_config(), 1.5),
     )
     instructions.insert(tk.END, _("This is not a ground control station and it has a different workflow:"))
@@ -80,7 +79,6 @@ def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> BaseWindow:
         wrap=tk.WORD,
         height=1,
         bd=0,
-        background=ttk.Style(popup_window.root).lookup("TLabel", "background"),
         font=create_scaled_font(get_safe_font_config(), 1.5),
     )
     rich_text.insert(tk.END, _("see "))
@@ -106,19 +104,17 @@ def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> BaseWindow:
     return popup_window
 
 
-def display_component_editor_usage_popup(parent: tk.Tk) -> None:
+def display_component_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
     if not _validate_parent(parent):
-        return
+        return None
 
     usage_popup_window = BaseWindow(parent)
-    style = ttk.Style()
 
     instructions_text = RichText(
         usage_popup_window.main_frame,
         wrap=tk.WORD,
         height=6,
         bd=0,
-        background=style.lookup("TLabel", "background"),
         font=create_scaled_font(get_safe_font_config(), 1.5),
     )
     instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))
@@ -138,6 +134,7 @@ def display_component_editor_usage_popup(parent: tk.Tk) -> None:
         "690x210",
         instructions_text,
     )
+    return usage_popup_window
 
 
 def confirm_component_properties(parent: tk.Tk) -> bool:
@@ -147,14 +144,12 @@ def confirm_component_properties(parent: tk.Tk) -> bool:
 
     # Create a popup window similar to the usage instructions
     validation_popup_window = BaseWindow(parent)
-    style = ttk.Style()
 
     confirmation_text = RichText(
         validation_popup_window.main_frame,
         wrap=tk.WORD,
         height=6,
         bd=0,
-        background=style.lookup("TLabel", "background"),
         font=create_scaled_font(get_safe_font_config(), 1.5),
     )
     confirmation_text.insert(
@@ -179,19 +174,17 @@ def confirm_component_properties(parent: tk.Tk) -> bool:
     )
 
 
-def display_parameter_editor_usage_popup(parent: tk.Tk) -> None:
+def display_parameter_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
     if not _validate_parent(parent):
-        return
+        return None
 
     usage_popup_window = BaseWindow(parent)
-    style = ttk.Style()
 
     instructions_text = RichText(
         usage_popup_window.main_frame,
         wrap=tk.WORD,
         height=11,
         bd=0,
-        background=style.lookup("TLabel", "background"),
         font=create_scaled_font(get_safe_font_config(), 1.5),
     )
     instructions_text.insert(tk.END, _("1. Read "))
@@ -239,9 +232,11 @@ def display_parameter_editor_usage_popup(parent: tk.Tk) -> None:
         "690x360",
         instructions_text,
     )
+    return usage_popup_window
 
 
 USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
+    # Element insertion order determines the order in which they appear in the settings and About dialogs
     "workflow_explanation": UsagePopupWindowDefinition(
         description=_("General AMC workflow"),
         function=display_workflow_explanation,
