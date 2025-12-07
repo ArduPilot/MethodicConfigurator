@@ -45,14 +45,15 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     show_warning_popup,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
-from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
+from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
-from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_parameter_editor_usage_popup
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
@@ -200,7 +201,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # this one should be on top of the previous one hence the longer time
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("parameter_editor"):
-            self.root.after(100, lambda: self._display_usage_popup_window(self.root))  # type: ignore[arg-type]
+            self.root.after(100, lambda: display_parameter_editor_usage_popup(cast("tk.Tk", self.root)))  # type: ignore[arg-type]
 
     def run(self) -> None:
         """
@@ -718,59 +719,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             msg = _("Error loading plugin {plugin_name}: {error}").format(plugin_name=plugin_name, error=str(e))
             logging_exception(msg)  # Log full traceback
             ttk.Label(parent_frame, text=msg, foreground="red").pack()
-
-    @staticmethod
-    def _display_usage_popup_window(parent: tk.Tk) -> None:
-        if not parent.winfo_exists():
-            return
-
-        usage_popup_window = BaseWindow(parent)
-        style = ttk.Style()
-
-        instructions_text = RichText(
-            usage_popup_window.main_frame,
-            wrap=tk.WORD,
-            height=11,
-            bd=0,
-            background=style.lookup("TLabel", "background"),
-            font=create_scaled_font(get_safe_font_config(), 1.5),
-        )
-        instructions_text.insert(tk.END, _("1. Read "))
-        instructions_text.insert(tk.END, _("all"), "bold")
-        instructions_text.insert(tk.END, _(" the documentation on top of the parameter table\n"))
-        instructions_text.insert(tk.END, _("2. Edit the parameter "))
-        instructions_text.insert(tk.END, _("New Values"), "italic")
-        instructions_text.insert(tk.END, _(" and"), "bold")
-        instructions_text.insert(tk.END, _(" their "))
-        instructions_text.insert(tk.END, _("Change Reason\n"), "italic")
-        instructions_text.insert(tk.END, "   " + _("Documenting change reasons is crucial because it:") + "\n")
-        instructions_text.insert(tk.END, "   " + _(" * Promotes thoughtful decisions over impulsive changes") + "\n")
-        instructions_text.insert(tk.END, "   " + _(" * Provides documentation for vehicle certification requirements") + "\n")
-        instructions_text.insert(
-            tk.END, "   " + _(" * Enables validation or suggestions from team members or AI tools") + "\n"
-        )
-        instructions_text.insert(
-            tk.END, "   " + _(" * Preserves your reasoning for future reference or troubleshooting") + "\n"
-        )
-        instructions_text.insert(tk.END, _("3. Use "))
-        instructions_text.insert(tk.END, _("Del"), "italic")
-        instructions_text.insert(tk.END, _(" and "))
-        instructions_text.insert(tk.END, _("Add"), "italic")
-        instructions_text.insert(tk.END, _(" buttons to delete and add parameters if necessary\n"))
-        instructions_text.insert(tk.END, _("4. Press the "))
-        instructions_text.insert(tk.END, _("Upload selected params to FC, and advance to next param file"), "italic")
-        instructions_text.insert(tk.END, _(" button\n"))
-        instructions_text.insert(tk.END, _("5. Repeat from the top until the program automatically closes"))
-        instructions_text.config(state=tk.DISABLED)
-
-        UsagePopupWindow.display(
-            parent,
-            usage_popup_window,
-            _("How to use the parameter file editor and uploader window"),
-            "parameter_editor",
-            "690x360",
-            instructions_text,
-        )
 
     def _do_tempcal_imu(self, selected_file: str) -> None:
         """

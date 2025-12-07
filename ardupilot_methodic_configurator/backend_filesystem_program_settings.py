@@ -55,14 +55,14 @@ class ProgramSettings:
         # Define default settings directly - no need for deep copying
         settings_directory = cls._user_config_dir()
 
+        # avoid a circular dependency
+        from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (  # noqa: PLC0415
+            get_usage_popup_keys,  # pylint: disable=import-outside-toplevel
+        )
+
         return {
             "Format version": 1,
-            "display_usage_popup": {
-                "workflow_explanation": True,
-                "component_editor": True,
-                "component_editor_validation": True,
-                "parameter_editor": True,
-            },
+            "display_usage_popup": dict.fromkeys(get_usage_popup_keys(), True),
             "directory_selection": {
                 "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
                 "new_base_dir": os_path.join(settings_directory, "vehicles"),
@@ -311,8 +311,8 @@ class ProgramSettings:
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool) -> None:
-        if ptype in {"workflow_explanation", "component_editor", "component_editor_validation", "parameter_editor"}:
-            settings = ProgramSettings._get_settings_as_dict()
+        settings = ProgramSettings._get_settings_as_dict()
+        if ptype in settings.get("display_usage_popup", {}):
             settings["display_usage_popup"][ptype] = value
             ProgramSettings._set_settings_from_dict(settings)
 

@@ -20,6 +20,7 @@ from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import USAGE_POPUP_WINDOWS
 
 
 def show_about_window(root: ttk.Frame, _version: str) -> None:
@@ -58,10 +59,8 @@ def show_about_window(root: ttk.Frame, _version: str) -> None:
         )
         checkbox.pack(side=tk.TOP, anchor=tk.W)
 
-    _create_usage_popup_checkbox("workflow_explanation", _("General AMC workflow"))
-    _create_usage_popup_checkbox("component_editor", _("Component editor window introduction"))
-    _create_usage_popup_checkbox("component_editor_validation", _("Component editor window data validation"))
-    _create_usage_popup_checkbox("parameter_editor", _("Parameter file editor and uploader window"))
+    for popup_id, popup_data in USAGE_POPUP_WINDOWS.items():
+        _create_usage_popup_checkbox(popup_id, popup_data.description)
 
     # Create buttons for each action
     user_manual_button = ttk.Button(
