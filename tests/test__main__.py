@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import __main__ as amc_main
 from ardupilot_methodic_configurator.__main__ import (
     ApplicationState,
     backup_fc_parameters,
@@ -34,10 +35,7 @@ from ardupilot_methodic_configurator.__main__ import (
     vehicle_directory_selection,
     write_parameter_defaults,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import (
-    PopupWindow,
-    UsagePopupWindow,
-)
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 
 # pylint: disable=,too-many-lines,redefined-outer-name,too-few-public-methods
 
@@ -222,23 +220,21 @@ class TestApplicationStartup:
                 "ardupilot_methodic_configurator.__main__.PopupWindow.should_display",
                 return_value=True,
             ) as mock_should_display,
-            patch(
-                "ardupilot_methodic_configurator.__main__.UsagePopupWindow.display_workflow_explanation"
-            ) as mock_display_popup,
+            patch("ardupilot_methodic_configurator.__main__.display_workflow_explanation") as module_display,
         ):
             mock_popup_window = MagicMock()
-            mock_display_popup.return_value = mock_popup_window
+            module_display.return_value = mock_popup_window
 
             # Act: Simulate the startup popup logic from main()
             if PopupWindow.should_display("workflow_explanation"):
-                UsagePopupWindow.display_workflow_explanation()
+                amc_main.display_workflow_explanation()
                 # Note: We don't call mainloop() in tests to avoid blocking
 
             # Assert: User preference was checked
             mock_should_display.assert_called_once_with("workflow_explanation")
 
             # Assert: Popup was displayed for user guidance
-            mock_display_popup.assert_called_once()
+            module_display.assert_called_once()
 
     def test_user_can_skip_workflow_popup_when_previously_disabled(self) -> None:
         """

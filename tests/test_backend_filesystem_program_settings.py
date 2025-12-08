@@ -150,6 +150,32 @@ class TestApplicationResourcePaths:
         assert os_path.exists(result), f"Workflow image file should exist at {result}"
 
 
+class TestUsagePopupDefaults:
+    """Test default configuration for usage popup preferences."""
+
+    def test_default_settings_enable_all_registered_popups(self) -> None:
+        """
+        Default settings enable every registered usage popup.
+
+        GIVEN: The usage popup registry reports several popup identifiers
+        WHEN: ProgramSettings builds its default configuration dictionary
+        THEN: Each identifier is present in display_usage_popup and defaults to True
+        """
+        # Arrange (Given)
+        popup_keys = ("workflow_explanation", "component_editor", "custom_popup")
+        expected_defaults = dict.fromkeys(popup_keys, True)
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows.get_usage_popup_keys",
+            return_value=popup_keys,
+        ):
+            # Act (When)
+            defaults = ProgramSettings._get_settings_defaults()
+
+        # Assert (Then)
+        assert defaults["display_usage_popup"] == expected_defaults
+
+
 class TestDirectoryManagement:
     """Test user directory creation and validation workflows."""
 

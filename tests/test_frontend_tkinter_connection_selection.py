@@ -409,7 +409,7 @@ class TestConnectionSelectionWindow(unittest.TestCase):  # pylint: disable=too-m
 
         # Patch the filesystem icon path
         self.icon_path_patcher = patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_base_window.LocalFilesystem.application_icon_filepath",
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.ProgramSettings.application_icon_filepath",
             return_value="mock_icon_path.png",
         )
         self.mock_icon_path = self.icon_path_patcher.start()

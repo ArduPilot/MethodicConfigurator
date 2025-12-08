@@ -360,7 +360,7 @@ class TestErrorResilienceBehavior:
             patch.object(BaseWindow, "_setup_theme_and_styling"),
             patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0),
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_base_window.LocalFilesystem.application_icon_filepath",
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.ProgramSettings.application_icon_filepath",
                 return_value="test_icon.png",
             ),
             patch("tkinter.PhotoImage"),

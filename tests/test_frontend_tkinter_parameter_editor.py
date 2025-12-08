@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import tkinter as tk
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Callable, cast
 from unittest.mock import ANY, MagicMock, patch
 
@@ -26,6 +27,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access
@@ -346,6 +348,68 @@ class TestParameterFileSelection:
         assert window.stage_progress_bar is mock_stage.return_value
 
 
+class TestUsagePopupScheduling:
+    """Ensure the parameter editor schedules its usage popup correctly."""
+
+    @contextmanager
+    def _window_with_common_patches(
+        self,
+        parameter_editor: MagicMock,
+        *,
+        should_display: bool,
+    ) -> Iterator[tuple[ParameterEditorWindow, MagicMock]]:
+        parameter_editor.get_last_configuration_step_number.return_value = None
+
+        def fake_get_setting(key: str) -> object:
+            return {"gui_complexity": "advanced", "annotate_docs_into_param_files": False}.get(key, False)
+
+        with (
+            patch("tkinter.Tk", _DummyTkRoot),
+            patch.object(ParameterEditorWindow, "_create_conf_widgets"),
+            patch.object(ParameterEditorWindow, "_create_parameter_area_widgets"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.DocumentationFrame",
+                return_value=MagicMock(documentation_frame=MagicMock()),
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.ttk.Style"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_font.safe_font_nametofont",
+                return_value=None,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FreeDesktop.setup_startup_notification"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
+                side_effect=fake_get_setting,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
+                return_value=should_display,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.display_parameter_editor_usage_popup"
+            ) as mock_display,
+        ):
+            window = ParameterEditorWindow(parameter_editor)
+            yield window, mock_display
+
+    def test_usage_popup_runs_when_enabled(self, parameter_editor: MagicMock) -> None:
+        """Parameter editor schedules its usage popup when user preference allows it."""
+        with self._window_with_common_patches(parameter_editor, should_display=True) as (window, mock_display):
+            root = cast("_DummyTkRoot", window.root)
+            popup_calls = [call for call in root.after.call_args_list if call.args[0] == 100]
+            assert len(popup_calls) == 1
+            popup_callback = popup_calls[0].args[1]
+            popup_callback()
+            mock_display.assert_called_once_with(root)
+
+    def test_usage_popup_not_scheduled_when_disabled(self, parameter_editor: MagicMock) -> None:
+        """Preference disabling the popup prevents the helper from being scheduled."""
+        with self._window_with_common_patches(parameter_editor, should_display=False) as (window, mock_display):
+            root = cast("_DummyTkRoot", window.root)
+            assert all(call.args[0] != 100 for call in root.after.call_args_list)
+            mock_display.assert_not_called()
+
+
 class TestRunLoop:  # pylint: disable=too-few-public-methods
     """Ensure the run helper starts Tk's event loop."""
 
@@ -439,50 +503,6 @@ class TestWidgetFactoryMethods:
         for call in mock_tooltip.call_args_list:
             assert call.args[0] is not only_changed_checkbox
             assert call.args[0] is not annotate_checkbox
-
-
-class TestUsagePopupWindow:
-    """Cover the usage popup helper to document how the window opens."""
-
-    def test_popup_skips_when_parent_is_destroyed(self) -> None:
-        parent = MagicMock()
-        parent.winfo_exists.return_value = False
-
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.BaseWindow") as mock_base:
-            ParameterEditorWindow._display_usage_popup_window(parent)
-
-        mock_base.assert_not_called()
-
-    def test_popup_builds_rich_text_and_triggers_display(self) -> None:
-        parent = MagicMock()
-        parent.winfo_exists.return_value = True
-        usage_popup = MagicMock()
-        usage_popup.main_frame = MagicMock()
-        rich_text = MagicMock(insert=MagicMock(), config=MagicMock(), pack=MagicMock())
-        style = MagicMock(lookup=MagicMock(return_value="bg"))
-
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.BaseWindow", return_value=usage_popup),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Style", return_value=style),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.RichText",
-                return_value=rich_text,
-            ) as mock_rich_text,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.create_scaled_font", return_value="font"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.get_safe_font_config", return_value={}),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.display"
-            ) as mock_display,
-        ):
-            ParameterEditorWindow._display_usage_popup_window(parent)
-
-        args, kwargs = mock_rich_text.call_args
-        assert args[0] is usage_popup.main_frame
-        assert kwargs["wrap"] is tk.WORD
-        assert kwargs["background"] == style.lookup.return_value
-        assert kwargs["font"] == "font"
-        rich_text.config.assert_called_with(state=tk.DISABLED)
-        mock_display.assert_called_once_with(parent, usage_popup, ANY, "parameter_editor", "690x360", rich_text)
 
     def test_create_parameter_area_widgets_sets_skip_button_state(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
