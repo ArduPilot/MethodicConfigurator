@@ -87,7 +87,7 @@ def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> Union[BaseWi
     rich_text.config(borderwidth=0, relief="flat", highlightthickness=0, state=tk.DISABLED)
     rich_text.pack(padx=6, pady=10)
 
-    UsagePopupWindow.finalize_setup_window(parent, popup_window, "workflow_explanation", _("I understand this"))
+    UsagePopupWindow.finalize_setup_window(parent, popup_window, "workflow_explanation")
     return popup_window
 
 
