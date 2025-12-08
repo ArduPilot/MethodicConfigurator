@@ -44,7 +44,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widge
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
-from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_bitmask_parameters_editor_usage_popup
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (  # pylint: disable=cyclic-import
+    display_bitmask_parameters_editor_usage_popup,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow

@@ -16,7 +16,7 @@ from tkinter import ttk
 from typing import Optional, Union
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
@@ -51,7 +51,7 @@ def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> Union[BaseWi
     )
 
     # Add the image
-    image_path = LocalFilesystem.workflow_image_filepath()
+    image_path = ProgramSettings.workflow_image_filepath()
     try:
         image_label = popup_window.put_image_in_label(popup_window.main_frame, image_path, image_height=141)
         image_label.pack(pady=(0, 10))
@@ -250,4 +250,48 @@ def display_bitmask_parameters_editor_usage_popup(parent: tk.Tk) -> Union[BaseWi
         "690x260",
         instructions_text,
     )
+    return usage_popup_window
+
+
+def only_upload_changed_parameters_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
+    if not _validate_parent(parent):
+        return None
+
+    usage_popup_window = BaseWindow(parent)
+    instructions_text = RichText(
+        usage_popup_window.main_frame,
+        wrap=tk.WORD,
+        height=4,
+        bd=0,
+        font=create_scaled_font(get_safe_font_config(), 1.5),
+    )
+
+    # pylint: disable=line-too-long, import-outside-toplevel
+    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import NEW_VALUE_DIFFERENT_STR  # noqa: PLC0415, I001
+    # pylint: enable=line-too-long, import-outside-toplevel
+
+    instructions_text.insert(tk.END, _("Only"), "bold")
+    instructions_text.insert(tk.END, _(" changed parameters (marked by " + NEW_VALUE_DIFFERENT_STR + ") and\n"))
+    instructions_text.insert(tk.END, _(" selected for upload get uploaded to the FC.\n\n"))
+    instructions_text.insert(tk.END, _("No other FC parameters will be changed."))
+    instructions_text.config(state=tk.DISABLED)
+
+    UsagePopupWindow.setup_window(
+        usage_popup_window,
+        _("What gets uploaded to the FC"),
+        "690x260",
+        instructions_text,
+    )
+
+    # Add the image
+    image_path = ProgramSettings.what_gets_uploaded_image_filepath()
+    try:
+        image_label = usage_popup_window.put_image_in_label(usage_popup_window.main_frame, image_path, image_height=68)
+        image_label.pack(pady=(0, 10))
+    except FileNotFoundError:
+        # Fallback if image not found
+        fallback_label = ttk.Label(usage_popup_window.main_frame, text=_("[Image not found: what_gets_uploaded.png]"))
+        fallback_label.pack(pady=(0, 10))
+
+    UsagePopupWindow.finalize_setup_window(parent, usage_popup_window, "only_changed_get_uploaded")
     return usage_popup_window

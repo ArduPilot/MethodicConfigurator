@@ -53,7 +53,10 @@ from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widge
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
-from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_parameter_editor_usage_popup
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (
+    display_parameter_editor_usage_popup,
+    only_upload_changed_parameters_usage_popup,
+)
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
@@ -993,6 +996,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.repopulate_parameter_table(regenerate_from_disk=False)
 
     def on_upload_selected_click(self) -> None:
+        if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
+            only_upload_changed_parameters_usage_popup(self.root)
         self.write_changes_to_intermediate_parameter_file()
         selected_params: ParDict = self.parameter_editor_table.get_upload_selected_params(self.gui_complexity)
         precondition_payload: dict[str, object] = dict(selected_params)

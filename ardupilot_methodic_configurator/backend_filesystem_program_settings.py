@@ -56,6 +56,9 @@ USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
     "bitmask_parameter_editor": UsagePopupWindowDefinition(
         description=_("Bitmask parameter editor usage window"),
     ),
+    "only_changed_get_uploaded": UsagePopupWindowDefinition(
+        description=_("Only changed parameters get upload explanation"),
+    ),
 }
 
 
@@ -155,6 +158,11 @@ class ProgramSettings:
     def workflow_image_filepath() -> str:
         package_path = importlib_files("ardupilot_methodic_configurator")
         return str(package_path / "images" / "AMC_general_workflow.png")
+
+    @staticmethod
+    def what_gets_uploaded_image_filepath() -> str:
+        package_path = importlib_files("ardupilot_methodic_configurator")
+        return str(package_path / "images" / "what_gets_uploaded.png")
 
     @staticmethod
     def create_new_vehicle_dir(new_vehicle_dir: str) -> str:
