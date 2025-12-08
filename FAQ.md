@@ -6,6 +6,11 @@ This document contains answers to the most commonly asked questions about the Ar
 
 ## General Questions
 
+**Q: Is the software fully automated? Will it produce correct results even if I input incorrect data?**
+
+A: No, it is not. You still need to make decisions and perform manual steps.
+   No, it will not produce correct results when you input incorrect data.
+
 **Q: Do I need to be connected to the internet?**
 
 A: Not required for basic operation, but recommended for:
