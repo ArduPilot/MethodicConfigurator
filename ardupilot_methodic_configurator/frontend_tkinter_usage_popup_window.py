@@ -146,7 +146,7 @@ class UsagePopupWindow(PopupWindow):
         parent: Optional[tk.Tk],
         usage_popup_window: BaseWindow,
         ptype: str,
-        dismiss_text: str = _("Dismiss"),
+        dismiss_text: str = _("I understand this"),
     ) -> None:
         """Finalize a usage popup window display."""
         # Add show again checkbox
