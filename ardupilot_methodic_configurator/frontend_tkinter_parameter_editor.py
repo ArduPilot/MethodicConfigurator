@@ -201,7 +201,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # this one should be on top of the previous one hence the longer time
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("parameter_editor"):
-            self.root.after(100, lambda: display_parameter_editor_usage_popup(cast("tk.Tk", self.root)))  # type: ignore[arg-type]
+            self.root.after(100, lambda: display_parameter_editor_usage_popup(cast("tk.Tk", self.root)))
 
     def run(self) -> None:
         """

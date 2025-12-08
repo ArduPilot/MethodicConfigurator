@@ -43,6 +43,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_bitmask_parameters_editor_usage_popup
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
@@ -227,11 +229,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         current_param_name: str = ""
         show_upload_column = self._should_show_upload_column(gui_complexity)
 
+        should_try_to_display_bitmask_parameter_editor_usage = False
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
 
                 row_widgets: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
+                if self.parameter_editor.should_display_bitmask_parameter_editor_usage(param_name):
+                    should_try_to_display_bitmask_parameter_editor_usage = True
                 self._grid_column_widgets(row_widgets, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
@@ -251,6 +256,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             sys_exit(1)
 
         self._configure_table_columns(show_upload_column)
+        parent_root = self._get_parent_root()
+        if (
+            parent_root
+            and should_try_to_display_bitmask_parameter_editor_usage
+            and UsagePopupWindow.should_display("bitmask_parameter_editor")
+        ):
+            display_bitmask_parameters_editor_usage_popup(parent_root)
 
     def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
@@ -834,6 +846,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if self.parameter_editor.add_parameter_to_current_file(param_name):
                 self._pending_scroll_to_bottom = True
                 self.parameter_editor_window.repopulate_parameter_table(regenerate_from_disk=False)
+
                 return True
         except InvalidParameterNameError as exc:
             self._dialogs.show_error(_("Invalid parameter name."), str(exc))

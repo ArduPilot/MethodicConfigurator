@@ -150,32 +150,6 @@ class TestApplicationResourcePaths:
         assert os_path.exists(result), f"Workflow image file should exist at {result}"
 
 
-class TestUsagePopupDefaults:
-    """Test default configuration for usage popup preferences."""
-
-    def test_default_settings_enable_all_registered_popups(self) -> None:
-        """
-        Default settings enable every registered usage popup.
-
-        GIVEN: The usage popup registry reports several popup identifiers
-        WHEN: ProgramSettings builds its default configuration dictionary
-        THEN: Each identifier is present in display_usage_popup and defaults to True
-        """
-        # Arrange (Given)
-        popup_keys = ("workflow_explanation", "component_editor", "custom_popup")
-        expected_defaults = dict.fromkeys(popup_keys, True)
-
-        with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows.get_usage_popup_keys",
-            return_value=popup_keys,
-        ):
-            # Act (When)
-            defaults = ProgramSettings._get_settings_defaults()
-
-        # Assert (Then)
-        assert defaults["display_usage_popup"] == expected_defaults
-
-
 class TestDirectoryManagement:
     """Test user directory creation and validation workflows."""
 
@@ -431,6 +405,7 @@ class TestSettingsFileOperations:
         expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
         expected_result["display_usage_popup"]["component_editor_validation"] = True  # Added by default
         expected_result["display_usage_popup"]["workflow_explanation"] = True  # Added by default
+        expected_result["display_usage_popup"]["bitmask_parameter_editor"] = True  # Added by default
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
@@ -500,6 +475,7 @@ class TestSettingsFileOperations:
             # Assert: Popup settings initialized with defaults
             assert result["display_usage_popup"]["component_editor"] is True
             assert result["display_usage_popup"]["parameter_editor"] is True
+            assert result["display_usage_popup"]["bitmask_parameter_editor"] is True
 
     def test_user_can_load_settings_from_file_directly(self, mock_user_config) -> None:  # pylint: disable=unused-argument
         """

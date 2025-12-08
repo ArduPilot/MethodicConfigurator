@@ -121,6 +121,7 @@ def mock_parameter_editor_window() -> MagicMock:
     parent_window.gui_complexity = "simple"
     parent_window.repopulate_parameter_table = MagicMock()
     parent_window.on_skip_click = MagicMock()
+    parent_window.root = MagicMock(spec=tk.Tk)
     return parent_window
 
 
@@ -177,9 +178,12 @@ def parameter_editor_table(
 
         # Mock _has_unsaved_changes to return False by default
         mock_param_editor._has_unsaved_changes.return_value = False
+        mock_param_editor.should_display_bitmask_parameter_editor_usage.return_value = False
 
         # Create the table instance
         table = ParameterEditorTable(mock_master, mock_param_editor, mock_parameter_editor_window, dialogs=table_dialogs)
+
+        mock_parameter_editor_window.root = mock_master
 
         # Mock necessary tkinter widgets and methods
         table.add_parameter_row = MagicMock()

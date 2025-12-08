@@ -15,12 +15,11 @@ from tkinter import ttk
 
 # from logging import critical as logging_critical
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import USAGE_POPUP_WINDOWS, ProgramSettings
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import USAGE_POPUP_WINDOWS
 
 
 def show_about_window(root: ttk.Frame, _version: str) -> None:

@@ -18,15 +18,16 @@ import pytest
 from pytest_mock import MockerFixture
 
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (
-    USAGE_POPUP_WINDOWS,
     confirm_component_properties,
     display_component_editor_usage_popup,
     display_parameter_editor_usage_popup,
     display_workflow_explanation,
-    get_usage_popup_keys,
 )
 
 MODULE = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows"
+
+
+# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture
@@ -267,23 +268,3 @@ def test_confirm_component_properties_skips_when_parent_missing(mocker: MockerFi
     # Assert (Then)
     assert result is False
     mock_confirm.assert_not_called()
-
-
-def test_usage_popup_registry_keys() -> None:
-    """
-    Registry helper exposes the expected tuple of popup identifiers.
-
-    GIVEN: The usage popup registry constant
-    WHEN: Retrieving keys via the helper
-    THEN: The tuple matches the registry and contains known entries
-    """
-    # Arrange (Given)
-    # No setup required beyond accessing the registry constant
-
-    # Act (When)
-    keys = get_usage_popup_keys()
-
-    # Assert (Then)
-    assert keys == tuple(USAGE_POPUP_WINDOWS.keys())
-    assert "workflow_explanation" in keys
-    assert "parameter_editor" in keys
