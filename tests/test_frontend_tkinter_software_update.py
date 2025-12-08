@@ -29,7 +29,7 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
         self.photo_image_mock.return_value = MagicMock()
 
         # Patch LocalFilesystem to avoid file system dependency
-        self.filesystem_patch = patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.LocalFilesystem")
+        self.filesystem_patch = patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.ProgramSettings")
         self.filesystem_mock = self.filesystem_patch.start()
         self.filesystem_mock.application_icon_filepath.return_value = "mock_icon_path"
 
