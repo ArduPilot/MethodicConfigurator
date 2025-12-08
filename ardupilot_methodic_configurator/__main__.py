@@ -571,7 +571,8 @@ def main() -> None:
     # Display workflow explanation popup
     if PopupWindow.should_display("workflow_explanation"):
         popup_window = display_workflow_explanation()
-        popup_window.root.mainloop()
+        if popup_window:
+            popup_window.root.mainloop()
 
     # Validate that all configured plugins are registered
     if state.local_filesystem:

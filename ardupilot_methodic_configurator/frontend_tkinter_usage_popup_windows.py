@@ -1,10 +1,8 @@
 """
 Central registry for UsagePopupWindow helpers.
 
-This module keeps the textual content and callable hooks that build every
-UsagePopupWindow instance. A single registry allows the GUI and backend layers
-to discover which popups exist, show them on demand, and generate user-facing
-lists (Program Settings defaults, About checkbox list, etc.).
+When adding a new UsagePopupWindow, please add its helper functions here and
+register it in the USAGE_POPUP_WINDOWS dictionary.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -14,9 +12,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from dataclasses import dataclass
 from tkinter import ttk
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -24,16 +21,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import ConfirmationPopupWindow, UsagePopupWindow
-
-PopupDisplayFn = Callable[[Optional[tk.Tk]], Union[Union[BaseWindow, None], bool]]
-
-
-@dataclass(frozen=True)
-class UsagePopupWindowDefinition:
-    """Definition for a registered UsagePopupWindow."""
-
-    description: str
-    function: PopupDisplayFn
 
 
 def _validate_parent(parent: tk.Tk) -> bool:
@@ -161,7 +148,6 @@ def confirm_component_properties(parent: tk.Tk) -> bool:
             "entered the correct values for all components?"
         ),
     )
-    confirmation_text.config(state=tk.DISABLED)
 
     # Use ConfirmationPopupWindow.display with yes/no buttons
     return ConfirmationPopupWindow.display(
@@ -235,27 +221,33 @@ def display_parameter_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, Non
     return usage_popup_window
 
 
-USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
-    # Element insertion order determines the order in which they appear in the settings and About dialogs
-    "workflow_explanation": UsagePopupWindowDefinition(
-        description=_("General AMC workflow"),
-        function=display_workflow_explanation,
-    ),
-    "component_editor": UsagePopupWindowDefinition(
-        description=_("Component editor window introduction"),
-        function=display_component_editor_usage_popup,
-    ),
-    "component_editor_validation": UsagePopupWindowDefinition(
-        description=_("Component editor window data validation"),
-        function=confirm_component_properties,
-    ),
-    "parameter_editor": UsagePopupWindowDefinition(
-        description=_("Parameter file editor and uploader window"),
-        function=display_parameter_editor_usage_popup,
-    ),
-}
+def display_bitmask_parameters_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
+    if not _validate_parent(parent):
+        return None
 
+    usage_popup_window = BaseWindow(parent)
+    instructions_text = RichText(
+        usage_popup_window.main_frame,
+        wrap=tk.WORD,
+        height=5,
+        bd=0,
+        font=create_scaled_font(get_safe_font_config(), 1.5),
+    )
+    instructions_text.insert(tk.END, _("Bitmask parameters are editable in four different ways:\n"))
+    instructions_text.insert(tk.END, _(" - double-click on the "))
+    instructions_text.insert(tk.END, _("New Value"), "italic")
+    instructions_text.insert(tk.END, _(" field to edit each bit individually\n"))
+    instructions_text.insert(tk.END, _(" - enter the decimal value directly\n"))
+    instructions_text.insert(tk.END, _(" - enter '0x' followed by the hex code\n"))
+    instructions_text.insert(tk.END, _(" - enter '0b' followed by the binary code\n"))
+    instructions_text.config(state=tk.DISABLED)
 
-def get_usage_popup_keys() -> tuple[str, ...]:
-    """Return a tuple with every UsagePopupWindow identifier."""
-    return tuple(USAGE_POPUP_WINDOWS.keys())
+    UsagePopupWindow.display(
+        parent,
+        usage_popup_window,
+        _("Bitmask parameter editor usage"),
+        "bitmask_parameter_editor",
+        "690x260",
+        instructions_text,
+    )
+    return usage_popup_window

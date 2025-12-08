@@ -124,6 +124,20 @@ To semi-automate the steps and processes on that guide the following *system des
     automatically open the URL <https://discuss.ardupilot.org> in the system's default web browser
   - **Error handling**: If the zip creation fails (e.g., due to file permission issues or disk space),
     the software must display an error message explaining the failure and must not open the browser URL
+- The software must show a dedicated usage popup whenever the parameter editor table displays at least one editable bitmask parameter
+  - The frontend table implementation (`frontend_tkinter_parameter_editor_table.py`) triggers the popup immediately
+    after it renders the parameter rows and again right after the user adds a new bitmask parameter via the Add dialog
+  - Popup visibility is gated exclusively by the `UsagePopupWindow` preference `bitmask_parameter_editor`; no
+    additional per-step throttling is implemented
+  - Keep the title translatable, using the string "Bitmask parameter editor usage"
+  - The message content is:
+    - "Bitmask parameters are editable in four different ways:"
+    - " - double-click on the *New Value* field to edit each bit individually"
+    - " - enter the decimal value directly"
+    - " - enter '0x' followed by the hex code"
+    - " - enter '0b' followed by the binary code"
+  - Define the popup window in `frontend_tkinter_usage_popup_windows.py` and invoke it from `frontend_tkinter_parameter_editor_table.py`
+  - Reuse the standard "display this message again" preference handling implemented by `UsagePopupWindow`
 
 ## 5. Error Handling and Logging
 

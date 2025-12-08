@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # from sys import exit as sys_exit
 from contextlib import suppress as contextlib_suppress
+from dataclasses import dataclass
 from glob import glob as glob_glob
 from importlib.resources import files as importlib_files
 from json import dump as json_dump
@@ -29,6 +30,33 @@ from typing import Any, Optional, Union
 from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
+
+
+@dataclass(frozen=True)
+class UsagePopupWindowDefinition:
+    """Definition for a registered UsagePopupWindow."""
+
+    description: str
+
+
+USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
+    # Element insertion order determines the order in which they appear in the settings and About dialogs
+    "workflow_explanation": UsagePopupWindowDefinition(
+        description=_("General AMC workflow"),
+    ),
+    "component_editor": UsagePopupWindowDefinition(
+        description=_("Component editor window introduction"),
+    ),
+    "component_editor_validation": UsagePopupWindowDefinition(
+        description=_("Component editor window data validation"),
+    ),
+    "parameter_editor": UsagePopupWindowDefinition(
+        description=_("Parameter file editor and uploader window"),
+    ),
+    "bitmask_parameter_editor": UsagePopupWindowDefinition(
+        description=_("Bitmask parameter editor usage window"),
+    ),
+}
 
 
 class ProgramSettings:
@@ -55,14 +83,9 @@ class ProgramSettings:
         # Define default settings directly - no need for deep copying
         settings_directory = cls._user_config_dir()
 
-        # avoid a circular dependency
-        from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (  # noqa: PLC0415
-            get_usage_popup_keys,  # pylint: disable=import-outside-toplevel
-        )
-
         return {
             "Format version": 1,
-            "display_usage_popup": dict.fromkeys(get_usage_popup_keys(), True),
+            "display_usage_popup": dict.fromkeys(USAGE_POPUP_WINDOWS, True),
             "directory_selection": {
                 "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
                 "new_base_dir": os_path.join(settings_directory, "vehicles"),
@@ -315,6 +338,8 @@ class ProgramSettings:
         if ptype in settings.get("display_usage_popup", {}):
             settings["display_usage_popup"][ptype] = value
             ProgramSettings._set_settings_from_dict(settings)
+        else:
+            logging_error(_("Usage popup type '%s' not found in settings dictionary"), ptype)
 
     @staticmethod
     def get_setting(setting: str) -> Optional[Union[int, bool, str, float]]:

@@ -1709,6 +1709,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             )
         return False
 
+    def should_display_bitmask_parameter_editor_usage(self, param_name: str) -> bool:
+        return self.current_step_parameters[param_name].is_editable and self.current_step_parameters[param_name].is_bitmask
+
     def get_parameters_as_par_dict(self, param_names: Optional[list[str]] = None) -> ParDict:
         """
         Extract Par objects from ArduPilotParameter domain models.
