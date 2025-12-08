@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, Callable, Optional, cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -54,7 +54,7 @@ class StubStepParameter:
 class StubParameterEditor:
     """Provide just enough behavior for the acceptance scenarios."""
 
-    def __init__(self, on_add: Callable[[str], bool] | None = None) -> None:
+    def __init__(self, on_add: Optional[Callable[[str], bool]] = None) -> None:  # noqa: UP045
         self.current_step_parameters: dict[str, StubStepParameter] = {}
         self.current_file = "01_test.param"
         self._on_add = on_add

@@ -138,6 +138,14 @@ To semi-automate the steps and processes on that guide the following *system des
     - " - enter '0b' followed by the binary code"
   - Define the popup window in `frontend_tkinter_usage_popup_windows.py` and invoke it from `frontend_tkinter_parameter_editor_table.py`
   - Reuse the standard "display this message again" preference handling implemented by `UsagePopupWindow`
+- After pressing the *Upload selected params to FC, and advance to next param file* button a popup window should appear:
+  - It is a `UsagePopupWindow` gated exclusively by the `only_changed_get_uploaded`
+  - Keep the title translatable, using the string "What gets uploaded to the FC"
+  - The message content is:
+    - "Only changed parameters (marked by `≠` on Windows or `!=` elsewhere) and selected via the Upload checkbox get uploaded to the FC"
+    - "No other parameters will be changed in the FC"
+  - Display the `what_gets_uploaded.png` illustration beneath the text to reinforce the message, falling back to a placeholder if the asset is missing
+  - Reuse the standard "display this message again" preference handling implemented by `UsagePopupWindow`
 
 ## 5. Error Handling and Logging
 

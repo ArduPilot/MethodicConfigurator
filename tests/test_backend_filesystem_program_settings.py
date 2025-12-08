@@ -406,6 +406,7 @@ class TestSettingsFileOperations:
         expected_result["display_usage_popup"]["component_editor_validation"] = True  # Added by default
         expected_result["display_usage_popup"]["workflow_explanation"] = True  # Added by default
         expected_result["display_usage_popup"]["bitmask_parameter_editor"] = True  # Added by default
+        expected_result["display_usage_popup"]["only_changed_get_uploaded"] = True  # Added by default
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
@@ -476,6 +477,7 @@ class TestSettingsFileOperations:
             assert result["display_usage_popup"]["component_editor"] is True
             assert result["display_usage_popup"]["parameter_editor"] is True
             assert result["display_usage_popup"]["bitmask_parameter_editor"] is True
+            assert result["display_usage_popup"]["only_changed_get_uploaded"] is True
 
     def test_user_can_load_settings_from_file_directly(self, mock_user_config) -> None:  # pylint: disable=unused-argument
         """

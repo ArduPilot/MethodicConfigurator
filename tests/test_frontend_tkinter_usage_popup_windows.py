@@ -167,7 +167,7 @@ def test_display_workflow_explanation_creates_links(mocker: MockerFixture) -> No
     popup_window.put_image_in_label.return_value = MagicMock()
     mocker.patch(f"{MODULE}.BaseWindow", return_value=popup_window)
     image_path = str(Path("workflow.png"))
-    mocker.patch(f"{MODULE}.LocalFilesystem.workflow_image_filepath", return_value=image_path)
+    mocker.patch(f"{MODULE}.ProgramSettings.workflow_image_filepath", return_value=image_path)
 
     rich_text_instances: list[MagicMock] = []
 
@@ -213,7 +213,7 @@ def test_display_workflow_explanation_handles_missing_image(mocker: MockerFixtur
     popup_window.put_image_in_label.side_effect = FileNotFoundError()
     mocker.patch(f"{MODULE}.BaseWindow", return_value=popup_window)
     missing_image_path = str(Path("missing_workflow.png"))
-    mocker.patch(f"{MODULE}.LocalFilesystem.workflow_image_filepath", return_value=missing_image_path)
+    mocker.patch(f"{MODULE}.ProgramSettings.workflow_image_filepath", return_value=missing_image_path)
     mocker.patch(f"{MODULE}.RichText", return_value=MagicMock())
     fallback_label = MagicMock()
     mocker.patch(f"{MODULE}.ttk.Label", return_value=fallback_label)
