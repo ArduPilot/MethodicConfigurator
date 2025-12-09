@@ -1,7 +1,7 @@
 ARMING_RUDDER,2  # Vehicle uses arm/disarm via sticks as well as emergency motor stop switch (shoulder switch of Radiomaster Boxer assigned to channel 5)
 RC_OPTIONS,11040  # Enables Crossfire Telemetry and 420 kBaud for ELRS
 RC_PROTOCOLS,512  # Selected in the component editor
-RC5_OPTION,31  # "Motor Emergency Stop", stops all motors immediately at a high signal - mapped to channel 5 / left shoulder toggle button (inverted on RC sender) because ELRS can transmit only 2 positions on channel 5
+RC5_OPTION,31  # To stop all motors immediately if the vehicle starts moving dangerously - mapped to channel 5 / left shoulder toggle button (inverted on RC sender) because ELRS can transmit only 2 positions on channel 5
 RC6_OPTION,0  # Used for flight mode selection
 RC7_OPTION,0
 RC8_OPTION,4  # force RTL
