@@ -323,7 +323,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Create the scrollable parameter editor table in the container
         self.parameter_editor_table = ParameterEditorTable(self.parameter_container, self.parameter_editor, self)
-        self.repopulate_parameter_table(regenerate_from_disk=True)
+        # Table will be populated by the scheduled on_param_file_combobox_change callback
         self.parameter_editor_table.pack(side="top", fill="both", expand=True)
 
         # Create a frame for the buttons
