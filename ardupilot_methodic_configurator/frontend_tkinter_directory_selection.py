@@ -85,7 +85,9 @@ class DirectorySelectionWidgets:
 
         # Create a read-only entry for the directory
         dir_var = tk.StringVar(value=self.directory)
-        self.directory_entry = tk.Entry(directory_selection_subframe, textvariable=dir_var, state="readonly")
+        self.directory_entry = tk.Entry(
+            directory_selection_subframe, textvariable=dir_var, state="readonly", foreground="black"
+        )
         if autoresize_width:
             self.directory_entry.config(width=max(4, len(self.directory)))
         self.directory_entry.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW, pady=(4, 0))
