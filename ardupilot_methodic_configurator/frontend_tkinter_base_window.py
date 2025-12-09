@@ -153,6 +153,7 @@ class BaseWindow:
         - Selecting an appropriate TTK theme
         - Creating custom styles for common UI elements
         - Applying DPI-aware font sizing
+        - Ensuring readable text colors across platforms (especially Linux dark themes)
 
         """
         # Set the theme to 'alt' for consistent appearance
@@ -164,6 +165,18 @@ class BaseWindow:
         # Warning: on linux the font size might be negative
         bold_font_size = self.calculate_scaled_font_size(self.default_font_size)
         style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))
+
+        # Configure Entry and Combobox styles with explicit foreground colors
+        # This prevents white-on-white text issues on Linux with dark themes
+        style.configure("default_v.TEntry", fieldbackground="light blue", foreground="black")
+        style.configure("below_limit.TEntry", fieldbackground="orangered", foreground="black")
+        style.configure("above_limit.TEntry", fieldbackground="red3", foreground="white")
+        style.map("readonly.TCombobox", fieldbackground=[("readonly", "white")])
+        style.map("readonly.TCombobox", selectbackground=[("readonly", "white")])
+        style.map("readonly.TCombobox", selectforeground=[("readonly", "black")])
+        style.map("default_v.TCombobox", fieldbackground=[("readonly", "light blue")])
+        style.map("default_v.TCombobox", selectbackground=[("readonly", "light blue")])
+        style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])
 
     def _get_dpi_scaling_factor(self) -> float:
         """

@@ -163,16 +163,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)
 
-        style = ttk.Style()
-        style.map("readonly.TCombobox", fieldbackground=[("readonly", "white")])
-        style.map("readonly.TCombobox", selectbackground=[("readonly", "white")])
-        style.map("readonly.TCombobox", selectforeground=[("readonly", "black")])
-        style.map("default_v.TCombobox", fieldbackground=[("readonly", "light blue")])
-        style.map("default_v.TCombobox", selectbackground=[("readonly", "light blue")])
-        style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])
-        style.configure("default_v.TEntry", fieldbackground="light blue")
-        style.configure("below_limit.TEntry", fieldbackground="orangered")
-        style.configure("above_limit.TEntry", fieldbackground="red3")
+        # Note: Entry and Combobox styles are configured in BaseWindow._setup_theme_and_styling()
 
         self._create_conf_widgets(__version__)
 
