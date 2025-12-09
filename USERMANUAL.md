@@ -7,7 +7,7 @@ Its graphical user interface (GUI) manages, edits and visualizes parameter files
 It automates the tasks described in the [How to methodically tune any ArduCopter](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter) tuning guide.
 
 This user manual gives a general overview of the software functionality.
-There are also [quick start instructions](README.md), [specific use case instructions](USECASES.md), and [frequently asked questions](FAQ.md).
+There are also [quick start instructions](README.md), [specific use case instructions](USECASES.md), and [frequently asked questions](https://ardupilot.github.io/MethodicConfigurator/FAQ.html).
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ There are also [quick start instructions](README.md), [specific use case instruc
 4. [Troubleshooting](#troubleshooting)
 5. [Support](SUPPORT.md) (External Document)
 6. [Installation and Security](INSTALL.md) (External Document)
-7. [FAQ](FAQ.md) (External Document)
+7. [FAQ](https://ardupilot.github.io/MethodicConfigurator/FAQ.html) (External Document)
 8. [Glossary](#glossary)
 
 ## Before You Begin
@@ -689,7 +689,7 @@ For detailed installation instructions and installer security verification, see 
 
 ## Frequently Asked Questions
 
-For comprehensive answers to common questions about the ArduPilot Methodic Configurator, please see our dedicated **[FAQ document](FAQ.md)**.
+For comprehensive answers to common questions about the ArduPilot Methodic Configurator, please see our dedicated **[FAQ document](https://ardupilot.github.io/MethodicConfigurator/FAQ.html)**.
 
 The FAQ covers:
 
@@ -697,7 +697,7 @@ The FAQ covers:
 - **Technical Questions**: Parameter editing, templates, firmware compatibility
 - **Workflow Questions**: Component editor, configuration changes, vehicle comparisons
 
-> 💡 **Quick Access**: [View Complete FAQ →](FAQ.md)
+> 💡 **Quick Access**: [View Complete FAQ →](https://ardupilot.github.io/MethodicConfigurator/FAQ.html)
 
 ## Glossary
 
