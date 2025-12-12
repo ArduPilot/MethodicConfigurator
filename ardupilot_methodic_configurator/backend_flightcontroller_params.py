@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict, validate_param_name
@@ -103,7 +104,7 @@ class FlightControllerParams:
                 default_parameters is a ParDict of default parameter values
 
         """
-        if self.master is None and self.comport_device == "file":
+        if self.master is None and self.comport_device == DEVICE_FC_PARAM_FROM_FILE:
             filename = "params.param"
             logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
             par_dict_with_comments = ParDict.from_file(filename)

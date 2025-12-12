@@ -47,6 +47,12 @@ To semi-automate the steps and processes on that guide the following *system des
 - The software must support communication with the drone's flight controller using [MAVlink](https://mavlink.io/en/):
   - [parameter protocol](https://mavlink.io/en/services/parameter.html) or
   - [FTP-over-MAVLink](https://mavlink.io/en/services/ftp.html) protocols.
+- The software must support simulating flight controller parameters from a file for testing and template creation:
+  - Users should be able to specify `--device=file` on the command line to simulate FC parameters
+  - When `--device=file` is specified, the software must read parameters from a `params.param` file in the current directory
+  - This simulation mode must allow creating vehicle templates with values derived from FC parameters without requiring a physical flight controller
+  - Parameter-dependent features (component inference, using FC params) must work with simulated parameters
+  - Connection-dependent features (parameter reset) must be properly disabled when using simulated parameters
 - The software must automatically reset the ArduPilot if required by the changes made to the parameters.
   - parameters ending in "_TYPE", "_EN", "_ENABLE", "SID_AXIS" require a reset after being changed
 - The software must automatically validate if the parameter was correctly uploaded to the flight controller

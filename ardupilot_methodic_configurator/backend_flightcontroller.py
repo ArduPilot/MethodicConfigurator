@@ -24,6 +24,7 @@ from ardupilot_methodic_configurator.argparse_check_range import CheckRange
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
+    DEVICE_FC_PARAM_FROM_FILE,
     SUPPORTED_BAUDRATES,
     FlightControllerConnection,
 )
@@ -48,6 +49,7 @@ DEFAULT_REBOOT_TIME: int = 7
 __all__ = [
     "DEFAULT_BAUDRATE",
     "DEFAULT_REBOOT_TIME",
+    "DEVICE_FC_PARAM_FROM_FILE",
     "SUPPORTED_BAUDRATES",
     "FlightController",
     "FlightControllerInfo",
