@@ -120,7 +120,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     @property
     def is_fc_connected(self) -> bool:
-        return self._flight_controller.master is not None and bool(self._flight_controller.fc_parameters)
+        return bool(self._flight_controller.fc_parameters)
+        #return self._flight_controller.master is not None and bool(self._flight_controller.fc_parameters)
 
     @property
     def fc_parameters(self) -> dict[str, float]:

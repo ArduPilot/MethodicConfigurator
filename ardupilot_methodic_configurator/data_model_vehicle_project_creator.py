@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import MISSING, dataclass, fields
-from typing import ClassVar, NamedTuple
+from typing import ClassVar, NamedTuple, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -121,23 +121,31 @@ class NewVehicleProjectSettings:
     }
 
     # Settings that require flight controller connection
-    _FC_DEPENDENT_SETTINGS: ClassVar[set[str]] = {
+    _FC_CONN_DEPENDENT_SETTINGS: ClassVar[set[str]] = {
         "reset_fc_parameters_to_their_defaults",
+    }
+
+    # Error messages for FC connection dependent settings
+    _FC_CONN_DEPENDENT_ERROR_MESSAGES: ClassVar[dict[str, str]] = {
+        "reset_fc_parameters_to_their_defaults": _("Cannot reset FC parameters to defaults: no flight controller connected"),
+    }
+
+    # Settings that require flight controller parameter values
+    _FC_PARAM_DEPENDENT_SETTINGS: ClassVar[set[str]] = {
         "infer_comp_specs_and_conn_from_fc_params",
         "use_fc_params",
     }
 
-    # Error messages for FC-dependent settings
-    _FC_DEPENDENT_ERROR_MESSAGES: ClassVar[dict[str, str]] = {
-        "reset_fc_parameters_to_their_defaults": _("Cannot reset FC parameters to defaults: no flight controller connected"),
+    # Error messages for FC parameter dependent settings
+    _FC_PARAM_DEPENDENT_ERROR_MESSAGES: ClassVar[dict[str, str]] = {
         "infer_comp_specs_and_conn_from_fc_params": _(
-            "Cannot infer component specifications from FC parameters: no flight controller connected"
+            "Cannot infer component specifications from FC parameters: no flight controller parameters available"
         ),
-        "use_fc_params": _("Cannot use FC parameters: no flight controller connected"),
+        "use_fc_params": _("Cannot use FC parameters: no flight controller parameters available"),
     }
 
     @classmethod
-    def get_setting_metadata(cls, setting_name: str, fc_connected: bool = True) -> NewVehicleProjectSetting:
+    def get_setting_metadata(cls, setting_name: str, fc_connected: bool=True, fc_parameters: Optional[dict[str, float]]=None) -> NewVehicleProjectSetting:
         """
         Get metadata for a specific setting with enabled state based on FC connection.
 
@@ -155,12 +163,13 @@ class NewVehicleProjectSettings:
         base_metadata = cls._BASE_SETTINGS_METADATA[setting_name]
 
         # Update enabled state based on FC connection for FC-dependent settings
-        enabled = fc_connected if setting_name in cls._FC_DEPENDENT_SETTINGS else base_metadata.enabled
+        enabled = fc_connected if setting_name in cls._FC_CONN_DEPENDENT_SETTINGS else base_metadata.enabled
+        enabled = bool(fc_parameters) if setting_name in cls._FC_PARAM_DEPENDENT_SETTINGS else base_metadata.enabled
 
         return NewVehicleProjectSetting(label=base_metadata.label, tooltip=base_metadata.tooltip, enabled=enabled)
 
     @classmethod
-    def get_all_settings_metadata(cls, fc_connected: bool = True) -> dict[str, NewVehicleProjectSetting]:
+    def get_all_settings_metadata(cls, fc_connected: bool, fc_parameters: Optional[dict[str, float]]=None) -> dict[str, NewVehicleProjectSetting]:
         """
         Get metadata for all settings with enabled states based on FC connection.
 
@@ -171,10 +180,10 @@ class NewVehicleProjectSettings:
             Dictionary of all settings metadata with appropriate enabled states
 
         """
-        return {name: cls.get_setting_metadata(name, fc_connected) for name in cls._BASE_SETTINGS_METADATA}
+        return {name: cls.get_setting_metadata(name, fc_connected, fc_parameters) for name in cls._BASE_SETTINGS_METADATA}
 
     @classmethod
-    def is_setting_enabled(cls, setting_name: str, fc_connected: bool) -> bool:
+    def is_setting_enabled(cls, setting_name: str, fc_connected: bool, fc_parameters: Optional[dict[str, float]]) -> bool:
         """
         Check if a setting should be enabled based on FC connection state.
 
@@ -186,11 +195,11 @@ class NewVehicleProjectSettings:
             True if setting should be enabled, False otherwise
 
         """
-        metadata = cls.get_setting_metadata(setting_name, fc_connected)
+        metadata = cls.get_setting_metadata(setting_name, fc_connected, fc_parameters)
         return metadata.enabled
 
     @classmethod
-    def get_settings_state(cls, fc_connected: bool) -> dict[str, bool]:
+    def get_settings_state(cls, fc_connected: bool, fc_parameters: Optional[dict[str, float]]) -> dict[str, bool]:
         """
         Get the enabled state for all settings based on FC connection.
 
@@ -201,7 +210,7 @@ class NewVehicleProjectSettings:
             Dictionary mapping setting names to their enabled state
 
         """
-        return {name: cls.is_setting_enabled(name, fc_connected) for name in cls._BASE_SETTINGS_METADATA}
+        return {name: cls.is_setting_enabled(name, fc_connected, fc_parameters) for name in cls._BASE_SETTINGS_METADATA}
 
     @classmethod
     def get_default_values(cls) -> dict[str, bool]:
@@ -229,10 +238,10 @@ class NewVehicleProjectSettings:
             KeyError: If setting is not FC-dependent
 
         """
-        return cls._FC_DEPENDENT_ERROR_MESSAGES[setting_name]
+        return cls._FC_CONN_DEPENDENT_ERROR_MESSAGES[setting_name]
 
     @classmethod
-    def validate_fc_dependent_setting(cls, setting_name: str, setting_value: bool, fc_connected: bool) -> None:
+    def validate_fc_dependent_setting(cls, setting_name: str, setting_value: bool, fc_connected: bool, fc_parameters: Optional[dict[str, float]]) -> None:
         """
         Validate a single FC-dependent setting.
 
@@ -245,12 +254,15 @@ class NewVehicleProjectSettings:
             VehicleProjectCreationError: If FC-dependent setting is enabled without connection
 
         """
-        if setting_name in cls._FC_DEPENDENT_SETTINGS and setting_value and not fc_connected:
+        if setting_name in cls._FC_CONN_DEPENDENT_SETTINGS and setting_value and not fc_connected:
+            error_message = cls.get_fc_dependent_error_message(setting_name)
+            raise VehicleProjectCreationError(_("Flight Controller Connection"), error_message)
+        if setting_name in cls._FC_PARAM_DEPENDENT_SETTINGS and setting_value and not bool(fc_parameters):
             error_message = cls.get_fc_dependent_error_message(setting_name)
             raise VehicleProjectCreationError(_("Flight Controller Connection"), error_message)
 
     @classmethod
-    def is_fc_dependent_setting(cls, setting_name: str) -> bool:
+    def is_fc_conn_dependent_setting(cls, setting_name: str) -> bool:
         """
         Check if a setting requires flight controller connection.
 
@@ -261,7 +273,21 @@ class NewVehicleProjectSettings:
             True if setting requires FC connection, False otherwise
 
         """
-        return setting_name in cls._FC_DEPENDENT_SETTINGS
+        return setting_name in cls._FC_CONN_DEPENDENT_SETTINGS
+
+    @classmethod
+    def is_fc_param_dependent_setting(cls, setting_name: str) -> bool:
+        """
+        Check if a setting requires flight controller parameters.
+
+        Args:
+            setting_name: Name of the setting
+
+        Returns:
+            True if setting requires FC parameters, False otherwise
+
+        """
+        return setting_name in cls._FC_PARAM_DEPENDENT_SETTINGS
 
     def validate_fc_dependent_settings(self, fc_connected: bool) -> None:
         """
@@ -286,10 +312,12 @@ class NewVehicleProjectSettings:
 
         # Validate each FC-dependent setting
         for setting_name, setting_value in settings_dict.items():
-            if self.__class__.is_fc_dependent_setting(setting_name):
-                self.__class__.validate_fc_dependent_setting(setting_name, setting_value, fc_connected)
+            if self.__class__.is_fc_conn_dependent_setting(setting_name):
+                self.__class__.validate_fc_conn_dependent_setting(setting_name, setting_value, fc_connected)
+            if self.__class__.is_fc_param_dependent_setting(setting_name):
+                self.__class__.validate_fc_param_dependent_setting(setting_name, setting_value, fc_connected)
 
-    def adjust_for_fc_connection(self, fc_connected: bool) -> "NewVehicleProjectSettings":
+    def adjust_for_fc_connection(self, fc_connected: bool, fc_parameters: Optional[dict[str, float]]) -> "NewVehicleProjectSettings":
         """
         Return a copy of settings adjusted for flight controller connection state.
 
@@ -300,7 +328,7 @@ class NewVehicleProjectSettings:
             New NewVehicleProjectSettings instance with adjusted values
 
         """
-        if fc_connected:
+        if fc_connected and bool(fc_parameters):
             return self  # No adjustment needed
 
         # Create adjusted settings dictionary
@@ -315,8 +343,10 @@ class NewVehicleProjectSettings:
 
         # Disable FC-dependent settings when FC is not connected
         for setting_name in adjusted_settings:
-            if self.__class__.is_fc_dependent_setting(setting_name):
-                adjusted_settings[setting_name] = False
+            if self.__class__.is_fc_conn_dependent_setting(setting_name):
+                adjusted_settings[setting_name] = fc_connected
+            if self.__class__.is_fc_param_dependent_setting(setting_name):
+                adjusted_settings[setting_name] = bool(fc_parameters)
 
         return NewVehicleProjectSettings(**adjusted_settings)
 

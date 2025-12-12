@@ -49,7 +49,7 @@ def mock_args() -> MagicMock:
     args.loglevel = "INFO"
     args.skip_check_for_updates = False
     args.vehicle_dir = "/test/vehicle/dir"
-    args.device = "test"
+    args.device = "file"
     args.vehicle_type = "ArduCopter"
     args.allow_editing_template_files = False
     args.save_component_to_system_templates = False
@@ -364,7 +364,7 @@ class TestFlightControllerConnection:
         THEN: Application should work with simulated data
         """
         # Arrange: Simulation mode setup
-        application_state.args.device = "test"
+        application_state.args.device = "file"
 
         with (
             patch("ardupilot_methodic_configurator.__main__.connect_to_fc_and_set_vehicle_type") as mock_connect,
@@ -474,7 +474,7 @@ class TestVehicleDirectoryWorkflow:
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
         application_state.vehicle_type = "ArduCopter"  # This is what actually gets used
-        application_state.args.device = "serial"  # Not "test" to avoid FC info window
+        application_state.args.device = "serial"  # Not "file" to avoid FC info window
 
         with (
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
@@ -520,7 +520,7 @@ class TestVehicleDirectoryWorkflow:
         mock_fc.reset_all_parameters_to_default.return_value = (True, "")  # Mock successful reset
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
-        application_state.args.device = "serial"  # Not "test" to avoid FC info window
+        application_state.args.device = "serial"  # Not "file" to avoid FC info window
 
         with (
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
@@ -644,7 +644,7 @@ class TestFlightControllerConnectionLogic:
         # Arrange: Mock arguments with explicit vehicle type
         mock_args = MagicMock()
         mock_args.vehicle_type = "ArduPlane"
-        mock_args.device = "test"
+        mock_args.device = "file"
         mock_args.reboot_time = 10.0
         mock_args.baudrate = 115200
 
@@ -680,7 +680,7 @@ class TestFlightControllerConnectionLogic:
         # Arrange: Mock arguments without vehicle type
         mock_args = MagicMock()
         mock_args.vehicle_type = ""  # Not specified
-        mock_args.device = "test"
+        mock_args.device = "file"
         mock_args.reboot_time = 10.0
         mock_args.baudrate = 115200
 
@@ -813,9 +813,7 @@ class TestParameterBackupWorkflow:
                 "check" in second_message.lower() and "permission" in second_message.lower()
             ) or "write access" in second_message.lower(), "User should receive actionable steps to resolve permission issues"
 
-    def test_user_gets_helpful_error_when_disk_space_insufficient(
-        self, configured_application_state: ApplicationState
-    ) -> None:
+    def test_user_gets_helpful_error_when_disk_space_insufficient(self, configured_application_state: ApplicationState) -> None:
         """
         User receives helpful guidance when insufficient disk space prevents backup.
 

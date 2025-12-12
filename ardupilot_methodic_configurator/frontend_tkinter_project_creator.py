@@ -56,11 +56,12 @@ class VehicleProjectCreatorWindow(BaseWindow):
         )
 
         fc_connected = project_manager.is_flight_controller_connected()
+        fc_parameters = project_manager.fc_parameters()
 
         # Initialize settings variables dynamically from data model
         self.new_project_settings_vars: dict[str, tk.BooleanVar] = {}
         self.new_project_settings_widgets: dict[str, ttk.Checkbutton] = {}
-        new_project_settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
+        new_project_settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected, fc_parameters)
         new_project_settings_default_values = NewVehicleProjectSettings.get_default_values()
         for setting_name in new_project_settings_metadata:
             default_value = new_project_settings_default_values.get(setting_name, False)
@@ -75,7 +76,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
         logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
         logging_debug("new_base_dir: %s", new_base_dir)  # this string is intentionally left untranslated
         logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
-        self.create_option1_widgets(
+        nr_new_project_settings = self.create_option1_widgets(
             template_dir,
             new_base_dir,
             self.project_manager.get_default_vehicle_name(),
@@ -96,7 +97,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
         initial_new_dir: str,
         fc_connected: bool,
         connected_fc_vehicle_type: str,
-    ) -> None:
+    ) -> int:
         # Option 1 - Create a new vehicle configuration directory based on an existing template
         option1_label = ttk.Label(text=_("New vehicle"), style="Bold.TLabel")
         option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label)
@@ -179,6 +180,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
                 "load the newly created files into the application"
             ),
         )
+        return len(settings_metadata)
 
     def create_new_vehicle_from_template(self) -> None:
         # Get the selected template directory and new vehicle configuration directory name

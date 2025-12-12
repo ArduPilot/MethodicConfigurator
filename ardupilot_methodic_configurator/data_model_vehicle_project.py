@@ -137,7 +137,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         """
         fc_connected = self.is_flight_controller_connected()
         new_path = self._creator.create_new_vehicle_from_template(
-            template_dir, new_base_dir, new_vehicle_name, settings, fc_connected
+            template_dir, new_base_dir, new_vehicle_name, settings, fc_connected, self.fc_parameters()
         )
         if new_path:
             self._settings = settings
@@ -243,6 +243,11 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             and hasattr(self._flight_controller, "master")
             and self._flight_controller.master is not None
         )
+
+    def fc_parameters(self) -> Optional[dict[str, float]]:
+        if self._flight_controller is None:
+            return None
+        return self._flight_controller.fc_parameters
 
     def can_open_last_vehicle_directory(self, last_vehicle_dir: str) -> bool:
         """
