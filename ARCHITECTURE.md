@@ -214,8 +214,8 @@ All applications use one or more of the following shared libraries:
      violating the principle that connection manager should be the sole mutator of connection state.
      **Never use in production code.**
 
-   - Test parameter loading via `device="test"` in `backend_flightcontroller_params.py` - Bypasses normal
-     parameter download flow to load from local file. **Marked with FIXME for future removal.**
+   - Test parameter loading via `device=DEVICE_FC_PARAM_FROM_FILE` in `backend_flightcontroller_params.py` - Bypasses normal
+     parameter download flow to load from local file.
 
 1. the tkinter frontend, which is the GUI the user interacts with
    1. [`frontend_tkinter_autoresize_combobox.py`](ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py)

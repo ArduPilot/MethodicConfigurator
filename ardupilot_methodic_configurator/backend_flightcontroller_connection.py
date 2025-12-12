@@ -70,6 +70,7 @@ class FakeSerialForTests:
 
 
 DEFAULT_BAUDRATE: int = 115200
+DEVICE_FC_PARAM_FROM_FILE: str = "file"  # Special device name to simulate FC parameters from params.param file
 # https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_SerialManager/AP_SerialManager.cpp#L741C1-L757C32
 SUPPORTED_BAUDRATES: list[str] = [
     "1200",
@@ -755,7 +756,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 indicating a successful connection.
 
         """
-        if self.comport is None or self.comport.device == "file":
+        if self.comport is None or self.comport.device == DEVICE_FC_PARAM_FROM_FILE:
             # will read parameters from a params.param file instead of a from a flight controller
             return ""
         if self.comport.device.startswith("udp") or self.comport.device.startswith("tcp"):

@@ -34,7 +34,7 @@ from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
-from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url, webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
@@ -218,7 +218,7 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
     state.flight_controller, state.vehicle_type = connect_to_fc_and_set_vehicle_type(state.args)
 
     # Get default parameter values from flight controller
-    if state.flight_controller.master is not None or state.args.device == "test":
+    if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
         fciw = FlightControllerInfoWindow(state.flight_controller)
         state.param_default_values = fciw.get_param_default_values()
 
@@ -270,7 +270,7 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProject
         if not success:
             logging_error(_("Failed to reset parameters to defaults: %(error)s"), {"error": error_msg})
         state.flight_controller.reset_and_reconnect()
-        if state.flight_controller.master is not None or state.args.device == "test":
+        if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
             fciw = FlightControllerInfoWindow(state.flight_controller)
             default_values = fciw.get_param_default_values()
             state.param_default_values = ParDict(default_values) if default_values else ParDict()
