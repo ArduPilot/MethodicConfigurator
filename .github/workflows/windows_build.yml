@@ -48,7 +48,7 @@ jobs:
 
       - name: Restore Inno Setup installer from cache
         id: cache-innosetup
-        uses: actions/cache@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: installer.exe
           key: innosetup-6.5.4-exe
@@ -114,7 +114,7 @@ jobs:
 
       - name: Restore ChineseSimplified.isl from cache
         id: cache-chinese-isl
-        uses: actions/cache@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: ChineseSimplified.isl
           key: chinese-simplified-isl-6.5
