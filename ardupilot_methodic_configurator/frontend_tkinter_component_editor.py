@@ -200,6 +200,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 f"{' > '.join(path)}",
             )
             cb.config(foreground=fg_color)
+            cb.config(width=20)
 
             cb.bind("<FocusOut>", on_validate_combobox)
             cb.bind("<KeyRelease>", on_validate_combobox)
