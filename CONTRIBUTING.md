@@ -68,7 +68,7 @@ On Windows:
 
 ```powershell
 .venv\Scripts\activate.ps1
-python3 -m ardupilot_methodic_configurator
+python -m ardupilot_methodic_configurator
 ```
 
 On macOS & Linux:
