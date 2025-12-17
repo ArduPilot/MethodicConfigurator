@@ -1532,7 +1532,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
         """
-        Process the configuration step for the current file and update the self.parameters.
+        Process the configuration step for the current file and update the self.current_step_parameters.
 
         Returns:
             tuple: (ui_errors, ui_infos)
