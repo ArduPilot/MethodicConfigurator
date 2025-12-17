@@ -35,6 +35,7 @@ from ardupilot_methodic_configurator.__main__ import (
     vehicle_directory_selection,
     write_parameter_defaults,
 )
+from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 
 # pylint: disable=,too-many-lines,redefined-outer-name,too-few-public-methods
@@ -49,7 +50,7 @@ def mock_args() -> MagicMock:
     args.loglevel = "INFO"
     args.skip_check_for_updates = False
     args.vehicle_dir = "/test/vehicle/dir"
-    args.device = "test"
+    args.device = DEVICE_FC_PARAM_FROM_FILE
     args.vehicle_type = "ArduCopter"
     args.allow_editing_template_files = False
     args.save_component_to_system_templates = False
@@ -364,7 +365,7 @@ class TestFlightControllerConnection:
         THEN: Application should work with simulated data
         """
         # Arrange: Simulation mode setup
-        application_state.args.device = "test"
+        application_state.args.device = DEVICE_FC_PARAM_FROM_FILE
 
         with (
             patch("ardupilot_methodic_configurator.__main__.connect_to_fc_and_set_vehicle_type") as mock_connect,
@@ -474,7 +475,7 @@ class TestVehicleDirectoryWorkflow:
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
         application_state.vehicle_type = "ArduCopter"  # This is what actually gets used
-        application_state.args.device = "serial"  # Not "test" to avoid FC info window
+        application_state.args.device = "serial"  # Not DEVICE_FC_PARAM_FROM_FILE to avoid FC info window
 
         with (
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
@@ -520,7 +521,7 @@ class TestVehicleDirectoryWorkflow:
         mock_fc.reset_all_parameters_to_default.return_value = (True, "")  # Mock successful reset
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
-        application_state.args.device = "serial"  # Not "test" to avoid FC info window
+        application_state.args.device = "serial"  # Not DEVICE_FC_PARAM_FROM_FILE to avoid FC info window
 
         with (
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
@@ -644,7 +645,7 @@ class TestFlightControllerConnectionLogic:
         # Arrange: Mock arguments with explicit vehicle type
         mock_args = MagicMock()
         mock_args.vehicle_type = "ArduPlane"
-        mock_args.device = "test"
+        mock_args.device = DEVICE_FC_PARAM_FROM_FILE
         mock_args.reboot_time = 10.0
         mock_args.baudrate = 115200
 
@@ -680,7 +681,7 @@ class TestFlightControllerConnectionLogic:
         # Arrange: Mock arguments without vehicle type
         mock_args = MagicMock()
         mock_args.vehicle_type = ""  # Not specified
-        mock_args.device = "test"
+        mock_args.device = DEVICE_FC_PARAM_FROM_FILE
         mock_args.reboot_time = 10.0
         mock_args.baudrate = 115200
 

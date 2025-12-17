@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
@@ -530,7 +531,7 @@ class TestFlightControllerParamsDownload:
         """
         mock_conn_mgr = Mock()
         mock_conn_mgr.master = None
-        mock_conn_mgr.comport_device = "file"
+        mock_conn_mgr.comport_device = DEVICE_FC_PARAM_FROM_FILE
         mock_conn_mgr.info = FlightControllerInfo()
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
