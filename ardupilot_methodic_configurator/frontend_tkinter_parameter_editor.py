@@ -937,7 +937,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._update_plugin_layout(plugin)
 
             # Repopulate parameter table with new file
-            self.repopulate_parameter_table(regenerate_from_disk=False)
+            self.repopulate_parameter_table()
             self._update_skip_button_state()
 
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
@@ -977,16 +977,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
 
-    def repopulate_parameter_table(self, regenerate_from_disk: bool) -> None:
+    def repopulate_parameter_table(self) -> None:
         if not self.parameter_editor.current_file:
             return  # no file was yet selected, so skip it
         # Re-populate the table with the new parameters
-        self.parameter_editor_table.repopulate_table(
-            self.show_only_differences.get(), self.gui_complexity, regenerate_from_disk
-        )
+        self.parameter_editor_table.repopulate_table(self.show_only_differences.get(), self.gui_complexity)
 
     def on_show_only_changed_checkbox_change(self) -> None:
-        self.repopulate_parameter_table(regenerate_from_disk=False)
+        self.repopulate_parameter_table()
 
     def on_upload_selected_click(self) -> None:
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):

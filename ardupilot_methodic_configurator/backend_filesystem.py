@@ -650,17 +650,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
         return tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)
 
-    def copy_fc_values_to_file(self, selected_file: str, params: dict[str, float]) -> int:
-        ret = 0
-        if selected_file in self.file_parameters:
-            for param, v in self.file_parameters[selected_file].items():
-                if param in params:
-                    v.value = params[param]
-                    ret += 1
-                else:
-                    logging_warning(_("Parameter %s not found in the current parameter file"), param)
-        return ret
-
     def write_last_uploaded_filename(self, current_file: str) -> None:
         try:
             with open(os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), "w", encoding="utf-8") as file:

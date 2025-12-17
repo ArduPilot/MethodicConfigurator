@@ -243,22 +243,29 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return True, relevant_fc_params, auto_changed_by
         return False, None, auto_changed_by
 
-    def _copy_fc_values_to_file(self, selected_file: str, relevant_fc_params: dict) -> bool:
+    def _update_parameters_from_fc_values(self, relevant_fc_params: dict[str, float]) -> bool:
         """
-        Copy FC values to the specified file and update the in-memory domain model.
+        Update in-memory parameter values from flight controller values.
+
+        This method updates the ArduPilotParameter objects in current_step_parameters
+        with values from the flight controller. The updated values are held in memory
+        and will be saved to the parameter file later when the user either:
+        - Uploads parameters to the FC (via upload button)
+        - Skips to the next parameter file (via skip button)
+
+        At that point, the user will be prompted to save changes to file if any
+        parameters have been modified.
 
         Args:
-            selected_file: The configuration file to update.
-            relevant_fc_params: The parameters to copy.
+            relevant_fc_params: Dictionary of parameter names and FC values to copy.
 
         Returns:
-            bool: True if parameters were copied successfully and applied to the
-                  current_step_parameters (when this is the active file).
+            bool: True if at least one parameter was successfully updated in memory.
 
         Note:
-            This keeps the ArduPilotParameter objects in sync with the values written
-            to disk so that the GUI immediately reflects the copied FC values and
-            subsequent exports/write-change checks operate on the updated state.
+            This method bypasses range checking since values came from the FC and were
+            already accepted there. The GUI table view immediately reflects the copied
+            FC values, and subsequent dirty-state tracking operates on the updated state.
 
         """
         params_copied = 0
@@ -268,19 +275,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 logging_error(_("Parameter %s not in current step parameters"), param_name)
                 continue
             try:
-                # We bypass range checking here because values came from the FC
-                # and were already accepted there.
                 param.set_new_value(str(value), ignore_out_of_range=True)
+                params_copied += 1
             except ParameterUnchangedError:
-                continue  # these exceptions are expected and must be ignored
+                continue  # Expected, not an error
             except ParameterOutOfRangeError:
-                pass
+                # Log warning but accept FC value anyway since it came from FC
+                logging_warning(_("Parameter %s value %s is out of range but accepted from FC"), param_name, value)
+                params_copied += 1
             except (ValueError, TypeError):
-                # Log and continue; individual failures shouldn't abort the workflow
                 logging_exception(_("Failed to update in-memory value for %s after FC copy"), param_name)
                 continue
-            params_copied = params_copied + 1
-
         return bool(params_copied)
 
     def handle_copy_fc_values_workflow(
@@ -316,7 +321,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             user_choice = ask_user_choice(_("Update file with values from FC?"), msg, [_("Close"), _("Yes"), _("No")])
 
             if user_choice is True:  # Yes option
-                params_copied = self._copy_fc_values_to_file(selected_file, relevant_fc_params)
+                params_copied = self._update_parameters_from_fc_values(relevant_fc_params)
                 if params_copied:
                     show_info(
                         _("Parameters copied"),
@@ -399,7 +404,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return should_save
         return False
 
-    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913
         self,
         selected_file: str,
         forced: bool,
@@ -434,6 +439,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             handle_file_jump: Callback to handle file jumping.
             handle_download_file: Callback to handle file download.
             handle_upload_file: Callback to handle file upload.
+            show_error: Callback to show error messages.
+            show_info: Callback to show information messages.
 
         Returns:
             tuple: (final_selected_file, should_continue) - The final file after any jumps,
@@ -455,7 +462,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self.current_file = selected_file
 
         # Process configuration step and create domain model parameters
-        (ui_errors, ui_infos) = self.repopulate_configuration_step_parameters()
+        (ui_errors, ui_infos) = self._repopulate_configuration_step_parameters()
 
         for title, msg in ui_errors:
             show_error(title, msg)
@@ -1521,7 +1528,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     # frontend_tkinter_parameter_editor_table.py API start
 
-    def repopulate_configuration_step_parameters(
+    def _repopulate_configuration_step_parameters(
         self,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
         """
