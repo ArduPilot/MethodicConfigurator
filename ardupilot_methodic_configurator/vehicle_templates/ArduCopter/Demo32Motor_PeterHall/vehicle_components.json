@@ -1,0 +1,187 @@
+{
+    "Format version": 0,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.6.3"
+            },
+            "Specifications": {
+                "MCU Series": ""
+            },
+            "Notes": ""
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "TOW min Kg": 0.1,
+                "TOW max Kg": 0.1
+            },
+            "Notes": ""
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "other",
+                "Protocol": "Sum Of Selected Monitors"
+            },
+            "Notes": ""
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.2,
+                "Volt per cell low": 3.5,
+                "Volt per cell crit": 3.3,
+                "Number of cells": 4,
+                "Capacity mAh": 3300
+            },
+            "Notes": ""
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Main Out",
+                "Protocol": "Normal"
+            },
+            "Notes": ""
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": ""
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 10.0
+            },
+            "Notes": ""
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "CAN1",
+                "Protocol": "DroneCAN"
+            },
+            "Notes": ""
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "Notes": ""
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "All"
+            },
+            "Notes": ""
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": ""
+        }
+    },
+    "Program version": "2.8.3"
+}
