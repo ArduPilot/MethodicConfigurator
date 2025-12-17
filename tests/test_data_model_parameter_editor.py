@@ -1183,9 +1183,9 @@ class TestFileCopyWorkflows:
         WHEN: User attempts to copy values
         THEN: False should be returned
         """
-        # Arrange: Set up failed copy
+        # Arrange: Set up failed copy - current_step_parameters is empty by default
+        # so trying to copy PARAM1 will fail because it doesn't exist in current_step_parameters
         relevant_params = {"PARAM1": 1.0}
-        parameter_editor._local_filesystem.copy_fc_values_to_file.return_value = 0
 
         # Act: Attempt copy
         result = parameter_editor._update_parameters_from_fc_values(relevant_params)
