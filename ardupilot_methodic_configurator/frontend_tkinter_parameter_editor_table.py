@@ -172,9 +172,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         return tuple(base_headers), tuple(base_tooltips)
 
-    def repopulate_table(  # pylint: disable=too-many-locals
-        self, show_only_differences: bool, gui_complexity: str, regenerate_from_disk: bool
-    ) -> None:
+    def repopulate_table(self, show_only_differences: bool, gui_complexity: str) -> None:
         for widget in self.view_port.winfo_children():
             widget.destroy()
         # Clear the last return values tracking dictionary when repopulating
@@ -194,15 +192,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(label, tooltips[i])
 
         self.upload_checkbutton_var = {}
-
-        # Process configuration step and create domain model parameters
-        if regenerate_from_disk:
-            (ui_errors, ui_infos) = self.parameter_editor.repopulate_configuration_step_parameters()
-
-            for title, msg in ui_errors:
-                self._dialogs.show_error(title, msg)
-            for title, msg in ui_infos:
-                self._dialogs.show_info(title, msg)
 
         if show_only_differences:
             # Filter to show only different parameters
@@ -796,7 +785,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             # Delete the parameter
             self.parameter_editor.delete_parameter_from_current_file(param_name)
-            self.parameter_editor_window.repopulate_parameter_table(regenerate_from_disk=False)
+            self.parameter_editor_window.repopulate_parameter_table()
 
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
@@ -847,7 +836,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         try:
             if self.parameter_editor.add_parameter_to_current_file(param_name):
                 self._pending_scroll_to_bottom = True
-                self.parameter_editor_window.repopulate_parameter_table(regenerate_from_disk=False)
+                self.parameter_editor_window.repopulate_parameter_table()
 
                 return True
         except InvalidParameterNameError as exc:
