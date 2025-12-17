@@ -492,21 +492,6 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             result = lfs._LocalFilesystem__read_last_uploaded_filename()  # pylint: disable=protected-access
             assert result == ""
 
-    def test_copy_fc_values_to_file_with_missing_params(self) -> None:
-        """Test copy_fc_values_to_file with missing parameters."""
-        lfs = LocalFilesystem(
-            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
-        )
-        test_params = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
-        test_file = "test.param"
-
-        # Test with partially matching parameters
-        lfs.file_parameters = {test_file: {"PARAM1": MagicMock(value=0.0), "PARAM2": MagicMock(value=0.0)}}
-        result = lfs.copy_fc_values_to_file(test_file, test_params)
-        assert result == 2
-        assert lfs.file_parameters[test_file]["PARAM1"].value == 1.0
-        assert lfs.file_parameters[test_file]["PARAM2"].value == 2.0
-
     def test_get_start_file_empty_files(self) -> None:
         """Test get_start_file with empty files list."""
         lfs = LocalFilesystem(

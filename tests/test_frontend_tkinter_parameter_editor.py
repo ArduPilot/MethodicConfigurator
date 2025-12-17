@@ -1199,7 +1199,7 @@ class TestPluginLoading:
         doc_frame.refresh_documentation_labels.assert_called_once()
         doc_frame.update_why_why_now_tooltip.assert_called_once()
         mock_plugin_layout.assert_called_once_with(parameter_editor.get_plugin.return_value)
-        mock_repopulate.assert_called_once_with(regenerate_from_disk=True)
+        mock_repopulate.assert_called_once_with()
         mock_skip_state.assert_called_once()
 
     def test_user_cancels_parameter_file_change_closes_application(
@@ -1436,7 +1436,7 @@ class TestTableRefresh:
         with patch.object(parameter_editor_window, "repopulate_parameter_table") as mock_repopulate:
             parameter_editor_window.on_show_only_changed_checkbox_change()
 
-        mock_repopulate.assert_called_once_with(regenerate_from_disk=False)
+        mock_repopulate.assert_called_once_with()
 
     def test_user_repopulates_table_for_selected_file(self, editor_factory, parameter_editor) -> None:
         """
@@ -1449,14 +1449,12 @@ class TestTableRefresh:
         editor = editor_factory()
         parameter_editor.current_file = "06_table.param"
 
-        regenerate_flag = True
-        editor.repopulate_parameter_table(regenerate_from_disk=regenerate_flag)
+        editor.repopulate_parameter_table()
 
         show_only_flag = editor.show_only_differences.get()
         editor.parameter_editor_table.repopulate_table.assert_called_once_with(
             show_only_flag,
             editor.gui_complexity,
-            regenerate_flag,
         )
 
 
