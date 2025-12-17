@@ -915,6 +915,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 handle_file_jump=self._should_jump_to_file,
                 handle_download_file=self._should_download_file_from_url,
                 handle_upload_file=self._should_upload_file_to_fc,
+                show_error=self.ui.show_error,
+                show_info=self.ui.show_info,
             )
 
             # If user chose to close, exit
@@ -935,7 +937,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._update_plugin_layout(plugin)
 
             # Repopulate parameter table with new file
-            self.repopulate_parameter_table(regenerate_from_disk=True)
+            self.repopulate_parameter_table(regenerate_from_disk=False)
             self._update_skip_button_state()
 
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
