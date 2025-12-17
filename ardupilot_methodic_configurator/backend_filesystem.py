@@ -51,6 +51,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
 
+PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
 
 
@@ -153,7 +154,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         # Convert to set for O(1) lookup performance and compile pattern once
         file_set = set(files)
-        pattern = re_compile(r"^\d{2}_.*\.param$")
+        pattern = re_compile(PARAMETER_FILE_REGEXP)
 
         return self.vehicle_components_fs.json_filename in file_set and any(pattern.match(f) for f in file_set)
 
@@ -345,7 +346,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         parameters: dict[str, ParDict] = {}
         if os_path.isdir(self.vehicle_dir):
             # Regular expression pattern for filenames starting with two digits followed by an underscore and ending in .param
-            pattern = re_compile(r"^\d{2}_.*\.param$")
+            pattern = re_compile(PARAMETER_FILE_REGEXP)
 
             for filename in sorted(os_listdir(self.vehicle_dir)):
                 if pattern.match(filename):
