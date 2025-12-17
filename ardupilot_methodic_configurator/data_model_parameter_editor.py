@@ -245,17 +245,42 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _copy_fc_values_to_file(self, selected_file: str, relevant_fc_params: dict) -> bool:
         """
-        Copy FC values to the specified file.
+        Copy FC values to the specified file and update the in-memory domain model.
 
         Args:
             selected_file: The configuration file to update.
             relevant_fc_params: The parameters to copy.
 
         Returns:
-            bool: True if parameters were copied successfully.
+            bool: True if parameters were copied successfully and applied to the
+                  current_step_parameters (when this is the active file).
+
+        Note:
+            This keeps the ArduPilotParameter objects in sync with the values written
+            to disk so that the GUI immediately reflects the copied FC values and
+            subsequent exports/write-change checks operate on the updated state.
 
         """
-        params_copied = self._local_filesystem.copy_fc_values_to_file(selected_file, relevant_fc_params)
+        params_copied = 0
+        for param_name, value in relevant_fc_params.items():
+            param = self.current_step_parameters.get(param_name)
+            if param is None:
+                logging_error(_("Parameter %s not in current step parameters"), param_name)
+                continue
+            try:
+                # We bypass range checking here because values came from the FC
+                # and were already accepted there.
+                param.set_new_value(str(value), ignore_out_of_range=True)
+            except ParameterUnchangedError:
+                continue  # these exceptions are expected and must be ignored
+            except ParameterOutOfRangeError:
+                pass
+            except (ValueError, TypeError):
+                # Log and continue; individual failures shouldn't abort the workflow
+                logging_exception(_("Failed to update in-memory value for %s after FC copy"), param_name)
+                continue
+            params_copied = params_copied + 1
+
         return bool(params_copied)
 
     def handle_copy_fc_values_workflow(
@@ -385,6 +410,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         handle_file_jump: Callable[[str], str],
         handle_download_file: Callable[[str], None],
         handle_upload_file: Callable[[str], None],
+        show_error: ShowErrorCallback,
+        show_info: ShowInfoCallback,
     ) -> tuple[str, bool]:
         """
         Handle the complete workflow when parameter file selection changes.
@@ -424,6 +451,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if auto_open_documentation or gui_complexity == "simple":
             self.open_documentation_in_browser(selected_file)
 
+        # Update current file
+        self.current_file = selected_file
+
+        # Process configuration step and create domain model parameters
+        (ui_errors, ui_infos) = self.repopulate_configuration_step_parameters()
+
+        for title, msg in ui_errors:
+            show_error(title, msg)
+        for title, msg in ui_infos:
+            show_info(title, msg)
+
         # Handle copying FC values to file
         result = handle_copy_fc_values(selected_file)
         if result == "close":
@@ -440,9 +478,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Handle file upload to FC
         handle_upload_file(selected_file)
-
-        # Update current file
-        self.current_file = selected_file
 
         return selected_file, True
 

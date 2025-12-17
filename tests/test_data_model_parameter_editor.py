@@ -1094,23 +1094,73 @@ class TestFileCopyWorkflows:
 
     def test_user_can_copy_fc_values_to_file(self, parameter_editor) -> None:
         """
-        User can copy FC values to configuration file.
+        User can copy FC values to a configuration file that is not currently open.
 
-        GIVEN: A user has relevant FC parameters to copy
-        WHEN: They copy values to file
-        THEN: Parameters should be copied successfully
+        GIVEN: A user has relevant FC parameters to copy for a non-active file
+        WHEN: They copy values to that file
+        THEN: The filesystem should be updated and the method should report success
         """
-        # Arrange: Set up copy operation
-        selected_file = "test_file.param"
+        # Arrange (Given): Set up copy operation for a non-current file
+        selected_file = "other_file.param"
+        parameter_editor.current_file = "test_file.param"
         relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0}
         parameter_editor._local_filesystem.copy_fc_values_to_file.return_value = 2
 
-        # Act: Copy values to file
+        # Act (When): Copy values to file
         result = parameter_editor._copy_fc_values_to_file(selected_file, relevant_params)
 
-        # Assert: Values were copied
+        # Assert (Then): Values were copied via filesystem only
         assert result is True
         parameter_editor._local_filesystem.copy_fc_values_to_file.assert_called_once_with(selected_file, relevant_params)
+
+    def test_user_sees_ui_updated_when_copying_fc_values_to_current_file(self, parameter_editor) -> None:
+        """
+        User sees the in-memory parameters updated when copying FC values to the current file.
+
+        GIVEN: A user has a configuration step open with parameters matching the FC
+        WHEN: They copy current FC values into the same configuration file
+        THEN: The underlying ArduPilotParameter values should be updated and marked as clean
+        """
+        # Arrange (Given): Set current file and in-memory parameters
+        selected_file = "test_file.param"
+        parameter_editor.current_file = selected_file
+
+        # Create ArduPilotParameter instances with different initial values
+        param1 = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1.0,
+        )
+        param2 = ArduPilotParameter(
+            name="PARAM2",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=2.0,
+        )
+        parameter_editor.current_step_parameters = {"PARAM1": param1, "PARAM2": param2}
+
+        # FC values that will be copied
+        relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+        parameter_editor._local_filesystem.copy_fc_values_to_file.return_value = 2
+
+        # Act (When): Copy FC values into the current file
+        result = parameter_editor._copy_fc_values_to_file(selected_file, relevant_params)
+
+        # Assert (Then):
+        # 1) Filesystem was updated
+        assert result is True
+        parameter_editor._local_filesystem.copy_fc_values_to_file.assert_called_with(selected_file, relevant_params)
+
+        # 2) In-memory ArduPilotParameter values were updated to match FC values
+        assert param1.get_new_value() == pytest.approx(1.0)
+        assert param2.get_new_value() == pytest.approx(2.0)
+
+        # 3) Parameters were marked as clean (no unsaved changes)
+        assert param1.is_dirty is False
+        assert param2.is_dirty is False
 
     def test_user_handles_failed_copy_operation(self, parameter_editor) -> None:
         """
