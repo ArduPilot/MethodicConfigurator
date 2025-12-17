@@ -1092,7 +1092,7 @@ class TestFileCopyWorkflows:
         assert relevant_params is None
         assert auto_changed_by is None
 
-    def test_user_can_copy_fc_values_to_file(self, parameter_editor) -> None:
+    def test_user_can_update_parameters_from_fc_values(self, parameter_editor) -> None:
         """
         User can update in-memory parameters from FC values.
 
