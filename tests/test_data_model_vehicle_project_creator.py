@@ -25,7 +25,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreator,
 )
 
-# pylint: disable=redefined-outer-name,unused-argument,too-few-public-methods
+# pylint: disable=redefined-outer-name,unused-argument,too-few-public-methods,too-many-lines
 
 # ==================== FIXTURES ====================
 
@@ -131,9 +131,10 @@ class TestNewVehicleProjectSettingsValidation:
         """
         # Arrange: FC-dependent settings with active connection
         fc_connected = True
+        fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}  # Mock FC parameters
 
         # Act & Assert: Validation should pass
-        fc_dependent_settings.validate_fc_dependent_settings(fc_connected)
+        fc_dependent_settings.validate_fc_dependent_settings(fc_connected, fc_parameters)
 
     def test_user_sees_specific_error_for_each_fc_dependent_setting(self) -> None:
         """
@@ -511,6 +512,7 @@ class TestVehicleProjectCreationWorkflow:
         new_vehicle_name = "FCConnectedQuad"
         expected_vehicle_dir = "/valid/base/dir/FCConnectedQuad"
         fc_connected = True
+        fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}  # Mock FC parameters
 
         with (
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
@@ -522,7 +524,7 @@ class TestVehicleProjectCreationWorkflow:
         ):
             # Act: Create vehicle project with FC connection
             result_dir = project_creator.create_new_vehicle_from_template(
-                template_dir, new_base_dir, new_vehicle_name, fc_dependent_settings, fc_connected
+                template_dir, new_base_dir, new_vehicle_name, fc_dependent_settings, fc_connected, fc_parameters
             )
 
             # Assert: Project created successfully with FC settings
@@ -575,9 +577,10 @@ class TestNewVehicleProjectSettingsMetadata:
         # Arrange: FC-dependent setting with connection
         setting_name = "use_fc_params"
         fc_connected = True
+        fc_parameters = {"PARAM1": 1.0}  # Mock FC parameters
 
         # Act: Get setting metadata
-        metadata = NewVehicleProjectSettings.get_setting_metadata(setting_name, fc_connected)
+        metadata = NewVehicleProjectSettings.get_setting_metadata(setting_name, fc_connected, fc_parameters)
 
         # Assert: Setting should be enabled
         assert metadata.enabled is True
@@ -629,9 +632,10 @@ class TestNewVehicleProjectSettingsMetadata:
         """
         # Arrange: FC connected
         fc_connected = True
+        fc_parameters = {"PARAM1": 1.0}  # Mock FC parameters
 
         # Act: Get all settings metadata
-        all_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
+        all_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected, fc_parameters)
 
         # Assert: All settings should be present and FC-dependent ones enabled
         assert len(all_metadata) == 6  # All settings should be present
@@ -671,15 +675,15 @@ class TestNewVehicleProjectSettingsMetadata:
         """
         # Arrange: Test different settings and connection states
         test_cases = [
-            ("use_fc_params", True, True),  # FC-dependent, connected = enabled
-            ("use_fc_params", False, False),  # FC-dependent, disconnected = disabled
-            ("copy_vehicle_image", True, True),  # Non-FC-dependent, connected = enabled
-            ("copy_vehicle_image", False, True),  # Non-FC-dependent, disconnected = enabled
+            ("use_fc_params", True, {"P": 1.0}, True),  # FC-param-dependent, connected with params = enabled
+            ("use_fc_params", False, None, False),  # FC-param-dependent, disconnected = disabled
+            ("copy_vehicle_image", True, None, True),  # Non-FC-dependent, connected = enabled
+            ("copy_vehicle_image", False, None, True),  # Non-FC-dependent, disconnected = enabled
         ]
 
-        for setting_name, fc_connected, expected_enabled in test_cases:
+        for setting_name, fc_connected, fc_parameters, expected_enabled in test_cases:
             # Act: Check if setting is enabled
-            is_enabled = NewVehicleProjectSettings.is_setting_enabled(setting_name, fc_connected)
+            is_enabled = NewVehicleProjectSettings.is_setting_enabled(setting_name, fc_connected, fc_parameters)
 
             # Assert: Enabled state should match expectations
             assert is_enabled == expected_enabled
@@ -694,9 +698,10 @@ class TestNewVehicleProjectSettingsMetadata:
         """
         # Arrange: FC connected
         fc_connected = True
+        fc_parameters = {"PARAM1": 1.0}  # Mock FC parameters
 
         # Act: Get all settings state
-        settings_state = NewVehicleProjectSettings.get_settings_state(fc_connected)
+        settings_state = NewVehicleProjectSettings.get_settings_state(fc_connected, fc_parameters)
 
         # Assert: All settings should be present and appropriately enabled
         assert len(settings_state) == 6
@@ -733,32 +738,36 @@ class TestNewVehicleProjectSettingsMetadata:
         """
         # Arrange: FC-dependent settings
         test_cases = [
-            ("use_fc_params", "use FC parameters"),
-            ("reset_fc_parameters_to_their_defaults", "reset FC parameters"),
-            ("infer_comp_specs_and_conn_from_fc_params", "infer component specifications"),
+            ("use_fc_params", "use FC parameters", "no flight controller parameters available"),
+            ("reset_fc_parameters_to_their_defaults", "reset FC parameters", "no flight controller connected"),
+            (
+                "infer_comp_specs_and_conn_from_fc_params",
+                "infer component specifications",
+                "no flight controller parameters available",
+            ),
         ]
 
-        for setting_name, expected_text in test_cases:
+        for setting_name, expected_text, expected_error_text in test_cases:
             # Act: Get error message
             error_message = NewVehicleProjectSettings.get_fc_dependent_error_message(setting_name)
 
             # Assert: Error message should be descriptive
             assert expected_text in error_message
-            assert "no flight controller connected" in error_message
+            assert expected_error_text in error_message
 
     def test_user_gets_error_for_non_fc_dependent_error_message(self) -> None:
         """
-        User receives KeyError when requesting error message for non-FC-dependent setting.
+        User receives ValueError when requesting error message for non-FC-dependent setting.
 
         GIVEN: A user requests error message for non-FC-dependent setting
         WHEN: They call get_fc_dependent_error_message with non-FC setting
-        THEN: They should receive a KeyError
+        THEN: They should receive a ValueError
         """
         # Arrange: Non-FC-dependent setting
         non_fc_setting = "copy_vehicle_image"
 
-        # Act & Assert: Should raise KeyError
-        with pytest.raises(KeyError):
+        # Act & Assert: Should raise ValueError
+        with pytest.raises(ValueError, match="Unknown FC-dependent setting"):
             NewVehicleProjectSettings.get_fc_dependent_error_message(non_fc_setting)
 
     def test_user_can_check_if_setting_is_fc_dependent(self) -> None:
@@ -770,21 +779,33 @@ class TestNewVehicleProjectSettingsMetadata:
         THEN: They should get correct dependency information
         """
         # Arrange: Test FC-dependent and non-FC-dependent settings
-        fc_dependent_cases = [
-            ("use_fc_params", True),
+        fc_conn_dependent_cases = [
             ("reset_fc_parameters_to_their_defaults", True),
-            ("infer_comp_specs_and_conn_from_fc_params", True),
             ("copy_vehicle_image", False),
             ("blank_component_data", False),
             ("blank_change_reason", False),
         ]
 
-        for setting_name, expected_dependency in fc_dependent_cases:
-            # Act: Check FC dependency
-            is_fc_dependent = NewVehicleProjectSettings.is_fc_dependent_setting(setting_name)
+        fc_param_dependent_cases = [
+            ("use_fc_params", True),
+            ("infer_comp_specs_and_conn_from_fc_params", True),
+            ("copy_vehicle_image", False),
+            ("blank_component_data", False),
+        ]
 
-            # Assert: Dependency should match expectations
-            assert is_fc_dependent == expected_dependency
+        for setting_name, expected_dependency in fc_conn_dependent_cases:
+            # Act: Check FC connection dependency
+            is_fc_conn_dependent = NewVehicleProjectSettings.is_fc_conn_dependent_setting(setting_name)
+
+            # Assert: Dependency should match expectation
+            assert is_fc_conn_dependent == expected_dependency
+
+        for setting_name, expected_dependency in fc_param_dependent_cases:
+            # Act: Check FC parameter dependency
+            is_fc_param_dependent = NewVehicleProjectSettings.is_fc_param_dependent_setting(setting_name)
+
+            # Assert: Dependency should match expectation
+            assert is_fc_param_dependent == expected_dependency
 
 
 class TestNewVehicleProjectSettingsAdjustment:
@@ -805,9 +826,10 @@ class TestNewVehicleProjectSettingsAdjustment:
             copy_vehicle_image=True,
         )
         fc_connected = True
+        fc_parameters = {"PARAM1": 1.0}  # Mock FC parameters
 
         # Act: Adjust settings for FC connection
-        adjusted_settings = original_settings.adjust_for_fc_connection(fc_connected)
+        adjusted_settings = original_settings.adjust_for_fc_connection(fc_connected, fc_parameters)
 
         # Assert: Settings should be the same object (no adjustment needed)
         assert adjusted_settings is original_settings
@@ -829,9 +851,10 @@ class TestNewVehicleProjectSettingsAdjustment:
             blank_component_data=True,
         )
         fc_connected = False
+        fc_parameters = None  # No FC parameters when disconnected
 
         # Act: Adjust settings for FC connection
-        adjusted_settings = original_settings.adjust_for_fc_connection(fc_connected)
+        adjusted_settings = original_settings.adjust_for_fc_connection(fc_connected, fc_parameters)
 
         # Assert: FC-dependent settings disabled, others preserved
         assert adjusted_settings is not original_settings  # New instance created
@@ -840,6 +863,134 @@ class TestNewVehicleProjectSettingsAdjustment:
         assert adjusted_settings.infer_comp_specs_and_conn_from_fc_params is False
         assert adjusted_settings.copy_vehicle_image is True  # Non-FC-dependent preserved
         assert adjusted_settings.blank_component_data is True  # Non-FC-dependent preserved
+
+    def test_user_gets_adjusted_settings_when_fc_connected_without_parameters(self) -> None:
+        """
+        User receives adjusted settings when FC is connected but has no parameters.
+
+        GIVEN: A user has FC connected but parameters haven't loaded yet
+        WHEN: They adjust settings for FC connection state
+        THEN: FC connection-dependent settings enabled, parameter-dependent settings disabled
+        """
+        # Arrange: Settings with both connection and parameter dependencies
+        original_settings = NewVehicleProjectSettings(
+            use_fc_params=True,
+            reset_fc_parameters_to_their_defaults=True,
+            infer_comp_specs_and_conn_from_fc_params=True,
+            copy_vehicle_image=True,
+        )
+        fc_connected = True
+        fc_parameters = None  # FC connected but no parameters loaded
+
+        # Act: Adjust settings for FC connection without parameters
+        adjusted_settings = original_settings.adjust_for_fc_connection(fc_connected, fc_parameters)
+
+        # Assert: Connection-dependent enabled, parameter-dependent disabled
+        assert adjusted_settings is not original_settings
+        assert adjusted_settings.reset_fc_parameters_to_their_defaults is True  # Connection-dependent
+        assert adjusted_settings.use_fc_params is False  # Parameter-dependent
+        assert adjusted_settings.infer_comp_specs_and_conn_from_fc_params is False  # Parameter-dependent
+        assert adjusted_settings.copy_vehicle_image is True  # Non-FC-dependent
+
+
+class TestFCParameterDependentSettings:
+    """Test settings that depend specifically on FC parameters availability."""
+
+    def test_user_cannot_use_fc_params_without_parameters(self) -> None:
+        """
+        User cannot enable use_fc_params setting without FC parameters.
+
+        GIVEN: A user wants to use FC parameters but none are available
+        WHEN: They try to validate settings with use_fc_params enabled
+        THEN: Should raise validation error about missing parameters
+        """
+        # Arrange: Settings with use_fc_params enabled
+        settings = NewVehicleProjectSettings(use_fc_params=True)
+        fc_connected = True  # FC is connected
+        fc_parameters = None  # But no parameters available
+
+        # Act & Assert: Validation should fail
+        with pytest.raises(VehicleProjectCreationError) as exc_info:
+            settings.validate_fc_dependent_settings(fc_connected, fc_parameters)
+
+        assert "parameters available" in str(exc_info.value).lower()
+
+    def test_user_can_use_fc_params_when_parameters_available(self) -> None:
+        """
+        User can enable use_fc_params setting when FC parameters are available.
+
+        GIVEN: A user has FC with loaded parameters
+        WHEN: They validate settings with use_fc_params enabled
+        THEN: Validation should pass
+        """
+        # Arrange: Settings with use_fc_params and available parameters
+        settings = NewVehicleProjectSettings(use_fc_params=True)
+        fc_connected = True
+        fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+
+        # Act & Assert: Validation should succeed
+        settings.validate_fc_dependent_settings(fc_connected, fc_parameters)
+
+    def test_user_cannot_infer_components_without_parameters(self) -> None:
+        """
+        User cannot infer component specs without FC parameters.
+
+        GIVEN: A user wants to infer component specs but FC has no parameters
+        WHEN: They try to validate settings
+        THEN: Should raise validation error about missing parameters
+        """
+        # Arrange: Settings with component inference enabled
+        settings = NewVehicleProjectSettings(infer_comp_specs_and_conn_from_fc_params=True)
+        fc_connected = True
+        fc_parameters: dict[str, float] = {}  # Empty parameters
+
+        # Act & Assert: Validation should fail
+        with pytest.raises(VehicleProjectCreationError) as exc_info:
+            settings.validate_fc_dependent_settings(fc_connected, fc_parameters)
+
+        assert "parameters available" in str(exc_info.value).lower()
+
+    def test_user_can_reset_fc_params_with_connection_only(self) -> None:
+        """
+        User can reset FC parameters with just connection, no parameters needed.
+
+        GIVEN: A user has FC connected but no parameters loaded
+        WHEN: They validate settings with reset_fc_parameters enabled
+        THEN: Validation should pass (only requires connection, not parameters)
+        """
+        # Arrange: Settings with reset enabled
+        settings = NewVehicleProjectSettings(reset_fc_parameters_to_their_defaults=True)
+        fc_connected = True
+        fc_parameters = None  # No parameters needed for reset
+
+        # Act & Assert: Validation should succeed
+        settings.validate_fc_dependent_settings(fc_connected, fc_parameters)
+
+    def test_parameter_dependent_settings_disabled_when_no_parameters(self) -> None:
+        """
+        Parameter-dependent settings show as disabled when no FC parameters.
+
+        GIVEN: A user queries settings metadata with FC connected but no parameters
+        WHEN: They check parameter-dependent settings
+        THEN: Those settings should be marked as disabled
+        """
+        # Arrange: FC connected but no parameters
+        fc_connected = True
+        fc_parameters = None
+
+        # Act: Get metadata for parameter-dependent settings
+        use_fc_params_meta = NewVehicleProjectSettings.get_setting_metadata("use_fc_params", fc_connected, fc_parameters)
+        infer_comp_meta = NewVehicleProjectSettings.get_setting_metadata(
+            "infer_comp_specs_and_conn_from_fc_params", fc_connected, fc_parameters
+        )
+        reset_meta = NewVehicleProjectSettings.get_setting_metadata(
+            "reset_fc_parameters_to_their_defaults", fc_connected, fc_parameters
+        )
+
+        # Assert: Parameter-dependent disabled, connection-dependent enabled
+        assert use_fc_params_meta.enabled is False  # Parameter-dependent
+        assert infer_comp_meta.enabled is False  # Parameter-dependent
+        assert reset_meta.enabled is True  # Connection-dependent only
 
 
 class TestVehicleProjectCreationErrorHandling:
@@ -909,3 +1060,75 @@ class TestNewVehicleProjectSettingsTuple:
         assert setting.label == label
         assert setting.tooltip == tooltip
         assert setting.enabled is True
+
+
+class TestGetFCDependentErrorMessageGuardClause:
+    """Test guard clause in get_fc_dependent_error_message method."""
+
+    def test_get_fc_dependent_error_message_raises_for_unknown_setting(self) -> None:
+        """
+        get_fc_dependent_error_message raises ValueError for unknown setting.
+
+        GIVEN: User attempts to get error message for non-existent FC-dependent setting
+        WHEN: They call method with invalid setting name
+        THEN: Should raise ValueError with descriptive message
+        """
+        # Arrange: Invalid setting name
+        invalid_setting = "nonexistent_fc_setting"
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="Unknown FC-dependent setting"):
+            NewVehicleProjectSettings.get_fc_dependent_error_message(invalid_setting)
+
+    def test_get_fc_dependent_error_message_raises_for_non_fc_setting(self) -> None:
+        """
+        get_fc_dependent_error_message raises ValueError for non-FC-dependent setting.
+
+        GIVEN: User attempts to get error message for non-FC-dependent setting
+        WHEN: They call method with valid but non-FC-dependent setting
+        THEN: Should raise ValueError
+        """
+        # Arrange: Valid but non-FC-dependent setting
+        non_fc_setting = "copy_vehicle_image"
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="Unknown FC-dependent setting"):
+            NewVehicleProjectSettings.get_fc_dependent_error_message(non_fc_setting)
+
+    def test_get_fc_dependent_error_message_works_for_conn_dependent(self) -> None:
+        """
+        get_fc_dependent_error_message works correctly for connection-dependent settings.
+
+        GIVEN: User requests error message for connection-dependent setting
+        WHEN: They call method with valid connection-dependent setting name
+        THEN: Should return appropriate error message
+        """
+        # Arrange: Connection-dependent setting
+        setting_name = "reset_fc_parameters_to_their_defaults"
+
+        # Act
+        error_message = NewVehicleProjectSettings.get_fc_dependent_error_message(setting_name)
+
+        # Assert
+        assert "no flight controller connected" in error_message
+
+    def test_get_fc_dependent_error_message_works_for_param_dependent(self) -> None:
+        """
+        get_fc_dependent_error_message works correctly for parameter-dependent settings.
+
+        GIVEN: User requests error message for parameter-dependent setting
+        WHEN: They call method with valid parameter-dependent setting name
+        THEN: Should return appropriate error message
+        """
+        # Arrange: Parameter-dependent settings
+        test_cases = [
+            ("use_fc_params", "no flight controller parameters available"),
+            ("infer_comp_specs_and_conn_from_fc_params", "no flight controller parameters available"),
+        ]
+
+        for setting_name, expected_text in test_cases:
+            # Act
+            error_message = NewVehicleProjectSettings.get_fc_dependent_error_message(setting_name)
+
+            # Assert
+            assert expected_text in error_message

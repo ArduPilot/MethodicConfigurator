@@ -75,6 +75,64 @@ class TestVehicleProjectManagerInitialization:
         assert manager._creator is not None
         assert manager._opener is not None
 
+    def test_user_can_get_fc_parameters_when_fc_connected(self) -> None:
+        """
+        User can retrieve FC parameters when flight controller is connected.
+
+        GIVEN: A project manager with a connected flight controller that has parameters
+        WHEN: User requests FC parameters
+        THEN: Should return the flight controller's parameters dictionary
+        """
+        # Arrange: Create manager with FC that has parameters
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_flight_controller = MagicMock()
+        mock_flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+        manager = VehicleProjectManager(mock_filesystem, mock_flight_controller)
+
+        # Act: Get FC parameters
+        fc_params = manager.fc_parameters()
+
+        # Assert: FC parameters are returned
+        assert fc_params == {"PARAM1": 1.0, "PARAM2": 2.0}
+
+    def test_user_gets_none_when_fc_not_connected(self) -> None:
+        """
+        User receives None when no flight controller is connected.
+
+        GIVEN: A project manager without a flight controller
+        WHEN: User requests FC parameters
+        THEN: Should return None
+        """
+        # Arrange: Create manager without FC
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        manager = VehicleProjectManager(mock_filesystem)
+
+        # Act: Get FC parameters
+        fc_params = manager.fc_parameters()
+
+        # Assert: None is returned
+        assert fc_params is None
+
+    def test_user_gets_fc_parameters_even_if_empty(self) -> None:
+        """
+        User receives empty dict when FC is connected but has no parameters yet.
+
+        GIVEN: A project manager with FC that hasn't loaded parameters yet
+        WHEN: User requests FC parameters
+        THEN: Should return empty dictionary
+        """
+        # Arrange: Create manager with FC that has empty parameters
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_flight_controller = MagicMock()
+        mock_flight_controller.fc_parameters = {}
+        manager = VehicleProjectManager(mock_filesystem, mock_flight_controller)
+
+        # Act: Get FC parameters
+        fc_params = manager.fc_parameters()
+
+        # Assert: Empty dict is returned
+        assert fc_params == {}
+
 
 class TestDirectoryAndPathOperations:
     """Test directory and path related operations."""
