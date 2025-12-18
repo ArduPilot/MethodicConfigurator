@@ -159,4 +159,7 @@ class FilesystemJSONWithSchema:
             logging_error(msg)
             return True, msg
 
+        # Update the in-memory data after successful save
+        self.data = data
+
         return False, ""
