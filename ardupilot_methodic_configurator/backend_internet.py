@@ -12,6 +12,8 @@ import os
 import subprocess
 import tempfile
 import time
+import sys
+import subprocess
 from datetime import datetime, timezone
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -238,7 +240,7 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
     if progress_callback:
         progress_callback(0.0, _("Starting installation..."))
 
-    ret = os.system("pip install --upgrade ardupilot_methodic_configurator")  # noqa: S605, S607
+    ret = subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "ardupilot_methodic_configurator"])
 
     if ret == 0 and progress_callback:
         progress_callback(100.0, _("Download complete"))
