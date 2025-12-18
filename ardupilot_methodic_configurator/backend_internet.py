@@ -238,7 +238,7 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
     if progress_callback:
         progress_callback(0.0, _("Starting installation..."))
 
-    ret = os.system(".ardupilot_methodic_configurator_venv/bin/pip install --upgrade ardupilot_methodic_configurato")  # noqa: S605, S607
+    ret = os.system(".ardupilot_methodic_configurator_venv/bin/pip install --upgrade ardupilot_methodic_configurato")  # noqa: S605
 
     if ret == 0 and progress_callback:
         progress_callback(100.0, _("Download complete"))
