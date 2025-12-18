@@ -214,11 +214,12 @@ Test files follow specific naming conventions to clearly indicate their purpose 
 
 ```text
 tests/
-├── test_frontend_tkinter_component.py      # UI component unit tests
-├── test_backend_logic.py                   # Business logic unit tests
-├── gui_*.py                                # GUI-focused tests (prefixed with gui_)
-├── integration_*.py                        # Integration tests (prefixed with integration_)
-├── test_integration_workflows.py           # End-to-end scenarios
+├── test_frontend_tkinter_component.py      # BDD UI component unit tests
+├── test_backend_logic.py                   # BDD Business logic unit tests
+├── gui_*.py                                # pyautogui GUI-focused tests (prefixed with gui_)
+├── integration_*.py                        # End-to-end integration tests (prefixed with integration_)
+├── acceptance_*.py                         # Acceptance tests (prefixed with acceptance_)
+├── unit_*.py                               # Low-level unit tests for coverage purposes (prefixed with unit_)
 └── conftest.py                             # Shared fixtures
 ```
 
@@ -296,10 +297,11 @@ class TestTemplateSelection:
 
 1. **Run tests**: `pytest tests/ -v`
 2. **Check coverage**: `pytest --cov=ardupilot_methodic_configurator --cov-report=term-missing`
-3. **Lint with ruff**: `ruff check --fix`
-4. **Type check with mypy**: `mypy .`
-5. **Advanced type check with pyright**: `pyright`
-6. **Style check with pylint**: `pylint $(git ls-files '*.py')`
+3. **Format with ruff**: `ruff formal`
+4. **Lint with ruff**: `ruff check --fix`
+5. **Type check with mypy**: `mypy`
+6. **Advanced type check with pyright**: `pyright`
+7. **Style check with pylint**: `pylint $(git ls-files '*.py')`
 
 ### Test Execution Commands
 
@@ -335,17 +337,6 @@ pytest tests/ -m "slow" -v
 
 ## 🔍 Quality Assurance
 
-### Final Validation Steps
-
-Before submitting any test changes:
-
-1. **Verify all tests pass**: `pytest tests/ -v`
-2. **Confirm coverage maintained**: Check coverage report
-3. **Lint compliance**: `ruff check` (must pass)
-4. **Type safety**: `mypy .` (must pass)
-5. **Pyright validation**: `pyright` (should pass)
-6. **Style compliance**: `pylint $(git ls-files '*.py')` (address major issues)
-
 ### Success Criteria
 
 - ✅ All tests pass consistently
@@ -358,4 +349,4 @@ Before submitting any test changes:
 
 ---
 
-**Remember**: Great tests are an investment in the future. Write tests that make the codebase more maintainable, not just achieve coverage metrics.
+**Remember**: Write tests that make the codebase more maintainable, not just achieve coverage metrics.
