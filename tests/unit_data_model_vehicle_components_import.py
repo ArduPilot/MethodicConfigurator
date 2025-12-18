@@ -13,6 +13,8 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+# pylint: disable=duplicate-code  # Unit tests may have similar structure to integration tests
+
 from unittest.mock import patch
 
 import pytest
@@ -418,3 +420,87 @@ class TestComponentDataModelImportInternals:
         fc_parameters = {"BATT_CAPACITY": "invalid"}
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    def test_estimate_cell_count_from_mot_bat_volt_max(self, realistic_model) -> None:
+        """
+        Cell count is estimated from MOT_BAT_VOLT_MAX parameter.
+
+        GIVEN: FC with MOT_BAT_VOLT_MAX for 4S battery
+        WHEN: Estimating battery cell count
+        THEN: Should calculate 4 cells correctly
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        fc_parameters = {"MOT_BAT_VOLT_MAX": 16.8}
+        realistic_model._estimate_battery_cell_count(fc_parameters)
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == 4
+
+    def test_estimate_cell_count_from_batt_low_volt(self, realistic_model) -> None:
+        """
+        Cell count is estimated from BATT_LOW_VOLT when MOT_BAT_VOLT_MAX unavailable.
+
+        GIVEN: FC with only BATT_LOW_VOLT configured
+        WHEN: Estimating battery cell count
+        THEN: Should use BATT_LOW_VOLT for estimation
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        fc_parameters = {"BATT_LOW_VOLT": 21.6}  # 6S
+        realistic_model._estimate_battery_cell_count(fc_parameters)
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == 6
+
+    def test_estimate_cell_count_from_batt_crt_volt(self, realistic_model) -> None:
+        """
+        Cell count is estimated from BATT_CRT_VOLT as last resort.
+
+        GIVEN: FC with only BATT_CRT_VOLT configured
+        WHEN: Estimating battery cell count
+        THEN: Should use BATT_CRT_VOLT for estimation
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        fc_parameters = {"BATT_CRT_VOLT": 9.9}  # 3S
+        realistic_model._estimate_battery_cell_count(fc_parameters)
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == 3
+
+    def test_estimate_cell_count_respects_priority(self, realistic_model) -> None:
+        """
+        Cell count estimation prioritizes MOT_BAT_VOLT_MAX over other parameters.
+
+        GIVEN: FC with all voltage parameters set
+        WHEN: Estimating battery cell count
+        THEN: Should use MOT_BAT_VOLT_MAX (highest priority)
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 12.6,  # 3S
+            "BATT_LOW_VOLT": 14.4,  # Would be 4S
+            "BATT_CRT_VOLT": 16.5,  # Would be 5S
+        }
+        realistic_model._estimate_battery_cell_count(fc_parameters)
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == 3
+
+    def test_estimate_cell_count_handles_zero_voltage(self, realistic_model) -> None:
+        """
+        Zero voltage values are ignored during cell count estimation.
+
+        GIVEN: FC with zero voltage parameters
+        WHEN: Estimating battery cell count
+        THEN: Cell count should not be set
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        initial_cells = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        fc_parameters = {"MOT_BAT_VOLT_MAX": 0}
+        realistic_model._estimate_battery_cell_count(fc_parameters)
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == initial_cells
+
+    def test_estimate_cell_count_validates_range(self, realistic_model) -> None:
+        """
+        Unrealistic cell count estimations are rejected.
+
+        GIVEN: FC with voltage that would estimate >50 cells
+        WHEN: Estimating battery cell count
+        THEN: Cell count should not be set (out of range)
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        initial_cells = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        fc_parameters = {"MOT_BAT_VOLT_MAX": 300.0}  # ~71 cells
+        realistic_model._estimate_battery_cell_count(fc_parameters)
+        assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == initial_cells

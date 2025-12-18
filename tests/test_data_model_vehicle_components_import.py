@@ -571,6 +571,171 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert batt_type == "Analog"
         assert capacity == 6500
 
+    def test_user_can_estimate_cell_count_from_mot_bat_volt_max(self, realistic_model) -> None:
+        """
+        User can estimate battery cell count from MOT_BAT_VOLT_MAX parameter.
+
+        GIVEN: Flight controller with MOT_BAT_VOLT_MAX configured for 4S Lipo (16.8V)
+        WHEN: Importing battery configuration
+        THEN: Cell count should be estimated as 4 (16.8V / 4.2V per cell)
+        """
+        # Set Lipo chemistry (4.2V per cell max)
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        fc_parameters = {"MOT_BAT_VOLT_MAX": 16.8}  # 4S Lipo: 4 * 4.2V = 16.8V
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == 4
+
+    def test_user_can_estimate_cell_count_from_batt_low_volt(self, realistic_model) -> None:
+        """
+        User can estimate battery cell count from BATT_LOW_VOLT parameter.
+
+        GIVEN: Flight controller with BATT_LOW_VOLT configured for 6S Lipo (21.6V)
+        WHEN: Importing battery configuration without MOT_BAT_VOLT_MAX
+        THEN: Cell count should be estimated as 6 (21.6V / 3.6V per cell)
+        """
+        # Set Lipo chemistry (3.6V per cell low)
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        fc_parameters = {"BATT_LOW_VOLT": 21.6}  # 6S Lipo: 6 * 3.6V = 21.6V
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == 6
+
+    def test_user_can_estimate_cell_count_from_batt_crt_volt(self, realistic_model) -> None:
+        """
+        User can estimate battery cell count from BATT_CRT_VOLT parameter.
+
+        GIVEN: Flight controller with BATT_CRT_VOLT configured for 3S Lipo (9.9V)
+        WHEN: Importing battery configuration without MOT_BAT_VOLT_MAX or BATT_LOW_VOLT
+        THEN: Cell count should be estimated as 3 (9.9V / 3.3V per cell)
+        """
+        # Set Lipo chemistry (3.3V per cell critical)
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        fc_parameters = {"BATT_CRT_VOLT": 9.9}  # 3S Lipo: 3 * 3.3V = 9.9V
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == 3
+
+    def test_system_prioritizes_mot_bat_volt_max_for_cell_estimation(self, realistic_model) -> None:
+        """
+        System prioritizes MOT_BAT_VOLT_MAX over other voltage parameters for cell estimation.
+
+        GIVEN: FC with multiple voltage parameters that would give different cell counts
+        WHEN: Importing battery configuration
+        THEN: Cell count should be estimated from MOT_BAT_VOLT_MAX (highest priority)
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 16.8,  # 4S
+            "BATT_LOW_VOLT": 18.0,  # Would estimate 5S
+            "BATT_CRT_VOLT": 19.8,  # Would estimate 6S
+        }
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == 4  # From MOT_BAT_VOLT_MAX
+
+    def test_system_handles_liion_cell_count_estimation(self, realistic_model) -> None:
+        """
+        System correctly estimates cell count for LiIon batteries with different voltages.
+
+        GIVEN: Flight controller configured for 14S LiIon battery
+        WHEN: Importing battery configuration
+        THEN: Cell count should be estimated as 14 (57.4V / 4.1V per cell)
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "LiIon")
+
+        fc_parameters = {"MOT_BAT_VOLT_MAX": 57.4}  # 14S LiIon: 14 * 4.1V = 57.4V
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == 14
+
+    def test_system_handles_zero_voltage_for_cell_estimation(self, realistic_model) -> None:
+        """
+        System ignores zero voltage values when estimating cell count.
+
+        GIVEN: Flight controller with voltage parameters set to 0
+        WHEN: Importing battery configuration
+        THEN: Cell count should not be set
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        initial_cells = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 0,
+            "BATT_LOW_VOLT": 0,
+            "BATT_CRT_VOLT": 0,
+        }
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == initial_cells  # Should not change
+
+    def test_system_handles_invalid_voltage_type_for_cell_estimation(self, realistic_model) -> None:
+        """
+        System handles invalid voltage parameter types gracefully.
+
+        GIVEN: FC with non-numeric voltage values
+        WHEN: Importing battery configuration
+        THEN: Error should be logged and system should not crash
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        fc_parameters = {"MOT_BAT_VOLT_MAX": "invalid"}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    def test_system_handles_out_of_range_cell_count(self, realistic_model) -> None:
+        """
+        System ignores unrealistic cell count estimations.
+
+        GIVEN: Flight controller with voltage that would estimate >50 cells
+        WHEN: Importing battery configuration
+        THEN: Cell count should not be set (out of valid range)
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        initial_cells = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+
+        fc_parameters = {"MOT_BAT_VOLT_MAX": 300.0}  # Would estimate ~71 cells
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == initial_cells  # Should not change
+
+    def test_system_estimates_cells_with_default_chemistry(self, realistic_model) -> None:
+        """
+        System uses default Lipo chemistry if battery chemistry not set.
+
+        GIVEN: Flight controller without battery chemistry configured
+        WHEN: Importing battery configuration with voltage parameters
+        THEN: Cell count should be estimated using Lipo voltages as default
+        """
+        # Ensure chemistry is not a valid one (empty or invalid)
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "")
+
+        fc_parameters = {"MOT_BAT_VOLT_MAX": 25.2}  # 6S Lipo: 6 * 4.2V = 25.2V
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+        assert cell_count == 6  # Should estimate as Lipo
+
     def test_system_preserves_motor_poles_when_no_dshot_or_fettec(self, realistic_model) -> None:
         """
         System preserves existing motor poles when neither DShot nor FETtec configured.
@@ -1160,3 +1325,44 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert is_single_bit_set(0) is False  # No bits set
         assert is_single_bit_set(-1) is False  # Negative number
         assert is_single_bit_set(-4) is False  # Negative power of 2
+
+    def test_user_can_import_complete_battery_configuration(self, realistic_model) -> None:
+        """
+        User can import complete battery configuration including monitor, capacity, and cell count.
+
+        GIVEN: Flight controller with BATT_MONITOR, BATT_CAPACITY, and MOT_BAT_VOLT_MAX configured
+        WHEN: Processing FC parameters through complete import flow
+        THEN: Battery monitor connection, capacity, and estimated cell count should be imported
+        """
+        # Set Lipo chemistry for cell count estimation
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        fc_parameters = {
+            "BATT_MONITOR": 4,
+            "BATT_CAPACITY": 6500,
+            "MOT_BAT_VOLT_MAX": 25.2,  # 6S Lipo
+        }
+        doc: dict[str, Any] = {
+            "SERIAL1_PROTOCOL": {"values": {}},
+            "BATT_MONITOR": {"values": {"4": "Analog Voltage and Current"}},
+            "GPS1_TYPE": {"values": {}},
+            "MOT_PWM_TYPE": {"values": {}},
+            "RC_PROTOCOLS": {"Bitmask": {}},
+        }
+
+        realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        # Verify battery monitor connection
+        batt_type = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
+        batt_protocol = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
+
+        # Verify battery capacity
+        capacity = realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+
+        # Verify cell count estimation
+        cell_count = realistic_model.get_component_value(("Battery", "Specifications", "Number of cells"))
+
+        assert batt_type == "Analog"
+        assert batt_protocol == "Analog Voltage and Current"
+        assert capacity == 6500
+        assert cell_count == 6

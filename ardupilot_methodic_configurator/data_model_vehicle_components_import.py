@@ -8,11 +8,13 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
+
 # from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import warning as logging_warning
 from math import log2
-from typing import Any
+from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentDataModelBase
@@ -24,6 +26,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     RC_PROTOCOLS_DICT,
     SERIAL_PORTS,
     SERIAL_PROTOCOLS_DICT,
+    ComponentDataModelValidation,
 )
 
 
@@ -324,6 +327,92 @@ class ComponentDataModelImport(ComponentDataModelBase):
                     self.set_component_value(("Battery", "Specifications", "Capacity mAh"), batt_capacity)
             except (ValueError, TypeError) as e:
                 logging_error(_("Error processing BATT_CAPACITY parameter: %s"), str(e))
+
+        # Estimate number of cells from voltage parameters
+        self._estimate_battery_cell_count(fc_parameters)
+
+    def _estimate_cells_from_voltage_param(
+        self, param_name: str, param_value: float, volt_per_cell_spec: str
+    ) -> Optional[int]:
+        """
+        Estimate cell count from a voltage parameter.
+
+        Args:
+            param_name: Name of the parameter for logging
+            param_value: Value of the voltage parameter
+            volt_per_cell_spec: Battery specification name (e.g., "Volt per cell max")
+
+        Returns:
+            Estimated cell count or None if estimation failed
+
+        """
+        volt_per_cell_value = self.get_component_value(("Battery", "Specifications", volt_per_cell_spec))
+
+        volt_per_cell = 0.0
+        if isinstance(volt_per_cell_value, (int, float, str)) and volt_per_cell_value:
+            with contextlib.suppress(ValueError, TypeError):
+                volt_per_cell = float(volt_per_cell_value)
+
+        if volt_per_cell <= 0:
+            return None
+
+        try:
+            voltage = float(param_value)
+            if voltage > 0:
+                return round(voltage / volt_per_cell)
+        except (ValueError, TypeError, ZeroDivisionError) as e:
+            logging_error(_("Error processing %s parameter: %s"), param_name, str(e))
+
+        return None
+
+    def _estimate_battery_cell_count(self, fc_parameters: dict[str, float]) -> None:
+        """
+        Estimate battery cell count from voltage parameters.
+
+        Uses MOT_BAT_VOLT_MAX, BATT_LOW_VOLT, or BATT_CRT_VOLT along with
+        current volt-per-cell values to estimate the number of cells.
+
+        Args:
+            fc_parameters: Dictionary of flight controller parameters
+
+        """
+        # Try to estimate cell count from available voltage parameters
+        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT
+        estimated_cells = None
+
+        if "MOT_BAT_VOLT_MAX" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "MOT_BAT_VOLT_MAX", fc_parameters["MOT_BAT_VOLT_MAX"], "Volt per cell max"
+            )
+
+        if estimated_cells is None and "BATT_LOW_VOLT" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "BATT_LOW_VOLT", fc_parameters["BATT_LOW_VOLT"], "Volt per cell low"
+            )
+
+        if estimated_cells is None and "BATT_CRT_VOLT" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "BATT_CRT_VOLT", fc_parameters["BATT_CRT_VOLT"], "Volt per cell crit"
+            )
+
+        # If no estimation succeeded, all volt per cell values must be invalid
+        if estimated_cells is None:
+            logging_error(_("All volt per cell values are zero or invalid; cannot estimate battery cell count"))
+            return
+
+        # Validate and set the estimated cell count
+        cell_path = ("Battery", "Specifications", "Number of cells")
+        if cell_path in ComponentDataModelValidation.VALIDATION_RULES:
+            _type, (min_cells, max_cells), _doc = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
+            if min_cells <= estimated_cells <= max_cells:
+                self.set_component_value(cell_path, estimated_cells)
+            else:
+                logging_error(
+                    _("Estimated battery cell count %s is out of valid range (%d to %d)"),
+                    estimated_cells,
+                    min_cells,
+                    max_cells,
+                )
 
     def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, Any]) -> None:
         """Process motor parameters and update the data model."""
