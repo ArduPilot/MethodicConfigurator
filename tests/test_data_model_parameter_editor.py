@@ -597,7 +597,7 @@ class TestFileDownloadUrlWorkflows:
         # Mock the download_file_from_url function to return success
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url", return_value=True):
             # Act: Execute download workflow
-            result = parameter_editor.should_download_file_from_url_workflow(
+            result = parameter_editor._should_download_file_from_url_workflow(
                 selected_file,
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
@@ -630,7 +630,7 @@ class TestFileDownloadUrlWorkflows:
         # Mock the download_file_from_url function to return failure
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url", return_value=False):
             # Act: Execute download workflow
-            result = parameter_editor.should_download_file_from_url_workflow(
+            result = parameter_editor._should_download_file_from_url_workflow(
                 selected_file,
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
@@ -647,7 +647,7 @@ class TestFileDownloadUrlWorkflows:
 
         GIVEN: A user has a file that could be downloaded
         WHEN: They decline the download confirmation
-        THEN: No download should occur and workflow should return True
+        THEN: No download should occur and workflow should return False
         """
         # Arrange: Set up file info and declining user
         selected_file = "test_file.param"
@@ -661,14 +661,14 @@ class TestFileDownloadUrlWorkflows:
         show_error_mock = MagicMock()
 
         # Act: Execute download workflow
-        result = parameter_editor.should_download_file_from_url_workflow(
+        result = parameter_editor._should_download_file_from_url_workflow(
             selected_file,
             ask_confirmation=ask_confirmation_mock,
             show_error=show_error_mock,
         )
 
         # Assert: Workflow succeeded without download
-        assert result is True
+        assert result is False
         ask_confirmation_mock.assert_called_once()
         show_error_mock.assert_not_called()
 
@@ -1312,7 +1312,9 @@ class TestFileDownloadWorkflows:  # pylint: disable=too-few-public-methods
         mock_show_error = MagicMock()
 
         # Act: Download file
-        result = parameter_editor.should_download_file_from_url_workflow(selected_file, mock_ask_confirmation, mock_show_error)
+        result = parameter_editor._should_download_file_from_url_workflow(
+            selected_file, mock_ask_confirmation, mock_show_error
+        )
 
         # Assert: Download successful
         assert result is True

@@ -330,7 +330,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return user_choice
         return False
 
-    def handle_file_jump_workflow(
+    def _handle_file_jump_workflow(
         self,
         selected_file: str,
         gui_complexity: str,
@@ -412,9 +412,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         auto_open_documentation: bool,
         handle_imu_temp_cal: Callable[[str], None],
         handle_copy_fc_values: Callable[[str], ExperimentChoice],
-        handle_file_jump: Callable[[str], str],
-        handle_download_file: Callable[[str], None],
         handle_upload_file: Callable[[str], None],
+        ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
         show_info: ShowInfoCallback,
     ) -> tuple[str, bool]:
@@ -424,9 +423,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         This method orchestrates all the steps that need to happen when switching
         to a different parameter file, including:
         - IMU temperature calibration check
+        - File jumping
         - Documentation opening
         - FC values copy check
-        - File jumping
         - File download/upload
 
         Args:
@@ -436,9 +435,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             auto_open_documentation: Whether to automatically open documentation.
             handle_imu_temp_cal: Callback to handle IMU temperature calibration.
             handle_copy_fc_values: Callback to handle copying FC values to file.
-            handle_file_jump: Callback to handle file jumping.
-            handle_download_file: Callback to handle file download.
             handle_upload_file: Callback to handle file upload.
+            ask_confirmation: Callback to ask user for confirmation.
             show_error: Callback to show error messages.
             show_info: Callback to show information messages.
 
@@ -454,12 +452,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Handle IMU temperature calibration workflow
         handle_imu_temp_cal(selected_file)
 
+        # Handle file jumping
+        self.current_file = self._handle_file_jump_workflow(selected_file, gui_complexity, ask_confirmation)
+
         # Open documentation if configured
         if auto_open_documentation or gui_complexity == "simple":
-            self.open_documentation_in_browser(selected_file)
-
-        # Update current file
-        self.current_file = selected_file
+            self.open_documentation_in_browser(self.current_file)
 
         # Process configuration step and create domain model parameters
         (ui_errors, ui_infos) = self._repopulate_configuration_step_parameters()
@@ -469,26 +467,22 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         for title, msg in ui_infos:
             show_info(title, msg)
 
-        # Handle copying FC values to file
-        result = handle_copy_fc_values(selected_file)
+        # Handle copying FC values to file, can only be done after repopulate
+        result = handle_copy_fc_values(self.current_file)
         if result == "close":
             # User wants to close application
             if self.is_fc_connected:
                 self._flight_controller.disconnect()
-            return selected_file, False
-
-        # Handle file jumping
-        selected_file = handle_file_jump(selected_file)
+            return self.current_file, False
 
         # Handle file download from URL
-        handle_download_file(selected_file)
+        if self._should_download_file_from_url_workflow(self.current_file, ask_confirmation, show_error):
+            # Handle file upload to FC
+            handle_upload_file(self.current_file)
 
-        # Handle file upload to FC
-        handle_upload_file(selected_file)
+        return self.current_file, True
 
-        return selected_file, True
-
-    def should_download_file_from_url_workflow(
+    def _should_download_file_from_url_workflow(
         self,
         selected_file: str,
         ask_confirmation: AskConfirmationCallback,
@@ -519,7 +513,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Ask user for confirmation
         msg = _("Should the {local_filename} file be downloaded from the URL\n{url}?")
         if not ask_confirmation(_("Download file from URL"), msg.format(local_filename=local_filename, url=url)):
-            return True  # User declined download
+            return False  # User declined download
 
         # Attempt download
         if not download_file_from_url(url, local_filename):

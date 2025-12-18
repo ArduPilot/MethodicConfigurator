@@ -152,9 +152,9 @@ def parameter_editor() -> MagicMock:
                 manager.last_upload_progress_callback(10, 20)
 
     manager.should_upload_file_to_fc_workflow = MagicMock(side_effect=_should_upload_file_to_fc)
-    manager.should_download_file_from_url_workflow = MagicMock()
+    manager._should_download_file_from_url_workflow = MagicMock()
     manager.handle_imu_temperature_calibration_workflow = MagicMock()
-    manager.handle_file_jump_workflow = MagicMock()
+    manager._handle_file_jump_workflow = MagicMock()
     manager.get_non_default_params = MagicMock(return_value={})
     manager.is_fc_connected = True
     manager.is_configuration_step_optional.return_value = False
@@ -1311,31 +1311,6 @@ class TestCopyFlightControllerValues:
         assert result == "close"
         parameter_editor.handle_copy_fc_values_workflow.assert_called_once()
         wait_window_mock.assert_called_once_with(dialog)
-
-
-class TestFileJumpAndDownloadWorkflows:
-    """Exercise lightweight helper methods that delegate to parameter editor data model."""
-
-    def test_user_requests_file_jump_via_helper(
-        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
-    ) -> None:
-        parameter_editor.handle_file_jump_workflow.return_value = "02_next.param"
-
-        result = parameter_editor_window._should_jump_to_file("01_initial.param")
-
-        assert result == "02_next.param"
-        parameter_editor.handle_file_jump_workflow.assert_called_once()
-
-    def test_user_requests_download_from_url(
-        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
-    ) -> None:
-        parameter_editor_window._should_download_file_from_url("01_initial.param")
-
-        parameter_editor.should_download_file_from_url_workflow.assert_called_once_with(
-            "01_initial.param",
-            ask_confirmation=parameter_editor_window.ui.ask_yesno,
-            show_error=parameter_editor_window.ui.show_error,
-        )
 
 
 # ============================== PROGRESS AND DOWNLOADS ==============================
