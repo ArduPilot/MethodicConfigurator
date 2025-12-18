@@ -387,7 +387,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         THEN: System should not crash
         AND: No components should be configured
         """
-        fc_parameters: dict[str, Any] = {}
+        fc_parameters: dict[str, float] = {}
         doc: dict[str, Any] = {}
 
         with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):

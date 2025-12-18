@@ -307,7 +307,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Set the configuration template name in the data."""
         self.data_model.set_configuration_template(configuration_template)
 
-    def set_values_from_fc_parameters(self, fc_parameters: dict[str, Any], doc: dict[str, Any]) -> None:
+    def set_values_from_fc_parameters(self, fc_parameters: dict[str, float], doc: dict[str, Any]) -> None:
         """
         Process flight controller parameters and update the data model.
 

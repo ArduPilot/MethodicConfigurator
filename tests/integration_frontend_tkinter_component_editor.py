@@ -263,7 +263,7 @@ class TestUserComponentConfigurationWorkflows:
         editor = component_editor_window
 
         # GIVEN: FC parameters that affect multiple components
-        fc_params = {
+        fc_params: dict[str, float] = {
             "SERIAL1_PROTOCOL": 23,  # RCIN protocol
             "BATT_MONITOR": 4,  # Analog Voltage and Current
         }
