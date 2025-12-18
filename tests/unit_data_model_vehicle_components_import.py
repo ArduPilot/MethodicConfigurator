@@ -379,3 +379,42 @@ class TestComponentDataModelImportInternals:
             batt_protocol = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
             assert batt_type == "Analog"
             assert batt_protocol == "Voltage"
+
+    def test_set_battery_capacity_from_fc_parameters(self, realistic_model) -> None:
+        """
+        Battery capacity is correctly imported from FC parameters.
+
+        GIVEN: FC parameters with valid BATT_CAPACITY
+        WHEN: Setting battery type from parameters
+        THEN: Battery capacity should be set correctly
+        """
+        fc_parameters = {"BATT_CAPACITY": 5000}
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        capacity = realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+        assert capacity == 5000
+
+    def test_set_battery_capacity_ignores_zero(self, realistic_model) -> None:
+        """
+        Zero battery capacity is ignored during import.
+
+        GIVEN: FC parameters with BATT_CAPACITY set to 0
+        WHEN: Setting battery type from parameters
+        THEN: Battery capacity should not be updated
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Capacity mAh"), 1000)
+        fc_parameters = {"BATT_CAPACITY": 0}
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        capacity = realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+        assert capacity == 1000  # Should not change
+
+    def test_set_battery_capacity_handles_invalid_type(self, realistic_model) -> None:
+        """
+        Invalid battery capacity type is handled gracefully.
+
+        GIVEN: FC parameters with non-integer BATT_CAPACITY
+        WHEN: Setting battery type from parameters
+        THEN: Error should be logged and system should not crash
+        """
+        fc_parameters = {"BATT_CAPACITY": "invalid"}
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)

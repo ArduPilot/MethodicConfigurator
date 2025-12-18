@@ -317,6 +317,14 @@ class ComponentDataModelImport(ComponentDataModelBase):
             except (ValueError, KeyError, TypeError) as e:
                 logging_error(_("Error processing BATT_MONITOR parameter: %s"), str(e))
 
+        if "BATT_CAPACITY" in fc_parameters:
+            try:
+                batt_capacity = int(fc_parameters["BATT_CAPACITY"])
+                if batt_capacity > 0:
+                    self.set_component_value(("Battery", "Specifications", "Capacity mAh"), batt_capacity)
+            except (ValueError, TypeError) as e:
+                logging_error(_("Error processing BATT_CAPACITY parameter: %s"), str(e))
+
     def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, Any]) -> None:
         """Process motor parameters and update the data model."""
         if "MOT_PWM_TYPE" in fc_parameters:
