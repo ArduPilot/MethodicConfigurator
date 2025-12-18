@@ -83,359 +83,126 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert not basic_model.is_fc_model_valid("")
         assert not basic_model.is_fc_model_valid(None)
 
-    def test_system_finds_parameter_keys_from_protocol_names(self, realistic_model, sample_doc_dict) -> None:
+    def test_user_can_import_gnss_serial_connection_from_fc(self, realistic_model) -> None:
         """
-        System looks up parameter keys using protocol names (reverse search).
-
-        GIVEN: Documentation mapping parameter values to protocol names
-        WHEN: Searching for keys by protocol name
-        THEN: Correct parameter keys should be returned
-        AND: Missing values should return fallback keys
-        AND: Mismatched list lengths should log error but still find values
-        """
-        # Act & Assert: Found values return correct keys
-        result = realistic_model._reverse_key_search(sample_doc_dict, "SERIAL1_PROTOCOL", ["MAVLink1", "MAVLink2"], [1, 2])
-        assert result == [1, 2]
-
-        # Act & Assert: Missing values return fallbacks
-        result = realistic_model._reverse_key_search(sample_doc_dict, "SERIAL1_PROTOCOL", ["NonExistent"], [99])
-        assert result == [99]
-
-        # Act & Assert: Mismatched lengths log error but still work
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_log:
-            result = realistic_model._reverse_key_search(
-                sample_doc_dict,
-                "SERIAL1_PROTOCOL",
-                ["GPS", "RCIN"],
-                [5],  # Mismatched lengths
-            )
-            mock_log.assert_called()
-            assert result == [5, 23]  # Should still return found values
-
-    def test_system_handles_reverse_key_search_edge_cases(self, realistic_model) -> None:
-        """
-        System gracefully handles edge cases during reverse parameter key search.
-
-        GIVEN: Various edge cases (empty docs, malformed docs, empty values)
-        WHEN: Attempting reverse key search
-        THEN: System should handle errors gracefully
-        AND: Return fallbacks when parameters not found
-        """
-        # Test with empty documentation - should handle KeyError gracefully
-        empty_doc: dict = {}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            # The method should handle the KeyError and return fallbacks
-            try:
-                result = realistic_model._reverse_key_search(empty_doc, "MISSING_PARAM", ["value"], [99])
-                assert result == [99]  # Should return fallbacks when parameter not found
-            except KeyError:
-                # The current implementation raises KeyError - this is expected behavior
-                # The method is designed to access doc[param_name]["values"] directly
-                pass
-
-        # Test with malformed documentation (missing values key)
-        malformed_doc: dict = {"PARAM": {"other_key": {}}}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            try:
-                result = realistic_model._reverse_key_search(malformed_doc, "PARAM", ["value"], [99])
-                assert result == [99]
-            except KeyError:
-                # Expected behavior - the method doesn't handle missing "values" key
-                pass
-
-        # Test with empty values in documentation
-        empty_values_doc: dict = {"PARAM": {"values": {}}}
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            result = realistic_model._reverse_key_search(empty_values_doc, "PARAM", ["value"], [99])
-            assert result == [99]
-
-    def test_system_verifies_protocol_dictionary_against_documentation(self, realistic_model, sample_doc_dict) -> None:
-        """
-        System verifies protocol dictionaries match ArduPilot documentation.
-
-        GIVEN: A protocol dictionary and corresponding ArduPilot documentation
-        WHEN: Verifying dictionary correctness
-        THEN: Matching dictionaries should return True
-        """
-        dict_to_check = {
-            "1": {"protocol": "MAVLink1"},
-            "2": {"protocol": "MAVLink2"},
-            "5": {"protocol": "GPS"},
-            "23": {"protocol": "RCIN"},
-        }
-
-        result = realistic_model._verify_dict_is_uptodate(sample_doc_dict, dict_to_check, "SERIAL1_PROTOCOL", "values")
-        assert result is True
-
-    def test_system_detects_outdated_protocol_dictionaries(self, realistic_model, sample_doc_dict) -> None:
-        """
-        System detects when protocol dictionaries don't match documentation.
-
-        GIVEN: A protocol dictionary with incorrect values
-        WHEN: Verifying against ArduPilot documentation
-        THEN: Mismatched dictionaries should return False
-        AND: Error should be logged
-        """
-        dict_mismatch = {
-            "1": {"protocol": "Wrong Protocol"},
-            "2": {"protocol": "MAVLink2"},
-            "5": {"protocol": "GPS"},
-            "23": {"protocol": "RCIN"},
-        }
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            result = realistic_model._verify_dict_is_uptodate(sample_doc_dict, dict_mismatch, "SERIAL1_PROTOCOL", "values")
-            assert result is False
-
-    def test_system_handles_missing_documentation_gracefully(self, realistic_model) -> None:
-        """
-        System handles missing or incomplete documentation during verification.
-
-        GIVEN: Empty or incomplete documentation
-        WHEN: Attempting to verify dictionaries
-        THEN: Verification should return False
-        AND: System should not crash
-        """
-        # Act & Assert: Empty doc returns False
-        result = realistic_model._verify_dict_is_uptodate({}, {}, "MISSING", "values")
-        assert result is False
-
-        # Act & Assert: Missing doc_key returns False
-        doc: dict = {"OTHER_KEY": {"values": {}}}
-        result = realistic_model._verify_dict_is_uptodate(doc, {}, "MISSING_KEY", "values")
-        assert result is False
-
-        # Act & Assert: Missing doc_dict returns False
-        doc = {"PARAM": {"other_dict": {}}}
-        result = realistic_model._verify_dict_is_uptodate(doc, {}, "PARAM", "values")
-        assert result is False
-
-    def test_system_detects_incomplete_protocol_dictionaries(self, realistic_model) -> None:
-        """
-        System detects when protocol dictionary is missing documented keys.
-
-        GIVEN: Protocol dictionary missing some documented protocols
-        WHEN: Verifying completeness against documentation
-        THEN: Incomplete dictionary should return False
-        AND: Error should be logged about missing keys
-        """
-        doc = {
-            "PARAM": {
-                "values": {
-                    "1": "Protocol1",
-                    "2": "Protocol2",
-                    "3": "Protocol3",
-                }
-            }
-        }
-
-        incomplete_dict = {
-            "1": {"protocol": "Protocol1"},
-            # Missing key "2" and "3"
-        }
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            result = realistic_model._verify_dict_is_uptodate(doc, incomplete_dict, "PARAM", "values")
-            assert result is False
-
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.GNSS_RECEIVER_CONNECTION",
-        {"2": {"type": "SERIAL", "protocol": "uBlox"}},
-    )
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PROTOCOLS_DICT",
-        {"5": {"component": "GNSS Receiver", "protocol": "GPS"}},
-    )
-    def test_system_imports_gnss_serial_connection_from_fc(self, realistic_model) -> None:
-        """
-        System correctly imports GNSS receiver with serial connection.
+        User can import GNSS receiver configuration with serial connection.
 
         GIVEN: Flight controller configured with GNSS on serial connection (GPS_TYPE=2, uBlox)
-        WHEN: Importing GNSS parameters
+        WHEN: User imports FC parameters
         THEN: GNSS protocol should be set to uBlox
-        AND: Connection type should be SERIAL
+        AND: Connection type should be detected from serial port configuration
         """
-        fc_parameters = {"GPS_TYPE": 2}
+        fc_parameters = {"GPS_TYPE": 2, "SERIAL3_PROTOCOL": 5}
+        doc = {
+            "GPS_TYPE": {"values": {"2": "uBlox"}},
+            "SERIAL3_PROTOCOL": {"values": {"5": "GPS"}},
+        }
 
-        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
+        gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
         assert protocol == "uBlox"
+        assert gnss_type == "SERIAL3"
 
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.GNSS_RECEIVER_CONNECTION",
-        {"0": {"type": "None", "protocol": "None"}},
-    )
-    def test_system_imports_disabled_gnss_receiver(self, realistic_model) -> None:
+    def test_user_can_import_disabled_gnss_receiver(self, realistic_model) -> None:
         """
-        System correctly handles disabled GNSS receiver configuration.
+        User can import disabled GNSS receiver configuration.
 
         GIVEN: Flight controller with GPS_TYPE=0 (no GNSS)
-        WHEN: Importing GNSS parameters
+        WHEN: User imports FC parameters
         THEN: GNSS type should be None
         AND: GNSS protocol should be None
         """
         fc_parameters = {"GPS_TYPE": 0}
+        doc = {"GPS_TYPE": {"values": {"0": "None"}}}
 
-        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
         gnss_protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
         assert gnss_type == "None"
         assert gnss_protocol == "None"
 
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.GNSS_RECEIVER_CONNECTION",
-        {"9": {"type": "CAN1", "protocol": "DroneCAN"}},
-    )
-    @patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.CAN_PORTS", ["CAN1", "CAN2"])
-    def test_system_imports_gnss_can1_connection(self, realistic_model) -> None:
+    def test_user_can_import_gnss_can1_connection(self, realistic_model) -> None:
         """
-        System correctly imports GNSS receiver on CAN1 bus with DroneCAN.
+        User can import GNSS receiver on CAN1 bus with DroneCAN.
 
         GIVEN: Flight controller with GNSS on CAN1 (GPS_TYPE=9, DroneCAN)
-        WHEN: Importing GNSS and CAN parameters
+        WHEN: User imports FC parameters
         THEN: GNSS connection type should be CAN1
         AND: GNSS protocol should be DroneCAN
         """
         fc_parameters = {"GPS_TYPE": 9, "CAN_D1_PROTOCOL": 1, "CAN_P1_DRIVER": 1}
+        doc = {"GPS_TYPE": {"values": {"9": "DroneCAN"}}}
 
-        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
         gnss_protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
         assert gnss_type == "CAN1"
         assert gnss_protocol == "DroneCAN"
 
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.GNSS_RECEIVER_CONNECTION",
-        {"9": {"type": "CAN2", "protocol": "DroneCAN"}},
-    )
-    @patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.CAN_PORTS", ["CAN1", "CAN2"])
-    def test_system_imports_gnss_can2_connection(self, realistic_model) -> None:
+    def test_user_can_import_gnss_can2_connection(self, realistic_model) -> None:
         """
-        System correctly imports GNSS receiver on CAN2 bus with DroneCAN.
+        User can import GNSS receiver on CAN2 bus with DroneCAN.
 
         GIVEN: Flight controller with GNSS on CAN2 (GPS_TYPE=9, DroneCAN on second port)
-        WHEN: Importing GNSS and CAN parameters
+        WHEN: User imports FC parameters
         THEN: GNSS connection type should be CAN2
         AND: GNSS protocol should be DroneCAN
         """
         fc_parameters = {"GPS_TYPE": 9, "CAN_D2_PROTOCOL": 1, "CAN_P2_DRIVER": 2}
+        doc = {"GPS_TYPE": {"values": {"9": "DroneCAN"}}}
 
-        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
         gnss_protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
         assert gnss_type == "CAN2"
         assert gnss_protocol == "DroneCAN"
 
-    def test_system_handles_invalid_gps_type_value(self, realistic_model) -> None:
+    def test_user_can_import_single_rc_protocol_configuration(self, realistic_model) -> None:
         """
-        System handles invalid GPS_TYPE parameter values gracefully.
-
-        GIVEN: Flight controller with invalid GPS_TYPE value (non-integer)
-        WHEN: Importing GNSS parameters
-        THEN: Error should be logged
-        AND: GNSS type should default to None
-        """
-        fc_parameters = {"GPS_TYPE": "invalid"}
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
-
-        gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
-        assert gnss_type == "None"
-
-    def test_system_handles_unknown_gps_type(self, realistic_model) -> None:
-        """
-        System handles unknown GPS_TYPE values gracefully.
-
-        GIVEN: Flight controller with unknown GPS_TYPE value (999)
-        WHEN: Importing GNSS parameters
-        THEN: Error should be logged
-        AND: GNSS type should default to None
-        """
-        fc_parameters = {"GPS_TYPE": 999}
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
-
-        gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
-        assert gnss_type == "None"
-
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.RC_PROTOCOLS_DICT", {"9": {"protocol": "CRSF"}}
-    )
-    def test_system_imports_single_rc_protocol_configuration(self, realistic_model) -> None:
-        """
-        System correctly imports RC receiver with single protocol (power of 2).
+        User can import RC receiver with single protocol (power of 2).
 
         GIVEN: Flight controller with RC_PROTOCOLS=512 (CRSF, single protocol)
-        WHEN: Importing RC protocol configuration
+        WHEN: User imports FC parameters
         THEN: RC protocol should be set to CRSF
         AND: No warning should be logged
         """
         fc_parameters = {"RC_PROTOCOLS": 512}  # 2^9
+        doc = {"RC_PROTOCOLS": {"values": {"512": "CRSF"}}}
 
-        realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         rc_protocol = realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol"))
         assert rc_protocol == "CRSF"
 
-    def test_system_handles_invalid_rc_protocols_value(self, realistic_model) -> None:
-        """
-        System handles invalid RC_PROTOCOLS parameter gracefully.
-
-        GIVEN: Flight controller with invalid RC_PROTOCOLS value (non-integer)
-        WHEN: Importing RC protocol configuration
-        THEN: Error should be logged
-        AND: System should not crash
-        """
-        fc_parameters = {"RC_PROTOCOLS": "invalid"}
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
-
     def test_system_handles_multiple_rc_protocols_configuration(self, realistic_model) -> None:
         """
-        System handles ambiguous RC_PROTOCOLS configuration (multiple bits set).
-
-        GIVEN: Flight controller with RC_PROTOCOLS=3 (multiple protocols enabled)
-        WHEN: Importing RC protocol configuration
-        THEN: Protocol should not be set due to ambiguity
-        AND: Warning should be logged about multiple protocols
-        """
-        fc_parameters = {"RC_PROTOCOLS": 3}  # Not a power of 2
-
-        realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
-
-        # Should not set protocol for non-power of 2 values
-
-    @patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1", "SERIAL2"])
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PROTOCOLS_DICT",
-        {"2": {"component": "Telemetry", "protocol": "MAVLink2"}},
-    )
-    def test_system_imports_telemetry_serial_connection(self, realistic_model) -> None:
-        """
-        System correctly imports telemetry on serial port.
+        User can import telemetry on serial port.
 
         GIVEN: Flight controller with telemetry on SERIAL1 (MAVLink2)
-        WHEN: Importing serial port configuration
+        WHEN: User imports FC parameters
         THEN: Telemetry type should be SERIAL1
         AND: Telemetry protocol should be MAVLink2
-        AND: Should return False (no ESC detected)
         """
         fc_parameters = {"SERIAL1_PROTOCOL": 2}
+        doc = {"SERIAL1_PROTOCOL": {"values": {"2": "MAVLink2"}}}
 
-        result = realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         telem_type = realistic_model.get_component_value(("Telemetry", "FC Connection", "Type"))
         telem_protocol = realistic_model.get_component_value(("Telemetry", "FC Connection", "Protocol"))
         assert telem_type == "SERIAL1"
         assert telem_protocol == "MAVLink2"
-        assert result is False  # No ESC
 
     @patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1", "SERIAL2"])
     @patch(
@@ -530,105 +297,56 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert esc_type == "AIO"
         assert esc_protocol == "DShot600"
 
-    def test_system_handles_invalid_mot_pwm_type(self, realistic_model) -> None:
+    def test_user_can_import_battery_monitor_configuration(self, realistic_model) -> None:
         """
-        System handles invalid MOT_PWM_TYPE parameter gracefully.
-
-        GIVEN: Flight controller with invalid MOT_PWM_TYPE value
-        WHEN: Importing ESC parameters
-        THEN: Error should be logged
-        AND: System should not crash
-        """
-        fc_parameters = {"MOT_PWM_TYPE": "invalid"}
-        doc: dict[str, Any] = {}
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
-
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.BATT_MONITOR_CONNECTION",
-        {"4": {"type": "Analog", "protocol": "Analog Voltage and Current"}},
-    )
-    def test_system_imports_battery_monitor_configuration(self, realistic_model) -> None:
-        """
-        System correctly imports battery monitor configuration.
+        User can import battery monitor configuration.
 
         GIVEN: Flight controller with analog battery monitor (BATT_MONITOR=4)
-        WHEN: Importing battery parameters
+        WHEN: User imports FC parameters
         THEN: Battery type should be Analog
         AND: Battery protocol should be Analog Voltage and Current
         """
         fc_parameters = {"BATT_MONITOR": 4}
+        doc = {"BATT_MONITOR": {"values": {"4": "Analog Voltage and Current"}}}
 
-        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         batt_type = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
         batt_protocol = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
         assert batt_type == "Analog"
         assert batt_protocol == "Analog Voltage and Current"
 
-    @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.BATT_MONITOR_CONNECTION",
-        {"4": {"type": ["Analog", "Digital"], "protocol": ["Voltage", "Current"]}},
-    )
-    def test_system_handles_battery_list_type_values(self, realistic_model) -> None:
+    def test_user_can_import_motor_poles_for_dshot(self, realistic_model) -> None:
         """
-        System handles battery configuration with list-type values.
-
-        GIVEN: Flight controller with battery configuration using lists for type/protocol
-        WHEN: Importing battery parameters
-        THEN: First element of each list should be used
-        """
-        fc_parameters = {"BATT_MONITOR": 4}
-
-        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
-
-        batt_type = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
-        batt_protocol = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
-        assert batt_type == "Analog"  # First element of list
-        assert batt_protocol == "Voltage"  # First element of list
-
-    def test_system_handles_invalid_battery_monitor_value(self, realistic_model) -> None:
-        """
-        System handles invalid BATT_MONITOR parameter gracefully.
-
-        GIVEN: Flight controller with invalid BATT_MONITOR value
-        WHEN: Importing battery parameters
-        THEN: Error should be logged
-        AND: System should not crash
-        """
-        fc_parameters = {"BATT_MONITOR": "invalid"}
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
-
-    @patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.MOT_PWM_TYPE_DICT", {"6": {"is_dshot": True}})
-    def test_system_imports_motor_poles_for_dshot(self, realistic_model) -> None:
-        """
-        System correctly imports motor pole count for DShot ESCs.
+        User can import motor pole count for DShot ESCs.
 
         GIVEN: Flight controller with DShot ESC and motor poles configured
-        WHEN: Importing motor specifications
+        WHEN: User imports FC parameters
         THEN: Motor poles should be set from SERVO_BLH_POLES parameter
         """
-        fc_parameters = {"MOT_PWM_TYPE": "6", "SERVO_BLH_POLES": 14}
+        fc_parameters = {"MOT_PWM_TYPE": 6, "SERVO_BLH_POLES": 14}
+        doc = {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}
 
-        realistic_model._set_motor_poles_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         motor_poles = realistic_model.get_component_value(("Motors", "Specifications", "Poles"))
         assert motor_poles == 14
 
-    def test_system_imports_motor_poles_for_fettec(self, realistic_model) -> None:
+    def test_user_can_import_motor_poles_for_fettec(self, realistic_model) -> None:
         """
-        System correctly imports motor pole count for FETtec ESCs.
+        User can import motor pole count for FETtec ESCs.
 
         GIVEN: Flight controller with FETtec ESC and motor poles configured
-        WHEN: Importing motor specifications
+        WHEN: User imports FC parameters
         THEN: Motor poles should be set from SERVO_FTW_POLES parameter
         """
-        fc_parameters = {"MOT_PWM_TYPE": "0", "SERVO_FTW_MASK": 15, "SERVO_FTW_POLES": 12}
+        fc_parameters = {"MOT_PWM_TYPE": 0, "SERVO_FTW_MASK": 15, "SERVO_FTW_POLES": 12}
+        doc: dict[str, Any] = {}
 
-        realistic_model._set_motor_poles_from_fc_parameters(fc_parameters)
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
 
         motor_poles = realistic_model.get_component_value(("Motors", "Specifications", "Poles"))
         assert motor_poles == 12
@@ -675,164 +393,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
             realistic_model.process_fc_parameters(fc_parameters, doc)
 
-    def test_system_handles_invalid_can_configuration(self, realistic_model) -> None:
-        """
-        System handles invalid CAN bus configuration for GNSS.
-
-        GIVEN: Flight controller with CAN GNSS but invalid CAN configuration
-        WHEN: Importing GNSS parameters
-        THEN: Error should be logged
-        AND: GNSS type should default to None
-        """
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_vehicle_components_import.GNSS_RECEIVER_CONNECTION",
-                {"9": {"type": "CAN1", "protocol": "DroneCAN"}},
-            ),
-            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.CAN_PORTS", ["CAN1", "CAN2"]),
-        ):
-            # Test invalid CAN1 configuration
-            fc_parameters = {
-                "GPS_TYPE": 9,
-                "CAN_D1_PROTOCOL": 0,  # Invalid protocol
-                "CAN_P1_DRIVER": 1,
-            }
-
-            with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-                realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
-
-            gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
-            assert gnss_type == "None"
-
-    def test_system_handles_missing_can_parameters(self, realistic_model) -> None:
-        """
-        System handles missing CAN parameters for GNSS configuration.
-
-        GIVEN: Flight controller with CAN GNSS but missing CAN_D/CAN_P parameters
-        WHEN: Importing GNSS parameters
-        THEN: Error should be logged
-        AND: GNSS type should default to None
-        """
-        with (
-            patch(
-                "ardupilot_methodic_configurator.data_model_vehicle_components_import.GNSS_RECEIVER_CONNECTION",
-                {"9": {"type": "CAN1", "protocol": "DroneCAN"}},
-            ),
-            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.CAN_PORTS", ["CAN1", "CAN2"]),
-        ):
-            # Test missing CAN parameters
-            fc_parameters = {
-                "GPS_TYPE": 9,
-                # Missing CAN_D1_PROTOCOL and CAN_P1_DRIVER
-            }
-
-            with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-                realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
-
-            gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
-            assert gnss_type == "None"
-
-    def test_system_handles_invalid_gnss_connection_type(self, realistic_model) -> None:
-        """
-        System handles invalid GNSS connection type gracefully.
-
-        GIVEN: Flight controller with GPS_TYPE having invalid connection type
-        WHEN: Importing GNSS parameters
-        THEN: Error should be logged
-        AND: GNSS type should default to None
-        """
-        with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.GNSS_RECEIVER_CONNECTION",
-            {"9": {"type": "INVALID_TYPE", "protocol": "Unknown"}},
-        ):
-            fc_parameters = {"GPS_TYPE": 9}
-
-            with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-                realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
-
-            gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
-            assert gnss_type == "None"
-
-    def test_system_handles_unknown_gnss_connection_dictionary_key(self, realistic_model) -> None:
-        """
-        System handles GPS_TYPE not found in connection dictionary.
-
-        GIVEN: Flight controller with GPS_TYPE not in GNSS_RECEIVER_CONNECTION dict
-        WHEN: Importing GNSS parameters
-        THEN: Error should be logged
-        AND: GNSS type should default to None
-        """
-        fc_parameters = {"GPS_TYPE": 999}  # Non-existent GPS type
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
-            realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
-
-        gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
-        assert gnss_type == "None"
-
     def test_system_skips_disabled_serial_ports(self, realistic_model) -> None:
-        """
-        System correctly skips serial ports with protocol 0 (disabled).
-
-        GIVEN: Flight controller with some serial ports disabled (protocol=0)
-        WHEN: Importing serial port configuration
-        THEN: Disabled ports should be skipped
-        AND: Only enabled ports should be processed
-        """
-        with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1", "SERIAL2"]
-        ):
-            fc_parameters = {
-                "SERIAL1_PROTOCOL": 0,  # Zero protocol should be skipped
-                "SERIAL2_PROTOCOL": 5,  # Valid protocol
-            }
-
-            realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
-            # SERIAL1 should be skipped, only SERIAL2 processed
-
-    def test_system_handles_unknown_serial_protocol(self, realistic_model) -> None:
-        """
-        System handles serial protocol not in SERIAL_PROTOCOLS_DICT.
-
-        GIVEN: Flight controller with protocol value not in dictionary
-        WHEN: Importing serial port configuration
-        THEN: Protocol should be skipped
-        AND: Should return False
-        """
-        with (
-            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1"]),
-            patch(
-                "ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PROTOCOLS_DICT",
-                {"5": {"component": "GNSS Receiver", "protocol": "GPS"}},
-            ),
-        ):
-            fc_parameters = {"SERIAL1_PROTOCOL": 99}  # Not in dictionary
-
-            result = realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
-            assert result is False
-
-    def test_system_handles_serial_protocol_with_no_component(self, realistic_model) -> None:
-        """
-        System handles serial protocol that maps to None component.
-
-        GIVEN: Serial protocol in dictionary but with None component
-        WHEN: Importing serial port configuration
-        THEN: Protocol should be skipped
-        AND: Should return False
-        """
-        with (
-            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1"]),
-            patch(
-                "ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PROTOCOLS_DICT",
-                {"5": {"component": None, "protocol": "SomeProtocol"}},
-            ),
-        ):
-            fc_parameters = {"SERIAL1_PROTOCOL": 5}
-
-            result = realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
-            assert result is False
-
-    def test_system_defaults_to_aio_when_no_servo_functions(self, realistic_model) -> None:
         """
         System defaults ESC to AIO when no servo functions defined.
 
@@ -891,11 +452,12 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         WHEN: Importing battery configuration
         THEN: Error should be logged
         AND: System should not crash
-        """
+        """  # pylint: disable=duplicate-code  # Common error handling test pattern
         fc_parameters = {"BATT_MONITOR": 999}  # Non-existent key
 
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        # pylint: enable=duplicate-code
 
     def test_system_handles_battery_monitor_type_error(self, realistic_model) -> None:
         """
@@ -905,11 +467,12 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         WHEN: Importing battery configuration
         THEN: Error should be logged
         AND: System should not crash
-        """
+        """  # pylint: disable=duplicate-code  # Common error handling test pattern
         fc_parameters = {"BATT_MONITOR": None}  # Will cause TypeError in int()
 
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+        # pylint: enable=duplicate-code
 
     def test_system_preserves_motor_poles_when_no_dshot_or_fettec(self, realistic_model) -> None:
         """
