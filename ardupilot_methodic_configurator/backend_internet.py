@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from datetime import datetime, timezone
@@ -238,7 +239,9 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
     if progress_callback:
         progress_callback(0.0, _("Starting installation..."))
 
-    ret = os.system("pip install --upgrade ardupilot_methodic_configurator")  # noqa: S605, S607
+    ret = subprocess.check_call(  # noqa: S603
+        [sys.executable, "-m", "pip", "install", "--upgrade", "ardupilot_methodic_configurator"]
+    )
 
     if ret == 0 and progress_callback:
         progress_callback(100.0, _("Download complete"))

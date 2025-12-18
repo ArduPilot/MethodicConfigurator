@@ -192,9 +192,9 @@ def test_download_and_install_windows_download_failure(mock_download) -> None:
     assert not download_and_install_on_windows("http://test.com", "test.exe")
 
 
-@patch("os.system")
-def test_download_and_install_pip_release(mock_system) -> None:
-    mock_system.return_value = 0
+@patch("subprocess.check_call")
+def test_download_and_install_pip_release(mock_check_call) -> None:
+    mock_check_call.return_value = 0
     assert download_and_install_pip_release() == 0
 
 
