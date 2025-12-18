@@ -283,8 +283,7 @@ class TestFlightControllerParameterManagement:
 
         # Then: Parameter change sent to flight controller
         mock_master.param_set_send.assert_called_once_with("BATT_MONITOR", 4.0)
-        # And: Parameter cached locally
-        assert fc.fc_parameters["BATT_MONITOR"] == 4.0
+        # Note: Parameter is NOT cached by set_param - cache only updates from actual FC reads
 
 
 class TestFlightControllerMotorTestingWorkflow:
@@ -487,14 +486,14 @@ class TestFlightControllerBatteryMonitoringWorkflow:
         fc.set_master_for_testing(MagicMock())  # Need a master connection
 
         # When: Check monitoring with battery monitoring enabled
-        fc.set_param("BATT_MONITOR", 4.0)  # Analog voltage monitoring
+        fc.fc_parameters["BATT_MONITOR"] = 4.0  # Simulate parameter in cache
         is_enabled = fc.is_battery_monitoring_enabled()
 
         # Then: Monitoring correctly identified as enabled
         assert is_enabled is True
 
         # When: Check with monitoring disabled
-        fc.set_param("BATT_MONITOR", 0.0)  # Disabled
+        fc.fc_parameters["BATT_MONITOR"] = 0.0  # Simulate parameter in cache
         is_enabled = fc.is_battery_monitoring_enabled()
 
         # Then: Monitoring correctly identified as disabled

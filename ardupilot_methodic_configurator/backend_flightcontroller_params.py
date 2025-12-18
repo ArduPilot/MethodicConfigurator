@@ -238,7 +238,6 @@ class FlightControllerParams:
 
         Note: This method sends the parameter but does NOT wait for confirmation.
         This is an ArduPilot limitation - the parameter_set command does not return an ACK.
-        The local cache is updated optimistically.
 
         Args:
             param_name: The name of the parameter to set
@@ -265,8 +264,10 @@ class FlightControllerParams:
             return False, error_msg
 
         self.master.param_set_send(param_name, param_value)
-        # Update local cache optimistically
-        self.fc_parameters[param_name] = param_value
+        # Note: We do NOT update fc_parameters here because:
+        # 1. ArduPilot's param_set doesn't send confirmation (no ACK)
+        # 2. The parameter should only be updated when read back from FC (via MAVFTP or fetch_param)
+        # 3. This ensures fc_parameters always reflects the actual FC state
         return True, ""
 
     def get_param(self, param_name: str, default: float = nan) -> float:
