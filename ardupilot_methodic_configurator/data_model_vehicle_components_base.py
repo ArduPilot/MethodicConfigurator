@@ -262,6 +262,21 @@ class ComponentDataModelBase:
             battery_monitor = self._data.setdefault("Components", {}).setdefault("Battery Monitor", {})
             battery_monitor.setdefault("FC Connection", {})["Type"] = "other"
 
+        # Handle GNSS protocol name migration from older versions
+        # Protocol names were made more descriptive with manufacturer names
+        gnss_protocol_migration = {
+            "SBF": "Septentrio(SBF)",
+            "GSOF": "Trimble(GSOF)",
+            "SBF-DualAntenna": "Septentrio-DualAntenna(SBF)",
+        }
+        gnss_receiver_protocol = (
+            self._data.get("Components", {}).get("GNSS Receiver", {}).get("FC Connection", {}).get("Protocol")
+        )
+        if gnss_receiver_protocol in gnss_protocol_migration:
+            # Migrate to new protocol name
+            gnss_receiver = self._data.setdefault("Components", {}).setdefault("GNSS Receiver", {})
+            gnss_receiver.setdefault("FC Connection", {})["Protocol"] = gnss_protocol_migration[gnss_receiver_protocol]
+
         # Merge existing data onto default structure (preserves existing values)
         self._data = self._deep_merge_dicts(default_structure, self._data)
         self._data["Components"] = self._reorder_components(self._data.get("Components", {}))

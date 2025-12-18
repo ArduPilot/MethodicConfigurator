@@ -20,9 +20,9 @@ from test_data_model_vehicle_components_common import (
     RealisticDataTestMixin,
 )
 
-from ardupilot_methodic_configurator.data_model_vehicle_components_import import ComponentDataModelImport
+from ardupilot_methodic_configurator.data_model_vehicle_components_import import ComponentDataModelImport, is_single_bit_set
 
-# pylint: disable=protected-access,too-many-public-methods
+# pylint: disable=protected-access,too-many-public-methods,too-many-lines
 
 
 class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
@@ -870,3 +870,189 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
             esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
             assert esc_type == expected_esc_type, f"Failed for servo functions {servo_functions}"
+
+    def test_gps1_type_parameter_support(self, realistic_model) -> None:
+        """Test that GPS1_TYPE parameter is correctly supported (ArduPilot 4.6+)."""
+        # Test GPS1_TYPE with uBlox (type 2)
+        fc_parameters = {"GPS1_TYPE": 2}
+
+        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
+
+        assert protocol == "uBlox", "GPS1_TYPE should work just like GPS_TYPE"
+
+    def test_gps1_type_takes_precedence_over_gps_type(self, realistic_model) -> None:
+        """Test that GPS1_TYPE takes precedence when both parameters exist."""
+        # Both parameters present - GPS1_TYPE should win
+        fc_parameters = {
+            "GPS_TYPE": 5,  # NMEA
+            "GPS1_TYPE": 2,  # uBlox - should be used
+        }
+
+        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
+
+        assert protocol == "uBlox", "GPS1_TYPE should take precedence over GPS_TYPE"
+
+    def test_gps_type_fallback_when_gps1_type_missing(self, realistic_model) -> None:
+        """Test that GPS_TYPE is used when GPS1_TYPE is not present (backward compatibility)."""
+        # Only GPS_TYPE present (older firmware)
+        fc_parameters = {"GPS_TYPE": 5}  # NMEA
+
+        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
+
+        assert protocol == "NMEA", "GPS_TYPE should work when GPS1_TYPE is absent"
+
+    def test_gps1_type_can_connection(self, realistic_model) -> None:
+        """Test GPS1_TYPE with CAN connection (DroneCAN)."""
+        fc_parameters = {
+            "GPS1_TYPE": 9,  # DroneCAN
+            "CAN_D1_PROTOCOL": 1,  # DroneCAN
+            "CAN_P1_DRIVER": 1,  # First CAN driver
+        }
+
+        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+        protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
+
+        assert gnss_type == "CAN1", "GPS1_TYPE should support CAN connections"
+        assert protocol == "DroneCAN"
+
+    def test_gps1_type_serial_connection(self, realistic_model) -> None:
+        """Test GPS1_TYPE with serial connection detection."""
+        fc_parameters = {
+            "GPS1_TYPE": 2,  # uBlox (SERIAL)
+            "SERIAL3_PROTOCOL": 5,  # GPS protocol on SERIAL3
+        }
+
+        realistic_model._set_gnss_type_from_fc_parameters(fc_parameters)
+        realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+        gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+        protocol = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Protocol"))
+
+        assert gnss_type == "SERIAL3", "GPS1_TYPE serial connection should be detected from SERIAL_PROTOCOL"
+        assert protocol == "uBlox"
+
+    def test_gps1_type_verification_in_process_fc_parameters(self, realistic_model) -> None:
+        """Test that process_fc_parameters correctly verifies GPS1_TYPE documentation."""
+        fc_parameters = {"GPS1_TYPE": 2}
+        doc = {
+            "GPS1_TYPE": {
+                "values": {
+                    "0": "None",
+                    "1": "AUTO",
+                    "2": "uBlox",
+                }
+            }
+        }
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True) as mock_verify:
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+            # Should call verification with GPS1_TYPE (not GPS_TYPE)
+            calls = [call[0] for call in mock_verify.call_args_list]
+            assert any("GPS1_TYPE" in str(call) for call in calls), "Should verify GPS1_TYPE when present in doc"
+
+    def test_gps_type_verification_when_gps1_type_absent(self, realistic_model) -> None:
+        """Test that process_fc_parameters falls back to GPS_TYPE verification for older firmware."""
+        fc_parameters = {"GPS_TYPE": 2}
+        doc = {
+            "GPS_TYPE": {  # Older firmware uses GPS_TYPE
+                "values": {
+                    "0": "None",
+                    "1": "AUTO",
+                    "2": "uBlox",
+                }
+            }
+        }
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True) as mock_verify:
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+            # Should call verification with GPS_TYPE (not GPS1_TYPE)
+            calls = [call[0] for call in mock_verify.call_args_list]
+            assert any("GPS_TYPE" in str(call) for call in calls), "Should verify GPS_TYPE when GPS1_TYPE absent"
+
+    def test_rc_protocols_multiple_bits_warning(self, realistic_model, caplog) -> None:
+        """Test that a warning is logged when RC_PROTOCOLS has multiple bits set."""
+        fc_parameters = {
+            "RC_PROTOCOLS": 3,  # 0b0011 - both PPM and IBUS enabled
+        }
+
+        # Capture log output
+        with caplog.at_level("WARNING"):
+            realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+            # Should log a warning about multiple protocols
+            assert len(caplog.records) >= 1
+            log_message = caplog.text.lower()
+            assert "multiple" in log_message or "protocol" in log_message
+
+    def test_rc_protocols_single_bit_no_warning(self, realistic_model) -> None:
+        """Test that no warning is logged when RC_PROTOCOLS has a single bit set."""
+        fc_parameters = {
+            "RC_PROTOCOLS": 512,  # 2^9 - CRSF protocol only
+        }
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+            # Should NOT log a warning for single protocol
+            mock_warn.assert_not_called()
+
+    def test_rc_protocols_zero_no_warning(self, realistic_model) -> None:
+        """Test that no warning is logged when RC_PROTOCOLS is zero."""
+        fc_parameters = {
+            "RC_PROTOCOLS": 0,  # No protocols enabled
+        }
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+            # Should NOT log a warning for zero (common default)
+            mock_warn.assert_not_called()
+
+    def test_rc_protocols_various_multiple_bit_combinations(self, realistic_model, caplog) -> None:
+        """Test warning for various combinations of multiple RC protocol bits."""
+        test_cases = [
+            3,  # PPM + IBUS
+            5,  # PPM + DSM
+            7,  # PPM + IBUS + SBUS
+            12,  # SBUS_NI + DSM
+            255,  # Many protocols
+            1023,  # All protocols
+        ]
+
+        for rc_protocols_value in test_cases:
+            fc_parameters = {"RC_PROTOCOLS": rc_protocols_value}
+
+            caplog.clear()  # Clear logs between iterations
+            with caplog.at_level("WARNING"):
+                realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+                # Each should log a warning
+                assert len(caplog.records) >= 1, f"Should warn for RC_PROTOCOLS={rc_protocols_value}"
+
+    def test_is_single_bit_set_helper_function(self) -> None:
+        """Test the is_single_bit_set helper function with various inputs."""
+        # Test powers of 2 (single bit set) - should return True
+        assert is_single_bit_set(1) is True  # 0b0001
+        assert is_single_bit_set(2) is True  # 0b0010
+        assert is_single_bit_set(4) is True  # 0b0100
+        assert is_single_bit_set(8) is True  # 0b1000
+        assert is_single_bit_set(16) is True  # 0b10000
+        assert is_single_bit_set(512) is True  # 0b1000000000
+        assert is_single_bit_set(1024) is True  # 0b10000000000
+
+        # Test non-powers of 2 (multiple bits) - should return False
+        assert is_single_bit_set(3) is False  # 0b0011
+        assert is_single_bit_set(5) is False  # 0b0101
+        assert is_single_bit_set(7) is False  # 0b0111
+        assert is_single_bit_set(255) is False  # 0b11111111
+
+        # Test edge cases - should return False
+        assert is_single_bit_set(0) is False  # No bits set
+        assert is_single_bit_set(-1) is False  # Negative number
+        assert is_single_bit_set(-4) is False  # Negative power of 2
