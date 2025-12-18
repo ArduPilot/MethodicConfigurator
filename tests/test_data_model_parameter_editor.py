@@ -534,12 +534,14 @@ class TestParameterUploadWorkflows:
         parameter_editor._reset_and_reconnect_flight_controller = MagicMock(return_value=None)
 
         # Act: Upload parameters requiring reset
-        reset_required = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
-        # Assert: Reset required
+        # Assert: Reset required and both parameters were uploaded
         assert reset_required is True
+        assert "PARAM_RESET_REQ" in uploaded_params
+        assert "PARAM_TYPE" in uploaded_params
         mock_show_error.assert_not_called()
 
     def test_user_handles_parameter_upload_errors_gracefully(self, parameter_editor) -> None:
@@ -561,12 +563,13 @@ class TestParameterUploadWorkflows:
         mock_show_error = MagicMock()
 
         # Act: Upload parameters with errors
-        reset_required = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: Errors handled via callback
         assert reset_required is False  # No successful uploads
+        assert len(uploaded_params) == 0  # No parameters were uploaded
         mock_show_error.assert_called_once()
         error_call_args = mock_show_error.call_args[0]
         assert "Failed to set parameter" in error_call_args[1]  # Second argument is the error message

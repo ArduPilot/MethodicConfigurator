@@ -630,13 +630,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return fc_parameters, param_default_values
 
-    def upload_parameters_that_require_reset_workflow(
+    def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals
         self,
         selected_params: dict,
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
         progress_callback: Optional[Callable] = None,
-    ) -> bool:
+    ) -> tuple[bool, set[str]]:
         """
         Upload parameters that require reset to the flight controller.
 
@@ -647,11 +647,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             progress_callback: Optional callback for progress updates.
 
         Returns:
-            bool: True if reset was required or unsure, False otherwise.
+            tuple[bool, set[str]]: (reset_happened, uploaded_param_names) - reset_happened indicates if reset occurred,
+                                   uploaded_param_names contains names of parameters that were uploaded.
 
         """
         reset_required = False
         reset_unsure_params = []
+        uploaded_params = set()
         error_messages = []
 
         # Write each selected parameter to the flight controller
@@ -666,6 +668,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         if not success:
                             logging_error(_("Failed to set parameter %s: %s"), param_name, error_msg)
                             continue
+                        uploaded_params.add(param_name)
                         if param_name in self._flight_controller.fc_parameters:
                             logging_info(
                                 _("Parameter %s changed from %f to %f, reset required"),
@@ -682,6 +685,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         if not success:
                             logging_error(_("Failed to set parameter %s: %s"), param_name, error_msg)
                             continue
+                        uploaded_params.add(param_name)
                         if param_name in self._flight_controller.fc_parameters:
                             logging_info(
                                 _("Parameter %s changed from %f to %f, possible reset required"),
@@ -696,14 +700,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 error_msg = _("Failed to set parameter {param_name}: {e}").format(param_name=param_name, e=e)
                 logging_error(error_msg)
                 error_messages.append(error_msg)
-
         # Handle any errors with GUI dialogs
         for error_msg in error_messages:
             show_error(_("ArduPilot methodic configurator"), error_msg)
 
         self.reset_and_reconnect_workflow(reset_required, reset_unsure_params, ask_confirmation, show_error, progress_callback)
 
-        return reset_required or bool(reset_unsure_params)
+        reset_happened = reset_required or bool(reset_unsure_params)
+        return reset_happened, uploaded_params
 
     def _calculate_reset_time(self) -> int:
         """
@@ -942,17 +946,25 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Get progress callbacks from factories if provided
         progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
         progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
-
         # Upload parameters that require reset
-        reset_happened = self.upload_parameters_that_require_reset_workflow(
+        reset_happened, already_uploaded_params = self.upload_parameters_that_require_reset_workflow(
             selected_params,
             ask_confirmation,
             show_error,
             progress_callback_for_reset,
         )
 
-        # Upload the selected parameters
-        nr_changed = self._upload_parameters_to_fc(selected_params, show_error)
+        # If reset happened, fc_parameters cache was cleared during disconnect/reconnect
+        # Re-download parameters now so _upload_parameters_to_fc has valid cache for comparison
+        if reset_happened:
+            self.download_flight_controller_parameters(lambda: progress_callback_for_download)
+
+        # Upload remaining parameters (excluding those already uploaded in reset workflow)
+        remaining_params = {k: v for k, v in selected_params.items() if k not in already_uploaded_params}
+        nr_changed = self._upload_parameters_to_fc(remaining_params, show_error)
+
+        # Add count of already uploaded params to total changed count
+        nr_changed += len(already_uploaded_params)
 
         if reset_happened or nr_changed > 0:
             self._at_least_one_changed = True
