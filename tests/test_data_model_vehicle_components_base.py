@@ -41,8 +41,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelBase)
 
     # Additional tests specific to ComponentDataModelBase that aren't covered by mixins
-    def test_set_component_value(self, basic_model) -> None:
-        """Test setting a component value."""
+    def test_system_sets_component_values_at_nested_paths(self, basic_model) -> None:
+        """
+        System correctly sets component values at various nested path levels.
+
+        GIVEN: A vehicle component model
+        WHEN: Setting values at different path depths
+        THEN: Values should be stored correctly at the specified paths
+        AND: None values should be converted to empty strings
+        """
         # Set a new value for an existing path
         basic_model.set_component_value(("Battery", "Specifications", "Capacity mAh"), 1500)
         assert basic_model._data["Components"]["Battery"]["Specifications"]["Capacity mAh"] == 1500
@@ -59,8 +66,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         basic_model.set_component_value(("Flight Controller", "Notes"), None)
         assert basic_model._data["Components"]["Flight Controller"]["Notes"] == ""
 
-    def test_get_component_value(self, basic_model) -> None:
-        """Test getting a component value."""
+    def test_system_retrieves_component_values_from_nested_paths(self, basic_model) -> None:
+        """
+        System correctly retrieves component values from nested paths.
+
+        GIVEN: A vehicle component model with stored values
+        WHEN: Retrieving values using path tuples
+        THEN: Existing values should be returned correctly
+        AND: Non-existent paths should return empty dict
+        """
         # Get an existing value
         value = basic_model.get_component_value(("Battery", "Specifications", "Chemistry"))
         assert value == "Lipo"
@@ -77,8 +91,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         value = basic_model.get_component_value(("NonExistent", "Path"))
         assert value == {}
 
-    def test_set_component_value_batch(self, basic_model) -> None:
-        """Test setting multiple component values."""
+    def test_system_converts_values_to_appropriate_types_when_setting(self, basic_model) -> None:
+        """
+        System automatically converts string values to appropriate data types.
+
+        GIVEN: Component values provided as strings
+        WHEN: Setting multiple component values
+        THEN: Numeric strings should be converted to int or float
+        AND: Version strings should remain as strings
+        AND: Regular strings should be preserved
+        """
         # Test setting values one by one (mimicking what _update_from_entries would do)
         basic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "LiFePO4")
         basic_model.set_component_value(("Battery", "Specifications", "Capacity mAh"), "2200")  # Should be converted to int
@@ -93,8 +115,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert basic_model._data["Components"]["Frame"]["Specifications"]["Weight Kg"] == 0.35
         assert basic_model._data["Components"]["Flight Controller"]["Firmware"]["Version"] == "v4.6.2"
 
-    def test_format_version_management(self, basic_model, empty_model) -> None:
-        """Test format version management."""
+    def test_system_manages_format_version_correctly(self, basic_model, empty_model) -> None:
+        """
+        System correctly manages format version in component data.
+
+        GIVEN: Component models with or without existing data
+        WHEN: Checking format version
+        THEN: Existing format version should be preserved
+        AND: Empty models should have default format version of 1
+        """
         # Should not change existing format version
         original_version = basic_model._data["Format version"]
         # Format version should remain unchanged during normal operations
@@ -103,8 +132,17 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         # Empty model should have default format version
         assert empty_model._data["Format version"] == 1
 
-    def test_process_value(self, basic_model) -> None:
-        """Test processing values to the appropriate type."""
+    def test_system_processes_values_with_type_inference(self, basic_model) -> None:
+        """
+        System processes values with automatic type inference and conversion.
+
+        GIVEN: Various string values representing different data types
+        WHEN: Processing values for component paths
+        THEN: Integer strings should convert to int
+        AND: Float strings should convert to float
+        AND: String values should have whitespace trimmed
+        AND: Version fields should remain as strings
+        """
         # Test integer conversion
         value = basic_model._process_value(("Battery", "Specifications", "Capacity mAh"), "2000")
         assert value == 2000
@@ -130,8 +168,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert value == "4.6.2"  # Should remain a string, not be converted to float
         assert isinstance(value, str)
 
-    def test_get_component_data_access(self, basic_model) -> None:
-        """Test accessing component data."""
+    def test_system_provides_access_to_component_data_structure(self, basic_model) -> None:
+        """
+        System provides structured access to component data.
+
+        GIVEN: A vehicle component model with component data
+        WHEN: Accessing component data via get_component_data
+        THEN: Component data should be returned as dictionary
+        AND: Non-existent components should return empty dict
+        """
         # Test getting specific component's data via get_component_data
         components = basic_model.get_component_data()["Components"]
         battery_data = components.get("Battery", {})
@@ -143,8 +188,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         nonexistent = components.get("NonExistent", {})
         assert nonexistent == {}
 
-    def test_component_data_modification(self, basic_model) -> None:
-        """Test modifying component data."""
+    def test_user_can_modify_existing_components_and_add_new_ones(self, basic_model) -> None:
+        """
+        User can modify existing component data and add new components dynamically.
+
+        GIVEN: A vehicle component model with existing components
+        WHEN: Updating existing component values and adding new components
+        THEN: Existing components should be updated with new values
+        AND: New components should be created and added to the model
+        """
         # Update existing component via set_component_value
         basic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "LiIon")
         basic_model.set_component_value(("Battery", "Specifications", "Capacity mAh"), 2200)
@@ -170,8 +222,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
 
     # Tests for specific ComponentDataModelBase methods
 
-    def test_update_json_structure(self, empty_model) -> None:
-        """Test updating JSON structure for old files."""
+    def test_system_updates_json_structure_for_old_file_formats(self, empty_model) -> None:
+        """
+        System updates JSON structure to add missing required fields from old formats.
+
+        GIVEN: Component data with minimal or missing structure
+        WHEN: Calling update_json_structure
+        THEN: All required component fields should be added
+        AND: Default values should be set for missing fields
+        AND: Program version field should be added
+        """
         # Start with minimal data
         empty_model._data = {"Components": {}}
 
@@ -194,8 +254,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
 
         assert "Program version" in empty_model._data
 
-    def test_rename_old_gnss_receiver_key(self, basic_model) -> None:
-        """Test renaming old 'GNSS receiver' to 'GNSS Receiver'."""
+    def test_system_migrates_old_gnss_receiver_key_to_new_format(self, basic_model) -> None:
+        """
+        System migrates old 'GNSS receiver' key to new 'GNSS Receiver' format.
+
+        GIVEN: Component data with old 'GNSS receiver' key (lowercase 'r')
+        WHEN: Running JSON structure update
+        THEN: Old key should be removed
+        AND: New 'GNSS Receiver' key should be created
+        AND: All data should be preserved under new key
+        """
         # Add old key format
         basic_model._data["Components"]["GNSS receiver"] = {"Product": {"Manufacturer": "Holybro", "Model": "H-RTK F9P"}}
 
@@ -206,8 +274,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert "GNSS Receiver" in basic_model._data["Components"]
         assert basic_model._data["Components"]["GNSS Receiver"]["Product"]["Manufacturer"] == "Holybro"
 
-    def test_gnss_protocol_migration_sbf(self, basic_model) -> None:
-        """Test migration of old SBF protocol name to Septentrio(SBF)."""
+    def test_system_migrates_old_sbf_protocol_name(self, basic_model) -> None:
+        """
+        System migrates legacy SBF protocol name to vendor-specific format.
+
+        GIVEN: GNSS receiver with old 'SBF' protocol name
+        WHEN: Running JSON structure update
+        THEN: Protocol name should be migrated to 'Septentrio(SBF)'
+        AND: Migration reflects vendor clarity improvement
+        """
         # Set old protocol name
         basic_model._data["Components"]["GNSS Receiver"] = {"FC Connection": {"Type": "SERIAL3", "Protocol": "SBF"}}
 
@@ -217,8 +292,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
         assert gnss_protocol == "Septentrio(SBF)", "Old SBF protocol should be migrated to Septentrio(SBF)"
 
-    def test_gnss_protocol_migration_gsof(self, basic_model) -> None:
-        """Test migration of old GSOF protocol name to Trimble(GSOF)."""
+    def test_system_migrates_old_gsof_protocol_name(self, basic_model) -> None:
+        """
+        System migrates legacy GSOF protocol name to vendor-specific format.
+
+        GIVEN: GNSS receiver with old 'GSOF' protocol name
+        WHEN: Running JSON structure update
+        THEN: Protocol name should be migrated to 'Trimble(GSOF)'
+        AND: Migration reflects vendor clarity improvement
+        """
         # Set old protocol name
         basic_model._data["Components"]["GNSS Receiver"] = {"FC Connection": {"Type": "SERIAL3", "Protocol": "GSOF"}}
 
@@ -228,8 +310,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
         assert gnss_protocol == "Trimble(GSOF)", "Old GSOF protocol should be migrated to Trimble(GSOF)"
 
-    def test_gnss_protocol_migration_sbf_dual_antenna(self, basic_model) -> None:
-        """Test migration of old SBF-DualAntenna protocol name to Septentrio-DualAntenna(SBF)."""
+    def test_system_migrates_old_sbf_dual_antenna_protocol_name(self, basic_model) -> None:
+        """
+        System migrates legacy SBF-DualAntenna protocol name to vendor-specific format.
+
+        GIVEN: GNSS receiver with old 'SBF-DualAntenna' protocol name
+        WHEN: Running JSON structure update
+        THEN: Protocol name should be migrated to 'Septentrio-DualAntenna(SBF)'
+        AND: Dual antenna configuration is preserved with vendor clarity
+        """
         # Set old protocol name
         basic_model._data["Components"]["GNSS Receiver"] = {
             "FC Connection": {"Type": "SERIAL3", "Protocol": "SBF-DualAntenna"}
@@ -243,8 +332,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
             "Old SBF-DualAntenna protocol should be migrated to Septentrio-DualAntenna(SBF)"
         )
 
-    def test_gnss_protocol_no_migration_for_new_names(self, basic_model) -> None:
-        """Test that already-migrated protocol names are not changed."""
+    def test_system_preserves_already_migrated_protocol_names(self, basic_model) -> None:
+        """
+        System does not modify protocol names that are already in new format.
+
+        GIVEN: GNSS receiver with already-migrated protocol name 'Septentrio(SBF)'
+        WHEN: Running JSON structure update
+        THEN: Protocol name should remain unchanged
+        AND: Migration is idempotent for already-updated configurations
+        """
         # Set new protocol name (already migrated)
         basic_model._data["Components"]["GNSS Receiver"] = {
             "FC Connection": {"Type": "SERIAL3", "Protocol": "Septentrio(SBF)"}
@@ -256,8 +352,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
         assert gnss_protocol == "Septentrio(SBF)", "New protocol names should not be modified"
 
-    def test_gnss_protocol_no_migration_for_other_protocols(self, basic_model) -> None:
-        """Test that other GNSS protocols are not affected by migration."""
+    def test_system_preserves_non_migrated_gnss_protocols(self, basic_model) -> None:
+        """
+        System does not modify GNSS protocols that don't require migration.
+
+        GIVEN: GNSS receiver with protocol not requiring migration (e.g., uBlox)
+        WHEN: Running JSON structure update
+        THEN: Protocol name should remain unchanged
+        AND: Only specific legacy protocols are targeted for migration
+        """
         # Set a protocol that doesn't need migration
         basic_model._data["Components"]["GNSS Receiver"] = {"FC Connection": {"Type": "SERIAL3", "Protocol": "uBlox"}}
 
@@ -267,8 +370,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
         assert gnss_protocol == "uBlox", "Other protocols should not be changed by migration"
 
-    def test_gnss_protocol_migration_preserves_other_fields(self, basic_model) -> None:
-        """Test that protocol migration preserves other GNSS fields."""
+    def test_system_preserves_gnss_fields_during_protocol_migration(self, basic_model) -> None:
+        """
+        System preserves all GNSS receiver fields during protocol migration.
+
+        GIVEN: GNSS receiver with legacy protocol and additional fields (manufacturer, model, notes)
+        WHEN: Migrating protocol name
+        THEN: Only protocol field should be updated
+        AND: All other fields (manufacturer, model, notes) should be preserved
+        """
         # Set old protocol with additional fields
         basic_model._data["Components"]["GNSS Receiver"] = {
             "Product": {"Manufacturer": "Septentrio", "Model": "mosaic-X5"},
@@ -285,8 +395,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert gnss["Product"]["Model"] == "mosaic-X5"
         assert gnss["Notes"] == "Dual antenna setup"
 
-    def test_none_value_handling(self, basic_model) -> None:
-        """Test handling of None values."""
+    def test_system_converts_none_values_to_empty_strings(self, basic_model) -> None:
+        """
+        System converts None values to empty strings when setting component values.
+
+        GIVEN: Component values set to None
+        WHEN: Setting and retrieving these values
+        THEN: None values should be stored as empty strings
+        AND: Retrieval should return empty string, not None
+        """
         # Set None and then ensure it's converted to empty string
         basic_model.set_component_value(("Motor", "Notes"), None)
         assert basic_model.get_component_value(("Motor", "Notes")) == ""
@@ -295,8 +412,17 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         basic_model.set_component_value(("Motor", "Description"), None)
         assert basic_model.get_component_value(("Motor", "Description")) == ""
 
-    def test_edge_cases_process_value(self, basic_model) -> None:
-        """Test edge cases in _process_value method."""
+    def test_system_handles_type_conversion_edge_cases(self, basic_model) -> None:
+        """
+        System handles various edge cases during value type conversion.
+
+        GIVEN: Values that could be interpreted as different types
+        WHEN: Processing these values with _process_value
+        THEN: Integer strings should convert to int
+        AND: Float strings should convert to float
+        AND: Non-numeric strings should remain as strings
+        AND: Version fields should always return string regardless of content
+        """
         # Test non-Version field with numeric string
         path = ("Test", "Numeric")
 
@@ -321,8 +447,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert result == "42"
         assert isinstance(result, str)
 
-    def test_get_component_value_edge_cases(self, basic_model) -> None:
-        """Test edge cases in get_component_value method."""
+    def test_system_handles_unusual_data_types_in_component_values(self, basic_model) -> None:
+        """
+        System handles unusual data types when retrieving component values.
+
+        GIVEN: Component data with unusual types (lists, tuples, None)
+        WHEN: Retrieving these values
+        THEN: Non-existent nested paths should return empty dict
+        AND: Lists and tuples should be converted to string representation
+        """
         # Test accessing non-existent nested path
         result = basic_model.get_component_value(("NonExistent", "Path", "Deep"))
         assert result == {}
@@ -342,8 +475,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         result = basic_model.get_component_value(("Test", "tuple_data"))
         assert result == "(1, 2, 3)"
 
-    def test_update_component_data_via_set_values(self, empty_model) -> None:
-        """Test updating component when Components key doesn't exist."""
+    def test_system_creates_components_key_when_missing(self, empty_model) -> None:
+        """
+        System automatically creates Components key structure when missing.
+
+        GIVEN: Empty model without Components key
+        WHEN: Setting component values via set_component_value
+        THEN: Components key should be created automatically
+        AND: Component data should be stored correctly
+        """
         # Remove Components key if it exists
         if "Components" in empty_model._data:
             del empty_model._data["Components"]
@@ -357,15 +497,30 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert empty_model._data["Components"]["TestComponent"]["Type"] == "Test"
         assert empty_model._data["Components"]["TestComponent"]["Value"] == 42
 
-    def test_combobox_values_basic_functionality(self, realistic_model) -> None:
-        """Test basic functionality of get_combobox_values_for_path."""
+    def test_system_returns_empty_tuple_for_unknown_combobox_paths(self, realistic_model) -> None:
+        """
+        System returns empty tuple for combobox values at unknown paths.
+
+        GIVEN: An unknown component path
+        WHEN: Requesting combobox values for that path
+        THEN: Should return empty tuple
+        AND: Base class behavior for unknown paths is defined
+        """
         # Test with basic path - only test with one argument since that's what the base class supports
         unknown_path = ("Unknown", "Component", "Property")
         result = realistic_model.get_combobox_values_for_path(unknown_path)
         assert result == ()  # Should return empty tuple for unknown paths
 
-    def test_save_to_filesystem_method(self, realistic_model) -> None:
-        """Test save_to_filesystem method with mocked filesystem."""
+    def test_system_saves_component_data_to_filesystem(self, realistic_model) -> None:
+        """
+        System successfully saves component data to filesystem.
+
+        GIVEN: A vehicle component model with modified data
+        WHEN: Calling save_to_filesystem with mocked filesystem
+        THEN: Save operation should succeed
+        AND: Filesystem save method should be called once
+        AND: Modified values should be persisted
+        """
         # Create a mock filesystem
         mock_filesystem = Mock()
         mock_filesystem.save_vehicle_components_json_data = MagicMock(return_value=(True, "Success"))
@@ -387,8 +542,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert realistic_model.get_component_value(("Flight Controller", "Product", "Manufacturer")) == "TestManufacturer"
         assert realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh")) == 2000
 
-    def test_update_json_structure_missing_fc_data(self, realistic_model) -> None:
-        """Test update_json_structure when Flight Controller has missing data."""
+    def test_system_recreates_missing_flight_controller_data(self, realistic_model) -> None:
+        """
+        System recreates missing Flight Controller component with defaults.
+
+        GIVEN: Model with missing Flight Controller component
+        WHEN: Running JSON structure update
+        THEN: Flight Controller component should be recreated
+        AND: Default specifications should be set (MCU Series = Unknown)
+        """
         # Remove Flight Controller key
         if "Flight Controller" in realistic_model._data["Components"]:
             del realistic_model._data["Components"]["Flight Controller"]
@@ -406,8 +568,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
             )
         assert realistic_model._data["Components"]["Flight Controller"]["Specifications"]["MCU Series"] == "Unknown"
 
-    def test_update_json_structure_missing_components(self) -> None:
-        """Test JSON structure update when Components key is missing."""
+    def test_system_creates_components_structure_when_missing(self) -> None:
+        """
+        System creates entire Components structure when completely missing.
+
+        GIVEN: Data without Components key
+        WHEN: Running JSON structure update
+        THEN: Components key should be created
+        AND: Required components (Battery, Frame, etc.) should be added
+        AND: Default specifications should be initialized
+        """
         # Create data without Components key
         data: ComponentData = {"Configuration": {}}
         vehicle_components = VehicleComponents()
@@ -423,8 +593,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert "Battery" in component_model._data["Components"]
         assert "Specifications" in component_model._data["Components"]["Battery"]
 
-    def test_update_json_structure_missing_battery(self, realistic_model) -> None:
-        """Test JSON structure update when Battery component is missing."""
+    def test_system_recreates_missing_battery_component(self, realistic_model) -> None:
+        """
+        System recreates missing Battery component with specifications.
+
+        GIVEN: Model with missing Battery component
+        WHEN: Running JSON structure update
+        THEN: Battery component should be recreated
+        AND: Specifications sub-section should be added
+        """
         # Remove Battery component
         if "Battery" in realistic_model._data["Components"]:
             del realistic_model._data["Components"]["Battery"]
@@ -435,8 +612,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert "Battery" in realistic_model._data["Components"]
         assert "Specifications" in realistic_model._data["Components"]["Battery"]
 
-    def test_update_json_structure_missing_fc_subkeys_coverage(self, realistic_model) -> None:
-        """Test update_json_structure when Flight Controller has missing sub-keys."""
+    def test_system_recreates_missing_flight_controller_specifications(self, realistic_model) -> None:
+        """
+        System recreates missing Flight Controller Specifications sub-section.
+
+        GIVEN: Flight Controller component with missing Specifications
+        WHEN: Running JSON structure update
+        THEN: Specifications should be recreated
+        AND: MCU Series should be set to Unknown
+        """
         # Remove some Flight Controller sub-keys
         if "Specifications" in realistic_model._data["Components"]["Flight Controller"]:
             del realistic_model._data["Components"]["Flight Controller"]["Specifications"]
@@ -447,8 +631,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert "Specifications" in realistic_model._data["Components"]["Flight Controller"]
         assert realistic_model._data["Components"]["Flight Controller"]["Specifications"]["MCU Series"] == "Unknown"
 
-    def test_get_component_datatype_functionality(self, basic_model) -> None:
-        """Test _get_component_datatype method thoroughly."""
+    def test_system_determines_component_datatypes_from_path(self, basic_model) -> None:
+        """
+        System determines correct datatype for component fields based on path.
+
+        GIVEN: Component paths with known datatypes
+        WHEN: Requesting datatype for each path
+        THEN: Correct Python type should be returned (int, float, str)
+        AND: Invalid or non-existent paths should return None
+        AND: Empty component datatypes should return None
+        """
         # Test with valid datatype paths
         datatype = basic_model._get_component_datatype(("Battery", "Specifications", "Capacity mAh"))
         assert datatype is int
@@ -472,8 +664,18 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         datatype = basic_model._get_component_datatype(("Battery", "Specifications", "Capacity mAh"))
         assert datatype is None
 
-    def test_safe_cast_value_comprehensive(self, basic_model) -> None:
-        """Test _safe_cast_value method with various scenarios."""
+    def test_system_safely_casts_values_with_fallback(self, basic_model) -> None:
+        """
+        System safely casts values to target types with fallback handling.
+
+        GIVEN: Various values and target types for casting
+        WHEN: Attempting to cast values
+        THEN: Successful casts should return correctly typed values
+        AND: Values already correct type should pass through
+        AND: None values should return type-appropriate defaults
+        AND: Failed casts should fall back to _process_value
+        AND: Dict/list types should be preserved
+        """
         path = ("Battery", "Specifications", "Capacity mAh")
 
         # Test successful int casting
@@ -511,8 +713,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert result == {"key": "value"}
         assert isinstance(result, dict)
 
-    def test_data_structure_validation(self, basic_model, empty_model) -> None:
-        """Test data structure validation and edge cases."""
+    def test_system_validates_and_initializes_data_structure(self, basic_model, empty_model) -> None:
+        """
+        System validates data structure and initializes with proper defaults.
+
+        GIVEN: Models with various data structures
+        WHEN: Checking data structure validity
+        THEN: Data should be dictionary with Components key
+        AND: Empty structures should be initialized with defaults
+        AND: Corrupted data should be replaced with default structure
+        """
         # Test basic structure validation
         assert isinstance(basic_model._data, dict)
         assert "Components" in basic_model._data
@@ -527,8 +737,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         corrupted_model = ComponentDataModelBase({}, {}, mock_schema)
         assert corrupted_model._data == {"Components": {}, "Format version": 1}
 
-    def test_nested_path_creation(self, empty_model) -> None:
-        """Test creation of deeply nested paths."""
+    def test_system_creates_deeply_nested_component_paths(self, empty_model) -> None:
+        """
+        System creates and accesses deeply nested component path structures.
+
+        GIVEN: Empty model without nested structures
+        WHEN: Creating very deep nested paths (4+ levels)
+        THEN: All intermediate levels should be created automatically
+        AND: Deep values should be accessible via path tuples
+        """
         # Test creating very deep path
         empty_model.set_component_value(("Component", "Level1", "Level2", "Level3", "DeepValue"), "deep")
 
@@ -542,8 +759,18 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         result = empty_model.get_component_value(("Component", "Level1", "Level2", "Level3", "DeepValue"))
         assert result == "deep"
 
-    def test_type_conversion_edge_cases(self, basic_model) -> None:
-        """Test edge cases in type conversion."""
+    def test_system_handles_numeric_format_edge_cases(self, basic_model) -> None:
+        """
+        System correctly handles various numeric format edge cases.
+
+        GIVEN: Values in scientific notation, negative numbers, zero, boolean-like strings, hex
+        WHEN: Setting and retrieving these values
+        THEN: Scientific notation should convert to float
+        AND: Negative numbers should be handled correctly
+        AND: Zero values should be preserved
+        AND: Boolean strings should remain as strings
+        AND: Hexadecimal strings should remain as strings
+        """
         # Test scientific notation
         basic_model.set_component_value(("Test", "Scientific"), "1.5e3")
         result = basic_model.get_component_value(("Test", "Scientific"))
@@ -569,8 +796,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         result = basic_model.get_component_value(("Test", "Hex"))
         assert result == "0xFF"  # Should remain string since not pure decimal
 
-    def test_whitespace_handling(self, basic_model) -> None:
-        """Test handling of whitespace in values."""
+    def test_system_trims_whitespace_from_component_values(self, basic_model) -> None:
+        """
+        System automatically trims whitespace from component values.
+
+        GIVEN: Component values with leading/trailing whitespace, tabs, newlines
+        WHEN: Setting and retrieving these values
+        THEN: Leading and trailing whitespace should be removed
+        AND: Tabs and newlines should be trimmed
+        AND: Values with only whitespace should become empty strings
+        """
         # Test leading/trailing whitespace
         basic_model.set_component_value(("Test", "Whitespace"), "  trimmed  ")
         result = basic_model.get_component_value(("Test", "Whitespace"))
@@ -586,8 +821,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         result = basic_model.get_component_value(("Test", "OnlyWhitespace"))
         assert result == ""
 
-    def test_component_data_immutability(self, basic_model) -> None:
-        """Test that returned component data affects internal state (documents current behavior)."""
+    def test_system_returns_direct_reference_to_component_data(self, basic_model) -> None:
+        """
+        System returns direct reference to internal data (documents current behavior).
+
+        GIVEN: Component data retrieved via get_component_data
+        WHEN: Modifying the returned data
+        THEN: Internal data is changed (direct reference returned)
+        NOTE: This documents current behavior; production code should return deep copy
+        """
         # Get component data
         original_data = basic_model.get_component_data()
 
@@ -601,8 +843,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         # In a production environment, you'd want get_component_data to return a copy
         assert current_chemistry == "Modified"  # Data was changed because direct reference returned
 
-    def test_error_handling_malformed_data(self) -> None:
-        """Test error handling with malformed initial data."""
+    def test_system_handles_malformed_initial_data_gracefully(self) -> None:
+        """
+        System handles malformed or None initial data gracefully.
+
+        GIVEN: Initial data that is None or invalid type
+        WHEN: Creating component model
+        THEN: Model should initialize with default structure
+        AND: Should not crash with type errors
+        """
         # Test with None initial data
         vehicle_components = VehicleComponents()
         schema = VehicleComponentsJsonSchema(vehicle_components.load_schema())
@@ -620,8 +869,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
             # If the constructor validates input and raises an error, that's also acceptable
             pass
 
-    def test_battery_chemistry_initialization(self, basic_model) -> None:
-        """Test battery chemistry initialization."""
+    def test_system_initializes_battery_chemistry_with_validation(self, basic_model) -> None:
+        """
+        System initializes battery chemistry with validation and defaults.
+
+        GIVEN: Battery component with various chemistry values
+        WHEN: Initializing battery chemistry
+        THEN: Valid chemistry should be set correctly
+        AND: Invalid chemistry should default to Lipo
+        AND: Missing chemistry should default to Lipo
+        """
         # Test that battery chemistry is initialized
         basic_model.init_battery_chemistry()
         assert basic_model._battery_chemistry == "Lipo"  # Default from BASIC_COMPONENT_DATA
@@ -636,8 +893,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         basic_model.init_battery_chemistry()
         assert basic_model._battery_chemistry == "Lipo"  # Should default to Lipo for invalid chemistry
 
-    def test_component_access_patterns(self, realistic_model) -> None:
-        """Test various component access patterns."""
+    def test_system_provides_multiple_component_access_methods(self, realistic_model) -> None:
+        """
+        System provides various methods to access and check components.
+
+        GIVEN: Model with components
+        WHEN: Using different access methods (get_all_components, has_components)
+        THEN: get_all_components should return dict of all components
+        AND: has_components should return True when components exist
+        AND: has_components should return False for empty models
+        """
         # Test accessing all top-level components
         components = realistic_model.get_all_components()
         assert isinstance(components, dict)
@@ -651,8 +916,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         empty_components = ComponentDataModelBase({"Components": {}, "Format version": 1}, {}, mock_schema)
         assert empty_components.has_components() is False
 
-    def test_version_field_special_handling(self, basic_model) -> None:
-        """Test special handling of Version fields."""
+    def test_system_preserves_version_fields_as_strings(self, basic_model) -> None:
+        """
+        System treats Version fields specially, always preserving as strings.
+
+        GIVEN: Various version format strings
+        WHEN: Setting version values
+        THEN: All version formats should remain as strings
+        AND: Numeric-looking versions should not convert to numbers
+        """
         # Test various version formats
         version_test_cases = ["4.6.2", "v4.6.2", "1.0.0-beta", "2024.1", "stable", "development"]
 
@@ -662,8 +934,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
             assert result == version
             assert isinstance(result, str)
 
-    def test_post_init_comprehensive(self, empty_model) -> None:
-        """Test post_init method comprehensively."""
+    def test_system_initializes_model_correctly_via_post_init(self, empty_model) -> None:
+        """
+        System performs comprehensive initialization via post_init method.
+
+        GIVEN: Empty model and optional documentation dictionary
+        WHEN: Calling post_init
+        THEN: JSON structure should be updated
+        AND: Battery chemistry should be initialized to Lipo
+        AND: Should handle both empty and populated doc_dict
+        """
         # Test with empty doc_dict
         empty_model.post_init({})
 
@@ -685,8 +965,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         # Should not crash and should maintain structure
         assert empty_model._data["Components"]["Battery"]["Specifications"]["Chemistry"] == "Lipo"
 
-    def test_memory_efficiency_large_data(self, basic_model) -> None:
-        """Test handling of large data structures."""
+    def test_system_efficiently_handles_large_component_datasets(self, basic_model) -> None:
+        """
+        System efficiently handles creation and access of many components.
+
+        GIVEN: Creation of 100+ components with various properties
+        WHEN: Setting and retrieving component values
+        THEN: All components should be created successfully
+        AND: Random access to any component should work correctly
+        AND: Memory efficiency should be maintained
+        """
         # Create a large number of components to test memory efficiency
         for i in range(100):
             component_name = f"Component_{i}"
@@ -703,8 +991,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert basic_model.get_component_value(("Component_99", "Number")) == 99
         assert basic_model.get_component_value(("Component_25", "Float")) == 37.5
 
-    def test_concurrent_access_simulation(self, basic_model) -> None:
-        """Simulate concurrent access patterns."""
+    def test_system_handles_sequential_access_to_different_components(self, basic_model) -> None:
+        """
+        System handles sequential access patterns to different components.
+
+        GIVEN: Multiple components being accessed in sequence
+        WHEN: Setting values for different components sequentially
+        THEN: All values should be set correctly
+        AND: No interference between different component operations
+        """
         # Simulate multiple "threads" accessing different components
         test_operations = [
             (("Battery", "Specifications", "Capacity mAh"), 2000),
@@ -723,8 +1018,15 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
             actual_value = basic_model.get_component_value(path)
             assert actual_value == expected_value
 
-    def test_boundary_value_testing(self, basic_model) -> None:
-        """Test boundary values for numeric conversions."""
+    def test_system_handles_numeric_boundary_values_correctly(self, basic_model) -> None:
+        """
+        System correctly handles boundary values for numeric types.
+
+        GIVEN: Integer and float boundary values (min, max, zero)
+        WHEN: Setting these boundary values
+        THEN: All boundary values should be converted correctly
+        AND: No overflow or underflow errors should occur
+        """
         # Test integer boundaries
         boundary_int_values = [
             ("0", 0),
@@ -752,8 +1054,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
             assert result == expected_float
             assert isinstance(result, float)
 
-    def test_path_validation_edge_cases(self, basic_model) -> None:
-        """Test edge cases in path validation and traversal."""
+    def test_system_handles_unusual_path_structures(self, basic_model) -> None:
+        """
+        System handles unusual path structures and edge cases.
+
+        GIVEN: Paths with unusual characteristics (empty, single element, empty strings)
+        WHEN: Using these paths for get/set operations
+        THEN: System should handle gracefully without crashing
+        AND: Single element paths should return dict
+        AND: Empty string path elements should be accepted
+        """
         # Test empty path
         try:
             result = basic_model.get_component_value(())
@@ -772,8 +1082,16 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         result = basic_model.get_component_value(("", "EmptyKey", "Value"))
         assert result == "test"
 
-    def test_data_consistency_after_operations(self, basic_model) -> None:
-        """Test that data remains consistent after multiple operations."""
+    def test_system_maintains_data_consistency_across_operations(self, basic_model) -> None:
+        """
+        System maintains data consistency across multiple set/get operations.
+
+        GIVEN: Sequence of interleaved set and get operations
+        WHEN: Performing multiple operations on different components
+        THEN: All set values should be retrievable correctly
+        AND: Final state should reflect all operations performed
+        AND: No data corruption or loss should occur
+        """
         # Perform multiple operations
         operations = [
             ("set", ("Battery", "Specifications", "Chemistry"), "LiFePO4"),
@@ -798,14 +1116,26 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert basic_model.get_component_value(("Frame", "Specifications", "TOW min Kg")) == 1.2
         assert basic_model.get_component_value(("New Component", "Type")) == "Test"
 
-    def test_set_configuration_template_new(self, empty_model) -> None:
-        """Test setting a configuration template on empty data."""
+    def test_system_sets_new_configuration_template(self, empty_model) -> None:
+        """
+        System successfully sets configuration template on empty data.
+
+        GIVEN: Empty model without configuration template
+        WHEN: Setting a configuration template name
+        THEN: Template name should be stored in data structure
+        """
         template_name = "Test Template v1.0"
         empty_model.set_configuration_template(template_name)
         assert empty_model._data["Configuration template"] == template_name
 
-    def test_set_configuration_template_overwrite(self, basic_model) -> None:
-        """Test overwriting an existing configuration template."""
+    def test_system_overwrites_existing_configuration_template(self, basic_model) -> None:
+        """
+        System successfully overwrites existing configuration template.
+
+        GIVEN: Model with existing configuration template
+        WHEN: Setting a new template name
+        THEN: New template name should replace the old one
+        """
         template_name1 = "Initial Template"
         template_name2 = "Updated Template"
 
@@ -815,38 +1145,74 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         basic_model.set_configuration_template(template_name2)
         assert basic_model._data["Configuration template"] == template_name2
 
-    def test_set_configuration_template_empty_string(self, empty_model) -> None:
-        """Test setting an empty string as configuration template."""
+    def test_system_accepts_empty_string_as_template_name(self, empty_model) -> None:
+        """
+        System accepts empty string as valid configuration template.
+
+        GIVEN: Empty model
+        WHEN: Setting empty string as template name
+        THEN: Empty string should be stored as template
+        """
         empty_model.set_configuration_template("")
         assert empty_model._data["Configuration template"] == ""
 
-    def test_set_configuration_template_special_characters(self, empty_model) -> None:
-        """Test setting a template name with special characters."""
+    def test_system_accepts_special_characters_in_template_name(self, empty_model) -> None:
+        """
+        System accepts template names with special characters.
+
+        GIVEN: Template name containing dashes, underscores, parentheses, ampersands
+        WHEN: Setting the template name
+        THEN: Template name with special characters should be stored correctly
+        """
         template_name = "Template-v2.1_final (test) & more!"
         empty_model.set_configuration_template(template_name)
         assert empty_model._data["Configuration template"] == template_name
 
     # Template configuration robustness tests
-    def test_set_configuration_template_unicode(self, empty_model) -> None:
-        """Test setting configuration template with unicode characters."""
+    def test_system_supports_unicode_in_template_names(self, empty_model) -> None:
+        """
+        System supports Unicode characters in configuration template names.
+
+        GIVEN: Template name with Unicode characters (Portuguese, Chinese, emoji)
+        WHEN: Setting the template name
+        THEN: Unicode template name should be stored correctly
+        """
         template_name = "Configuração de Drone™ 无人机配置 🚁"
         empty_model.set_configuration_template(template_name)
         assert empty_model._data["Configuration template"] == template_name
 
-    def test_set_configuration_template_very_long(self, empty_model) -> None:
-        """Test setting very long configuration template name."""
+    def test_system_handles_very_long_template_names(self, empty_model) -> None:
+        """
+        System handles very long configuration template names.
+
+        GIVEN: Extremely long template name (400+ characters)
+        WHEN: Setting the template name
+        THEN: Long template name should be stored without truncation
+        """
         template_name = "Very" * 100 + "Long Template Name"
         empty_model.set_configuration_template(template_name)
         assert empty_model._data["Configuration template"] == template_name
 
-    def test_set_configuration_template_newlines(self, empty_model) -> None:
-        """Test setting configuration template with newlines."""
+    def test_system_accepts_newlines_in_template_names(self, empty_model) -> None:
+        """
+        System accepts template names containing newline characters.
+
+        GIVEN: Template name with embedded newlines
+        WHEN: Setting the template name
+        THEN: Template name with newlines should be stored correctly
+        """
         template_name = "Multi\nLine\nTemplate\nName"
         empty_model.set_configuration_template(template_name)
         assert empty_model._data["Configuration template"] == template_name
 
-    def test_set_configuration_template_none(self, empty_model) -> None:
-        """Test setting None as configuration template."""
+    def test_system_accepts_none_as_template_value(self, empty_model) -> None:
+        """
+        System accepts None as valid configuration template value.
+
+        GIVEN: None value for template
+        WHEN: Setting template to None
+        THEN: None should be stored as template value
+        """
         empty_model.set_configuration_template(None)
         assert empty_model._data["Configuration template"] is None
 
@@ -1093,13 +1459,15 @@ class TestComponentDataModelEdgeCases:
         assert result["mixed_key"] == "string_value"
         assert not isinstance(result["mixed_key"], dict)
 
-    def test_process_value_none_and_version_handling(self, model_with_datatypes) -> None:
+    def test_system_handles_none_values_and_version_fields_specially(self, model_with_datatypes) -> None:
         """
-        Test _process_value None handling and Version field special case.
+        System handles None values and Version field type conversion specially.
 
-        GIVEN: A model instance
-        WHEN: Processing None values and Version fields
-        THEN: Should handle appropriately
+        GIVEN: Values that are None or Version field paths
+        WHEN: Processing these values
+        THEN: None values should convert to empty string
+        AND: Version fields should remain as strings regardless of content
+        AND: Non-Version numeric fields should still convert to numbers
         """
         # Test None value handling
         path = ("Battery", "Specifications", "TestField")
