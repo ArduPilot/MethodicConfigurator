@@ -853,20 +853,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.ui.show_info,
         )
 
-    def _should_jump_to_file(self, selected_file: str) -> str:
-        return self.parameter_editor.handle_file_jump_workflow(
-            selected_file,
-            self.gui_complexity,
-            self.ui.ask_yesno,
-        )
-
-    def _should_download_file_from_url(self, selected_file: str) -> None:
-        self.parameter_editor.should_download_file_from_url_workflow(
-            selected_file,
-            ask_confirmation=self.ui.ask_yesno,
-            show_error=self.ui.show_error,
-        )
-
     def _should_upload_file_to_fc(self, selected_file: str) -> None:
         def get_progress_callback() -> Callable | None:
             """Create and return progress window callback only when upload will actually happen."""
@@ -912,9 +898,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 self.documentation_frame.get_auto_open_documentation_in_browser(),
                 handle_imu_temp_cal=self._do_tempcal_imu,
                 handle_copy_fc_values=self._should_copy_fc_values_to_file,
-                handle_file_jump=self._should_jump_to_file,
-                handle_download_file=self._should_download_file_from_url,
                 handle_upload_file=self._should_upload_file_to_fc,
+                ask_confirmation=self.ui.ask_yesno,
                 show_error=self.ui.show_error,
                 show_info=self.ui.show_info,
             )
