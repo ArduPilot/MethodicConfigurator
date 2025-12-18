@@ -25,6 +25,7 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
+from pathlib import Path
 from sys import exit as sys_exit
 from typing import Union
 
@@ -219,7 +220,7 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
 
     # Get default parameter values from flight controller
     if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
-        fciw = FlightControllerInfoWindow(state.flight_controller)
+        fciw = FlightControllerInfoWindow(state.flight_controller, Path(state.args.vehicle_dir))
         state.param_default_values = fciw.get_param_default_values()
 
     # Initialize local filesystem
@@ -271,7 +272,7 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProject
             logging_error(_("Failed to reset parameters to defaults: %(error)s"), {"error": error_msg})
         state.flight_controller.reset_and_reconnect()
         if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
-            fciw = FlightControllerInfoWindow(state.flight_controller)
+            fciw = FlightControllerInfoWindow(state.flight_controller, Path(state.args.vehicle_dir))
             default_values = fciw.get_param_default_values()
             state.param_default_values = ParDict(default_values) if default_values else ParDict()
 

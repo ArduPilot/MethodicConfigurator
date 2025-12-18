@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -389,7 +390,11 @@ class TestFlightControllerConnection:
             # Assert: Simulation mode works
             assert application_state.flight_controller is mock_fc
             assert application_state.vehicle_type == "ArduCopter"
-            mock_fc_window.assert_called_once_with(mock_fc)
+            # Verify FlightControllerInfoWindow was called with flight controller and vehicle_dir
+            mock_fc_window.assert_called_once()
+            call_args = mock_fc_window.call_args[0]
+            assert call_args[0] is mock_fc
+            assert isinstance(call_args[1], Path)
 
     def test_user_receives_clear_error_when_configuration_invalid(self, application_state: ApplicationState) -> None:
         """
