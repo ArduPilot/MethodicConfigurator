@@ -27,6 +27,30 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
 )
 
 
+def is_single_bit_set(value: int) -> bool:
+    """
+    Check if exactly one bit is set in a bitmask (value is a power of 2 and non-zero).
+
+    Args:
+        value: Integer value to check
+
+    Returns:
+        True if value is a power of 2 (exactly one bit set), False otherwise
+
+    Examples:
+        >>> is_single_bit_set(1)   # 0b0001
+        True
+        >>> is_single_bit_set(4)   # 0b0100
+        True
+        >>> is_single_bit_set(5)   # 0b0101 (multiple bits)
+        False
+        >>> is_single_bit_set(0)   # no bits set
+        False
+
+    """
+    return value > 0 and value & (value - 1) == 0
+
+
 class ComponentDataModelImport(ComponentDataModelBase):
     """
     A class to handle component data import from FC parameters separate from UI logic.
@@ -183,13 +207,17 @@ class ComponentDataModelImport(ComponentDataModelBase):
             # RC_PROTOCOLS is a bitmask where each bit represents an enabled protocol
             # Only set a specific protocol if exactly one bit is set (power of 2)
             # If multiple bits are set, we can't determine which protocol is actually in use
-            if rc_protocols_nr > 0 and rc_protocols_nr & (rc_protocols_nr - 1) == 0:
+            if is_single_bit_set(rc_protocols_nr):
                 # Exactly one bit is set (power of 2)
                 rc_bit = str(int(log2(rc_protocols_nr)))
                 if rc_bit in RC_PROTOCOLS_DICT:
                     protocol = RC_PROTOCOLS_DICT[rc_bit].get("protocol")
                     self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
-            # If multiple bits are set (not a power of 2), don't set a specific protocol
+            elif rc_protocols_nr > 0:
+                # Multiple bits are set - cannot determine which protocol is active
+                logging_error(
+                    _("RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active protocol."), rc_protocols_nr
+                )
 
         rc = 1
         telem = 1
@@ -228,6 +256,9 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 telem += 1
             elif component == "GNSS Receiver" and gnss == 1:
                 # Only set GNSS Type from SERIAL if it hasn't been set to a CAN port already
+                # Processing order dependency: _set_gnss_type_from_fc_parameters() is called first,
+                # which sets CAN ports based on GPS_TYPE/GPS1_TYPE parameter. This check prevents
+                # overwriting CAN configuration with SERIAL when a GNSS uses CAN for connection.
                 current_gnss_type = self.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
                 if current_gnss_type not in CAN_PORTS:
                     self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), serial)

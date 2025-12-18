@@ -206,6 +206,85 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert "GNSS Receiver" in basic_model._data["Components"]
         assert basic_model._data["Components"]["GNSS Receiver"]["Product"]["Manufacturer"] == "Holybro"
 
+    def test_gnss_protocol_migration_sbf(self, basic_model) -> None:
+        """Test migration of old SBF protocol name to Septentrio(SBF)."""
+        # Set old protocol name
+        basic_model._data["Components"]["GNSS Receiver"] = {"FC Connection": {"Type": "SERIAL3", "Protocol": "SBF"}}
+
+        basic_model.update_json_structure()
+
+        # Check that protocol was migrated to new name
+        gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
+        assert gnss_protocol == "Septentrio(SBF)", "Old SBF protocol should be migrated to Septentrio(SBF)"
+
+    def test_gnss_protocol_migration_gsof(self, basic_model) -> None:
+        """Test migration of old GSOF protocol name to Trimble(GSOF)."""
+        # Set old protocol name
+        basic_model._data["Components"]["GNSS Receiver"] = {"FC Connection": {"Type": "SERIAL3", "Protocol": "GSOF"}}
+
+        basic_model.update_json_structure()
+
+        # Check that protocol was migrated to new name
+        gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
+        assert gnss_protocol == "Trimble(GSOF)", "Old GSOF protocol should be migrated to Trimble(GSOF)"
+
+    def test_gnss_protocol_migration_sbf_dual_antenna(self, basic_model) -> None:
+        """Test migration of old SBF-DualAntenna protocol name to Septentrio-DualAntenna(SBF)."""
+        # Set old protocol name
+        basic_model._data["Components"]["GNSS Receiver"] = {
+            "FC Connection": {"Type": "SERIAL3", "Protocol": "SBF-DualAntenna"}
+        }
+
+        basic_model.update_json_structure()
+
+        # Check that protocol was migrated to new name
+        gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
+        assert gnss_protocol == "Septentrio-DualAntenna(SBF)", (
+            "Old SBF-DualAntenna protocol should be migrated to Septentrio-DualAntenna(SBF)"
+        )
+
+    def test_gnss_protocol_no_migration_for_new_names(self, basic_model) -> None:
+        """Test that already-migrated protocol names are not changed."""
+        # Set new protocol name (already migrated)
+        basic_model._data["Components"]["GNSS Receiver"] = {
+            "FC Connection": {"Type": "SERIAL3", "Protocol": "Septentrio(SBF)"}
+        }
+
+        basic_model.update_json_structure()
+
+        # Check that protocol remains unchanged
+        gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
+        assert gnss_protocol == "Septentrio(SBF)", "New protocol names should not be modified"
+
+    def test_gnss_protocol_no_migration_for_other_protocols(self, basic_model) -> None:
+        """Test that other GNSS protocols are not affected by migration."""
+        # Set a protocol that doesn't need migration
+        basic_model._data["Components"]["GNSS Receiver"] = {"FC Connection": {"Type": "SERIAL3", "Protocol": "uBlox"}}
+
+        basic_model.update_json_structure()
+
+        # Check that protocol remains unchanged
+        gnss_protocol = basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"]
+        assert gnss_protocol == "uBlox", "Other protocols should not be changed by migration"
+
+    def test_gnss_protocol_migration_preserves_other_fields(self, basic_model) -> None:
+        """Test that protocol migration preserves other GNSS fields."""
+        # Set old protocol with additional fields
+        basic_model._data["Components"]["GNSS Receiver"] = {
+            "Product": {"Manufacturer": "Septentrio", "Model": "mosaic-X5"},
+            "FC Connection": {"Type": "SERIAL3", "Protocol": "SBF"},
+            "Notes": "Dual antenna setup",
+        }
+
+        basic_model.update_json_structure()
+
+        # Check that only protocol was changed, other fields preserved
+        gnss = basic_model._data["Components"]["GNSS Receiver"]
+        assert gnss["FC Connection"]["Protocol"] == "Septentrio(SBF)"
+        assert gnss["Product"]["Manufacturer"] == "Septentrio"
+        assert gnss["Product"]["Model"] == "mosaic-X5"
+        assert gnss["Notes"] == "Dual antenna setup"
+
     def test_none_value_handling(self, basic_model) -> None:
         """Test handling of None values."""
         # Set None and then ensure it's converted to empty string
