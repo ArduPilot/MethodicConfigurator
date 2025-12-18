@@ -10,10 +10,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import subprocess
+import sys
 import tempfile
 import time
-import sys
-import subprocess
 from datetime import datetime, timezone
 from logging import debug as logging_debug
 from logging import error as logging_error
