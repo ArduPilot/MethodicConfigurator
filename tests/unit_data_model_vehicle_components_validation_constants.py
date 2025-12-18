@@ -349,10 +349,10 @@ class TestValidationConstants:
             else:
                 pytest.fail(f"Unexpected port combination in key '{key}': {type_list}")
 
-        # Verify some expected RC protocols exist
+        # Verify some expected RC protocols exist (using bitmask values, not bit positions)
         expected_rc_protocols = {
-            "9": "CRSF",
-            "11": "FPORT",
+            "512": "CRSF",  # Bit 9 -> 2^9 = 512
+            "2048": "FPORT",  # Bit 11 -> 2^11 = 2048
         }
 
         for key, protocol in expected_rc_protocols.items():
@@ -429,7 +429,7 @@ class TestValidationConstants:
         # RC protocol numbers should be reasonable bit positions (typically 0-15)
         for key in RC_PROTOCOLS_DICT:
             rc_num = int(key)
-            assert 0 <= rc_num <= 20, f"RC protocol number {rc_num} is out of expected range"
+            assert 1 <= rc_num <= 65536, f"RC protocol number {rc_num} is out of expected range (bitmask values)"
 
     def test_protocol_names_not_empty(self) -> None:
         """Test that all protocol names are non-empty strings."""
