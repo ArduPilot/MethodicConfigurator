@@ -474,6 +474,103 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
         # pylint: enable=duplicate-code
 
+    def test_user_can_import_battery_capacity_from_fc_parameters(self, realistic_model) -> None:
+        """
+        User can import battery capacity from flight controller parameters.
+
+        GIVEN: Flight controller parameters with BATT_CAPACITY set
+        WHEN: Importing battery configuration
+        THEN: Battery capacity should be set in data model
+        """
+        fc_parameters = {"BATT_CAPACITY": 5000}
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        capacity = realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+        assert capacity == 5000
+
+    def test_system_handles_zero_battery_capacity(self, realistic_model) -> None:
+        """
+        System ignores zero battery capacity from FC parameters.
+
+        GIVEN: Flight controller with BATT_CAPACITY set to 0
+        WHEN: Importing battery configuration
+        THEN: Battery capacity should not be updated
+        """
+        # Set initial capacity to something non-zero
+        realistic_model.set_component_value(("Battery", "Specifications", "Capacity mAh"), 1000)
+
+        fc_parameters = {"BATT_CAPACITY": 0}
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        capacity = realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+        # Should remain at initial value since 0 is ignored
+        assert capacity == 1000
+
+    def test_system_handles_invalid_battery_capacity_type(self, realistic_model) -> None:
+        """
+        System handles invalid BATT_CAPACITY value gracefully.
+
+        GIVEN: FC parameters with non-integer BATT_CAPACITY value
+        WHEN: Importing battery configuration
+        THEN: Error should be logged
+        AND: System should not crash
+        """
+        fc_parameters = {"BATT_CAPACITY": "invalid"}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    def test_system_handles_none_battery_capacity(self, realistic_model) -> None:
+        """
+        System handles None BATT_CAPACITY value gracefully.
+
+        GIVEN: FC parameters with BATT_CAPACITY set to None
+        WHEN: Importing battery configuration
+        THEN: Error should be logged
+        AND: System should not crash
+        """
+        fc_parameters = {"BATT_CAPACITY": None}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    def test_system_handles_negative_battery_capacity(self, realistic_model) -> None:
+        """
+        System ignores negative battery capacity from FC parameters.
+
+        GIVEN: Flight controller with BATT_CAPACITY set to negative value
+        WHEN: Importing battery configuration
+        THEN: Battery capacity should not be updated
+        """
+        # Set initial capacity to something non-zero
+        realistic_model.set_component_value(("Battery", "Specifications", "Capacity mAh"), 1000)
+
+        fc_parameters = {"BATT_CAPACITY": -100}
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        capacity = realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+        # Should remain at initial value since negative is ignored
+        assert capacity == 1000
+
+    def test_system_imports_both_battery_monitor_and_capacity(self, realistic_model) -> None:
+        """
+        System imports both battery monitor type and capacity together.
+
+        GIVEN: FC parameters with both BATT_MONITOR and BATT_CAPACITY
+        WHEN: Importing battery configuration
+        THEN: Both monitor type and capacity should be set
+        """
+        fc_parameters = {"BATT_MONITOR": 4, "BATT_CAPACITY": 6500}
+
+        realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        batt_type = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
+        capacity = realistic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+
+        assert batt_type == "Analog"
+        assert capacity == 6500
+
     def test_system_preserves_motor_poles_when_no_dshot_or_fettec(self, realistic_model) -> None:
         """
         System preserves existing motor poles when neither DShot nor FETtec configured.
