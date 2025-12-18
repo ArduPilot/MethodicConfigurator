@@ -130,7 +130,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
     def process_fc_parameters(
         self,
-        fc_parameters: dict[str, Any],
+        fc_parameters: dict[str, float],
         doc: dict[str, Any],
     ) -> None:
         """
@@ -291,7 +291,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
         return esc >= 2
 
-    def _set_esc_type_from_fc_parameters(self, fc_parameters: dict[str, Any], doc: dict[str, Any]) -> None:
+    def _set_esc_type_from_fc_parameters(self, fc_parameters: dict[str, float], doc: dict[str, Any]) -> None:
         """Process ESC parameters and update the data model."""
         mot_pwm_type = fc_parameters.get("MOT_PWM_TYPE", 0)
         try:
@@ -317,7 +317,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
             protocol = str(MOT_PWM_TYPE_DICT[str(mot_pwm_type)]["protocol"])
             self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
 
-    def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, Any]) -> None:
+    def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:
         """Process battery monitor parameters and update the data model."""
         if "BATT_MONITOR" in fc_parameters:
             try:
@@ -429,7 +429,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
                     max_cells,
                 )
 
-    def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, Any]) -> None:
+    def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:
         """Process motor parameters and update the data model."""
         if "MOT_PWM_TYPE" in fc_parameters:
             mot_pwm_type_str = str(fc_parameters["MOT_PWM_TYPE"])
