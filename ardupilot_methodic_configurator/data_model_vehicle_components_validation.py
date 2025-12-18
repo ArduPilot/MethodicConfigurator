@@ -183,10 +183,10 @@ GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
     "7": {"type": SERIAL_PORTS, "protocol": "HIL"},
     "8": {"type": SERIAL_PORTS, "protocol": "SwiftNav"},
     "9": {"type": CAN_PORTS, "protocol": "DroneCAN"},
-    "10": {"type": SERIAL_PORTS, "protocol": "SBF"},
-    "11": {"type": SERIAL_PORTS, "protocol": "GSOF"},
+    "10": {"type": SERIAL_PORTS, "protocol": "Septentrio(SBF)"},
+    "11": {"type": SERIAL_PORTS, "protocol": "Trimble(GSOF)"},
     "13": {"type": SERIAL_PORTS, "protocol": "ERB"},
-    "14": {"type": SERIAL_PORTS, "protocol": "MAV"},
+    "14": {"type": SERIAL_PORTS, "protocol": "MAVLink"},
     "15": {"type": SERIAL_PORTS, "protocol": "NOVA"},
     "16": {"type": SERIAL_PORTS, "protocol": "HemisphereNMEA"},
     "17": {"type": SERIAL_PORTS, "protocol": "uBlox-MovingBaseline-Base"},
@@ -198,7 +198,7 @@ GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
     "23": {"type": CAN_PORTS, "protocol": "DroneCAN-MovingBaseline-Rover"},
     "24": {"type": SERIAL_PORTS, "protocol": "UnicoreNMEA"},
     "25": {"type": SERIAL_PORTS, "protocol": "UnicoreMovingBaselineNMEA"},
-    "26": {"type": SERIAL_PORTS, "protocol": "SBF-DualAntenna"},
+    "26": {"type": SERIAL_PORTS, "protocol": "Septentrio-DualAntenna(SBF)"},
 }
 
 MOT_PWM_TYPE_DICT: dict[str, dict[str, Union[list[str], str, bool]]] = {
@@ -294,6 +294,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             "BATT_MONITOR": get_all_protocols(BATT_MONITOR_CONNECTION),
             "MOT_PWM_TYPE": get_all_protocols(MOT_PWM_TYPE_DICT),
             "GPS_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),
+            "GPS1_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),  # GPS_TYPE was renamed to GPS1_TYPE in 4.6
         }
 
         def get_combobox_values(param_name: str) -> tuple[str, ...]:
@@ -340,7 +341,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("ESC", "FC Connection", "Type"): (*PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
             ("ESC", "FC Connection", "Protocol"): self._mot_pwm_types,
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
-            ("GNSS Receiver", "FC Connection", "Protocol"): get_combobox_values("GPS_TYPE"),
+            ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
         for component in ["RC Receiver", "Telemetry", "Battery Monitor", "ESC", "GNSS Receiver"]:

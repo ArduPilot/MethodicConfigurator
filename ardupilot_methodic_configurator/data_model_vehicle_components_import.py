@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # from logging import debug as logging_debug
 from logging import error as logging_error
+from logging import warning as logging_warning
 from math import log2
 from typing import Any
 
@@ -65,6 +66,8 @@ class ComponentDataModelImport(ComponentDataModelBase):
         Verify that a dictionary is up-to-date with the apm.pdef.xml documentation metadata.
 
         Returns True if valid, False if there are discrepancies.
+        Note: Logs warnings (not errors) when firmware has protocols not in code dictionaries,
+        as this is expected when ArduPilot firmware is updated with new features.
         """
         is_valid = True
         if not doc or doc_key not in doc or not doc[doc_key] or doc_dict not in doc[doc_key]:
@@ -74,10 +77,12 @@ class ComponentDataModelImport(ComponentDataModelBase):
             if key in dict_to_check:
                 code_protocol = dict_to_check[key].get("protocol", None)
                 if code_protocol != doc_protocol:
-                    logging_error(_("Protocol %s does not match %s in %s metadata"), code_protocol, doc_protocol, doc_key)
+                    logging_warning(_("Protocol %s does not match %s in %s metadata"), code_protocol, doc_protocol, doc_key)
                     is_valid = False
             else:
-                logging_error(_("Protocol %s not found in %s metadata"), doc_protocol, doc_key)
+                logging_warning(
+                    _("Protocol %s not found in %s code dictionary (firmware may be newer)"), doc_protocol, doc_key
+                )
                 is_valid = False
         return is_valid
 
@@ -94,7 +99,11 @@ class ComponentDataModelImport(ComponentDataModelBase):
         # First verify dictionaries match documentation
         self._verify_dict_is_uptodate(doc, SERIAL_PROTOCOLS_DICT, "SERIAL1_PROTOCOL", "values")
         self._verify_dict_is_uptodate(doc, BATT_MONITOR_CONNECTION, "BATT_MONITOR", "values")
-        self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values")
+        # GPS_TYPE was renamed to GPS1_TYPE in ArduPilot 4.6
+        if "GPS1_TYPE" in doc:
+            self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS1_TYPE", "values")
+        elif "GPS_TYPE" in doc:
+            self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values")
         self._verify_dict_is_uptodate(doc, MOT_PWM_TYPE_DICT, "MOT_PWM_TYPE", "values")
         self._verify_dict_is_uptodate(doc, RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask")
 
@@ -109,23 +118,29 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
     def _set_gnss_type_from_fc_parameters(self, fc_parameters: dict) -> None:
         """Process GNSS receiver parameters and update the data model."""
-        gps1_type = fc_parameters.get("GPS_TYPE", 0)
+        # GPS_TYPE was renamed to GPS1_TYPE in ArduPilot 4.6, check for both
+        gps1_type = fc_parameters.get("GPS1_TYPE", fc_parameters.get("GPS_TYPE", 0))
+        param_name = "GPS1_TYPE" if "GPS1_TYPE" in fc_parameters else "GPS_TYPE"
         try:
             gps1_type = int(gps1_type)
         except (ValueError, TypeError):
-            logging_error(_("Invalid non-integer value for GPS_TYPE %s"), gps1_type)
+            logging_error(_("Invalid non-integer value for %s: %s"), param_name, gps1_type)
             gps1_type = 0
 
         if str(gps1_type) in GNSS_RECEIVER_CONNECTION:
             gps1_connection_type = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("type")
             gps1_connection_protocol = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("protocol")
-            if gps1_connection_type == "None":
+            # Normalize gps1_connection_type to a list for consistent handling
+            if isinstance(gps1_connection_type, str):
+                gps1_connection_type = [gps1_connection_type]
+            # gps1_connection_type is now a list of possible connection types
+            if gps1_connection_type == ["None"]:
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), "None")
-            elif gps1_connection_type in SERIAL_PORTS:
+            elif gps1_connection_type and any(conn_type in SERIAL_PORTS for conn_type in gps1_connection_type):
                 # GNSS connection type will be detected later in set_serial_type_from_fc_parameters
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), str(gps1_connection_protocol))
-            elif gps1_connection_type in CAN_PORTS:
+            elif gps1_connection_type and any(conn_type in CAN_PORTS for conn_type in gps1_connection_type):
                 if (
                     "CAN_D1_PROTOCOL" in fc_parameters
                     and fc_parameters["CAN_D1_PROTOCOL"] == 1
@@ -152,10 +167,12 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 logging_error("Invalid GNSS connection type %s", gps1_connection_type)
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
         else:
-            logging_error("GPS_TYPE %u not in GNSS_RECEIVER_CONNECTION", gps1_type)
+            logging_error("%s value %u not in GNSS_RECEIVER_CONNECTION", param_name, gps1_type)
             self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
 
-    def _set_serial_type_from_fc_parameters(self, fc_parameters: dict) -> bool:  # pylint: disable=too-many-branches
+    def _set_serial_type_from_fc_parameters(  # pylint: disable=too-many-branches,too-many-statements # noqa: PLR0915
+        self, fc_parameters: dict
+    ) -> bool:
         """Process serial port parameters and update the data model. Returns True if ESC is serial controlled."""
         if "RC_PROTOCOLS" in fc_parameters:
             try:
@@ -163,12 +180,16 @@ class ComponentDataModelImport(ComponentDataModelBase):
             except (ValueError, TypeError):
                 logging_error(_("Invalid non-integer value for RC_PROTOCOLS %s"), fc_parameters["RC_PROTOCOLS"])
                 rc_protocols_nr = 0
-            # check if rc_protocols_nr is a power of two (only one bit set) and not zero
+            # RC_PROTOCOLS is a bitmask where each bit represents an enabled protocol
+            # Only set a specific protocol if exactly one bit is set (power of 2)
+            # If multiple bits are set, we can't determine which protocol is actually in use
             if rc_protocols_nr > 0 and rc_protocols_nr & (rc_protocols_nr - 1) == 0:
-                # rc_bit is the number of the bit that is set
+                # Exactly one bit is set (power of 2)
                 rc_bit = str(int(log2(rc_protocols_nr)))
-                protocol = RC_PROTOCOLS_DICT[rc_bit].get("protocol")
-                self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
+                if rc_bit in RC_PROTOCOLS_DICT:
+                    protocol = RC_PROTOCOLS_DICT[rc_bit].get("protocol")
+                    self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
+            # If multiple bits are set (not a power of 2), don't set a specific protocol
 
         rc = 1
         telem = 1
@@ -206,7 +227,10 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 self.set_component_value(("Telemetry", "FC Connection", "Protocol"), protocol)
                 telem += 1
             elif component == "GNSS Receiver" and gnss == 1:
-                self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), serial)
+                # Only set GNSS Type from SERIAL if it hasn't been set to a CAN port already
+                current_gnss_type = self.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+                if current_gnss_type not in CAN_PORTS:
+                    self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), serial)
                 gnss += 1
             elif component == "ESC":
                 if esc == 1:

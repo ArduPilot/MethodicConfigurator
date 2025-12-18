@@ -780,7 +780,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             "BATT_MONITOR": 4,
         }
 
-        doc = {"some": "data"}
+        doc = {"GPS_TYPE": {"values": {}}}  # Include GPS_TYPE so verification is called
 
         # Mock all verifications to fail
         with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=False) as mock_verify:
