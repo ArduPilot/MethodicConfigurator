@@ -110,11 +110,11 @@ class TestFlightControllerParamsSetParameter:
         # When: Set parameter
         success, error = params_mgr.set_param("BATT_MONITOR", 4.0)
 
-        # Then: Parameter sent and cached
+        # Then: Parameter sent (but NOT cached - cache only updates from actual FC reads)
         assert success is True
         assert error == ""
         mock_master.param_set_send.assert_called_once_with("BATT_MONITOR", 4.0)
-        assert params_mgr.fc_parameters["BATT_MONITOR"] == 4.0
+        # Note: fc_parameters is NOT updated by set_param to ensure cache accuracy
 
     def test_set_parameter_fails_without_connection(self) -> None:
         """
