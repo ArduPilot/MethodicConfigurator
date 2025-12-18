@@ -13,7 +13,6 @@ import contextlib
 # from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import warning as logging_warning
-from math import log2
 from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
@@ -95,20 +94,36 @@ class ComponentDataModelImport(ComponentDataModelBase):
         Returns True if valid, False if there are discrepancies.
         Note: Logs warnings (not errors) when firmware has protocols not in code dictionaries,
         as this is expected when ArduPilot firmware is updated with new features.
+
+        For bitmask parameters (doc_dict == "Bitmask"), the documentation key represents a bit position,
+        but our dictionary keys are the actual bitmask values (2^bit_position), so we convert for comparison.
         """
         is_valid = True
         if not doc or doc_key not in doc or not doc[doc_key] or doc_dict not in doc[doc_key]:
             return False
 
+        is_bitmask = doc_dict == "Bitmask"
+
         for key, doc_protocol in doc[doc_key][doc_dict].items():
-            if key in dict_to_check:
-                code_protocol = dict_to_check[key].get("protocol", None)
+            # For bitmask parameters, convert bit position to bitmask value (2^bit_position)
+            # e.g., bit position "0" -> value "1", bit position "9" -> value "512"
+            if is_bitmask:
+                try:
+                    check_key = str(2 ** int(key))
+                except (ValueError, TypeError):
+                    logging_warning(_("Invalid bit position %s in %s metadata"), key, doc_key)
+                    continue
+            else:
+                check_key = key
+
+            if check_key in dict_to_check:
+                code_protocol = dict_to_check[check_key].get("protocol", None)
                 if code_protocol != doc_protocol:
                     logging_warning(_("Protocol %s does not match %s in %s metadata"), code_protocol, doc_protocol, doc_key)
                     is_valid = False
             else:
                 logging_warning(
-                    _("Protocol %s not found in %s code dictionary (firmware may be newer)"), doc_protocol, doc_key
+                    _("Protocol %s (%s) not found in %s code dictionary (firmware may be newer)"), doc_protocol, key, doc_key
                 )
                 is_valid = False
         return is_valid
@@ -211,10 +226,10 @@ class ComponentDataModelImport(ComponentDataModelBase):
             # Only set a specific protocol if exactly one bit is set (power of 2)
             # If multiple bits are set, we can't determine which protocol is actually in use
             if is_single_bit_set(rc_protocols_nr):
-                # Exactly one bit is set (power of 2)
-                rc_bit = str(int(log2(rc_protocols_nr)))
-                if rc_bit in RC_PROTOCOLS_DICT:
-                    protocol = RC_PROTOCOLS_DICT[rc_bit].get("protocol")
+                # Exactly one bit is set (power of 2) - use the value directly as the key
+                rc_value = str(rc_protocols_nr)
+                if rc_value in RC_PROTOCOLS_DICT:
+                    protocol = RC_PROTOCOLS_DICT[rc_value].get("protocol")
                     self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
             elif rc_protocols_nr > 0:
                 # Multiple bits are set - cannot determine which protocol is active

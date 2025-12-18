@@ -141,6 +141,8 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "44": {"type": SERIAL_PORTS, "protocol": "IRC Tramp", "component": None},
     "45": {"type": SERIAL_PORTS, "protocol": "DDS XRCE", "component": None},
     "46": {"type": SERIAL_PORTS, "protocol": "IMUDATA", "component": None},
+    "48": {"type": SERIAL_PORTS, "protocol": "PPP", "component": "Telemetry"},
+    "49": {"type": SERIAL_PORTS, "protocol": "i-BUS Telemetry", "component": None},
 }
 
 BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
@@ -211,25 +213,30 @@ MOT_PWM_TYPE_DICT: dict[str, dict[str, Union[list[str], str, bool]]] = {
     "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
     "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
     "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
+    "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
 }
 
+# RC_PROTOCOLS is a bitmask parameter, so keys are actual bitmask values (2^bit_position)
+# Special case: value 1 = All protocols enabled
+# Bit 1 (value 2) = PPM, Bit 2 (value 4) = IBUS, Bit 3 (value 8) = SBUS, etc.
 RC_PROTOCOLS_DICT: dict[str, dict[str, Union[list[str], str]]] = {
-    "0": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "All"},
-    "1": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "PPM"},
-    "2": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "IBUS"},
-    "3": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS"},
-    "4": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS_NI"},
-    "5": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "DSM"},
-    "6": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SUMD"},
-    "7": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL"},
-    "8": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL2"},
-    "9": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "CRSF"},
-    "10": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "ST24"},
-    "11": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT"},
-    "12": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT2"},
-    "13": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FastSBUS"},
-    "14": {"type": CAN_PORTS, "protocol": "DroneCAN"},
-    "15": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "Ghost"},
+    "1": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "All"},  # Special case: 1 = All protocols
+    "2": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "PPM"},  # Bit 1
+    "4": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "IBUS"},  # Bit 2
+    "8": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS"},  # Bit 3
+    "16": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS_NI"},  # Bit 4
+    "32": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "DSM"},  # Bit 5
+    "64": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SUMD"},  # Bit 6
+    "128": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL"},  # Bit 7
+    "256": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL2"},  # Bit 8
+    "512": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "CRSF"},  # Bit 9
+    "1024": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "ST24"},  # Bit 10
+    "2048": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT"},  # Bit 11
+    "4096": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT2"},  # Bit 12
+    "8192": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FastSBUS"},  # Bit 13
+    "16384": {"type": CAN_PORTS, "protocol": "DroneCAN"},  # Bit 14
+    "32768": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "Ghost"},  # Bit 15
+    "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
 }
 
 
