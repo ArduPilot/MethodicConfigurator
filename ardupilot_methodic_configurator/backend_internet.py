@@ -152,7 +152,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 def create_backup(progress_callback: Optional[Callable[[float, str], None]] = None) -> bool:
     """
     Backup AMC installation and Vehicles folder.
-    
+
     Returns True on success, False on any error.
     """
     try:
