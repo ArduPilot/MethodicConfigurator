@@ -196,7 +196,7 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
 
         return True
 
-    except (CalledProcessError, FileNotFoundError, PermissionError, OSError) as e:
+    except (PermissionError, OSError) as e:
         logging_error(_("Backup failed: %s"), e)
         return False
 
