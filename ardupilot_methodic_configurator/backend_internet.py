@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import shutil
 from datetime import datetime, timezone
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -28,7 +29,10 @@ from requests import Timeout as requests_Timeout
 from requests import get as requests_get
 from requests.exceptions import RequestException
 
-from ardupilot_methodic_configurator import _
+from platformdirs import user_config_dir
+from pathlib import Path
+
+from ardupilot_methodic_configurator import _, __version__
 
 # Constants
 GITHUB_API_URL_RELEASES = "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/"
@@ -145,6 +149,47 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         logging_error(_("Invalid release data: {}").format(e))
         raise
 
+def create_backup(progress_callback: Optional[Callable[[float, str], None]] = None) -> bool:
+    """
+    Backup AMC installation and Vehicles folder.
+    Returns True on success, False on any error.
+    """
+    try:
+        version = __version__
+        config_dir = Path(user_config_dir(".ardupilot_methodic_configurator", appauthor=False, roaming=True))
+        backups_dir = config_dir / "backups" / version
+        backups_dir.mkdir(parents=True, exist_ok=True)
+
+        # Backup Vehicles folder
+        vehicles_dir = config_dir / "vehicles"
+        if vehicles_dir.exists():
+            shutil.copytree(vehicles_dir, backups_dir / "vehicles", dirs_exist_ok=True)
+            logging_info(_("Vehicles folder backed up to %s"), backups_dir / "Vehicles")
+        else:
+            logging_info(_("No Vehicles folder found to backup."))
+
+        # Backup AMC wheel
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "download", f"ardupilot_methodic_configurator=={version}", "-d", str(backups_dir)],
+                check=True,
+            )
+            logging_info(_("AMC wheel backup complete at %s"), backups_dir)
+        except subprocess.CalledProcessError as e:
+            logging_error(_("Failed to backup AMC wheel: %s"), e)
+            return False
+
+        if progress_callback:
+            progress_callback(100.0, _("Backup complete"))
+
+        return True
+
+    except OSError as e:
+        logging_error(_("File system error during backup: %s"), e)
+        return False
+    except Exception as e:
+        logging_error(_("Unexpected error during backup: %s"), e)
+        return False
 
 def download_and_install_on_windows(
     download_url: str,
@@ -172,6 +217,13 @@ def download_and_install_on_windows(
 
     """
     logging_info(_("Downloading and installing new version for Windows..."))
+    
+    try:
+        create_backup(progress_callback)
+    
+    except:
+        logging_error(_("Backup failed"))
+        
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = os.path.join(temp_dir, file_name)
@@ -233,21 +285,41 @@ def download_and_install_on_windows(
     return False
 
 
-def download_and_install_pip_release(progress_callback: Optional[Callable[[float, str], None]] = None) -> int:
+def download_and_install_pip_release(
+    progress_callback: Optional[Callable[[float, str], None]] = None
+) -> int:
     logging_info(_("Updating via pip for Linux and macOS..."))
 
     if progress_callback:
-        progress_callback(0.0, _("Starting installation..."))
+        progress_callback(0.0, _("Backing up current version..."))
+        
+    backup_ok = create_backup(progress_callback)
+    
+    if not backup_ok:
+        logging_error(_("Backup failed. Aborting update."))
+        if progress_callback:
+            progress_callback(0.0, _("Backup failed. Update aborted."))
+        return False
 
+    if progress_callback:
+        progress_callback(100.0, _("Backup complete"))
+        progress_callback(0.0, _("Starting installation..."))
+        
     ret = subprocess.check_call(  # noqa: S603
-        [sys.executable, "-m", "pip", "install", "--upgrade", "ardupilot_methodic_configurator"]
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            "ardupilot_methodic_configurator",
+        ]
     )
 
     if ret == 0 and progress_callback:
         progress_callback(100.0, _("Download complete"))
 
     return ret
-
 
 def verify_and_open_url(url: str) -> bool:
     """
