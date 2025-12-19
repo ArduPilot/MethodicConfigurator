@@ -184,8 +184,9 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
                     str(backups_dir),
                 ],
                 check=True,
-            )
+            )  # noqa: S603
             logging_info(_("AMC wheel backup complete at %s"), backups_dir)
+            
         except subprocess.CalledProcessError as e:
             logging_error(_("Failed to backup AMC wheel: %s"), e)
             return False
@@ -195,13 +196,10 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
 
         return True
 
-    except OSError as e:
-        logging_error(_("File system error during backup: %s"), e)
+    except (CalledProcessError, FileNotFoundError, PermissionError, OSError) as e:
+        logging_error(_("Backup failed: %s"), e)
         return False
-    except Exception as e:
-        logging_error(_("Unexpected error during backup: %s"), e)
-        return False
-
+        
 
 def download_and_install_on_windows(
     download_url: str,
@@ -230,11 +228,7 @@ def download_and_install_on_windows(
     """
     logging_info(_("Downloading and installing new version for Windows..."))
 
-    try:
-        create_backup(progress_callback)
-
-    except Exception as e:
-        logging_error(_("Backup failed"), e)
+    create_backup(progress_callback)
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
