@@ -152,6 +152,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 def create_backup(progress_callback: Optional[Callable[[float, str], None]] = None) -> bool:
     """
     Backup AMC installation and Vehicles folder.
+    
     Returns True on success, False on any error.
     """
     try:
@@ -181,7 +182,7 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
                     str(backups_dir),
                 ],
                 check=True,
-            )
+            ) # noqa: S603
             logging_info(_("AMC wheel backup complete at %s"), backups_dir)
         except subprocess.CalledProcessError as e:
             logging_error(_("Failed to backup AMC wheel: %s"), e)
@@ -230,8 +231,8 @@ def download_and_install_on_windows(
     try:
         create_backup(progress_callback)
 
-    except:
-        logging_error(_("Backup failed"))
+except Exception as e:
+        logging_error(_("Backup failed"), e)
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
