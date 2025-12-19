@@ -184,7 +184,7 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
                     str(backups_dir),
                 ],
                 check=True,
-            ) # noqa: S603
+            )
             logging_info(_("AMC wheel backup complete at %s"), backups_dir)
         except subprocess.CalledProcessError as e:
             logging_error(_("Failed to backup AMC wheel: %s"), e)
