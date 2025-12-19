@@ -36,6 +36,7 @@ from ardupilot_methodic_configurator import _, __version__
 # Constants
 GITHUB_API_URL_RELEASES = "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/"
 
+
 def download_file_from_url(
     url: str, local_filename: str, timeout: int = 30, progress_callback: Optional[Callable[[float, str], None]] = None
 ) -> bool:
@@ -154,6 +155,7 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
 
     Returns:
         True on success, False on any error.
+
     """
     try:
         version = __version__
@@ -182,7 +184,7 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
                     str(backups_dir),
                 ],
                 check=True,
-            ) # noqa: S603
+            )
             logging_info(_("AMC wheel backup complete at %s"), backups_dir)
         except subprocess.CalledProcessError as e:
             logging_error(_("Failed to backup AMC wheel: %s"), e)
