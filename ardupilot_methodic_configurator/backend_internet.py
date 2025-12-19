@@ -9,28 +9,27 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
-import shutil
 from datetime import datetime, timezone
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import shutdown as logging_shutdown
+from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
 
+from platformdirs import user_config_dir
 from requests import HTTPError as requests_HTTPError
 from requests import RequestException as requests_RequestException
 from requests import Timeout as requests_Timeout
 from requests import get as requests_get
 from requests.exceptions import RequestException
-
-from platformdirs import user_config_dir
-from pathlib import Path
 
 from ardupilot_methodic_configurator import _, __version__
 
@@ -149,6 +148,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         logging_error(_("Invalid release data: {}").format(e))
         raise
 
+
 def create_backup(progress_callback: Optional[Callable[[float, str], None]] = None) -> bool:
     """
     Backup AMC installation and Vehicles folder.
@@ -171,7 +171,15 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
         # Backup AMC wheel
         try:
             subprocess.run(
-                [sys.executable, "-m", "pip", "download", f"ardupilot_methodic_configurator=={version}", "-d", str(backups_dir)],
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "download",
+                    f"ardupilot_methodic_configurator=={version}",
+                    "-d",
+                    str(backups_dir),
+                ],
                 check=True,
             )
             logging_info(_("AMC wheel backup complete at %s"), backups_dir)
@@ -190,6 +198,7 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
     except Exception as e:
         logging_error(_("Unexpected error during backup: %s"), e)
         return False
+
 
 def download_and_install_on_windows(
     download_url: str,
@@ -217,13 +226,13 @@ def download_and_install_on_windows(
 
     """
     logging_info(_("Downloading and installing new version for Windows..."))
-    
+
     try:
         create_backup(progress_callback)
-    
+
     except:
         logging_error(_("Backup failed"))
-        
+
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = os.path.join(temp_dir, file_name)
@@ -285,16 +294,14 @@ def download_and_install_on_windows(
     return False
 
 
-def download_and_install_pip_release(
-    progress_callback: Optional[Callable[[float, str], None]] = None
-) -> int:
+def download_and_install_pip_release(progress_callback: Optional[Callable[[float, str], None]] = None) -> int:
     logging_info(_("Updating via pip for Linux and macOS..."))
 
     if progress_callback:
         progress_callback(0.0, _("Backing up current version..."))
-        
+
     backup_ok = create_backup(progress_callback)
-    
+
     if not backup_ok:
         logging_error(_("Backup failed. Aborting update."))
         if progress_callback:
@@ -304,7 +311,7 @@ def download_and_install_pip_release(
     if progress_callback:
         progress_callback(100.0, _("Backup complete"))
         progress_callback(0.0, _("Starting installation..."))
-        
+
     ret = subprocess.check_call(  # noqa: S603
         [
             sys.executable,
@@ -320,6 +327,7 @@ def download_and_install_pip_release(
         progress_callback(100.0, _("Download complete"))
 
     return ret
+
 
 def verify_and_open_url(url: str) -> bool:
     """
