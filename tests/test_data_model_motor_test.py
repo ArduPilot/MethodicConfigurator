@@ -2486,8 +2486,11 @@ class TestMotorTestDataModelFrameSelectionWorkflows:  # pylint: disable=too-many
 
     def test_frame_type_selection_handles_missing_layout_data(self, motor_test_model) -> None:
         """When layout metadata is absent the selection still succeeds with zero motors."""
-        motor_test_model._motor_data_loader.data = {}  # pylint: disable=protected-access
-        motor_test_model._frame_class = 3  # pylint: disable=protected-access
+        # Provide minimal layout with PLUS type but no motors
+        motor_test_model._motor_data_loader.data = {  # pylint: disable=protected-access
+            "layouts": [{"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "PLUS", "motors": []}]
+        }
+        motor_test_model._frame_class = 1  # pylint: disable=protected-access
         motor_test_model._frame_type = 3  # pylint: disable=protected-access
 
         with patch.object(motor_test_model, "set_parameter", return_value=None):
@@ -2505,7 +2508,13 @@ class TestMotorTestDataModelFrameSelectionWorkflows:  # pylint: disable=too-many
 
     def test_frame_type_selection_without_matching_layout(self, motor_test_model) -> None:
         """Non-matching layouts leave the motor count at zero after selection."""
-        motor_test_model._motor_data_loader.data = {"layouts": [{"Class": 9, "Type": 9, "motors": []}]}  # pylint: disable=protected-access
+        # Provide PLUS type for class 1 (current) but with a different class layout (class 9)
+        motor_test_model._motor_data_loader.data = {  # pylint: disable=protected-access
+            "layouts": [
+                {"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 9, "Type": 9, "motors": []},
+            ]
+        }
 
         with patch.object(motor_test_model, "set_parameter", return_value=None):
             assert motor_test_model.update_frame_type_from_selection("PLUS") is True
@@ -3099,3 +3108,162 @@ class TestMotorTestDataModelMotorExecutionWorkflows:
         motor_test_model.run_single_motor_test(0, 1)
 
         motor_test_model.flight_controller.test_motor.assert_called_once()
+
+
+# ==================== Non-Sequential Frame Class Tests ====================
+
+
+class TestNonSequentialFrameClassMapping:
+    """Tests for handling non-sequential frame class numbers like Class 15 SCRIPTINGMATRIX."""
+
+    def test_user_can_select_dotriaconta_frame_class_with_class_15(self, motor_test_model) -> None:
+        """
+        User selects SCRIPTINGMATRIX frame (class 15) successfully.
+
+        GIVEN: Motor data includes Class 15 (SCRIPTINGMATRIX) with Type 1
+        WHEN: Flight controller reports FRAME_CLASS=15
+        THEN: Frame types are retrieved correctly for class 15
+        """
+        # Setup motor data with non-sequential class numbers
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [
+                {"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 1, "ClassName": "QUAD", "Type": 1, "TypeName": "X", "motors": []},
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 1, "TypeName": "DOTRIACONTA/X", "motors": []},
+            ]
+        }
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 15
+
+        # Get types for class 15
+        frame_types = motor_test_model.get_current_frame_class_types()
+
+        # Should return both type options for class 15
+        assert len(frame_types) == 2
+        assert 0 in frame_types
+        assert 1 in frame_types
+        assert frame_types[0] == "PLUS"
+        assert frame_types[1] == "DOTRIACONTA/X"
+
+    def test_user_receives_error_when_selecting_undefined_frame_class(self, motor_test_model) -> None:
+        """
+        User selecting undefined frame class sees helpful error.
+
+        GIVEN: Motor data with classes 1, 2, 5, 15 (non-sequential)
+        WHEN: Flight controller reports FRAME_CLASS=10 (not defined)
+        THEN: Warning logged showing max defined class and empty dict returned
+        """
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [
+                {"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 2, "ClassName": "HEXA", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 5, "ClassName": "Y6", "Type": 0, "TypeName": "default", "motors": []},
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 1, "TypeName": "DOTRIACONTA/X", "motors": []},
+            ]
+        }
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 10
+
+        frame_types = motor_test_model.get_current_frame_class_types()
+
+        assert frame_types == {}
+
+    def test_dotriaconta_32_motors_configuration_loads_correctly(self, motor_test_model) -> None:
+        """
+        SCRIPTINGMATRIX with 32 motors loads all motor positions.
+
+        GIVEN: Class 15 with 32 motors in JSON data
+        WHEN: User configures frame class 15, type 1
+        THEN: All 32 motor positions are loaded with correct data
+        """
+        # Create realistic 32-motor layout
+        motors = [
+            {"Number": i, "TestOrder": i, "Rotation": "CCW" if i % 2 else "CW", "Roll": 0.0, "Pitch": 0.0}
+            for i in range(1, 33)
+        ]
+
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 1, "TypeName": "DOTRIACONTA/X", "motors": motors}
+            ]
+        }
+
+        # Update doc_dict to allow FRAME_CLASS=15
+        if "FRAME_CLASS" in motor_test_model.filesystem.doc_dict:
+            motor_test_model.filesystem.doc_dict["FRAME_CLASS"]["max"] = 15
+
+        motor_test_model.update_frame_configuration(15, 1)
+
+        assert motor_test_model.motor_count == 32
+        assert motor_test_model._frame_class == 15
+        assert motor_test_model._frame_type == 1
+
+    def test_frame_class_mapping_handles_gaps_in_class_numbers(self, motor_test_model) -> None:
+        """
+        Frame class mapping works with non-contiguous class numbers.
+
+        GIVEN: Motor data with classes 1, 5, 7, 12, 15 (gaps in sequence)
+        WHEN: User queries frame options
+        THEN: All classes are accessible by their actual class number
+        """
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [
+                {"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 5, "ClassName": "Y6", "Type": 0, "TypeName": "default", "motors": []},
+                {"Class": 7, "ClassName": "TRI", "Type": 0, "TypeName": "default", "motors": []},
+                {"Class": 12, "ClassName": "DODECAHEXA", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 1, "TypeName": "DOTRIACONTA/X", "motors": []},
+            ]
+        }
+
+        # Test each class can be accessed
+        for class_num in [1, 5, 7, 12, 15]:
+            motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = class_num
+            frame_types = motor_test_model.get_current_frame_class_types()
+            assert len(frame_types) > 0, f"Class {class_num} should have frame types"
+
+    def test_multiple_types_available_for_dotriaconta_class(self, motor_test_model) -> None:
+        """
+        SCRIPTINGMATRIX frame class offers multiple type configurations.
+
+        GIVEN: Class 15 with multiple type variants (0=PLUS, 1=X, 14=CW_X)
+        WHEN: User selects FRAME_CLASS=15
+        THEN: All type options are presented
+        """
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 1, "TypeName": "DOTRIACONTA/X", "motors": []},
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 14, "TypeName": "CW_X", "motors": []},
+            ]
+        }
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 15
+
+        frame_types = motor_test_model.get_current_frame_class_types()
+
+        assert len(frame_types) == 3
+        assert frame_types[0] == "PLUS"
+        assert frame_types[1] == "DOTRIACONTA/X"
+        assert frame_types[14] == "CW_X"
+
+    def test_frame_options_include_all_defined_classes(self, motor_test_model) -> None:
+        """
+        Frame options listing includes all defined classes regardless of numbering.
+
+        GIVEN: Motor data with various non-sequential class numbers
+        WHEN: User requests all frame options
+        THEN: Response includes all class names as keys
+        """
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [
+                {"Class": 1, "ClassName": "QUAD", "Type": 0, "TypeName": "PLUS", "motors": []},
+                {"Class": 5, "ClassName": "Y6", "Type": 0, "TypeName": "default", "motors": []},
+                {"Class": 15, "ClassName": "SCRIPTINGMATRIX", "Type": 1, "TypeName": "DOTRIACONTA/X", "motors": []},
+            ]
+        }
+
+        frame_options = motor_test_model.get_frame_options()
+
+        assert "QUAD" in frame_options
+        assert "Y6" in frame_options
+        assert "SCRIPTINGMATRIX" in frame_options
+        assert len(frame_options) == 3

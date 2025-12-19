@@ -925,11 +925,18 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         # Get all frame options
         all_frame_options = self.get_frame_options()
 
-        # Find the class name that corresponds to the current frame class number
-        # Frame classes are typically 1-indexed in ArduPilot
-        class_names = list(all_frame_options.keys())
-        if 1 <= frame_class_int <= len(class_names):
-            current_class_name = class_names[frame_class_int - 1]
+        # Build a mapping from frame class number to class name using the JSON data
+        class_number_to_name = {}
+        if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
+            for layout in self._motor_data_loader.data["layouts"]:
+                class_num = layout.get("Class")
+                class_name = layout.get("ClassName")
+                if class_num is not None and class_name is not None:
+                    class_number_to_name[class_num] = class_name
+
+        # Find the class name for the current frame class number
+        if frame_class_int in class_number_to_name:
+            current_class_name = class_number_to_name[frame_class_int]
             types_for_class = all_frame_options.get(current_class_name, {})
             logging_debug(
                 _("Found %(count)d frame types for current frame class %(class)d (%(name)s)"),
@@ -941,9 +948,11 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             )
             return types_for_class
 
+        # Class number not found in motor data
+        max_class = max(class_number_to_name.keys()) if class_number_to_name else 0
         logging_warning(
-            _("Current frame class %(class)d is outside valid range (1-%(max)d)"),
-            {"class": frame_class_int, "max": len(class_names)},
+            _("Current frame class %(class)d is not defined in motor configuration (max defined: %(max)d)"),
+            {"class": frame_class_int, "max": max_class},
         )
         return {}
 
