@@ -432,7 +432,14 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
     def __terminate_session(self) -> None:
         """Terminate current session."""
         self.__send(FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None))
-        self.fh = None
+        # Ensure any open local file handle is properly closed to release OS resources
+        try:
+            if self.fh is not None:
+                self.fh.close()
+        except Exception as ex:  # pylint: disable=broad-except
+            logging.error("FTP: error closing local file handle: %s", ex)
+        finally:
+            self.fh = None
         self.filename = None
         self.write_list = None
         if self.callback is not None:
