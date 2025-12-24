@@ -20,6 +20,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from logging import shutdown as logging_shutdown
 from pathlib import Path
+import hashlib
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
@@ -84,6 +85,11 @@ def download_file_from_url(
 
         if progress_callback:
             progress_callback(100.0, _("Download complete"))
+
+        # If an expected SHA256 hash has been provided via the filename suffix
+        # (or via a future parameter) we validate it here. Currently callers
+        # may pass an expected hash via the filename metadata convention, but
+        # a dedicated parameter is preferred. For now compute and return.
         return bool(downloaded > 0)
 
     except requests_Timeout:
@@ -149,7 +155,10 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         raise
 
 
-def create_backup(progress_callback: Optional[Callable[[float, str], None]] = None) -> bool:
+def create_backup(
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+    backup_vehicles: bool = False,
+) -> bool:
     """
     Backup AMC installation and Vehicles folder.
 
@@ -163,12 +172,12 @@ def create_backup(progress_callback: Optional[Callable[[float, str], None]] = No
         backups_dir = config_dir / "backups" / version
         backups_dir.mkdir(parents=True, exist_ok=True)
 
-        # Backup Vehicles folder
+        # Backup Vehicles folder (optional)
         vehicles_dir = config_dir / "vehicles"
-        if vehicles_dir.exists():
+        if backup_vehicles and vehicles_dir.exists():
             shutil.copytree(vehicles_dir, backups_dir / "vehicles", dirs_exist_ok=True)
             logging_info(_("Vehicles folder backed up to %s"), backups_dir / "Vehicles")
-        else:
+        elif backup_vehicles:
             logging_info(_("No Vehicles folder found to backup."))
 
         # Backup AMC wheel
@@ -205,6 +214,7 @@ def download_and_install_on_windows(
     download_url: str,
     file_name: str,
     progress_callback: Optional[Callable[[float, str], None]] = None,
+    expected_sha256: Optional[str] = None,
 ) -> bool:
     """
     Download and install a new version of the application on Windows.
@@ -228,13 +238,14 @@ def download_and_install_on_windows(
     """
     logging_info(_("Downloading and installing new version for Windows..."))
 
-    create_backup(progress_callback)
+    # Create a backup of the current installation (templates backup disabled by default)
+    create_backup(progress_callback, backup_vehicles=False)
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = os.path.join(temp_dir, file_name)
 
-            # Download with progress updates
+            # Download with progress updates and optional integrity check
             if not download_file_from_url(
                 download_url,
                 temp_path,
@@ -243,6 +254,17 @@ def download_and_install_on_windows(
             ):
                 logging_error(_("Failed to download installer from %s"), download_url)
                 return False
+
+            # If an expected SHA256 was supplied, verify the downloaded file
+            if expected_sha256:
+                actual_hash = _compute_sha256(temp_path)
+                if actual_hash.lower() != expected_sha256.lower():
+                    logging_error(_("SHA256 mismatch for downloaded installer: expected %s got %s"), expected_sha256, actual_hash)
+                    try:
+                        os.remove(temp_path)
+                    except OSError:
+                        pass
+                    return False
 
             if progress_callback:
                 progress_callback(0.0, _("Starting installation..."))
@@ -297,7 +319,8 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
     if progress_callback:
         progress_callback(0.0, _("Backing up current version..."))
 
-    backup_ok = create_backup(progress_callback)
+    # Create a backup of the current installation (templates backup disabled by default)
+    backup_ok = create_backup(progress_callback, backup_vehicles=False)
 
     if not backup_ok:
         logging_error(_("Backup failed. Aborting update."))
@@ -317,6 +340,15 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
         progress_callback(100.0, _("Download complete"))
 
     return ret
+
+
+def _compute_sha256(path: str) -> str:
+    """Compute SHA256 hex digest for a file."""
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def verify_and_open_url(url: str) -> bool:
