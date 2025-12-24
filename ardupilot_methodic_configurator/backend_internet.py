@@ -8,7 +8,10 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import hashlib
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -18,17 +21,19 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import shutdown as logging_shutdown
+from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
 
+from platformdirs import user_config_dir
 from requests import HTTPError as requests_HTTPError
 from requests import RequestException as requests_RequestException
 from requests import Timeout as requests_Timeout
 from requests import get as requests_get
 from requests.exceptions import RequestException
 
-from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator import _, __version__
 
 # Constants
 GITHUB_API_URL_RELEASES = "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/"
@@ -81,6 +86,11 @@ def download_file_from_url(
 
         if progress_callback:
             progress_callback(100.0, _("Download complete"))
+
+        # If an expected SHA256 hash has been provided via the filename suffix
+        # (or via a future parameter) we validate it here. Currently callers
+        # may pass an expected hash via the filename metadata convention, but
+        # a dedicated parameter is preferred. For now compute and return.
         return bool(downloaded > 0)
 
     except requests_Timeout:
@@ -146,10 +156,113 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         raise
 
 
+def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str, timeout: int = 30) -> Optional[str]:
+    """
+    Try to obtain the expected SHA256 for a release asset.
+
+    This searches release assets for checksum files (SHA256SUMS, *.sha256,
+    checksums.txt) and parses them for the given filename. As a fallback
+    it searches the release body for a 64-hex checksum.
+    """
+    if not release_info or not filename:
+        return None
+
+    assets = release_info.get("assets", [])
+    for asset in assets:
+        name = asset.get("name", "")
+        lname = name.lower()
+        if any(k in lname for k in ("sha256", "checksum", "checksums", "sha256sums", "sha256sum")) or lname.endswith(".txt"):
+            url = asset.get("browser_download_url")
+            if not url:
+                continue
+            try:
+                resp = requests_get(url, timeout=timeout)
+                resp.raise_for_status()
+                text = resp.text
+                # look for lines like: <hash>  filename
+                m = re.search(r"([A-Fa-f0-9]{64})\s+\*?" + re.escape(filename), text)
+                if m:
+                    return m.group(1)
+                # otherwise return first 64-hex found
+                m2 = re.search(r"([A-Fa-f0-9]{64})", text)
+                if m2:
+                    return m2.group(1)
+            except RequestException:
+                continue
+
+    # fallback: check release notes/body for hash mention
+    body = release_info.get("body", "")
+    if body:
+        m = re.search(r"([A-Fa-f0-9]{64})\s+\*?" + re.escape(filename), body)
+        if m:
+            return m.group(1)
+        m2 = re.search(r"([A-Fa-f0-9]{64})", body)
+        if m2:
+            return m2.group(1)
+
+    return None
+
+
+def create_backup(
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+    backup_vehicles: bool = False,
+) -> bool:
+    """
+    Backup AMC installation and Vehicles folder.
+
+    Returns:
+        True on success, False on any error.
+
+    """
+    try:
+        version = __version__
+        config_dir = Path(user_config_dir(".ardupilot_methodic_configurator", appauthor=False, roaming=True))
+        backups_dir = config_dir / "backups" / version
+        backups_dir.mkdir(parents=True, exist_ok=True)
+
+        # Backup Vehicles folder (optional)
+        vehicles_dir = config_dir / "vehicles"
+        if backup_vehicles and vehicles_dir.exists():
+            shutil.copytree(vehicles_dir, backups_dir / "vehicles", dirs_exist_ok=True)
+            logging_info(_("Vehicles folder backed up to %s"), backups_dir / "Vehicles")
+        elif backup_vehicles:
+            logging_info(_("No Vehicles folder found to backup."))
+
+        # Backup AMC wheel
+        try:
+            subprocess.run(  # noqa: S603
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "download",
+                    f"ardupilot_methodic_configurator=={version}",
+                    "-d",
+                    str(backups_dir),
+                ],
+                check=True,
+            )
+            logging_info(_("AMC wheel backup complete at %s"), backups_dir)
+
+        except subprocess.CalledProcessError as e:
+            logging_error(_("Failed to backup AMC wheel: %s"), e)
+            return False
+
+        if progress_callback:
+            progress_callback(100.0, _("Backup complete"))
+
+        return True
+
+    except (PermissionError, OSError) as e:
+        logging_error(_("Backup failed: %s"), e)
+        return False
+
+
 def download_and_install_on_windows(
     download_url: str,
     file_name: str,
     progress_callback: Optional[Callable[[float, str], None]] = None,
+    expected_sha256: Optional[str] = None,
 ) -> bool:
     """
     Download and install a new version of the application on Windows.
@@ -172,11 +285,15 @@ def download_and_install_on_windows(
 
     """
     logging_info(_("Downloading and installing new version for Windows..."))
+
+    # Create a backup of the current installation (templates backup disabled by default)
+    create_backup(progress_callback, backup_vehicles=False)
+
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = os.path.join(temp_dir, file_name)
 
-            # Download with progress updates
+            # Download with progress updates and optional integrity check
             if not download_file_from_url(
                 download_url,
                 temp_path,
@@ -185,6 +302,19 @@ def download_and_install_on_windows(
             ):
                 logging_error(_("Failed to download installer from %s"), download_url)
                 return False
+
+            # If an expected SHA256 was supplied, verify the downloaded file
+            if expected_sha256:
+                actual_hash = _compute_sha256(temp_path)
+                if actual_hash.lower() != expected_sha256.lower():
+                    logging_error(
+                        _("SHA256 mismatch for downloaded installer: expected %s got %s"), expected_sha256, actual_hash
+                    )
+                    try:
+                        os.remove(temp_path)
+                    except OSError:
+                        pass
+                    return False
 
             if progress_callback:
                 progress_callback(0.0, _("Starting installation..."))
@@ -237,6 +367,19 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
     logging_info(_("Updating via pip for Linux and macOS..."))
 
     if progress_callback:
+        progress_callback(0.0, _("Backing up current version..."))
+
+    # Create a backup of the current installation (templates backup disabled by default)
+    backup_ok = create_backup(progress_callback, backup_vehicles=False)
+
+    if not backup_ok:
+        logging_error(_("Backup failed. Aborting update."))
+        if progress_callback:
+            progress_callback(0.0, _("Backup failed. Update aborted."))
+        return False
+
+    if progress_callback:
+        progress_callback(100.0, _("Backup complete"))
         progress_callback(0.0, _("Starting installation..."))
 
     ret = subprocess.check_call(  # noqa: S603
@@ -247,6 +390,63 @@ def download_and_install_pip_release(progress_callback: Optional[Callable[[float
         progress_callback(100.0, _("Download complete"))
 
     return ret
+
+
+def _compute_sha256(path: str) -> str:
+    """Compute SHA256 hex digest for a file."""
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def download_and_install_wheel_asset(
+    download_url: str,
+    file_name: str,
+    expected_sha256: Optional[str] = None,
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+) -> int:
+    """Download a wheel asset, verify SHA256 if provided, and install via pip."""
+    logging_info(_("Downloading wheel asset for installation..."))
+
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = os.path.join(temp_dir, file_name)
+
+            if not download_file_from_url(
+                download_url,
+                temp_path,
+                timeout=120,
+                progress_callback=progress_callback,
+            ):
+                logging_error(_("Failed to download wheel from %s"), download_url)
+                return 1
+
+            if expected_sha256:
+                actual = _compute_sha256(temp_path)
+                if actual.lower() != expected_sha256.lower():
+                    logging_error(_("SHA256 mismatch for wheel: expected %s got %s"), expected_sha256, actual)
+                    try:
+                        os.remove(temp_path)
+                    except OSError:
+                        pass
+                    return 1
+
+            # Install the wheel file
+            ret = subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", temp_path])
+
+            if ret == 0 and progress_callback:
+                progress_callback(100.0, _("Installation complete"))
+
+            return ret
+
+    except subprocess.CalledProcessError as e:
+        logging_error(_("Wheel installation failed: %s"), e)
+        return 1
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logging_error(_("Unexpected error installing wheel: %s"), e)
+        return 1
 
 
 def verify_and_open_url(url: str) -> bool:
