@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -24,7 +25,6 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
-import re
 
 from platformdirs import user_config_dir
 from requests import HTTPError as requests_HTTPError
@@ -157,7 +157,8 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 
 
 def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str, timeout: int = 30) -> Optional[str]:
-    """Try to obtain the expected SHA256 for a release asset.
+    """
+    Try to obtain the expected SHA256 for a release asset.
 
     This searches release assets for checksum files (SHA256SUMS, *.sha256,
     checksums.txt) and parses them for the given filename. As a fallback
