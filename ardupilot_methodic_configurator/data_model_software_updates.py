@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
     download_and_install_pip_release,
+    download_and_install_wheel_asset,
     get_release_info,
     get_expected_sha256_from_release,
     webbrowser_open_url,
@@ -93,6 +94,21 @@ class UpdateManager:
                 return False
 
         try:
+            # Prefer wheel assets included in the GitHub release if available
+            wheel_assets = [a for a in latest_release.get("assets", []) if a.get("name", "").lower().endswith(".whl")]
+            if wheel_assets:
+                wheel = wheel_assets[0]
+                expected_sha256 = get_expected_sha256_from_release(latest_release, wheel["name"])
+                return (
+                    download_and_install_wheel_asset(
+                        download_url=wheel["browser_download_url"],
+                        file_name=wheel["name"],
+                        expected_sha256=expected_sha256,
+                        progress_callback=self.dialog.update_progress if self.dialog else None,
+                    )
+                    == 0
+                )
+
             return (
                 download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None) == 0
             )

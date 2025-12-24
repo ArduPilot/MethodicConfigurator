@@ -400,6 +400,54 @@ def _compute_sha256(path: str) -> str:
     return h.hexdigest()
 
 
+def download_and_install_wheel_asset(
+    download_url: str,
+    file_name: str,
+    expected_sha256: Optional[str] = None,
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+) -> int:
+    """Download a wheel asset, verify SHA256 if provided, and install via pip."""
+    logging_info(_("Downloading wheel asset for installation..."))
+
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = os.path.join(temp_dir, file_name)
+
+            if not download_file_from_url(
+                download_url,
+                temp_path,
+                timeout=120,
+                progress_callback=progress_callback,
+            ):
+                logging_error(_("Failed to download wheel from %s"), download_url)
+                return 1
+
+            if expected_sha256:
+                actual = _compute_sha256(temp_path)
+                if actual.lower() != expected_sha256.lower():
+                    logging_error(_("SHA256 mismatch for wheel: expected %s got %s"), expected_sha256, actual)
+                    try:
+                        os.remove(temp_path)
+                    except OSError:
+                        pass
+                    return 1
+
+            # Install the wheel file
+            ret = subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", temp_path])
+
+            if ret == 0 and progress_callback:
+                progress_callback(100.0, _("Installation complete"))
+
+            return ret
+
+    except subprocess.CalledProcessError as e:
+        logging_error(_("Wheel installation failed: %s"), e)
+        return 1
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logging_error(_("Unexpected error installing wheel: %s"), e)
+        return 1
+
+
 def verify_and_open_url(url: str) -> bool:
     """
     Verify if a URL is accessible and open it in the default web browser if successful.
