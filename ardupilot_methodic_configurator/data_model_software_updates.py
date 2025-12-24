@@ -30,6 +30,7 @@ from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
     download_and_install_pip_release,
     get_release_info,
+    get_expected_sha256_from_release,
     webbrowser_open_url,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
@@ -77,10 +78,12 @@ class UpdateManager:
                     logging_error(_("No suitable assets found for Windows installation"))
                     return False
 
+                expected_sha256 = get_expected_sha256_from_release(latest_release, asset["name"]) 
                 return download_and_install_on_windows(
                     download_url=asset["browser_download_url"],
                     file_name=asset["name"],
                     progress_callback=self.dialog.update_progress if self.dialog else None,
+                    expected_sha256=expected_sha256,
                 )
             except (KeyError, IndexError) as e:
                 logging_error(_("Error accessing release assets: %s"), e)

@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
+import re
 
 from platformdirs import user_config_dir
 from requests import HTTPError as requests_HTTPError
@@ -153,6 +154,52 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
     except (KeyError, ValueError) as e:
         logging_error(_("Invalid release data: {}").format(e))
         raise
+
+
+def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str, timeout: int = 30) -> Optional[str]:
+    """Try to obtain the expected SHA256 for a release asset.
+
+    This searches release assets for checksum files (SHA256SUMS, *.sha256,
+    checksums.txt) and parses them for the given filename. As a fallback
+    it searches the release body for a 64-hex checksum.
+    """
+    if not release_info or not filename:
+        return None
+
+    assets = release_info.get("assets", [])
+    for asset in assets:
+        name = asset.get("name", "")
+        lname = name.lower()
+        if any(k in lname for k in ("sha256", "checksum", "checksums", "sha256sums", "sha256sum")) or lname.endswith(".txt"):
+            url = asset.get("browser_download_url")
+            if not url:
+                continue
+            try:
+                resp = requests_get(url, timeout=timeout)
+                resp.raise_for_status()
+                text = resp.text
+                # look for lines like: <hash>  filename
+                m = re.search(r"([A-Fa-f0-9]{64})\s+\*?" + re.escape(filename), text)
+                if m:
+                    return m.group(1)
+                # otherwise return first 64-hex found
+                m2 = re.search(r"([A-Fa-f0-9]{64})", text)
+                if m2:
+                    return m2.group(1)
+            except RequestException:
+                continue
+
+    # fallback: check release notes/body for hash mention
+    body = release_info.get("body", "")
+    if body:
+        m = re.search(r"([A-Fa-f0-9]{64})\s+\*?" + re.escape(filename), body)
+        if m:
+            return m.group(1)
+        m2 = re.search(r"([A-Fa-f0-9]{64})", body)
+        if m2:
+            return m2.group(1)
+
+    return None
 
 
 def create_backup(
