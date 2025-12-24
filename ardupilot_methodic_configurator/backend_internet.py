@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import hashlib
 import os
 import shutil
 import subprocess
@@ -20,7 +21,6 @@ from logging import error as logging_error
 from logging import info as logging_info
 from logging import shutdown as logging_shutdown
 from pathlib import Path
-import hashlib
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
@@ -259,7 +259,9 @@ def download_and_install_on_windows(
             if expected_sha256:
                 actual_hash = _compute_sha256(temp_path)
                 if actual_hash.lower() != expected_sha256.lower():
-                    logging_error(_("SHA256 mismatch for downloaded installer: expected %s got %s"), expected_sha256, actual_hash)
+                    logging_error(
+                        _("SHA256 mismatch for downloaded installer: expected %s got %s"), expected_sha256, actual_hash
+                    )
                     try:
                         os.remove(temp_path)
                     except OSError:
