@@ -74,28 +74,54 @@ def _download_file_with_retries(
     allow_resume: bool,
 ) -> bool:
     """Internal: perform download with retries, resume and progress reporting."""
-    try:
+    def _build_proxies() -> dict:
         proxies_dict = {
             "http": os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy"),
             "https": os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy"),
             "no_proxy": os.environ.get("NO_PROXY") or os.environ.get("no_proxy"),
         }
+        return {k: v for k, v in proxies_dict.items() if v is not None}
 
-        # Remove None values
-        proxies = {k: v for k, v in proxies_dict.items() if v is not None}
+    def _existing_size_and_headers(path: str, resume: bool) -> tuple[int, dict]:
+        headers: dict = {}
+        existing = 0
+        if resume and os.path.exists(path):
+            existing = os.path.getsize(path)
+            if existing > 0:
+                headers["Range"] = f"bytes={existing}-"
+        return existing, headers
 
-        # Resumable download with retries and exponential backoff.
+    def _parse_total_size(response) -> int:
+        content_range = response.headers.get("Content-Range")
+        if content_range:
+            try:
+                return int(content_range.split("/")[-1])
+            except Exception:
+                return 0
+        return int(response.headers.get("content-length", 0) or 0)
+
+    def _write_response(response, path: str, mode: str, initial_downloaded: int, total_size: int) -> int:
+        downloaded_local = initial_downloaded
+        block_size_local = 8192
+        with open(path, mode) as fh:
+            for chunk in response.iter_content(chunk_size=block_size_local):
+                if chunk:
+                    fh.write(chunk)
+                    downloaded_local += len(chunk)
+                    if progress_callback and total_size:
+                        progress = (downloaded_local / total_size) * 100
+                        msg_local = _("Downloading ... {:.1f}%")
+                        progress_callback(progress, msg_local.format(progress))
+        return downloaded_local
+
+    try:
+        proxies = _build_proxies()
         os.makedirs(os.path.dirname(os.path.abspath(local_filename)), exist_ok=True)
 
         attempt = 0
         while attempt <= retries:
-            headers = {}
-            existing_size = 0
             try:
-                if allow_resume and os.path.exists(local_filename):
-                    existing_size = os.path.getsize(local_filename)
-                    if existing_size > 0:
-                        headers["Range"] = f"bytes={existing_size}-"
+                existing_size, headers = _existing_size_and_headers(local_filename, allow_resume)
 
                 response = requests_get(
                     url,
@@ -107,36 +133,13 @@ def _download_file_with_retries(
                 )
                 response.raise_for_status()
 
-                # Determine total size
-                total_size = 0
-                content_range = response.headers.get("Content-Range")
-                if content_range:
-                    # format: bytes start-end/total
-                    try:
-                        total_size = int(content_range.split("/")[-1])
-                    except Exception:
-                        total_size = 0
-                else:
-                    total_size = int(response.headers.get("content-length", 0))
+                total_size = _parse_total_size(response)
 
-                block_size = 8192
-                downloaded = existing_size
-
-                # If server did not honour Range (status 200) and we had a partial file,
-                # restart from scratch to avoid corrupt concatenation.
                 mode = "ab" if existing_size and response.status_code == 206 else "wb"
                 if mode == "wb":
-                    downloaded = 0
+                    existing_size = 0
 
-                with open(local_filename, mode) as file:
-                    for chunk in response.iter_content(chunk_size=block_size):
-                        if chunk:
-                            file.write(chunk)
-                            downloaded += len(chunk)
-                            if progress_callback and total_size:
-                                progress = (downloaded / total_size) * 100
-                                msg = _("Downloading ... {:.1f}%")
-                                progress_callback(progress, msg.format(progress))
+                downloaded = _write_response(response, local_filename, mode, existing_size, total_size)
 
                 if progress_callback:
                     progress_callback(100.0, _("Download complete"))
@@ -152,12 +155,10 @@ def _download_file_with_retries(
             except ValueError as e:
                 logging_error(_("Invalid data received from %s: %s"), url, e)
 
-            # Retry logic with exponential backoff and jitter
             attempt += 1
             if attempt > retries:
                 break
             sleep_time = backoff_factor * (2 ** (attempt - 1))
-            # add small jitter
             sleep_time = sleep_time * (0.8 + 0.4 * (os.urandom(1)[0] / 255.0))
             time.sleep(sleep_time)
 
