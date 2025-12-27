@@ -104,15 +104,6 @@ This ensures users always have access to the latest features, bug fixes, and sec
   - `BaseWindow` for consistent window behavior ✅
   - ❌ **TODO**: No threading - uses callback-based progress updates instead
 
-#### Backend Internet Module
-
-- **File**: `backend_internet.py` ✅ **IMPLEMENTED**
-- **Purpose**: Handles actual download and installation operations
-- **Key Functions**:
-  - `get_release_info()`: GitHub API communication
-  - `download_and_install_on_windows()`: Windows-specific installer handling
-  - `download_and_install_pip_release()`: Linux/macOS pip installation
-  - `download_file_from_url()`: File download with progress tracking
 - **Actual Dependencies**:
   - `requests` with SSL verification ✅
   - `subprocess` for Windows batch file execution ✅
@@ -122,9 +113,6 @@ This ensures users always have access to the latest features, bug fixes, and sec
 ### Data Flow - Implementation Status
 
 1. **Application Startup Check** ✅ **IMPLEMENTED**
-   - Main application calls `check_for_software_updates()` during startup
-   - Function checks current version from `__version__` and gets git hash
-   - Skippable via `--skip-check-for-updates` command line argument
 
 2. **Version Retrieval and Comparison** ✅ **IMPLEMENTED**
    - Calls `get_release_info("/latest", should_be_pre_release=False)` from backend_internet
