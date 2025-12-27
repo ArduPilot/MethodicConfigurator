@@ -92,6 +92,35 @@ def _write_response(
     return downloaded_local
 
 
+def _attempt_download_once(
+    url: str,
+    local_filename: str,
+    timeout: int,
+    proxies: dict[str, str],
+    headers: dict[str, str],
+    progress_callback: Optional[Callable[[float, str], None]],
+) -> bool:
+    """
+    Perform a single HTTP GET and write the response to disk.
+
+    Returns True on success, False on failure.
+    """
+    response = requests_get(url, stream=True, timeout=timeout, proxies=proxies, verify=True, headers=headers)
+    response.raise_for_status()
+
+    total_size = _parse_total_size(response)
+
+    mode = "ab" if headers.get("Range") and response.status_code == 206 else "wb"
+    existing_size = 0 if mode == "wb" else int(headers.get("Range", "bytes=0-").split("=")[1].split("-")[0])
+
+    downloaded = _write_response(response, local_filename, mode, existing_size, total_size, progress_callback)
+
+    if progress_callback:
+        progress_callback(100.0, _("Download complete"))
+
+    return bool(downloaded > 0)
+
+
 def download_file_from_url(
     url: str,
     local_filename: str,
@@ -104,8 +133,8 @@ def download_file_from_url(
     """
     Download a file with optional resume and retry support.
 
-    The implementation uses helper functions to keep complexity low and
-    provide clear unit-testable pieces.
+    Small wrapper that calls a single-attempt helper to keep cyclomatic
+    complexity low for linters.
     """
     if not url or not local_filename:
         logging_error(_("URL or local filename not provided."))
@@ -118,30 +147,8 @@ def download_file_from_url(
     while attempt <= retries:
         try:
             existing_size, headers = _existing_size_and_headers(local_filename, allow_resume)
-
-            response = requests_get(
-                url,
-                stream=True,
-                timeout=timeout,
-                proxies=proxies,
-                verify=True,
-                headers=headers,
-            )
-            response.raise_for_status()
-
-            total_size = _parse_total_size(response)
-
-            mode = "ab" if existing_size and response.status_code == 206 else "wb"
-            if mode == "wb":
-                existing_size = 0
-
-            downloaded = _write_response(response, local_filename, mode, existing_size, total_size, progress_callback)
-
-            if progress_callback:
-                progress_callback(100.0, _("Download complete"))
-
-            return bool(downloaded > 0)
-
+            ok = _attempt_download_once(url, local_filename, timeout, proxies, headers, progress_callback)
+            return ok
         except requests_Timeout:
             logging_error(_("Download timed out (attempt %d)"), attempt + 1)
         except requests_RequestException as e:
