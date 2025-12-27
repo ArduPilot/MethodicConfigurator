@@ -40,7 +40,13 @@ GITHUB_API_URL_RELEASES = "https://api.github.com/repos/ArduPilot/MethodicConfig
 
 
 def download_file_from_url(
-    url: str, local_filename: str, timeout: int = 30, progress_callback: Optional[Callable[[float, str], None]] = None
+    url: str,
+    local_filename: str,
+    timeout: int = 30,
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+    retries: int = 3,
+    backoff_factor: float = 0.5,
+    allow_resume: bool = True,
 ) -> bool:
     if not url or not local_filename:
         logging_error(_("URL or local filename not provided."))
@@ -58,40 +64,84 @@ def download_file_from_url(
         # Remove None values
         proxies = {k: v for k, v in proxies_dict.items() if v is not None}
 
-        # Make request with proxy support
-        response = requests_get(
-            url,
-            stream=True,
-            timeout=timeout,
-            proxies=proxies,
-            verify=True,  # SSL verification
-        )
-        response.raise_for_status()
-
-        total_size = int(response.headers.get("content-length", 0))
-        block_size = 8192
-        downloaded = 0
-
+        # Resumable download with retries and exponential backoff.
         os.makedirs(os.path.dirname(os.path.abspath(local_filename)), exist_ok=True)
 
-        with open(local_filename, "wb") as file:
-            for chunk in response.iter_content(chunk_size=block_size):
-                if chunk:
-                    file.write(chunk)
-                    downloaded += len(chunk)
-                    if progress_callback and total_size:
-                        progress = (downloaded / total_size) * 100
-                        msg = _("Downloading ... {:.1f}%")
-                        progress_callback(progress, msg.format(progress))
+        attempt = 0
+        while attempt <= retries:
+            headers = {}
+            existing_size = 0
+            try:
+                if allow_resume and os.path.exists(local_filename):
+                    existing_size = os.path.getsize(local_filename)
+                    if existing_size > 0:
+                        headers["Range"] = f"bytes={existing_size}-"
 
-        if progress_callback:
-            progress_callback(100.0, _("Download complete"))
+                response = requests_get(
+                    url,
+                    stream=True,
+                    timeout=timeout,
+                    proxies=proxies,
+                    verify=True,
+                    headers=headers,
+                )
+                response.raise_for_status()
 
-        # If an expected SHA256 hash has been provided via the filename suffix
-        # (or via a future parameter) we validate it here. Currently callers
-        # may pass an expected hash via the filename metadata convention, but
-        # a dedicated parameter is preferred. For now compute and return.
-        return bool(downloaded > 0)
+                # Determine total size
+                total_size = 0
+                content_range = response.headers.get("Content-Range")
+                if content_range:
+                    # format: bytes start-end/total
+                    try:
+                        total_size = int(content_range.split("/")[-1])
+                    except Exception:
+                        total_size = 0
+                else:
+                    total_size = int(response.headers.get("content-length", 0))
+
+                block_size = 8192
+                downloaded = existing_size
+
+                # If server did not honour Range (status 200) and we had a partial file,
+                # restart from scratch to avoid corrupt concatenation.
+                mode = "ab" if existing_size and response.status_code == 206 else "wb"
+                if mode == "wb":
+                    downloaded = 0
+
+                with open(local_filename, mode) as file:
+                    for chunk in response.iter_content(chunk_size=block_size):
+                        if chunk:
+                            file.write(chunk)
+                            downloaded += len(chunk)
+                            if progress_callback and total_size:
+                                progress = (downloaded / total_size) * 100
+                                msg = _("Downloading ... {:.1f}%")
+                                progress_callback(progress, msg.format(progress))
+
+                if progress_callback:
+                    progress_callback(100.0, _("Download complete"))
+
+                return bool(downloaded > 0)
+
+            except requests_Timeout:
+                logging_error(_("Download timed out (attempt %d)"), attempt + 1)
+            except requests_RequestException as e:
+                logging_error(_("Network error during download (attempt %d): %s"), attempt + 1, e)
+            except OSError as e:
+                logging_error(_("File system error during download: %s"), e)
+            except ValueError as e:
+                logging_error(_("Invalid data received from %s: %s"), url, e)
+
+            # Retry logic with exponential backoff and jitter
+            attempt += 1
+            if attempt > retries:
+                break
+            sleep_time = backoff_factor * (2 ** (attempt - 1))
+            # add small jitter
+            sleep_time = sleep_time * (0.8 + 0.4 * (os.urandom(1)[0] / 255.0))
+            time.sleep(sleep_time)
+
+        return False
 
     except requests_Timeout:
         logging_error(_("Download timed out"))
