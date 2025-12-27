@@ -30,6 +30,7 @@ from webbrowser import open as webbrowser_open
 from platformdirs import user_config_dir
 from requests import HTTPError as requests_HTTPError
 from requests import RequestException as requests_RequestException
+from requests import Response
 from requests import Timeout as requests_Timeout
 from requests import get as requests_get
 from requests.exceptions import RequestException
@@ -38,6 +39,57 @@ from ardupilot_methodic_configurator import _, __version__
 
 # Constants
 GITHUB_API_URL_RELEASES = "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/"
+
+
+def _build_proxies() -> dict[str, str]:
+    proxies_dict = {
+        "http": os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy"),
+        "https": os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy"),
+        "no_proxy": os.environ.get("NO_PROXY") or os.environ.get("no_proxy"),
+    }
+    return {k: v for k, v in proxies_dict.items() if v is not None}
+
+
+def _existing_size_and_headers(path: str, resume: bool) -> tuple[int, dict[str, str]]:
+    headers: dict[str, str] = {}
+    existing = 0
+    if resume and os.path.exists(path):
+        existing = os.path.getsize(path)
+        if existing > 0:
+            headers["Range"] = f"bytes={existing}-"
+    return existing, headers
+
+
+def _parse_total_size(response: Response) -> int:
+    content_range = response.headers.get("Content-Range")
+    if content_range:
+        try:
+            return int(content_range.split("/")[-1])
+        except Exception:
+            return 0
+    return int(response.headers.get("content-length", 0) or 0)
+
+
+def _write_response(
+    response: Response,
+    path: str,
+    mode: str,
+    initial_downloaded: int,
+    total_size: int,
+    progress_callback: Optional[Callable[[float, str], None]],
+) -> int:
+    downloaded_local = initial_downloaded
+    block_size_local = 8192
+    with open(path, mode) as fh:
+        for chunk in response.iter_content(chunk_size=block_size_local):
+            if chunk:
+                fh.write(chunk)
+                downloaded_local += len(chunk)
+                if progress_callback and total_size:
+                    progress = (downloaded_local / total_size) * 100
+                    msg_local = _("Downloading ... {:.1f}%")
+                    progress_callback(progress, msg_local.format(progress))
+    return downloaded_local
 
 
 def download_file_from_url(
@@ -52,126 +104,59 @@ def download_file_from_url(
     """
     Download a file with optional resume and retry support.
 
-    This is a thin wrapper that delegates the heavy lifting to
-    `_download_file_with_retries` to keep function complexity low for linters.
+    The implementation uses helper functions to keep complexity low and
+    provide clear unit-testable pieces.
     """
     if not url or not local_filename:
         logging_error(_("URL or local filename not provided."))
         return False
 
-    logging_info(_("Downloading %s from %s"), local_filename, url)
+    proxies = _build_proxies()
+    os.makedirs(os.path.dirname(os.path.abspath(local_filename)), exist_ok=True)
 
-    return _download_file_with_retries(url, local_filename, timeout, progress_callback, retries, backoff_factor, allow_resume)
+    attempt = 0
+    while attempt <= retries:
+        try:
+            existing_size, headers = _existing_size_and_headers(local_filename, allow_resume)
 
+            response = requests_get(
+                url,
+                stream=True,
+                timeout=timeout,
+                proxies=proxies,
+                verify=True,
+                headers=headers,
+            )
+            response.raise_for_status()
 
-def _download_file_with_retries(
-    url: str,
-    local_filename: str,
-    timeout: int,
-    progress_callback: Optional[Callable[[float, str], None]],
-    retries: int,
-    backoff_factor: float,
-    allow_resume: bool,
-) -> bool:
-    """Internal: perform download with retries, resume and progress reporting."""
-    def _build_proxies() -> dict:
-        proxies_dict = {
-            "http": os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy"),
-            "https": os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy"),
-            "no_proxy": os.environ.get("NO_PROXY") or os.environ.get("no_proxy"),
-        }
-        return {k: v for k, v in proxies_dict.items() if v is not None}
+            total_size = _parse_total_size(response)
 
-    def _existing_size_and_headers(path: str, resume: bool) -> tuple[int, dict]:
-        headers: dict = {}
-        existing = 0
-        if resume and os.path.exists(path):
-            existing = os.path.getsize(path)
-            if existing > 0:
-                headers["Range"] = f"bytes={existing}-"
-        return existing, headers
+            mode = "ab" if existing_size and response.status_code == 206 else "wb"
+            if mode == "wb":
+                existing_size = 0
 
-    def _parse_total_size(response) -> int:
-        content_range = response.headers.get("Content-Range")
-        if content_range:
-            try:
-                return int(content_range.split("/")[-1])
-            except Exception:
-                return 0
-        return int(response.headers.get("content-length", 0) or 0)
+            downloaded = _write_response(response, local_filename, mode, existing_size, total_size, progress_callback)
 
-    def _write_response(response, path: str, mode: str, initial_downloaded: int, total_size: int) -> int:
-        downloaded_local = initial_downloaded
-        block_size_local = 8192
-        with open(path, mode) as fh:
-            for chunk in response.iter_content(chunk_size=block_size_local):
-                if chunk:
-                    fh.write(chunk)
-                    downloaded_local += len(chunk)
-                    if progress_callback and total_size:
-                        progress = (downloaded_local / total_size) * 100
-                        msg_local = _("Downloading ... {:.1f}%")
-                        progress_callback(progress, msg_local.format(progress))
-        return downloaded_local
+            if progress_callback:
+                progress_callback(100.0, _("Download complete"))
 
-    try:
-        proxies = _build_proxies()
-        os.makedirs(os.path.dirname(os.path.abspath(local_filename)), exist_ok=True)
+            return bool(downloaded > 0)
 
-        attempt = 0
-        while attempt <= retries:
-            try:
-                existing_size, headers = _existing_size_and_headers(local_filename, allow_resume)
+        except requests_Timeout:
+            logging_error(_("Download timed out (attempt %d)"), attempt + 1)
+        except requests_RequestException as e:
+            logging_error(_("Network error during download (attempt %d): %s"), attempt + 1, e)
+        except OSError as e:
+            logging_error(_("File system error during download: %s"), e)
+        except ValueError as e:
+            logging_error(_("Invalid data received from %s: %s"), url, e)
 
-                response = requests_get(
-                    url,
-                    stream=True,
-                    timeout=timeout,
-                    proxies=proxies,
-                    verify=True,
-                    headers=headers,
-                )
-                response.raise_for_status()
-
-                total_size = _parse_total_size(response)
-
-                mode = "ab" if existing_size and response.status_code == 206 else "wb"
-                if mode == "wb":
-                    existing_size = 0
-
-                downloaded = _write_response(response, local_filename, mode, existing_size, total_size)
-
-                if progress_callback:
-                    progress_callback(100.0, _("Download complete"))
-
-                return bool(downloaded > 0)
-
-            except requests_Timeout:
-                logging_error(_("Download timed out (attempt %d)"), attempt + 1)
-            except requests_RequestException as e:
-                logging_error(_("Network error during download (attempt %d): %s"), attempt + 1, e)
-            except OSError as e:
-                logging_error(_("File system error during download: %s"), e)
-            except ValueError as e:
-                logging_error(_("Invalid data received from %s: %s"), url, e)
-
-            attempt += 1
-            if attempt > retries:
-                break
-            sleep_time = backoff_factor * (2 ** (attempt - 1))
-            sleep_time = sleep_time * (0.8 + 0.4 * (os.urandom(1)[0] / 255.0))
-            time.sleep(sleep_time)
-
-        return False
-
-    except requests_Timeout:
-        logging_error(_("Download timed out"))
-    except requests_RequestException as e:
-        logging_error(_("Network error during download: {}").format(e))
-    except OSError as e:
-        logging_error(_("File system error: {}").format(e))
-    except ValueError as e:
-        logging_error(_("Invalid data received from %s: %s"), url, e)
+        attempt += 1
+        if attempt > retries:
+            break
+        sleep_time = backoff_factor * (2 ** (attempt - 1))
+        sleep_time = sleep_time * (0.8 + 0.4 * (os.urandom(1)[0] / 255.0))
+        time.sleep(sleep_time)
 
     return False
 
