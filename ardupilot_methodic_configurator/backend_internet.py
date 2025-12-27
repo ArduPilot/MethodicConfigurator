@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 import hashlib
 import os
 import re
@@ -48,12 +49,31 @@ def download_file_from_url(
     backoff_factor: float = 0.5,
     allow_resume: bool = True,
 ) -> bool:
+    """
+    Download a file with optional resume and retry support.
+
+    This is a thin wrapper that delegates the heavy lifting to
+    `_download_file_with_retries` to keep function complexity low for linters.
+    """
     if not url or not local_filename:
         logging_error(_("URL or local filename not provided."))
         return False
 
     logging_info(_("Downloading %s from %s"), local_filename, url)
 
+    return _download_file_with_retries(url, local_filename, timeout, progress_callback, retries, backoff_factor, allow_resume)
+
+
+def _download_file_with_retries(
+    url: str,
+    local_filename: str,
+    timeout: int,
+    progress_callback: Optional[Callable[[float, str], None]],
+    retries: int,
+    backoff_factor: float,
+    allow_resume: bool,
+) -> bool:
+    """Internal: perform download with retries, resume and progress reporting."""
     try:
         proxies_dict = {
             "http": os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy"),
@@ -328,6 +348,8 @@ def download_and_install_on_windows(
         file_name: The name to save the downloaded file as
         progress_callback: Optional callback function to report progress
                           Takes two arguments: progress (0.0-1.0) and status message
+        expected_sha256: Optional SHA256 hex digest expected for the downloaded installer. If provided,
+            the downloaded file will be verified and the install will be aborted on mismatch.
 
     Returns:
         bool: True if the process started successfully (note: if successful,
@@ -360,10 +382,8 @@ def download_and_install_on_windows(
                     logging_error(
                         _("SHA256 mismatch for downloaded installer: expected %s got %s"), expected_sha256, actual_hash
                     )
-                    try:
+                    with contextlib.suppress(OSError):
                         os.remove(temp_path)
-                    except OSError:
-                        pass
                     return False
 
             if progress_callback:
@@ -477,14 +497,12 @@ def download_and_install_wheel_asset(
                 actual = _compute_sha256(temp_path)
                 if actual.lower() != expected_sha256.lower():
                     logging_error(_("SHA256 mismatch for wheel: expected %s got %s"), expected_sha256, actual)
-                    try:
+                    with contextlib.suppress(OSError):
                         os.remove(temp_path)
-                    except OSError:
-                        pass
                     return 1
 
             # Install the wheel file
-            ret = subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", temp_path])
+            ret = subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", temp_path])  # noqa: S603
 
             if ret == 0 and progress_callback:
                 progress_callback(100.0, _("Installation complete"))
