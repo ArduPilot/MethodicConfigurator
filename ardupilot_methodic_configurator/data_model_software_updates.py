@@ -81,12 +81,14 @@ class UpdateManager:
                     result = False
                 if exe_assets or latest_release.get("assets"):
                     expected_sha256 = get_expected_sha256_from_release(latest_release, asset["name"])
-                    result = download_and_install_on_windows(
-                        download_url=asset["browser_download_url"],
-                        file_name=asset["name"],
-                        progress_callback=self.dialog.update_progress if self.dialog else None,
-                        expected_sha256=expected_sha256,
-                    )
+                    kwargs: dict[str, object] = {
+                        "download_url": asset["browser_download_url"],
+                        "file_name": asset["name"],
+                        "progress_callback": self.dialog.update_progress if self.dialog else None,
+                    }
+                    if expected_sha256 is not None:
+                        kwargs["expected_sha256"] = expected_sha256
+                    result = download_and_install_on_windows(**kwargs)
             except (KeyError, IndexError) as e:
                 logging_error(_("Error accessing release assets: %s"), e)
                 result = False
