@@ -152,7 +152,7 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "enum": ["motor_test"],
+                  "enum": ["motor_test", "battery_monitor"],
                   "description": "The name of the plugin to load"
                 },
                 "placement": {

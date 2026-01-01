@@ -61,13 +61,16 @@ def register_plugins() -> None:
     This function explicitly imports and registers plugins, avoiding
     side-effect imports and potential race conditions.
     """
-    # Import and register motor test plugin
+    # Import and register plugins
     # pylint: disable=import-outside-toplevel, cyclic-import
+    from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (  # noqa: PLC0415
+        register_battery_monitor_plugin,
+    )
     from ardupilot_methodic_configurator.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
-
     # pylint: enable=import-outside-toplevel, cyclic-import
 
     register_motor_test_plugin()
+    register_battery_monitor_plugin()
 
     # Add more plugin registrations here in the future
 
@@ -193,20 +196,20 @@ def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[Flight
         FreeDesktop.setup_startup_notification(conn_sel_window.root)  # type: ignore[arg-type]
         conn_sel_window.root.mainloop()
 
-    vehicle_type = args.vehicle_type
-    if vehicle_type == "":  # not explicitly set, to try to guess it
-        if flight_controller.info.vehicle_type is not None:
-            vehicle_type = flight_controller.info.vehicle_type
-            logging_debug(_("Vehicle type not set explicitly, auto-detected %s."), vehicle_type)
-    else:
+    vehicle_type = ""  # default to empty string, downstream code will handle unknown vehicle type
+    if hasattr(args, "vehicle_type") and args.vehicle_type:
+        vehicle_type = args.vehicle_type
         logging_info(_("Vehicle type explicitly set to %s."), vehicle_type)
+    elif flight_controller.info.vehicle_type is not None:
+        vehicle_type = flight_controller.info.vehicle_type
+        logging_debug(_("Vehicle type not set explicitly, auto-detected %s."), vehicle_type)
 
     return flight_controller, vehicle_type
 
 
-def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None:
+def initialize_flight_controller(state: ApplicationState) -> None:
     """
-    Initialize flight controller connection and local filesystem.
+    Initialize flight controller connection.
 
     Args:
         state: Application state to populate with initialized objects
@@ -220,9 +223,22 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
 
     # Get default parameter values from flight controller
     if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
-        fciw = FlightControllerInfoWindow(state.flight_controller, Path(state.args.vehicle_dir))
+        vehicle_dir = Path(state.args.vehicle_dir) if hasattr(state.args, "vehicle_dir") else Path.cwd()
+        fciw = FlightControllerInfoWindow(state.flight_controller, vehicle_dir)
         state.param_default_values = fciw.get_param_default_values()
 
+
+def initialize_filesystem(state: ApplicationState) -> None:
+    """
+    Initialize local filesystem.
+
+    Args:
+        state: Application state to populate with initialized objects
+
+    Raises:
+        SystemExit: If there's a fatal error reading parameter files
+
+    """
     # Initialize local filesystem
     try:
         state.local_filesystem = LocalFilesystem(
@@ -239,6 +255,21 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
     # Write parameter default values if available
     if state.param_default_values:
         state.param_default_values_dirty = state.local_filesystem.write_param_default_values(state.param_default_values)
+
+
+def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None:
+    """
+    Initialize flight controller connection and local filesystem.
+
+    Args:
+        state: Application state to populate with initialized objects
+
+    Raises:
+        SystemExit: If there's a fatal error reading parameter files
+
+    """
+    initialize_flight_controller(state)
+    initialize_filesystem(state)
 
 
 def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProjectOpenerWindow, None]:

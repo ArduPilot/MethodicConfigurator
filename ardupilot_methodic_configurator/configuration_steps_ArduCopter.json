@@ -139,7 +139,11 @@
                 "MOT_BAT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
             },
             "rename_connection": "vehicle_components['Battery Monitor']['FC Connection']['Type']",
-            "old_filenames": []
+            "old_filenames": [],
+            "plugin": {
+                "name": "battery_monitor",
+                "placement": "left"
+            }
         },
         "09_batt2.param": {
             "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
