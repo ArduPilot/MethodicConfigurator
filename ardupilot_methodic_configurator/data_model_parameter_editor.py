@@ -34,10 +34,11 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
+from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR, PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
 # Type aliases for callback functions used in workflow methods
@@ -1954,6 +1955,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if not self.is_fc_connected:
                 return None
             return MotorTestDataModel(self._flight_controller, self._local_filesystem)
+        if plugin_name == PLUGIN_BATTERY_MONITOR:
+            if not self.is_fc_connected:
+                return None
+            return BatteryMonitorDataModel(self._flight_controller)
         # Add more plugins here in the future
         return None
 
