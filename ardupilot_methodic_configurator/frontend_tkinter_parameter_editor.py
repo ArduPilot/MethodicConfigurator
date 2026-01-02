@@ -71,7 +71,7 @@ class _PaneConfigurable(Protocol):  # pylint: disable=too-few-public-methods
     def paneconfigure(self, pane: tk.Widget, **kwargs: object) -> None: ...
 
 
-class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes, too-few-public-methods
+class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
     """Container for UI dependencies injected into the parameter editor window."""
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -120,6 +120,69 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             exit_callback=sys_exit,
         )
 
+    def upload_params_with_progress(
+        self,
+        parent_window: tk.Misc,
+        upload_callback: Callable[..., None],
+        selected_params: dict,
+    ) -> None:
+        """
+        Handle parameter upload with progress windows.
+
+        This method centralizes the common pattern of:
+        1. Creating reset and download progress window callbacks
+        2. Calling the upload workflow with all required callbacks
+        3. Cleaning up progress windows in a finally block
+
+        Args:
+            parent_window: The parent window for progress dialogs
+            upload_callback: The upload workflow function to call
+            selected_params: Dictionary of parameters to upload
+
+        """
+        reset_progress_window: ProgressWindow | None = None
+        download_progress_window: ProgressWindow | None = None
+
+        def get_reset_progress_callback() -> Callable[[int, int], None] | None:
+            """Create and return progress window callback for FC reset only when needed."""
+            nonlocal reset_progress_window
+            show_only_on_update = True
+            reset_progress_window = self.create_progress_window(
+                parent_window,
+                _("Resetting Flight Controller"),
+                _("Waiting for {} of {} seconds"),
+                show_only_on_update,
+            )
+            return reset_progress_window.update_progress_bar
+
+        def get_download_progress_callback() -> Callable[[int, int], None] | None:
+            """Create and return progress window callback for parameter download only when needed."""
+            nonlocal download_progress_window
+            show_immediately = False
+            download_progress_window = self.create_progress_window(
+                parent_window,
+                _("Re-downloading FC parameters"),
+                _("Downloaded {} of {} parameters"),
+                show_immediately,
+            )
+            return download_progress_window.update_progress_bar
+
+        try:
+            upload_callback(
+                selected_params,
+                ask_confirmation=self.ask_yesno,
+                ask_retry_cancel=self.ask_retry_cancel,
+                show_error=self.show_error,
+                get_reset_progress_callback=get_reset_progress_callback,
+                get_download_progress_callback=get_download_progress_callback,
+            )
+        finally:
+            # Clean up progress windows if they were created
+            if reset_progress_window is not None:
+                reset_progress_window.destroy()
+            if download_progress_window is not None:
+                download_progress_window.destroy()
+
 
 class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """
@@ -152,8 +215,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._tempcal_imu_progress_window: ProgressWindow | None = None
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
-        self._param_download_progress_window_upload: ProgressWindow | None = None
-        self._reset_progress_window: ProgressWindow | None = None
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -987,49 +1048,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     # This function can recurse multiple times if there is an upload error
     def upload_selected_params(self, selected_params: dict) -> None:
-        def get_reset_progress_callback() -> Callable | None:
-            """Create and return progress window callback for FC reset only when needed."""
-            show_only_on_update = True
-            reset_progress_window = self.ui.create_progress_window(
-                self.root,
-                _("Resetting Flight Controller"),
-                _("Waiting for {} of {} seconds"),
-                show_only_on_update,
-            )
-            # Store reference for cleanup
-            self._reset_progress_window = reset_progress_window
-            return reset_progress_window.update_progress_bar
-
-        def get_download_progress_callback() -> Callable | None:
-            """Create and return progress window callback for parameter download only when needed."""
-            show_immediately = False
-            param_download_progress_window = self.ui.create_progress_window(
-                self.root,
-                _("Re-downloading FC parameters"),
-                _("Downloaded {} of {} parameters"),
-                show_immediately,
-            )
-            # Store reference for cleanup
-            self._param_download_progress_window_upload = param_download_progress_window
-            return param_download_progress_window.update_progress_bar
-
-        try:
-            self.parameter_editor.upload_selected_params_workflow(
-                selected_params,
-                ask_confirmation=self.ui.ask_yesno,
-                ask_retry_cancel=self.ui.ask_retry_cancel,
-                show_error=self.ui.show_error,
-                get_reset_progress_callback=get_reset_progress_callback,
-                get_download_progress_callback=get_download_progress_callback,
-            )
-        finally:
-            # Clean up progress windows if they were created
-            if self._reset_progress_window is not None:
-                self._reset_progress_window.destroy()
-                self._reset_progress_window = None
-            if self._param_download_progress_window_upload is not None:
-                self._param_download_progress_window_upload.destroy()
-                self._param_download_progress_window_upload = None
+        self.ui.upload_params_with_progress(
+            self.root,
+            self.parameter_editor.upload_selected_params_workflow,
+            selected_params,
+        )
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""

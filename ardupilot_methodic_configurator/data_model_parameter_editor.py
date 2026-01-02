@@ -625,6 +625,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Note: fc_parameters are already updated internally in the flight controller
         # via params_manager.download_params()
 
+        if fc_parameters:
+            # Update FC values in all current step ArduPilotParameter objects
+            # Thread-safety: This assumes single-threaded execution during parameter upload.
+            # The parameter editor UI is not designed for concurrent uploads, and the upload
+            # workflow blocks the UI thread. If multi-threading is added in the future,
+            # this loop would need synchronization (e.g., threading.Lock) to prevent
+            # race conditions when modifying current_step_parameters during iteration.
+            for param_name, param_obj in self.current_step_parameters.items():
+                if param_name in fc_parameters:
+                    param_obj.set_fc_value(fc_parameters[param_name])
+
         # Write default values to file if available
         if param_default_values:
             self._local_filesystem.write_param_default_values_to_file(param_default_values)
@@ -1958,7 +1969,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if plugin_name == PLUGIN_BATTERY_MONITOR:
             if not self.is_fc_connected:
                 return None
-            return BatteryMonitorDataModel(self._flight_controller)
+            return BatteryMonitorDataModel(self._flight_controller, self)
         # Add more plugins here in the future
         return None
 

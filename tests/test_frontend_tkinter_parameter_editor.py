@@ -1586,6 +1586,88 @@ class TestParameterUploads:
         )
         assert all(window.destroy.called for window in created_windows)
 
+    def test_ui_services_upload_params_with_progress_handles_exceptions(
+        self, editor_factory, parameter_editor: MagicMock
+    ) -> None:
+        """
+        UI services properly handle exceptions during parameter upload.
+
+        GIVEN: The upload workflow raises an exception
+        WHEN: upload_params_with_progress is called
+        THEN: Progress windows should still be cleaned up
+        AND: Exception should propagate to caller
+        """
+        editor = editor_factory()
+
+        # Mock progress windows
+        reset_window = MagicMock()
+        download_window = MagicMock()
+
+        def fake_progress_window(_parent, title: str, *_args, **_kwargs) -> MagicMock:
+            if "Reset" in title:
+                return reset_window
+            return download_window
+
+        editor.ui.create_progress_window = MagicMock(side_effect=fake_progress_window)
+
+        # Mock workflow that raises exception
+        def failing_workflow(*_args, **_kwargs) -> None:
+            msg = "Upload failed"
+            raise RuntimeError(msg)
+
+        parameter_editor.upload_selected_params_workflow = MagicMock(side_effect=failing_workflow)
+
+        # Act & Assert: Exception is raised but cleanup happens
+        with pytest.raises(RuntimeError, match="Upload failed"):
+            editor.ui.upload_params_with_progress(
+                editor.root,
+                parameter_editor.upload_selected_params_workflow,
+                {"PARAM1": 1.0},
+            )
+
+        # Verify cleanup happened - windows are only created if callbacks are invoked
+        # Since workflow fails immediately, no callbacks are invoked, so no windows created
+        assert len([w for w in [reset_window, download_window] if w.destroy.called]) == 0
+
+    def test_upload_params_with_progress_only_creates_windows_when_callbacks_invoked(
+        self, editor_factory, parameter_editor: MagicMock
+    ) -> None:
+        """
+        Progress windows are only created when workflow invokes the factory callbacks.
+
+        GIVEN: An upload workflow that may or may not need reset/download
+        WHEN: The workflow only calls one of the progress factory callbacks
+        THEN: Only that progress window should be created
+        """
+        editor = editor_factory()
+
+        created_windows = []
+
+        def track_window_creation(*_args, **_kwargs) -> MagicMock:
+            window = MagicMock()
+            created_windows.append(window)
+            return window
+
+        editor.ui.create_progress_window = MagicMock(side_effect=track_window_creation)
+
+        # Mock workflow that only uses download progress (no reset needed)
+        def workflow_without_reset(_params, **kwargs) -> None:
+            # Don't call get_reset_progress_callback
+            download_cb = kwargs["get_download_progress_callback"]()
+            download_cb(50, 100)
+
+        parameter_editor.upload_selected_params_workflow = MagicMock(side_effect=workflow_without_reset)
+
+        # Act: Upload without reset
+        editor.ui.upload_params_with_progress(
+            editor.root,
+            parameter_editor.upload_selected_params_workflow,
+            {"PARAM1": 1.0},
+        )
+
+        # Assert: Only one window created (download, not reset)
+        assert len(created_windows) == 1
+
 
 # ============================== FILE DOWNLOADS ==============================
 

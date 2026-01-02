@@ -920,6 +920,60 @@ class TestFlightControllerDownloadWorkflows:
         assert defaults is None
         parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
 
+    def test_download_updates_fc_values_in_current_step_parameters(self, parameter_editor) -> None:
+        """
+        Downloaded FC parameters update FC values in current step ArduPilotParameter objects.
+
+        GIVEN: Current step has parameters with old FC values
+        WHEN: Parameters are downloaded from FC
+        THEN: ArduPilotParameter objects should have updated FC values
+        """
+        # Arrange: Set up current step parameters with old FC values
+        param1 = ArduPilotParameter("ROLL_P", Par(0.1))
+        param1._fc_value = 0.1  # Old value
+        param2 = ArduPilotParameter("PITCH_P", Par(0.15))
+        param2._fc_value = 0.15  # Old value
+
+        parameter_editor.current_step_parameters = {
+            "ROLL_P": param1,
+            "PITCH_P": param2,
+        }
+
+        # Mock download to return new values
+        new_fc_params = {"ROLL_P": 0.12, "PITCH_P": 0.18, "YAW_P": 0.25}
+        parameter_editor._flight_controller.download_params.return_value = (new_fc_params, None)
+
+        # Act: Download parameters
+        parameter_editor.download_flight_controller_parameters()
+
+        # Assert: FC values are updated in existing parameter objects
+        assert param1._fc_value == 0.12
+        assert param2._fc_value == 0.18
+        # YAW_P not in current_step_parameters, so not updated anywhere
+
+    def test_download_skips_updating_parameters_not_in_current_step(self, parameter_editor) -> None:
+        """
+        Downloaded parameters not in current step don't cause errors.
+
+        GIVEN: Downloaded parameters include ones not in current step
+        WHEN: Parameters are downloaded from FC
+        THEN: Only current step parameters should be updated
+        AND: No errors should occur for extra parameters
+        """
+        # Arrange: Current step has only one parameter
+        param1 = ArduPilotParameter("ROLL_P", Par(0.1))
+        parameter_editor.current_step_parameters = {"ROLL_P": param1}
+
+        # Download includes parameters not in current step
+        new_fc_params = {"ROLL_P": 0.12, "PITCH_P": 0.18, "YAW_P": 0.25}
+        parameter_editor._flight_controller.download_params.return_value = (new_fc_params, None)
+
+        # Act: Download parameters (should not raise)
+        parameter_editor.download_flight_controller_parameters()
+
+        # Assert: Only ROLL_P was updated
+        assert param1._fc_value == 0.12
+
 
 class TestFlightControllerResetWorkflows:
     """Test flight controller reset and reconnection business logic workflows."""
