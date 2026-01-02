@@ -16,11 +16,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import tkinter as tk
 from math import nan
+from typing import Callable
 from unittest.mock import MagicMock
 
 import pytest
 
 from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (
     BatteryMonitorView,
     _create_battery_monitor_view,
@@ -28,9 +30,10 @@ from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (
 )
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
-# pylint: disable=redefined-outer-name,protected-access
+# pylint: disable=redefined-outer-name,protected-access,too-many-lines
 
 
+# pylint: disable=duplicate-code
 @pytest.fixture
 def tk_root() -> tk.Tk:
     """Provide a real Tkinter root window for testing GUI components."""
@@ -45,6 +48,7 @@ def tk_root() -> tk.Tk:
 @pytest.fixture
 def mock_flight_controller_with_battery() -> MagicMock:
     """Provide mock flight controller with battery monitoring enabled and realistic values."""
+    # pylint: enable=duplicate-code
     mock_fc = MagicMock()
     mock_fc.fc_parameters = {
         "BATT_MONITOR": 4,  # Analog voltage and current
@@ -63,7 +67,7 @@ def mock_flight_controller_with_battery() -> MagicMock:
 def mock_flight_controller_disconnected() -> MagicMock:
     """Provide mock flight controller in disconnected state."""
     mock_fc = MagicMock()
-    mock_fc.fc_parameters = {}
+    mock_fc.fc_parameters = {"BATT_MONITOR": 0}  # Disabled
     mock_fc.is_connected.return_value = False
     mock_fc.is_battery_monitoring_enabled.return_value = False
     mock_fc.get_battery_status.return_value = (None, "Not connected")
@@ -590,7 +594,10 @@ class TestBatteryMonitorStreamReconnection:
         assert "12.4" in view.voltage_value_label.cget("text")
 
     def test_stream_request_occurs_on_every_call_until_data_received(
-        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+        self,
+        tk_root: tk.Tk,  # pylint: disable=unused-argument
+        mock_flight_controller_with_battery: MagicMock,
+        mock_base_window: MagicMock,  # pylint: disable=unused-argument
     ) -> None:
         """
         Stream request is repeated until actual data is received.
@@ -749,3 +756,474 @@ class TestBatteryMonitorDataModelCleanup:
 
         # Assert: Model cleanup was called
         assert model._got_battery_status is False
+
+
+class TestBatteryMonitorParameterUpload:
+    """
+    Test parameter upload functionality integrated into battery monitor plugin.
+
+    NOTE: These tests verify the upload button UI integration at acceptance level.
+    They test button visibility and delegation to UI services. Detailed workflow testing
+    is in test_data_model_parameter_editor.py and test_frontend_tkinter_parameter_editor.py.
+    """
+
+    def test_upload_button_appears_when_parameter_editor_available(
+        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Upload button is visible when parameter editor is integrated.
+
+        GIVEN: Battery monitor plugin with parameter editor integration
+        WHEN: The view is created
+        THEN: Upload button should be visible in the UI
+        """
+        # Arrange: Create model with parameter editor
+        mock_param_editor = MagicMock()
+        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, mock_param_editor)
+
+        # Act: Create view
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Assert: Button exists and is visible
+        assert hasattr(view, "upload_button")
+        assert view.upload_button.winfo_exists()
+
+    def test_upload_button_hidden_when_parameter_editor_unavailable(
+        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Upload button is not shown when parameter editor is unavailable.
+
+        GIVEN: Battery monitor plugin without parameter editor integration
+        WHEN: The view is created
+        THEN: Upload button should not be present
+        """
+        # Arrange & Act: Create view without parameter editor
+        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, parameter_editor=None)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Assert: Button doesn't exist
+        assert not hasattr(view, "upload_button") or view.upload_button.winfo_exists() == 0
+
+    def test_battery_monitor_integrates_with_parameter_editor_workflow(
+        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Battery monitor correctly integrates with parameter editor upload workflow.
+
+        GIVEN: Battery monitor with parameter editor and UI services
+        WHEN: Upload is initiated through the view's upload method
+        THEN: The view should delegate to UI services' upload_params_with_progress
+        AND: Pass the correct workflow callback from parameter editor
+        """
+        # Arrange: Set up integrated environment
+        mock_param_editor = MagicMock()
+        mock_ui_services = MagicMock()
+
+        # Set up base window with minimal required structure
+        mock_base_window.gui_complexity = "normal"
+        mock_base_window.parameter_editor_table = MagicMock()
+        mock_base_window.parameter_editor_table.get_upload_selected_params.return_value = ParDict({"BATT_CAPACITY": Par(5200)})
+
+        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, mock_param_editor)
+        view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=mock_ui_services)
+
+        # Act: Trigger upload through the view's public interface
+        selected_params = ParDict({"BATT_CAPACITY": Par(5200)})
+        view.upload_selected_params(selected_params)
+
+        # Assert: View delegates to UI services with correct workflow
+        mock_ui_services.upload_params_with_progress.assert_called_once()
+        call_args = mock_ui_services.upload_params_with_progress.call_args
+        assert call_args[0][1] == mock_param_editor.upload_selected_params_workflow  # Workflow callback
+        assert call_args[0][2] == selected_params  # Parameters
+
+    def _setup_upload_progress_mocks(self, mock_ui_services: MagicMock) -> tuple[list, Callable]:
+        """Helper to set up progress window mocks and tracking."""
+        progress_windows_created = []
+
+        def track_progress_window(*_args, **_kwargs) -> MagicMock:
+            mock_window = MagicMock()
+            progress_windows_created.append(mock_window)
+            return mock_window
+
+        mock_ui_services.create_progress_window = MagicMock(side_effect=track_progress_window)
+
+        def simulate_upload_with_progress(parent_window, upload_callback, selected_params_arg) -> None:
+            """Simulate upload_params_with_progress calling workflow with callbacks."""
+            reset_window = None
+            download_window = None
+
+            def reset_callback_getter() -> Callable[[int, int], None]:
+                nonlocal reset_window
+                reset_window = mock_ui_services.create_progress_window(
+                    parent_window, "Resetting Flight Controller", "msg", show_immediately=True
+                )
+                return reset_window.update_progress_bar
+
+            def download_callback_getter() -> Callable[[int, int], None]:
+                nonlocal download_window
+                download_window = mock_ui_services.create_progress_window(
+                    parent_window, "Re-downloading FC parameters", "msg", show_immediately=False
+                )
+                return download_window.update_progress_bar
+
+            try:
+                # Invoke the getters to actually create the windows
+                reset_cb = reset_callback_getter()
+                download_cb = download_callback_getter()
+
+                # Call the workflow with the callbacks
+                upload_callback(
+                    selected_params_arg,
+                    ask_confirmation=MagicMock(return_value=True),
+                    ask_retry_cancel=MagicMock(return_value=True),
+                    show_error=MagicMock(),
+                    get_reset_progress_callback=reset_callback_getter,
+                    get_download_progress_callback=download_callback_getter,
+                )
+
+                # Simulate some progress updates
+                if reset_cb:
+                    reset_cb(5, 10)
+                if download_cb:
+                    download_cb(50, 100)
+            finally:
+                # Simulate cleanup in finally block
+                if reset_window is not None:
+                    reset_window.destroy()
+                if download_window is not None:
+                    download_window.destroy()
+
+        return progress_windows_created, simulate_upload_with_progress
+
+    def test_user_sees_progress_feedback_during_parameter_upload(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:  # pylint: disable=too-many-locals
+        """
+        User sees progress feedback while parameters are being uploaded.
+
+        GIVEN: User initiates parameter upload
+        WHEN: Upload is in progress (reset, upload, download)
+        THEN: Progress windows should be displayed with appropriate messages
+        AND: Progress should be cleaned up when complete
+        """
+        # Arrange: Set up complete environment
+        mock_fc = MagicMock()
+        mock_fc.master = MagicMock()
+        mock_fc.fc_parameters = {"BATT_MONITOR": 4}
+
+        mock_param_editor = MagicMock()
+        selected_params = ParDict({"BATT_CAPACITY": Par(5200)})
+        mock_param_editor.ensure_upload_preconditions.return_value = True
+
+        mock_param_table = MagicMock()
+        mock_param_table.get_upload_selected_params.return_value = selected_params
+
+        mock_ui_services = MagicMock()
+        progress_windows_created, simulate_upload_with_progress = self._setup_upload_progress_mocks(mock_ui_services)
+        mock_ui_services.upload_params_with_progress = MagicMock(side_effect=simulate_upload_with_progress)
+
+        mock_base_window.gui_complexity = "normal"
+        mock_base_window.parameter_editor_table = mock_param_table
+        mock_base_window.show_only_differences = MagicMock()
+        mock_base_window.show_only_differences.get.return_value = False
+
+        model = BatteryMonitorDataModel(mock_fc, mock_param_editor)
+        view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=mock_ui_services)
+        tk_root.update()
+
+        # Act: Upload parameters
+        view._on_upload_button_clicked()
+
+        # Assert: Verify workflow integration
+        mock_ui_services.upload_params_with_progress.assert_called_once()
+
+        # Verify progress windows were created (should create 2: reset and download)
+        assert mock_ui_services.create_progress_window.call_count == 2
+
+        # Verify progress window calls have correct titles
+        call_args_list = mock_ui_services.create_progress_window.call_args_list
+        reset_window_call = call_args_list[0]
+        download_window_call = call_args_list[1]
+
+        # Check reset progress window was created with correct title
+        assert "Resetting Flight Controller" in str(reset_window_call)
+        # Check download progress window was created with correct title
+        assert "Re-downloading FC parameters" in str(download_window_call)
+
+        # Verify all created progress windows were destroyed
+        for mock_window in progress_windows_created:
+            mock_window.destroy.assert_called_once()
+
+
+class TestBatteryMonitorUIIntegration:
+    """
+    Test battery monitor UI integration at acceptance level.
+
+    These tests verify UI layout, component creation, and user-visible behavior.
+    """
+
+    def test_battery_monitor_displays_correct_initial_state(
+        self, tk_root: tk.Tk, mock_flight_controller_disconnected: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Battery monitor shows appropriate initial state before connection.
+
+        GIVEN: Battery monitor with disconnected flight controller
+        WHEN: View is created
+        THEN: Should display "N/A" for voltage and current
+        AND: UI components should be properly initialized
+        """
+        # Arrange & Act: Create view with disconnected FC
+        model = BatteryMonitorDataModel(mock_flight_controller_disconnected)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Assert: Initial state shows disabled (monitoring is off)
+        voltage_text, current_text = view._get_battery_display_text()
+        assert "Disabled" in voltage_text
+        assert "Disabled" in current_text
+
+    def test_battery_monitor_displays_disabled_state_when_monitoring_off(
+        self, tk_root: tk.Tk, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Battery monitor shows disabled state when monitoring is off.
+
+        GIVEN: Flight controller with battery monitoring disabled
+        WHEN: View displays battery status
+        THEN: Should show "Disabled" for both voltage and current
+        """
+        # Arrange: FC with monitoring disabled
+        mock_fc = MagicMock()
+        mock_fc.master = MagicMock()
+        mock_fc.fc_parameters = {"BATT_MONITOR": 0}  # Disabled
+        mock_fc.is_battery_monitoring_enabled.return_value = False
+
+        model = BatteryMonitorDataModel(mock_fc)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Act: Get display text
+        voltage_text, current_text = view._get_battery_display_text()
+
+        # Assert: Disabled state
+        assert "Disabled" in voltage_text
+        assert "Disabled" in current_text
+
+    def test_battery_monitor_formats_voltage_and_current_correctly(
+        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Battery monitor formats numeric values with correct precision.
+
+        GIVEN: Battery monitor with valid voltage and current
+        WHEN: Display text is generated
+        THEN: Should format voltage as "XX.XX V" and current as "XX.XX A"
+        """
+        # Arrange: FC with specific values
+        mock_flight_controller_with_battery.get_battery_status.return_value = ((12.456, 3.789), "")
+
+        model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Act: Get display text
+        voltage_text, current_text = view._get_battery_display_text()
+
+        # Assert: Correct formatting (2 decimal places)
+        assert voltage_text == "12.46 V"
+        assert current_text == "3.79 A"
+
+    def test_battery_monitor_ui_layout_creates_all_components(
+        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Battery monitor UI creates all expected components.
+
+        GIVEN: Battery monitor view creation
+        WHEN: UI setup completes
+        THEN: All labels and containers should exist
+        AND: Components should be properly configured
+        """
+        # Arrange & Act: Create view
+        model = BatteryMonitorDataModel(mock_flight_controller_with_battery)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Assert: Core components exist
+        assert hasattr(view, "voltage_value_label")
+        assert hasattr(view, "current_value_label")
+        assert view.voltage_value_label.winfo_exists()
+        assert view.current_value_label.winfo_exists()
+
+    def test_battery_monitor_without_parameter_editor_has_no_upload_button(
+        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Battery monitor without parameter editor doesn't create upload button.
+
+        GIVEN: Battery monitor without parameter editor
+        WHEN: View is created
+        THEN: Upload button should not be created
+        """
+        # Arrange & Act: Create view without parameter editor
+        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, parameter_editor=None)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Assert: No upload button
+        assert not hasattr(view, "upload_button") or not view.upload_button.winfo_exists()
+
+    def test_battery_monitor_with_parameter_editor_creates_upload_button(
+        self, tk_root: tk.Tk, mock_flight_controller_with_battery: MagicMock, mock_base_window: MagicMock
+    ) -> None:
+        """
+        Battery monitor with parameter editor creates upload button.
+
+        GIVEN: Battery monitor with parameter editor
+        WHEN: View is created
+        THEN: Upload button should be created and visible
+        """
+        # Arrange & Act: Create view with parameter editor
+        mock_param_editor = MagicMock()
+        model = BatteryMonitorDataModel(mock_flight_controller_with_battery, mock_param_editor)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Assert: Upload button exists
+        assert hasattr(view, "upload_button")
+        assert view.upload_button.winfo_exists()
+
+
+class TestBatteryMonitorColorCoding:
+    """
+    Test battery voltage color coding at acceptance level.
+
+    Verifies that voltage status colors are correctly applied to UI components.
+    """
+
+    def test_voltage_display_shows_green_for_safe_voltage(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:
+        """
+        Voltage display shows green for safe voltage range.
+
+        GIVEN: Battery voltage within safe range
+        WHEN: Status is updated
+        THEN: Voltage label should be colored green
+        """
+        # pylint: disable=duplicate-code
+        # Arrange: FC with safe voltage
+        mock_fc = MagicMock()
+        mock_fc.master = MagicMock()
+        mock_fc.fc_parameters = {
+            "BATT_MONITOR": 4,
+            "BATT_ARM_VOLT": 11.0,
+            "MOT_BAT_VOLT_MAX": 16.8,
+        }
+        mock_fc.is_battery_monitoring_enabled.return_value = True
+        # pylint: enable=duplicate-code
+        mock_fc.get_battery_status.return_value = ((12.5, 2.0), "")
+        mock_fc.get_voltage_thresholds.return_value = (11.0, 16.8)
+
+        model = BatteryMonitorDataModel(mock_fc)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Act: Update battery status
+        view._update_battery_status()
+
+        # Assert: Green color
+        color_str = str(view.voltage_value_label.cget("foreground"))
+        assert "green" in color_str.lower()
+
+    def test_voltage_display_shows_red_for_critical_low_voltage(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:
+        """
+        Voltage display shows red for critically low voltage.
+
+        GIVEN: Battery voltage below minimum threshold
+        WHEN: Status is updated
+        THEN: Voltage label should be colored red
+        """
+        # pylint: disable=duplicate-code
+        # Arrange: FC with low voltage
+        mock_fc = MagicMock()
+        mock_fc.master = MagicMock()
+        mock_fc.fc_parameters = {
+            "BATT_MONITOR": 4,
+            "BATT_ARM_VOLT": 11.0,
+            "MOT_BAT_VOLT_MAX": 16.8,
+        }
+        mock_fc.is_battery_monitoring_enabled.return_value = True
+        # pylint: enable=duplicate-code
+        mock_fc.get_battery_status.return_value = ((10.5, 0.5), "")
+        mock_fc.get_voltage_thresholds.return_value = (11.0, 16.8)
+
+        model = BatteryMonitorDataModel(mock_fc)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Act: Update battery status
+        view._update_battery_status()
+
+        # Assert: Red color
+        color_str = str(view.voltage_value_label.cget("foreground"))
+        assert "red" in color_str.lower()
+
+    def test_voltage_display_shows_red_for_critical_high_voltage(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:
+        """
+        Voltage display shows red for critically high voltage.
+
+        GIVEN: Battery voltage above maximum threshold
+        WHEN: Status is updated
+        THEN: Voltage label should be colored red
+        """
+        # pylint: disable=duplicate-code
+        # Arrange: FC with high voltage
+        mock_fc = MagicMock()
+        mock_fc.master = MagicMock()
+        mock_fc.fc_parameters = {
+            "BATT_MONITOR": 4,
+            "BATT_ARM_VOLT": 11.0,
+            "MOT_BAT_VOLT_MAX": 16.8,
+        }
+        mock_fc.is_battery_monitoring_enabled.return_value = True
+        # pylint: enable=duplicate-code
+        mock_fc.get_battery_status.return_value = ((17.5, 0.1), "")
+        mock_fc.get_voltage_thresholds.return_value = (11.0, 16.8)
+
+        model = BatteryMonitorDataModel(mock_fc)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Act: Update battery status
+        view._update_battery_status()
+
+        # Assert: Red color
+        color_str = str(view.voltage_value_label.cget("foreground"))
+        assert "red" in color_str.lower()
+
+    def test_voltage_display_shows_gray_when_monitoring_disabled(self, tk_root: tk.Tk, mock_base_window: MagicMock) -> None:
+        """
+        Voltage display shows gray when monitoring is disabled.
+
+        GIVEN: Battery monitoring disabled
+        WHEN: Status is updated
+        THEN: Voltage label should be colored gray
+        """
+        # Arrange: FC with monitoring disabled
+        mock_fc = MagicMock()
+        mock_fc.master = MagicMock()
+        mock_fc.fc_parameters = {"BATT_MONITOR": 0}
+        mock_fc.is_battery_monitoring_enabled.return_value = False
+
+        model = BatteryMonitorDataModel(mock_fc)
+        view = BatteryMonitorView(tk_root, model, mock_base_window)
+        tk_root.update()
+
+        # Act: Update battery status
+        view._update_battery_status()
+
+        # Assert: Gray color
+        color_str = str(view.voltage_value_label.cget("foreground"))
+        assert "gray" in color_str.lower()

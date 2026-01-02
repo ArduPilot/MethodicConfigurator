@@ -580,3 +580,74 @@ def test_forced_or_derived_setters_make_parameter_dirty(param_fixture) -> None:
 
     # Assert: Parameter is dirty due to comment change
     assert forced_param.is_dirty
+
+
+def test_set_fc_value_updates_flight_controller_value() -> None:
+    """
+    Setting FC value updates the internal flight controller value.
+
+    GIVEN: A parameter with an initial FC value
+    WHEN: set_fc_value() is called with a new value
+    THEN: The FC value should be updated
+    AND: Other parameter values should remain unchanged
+    """
+    # Arrange: Create parameter with initial FC value
+    param = ArduPilotParameter("TEST_PARAM", Par(10.0, ""))
+    param._fc_value = 15.0
+
+    # Act: Update FC value
+    param.set_fc_value(20.0)
+
+    # Assert: FC value is updated
+    assert param._fc_value == 20.0
+
+    # Assert: New value is unchanged
+    assert param.get_new_value() == 10.0
+
+
+def test_set_fc_value_without_validation() -> None:
+    """
+    FC values are set without validation since they come from the FC.
+
+    GIVEN: A parameter with range constraints (0-100)
+    WHEN: set_fc_value() is called with any value (including out of range)
+    THEN: The value should be accepted without validation errors
+    AND: This reflects that FC values are already validated by the FC
+    """
+    # Arrange: Create parameter with range constraints
+    metadata = {"min": 0.0, "max": 100.0}
+    param = ArduPilotParameter("TEST_PARAM", Par(50.0, ""), metadata)
+
+    # Act: Set FC value outside the range (would fail with set_new_value)
+    param.set_fc_value(150.0)  # Above max
+
+    # Assert: Value is accepted
+    assert param._fc_value == 150.0
+
+    # Act: Set FC value below minimum
+    param.set_fc_value(-10.0)  # Below min
+
+    # Assert: Value is accepted
+    assert param._fc_value == -10.0
+
+
+def test_set_fc_value_maintains_comparison_state() -> None:
+    """
+    Setting FC value correctly updates comparison state.
+
+    GIVEN: A parameter with new value different from FC
+    WHEN: FC value is updated to match new value
+    THEN: is_different_from_fc should become False
+    """
+    # Arrange: Create parameter with different new and FC values
+    param = ArduPilotParameter("TEST_PARAM", Par(20.0, ""))
+    param._fc_value = 10.0
+
+    # Assert: Initially different
+    assert param.is_different_from_fc is True
+
+    # Act: Update FC value to match new value
+    param.set_fc_value(20.0)
+
+    # Assert: No longer different
+    assert param.is_different_from_fc is False

@@ -11,10 +11,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from logging import debug as logging_debug
 from logging import warning as logging_warning
 from math import isnan, nan
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 
 # Battery update interval in milliseconds (used for periodic status requests)
 BATTERY_UPDATE_INTERVAL_MS = 500
@@ -45,15 +48,21 @@ class BatteryMonitorDataModel:
         - Status indicators (safe/critical/disabled/unavailable) guide user about data validity
     """
 
-    def __init__(self, flight_controller: FlightController) -> None:
+    def __init__(
+        self,
+        flight_controller: FlightController,
+        parameter_editor: Optional["ParameterEditor"] = None,
+    ) -> None:
         """
         Initialize the battery monitor data model.
 
         Args:
             flight_controller: Backend flight controller interface
+            parameter_editor: Optional parameter editor for uploading parameters
 
         """
         self.flight_controller = flight_controller
+        self.parameter_editor = parameter_editor
         self._got_battery_status = False
 
     def is_battery_monitoring_enabled(self) -> bool:

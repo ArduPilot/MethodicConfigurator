@@ -23,7 +23,7 @@ from logging import error as logging_error
 from logging import warning as logging_warning
 from tkinter import Frame, ttk
 from tkinter.messagebox import showerror
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
@@ -36,9 +36,15 @@ from ardupilot_methodic_configurator.data_model_battery_monitor import (
     BATTERY_UPDATE_INTERVAL_MS,
     BatteryMonitorDataModel,
 )
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
+        ParameterEditorUiServices,
+    )
 
 
 class BatteryMonitorView(Frame):
@@ -49,6 +55,7 @@ class BatteryMonitorView(Frame):
         parent: Union[tk.Frame, ttk.Frame],
         model: BatteryMonitorDataModel,
         base_window: BaseWindow,
+        ui_services: Optional["ParameterEditorUiServices"] = None,
     ) -> None:
         """
         Initialize the battery monitor view.
@@ -57,14 +64,18 @@ class BatteryMonitorView(Frame):
             parent: Parent widget
             model: Data model for battery monitoring
             base_window: Parent BaseWindow instance
+            ui_services: Optional UI services for testing. If None, will use base_window.ui.
 
         """
         super().__init__(parent)
         self.model = model
         self.base_window = base_window
+        # Reuse UI services from base window if not explicitly provided
+        self.ui = ui_services if ui_services is not None else getattr(base_window, "ui", None)
         self._timer_id: Optional[str] = None
         self.voltage_value_label: ttk.Label
         self.current_value_label: ttk.Label
+        self.upload_button: ttk.Button
 
         # Create UI components (labels initialized in _setup_ui)
         self._setup_ui()
@@ -120,6 +131,17 @@ class BatteryMonitorView(Frame):
         )
         self.current_value_label.pack(side="left", padx=5)
 
+        # Upload button (only shown if parameter editor is available)
+        if self.model.parameter_editor is not None:
+            button_container = ttk.Frame(main_frame)
+            button_container.pack(pady=20)
+            self.upload_button = ttk.Button(
+                button_container,
+                text=_("Upload Selected Parameters to FC"),
+                command=self._on_upload_button_clicked,
+            )
+            self.upload_button.pack()
+
     def _update_battery_status(self) -> None:
         """Update battery voltage and current labels."""
         voltage_text, current_text = self._get_battery_display_text()
@@ -153,6 +175,73 @@ class BatteryMonitorView(Frame):
             current_text = f"{current:.2f} A"
             return voltage_text, current_text
         return _("N/A"), _("N/A")
+
+    def _on_upload_button_clicked(self) -> None:
+        """Handle upload button click event."""
+        if self.ui is None:
+            showerror(
+                _("Error"),
+                _("UI services not available. Cannot upload parameters."),
+            )
+            return
+
+        gui_complexity = getattr(self.base_window, "gui_complexity", "simple")
+        parameter_editor_table = getattr(self.base_window, "parameter_editor_table", None)
+
+        if parameter_editor_table is None or self.model.parameter_editor is None:
+            showerror(_("Error"), _("Parameter editor not available."))
+            return
+
+        # Get selected params through the data model
+        try:
+            selected_params: ParDict = parameter_editor_table.get_upload_selected_params(gui_complexity)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            showerror(_("Error"), str(e))
+            return
+
+        # Check upload preconditions
+        precondition_payload: dict[str, object] = dict(selected_params)
+        if not self.model.parameter_editor.ensure_upload_preconditions(precondition_payload, self.ui.show_warning):
+            return
+
+        self.upload_selected_params(selected_params)
+
+        # Refresh the parameter editor table to show updated FC values
+        if parameter_editor_table:
+            show_only_differences_var = getattr(self.base_window, "show_only_differences", None)
+            show_only_differences = show_only_differences_var.get() if show_only_differences_var else False
+            parameter_editor_table.repopulate_table(show_only_differences=show_only_differences, gui_complexity=gui_complexity)
+
+    def upload_selected_params(self, selected_params: ParDict) -> None:
+        """
+        Upload selected parameters to flight controller with progress feedback.
+
+        Args:
+            selected_params: Dictionary of parameters to upload
+
+        """
+        if self.ui is None:
+            showerror(
+                _("Error"),
+                _("UI services not available. Cannot upload parameters."),
+            )
+            logging_error("UI services not available for parameter upload")
+            return
+
+        if self.model.parameter_editor is None:
+            showerror(_("Error"), _("Parameter editor not available."))
+            logging_error("Parameter editor not available for parameter upload")
+            return
+
+        try:
+            self.ui.upload_params_with_progress(
+                self.base_window.root,
+                self.model.parameter_editor.upload_selected_params_workflow,
+                selected_params,
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {e}")
+            logging_error("Parameter upload failed: %(error)s", {"error": e})
 
     def _schedule_next_update(self) -> None:
         """Schedule the next battery status update."""
@@ -231,7 +320,7 @@ def register_battery_monitor_plugin() -> None:
     plugin_factory.register(PLUGIN_BATTERY_MONITOR, _create_battery_monitor_view)
 
 
-class BatteryMonitorWindow(BaseWindow):
+class BatteryMonitorWindow(BaseWindow):  # pragma: no cover
     """
     Standalone window for the motor test GUI.
 
@@ -258,7 +347,7 @@ class BatteryMonitorWindow(BaseWindow):
         self.root.destroy()
 
 
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -285,7 +374,7 @@ def argument_parser() -> Namespace:
 
 
 # pylint: disable=duplicate-code
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     state = ApplicationState(args)
@@ -300,7 +389,7 @@ def main() -> None:
     initialize_flight_controller(state)
 
     try:
-        data_model = BatteryMonitorDataModel(state.flight_controller)
+        data_model = BatteryMonitorDataModel(state.flight_controller, None)
         window = BatteryMonitorWindow(data_model)
         window.root.mainloop()
 
@@ -313,5 +402,5 @@ def main() -> None:
             state.flight_controller.disconnect()  # Disconnect from the flight controller
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
