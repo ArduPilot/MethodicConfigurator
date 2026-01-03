@@ -5,7 +5,7 @@
 # This script is used to crawl the ArduPilot GitHub repository for README.md files
 # and output the URLs to a file called github_urllist.txt
 
-# SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+# SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 # SPDX-License-Identifier: GPL-3.0-or-later
 

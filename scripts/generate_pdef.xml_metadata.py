@@ -6,7 +6,7 @@ Rsync apm.pdef.xml files for different versions of the ArduPilot firmware.
 For each version, it checks out the corresponding tag, generates parameter metadata,
 and finally rsyncs the updated parameter metadata pdef.xml files.
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """

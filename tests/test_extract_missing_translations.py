@@ -5,7 +5,7 @@ Tests for the extract_missing_translations.py file.
 
 Tests the extraction of missing translations from a .po file.
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
