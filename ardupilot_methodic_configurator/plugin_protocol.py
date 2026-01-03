@@ -26,6 +26,15 @@ class PluginView(Protocol):
 
     This defines the interface contract for plugins without requiring
     concrete implementations to inherit from a base class.
+
+    Resource Cleanup Contract:
+        Plugins that allocate resources (timers, callbacks, network connections, etc.)
+        MUST implement proper cleanup through the lifecycle methods:
+        - on_activate(): Start timers and initialize active resources
+        - on_deactivate(): Stop timers and release active resources
+        - destroy(): Final cleanup of all resources when the plugin is removed
+
+        This ensures plugins don't leak resources when hidden or removed.
     """
 
     def __init__(
@@ -56,20 +65,47 @@ class PluginView(Protocol):
         """
 
     def destroy(self) -> None:
-        """Clean up the plugin view and release resources."""
+        """
+        Clean up the plugin view and release all resources.
+
+        This method is called when the plugin is being permanently removed.
+        Implementations must:
+        - Cancel any active timers (using after_cancel for tkinter timers)
+        - Close any open connections or file handles
+        - Unregister any callbacks or observers
+        - Call parent class destroy() if inherited
+        """
 
     def on_activate(self) -> None:
         """
         Called when the plugin becomes active (visible).
 
-        Use this to start timers, refresh data, or initialize resources
-        that should only be active when the plugin is visible.
+        This is called when the plugin is made visible.
+        Implementations should:
+        - Start periodic timers or refresh tasks
+        - Initialize resources that should only be active when visible
+        - Refresh display with current data
+        - Re-establish connections if needed
+
+        Example:
+            self._timer_id = self.after(500, self._periodic_update)
+
         """
 
     def on_deactivate(self) -> None:
         """
         Called when the plugin becomes inactive (hidden).
 
-        Use this to stop timers, release resources, or save state
-        when switching away from this plugin.
+        This is called when switching away from the plugin's view.
+        Implementations must:
+        - Cancel all active timers (critical for resource management)
+        - Save any unsaved state
+        - Close temporary resources
+        - Stop refresh tasks
+
+        Example:
+            if self._timer_id:
+                self.after_cancel(self._timer_id)
+                self._timer_id = None
+
         """
