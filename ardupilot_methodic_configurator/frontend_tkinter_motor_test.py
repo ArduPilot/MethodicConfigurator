@@ -122,6 +122,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._diagram_needs_update = True  # Track if diagram needs to be updated
         self._content_frame: Optional[ttk.Frame] = None  # Store reference to content frame for widget searches
         self._motor_grid_frame: Optional[ttk.Frame] = None  # Direct handle for motor grid frame
+        self._timer_id: Optional[str] = None  # Track scheduled update timer for cleanup
 
         self._create_widgets()
 
@@ -290,7 +291,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._update_motor_buttons_layout()
         self._update_battery_status()
         self._update_spinbox_values()
-        self.after(1000, self._update_view)  # Schedule periodic update
+        self._timer_id = self.after(1000, self._update_view)  # Schedule periodic update
 
     def _update_spinbox_values(self) -> None:
         """Update spinbox values from the data model only if not currently being edited."""
@@ -703,7 +704,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         Called when the plugin becomes inactive (hidden).
 
         Stops all running motor tests for safety when switching away from this plugin.
+        Also cancels any pending update timers to prevent resource leaks.
         """
+        # Cancel any pending update timer to prevent updating hidden widget
+        if self._timer_id:
+            self.after_cancel(self._timer_id)
+            self._timer_id = None
+
         # Critical safety requirement: stop all motors when user navigates away
         # to prevent motors running unattended in the background
         try:
@@ -721,6 +728,18 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             # We log as error and re-raise to prevent silently continuing with motors potentially running.
             logging_error(_("Critical error during motor stop at deactivation: %(error)s"), {"error": str(e)})
             raise
+
+    def destroy(self) -> None:
+        """
+        Clean up resources before widget destruction.
+
+        Cancels any pending timers to prevent resource leaks and ensure
+        no operations continue after the widget is destroyed.
+        """
+        if self._timer_id:
+            self.after_cancel(self._timer_id)
+            self._timer_id = None
+        super().destroy()
 
 
 class MotorTestWindow(BaseWindow):

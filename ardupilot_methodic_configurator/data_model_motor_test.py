@@ -22,6 +22,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import FilesystemJSONWithSchema
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
 
 # pylint: disable=too-many-lines
 
@@ -95,6 +96,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self.flight_controller = flight_controller
         self.filesystem = filesystem
 
+        # Initialize battery monitor for safety checks (composition)
+        self.battery_monitor = BatteryMonitorDataModel(flight_controller)
+
         # Initialize motor data loader for motor directions and test order
         self._motor_data_loader = FilesystemJSONWithSchema(
             json_filename="AP_Motors_test.json", schema_filename="AP_Motors_test_schema.json"
@@ -114,8 +118,6 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self._test_throttle_pct = 0.0
         self._test_duration_s = 0.0
         self._first_test_acknowledged = False
-
-        self._got_battery_status = False
 
         # Cache for frame options to avoid reloading them repeatedly
         self._cached_frame_options: Optional[dict[str, dict[int, str]]] = None
@@ -297,10 +299,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             bool: True if battery monitoring is enabled, False otherwise.
 
         """
-        if self.flight_controller.master is None:
-            logging_warning(_("Flight controller not connected, cannot check battery monitoring status."))
-            return False
-        return self.flight_controller.is_battery_monitoring_enabled()
+        return self.battery_monitor.is_battery_monitoring_enabled()
 
     def get_battery_status(self) -> Optional[tuple[float, float]]:
         """
@@ -311,24 +310,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                                          or None if not available
 
         """
-        if self.flight_controller.master is None:
-            logging_warning(_("Flight controller not connected, cannot get battery status."))
-            return None
-
-        if not self.is_battery_monitoring_enabled():
-            logging_warning(_("Battery monitoring disabled, cannot get battery status."))
-            return None
-
-        if not self._got_battery_status:
-            self.flight_controller.request_periodic_battery_status(500000)
-
-        battery_status, message = self.flight_controller.get_battery_status()
-        if message:
-            logging_debug(message)
-        else:
-            self._got_battery_status = True
-
-        return battery_status
+        return self.battery_monitor.get_battery_status()
 
     def get_voltage_thresholds(self) -> tuple[float, float]:
         """
@@ -338,11 +320,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             tuple[float, float]: (min_voltage, max_voltage) for safe motor testing
 
         """
-        if self.flight_controller.master is None or not self.flight_controller.fc_parameters:
-            logging_warning(_("Flight controller connection required for voltage threshold check"))
-            return (nan, nan)
-
-        return self.flight_controller.get_voltage_thresholds()
+        return self.battery_monitor.get_voltage_thresholds()
 
     def get_voltage_status(self) -> str:
         """
@@ -352,19 +330,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             str: "safe", "unsafe", "disabled", or "unavailable"
 
         """
-        if not self.is_battery_monitoring_enabled():
-            return "disabled"
-
-        battery_status = self.get_battery_status()
-        if battery_status is None:
-            return "unavailable"
-
-        voltage, _current = battery_status
-        min_voltage, max_voltage = self.get_voltage_thresholds()
-
-        if min_voltage < voltage < max_voltage:
-            return "safe"
-        return "critical"
+        return self.battery_monitor.get_voltage_status()
 
     def is_motor_test_safe(self) -> None:
         """
@@ -379,21 +345,20 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         if self.flight_controller.master is None:
             raise FlightControllerConnectionError(_("Flight controller not connected."))
 
-        # Check battery monitoring
-        if not self.is_battery_monitoring_enabled():
+        # Check battery monitoring using battery monitor
+        if not self.battery_monitor.is_battery_monitoring_enabled():
             # If battery monitoring is disabled, we still warn but don't fail
             logging_warning(_("Battery monitoring disabled, cannot verify voltage."))
             return
 
-        # Check battery voltage if monitoring is enabled
-        battery_status = self.get_battery_status()
-        if battery_status is None:
+        # Check battery voltage status using battery monitor
+        voltage_status = self.battery_monitor.get_voltage_status()
+        if voltage_status == "unavailable":
             raise MotorTestSafetyError(_("Could not read battery status."))
-
-        voltage, _current = battery_status
-        min_voltage, max_voltage = self.get_voltage_thresholds()
-
-        if not min_voltage < voltage < max_voltage:
+        if voltage_status == "critical":
+            battery_status = self.battery_monitor.get_battery_status()
+            voltage, _current = battery_status if battery_status else (nan, nan)
+            min_voltage, max_voltage = self.battery_monitor.get_voltage_thresholds()
             raise MotorTestSafetyError(
                 _("Battery voltage %(voltage).1fV is outside safe range (%(min).1fV - %(max).1fV)")
                 % {

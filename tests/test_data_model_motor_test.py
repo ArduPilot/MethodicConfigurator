@@ -1258,12 +1258,12 @@ class TestErrorHandlingAndEdgeCases:
         motor_test_model.flight_controller.master = None
 
         # Act
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.logging_warning") as mock_warning:
+        with patch("ardupilot_methodic_configurator.data_model_battery_monitor.logging_warning") as mock_warning:
             result = motor_test_model.get_battery_status()
 
             # Assert
             assert result is None
-            mock_warning.assert_called_once_with("Flight controller not connected, cannot get battery status.")
+            mock_warning.assert_called_once_with(_("Flight controller not connected, cannot get battery status."))
 
     def test_battery_status_with_debug_logging(self, motor_test_model) -> None:
         """
@@ -1865,9 +1865,9 @@ class TestMotorTestDataModelSafetyChecksAdvanced:
             "BATT_MONITOR": 4,  # Battery monitoring enabled
         }
 
-        # Mock get_battery_status to return None
+        # Mock battery monitor to return unavailable status
         with (
-            patch.object(motor_test_model, "get_battery_status", return_value=None),
+            patch.object(motor_test_model.battery_monitor, "get_voltage_status", return_value="unavailable"),
             pytest.raises(MotorTestSafetyError, match=r"Could not read battery status"),
         ):
             # Act: Check safety should raise MotorTestSafetyError
