@@ -38,6 +38,7 @@ from ardupilot_methodic_configurator.data_model_battery_monitor import (
 )
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
@@ -137,10 +138,18 @@ class BatteryMonitorView(Frame):
             button_container.pack(pady=20)
             self.upload_button = ttk.Button(
                 button_container,
-                text=_("Upload Selected Parameters to FC"),
+                text=_("Upload selected params to FC"),
                 command=self._on_upload_button_clicked,
             )
             self.upload_button.pack()
+            show_tooltip(
+                self.upload_button,
+                _(
+                    "Upload selected parameters to the flight controller and stay on the current "
+                    "intermediate parameter file\nIt will reset the FC if necessary, re-download "
+                    "all parameters and validate their value"
+                ),
+            )
 
     def _update_battery_status(self) -> None:
         """Update battery voltage and current labels."""
