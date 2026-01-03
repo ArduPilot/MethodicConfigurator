@@ -1,0 +1,84 @@
+name: Update Copyright Year
+
+on:
+  # Run on January 1st at 8:00 AM UTC
+  schedule:
+    - cron: '0 8 1 1 *'
+  # Enable manual trigger for testing
+  workflow_dispatch:
+
+# prevent race conditions
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  update-copyright:
+    permissions:
+      contents: write       # for creating branches and commits
+      pull-requests: write  # for creating PRs
+    runs-on: ubuntu-latest
+    env:
+      COPYRIGHT_CHANGED: false
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Update copyright years
+        run: |
+          # Calculate current and previous year
+          CURRENT_YEAR=$(date +%Y)
+          PREVIOUS_YEAR=$((CURRENT_YEAR - 1))
+
+          echo "Updating copyright from $PREVIOUS_YEAR to $CURRENT_YEAR"
+
+          # Find all files containing both SPDX-FileCopyrightText and the previous year
+          # Update patterns like "2024-2025" to "2024-2026"
+          grep -rl "SPDX-FileCopyrightText" . --exclude-dir=.git 2>/dev/null | while read -r file; do
+            # Update year ranges: YYYY-PREVIOUS_YEAR to YYYY-CURRENT_YEAR
+            # Only on lines containing SPDX-FileCopyrightText (handles any characters between them)
+            sed -i "/SPDX-FileCopyrightText.*/ s/\([0-9]\{4\}\)-${PREVIOUS_YEAR}\([^0-9]\)/\1-${CURRENT_YEAR}\2/g" "$file"
+
+            # Update standalone previous year in copyright lines
+            # Only on lines containing SPDX-FileCopyrightText (handles any characters between them)
+            sed -i "/SPDX-FileCopyrightText.*/ s/\b${PREVIOUS_YEAR}\([^0-9-]\)/${CURRENT_YEAR}\1/g" "$file"
+          done
+
+      - name: Check for changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "COPYRIGHT_CHANGED=true" >> $GITHUB_ENV
+            echo "Changes detected:"
+            git diff --stat
+          else
+            echo "No copyright changes detected"
+          fi
+
+      - name: Create Pull Request
+        if: env.COPYRIGHT_CHANGED == 'true'
+        uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Auto-update copyright year to ${{ env.CURRENT_YEAR }}'
+          title: 'Update copyright year to ${{ env.CURRENT_YEAR }}'
+          body: |
+            This PR updates copyright years in all files containing SPDX-FileCopyrightText headers.
+
+            The following patterns were updated:
+            - Year ranges: `YYYY-${{ env.PREVIOUS_YEAR }}` → `YYYY-${{ env.CURRENT_YEAR }}`
+            - Standalone years: `${{ env.PREVIOUS_YEAR }}` → `${{ env.CURRENT_YEAR }}`
+
+            This automated update runs annually on January 1st to keep copyright notices current.
+          branch: update-copyright-year-${{ env.CURRENT_YEAR }}
+          delete-branch: true
+          labels: automated-pr, maintenance
+          reviewers: ${{ github.actor }}
