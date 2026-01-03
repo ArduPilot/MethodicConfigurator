@@ -588,7 +588,7 @@ class TestUIComplexityBehavior:
         AND: Advanced users have complete control over parameter uploads
         """
         # Arrange: Set advanced mode
-        parameter_editor_table.parameter_editor_window.gui_complexity = "advanced"
+        parameter_editor_table.parameter_editor_window.gui_complexity = "normal"
 
         # Act: Check if upload column should be shown
         should_show = parameter_editor_table._should_show_upload_column()
@@ -608,8 +608,8 @@ class TestUIComplexityBehavior:
         # Arrange: Set simple mode as default
         parameter_editor_table.parameter_editor_window.gui_complexity = "simple"
 
-        # Act: Explicitly pass "advanced" to override the default
-        should_show = parameter_editor_table._should_show_upload_column("advanced")
+        # Act: Explicitly pass "normal" to override the default
+        should_show = parameter_editor_table._should_show_upload_column("normal")
 
         # Assert: Explicit parameter overrides default
         assert should_show is True
@@ -709,7 +709,7 @@ class TestIntegrationBehavior:
         assert column_index == 6  # No upload column
 
         # Act: Calculate columns for advanced mode override
-        show_upload_advanced = parameter_editor_table._should_show_upload_column("advanced")
+        show_upload_advanced = parameter_editor_table._should_show_upload_column("normal")
         column_index_advanced = parameter_editor_table._get_change_reason_column_index(show_upload_advanced)
 
         # Assert: Advanced mode calculations
@@ -1148,7 +1148,7 @@ class TestCompleteIntegrationWorkflows:
         assert column_index_simple == 6
 
         # Arrange & Act: Test advanced mode
-        parameter_editor_table.parameter_editor_window.gui_complexity = "advanced"
+        parameter_editor_table.parameter_editor_window.gui_complexity = "normal"
 
         headers_advanced, _ = parameter_editor_table._create_headers_and_tooltips(
             parameter_editor_table._should_show_upload_column()
@@ -1483,7 +1483,7 @@ class TestUserParameterEditingWorkflows:
         AND: The selection persists across table refreshes
         """
         # Arrange: Set up parameters with upload checkboxes
-        parameter_editor_table.parameter_editor_window.gui_complexity = "advanced"
+        parameter_editor_table.parameter_editor_window.gui_complexity = "normal"
         parameter_editor_table.parameter_editor.is_fc_connected = True
 
         # Create mock parameters
@@ -1500,7 +1500,7 @@ class TestUserParameterEditingWorkflows:
         }
 
         # Act: Get upload parameters (simulating user selections)
-        result = parameter_editor_table.get_upload_selected_params("advanced")
+        result = parameter_editor_table.get_upload_selected_params("normal")
 
         # Assert: All parameters selected in advanced mode when FC connected
         assert len(result) == 2
@@ -2285,5 +2285,5 @@ class TestUploadSelectionBehavior:
         }
         parameter_editor_table.parameter_editor.get_parameters_as_par_dict.return_value = ParDict({"A": Par(1.0, "")})
 
-        result = parameter_editor_table.get_upload_selected_params("advanced")
+        result = parameter_editor_table.get_upload_selected_params("normal")
         assert result == ParDict({"A": Par(1.0, "")})

@@ -176,7 +176,7 @@ def param_editor_with_params(realistic_filesystem: MagicMock, flight_controller_
 def mock_parameter_editor() -> MagicMock:
     """Create a mock parameter editor for testing UI interactions."""
     editor = MagicMock()
-    editor.gui_complexity = "advanced"
+    editor.gui_complexity = "normal"
     editor.repopulate_parameter_table = MagicMock()
     return editor
 
@@ -204,7 +204,7 @@ def integrated_parameter_table(
     """Create a fully integrated ParameterEditorTable with realistic data."""
     # Create parameter editor mock
     parameter_editor = MagicMock()
-    parameter_editor.gui_complexity = "advanced"
+    parameter_editor.gui_complexity = "normal"
     parameter_editor.repopulate_parameter_table = MagicMock()
 
     # Create parameter editor data model
@@ -488,7 +488,7 @@ class TestUIComplexityWorkflows:
         parameter_editor = mock_parameter_editor
 
         # Start with advanced complexity
-        assert parameter_editor.gui_complexity == "advanced"
+        assert parameter_editor.gui_complexity == "normal"
 
         # Reset mock call count
         parameter_editor.repopulate_parameter_table.reset_mock()
@@ -505,14 +505,14 @@ class TestUIComplexityWorkflows:
         assert parameter_editor.gui_complexity == "simple"
 
         # User switches back to advanced
-        parameter_editor.gui_complexity = "advanced"
-        assert parameter_editor.gui_complexity == "advanced"
+        parameter_editor.gui_complexity = "normal"
+        assert parameter_editor.gui_complexity == "normal"
 
         # Verify table repopulates when complexity changes
         # (This would trigger UI updates in the real implementation)
         # Note: In the current implementation, complexity changes don't automatically
         # trigger repopulation, but this test documents the expected behavior
-        assert parameter_editor.gui_complexity == "advanced"
+        assert parameter_editor.gui_complexity == "normal"
 
     def test_user_can_make_bulk_parameter_changes(
         self,

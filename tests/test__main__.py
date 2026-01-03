@@ -946,7 +946,7 @@ class TestParameterEditorStartup:
         application_state.args.n = 0  # Start from beginning
 
         with (
-            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value="advanced"),
+            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value="normal"),
             patch("ardupilot_methodic_configurator.__main__.ParameterEditorWindow") as mock_editor,
             patch("ardupilot_methodic_configurator.__main__.ParameterEditor") as mock_param_editor,
         ):

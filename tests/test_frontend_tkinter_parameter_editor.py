@@ -235,7 +235,7 @@ class TestParameterFileSelection:
         parameter_editor.get_last_configuration_step_number.return_value = None
 
         def fake_get_setting(key: str) -> object:
-            return {"gui_complexity": "advanced", "annotate_docs_into_param_files": False}.get(key, False)
+            return {"gui_complexity": "normal", "annotate_docs_into_param_files": False}.get(key, False)
 
         with (
             patch("tkinter.Tk", _DummyTkRoot),
@@ -263,7 +263,7 @@ class TestParameterFileSelection:
             window = ParameterEditorWindow(parameter_editor)
 
         assert window.parameter_editor is parameter_editor
-        assert window.gui_complexity == "advanced"
+        assert window.gui_complexity == "normal"
         assert window.current_plugin is None
         assert window.current_plugin_view is None
 
@@ -291,7 +291,7 @@ class TestParameterFileSelection:
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
-                side_effect=lambda key: "advanced" if key == "gui_complexity" else False,
+                side_effect=lambda key: "normal" if key == "gui_complexity" else False,
             ),
         ):
             window = ParameterEditorWindow(parameter_editor)
@@ -329,7 +329,7 @@ class TestParameterFileSelection:
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
-                side_effect=["advanced", False],
+                side_effect=["normal", False],
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.StageProgressBar",
@@ -361,7 +361,7 @@ class TestUsagePopupScheduling:
         parameter_editor.get_last_configuration_step_number.return_value = None
 
         def fake_get_setting(key: str) -> object:
-            return {"gui_complexity": "advanced", "annotate_docs_into_param_files": False}.get(key, False)
+            return {"gui_complexity": "normal", "annotate_docs_into_param_files": False}.get(key, False)
 
         with (
             patch("tkinter.Tk", _DummyTkRoot),
@@ -427,7 +427,7 @@ class TestWidgetFactoryMethods:
     def test_create_conf_widgets_configures_combobox(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
         editor.main_frame = MagicMock()
-        editor.gui_complexity = "advanced"
+        editor.gui_complexity = "normal"
         parameter_editor.parameter_files.return_value = ["01_initial.param"]
         parameter_editor.current_file = "01_initial.param"
         parameter_editor.get_vehicle_directory.return_value = "vehicle_dir"
