@@ -80,7 +80,7 @@ class TestParameterEditorTableUserWorkflows:
     def mock_parameter_editor(self) -> Mock:
         """Create a mock parameter editor with gui_complexity attribute."""
         mock_editor = Mock()
-        mock_editor.gui_complexity = "advanced"
+        mock_editor.gui_complexity = "normal"
         return mock_editor
 
     @pytest.fixture
@@ -129,8 +129,7 @@ class TestParameterEditorTableUserWorkflows:
         """
         # Test with different GUI complexity levels
         assert parameter_table._should_show_upload_column("simple") is False
-        assert parameter_table._should_show_upload_column("advanced") is True
-        assert parameter_table._should_show_upload_column("expert") is True
+        assert parameter_table._should_show_upload_column("normal") is True
 
         # Test with None (should use parameter_editor.gui_complexity)
         assert parameter_table._should_show_upload_column(None) is True  # advanced
@@ -447,11 +446,8 @@ class TestParameterEditorTableUserWorkflows:
         # Verify: Simple mode hides upload column
         assert parameter_table._should_show_upload_column("simple") is False
 
-        # Verify: Advanced mode shows upload column
-        assert parameter_table._should_show_upload_column("advanced") is True
-
         # Verify: Expert mode shows upload column
-        assert parameter_table._should_show_upload_column("expert") is True
+        assert parameter_table._should_show_upload_column("normal") is True
 
         # Verify: Change reason column index adapts to upload column visibility
         change_reason_idx_simple = parameter_table._get_change_reason_column_index(show_upload_column=False)

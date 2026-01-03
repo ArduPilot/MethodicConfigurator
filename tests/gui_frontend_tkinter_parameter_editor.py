@@ -214,7 +214,7 @@ class TestParameterEditorWindow:
                 self.pack_called = True
 
         def fake_get_setting(key: str) -> object:
-            return {"gui_complexity": "advanced", "annotate_docs_into_param_files": False}.get(key, False)
+            return {"gui_complexity": "normal", "annotate_docs_into_param_files": False}.get(key, False)
 
         def create_progress_window(*_args, **_kwargs) -> MagicMock:
             progress = MagicMock()
