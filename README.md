@@ -199,7 +199,8 @@ Now that all mandatory configuration steps are done you can [perform the first f
 
 ### 1.8 Minimalistic mandatory tuning
 
-These are the very [minimum tuning steps](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#8-minimalistic-mandatory-tuning) required for a stable flight:
+These are the very [minimum tuning steps](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#8-minimalistic-mandatory-tuning)
+required for a stable flight:
 
 - Load the `.bin` log file from the first flight into [Notch filter webtool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
 - [19_notch_filter_results.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#81-notch-filter-calibration) use the webtool information to
