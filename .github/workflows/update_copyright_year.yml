@@ -39,6 +39,10 @@ jobs:
           CURRENT_YEAR=$(date +%Y)
           PREVIOUS_YEAR=$((CURRENT_YEAR - 1))
 
+          # Export to GITHUB_ENV for use in subsequent steps
+          echo "CURRENT_YEAR=${CURRENT_YEAR}" >> $GITHUB_ENV
+          echo "PREVIOUS_YEAR=${PREVIOUS_YEAR}" >> $GITHUB_ENV
+
           echo "Updating copyright from $PREVIOUS_YEAR to $CURRENT_YEAR"
 
           # Find all files containing both SPDX-FileCopyrightText and the previous year
@@ -46,11 +50,13 @@ jobs:
           grep -rl "SPDX-FileCopyrightText" . --exclude-dir=.git 2>/dev/null | while read -r file; do
             # Update year ranges: YYYY-PREVIOUS_YEAR to YYYY-CURRENT_YEAR
             # Only on lines containing SPDX-FileCopyrightText (handles any characters between them)
-            sed -i "/SPDX-FileCopyrightText.*/ s/\([0-9]\{4\}\)-${PREVIOUS_YEAR}\([^0-9]\)/\1-${CURRENT_YEAR}\2/g" "$file"
+            # Match either non-digit character or end of line after the year
+            sed -i "/SPDX-FileCopyrightText.*/ s/\([0-9]\{4\}\)-${PREVIOUS_YEAR}\([^0-9]\|$\)/\1-${CURRENT_YEAR}\2/g" "$file"
 
             # Update standalone previous year in copyright lines
             # Only on lines containing SPDX-FileCopyrightText (handles any characters between them)
-            sed -i "/SPDX-FileCopyrightText.*/ s/\b${PREVIOUS_YEAR}\([^0-9-]\)/${CURRENT_YEAR}\1/g" "$file"
+            # Match either non-digit/non-hyphen character or end of line after the year
+            sed -i "/SPDX-FileCopyrightText.*/ s/\(^\|[^0-9]\)${PREVIOUS_YEAR}\([^0-9-]\|$\)/\1${CURRENT_YEAR}\2/g" "$file"
           done
 
       - name: Check for changes
