@@ -90,6 +90,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     and provides methods to interact with them.
     """
 
+    # Maximum number of parameters for bulk add warning threshold.
+    # When more than these parameters are selected for bulk addition, the user will be warned.
+    # This threshold prevents users from being overwhelmed by accidentally adding
+    # too many parameters at once, leading to difficulty tracking changes and slowing the GUI.
+    # 15 is chosen as a balance between convenience
+    # and safety, allowing batch operations while maintaining user control.
+    MAX_BULK_ADD_SUGGESTIONS = 15
+
     def __init__(self, current_file: str, flight_controller: FlightController, filesystem: LocalFilesystem) -> None:
         self.current_file = current_file
         self._flight_controller = flight_controller
@@ -1768,6 +1776,87 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 _("Can not add parameter when no FC is connected and no apm.pdef.xml file exists.")
             )
         return False
+
+    def add_parameters_to_current_file(self, param_names: list[str]) -> tuple[list[str], list[str], list[str]]:
+        """
+        Add multiple parameters at once.
+
+        Args:
+            param_names: List of parameter names to add
+
+        Returns:
+            Tuple of (added, skipped, failed) parameter names
+            - added: Parameters successfully added
+            - skipped: Parameters that returned False from add_parameter_to_current_file
+            - failed: Parameters that raised InvalidParameterNameError or OperationNotPossibleError
+                      (includes already existing parameters, invalid names, or missing data sources)
+
+        """
+        added: list[str] = []
+        skipped: list[str] = []
+        failed: list[str] = []
+
+        for param_name in param_names:
+            try:
+                if self.add_parameter_to_current_file(param_name):
+                    added.append(param_name)
+                else:
+                    skipped.append(param_name)
+            except (InvalidParameterNameError, OperationNotPossibleError):  # noqa: PERF203
+                failed.append(param_name)
+
+        return added, skipped, failed
+
+    @staticmethod
+    def generate_bulk_add_feedback_message(added: list[str], skipped: list[str], failed: list[str]) -> tuple[str, str, str]:
+        """
+        Generate feedback message for bulk parameter addition.
+
+        Args:
+            added: List of successfully added parameter names
+            skipped: List of skipped parameter names (already exist)
+            failed: List of failed parameter names (invalid or errors)
+
+        Returns:
+            Tuple of (message_type, title, message) where:
+            - message_type: "success", "warning", "error", or "info"
+            - title: The popup title
+            - message: The detailed message text
+
+        """
+        # All parameters added successfully
+        if added and not skipped and not failed:
+            return "success", _("Success"), _("Successfully added %d parameter(s).") % len(added)
+
+        # Partial success - some added, some skipped or failed
+        if added and (skipped or failed):
+            msg_parts = [_("Added %d parameter(s).") % len(added)]
+            if skipped:
+                msg_parts.append(_("Skipped %d parameter(s): %s") % (len(skipped), ", ".join(skipped)))
+            if failed:
+                msg_parts.append(_("Failed %d parameter(s): %s") % (len(failed), ", ".join(failed)))
+            return "warning", _("Partial Success"), "\n".join(msg_parts)
+
+        # All parameters already exist (skipped only)
+        if skipped and not added and not failed:
+            return "info", _("No Changes"), _("All %d parameter(s) already exist in the file.") % len(skipped)
+
+        # All parameters failed (no adds or skips)
+        if failed and not added and not skipped:
+            return "error", _("Error"), _("Failed to add all %d parameter(s): %s") % (len(failed), ", ".join(failed))
+
+        # Mixed skipped and failed, but nothing added
+        if (skipped or failed) and not added:
+            msg_parts = []
+            if skipped:
+                msg_parts.append(_("Skipped %d parameter(s): %s") % (len(skipped), ", ".join(skipped)))
+            if failed:
+                msg_parts.append(_("Failed %d parameter(s): %s") % (len(failed), ", ".join(failed)))
+            return "error", _("No Parameters Added"), "\n".join(msg_parts)
+
+        # Fallback for unexpected state
+        logging_error("Unexpected bulk add result - added: %s, skipped: %s, failed: %s", added, skipped, failed)
+        return "error", _("Error"), _("Unexpected result during bulk parameter addition.")
 
     def should_display_bitmask_parameter_editor_usage(self, param_name: str) -> bool:
         return self.current_step_parameters[param_name].is_editable and self.current_step_parameters[param_name].is_bitmask
