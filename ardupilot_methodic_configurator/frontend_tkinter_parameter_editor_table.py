@@ -34,8 +34,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     ask_yesno_popup,
     show_error_popup,
     show_info_popup,
+    show_warning_popup,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
     PairTupleCombobox,
     setup_combobox_mousewheel_handling,
@@ -53,6 +53,16 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checking only
 
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
+
+# Maximum number of suggestions for bulk add button to be enabled.
+# When more than these suggestions are found, no bulk parameter add is offered.
+# This threshold prevents users from being overwhelmed by accidentally adding
+# too many parameters at once, which could lead to configuration errors or
+# difficulty tracking changes. 15 is chosen as a balance between convenience
+# and safety, allowing batch operations while maintaining user control.
+MAX_BULK_ADD_SUGGESTIONS = 15
+
+# pylint: disable=too-many-lines
 
 
 @dataclass
@@ -231,7 +241,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self._grid_column_widgets(row_widgets, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
-            add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
+            add_button = ttk.Button(
+                self.view_port,
+                text=_("Add"),
+                style="narrow.TButton",
+                command=self._on_parameter_add,
+            )
+            add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
+
             tooltip_msg = _("Add a parameter to the {self.parameter_editor.current_file} file")
             show_tooltip(add_button, tooltip_msg.format(**locals()))
             add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
@@ -790,46 +807,187 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
 
+    @staticmethod
+    def _calculate_bulk_add_button_state(suggestion_count: int) -> str:
+        """
+        Calculate the state for the bulk add button based on suggestion count.
+
+        Args:
+            suggestion_count: Number of filtered parameter suggestions
+
+        Returns:
+            "normal" if 0 < suggestion_count <= MAX_BULK_ADD_SUGGESTIONS, otherwise "disabled"
+
+        Business logic extracted for testability.
+
+        """
+        if 0 < suggestion_count <= MAX_BULK_ADD_SUGGESTIONS:
+            return "normal"
+        return "disabled"
+
+    @staticmethod
+    def _generate_bulk_add_feedback_message(added: list[str], skipped: list[str], failed: list[str]) -> tuple[str, str, str]:
+        """
+        Generate feedback message for bulk parameter addition.
+
+        Args:
+            added: List of successfully added parameter names
+            skipped: List of skipped parameter names (already exist)
+            failed: List of failed parameter names (invalid or errors)
+
+        Returns:
+            Tuple of (message_type, title, message) where:
+            - message_type: "success", "warning", "error", or "info"
+            - title: The popup title
+            - message: The detailed message text
+
+        Business logic extracted for testability.
+
+        """
+        # All parameters added successfully
+        if added and not skipped and not failed:
+            return "success", _("Success"), _("Successfully added %d parameter(s).") % len(added)
+
+        # Partial success - some added, some skipped or failed
+        if added and (skipped or failed):
+            msg_parts = [_("Added %d parameter(s).") % len(added)]
+            if skipped:
+                msg_parts.append(_("Skipped %d parameter(s): %s") % (len(skipped), ", ".join(skipped)))
+            if failed:
+                msg_parts.append(_("Failed %d parameter(s): %s") % (len(failed), ", ".join(failed)))
+            return "warning", _("Partial Success"), "\n".join(msg_parts)
+
+        # All parameters already exist (skipped only)
+        if skipped and not added and not failed:
+            return "info", _("No Changes"), _("All %d parameter(s) already exist in the file.") % len(skipped)
+
+        # All parameters failed (no adds or skips)
+        if failed and not added and not skipped:
+            return "error", _("Error"), _("Failed to add all %d parameter(s): %s") % (len(failed), ", ".join(failed))
+
+        # Mixed skipped and failed, but nothing added
+        if (skipped or failed) and not added:
+            msg_parts = []
+            if skipped:
+                msg_parts.append(_("Skipped %d parameter(s): %s") % (len(skipped), ", ".join(skipped)))
+            if failed:
+                msg_parts.append(_("Failed %d parameter(s): %s") % (len(failed), ", ".join(failed)))
+            return "error", _("No Parameters Added"), "\n".join(msg_parts)
+
+        # Fallback for unexpected state
+        logging_critical("Unexpected bulk add result - added: %s, skipped: %s, failed: %s", added, skipped, failed)
+        return "error", _("Error"), _("Unexpected result during bulk parameter addition.")
+
+    def _bulk_add_parameters_and_show_feedback(
+        self, param_names: list[str], dialog_window: Union[BaseWindow, tk.Toplevel]
+    ) -> None:
+        """
+        Execute bulk parameter addition and display feedback to user.
+
+        Args:
+            param_names: List of parameter names to add (should be uppercase)
+            dialog_window: The add parameter dialog window to close after operation
+
+        Side Effects:
+            - Adds parameters to the current configuration file
+            - Updates the parameter editor table display
+            - Scrolls to bottom if parameters were added
+            - Displays feedback popup based on operation results
+            - Closes the dialog window
+
+        Note:
+            This method orchestrates the UI workflow. The business logic is in
+            ParameterEditor.bulk_add_parameters() and message generation is in
+            _generate_bulk_add_feedback_message() for better testability.
+
+        """
+        # Call business logic method
+        added, skipped, failed = self.parameter_editor.bulk_add_parameters(param_names)
+
+        # Update UI if parameters were added
+        if added:
+            self._pending_scroll_to_bottom = True
+            self.parameter_editor_window.repopulate_parameter_table()
+
+        # Generate and show feedback message
+        message_type, title, message = self._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        if message_type == "success":
+            pass  # Silent success - no popup needed for clean operation
+        elif message_type == "warning":
+            show_warning_popup(title, message)
+        elif message_type == "info":
+            show_info_popup(title, message)
+        elif message_type == "error":
+            show_error_popup(title, message)
+
+        if isinstance(dialog_window, BaseWindow):
+            dialog_window.root.destroy()
+        elif isinstance(dialog_window, tk.Toplevel):
+            dialog_window.destroy()
+
     def _on_parameter_add(self) -> None:
-        """Handle parameter addition."""
-        add_parameter_window = BaseWindow(self._get_parent_root())
-        add_parameter_window.root.title(_("Add Parameter to ") + self.parameter_editor.current_file)
-        add_parameter_window.root.geometry("450x300")
+        window = tk.Toplevel(self._get_parent_root())
+        window.title(_("Add parameter(s)"))
+        window.geometry("450x400")
+        window.transient(self._get_parent_toplevel())
+        window.grab_set()
+        window.update_idletasks()
 
-        # Label for instruction
-        instruction_label = ttk.Label(add_parameter_window.main_frame, text=_("Enter the parameter name to add:"))
-        instruction_label.pack(pady=5)
+        parent = self._get_parent_toplevel()
+        px = parent.winfo_rootx()
+        py = parent.winfo_rooty()
+        pw = parent.winfo_width()
+        ph = parent.winfo_height()
 
-        try:
-            possible_add_param_names = self.parameter_editor.get_possible_add_param_names()
-        except OperationNotPossibleError as e:
-            self._dialogs.show_error(_("Operation not possible"), str(e))
-            return
+        ww = window.winfo_width()
+        wh = window.winfo_height()
 
-        # Prompt the user for a parameter name
-        parameter_name_combobox = EntryWithDynamicalyFilteredListbox(
-            add_parameter_window.main_frame,
-            possible_add_param_names,
-            startswith_match=False,
-            ignorecase_match=True,
-            listbox_height=12,
-            width=28,
-        )
-        parameter_name_combobox.pack(padx=5, pady=5)
-        BaseWindow.center_window(add_parameter_window.root, self._get_parent_toplevel())
-        parameter_name_combobox.focus()
+        x = px + (pw - ww) // 2
+        y = py + (ph - wh) // 2
 
-        def custom_selection_handler(event: tk.Event) -> None:
-            parameter_name_combobox.update_entry_from_listbox(event)
-            param_name = parameter_name_combobox.get().upper()
-            if self._confirm_parameter_addition(param_name):
-                add_parameter_window.root.destroy()
-            else:
-                add_parameter_window.root.focus()
+        window.geometry(f"+{x}+{y}")
 
-        # Bindings to handle Enter press and selection while respecting original functionalities
-        parameter_name_combobox.bind("<Return>", custom_selection_handler)
-        parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
+        ttk.Label(window, text=_("Search and select parameter(s) (Ctrl / Shift for multiple):")).pack(pady=5)
+
+        search_var = tk.StringVar()
+        search_entry = ttk.Entry(window, textvariable=search_var)
+        search_entry.pack(fill="x", padx=10)
+        search_entry.focus()
+
+        frame = ttk.Frame(window)
+        frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+        listbox = tk.Listbox(frame, selectmode=tk.EXTENDED)
+        listbox.pack(side="left", fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=listbox.yview)
+        scrollbar.pack(side="right", fill="y")
+        listbox.configure(yscrollcommand=scrollbar.set)
+
+        all_params = self.parameter_editor.get_possible_add_param_names()
+
+        def refresh_list(*_: object) -> None:
+            listbox.delete(0, tk.END)
+            query = search_var.get().lower()
+            for p in all_params:
+                if query in p.lower():
+                    listbox.insert(tk.END, p)
+
+        search_var.trace_add("write", refresh_list)
+        refresh_list()
+
+        def add_selected() -> None:
+            selected = [listbox.get(i).upper() for i in listbox.curselection()]
+            if not selected:
+                return
+            self._bulk_add_parameters_and_show_feedback(selected, window)
+            window.destroy()
+
+        listbox.bind("<Return>", lambda _e: add_selected())
+        window.bind("<Return>", lambda _e: add_selected())
+
+        ttk.Button(window, text=_("Add selected parameters"), command=add_selected).pack(pady=10)
 
     def _confirm_parameter_addition(self, param_name: str) -> bool:
         """Confirm and process parameter addition using ParameterEditor."""

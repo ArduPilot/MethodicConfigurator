@@ -2235,6 +2235,7 @@ class TestParameterAdditionWorkflows:
         mock_window.main_frame = MagicMock()
         entry_widget = MagicMock()
         entry_widget.get.return_value = "NEW"
+        entry_widget.get_filtered_items.return_value = []  # For bulk add button state
 
         with (
             patch(
@@ -2247,7 +2248,17 @@ class TestParameterAdditionWorkflows:
         ):
             parameter_editor_table._on_parameter_add()
 
-        handler = entry_widget.bind.call_args_list[0][0][1]
+        # Find the handler for Return/ComboboxSelected (not KeyRelease)
+        # The bind calls now include: <Return>, <<ComboboxSelected>>, and <KeyRelease>
+        bind_calls = entry_widget.bind.call_args_list
+        return_handler = None
+        for call in bind_calls:
+            if call[0][0] == "<Return>":
+                return_handler = call[0][1]
+                break
+
+        assert return_handler is not None
+        handler = return_handler
         handler(SimpleNamespace(widget=entry_widget))
         parameter_editor_table._confirm_parameter_addition.assert_called_with("NEW")
 
@@ -2265,6 +2276,200 @@ class TestParameterAdditionWorkflows:
         parameter_editor_table.parameter_editor.add_parameter_to_current_file.side_effect = OperationNotPossibleError("ops")
         assert parameter_editor_table._confirm_parameter_addition("bad") is False
         parameter_editor_table._dialogs.show_error.assert_called()
+
+
+class TestBulkParameterAdditionFeedbackMessages:
+    """Test feedback message generation for bulk parameter addition feature."""
+
+    def test_bulk_add_button_enabled_when_suggestion_count_is_within_threshold(self) -> None:
+        """
+        Bulk add button is enabled when suggestion count is within threshold.
+
+        GIVEN: A suggestion count between 1 and MAX_BULK_ADD_SUGGESTIONS (15)
+        WHEN: Button state is calculated
+        THEN: Button should be in "normal" (enabled) state
+        """
+        # Act & Assert - test boundary and middle values
+        assert ParameterEditorTable._calculate_bulk_add_button_state(1) == "normal"
+        assert ParameterEditorTable._calculate_bulk_add_button_state(7) == "normal"
+        assert ParameterEditorTable._calculate_bulk_add_button_state(15) == "normal"
+
+    def test_bulk_add_button_disabled_when_suggestion_count_exceeds_threshold(self) -> None:
+        """
+        Bulk add button is disabled when suggestion count exceeds threshold.
+
+        GIVEN: A suggestion count greater than MAX_BULK_ADD_SUGGESTIONS (15)
+        WHEN: Button state is calculated
+        THEN: Button should be in "disabled" state
+        """
+        # Act & Assert
+        assert ParameterEditorTable._calculate_bulk_add_button_state(16) == "disabled"
+        assert ParameterEditorTable._calculate_bulk_add_button_state(100) == "disabled"
+
+    def test_bulk_add_button_disabled_when_no_suggestions(self) -> None:
+        """
+        Bulk add button is disabled when there are no suggestions.
+
+        GIVEN: A suggestion count of 0
+        WHEN: Button state is calculated
+        THEN: Button should be in "disabled" state
+        """
+        # Act & Assert
+        assert ParameterEditorTable._calculate_bulk_add_button_state(0) == "disabled"
+
+    def test_user_receives_success_message_when_all_parameters_added_successfully(self) -> None:
+        """
+        User receives success message when all parameters are added successfully.
+
+        GIVEN: All requested parameters were added successfully
+        WHEN: Feedback message is generated
+        THEN: Success message type with appropriate details is returned
+        """
+        # Arrange
+        added = ["PARAM1", "PARAM2", "PARAM3"]
+        skipped = []
+        failed = []
+
+        # Act
+        msg_type, title, message = ParameterEditorTable._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        # Assert
+        assert msg_type == "success"
+        assert title == _("Success")
+        assert "3" in message
+
+    def test_user_receives_partial_success_warning_with_added_and_skipped(self) -> None:
+        """
+        User receives partial success warning when some added and some skipped.
+
+        GIVEN: Some parameters added, some skipped
+        WHEN: Feedback message is generated
+        THEN: Warning message with both categories listed is returned
+        """
+        # Arrange
+        added = ["PARAM1", "PARAM2"]
+        skipped = ["PARAM3"]
+        failed = []
+
+        # Act
+        msg_type, title, message = ParameterEditorTable._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        # Assert
+        assert msg_type == "warning"
+        assert title == _("Partial Success")
+        assert "2" in message  # Added count
+        assert "PARAM3" in message  # Skipped parameter name
+
+    def test_user_receives_info_message_when_all_parameters_already_exist(self) -> None:
+        """
+        User receives info message when all parameters already exist.
+
+        GIVEN: All requested parameters already exist in file
+        WHEN: Feedback message is generated
+        THEN: Info message about no changes is returned
+        """
+        # Arrange
+        added = []
+        skipped = ["PARAM1", "PARAM2"]
+        failed = []
+
+        # Act
+        msg_type, title, message = ParameterEditorTable._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        # Assert
+        assert msg_type == "info"
+        assert title == _("No Changes")
+        assert "2" in message
+        assert _("already exist") in message
+
+    def test_user_receives_error_message_when_all_parameters_fail(self) -> None:
+        """
+        User receives error message when all parameters fail to add.
+
+        GIVEN: All requested parameters failed to add
+        WHEN: Feedback message is generated
+        THEN: Error message listing failed parameters is returned
+        """
+        # Arrange
+        added = []
+        skipped = []
+        failed = ["INVALID1", "INVALID2"]
+
+        # Act
+        msg_type, title, message = ParameterEditorTable._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        # Assert
+        assert msg_type == "error"
+        assert title == _("Error")
+        assert "2" in message
+        assert "INVALID1" in message
+        assert "INVALID2" in message
+
+    def test_user_receives_error_when_nothing_added_with_mixed_skipped_and_failed(self) -> None:
+        """
+        User receives error message when nothing added but has skipped and failed.
+
+        GIVEN: No parameters added, but some skipped and some failed
+        WHEN: Feedback message is generated
+        THEN: Error message with detailed breakdown is returned
+        """
+        # Arrange
+        added = []
+        skipped = ["PARAM1"]
+        failed = ["INVALID1"]
+
+        # Act
+        msg_type, title, message = ParameterEditorTable._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        # Assert
+        assert msg_type == "error"
+        assert title == _("No Parameters Added")
+        assert "PARAM1" in message
+        assert "INVALID1" in message
+
+    def test_user_receives_warning_with_all_three_categories(self) -> None:
+        """
+        User receives comprehensive warning with added, skipped, and failed parameters.
+
+        GIVEN: Bulk operation has added, skipped, and failed parameters
+        WHEN: Feedback message is generated
+        THEN: Warning message with all three categories is returned
+        """
+        # Arrange
+        added = ["PARAM1"]
+        skipped = ["PARAM2"]
+        failed = ["INVALID1"]
+
+        # Act
+        msg_type, title, message = ParameterEditorTable._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        # Assert
+        assert msg_type == "warning"
+        assert title == _("Partial Success")
+        assert "1" in message  # Count appears
+        assert "PARAM2" in message  # Skipped parameter
+        assert "INVALID1" in message  # Failed parameter
+
+    def test_fallback_error_for_unexpected_state(self) -> None:
+        """
+        System returns fallback error for unexpected result state.
+
+        GIVEN: An unexpected result state (e.g., empty lists)
+        WHEN: Feedback message is generated
+        THEN: A generic error message is returned
+        """
+        # Arrange: All empty (unexpected state)
+        added = []
+        skipped = []
+        failed = []
+
+        # Act
+        msg_type, title, message = ParameterEditorTable._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        # Assert
+        assert msg_type == "error"
+        assert title == _("Error")
+        assert _("Unexpected") in message or _("unexpected") in message.lower()
 
 
 class TestUploadSelectionBehavior:
