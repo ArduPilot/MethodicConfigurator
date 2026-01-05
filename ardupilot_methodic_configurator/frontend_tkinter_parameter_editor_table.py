@@ -34,6 +34,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     ask_yesno_popup,
     show_error_popup,
     show_info_popup,
+    show_warning_popup,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
@@ -53,6 +54,16 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checking only
 
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
+
+# Maximum number of suggestions for bulk add button to be enabled.
+# When more than these suggestions are found, no bulk parameter add is offered.
+# This threshold prevents users from being overwhelmed by accidentally adding
+# too many parameters at once, which could lead to configuration errors or
+# difficulty tracking changes. 15 is chosen as a balance between convenience
+# and safety, allowing batch operations while maintaining user control.
+MAX_BULK_ADD_SUGGESTIONS = 15
+
+# pylint: disable=too-many-lines
 
 
 @dataclass
@@ -790,11 +801,125 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
 
+    @staticmethod
+    def _calculate_bulk_add_button_state(suggestion_count: int) -> str:
+        """
+        Calculate the state for the bulk add button based on suggestion count.
+
+        Args:
+            suggestion_count: Number of filtered parameter suggestions
+
+        Returns:
+            "normal" if 0 < suggestion_count <= MAX_BULK_ADD_SUGGESTIONS, otherwise "disabled"
+
+        Business logic extracted for testability.
+
+        """
+        if 0 < suggestion_count <= MAX_BULK_ADD_SUGGESTIONS:
+            return "normal"
+        return "disabled"
+
+    @staticmethod
+    def _generate_bulk_add_feedback_message(added: list[str], skipped: list[str], failed: list[str]) -> tuple[str, str, str]:
+        """
+        Generate feedback message for bulk parameter addition.
+
+        Args:
+            added: List of successfully added parameter names
+            skipped: List of skipped parameter names (already exist)
+            failed: List of failed parameter names (invalid or errors)
+
+        Returns:
+            Tuple of (message_type, title, message) where:
+            - message_type: "success", "warning", "error", or "info"
+            - title: The popup title
+            - message: The detailed message text
+
+        Business logic extracted for testability.
+
+        """
+        # All parameters added successfully
+        if added and not skipped and not failed:
+            return "success", _("Success"), _("Successfully added %d parameter(s).") % len(added)
+
+        # Partial success - some added, some skipped or failed
+        if added and (skipped or failed):
+            msg_parts = [_("Added %d parameter(s).") % len(added)]
+            if skipped:
+                msg_parts.append(_("Skipped %d parameter(s): %s") % (len(skipped), ", ".join(skipped)))
+            if failed:
+                msg_parts.append(_("Failed %d parameter(s): %s") % (len(failed), ", ".join(failed)))
+            return "warning", _("Partial Success"), "\n".join(msg_parts)
+
+        # All parameters already exist (skipped only)
+        if skipped and not added and not failed:
+            return "info", _("No Changes"), _("All %d parameter(s) already exist in the file.") % len(skipped)
+
+        # All parameters failed (no adds or skips)
+        if failed and not added and not skipped:
+            return "error", _("Error"), _("Failed to add all %d parameter(s): %s") % (len(failed), ", ".join(failed))
+
+        # Mixed skipped and failed, but nothing added
+        if (skipped or failed) and not added:
+            msg_parts = []
+            if skipped:
+                msg_parts.append(_("Skipped %d parameter(s): %s") % (len(skipped), ", ".join(skipped)))
+            if failed:
+                msg_parts.append(_("Failed %d parameter(s): %s") % (len(failed), ", ".join(failed)))
+            return "error", _("No Parameters Added"), "\n".join(msg_parts)
+
+        # Fallback for unexpected state
+        logging_critical("Unexpected bulk add result - added: %s, skipped: %s, failed: %s", added, skipped, failed)
+        return "error", _("Error"), _("Unexpected result during bulk parameter addition.")
+
+    def _bulk_add_parameters_and_show_feedback(self, param_names: list[str], dialog_window: BaseWindow) -> None:
+        """
+        Execute bulk parameter addition and display feedback to user.
+
+        Args:
+            param_names: List of parameter names to add (should be uppercase)
+            dialog_window: The add parameter dialog window to close after operation
+
+        Side Effects:
+            - Adds parameters to the current configuration file
+            - Updates the parameter editor table display
+            - Scrolls to bottom if parameters were added
+            - Displays feedback popup based on operation results
+            - Closes the dialog window
+
+        Note:
+            This method orchestrates the UI workflow. The business logic is in
+            ParameterEditor.bulk_add_parameters() and message generation is in
+            _generate_bulk_add_feedback_message() for better testability.
+
+        """
+        # Call business logic method
+        added, skipped, failed = self.parameter_editor.bulk_add_parameters(param_names)
+
+        # Update UI if parameters were added
+        if added:
+            self._pending_scroll_to_bottom = True
+            self.parameter_editor_window.repopulate_parameter_table()
+
+        # Generate and show feedback message
+        message_type, title, message = self._generate_bulk_add_feedback_message(added, skipped, failed)
+
+        if message_type == "success":
+            pass  # Silent success - no popup needed for clean operation
+        elif message_type == "warning":
+            show_warning_popup(title, message)
+        elif message_type == "info":
+            show_info_popup(title, message)
+        elif message_type == "error":
+            show_error_popup(title, message)
+
+        dialog_window.root.destroy()
+
     def _on_parameter_add(self) -> None:
         """Handle parameter addition."""
         add_parameter_window = BaseWindow(self._get_parent_root())
         add_parameter_window.root.title(_("Add Parameter to ") + self.parameter_editor.current_file)
-        add_parameter_window.root.geometry("450x300")
+        add_parameter_window.root.geometry("450x320")
 
         # Label for instruction
         instruction_label = ttk.Label(add_parameter_window.main_frame, text=_("Enter the parameter name to add:"))
@@ -819,6 +944,41 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         BaseWindow.center_window(add_parameter_window.root, self._get_parent_toplevel())
         parameter_name_combobox.focus()
 
+        # Add all suggested parameters button (disabled by default)
+        add_suggested_button = ttk.Button(
+            add_parameter_window.main_frame,
+            text=_("Add all suggested parameters"),
+            state="disabled",
+        )
+        add_suggested_button.pack(pady=(10, 0))
+
+        # --- Helper: get filtered suggestions
+        def get_filtered_parameter_names() -> list[str]:
+            return [name.upper() for name in parameter_name_combobox.get_filtered_items()]
+
+        # --- Enable button only when <= MAX_BULK_ADD_SUGGESTIONS suggestions
+        def update_add_suggested_button_state() -> None:
+            filtered = get_filtered_parameter_names()
+            button_state = self._calculate_bulk_add_button_state(len(filtered))
+            add_suggested_button.configure(state=button_state)
+
+        # --- Bulk add handler
+        def on_add_suggested_parameters() -> None:
+            filtered = get_filtered_parameter_names()
+            self._bulk_add_parameters_and_show_feedback(filtered, add_parameter_window)
+
+        add_suggested_button.configure(command=on_add_suggested_parameters)
+
+        # Update button state while typing
+        parameter_name_combobox.bind(
+            "<KeyRelease>",
+            lambda _event: update_add_suggested_button_state(),
+        )
+
+        # Initialize button state on dialog open
+        update_add_suggested_button_state()
+
+        # --- Single-add behavior
         def custom_selection_handler(event: tk.Event) -> None:
             parameter_name_combobox.update_entry_from_listbox(event)
             param_name = parameter_name_combobox.get().upper()
@@ -827,7 +987,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             else:
                 add_parameter_window.root.focus()
 
-        # Bindings to handle Enter press and selection while respecting original functionalities
+        # Bindings to handle Enter press and selection
         parameter_name_combobox.bind("<Return>", custom_selection_handler)
         parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
 
