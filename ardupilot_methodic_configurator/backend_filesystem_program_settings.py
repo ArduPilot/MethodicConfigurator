@@ -75,7 +75,7 @@ class ProgramSettings:
         pass
 
     @classmethod
-    def _get_settings_defaults(cls) -> dict[str, Union[int, bool, str, float, dict]]:
+    def _get_settings_defaults(cls) -> dict[str, Union[int, bool, str, float, dict, list]]:
         """
         Get the default settings dictionary with dynamically computed paths.
 
@@ -89,6 +89,7 @@ class ProgramSettings:
         return {
             "Format version": 1,
             "display_usage_popup": dict.fromkeys(USAGE_POPUP_WINDOWS, True),
+            "connection_history": [],
             "directory_selection": {
                 "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
                 "new_base_dir": os_path.join(settings_directory, "vehicles"),
@@ -455,3 +456,34 @@ class ProgramSettings:
         """
         filepath, _error_msg = ProgramSettings.motor_diagram_filepath(frame_class, frame_type)
         return filepath != "" and os_path.exists(filepath)
+
+    @staticmethod
+    def get_connection_history() -> list[str]:
+        """Get the list of previously used connection strings."""
+        settings = ProgramSettings._get_settings_as_dict()
+        history: Any = settings.get("connection_history", [])
+
+        if not isinstance(history, list):
+            return []
+
+        return [item for item in history if isinstance(item, str)]
+
+    @staticmethod
+    def store_connection(connection_string: str) -> None:
+        """Save a new connection string to history."""
+        if not connection_string:
+            return
+
+        settings = ProgramSettings._get_settings_as_dict()
+        history = settings.get("connection_history", [])
+
+        if connection_string in history:
+            history.remove(connection_string)
+
+        history.insert(0, connection_string)
+
+        if len(history) > 10:
+            history = history[:10]
+
+        settings["connection_history"] = history
+        ProgramSettings._set_settings_from_dict(settings)
