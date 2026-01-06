@@ -36,7 +36,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     show_info_popup,
     show_warning_popup,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
     PairTupleCombobox,
     setup_combobox_mousewheel_handling,
@@ -242,7 +241,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self._grid_column_widgets(row_widgets, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
-            add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
+            add_button = ttk.Button(
+                self.view_port,
+                text=_("Add"),
+                style="narrow.TButton",
+                command=self._on_parameter_add,
+            )
+            add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
+
             tooltip_msg = _("Add a parameter to the {self.parameter_editor.current_file} file")
             show_tooltip(add_button, tooltip_msg.format(**locals()))
             add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
@@ -916,80 +922,67 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         dialog_window.root.destroy()
 
     def _on_parameter_add(self) -> None:
-        """Handle parameter addition."""
-        add_parameter_window = BaseWindow(self._get_parent_root())
-        add_parameter_window.root.title(_("Add Parameter to ") + self.parameter_editor.current_file)
-        add_parameter_window.root.geometry("450x320")
+        window = tk.Toplevel(self._get_parent_root())
+        window.title(_("Add parameter(s)"))
+        window.geometry("450x400")
+        window.transient(self._get_parent_toplevel())
+        window.grab_set()
+        window.update_idletasks()
 
-        # Label for instruction
-        instruction_label = ttk.Label(add_parameter_window.main_frame, text=_("Enter the parameter name to add:"))
-        instruction_label.pack(pady=5)
+        parent = self._get_parent_toplevel()
+        px = parent.winfo_rootx()
+        py = parent.winfo_rooty()
+        pw = parent.winfo_width()
+        ph = parent.winfo_height()
 
-        try:
-            possible_add_param_names = self.parameter_editor.get_possible_add_param_names()
-        except OperationNotPossibleError as e:
-            self._dialogs.show_error(_("Operation not possible"), str(e))
-            return
+        ww = window.winfo_width()
+        wh = window.winfo_height()
 
-        # Prompt the user for a parameter name
-        parameter_name_combobox = EntryWithDynamicalyFilteredListbox(
-            add_parameter_window.main_frame,
-            possible_add_param_names,
-            startswith_match=False,
-            ignorecase_match=True,
-            listbox_height=12,
-            width=28,
-        )
-        parameter_name_combobox.pack(padx=5, pady=5)
-        BaseWindow.center_window(add_parameter_window.root, self._get_parent_toplevel())
-        parameter_name_combobox.focus()
+        x = px + (pw - ww) // 2
+        y = py + (ph - wh) // 2
 
-        # Add all suggested parameters button (disabled by default)
-        add_suggested_button = ttk.Button(
-            add_parameter_window.main_frame,
-            text=_("Add all suggested parameters"),
-            state="disabled",
-        )
-        add_suggested_button.pack(pady=(10, 0))
+        window.geometry(f"+{x}+{y}")
 
-        # --- Helper: get filtered suggestions
-        def get_filtered_parameter_names() -> list[str]:
-            return [name.upper() for name in parameter_name_combobox.get_filtered_items()]
+        ttk.Label(window, text=_("Search and select parameter(s) (Ctrl / Shift for multiple):")).pack(pady=5)
 
-        # --- Enable button only when <= MAX_BULK_ADD_SUGGESTIONS suggestions
-        def update_add_suggested_button_state() -> None:
-            filtered = get_filtered_parameter_names()
-            button_state = self._calculate_bulk_add_button_state(len(filtered))
-            add_suggested_button.configure(state=button_state)
+        search_var = tk.StringVar()
+        search_entry = ttk.Entry(window, textvariable=search_var)
+        search_entry.pack(fill="x", padx=10)
+        search_entry.focus()
 
-        # --- Bulk add handler
-        def on_add_suggested_parameters() -> None:
-            filtered = get_filtered_parameter_names()
-            self._bulk_add_parameters_and_show_feedback(filtered, add_parameter_window)
+        frame = ttk.Frame(window)
+        frame.pack(fill="both", expand=True, padx=10, pady=5)
 
-        add_suggested_button.configure(command=on_add_suggested_parameters)
+        listbox = tk.Listbox(frame, selectmode=tk.EXTENDED)
+        listbox.pack(side="left", fill="both", expand=True)
 
-        # Update button state while typing
-        parameter_name_combobox.bind(
-            "<KeyRelease>",
-            lambda _event: update_add_suggested_button_state(),
-        )
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=listbox.yview)
+        scrollbar.pack(side="right", fill="y")
+        listbox.configure(yscrollcommand=scrollbar.set)
 
-        # Initialize button state on dialog open
-        update_add_suggested_button_state()
+        all_params = self.parameter_editor.get_possible_add_param_names()
 
-        # --- Single-add behavior
-        def custom_selection_handler(event: tk.Event) -> None:
-            parameter_name_combobox.update_entry_from_listbox(event)
-            param_name = parameter_name_combobox.get().upper()
-            if self._confirm_parameter_addition(param_name):
-                add_parameter_window.root.destroy()
-            else:
-                add_parameter_window.root.focus()
+        def refresh_list(*_: object) -> None:
+            listbox.delete(0, tk.END)
+            query = search_var.get().lower()
+            for p in all_params:
+                if query in p.lower():
+                    listbox.insert(tk.END, p)
 
-        # Bindings to handle Enter press and selection
-        parameter_name_combobox.bind("<Return>", custom_selection_handler)
-        parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
+        search_var.trace_add("write", refresh_list)
+        refresh_list()
+
+        def add_selected(_event: tk.Event | None = None) -> None:
+            selected = [listbox.get(i).upper() for i in listbox.curselection()]
+            if not selected:
+                return
+            self._bulk_add_parameters_and_show_feedback(selected, window)
+            window.destroy()
+
+        listbox.bind("<Return>", add_selected)
+        window.bind("<Return>", add_selected)
+
+        ttk.Button(window, text=_("Add selected parameters"), command=add_selected).pack(pady=10)
 
     def _confirm_parameter_addition(self, param_name: str) -> bool:
         """Confirm and process parameter addition using ParameterEditor."""

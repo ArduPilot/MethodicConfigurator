@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from tkinter import Entry, Listbox, StringVar, ttk
-from tkinter.constants import END, HORIZONTAL, SINGLE, VERTICAL, E, N, S, W
+from tkinter.constants import END, HORIZONTAL, VERTICAL, E, N, S, W
 from typing import Callable, Union
 
 from ardupilot_methodic_configurator import _
@@ -118,7 +118,12 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         listbox_frame = ttk.Frame(self.master)
 
         self._listbox = Listbox(
-            listbox_frame, background="white", foreground="black", selectmode=SINGLE, activestyle="none", exportselection=False
+            listbox_frame,
+            background="white",
+            foreground="black",
+            selectmode=tk.EXTENDED,
+            activestyle="none",
+            exportselection=False,
         )
         self._listbox.grid(row=0, column=0, sticky=N + E + W + S)
 
