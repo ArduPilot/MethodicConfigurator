@@ -22,6 +22,7 @@ from tkinter import messagebox, simpledialog, ttk
 from typing import Union
 
 from ardupilot_methodic_configurator import _, __version__
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import SUPPORTED_BAUDRATES, FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -73,6 +74,9 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Create a label for port
         port_label = ttk.Label(selection_frame, text=_("Port:"))
         port_label.pack(side=tk.LEFT, padx=(0, 5))
+        # Load saved connection history from ProgramSettings
+        for conn in ProgramSettings.get_connection_history():
+            self.flight_controller.add_connection(conn)
 
         # Create a read-only combobox for flight controller connection selection
         self.conn_selection_combobox = PairTupleCombobox(
@@ -157,6 +161,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             ),
         )
         if selected_connection:
+            ProgramSettings.store_connection(selected_connection)
             error_msg = _("Will add new connection: {selected_connection} if not duplicated")
             logging_debug(error_msg.format(**locals()))
             self.flight_controller.add_connection(selected_connection)

@@ -297,7 +297,7 @@ class TestTemplateSelection:
 
 1. **Run tests**: `pytest tests/ -v`
 2. **Check coverage**: `pytest --cov=ardupilot_methodic_configurator --cov-report=term-missing`
-3. **Format with ruff**: `ruff formal`
+3. **Format with ruff**: `ruff format`
 4. **Lint with ruff**: `ruff check --fix`
 5. **Type check with mypy**: `mypy`
 6. **Advanced type check with pyright**: `pyright`
