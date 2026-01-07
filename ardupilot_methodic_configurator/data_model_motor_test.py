@@ -142,7 +142,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             self._cached_frame_options = None
 
             if not self._motor_data:
-                logging_warning(_("Failed to load motor test data from AP_Motors_test.json"))
+                logging_error(_("Failed to load motor test data from AP_Motors_test.json"))
             else:
                 logging_debug(
                     _("Successfully loaded motor test data with %(layouts)d layouts"),
