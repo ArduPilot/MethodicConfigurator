@@ -777,7 +777,7 @@ class MotorTestWindow(BaseWindow):
         self.root.destroy()
 
 
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -806,7 +806,7 @@ def argument_parser() -> Namespace:
 
 
 # pylint: disable=duplicate-code
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     state = ApplicationState(args)
@@ -865,5 +865,5 @@ def register_motor_test_plugin() -> None:
     plugin_factory.register(PLUGIN_MOTOR_TEST, _create_motor_test_view)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
