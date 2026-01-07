@@ -459,9 +459,18 @@ class ProgramSettings:
 
     @staticmethod
     def get_connection_history() -> list[str]:
-        """Get the list of previously used connection strings."""
+        """
+        Get the list of previously used connection strings.
+
+        Returns the connection history from settings, filtering out any invalid entries.
+        Only valid string entries are returned.
+
+        Returns:
+            List of connection strings in most-recent-first order (up to 10 items).
+
+        """
         settings = ProgramSettings._get_settings_as_dict()
-        history: Any = settings.get("connection_history", [])
+        history = settings.get("connection_history", [])
 
         if not isinstance(history, list):
             return []
@@ -470,8 +479,25 @@ class ProgramSettings:
 
     @staticmethod
     def store_connection(connection_string: str) -> None:
-        """Save a new connection string to history."""
-        if not connection_string:
+        """
+        Save a new connection string to history.
+
+        The history maintains up to 10 most recent connections in chronological order.
+        If the connection already exists, it's moved to the top of the list.
+        Empty strings, whitespace-only strings, and strings longer than 200 characters
+        are ignored.
+
+        Args:
+            connection_string: The connection string to store (max 200 characters).
+
+        """
+        if not connection_string or not connection_string.strip():
+            return
+
+        connection_string = connection_string.strip()
+
+        # Reject connection strings that are too long
+        if len(connection_string) > 200:
             return
 
         settings = ProgramSettings._get_settings_as_dict()
