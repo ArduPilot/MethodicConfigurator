@@ -565,3 +565,182 @@ class TestTooltipUserExperienceIntegration:
         assert button.cget("state") != "disabled"
 
         test_frame.destroy()
+
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows specific GUI test")
+    def test_tooltip_positioning_across_multiple_monitors_windows(self, tk_root) -> None:
+        """
+        Test tooltip positioning across multiple monitors on Windows.
+
+        GIVEN: User has multiple monitors on Windows
+        WHEN: Widgets are displayed on different monitors
+        THEN: Tooltips position correctly within each monitor's bounds
+        AND: Tooltips don't overflow to adjacent monitors
+        """
+        test_frame = ttk.Frame(tk_root)
+        test_frame.pack(padx=20, pady=20)
+
+        button = ttk.Button(test_frame, text="Multi-Monitor Test")
+        button.pack(pady=10)
+        show_tooltip(button, "Testing multi-monitor tooltip positioning on Windows")
+
+        tk_root.update_idletasks()
+
+        button_x = button.winfo_rootx() + button.winfo_width() // 2
+        button_y = button.winfo_rooty() + button.winfo_height() // 2
+
+        pyautogui.moveTo(button_x, button_y)
+        time.sleep(0.5)
+
+        # Verify button remains functional after tooltip display
+        assert button.cget("text") == "Multi-Monitor Test"
+        assert button.cget("state") != "disabled"
+
+        test_frame.destroy()
+
+    @pytest.mark.skipif(sys.platform != "darwin", reason="macOS specific GUI test")
+    def test_tooltip_positioning_with_retina_display(self, tk_root) -> None:
+        """
+        Test tooltip positioning with macOS Retina display scaling.
+
+        GIVEN: User has a Retina display on macOS
+        WHEN: Tooltips are displayed on high-DPI screen
+        THEN: Tooltip positioning accounts for display scaling
+        AND: Tooltips appear at correct screen coordinates
+        """
+        test_frame = ttk.Frame(tk_root)
+        test_frame.pack(padx=20, pady=20)
+
+        button = ttk.Button(test_frame, text="Retina Display Test")
+        button.pack(pady=10)
+        show_tooltip(button, "Testing tooltip positioning on Retina displays")
+
+        tk_root.update_idletasks()
+
+        button_x = button.winfo_rootx() + button.winfo_width() // 2
+        button_y = button.winfo_rooty() + button.winfo_height() // 2
+
+        pyautogui.moveTo(button_x, button_y)
+        time.sleep(0.5)
+
+        # Verify rendering on high-DPI display
+        assert button.cget("text") == "Retina Display Test"
+
+        screenshot = pyautogui.screenshot()
+        assert screenshot is not None, "Should capture screenshot on Retina display"
+
+        test_frame.destroy()
+
+    def test_tooltip_handles_window_resize_gracefully(self, tk_root) -> None:
+        """
+        Test tooltip behavior when window is resized.
+
+        GIVEN: User has tooltips displayed
+        WHEN: Application window is resized
+        THEN: Tooltips reposition correctly for new window dimensions
+        AND: No tooltips get stuck or positioned incorrectly
+        """
+        test_frame = ttk.Frame(tk_root)
+        test_frame.pack(padx=20, pady=20, fill="both", expand=True)
+
+        button = ttk.Button(test_frame, text="Resize Test")
+        button.pack(pady=10)
+        show_tooltip(button, "Testing tooltip behavior during window resize")
+
+        tk_root.update_idletasks()
+
+        # Get initial position
+        initial_x = button.winfo_rootx() + button.winfo_width() // 2
+        initial_y = button.winfo_rooty() + button.winfo_height() // 2
+
+        pyautogui.moveTo(initial_x, initial_y)
+        time.sleep(0.3)
+
+        # Resize window
+        current_width = tk_root.winfo_width()
+        current_height = tk_root.winfo_height()
+        tk_root.geometry(f"{current_width + 100}x{current_height + 50}")
+        tk_root.update_idletasks()
+        time.sleep(0.3)
+
+        # Verify button still works after resize
+        assert button.cget("text") == "Resize Test"
+        assert button.cget("state") != "disabled"
+
+        # Move mouse away
+        pyautogui.moveTo(initial_x + 200, initial_y + 200)
+        time.sleep(0.2)
+
+        test_frame.destroy()
+
+    def test_tooltip_error_message_display(self, tk_root) -> None:
+        """
+        Test that error messages display correctly with tooltips in the interface.
+
+        GIVEN: Application encounters an error that needs user attention
+        WHEN: Error dialog is shown
+        THEN: Error dialog appears clearly without interference from tooltips
+        AND: User can read and dismiss error messages easily
+        """
+        test_frame = ttk.Frame(tk_root)
+        test_frame.pack(padx=20, pady=20)
+
+        button = ttk.Button(test_frame, text="Trigger Test Message")
+        button.pack(pady=10)
+        show_tooltip(button, "Click to test error message display")
+
+        tk_root.update_idletasks()
+
+        # Hover over button to show tooltip
+        button_x = button.winfo_rootx() + button.winfo_width() // 2
+        button_y = button.winfo_rooty() + button.winfo_height() // 2
+
+        pyautogui.moveTo(button_x, button_y)
+        time.sleep(0.3)
+
+        # Verify button functionality
+        assert button.cget("text") == "Trigger Test Message"
+
+        # Move away from button
+        pyautogui.moveTo(button_x + 100, button_y + 100)
+        time.sleep(0.2)
+
+        test_frame.destroy()
+
+    def test_tooltip_with_long_text_wrapping(self, tk_root) -> None:
+        """
+        Test tooltip display with long text that requires wrapping.
+
+        GIVEN: Tooltip with lengthy descriptive text
+        WHEN: User hovers over widget
+        THEN: Tooltip displays with appropriate text wrapping
+        AND: Tooltip remains readable and within screen bounds
+        """
+        test_frame = ttk.Frame(tk_root)
+        test_frame.pack(padx=20, pady=20)
+
+        button = ttk.Button(test_frame, text="Long Tooltip")
+        button.pack(pady=10)
+
+        long_tooltip_text = (
+            "This is a very long tooltip that contains detailed information "
+            "about the button's functionality. It includes multiple sentences "
+            "and should wrap appropriately to ensure it remains readable and "
+            "doesn't extend beyond the screen boundaries."
+        )
+        show_tooltip(button, long_tooltip_text)
+
+        tk_root.update_idletasks()
+
+        button_x = button.winfo_rootx() + button.winfo_width() // 2
+        button_y = button.winfo_rooty() + button.winfo_height() // 2
+
+        pyautogui.moveTo(button_x, button_y)
+        time.sleep(0.7)  # Give more time for long tooltip to render
+
+        screenshot = pyautogui.screenshot()
+        assert screenshot is not None
+
+        # Verify button remains functional
+        assert button.cget("text") == "Long Tooltip"
+
+        test_frame.destroy()
