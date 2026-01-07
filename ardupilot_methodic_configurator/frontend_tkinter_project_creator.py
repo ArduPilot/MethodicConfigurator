@@ -204,7 +204,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
 
 
 # pylint: disable=duplicate-code
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Set up and parse command-line arguments for development/testing purposes.
 
@@ -222,7 +222,7 @@ def argument_parser() -> Namespace:
     return add_common_arguments(parser).parse_args()
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
@@ -254,5 +254,5 @@ def main() -> None:
 # pylint: enable=duplicate-code
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

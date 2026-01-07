@@ -1141,7 +1141,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         return parser
 
 
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -1163,7 +1163,7 @@ def argument_parser() -> Namespace:
     return add_common_arguments(parser).parse_args()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")

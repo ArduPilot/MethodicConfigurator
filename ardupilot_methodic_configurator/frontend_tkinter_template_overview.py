@@ -378,7 +378,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         return self.vehicle_components_provider.get_vehicle_image_filepath(template_path)
 
 
-def argument_parser() -> argparse.Namespace:
+def argument_parser() -> argparse.Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -412,7 +412,7 @@ def setup_logging(loglevel: str) -> None:
     logging_basicConfig(level=logging_getLevelName(loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     """Main entry point for the application."""
     args = argument_parser()
     setup_logging(args.loglevel)
@@ -424,5 +424,5 @@ def main() -> None:
         logging_info(ProgramSettings.get_recently_used_dirs()[0])
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

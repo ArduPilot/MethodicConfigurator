@@ -339,7 +339,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.root.destroy()
 
 
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -360,7 +360,7 @@ def argument_parser() -> Namespace:
 
 
 # pylint: disable=duplicate-code
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
@@ -379,5 +379,5 @@ def main() -> None:
     flight_controller.disconnect()  # Disconnect from the flight controller
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
