@@ -94,3 +94,5 @@ These books helped shape this software:
 - [Fundamentals of Software Architecture by Mark Richards, Neal Ford](https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/)
 - [The Pragmatic Programmer: 20th Anniversary Edition, 2nd Edition by David Thomas, Andrew Hunt](https://www.audible.com/pd/The-Pragmatic-Programmer-20th-Anniversary-Edition-2nd-Edition-Audiobook/B0833FMYH9)
 - [The Clean Coder: A Code of Conduct for Professional Programmers by Robert C. Martin](https://www.oreilly.com/library/view/clean-coder-the/9780132542913/)
+- [The Mythical Man-Month: 2nd Edition by Frederick P. Brooks](https://www.oreilly.com/library/view/mythical-man-month-the/0201835959/)
+- [Clean Agile: Back to Basics by Robert C. Martin](https://www.oreilly.com/library/view/clean-agile-back/9780135782002/)
