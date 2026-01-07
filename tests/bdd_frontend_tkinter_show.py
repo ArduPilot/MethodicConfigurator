@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
 """
-Tests for the frontend_tkinter_show.py file.
+BDD tests for the frontend_tkinter_show.py file.
+
+These tests focus on user behavior and high-level functionality.
+For unit tests of internal functions, see unit_frontend_tkinter_show.py.
+For GUI integration tests, see gui_frontend_tkinter_show.py.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -10,6 +14,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import tkinter as tk
 from collections.abc import Generator
 from tkinter import TclError
 from typing import Optional
@@ -30,7 +35,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
     show_warning_message,
 )
 
-# pylint: disable=redefined-outer-name, unused-argument, protected-access
+# pylint: disable=redefined-outer-name, unused-argument, protected-access, too-many-lines
 
 
 # Fixtures
@@ -648,7 +653,7 @@ class TestMonitorBoundsDetection:
         assert result == large_bounds
 
 
-class TestTooltipFunctionality:
+class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
     """Test the Tooltip class and related functions."""
 
     @pytest.fixture
@@ -887,3 +892,206 @@ class TestTooltipFunctionality:
 
         mock_toplevel.destroy.assert_called_once()
         assert tooltip.tooltip is None
+
+    def test_tooltip_handles_widget_destruction_during_positioning(self, mock_widget, mock_toplevel) -> None:
+        """
+        Test tooltip handles widget destruction during positioning.
+
+        GIVEN: Tooltip being positioned
+        WHEN: Widget gets destroyed (TclError)
+        THEN: Tooltip handles error gracefully
+        """
+        with (
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text")
+
+            # Simulate widget destruction
+            mock_widget.winfo_rootx.side_effect = TclError("invalid command")
+
+            # Act: Should not crash
+            tooltip.position_tooltip()
+
+        # Assert: No exception raised, method returns gracefully
+
+    def test_tooltip_no_position_when_tooltip_none(self, mock_widget) -> None:
+        """
+        Test tooltip position_tooltip returns early when tooltip is None.
+
+        GIVEN: Tooltip instance without created tooltip window
+        WHEN: position_tooltip is called
+        THEN: Method returns early without error
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+            tooltip = Tooltip(mock_widget, "Test text")
+
+        # tooltip.tooltip is None on macOS before creation
+        assert tooltip.tooltip is None
+
+        # Act: Should return early
+        tooltip.position_tooltip()
+
+        # Assert: No exception, no positioning attempted
+
+    def test_tooltip_do_hide_withdraws_on_non_macos(self, mock_widget, mock_toplevel) -> None:
+        """
+        Test tooltip _do_hide withdraws tooltip on non-macOS.
+
+        GIVEN: Tooltip on non-macOS platform
+        WHEN: _do_hide is called
+        THEN: Tooltip is withdrawn
+        """
+        with (
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text")
+
+            tooltip._do_hide()
+
+            mock_toplevel.withdraw.assert_called()
+
+    def test_tooltip_create_show_avoids_redundant_creation(self, mock_widget, mock_toplevel) -> None:
+        """
+        Test tooltip create_show avoids redundant tooltip creation.
+
+        GIVEN: Tooltip already created
+        WHEN: create_show is called again
+        THEN: No new tooltip is created
+        """
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel) as mock_toplevel_class,
+            patch("tkinter.ttk.Label"),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.create_show()
+
+            # Call again
+            tooltip.create_show()
+
+            # Assert: Toplevel created only once
+            mock_toplevel_class.assert_called_once()
+
+    def test_tooltip_with_text_widget_and_tag(self, mock_widget, mock_toplevel) -> None:  # pylint: disable=unused-argument
+        """
+        Test tooltip creation for Text widget with tag.
+
+        GIVEN: Text widget with tags
+        WHEN: Tooltip is created for specific tag
+        THEN: Bindings are set on the tag
+        """
+        mock_text = MagicMock(spec=tk.Text)
+        mock_text.tag_bind = MagicMock()
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+            Tooltip(mock_text, "Test text", tag_name="test_tag")
+
+        # Assert: tag_bind called instead of widget.bind
+        mock_text.tag_bind.assert_called()
+
+    def test_tooltip_with_custom_toplevel_class(self, mock_widget, mock_toplevel) -> None:
+        """
+        Test tooltip with custom Toplevel class.
+
+        GIVEN: Custom Toplevel class provided
+        WHEN: Tooltip is created
+        THEN: Custom class is used
+        """
+        custom_toplevel_class = MagicMock(return_value=mock_toplevel)
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch("tkinter.ttk.Label"),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text", toplevel_class=custom_toplevel_class)
+
+        # Assert: Custom class was used
+        custom_toplevel_class.assert_called_once_with(mock_widget)
+        assert tooltip.tooltip == mock_toplevel
+
+    def test_tooltip_position_below_false(self, mock_widget, mock_toplevel) -> None:
+        """
+        Test tooltip positioned above widget.
+
+        GIVEN: position_below=False
+        WHEN: Tooltip is created and shown
+        THEN: Tooltip appears above widget
+        """
+        with (
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text", position_below=False)
+            tooltip.position_tooltip()
+
+        # Assert: Geometry set (indicates positioning occurred)
+        mock_toplevel.geometry.assert_called_once()
+
+    def test_tooltip_create_show_uses_macos_styling(self, mock_widget, mock_toplevel) -> None:
+        """
+        Test tooltip uses macOS-specific styling when available.
+
+        GIVEN: macOS platform with tk.call support
+        WHEN: Tooltip is created
+        THEN: MacWindowStyle is applied
+        """
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
+        ):
+            mock_toplevel.tk.call = MagicMock()
+            mock_toplevel._w = ".tooltip"
+
+            tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.create_show()
+
+            # Assert: macOS styling called
+            mock_toplevel.tk.call.assert_called_once_with(
+                "::tk::unsupported::MacWindowStyle",
+                "style",
+                ".tooltip",
+                "help",
+                "noActivates",
+            )
+
+    def test_tooltip_create_show_falls_back_when_macos_styling_unavailable(self, mock_widget, mock_toplevel) -> None:
+        """
+        Test tooltip falls back to standard styling when macOS styling fails.
+
+        GIVEN: macOS platform where tk.call fails with AttributeError
+        WHEN: Tooltip is created
+        THEN: Standard wm_attributes are used instead
+        """
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
+        ):
+            # Configure mock to raise AttributeError during tk.call
+            mock_toplevel.tk.call.side_effect = AttributeError("tk.call failed")
+            mock_toplevel._w = ".tooltip"
+
+            tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.create_show()
+
+            # Assert: Fallback styling applied
+            mock_toplevel.wm_attributes.assert_any_call("-alpha", 1.0)
+            mock_toplevel.wm_attributes.assert_any_call("-topmost", True)  # noqa: FBT003
