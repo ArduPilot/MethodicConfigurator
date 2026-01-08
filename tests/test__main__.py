@@ -39,7 +39,7 @@ from ardupilot_methodic_configurator.__main__ import (
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 
-# pylint: disable=,too-many-lines,redefined-outer-name,too-few-public-methods
+# pylint: disable=too-many-lines,redefined-outer-name,too-few-public-methods
 
 # ====== Fixtures following pytest_testing_instructions.md ======
 

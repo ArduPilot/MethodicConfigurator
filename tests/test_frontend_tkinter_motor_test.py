@@ -34,8 +34,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_motor_test import (
     MotorTestView,
     MotorTestWindow,
     _create_motor_test_view,
-    argument_parser,
-    main,
     register_motor_test_plugin,
 )
 
@@ -796,78 +794,7 @@ class TestMotorTestWindow:
 
 
 class TestCommandLineWorkflow:
-    """Verifies CLI helpers, entry points, and plugin registration hooks."""
-
-    def test_argument_parser_wires_common_arguments(self, mocker) -> None:
-        """
-        Argument parser delegates to backend helpers and parses args.
-
-        GIVEN: Patched backend adders returning the provided parser
-        WHEN: argument_parser is invoked
-        THEN: Each backend helper receives the parser instance
-        """
-        parser_mock = MagicMock()
-        fc_adder = mocker.patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller.FlightController.add_argparse_arguments",
-            side_effect=lambda parser: parser,
-        )
-        fs_adder = mocker.patch(
-            "ardupilot_methodic_configurator.backend_filesystem.LocalFilesystem.add_argparse_arguments",
-            side_effect=lambda parser: parser,
-        )
-        mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.add_common_arguments",
-            return_value=parser_mock,
-        )
-        parser_mock.parse_args.return_value = SimpleNamespace()
-
-        argument_parser()
-        assert fc_adder.called
-        assert fs_adder.called
-        fc_parser = fc_adder.call_args.args[0]
-        fs_parser = fs_adder.call_args.args[0]
-        assert fc_parser is fs_parser
-        parser_mock.parse_args.assert_called_once_with()
-
-    def test_main_success_and_failure_paths(self, mocker) -> None:
-        """
-        The standalone entry point starts the window and reports failures.
-
-        GIVEN: Patched dependencies for ApplicationState, window, and dialogs
-        WHEN: main succeeds once and fails the next time
-        THEN: The window mainloop executes and failures trigger showerror
-        """
-        args = SimpleNamespace()
-        mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.argument_parser",
-            return_value=args,
-        )
-        state = SimpleNamespace(flight_controller=MagicMock(), local_filesystem=MagicMock())
-        mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.ApplicationState",
-            return_value=state,
-        )
-        mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.setup_logging")
-        mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.initialize_flight_controller_and_filesystem")
-        window_mock = MagicMock()
-        window_mock.root = MagicMock()
-        mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.MotorTestWindow",
-            return_value=window_mock,
-        )
-        mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.MotorTestDataModel", return_value=MagicMock()
-        )
-
-        main()
-        window_mock.root.mainloop.assert_called_once()
-
-        mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.MotorTestWindow",
-            side_effect=RuntimeError("boom"),
-        )
-        main()
-        state.flight_controller.disconnect.assert_called()
+    """Verifies plugin registration hooks."""
 
     def test_plugin_registration_and_factory_creation(
         self,

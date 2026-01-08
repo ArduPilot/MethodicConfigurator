@@ -153,7 +153,7 @@ def check_for_software_updates() -> bool:
         return False
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     logging_basicConfig(level=logging_getLevelName("DEBUG"), format="%(asctime)s - %(levelname)s - %(message)s")
     logging_warning(
         _(

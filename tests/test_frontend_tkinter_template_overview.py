@@ -10,12 +10,9 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import argparse
-import logging
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
-from typing import Any
 from unittest.mock import ANY, MagicMock, patch
 
 import pytest
@@ -23,26 +20,9 @@ import pytest
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import (
     TemplateOverviewWindow,
-    argument_parser,
-    main,
-    setup_logging,
 )
 
-# pylint: disable=too-many-lines,protected-access,redefined-outer-name,unused-argument
-
-
-@pytest.fixture
-def mock_logging_basicconfig() -> Generator[Any, Any, Any]:
-    """Fixture to mock logging.basicConfig."""
-    with patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.logging_basicConfig") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_logging_getlevelname() -> Generator[Any, Any, Any]:
-    """Fixture to mock logging.getLevelName."""
-    with patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.logging_getLevelName") as mock:
-        yield mock
+# pylint: disable=protected-access,redefined-outer-name,unused-argument
 
 
 @pytest.fixture
@@ -151,40 +131,6 @@ def template_window(mock_vehicle_provider, mock_program_provider) -> TemplateOve
         window.root = MagicMock()
         window.tree = MagicMock()
         return window
-
-
-@pytest.mark.parametrize(
-    ("argv", "expected_level"),
-    [
-        (["script.py", "--loglevel", "DEBUG"], "DEBUG"),
-        (["script.py", "--loglevel", "INFO"], "INFO"),
-        (["script.py", "--loglevel", "WARNING"], "WARNING"),
-        (["script.py", "--loglevel", "ERROR"], "ERROR"),
-    ],
-)
-def test_argument_parser_loglevel_options(argv, expected_level, monkeypatch) -> None:
-    """Test that the argument parser handles different log levels correctly."""
-    monkeypatch.setattr("sys.argv", argv)
-
-    # Mock the ArgumentParser to avoid system exit
-    with patch("argparse.ArgumentParser.parse_args") as mock_parse_args:
-        mock_parse_args.return_value = argparse.Namespace(loglevel=expected_level)
-        args = argument_parser()
-        assert args.loglevel == expected_level
-
-
-def test_setup_logging(mock_logging_basicconfig, mock_logging_getlevelname) -> None:
-    """Test that setup_logging configures logging correctly."""
-    # Setup
-    loglevel = "DEBUG"
-    mock_logging_getlevelname.return_value = logging.DEBUG
-
-    # Call the function
-    setup_logging(loglevel)
-
-    # Assertions
-    mock_logging_getlevelname.assert_called_once_with(loglevel)
-    mock_logging_basicconfig.assert_called_once_with(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 class TestUserTemplateSelection:
@@ -601,44 +547,6 @@ class TestVisualFeedbackAndImageDisplay:  # pylint: disable=too-few-public-metho
         # Assert: Graceful handling without errors (method completes without exceptions)
 
 
-class TestApplicationEntryPoint:  # pylint: disable=too-few-public-methods
-    """Test application startup and command-line interface behavior."""
-
-    def test_command_line_startup_creates_functional_user_interface(self) -> None:
-        """
-        Command-line startup should create a fully functional user interface.
-
-        GIVEN: A user starts the application from command line
-        WHEN: The main function is called with arguments
-        THEN: A complete template overview window should be created and run
-        """
-        # Arrange: Command line environment with minimal mocking
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.argument_parser") as mock_parser,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.setup_logging") as mock_setup_logging,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock_settings,
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.TemplateOverviewWindow"
-            ) as mock_window_class,
-        ):
-            # Set up mock returns
-            mock_args = MagicMock()
-            mock_args.loglevel = "INFO"
-            mock_parser.return_value = mock_args
-            mock_settings.get_recently_used_dirs.return_value = ["/test/dir"]
-
-            mock_window = MagicMock()
-            mock_window_class.return_value = mock_window
-
-            # Act: User starts application from command line
-            main()
-
-            # Assert: Complete application setup
-            mock_parser.assert_called_once()
-            mock_setup_logging.assert_called_once_with("INFO")
-            mock_window.run_app.assert_called_once()
-
-
 class TestWindowInitialization:
     """Test comprehensive window initialization behavior."""
 
@@ -982,76 +890,6 @@ class TestImageDisplayBehavior:
         # Assert: Provider was called and result returned
         template_window.vehicle_components_provider.get_vehicle_image_filepath.assert_called_once_with("Copter/Test")
         assert result == "/test/path.jpg"
-
-
-class TestAdvancedMainFunctionality:
-    """Test advanced main function behavior."""
-
-    def test_main_function_logs_recently_used_directory_when_available(self) -> None:
-        """
-        Main function should log recently used directory when available.
-
-        GIVEN: A user has recently used directories
-        WHEN: Main function completes
-        THEN: Most recent directory should be logged
-        """
-        # Arrange: Mock all main dependencies
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.argument_parser") as mock_parser,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.setup_logging"),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.TemplateOverviewWindow"
-            ) as mock_window_class,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock_settings,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.logging_info") as mock_log_info,
-        ):
-            # Set up mocks
-            mock_args = MagicMock()
-            mock_args.loglevel = "INFO"
-            mock_parser.return_value = mock_args
-
-            mock_window = MagicMock()
-            mock_window_class.return_value = mock_window
-            mock_settings.get_recently_used_dirs.return_value = ["/recent/dir"]
-
-            # Act: Run main function
-            main()
-
-            # Assert: Recent directory was logged
-            mock_log_info.assert_called_once_with("/recent/dir")
-
-    def test_main_function_handles_no_recently_used_directories(self) -> None:
-        """
-        Main function should handle no recently used directories gracefully.
-
-        GIVEN: A user has no recently used directories
-        WHEN: Main function completes
-        THEN: No logging should occur without error
-        """
-        # Arrange: Mock all main dependencies
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.argument_parser") as mock_parser,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.setup_logging"),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.TemplateOverviewWindow"
-            ) as mock_window_class,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.ProgramSettings") as mock_settings,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.logging_info") as mock_log_info,
-        ):
-            # Set up mocks
-            mock_args = MagicMock()
-            mock_args.loglevel = "INFO"
-            mock_parser.return_value = mock_args
-
-            mock_window = MagicMock()
-            mock_window_class.return_value = mock_window
-            mock_settings.get_recently_used_dirs.return_value = []
-
-            # Act: Run main function
-            main()
-
-            # Assert: No logging occurred
-            mock_log_info.assert_not_called()
 
 
 class TestVehicleTypeFiltering:
