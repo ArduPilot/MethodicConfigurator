@@ -502,6 +502,9 @@ class ProgramSettings:
 
         settings = ProgramSettings._get_settings_as_dict()
         history = settings.get("connection_history", [])
+        if not isinstance(history, list):
+            logging_error("The ProgramSetting connection_history was not a list")
+            history = []
 
         if connection_string in history:
             history.remove(connection_string)
