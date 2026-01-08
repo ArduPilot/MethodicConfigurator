@@ -29,6 +29,8 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
     download_and_install_pip_release,
+    download_and_install_wheel_asset,
+    get_expected_sha256_from_release,
     get_release_info,
     webbrowser_open_url,
 )
@@ -62,6 +64,7 @@ class UpdateManager:
         self.dialog: Optional[UpdateDialog] = None
 
     def _perform_download(self, latest_release: dict[str, Any]) -> bool:
+        result = False
         if platform.system() == "Windows":
             try:
                 # Look for .exe files first
@@ -75,27 +78,51 @@ class UpdateManager:
                     asset = latest_release["assets"][0]  # Fallback to first asset
                 else:
                     logging_error(_("No suitable assets found for Windows installation"))
-                    return False
-
-                return download_and_install_on_windows(
-                    download_url=asset["browser_download_url"],
-                    file_name=asset["name"],
-                    progress_callback=self.dialog.update_progress if self.dialog else None,
-                )
+                    result = False
+                if exe_assets or latest_release.get("assets"):
+                    expected_sha256 = get_expected_sha256_from_release(latest_release, asset["name"])
+                    kwargs: dict[str, object] = {
+                        "download_url": asset["browser_download_url"],
+                        "file_name": asset["name"],
+                        "progress_callback": self.dialog.update_progress if self.dialog else None,
+                    }
+                    if expected_sha256 is not None:
+                        kwargs["expected_sha256"] = expected_sha256
+                    result = download_and_install_on_windows(**kwargs)
             except (KeyError, IndexError) as e:
                 logging_error(_("Error accessing release assets: %s"), e)
-                return False
+                result = False
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logging_error(_("Error during Windows download: %s"), e)
-                return False
+                result = False
+        else:
+            try:
+                # Prefer wheel assets included in the GitHub release if available
+                wheel_assets = [a for a in latest_release.get("assets", []) if a.get("name", "").lower().endswith(".whl")]
+                if wheel_assets:
+                    wheel = wheel_assets[0]
+                    expected_sha256 = get_expected_sha256_from_release(latest_release, wheel["name"])
+                    result = (
+                        download_and_install_wheel_asset(
+                            download_url=wheel["browser_download_url"],
+                            file_name=wheel["name"],
+                            expected_sha256=expected_sha256,
+                            progress_callback=self.dialog.update_progress if self.dialog else None,
+                        )
+                        == 0
+                    )
+                else:
+                    result = (
+                        download_and_install_pip_release(
+                            progress_callback=self.dialog.update_progress if self.dialog else None
+                        )
+                        == 0
+                    )
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logging_error(_("Error during pip installation: %s"), e)
+                result = False
 
-        try:
-            return (
-                download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None) == 0
-            )
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logging_error(_("Error during pip installation: %s"), e)
-            return False
+        return result
 
     def check_and_update(self, latest_release: dict[str, Any], current_version_str: str) -> bool:
         try:
