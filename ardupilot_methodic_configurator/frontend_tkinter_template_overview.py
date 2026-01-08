@@ -401,7 +401,7 @@ def argument_parser() -> argparse.Namespace:  # pragma: no cover
     return add_common_arguments(parser).parse_args()
 
 
-def setup_logging(loglevel: str) -> None:
+def setup_logging(loglevel: str) -> None:  # pragma: no cover
     """
     Set up logging with the specified log level.
 
