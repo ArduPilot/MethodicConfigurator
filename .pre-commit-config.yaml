@@ -89,7 +89,7 @@ repos:
         stages: [pre-push]
 
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.1.1
+    rev: v6.2.0
     hooks:
       - id: reuse-lint-file
 
