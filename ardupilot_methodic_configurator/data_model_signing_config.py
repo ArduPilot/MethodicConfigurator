@@ -103,8 +103,12 @@ class SigningConfig:
         """
         # Filter to only known fields to avoid unexpected arguments
         known_fields = {
-            "enabled", "sign_outgoing", "allow_unsigned_in",
-            "accept_unsigned_callbacks", "timestamp_offset", "link_id",
+            "enabled",
+            "sign_outgoing",
+            "allow_unsigned_in",
+            "accept_unsigned_callbacks",
+            "timestamp_offset",
+            "link_id",
         }
         filtered_data = {k: v for k, v in data.items() if k in known_fields}
         return cls(**filtered_data)

@@ -32,14 +32,15 @@ SITL_CONNECTION_TIMEOUT = 30
 def is_sitl_available(connection: str = SITL_CONNECTION, timeout: float = 5.0) -> bool:
     """Check if SITL is running and accepting connections."""
     try:
-        from pymavlink import mavutil  
+        from pymavlink import mavutil
 
         master = mavutil.mavlink_connection(connection, baud=115200)
         heartbeat = master.wait_heartbeat(timeout=timeout)
         master.close()
         return heartbeat is not None
-    except Exception:  
+    except Exception:
         return False
+
 
 pytestmark = [
     pytest.mark.integration,
@@ -131,9 +132,7 @@ class TestSITLConnectionWithSigning:
         else:
             assert "not supported" in error_msg.lower() or "error" in error_msg.lower()
 
-    def test_can_disable_signing_after_setup(
-        self, connected_fc: FlightController, signing_keystore: SigningKeystore
-    ) -> None:
+    def test_can_disable_signing_after_setup(self, connected_fc: FlightController, signing_keystore: SigningKeystore) -> None:
         """
         User can disable signing after it has been configured.
 
@@ -213,9 +212,7 @@ class TestSITLSigningEdgeCases:
         with pytest.raises(ValueError, match="link_id"):
             connected_fc.setup_signing(key, link_id=256)
 
-    def test_can_reconnect_after_signing_enabled(
-        self, signing_keystore: SigningKeystore
-    ) -> None:
+    def test_can_reconnect_after_signing_enabled(self, signing_keystore: SigningKeystore) -> None:
         """
         FlightController can reconnect after signing was enabled.
 
@@ -232,7 +229,7 @@ class TestSITLSigningEdgeCases:
         fc.setup_signing(key)
 
         fc.disconnect()
-        time.sleep(1)  
+        time.sleep(1)
 
         new_result = fc.connect(device=SITL_CONNECTION)
 

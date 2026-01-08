@@ -11,8 +11,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import json
-from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -123,14 +121,16 @@ class TestSigningConfigSerialization:
         THEN: A SigningConfig instance should be created
         AND: All values should match the JSON input
         """
-        json_str = json.dumps({
-            "enabled": True,
-            "sign_outgoing": False,
-            "allow_unsigned_in": True,
-            "accept_unsigned_callbacks": True,
-            "timestamp_offset": 100,
-            "link_id": 7,
-        })
+        json_str = json.dumps(
+            {
+                "enabled": True,
+                "sign_outgoing": False,
+                "allow_unsigned_in": True,
+                "accept_unsigned_callbacks": True,
+                "timestamp_offset": 100,
+                "link_id": 7,
+            }
+        )
 
         config = SigningConfig.from_json(json_str)
 
@@ -206,7 +206,7 @@ class TestSigningConfigValidation:
         THEN: A ValueError should be raised
         """
         with pytest.raises(ValueError, match="enabled"):
-            SigningConfig(enabled="true")  
+            SigningConfig(enabled="true")
 
     def test_invalid_timestamp_type_raises_validation_error(self) -> None:
         """
@@ -217,7 +217,7 @@ class TestSigningConfigValidation:
         THEN: A ValueError should be raised
         """
         with pytest.raises(ValueError, match="timestamp_offset"):
-            SigningConfig(timestamp_offset="100")  
+            SigningConfig(timestamp_offset="100")
 
 
 class TestVehicleSigningConfig:

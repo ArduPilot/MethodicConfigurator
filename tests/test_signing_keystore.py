@@ -10,17 +10,13 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import json
-import os
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from ardupilot_methodic_configurator.backend_signing_keystore import (
     SIGNING_KEY_LENGTH,
     SigningKeystore,
-    StoredKey,
 )
 
 
