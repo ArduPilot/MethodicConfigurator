@@ -475,6 +475,183 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Check if battery monitoring is enabled - delegates to commands manager."""
         return self._commands_manager.is_battery_monitoring_enabled()
 
+    # MAVLink Signing Functionality
+
+    def setup_signing(
+        self,
+        key: bytes,
+        sign_outgoing: bool = True,
+        allow_unsigned_in: bool = True,
+        initial_timestamp: int = 0,
+        link_id: int = 0,
+    ) -> tuple[bool, str]:
+        """
+        Set up MAVLink 2.0 message signing for secure communication.
+
+        This enables HMAC-SHA256 signing of MAVLink messages to provide
+        authentication and prevent message tampering/injection.
+
+        Args:
+            key: 32-byte signing key (256-bit) for HMAC-SHA256
+            sign_outgoing: Whether to sign outgoing messages (default: True)
+            allow_unsigned_in: Whether to accept unsigned incoming messages (default: True)
+            initial_timestamp: Initial timestamp for replay protection (default: 0 = use current time)
+            link_id: Link ID for signing (0-255, default: 0)
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+                - success is True if signing was set up successfully
+                - error_message is empty on success or contains error description
+
+        Raises:
+            ValueError: If key is not 32 bytes or link_id is out of range
+
+        Note:
+            MAVLink signing provides authentication (not encryption).
+            Messages are still sent in plaintext but include a cryptographic
+            signature to verify authenticity and detect tampering.
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for signing setup")
+            logging_warning(error_msg)
+            return False, error_msg
+
+        if len(key) != 32:
+            msg = f"Signing key must be 32 bytes, got {len(key)} bytes"
+            raise ValueError(msg)
+
+        if not 0 <= link_id <= 255:
+            msg = f"link_id must be between 0 and 255, got {link_id}"
+            raise ValueError(msg)
+
+        try:
+            # Set up the signing state on the MAVLink connection
+            # pymavlink's mavlink_connection supports signing setup
+            self.master.setup_signing(
+                key,
+                sign_outgoing=sign_outgoing,
+                allow_unsigned_callback=self._unsigned_callback if allow_unsigned_in else None,
+                initial_timestamp=initial_timestamp,
+                link_id=link_id,
+            )
+
+            logging_info(
+                _("MAVLink signing configured: sign_outgoing=%(sign)s, allow_unsigned=%(unsigned)s"),
+                {"sign": sign_outgoing, "unsigned": allow_unsigned_in},
+            )
+            return True, ""
+
+        except AttributeError:
+            error_msg = _("MAVLink signing not supported by this pymavlink version")
+            logging_error(error_msg)
+            return False, error_msg
+        except Exception as exc:  # pylint: disable=broad-except
+            error_msg = _("Failed to set up MAVLink signing: %(error)s") % {"error": str(exc)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def _unsigned_callback(self, msg: object) -> bool:
+        """
+        Callback to handle unsigned incoming messages when signing is enabled.
+
+        This callback is invoked for each unsigned message when signing is
+        configured with allow_unsigned_in=True. It allows filtering which
+        unsigned messages to accept.
+
+        Args:
+            msg: The unsigned MAVLink message
+
+        Returns:
+            bool: True to accept the message, False to reject it
+
+        Note:
+            By default, this accepts all unsigned messages (permissive mode).
+            Override or modify this behavior for stricter security policies.
+
+        """
+        # Log unsigned messages for security monitoring
+        msg_type = getattr(msg, "get_type", lambda: "unknown")()
+        logging_debug(_("Received unsigned MAVLink message: %(type)s"), {"type": msg_type})
+
+        # Accept all unsigned messages by default (permissive mode)
+        # This allows communication during signing setup and transition periods
+        return True
+
+    def disable_signing(self) -> tuple[bool, str]:
+        """
+        Disable MAVLink message signing.
+
+        This removes signing configuration and returns to unsigned communication.
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+                - success is True if signing was disabled successfully
+                - error_message is empty on success or contains error description
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available")
+            logging_warning(error_msg)
+            return False, error_msg
+
+        try:
+            # Disable signing by passing None as key
+            self.master.setup_signing(None, sign_outgoing=False, allow_unsigned_callback=None)
+            logging_info(_("MAVLink signing disabled"))
+            return True, ""
+        except AttributeError:
+            error_msg = _("MAVLink signing not supported by this pymavlink version")
+            logging_error(error_msg)
+            return False, error_msg
+        except Exception as exc:  # pylint: disable=broad-except
+            error_msg = _("Failed to disable MAVLink signing: %(error)s") % {"error": str(exc)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def get_signing_status(self) -> dict[str, object]:
+        """
+        Get the current MAVLink signing status.
+
+        Returns:
+            dict: Signing status with keys:
+                - enabled: Whether signing is configured
+                - sign_outgoing: Whether outgoing messages are signed
+                - allow_unsigned: Whether unsigned messages are accepted
+                - link_id: Current link ID (if signing enabled)
+                - message: Human-readable status message
+
+        """
+        status: dict[str, object] = {
+            "enabled": False,
+            "sign_outgoing": False,
+            "allow_unsigned": True,
+            "link_id": 0,
+            "message": _("No connection"),
+        }
+
+        if self.master is None:
+            return status
+
+        try:
+            # Check if signing is set up on the MAVLink connection
+            mav = self.master.mav
+            if hasattr(mav, "signing") and mav.signing is not None:
+                signing = mav.signing
+                status["enabled"] = True
+                status["sign_outgoing"] = getattr(signing, "sign_outgoing", False)
+                status["allow_unsigned"] = getattr(signing, "allow_unsigned_callback", None) is not None
+                status["link_id"] = getattr(signing, "link_id", 0)
+                status["message"] = _("Signing enabled")
+            else:
+                status["message"] = _("Signing not configured")
+
+        except Exception as exc:  # pylint: disable=broad-except
+            logging_debug(_("Error getting signing status: %(error)s"), {"error": str(exc)})
+            status["message"] = _("Error: %(error)s") % {"error": str(exc)}
+
+        return status
+
     def get_frame_info(self) -> tuple[int, int]:
         """Get frame class and frame type - delegates to commands manager."""
         return self._commands_manager.get_frame_info()
