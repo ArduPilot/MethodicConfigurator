@@ -565,9 +565,15 @@ def test_update_manager_perform_download_windows_asset_selection(update_manager,
         patch(
             "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows", return_value=True
         ) as mock_download,
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release", return_value=None
+        ),
     ):
         assert update_manager._perform_download(latest_release) is True
         # Should have chosen the .exe file
         mock_download.assert_called_once_with(
-            download_url="https://example.com/setup.exe", file_name="setup.exe", progress_callback=mock_dialog.update_progress
+            download_url="https://example.com/setup.exe",
+            file_name="setup.exe",
+            progress_callback=mock_dialog.update_progress,
+            expected_sha256=None,
         )
