@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Tests for the backend_internet.py file.
+Unit tests for the backend_internet.py file.
+
+These tests focus on implementation details, edge cases, and error handling.
+For behavior-driven tests of software update functionality, see bdd_software_update.py.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -192,10 +195,30 @@ def test_download_and_install_windows_download_failure(mock_download) -> None:
     assert not download_and_install_on_windows("http://test.com", "test.exe")
 
 
+@patch("shutil.which", return_value=None)  # No uv available, use pip
 @patch("subprocess.check_call")
-def test_download_and_install_pip_release(mock_check_call) -> None:
+def test_download_and_install_pip_release(mock_check_call, mock_which) -> None:
     mock_check_call.return_value = 0
     assert download_and_install_pip_release() == 0
+    mock_which.assert_called_once_with("uv")
+
+    # Verify pip was called
+    call_args = mock_check_call.call_args[0][0]
+    assert call_args[1] == "-m"
+    assert call_args[2] == "pip"
+
+
+@patch("shutil.which", return_value="/usr/bin/uv")  # uv is available
+@patch("subprocess.check_call")
+def test_download_and_install_pip_release_with_uv(mock_check_call, mock_which) -> None:
+    mock_check_call.return_value = 0
+    assert download_and_install_pip_release() == 0
+    mock_which.assert_called_once_with("uv")
+
+    # Verify uv was called
+    call_args = mock_check_call.call_args[0][0]
+    assert call_args[0] == "/usr/bin/uv"
+    assert call_args[1] == "pip"
 
 
 class TestDownloadFile:
@@ -267,7 +290,7 @@ class TestDownloadFile:
             for key, value in config.items():
                 monkeypatch.setenv(key, value)
 
-            download_file_from_url("http://test.com", "test.txt")
+            download_file_from_url("http://test.com", "test.txt", allow_resume=False)
 
             expected_proxies = {}
             if "HTTP_PROXY" in config:
