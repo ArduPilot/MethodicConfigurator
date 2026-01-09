@@ -1769,6 +1769,38 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             )
         return False
 
+    def bulk_add_parameters(self, param_names: list[str]) -> tuple[list[str], list[str], list[str]]:
+        """
+        Add multiple parameters at once.
+
+        Args:
+            param_names: List of parameter names to add
+
+        Returns:
+            Tuple of (added, skipped, failed) parameter names
+            - added: Parameters successfully added
+            - skipped: Parameters that returned False from add_parameter_to_current_file
+            - failed: Parameters that raised InvalidParameterNameError or OperationNotPossibleError
+                      (includes already existing parameters, invalid names, or missing data sources)
+
+        Business logic extracted for testability.
+
+        """
+        added: list[str] = []
+        skipped: list[str] = []
+        failed: list[str] = []
+
+        for param_name in param_names:
+            try:
+                if self.add_parameter_to_current_file(param_name):
+                    added.append(param_name)
+                else:
+                    skipped.append(param_name)
+            except (InvalidParameterNameError, OperationNotPossibleError):  # noqa: PERF203
+                failed.append(param_name)
+
+        return added, skipped, failed
+
     def should_display_bitmask_parameter_editor_usage(self, param_name: str) -> bool:
         return self.current_step_parameters[param_name].is_editable and self.current_step_parameters[param_name].is_bitmask
 
