@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Tests for the backend_internet.py file.
+Unit tests for the backend_internet.py file.
+
+These tests focus on implementation details, edge cases, and error handling.
+For behavior-driven tests of software update functionality, see bdd_software_update.py.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -267,7 +270,7 @@ class TestDownloadFile:
             for key, value in config.items():
                 monkeypatch.setenv(key, value)
 
-            download_file_from_url("http://test.com", "test.txt")
+            download_file_from_url("http://test.com", "test.txt", allow_resume=False)
 
             expected_proxies = {}
             if "HTTP_PROXY" in config:
