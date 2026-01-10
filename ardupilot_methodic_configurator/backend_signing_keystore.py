@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 MAVLink 2.0 signing keystore for secure key management.
 
@@ -133,7 +131,7 @@ class SigningKeystore:
     def _check_keyring_available(self) -> bool:
         """Check if OS keyring is available and functional."""
         try:
-            import keyring  # pylint: disable=import-outside-toplevel
+            import keyring  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
 
             # Try to get the default keyring
             backend = keyring.get_keyring()
@@ -191,7 +189,7 @@ class SigningKeystore:
         # Try keyring first
         if self._keyring_available:
             try:
-                import keyring  # pylint: disable=import-outside-toplevel
+                import keyring  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
 
                 # Store key as base64 encoded string
                 key_b64 = base64.b64encode(key).decode("ascii")
@@ -207,9 +205,11 @@ class SigningKeystore:
     def _store_key_in_file(self, vehicle_id: str, key: bytes, description: str = "") -> bool:
         """Store key in encrypted file."""
         try:
-            from cryptography.fernet import Fernet  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives import hashes  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC  # pylint: disable=import-outside-toplevel
+            from cryptography.fernet import Fernet  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives import hashes  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415
+                PBKDF2HMAC,  # pylint: disable=import-outside-toplevel
+            )
 
             # Load existing keystore or create new
             keystore = self._load_keystore_file()
@@ -270,7 +270,7 @@ class SigningKeystore:
         # Try keyring first
         if self._keyring_available:
             try:
-                import keyring  # pylint: disable=import-outside-toplevel
+                import keyring  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
 
                 key_b64 = keyring.get_password(self._keyring_service, vehicle_id)
                 if key_b64:
@@ -284,9 +284,11 @@ class SigningKeystore:
     def _retrieve_key_from_file(self, vehicle_id: str) -> Optional[bytes]:
         """Retrieve key from encrypted file."""
         try:
-            from cryptography.fernet import Fernet  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives import hashes  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC  # pylint: disable=import-outside-toplevel
+            from cryptography.fernet import Fernet  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives import hashes  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415
+                PBKDF2HMAC,  # pylint: disable=import-outside-toplevel
+            )
 
             keystore = self._load_keystore_file()
 
@@ -333,7 +335,7 @@ class SigningKeystore:
         # Try keyring first
         if self._keyring_available:
             try:
-                import keyring  # pylint: disable=import-outside-toplevel
+                import keyring  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
 
                 keyring.delete_password(self._keyring_service, vehicle_id)
                 deleted = True
@@ -393,9 +395,11 @@ class SigningKeystore:
             return None
 
         try:
-            from cryptography.fernet import Fernet  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives import hashes  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC  # pylint: disable=import-outside-toplevel
+            from cryptography.fernet import Fernet  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives import hashes  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415
+                PBKDF2HMAC,  # pylint: disable=import-outside-toplevel
+            )
 
             # Generate salt
             salt = secrets.token_bytes(16)
@@ -442,9 +446,11 @@ class SigningKeystore:
 
         """
         try:
-            from cryptography.fernet import Fernet, InvalidToken  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives import hashes  # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC  # pylint: disable=import-outside-toplevel
+            from cryptography.fernet import Fernet, InvalidToken  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives import hashes  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415
+                PBKDF2HMAC,  # pylint: disable=import-outside-toplevel
+            )
 
             # Decode export package
             data = json.loads(base64.b64decode(export_data).decode())

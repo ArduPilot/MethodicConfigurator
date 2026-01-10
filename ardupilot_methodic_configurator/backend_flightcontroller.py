@@ -9,6 +9,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from argparse import ArgumentParser
+from logging import debug as logging_debug
+from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
@@ -528,7 +530,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
         try:
             # Set up the signing state on the MAVLink connection
             # pymavlink's mavlink_connection supports signing setup
-            self.master.setup_signing(
+            # Type ignore needed because MavlinkConnection is a Union including object fallback
+            self.master.setup_signing(  # type: ignore[union-attr]
                 key,
                 sign_outgoing=sign_outgoing,
                 allow_unsigned_callback=self._unsigned_callback if allow_unsigned_in else None,
@@ -597,7 +600,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
         try:
             # Disable signing by passing None as key
-            self.master.setup_signing(None, sign_outgoing=False, allow_unsigned_callback=None)
+            # Type ignore needed because MavlinkConnection is a Union including object fallback
+            self.master.setup_signing(None, sign_outgoing=False, allow_unsigned_callback=None)  # type: ignore[union-attr]
             logging_info(_("MAVLink signing disabled"))
             return True, ""
         except AttributeError:
@@ -635,7 +639,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
         try:
             # Check if signing is set up on the MAVLink connection
-            mav = self.master.mav
+            # Type ignore needed because MavlinkConnection is a Union including object fallback
+            mav = self.master.mav  # type: ignore[union-attr]
             if hasattr(mav, "signing") and mav.signing is not None:
                 signing = mav.signing
                 status["enabled"] = True

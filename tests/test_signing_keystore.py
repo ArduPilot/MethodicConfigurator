@@ -53,8 +53,7 @@ class TestSigningKeystoreStorage:
         """Create a keystore using temporary storage."""
         with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
             mock_dir.return_value = str(tmp_path)
-            keystore = SigningKeystore(use_keyring=False)
-            return keystore
+            return SigningKeystore(use_keyring=False)
 
     def test_user_can_store_key_for_vehicle(self, temp_keystore) -> None:
         """
@@ -157,8 +156,7 @@ class TestSigningKeystoreExportImport:
         """Create a keystore using temporary storage."""
         with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
             mock_dir.return_value = str(tmp_path)
-            keystore = SigningKeystore(use_keyring=False)
-            return keystore
+            return SigningKeystore(use_keyring=False)
 
     def test_user_can_export_key_with_password(self, temp_keystore) -> None:
         """
@@ -172,7 +170,7 @@ class TestSigningKeystoreExportImport:
         key = temp_keystore.generate_key()
         vehicle_id = "EXPORT-VEHICLE"
         temp_keystore.store_key(vehicle_id, key)
-        password = "secure-password-123"
+        password = "secure-password-123"  # noqa: S105
         export_data = temp_keystore.export_key(vehicle_id, password)
 
         assert export_data is not None
@@ -190,7 +188,7 @@ class TestSigningKeystoreExportImport:
         original_key = temp_keystore.generate_key()
         vehicle_id = "IMPORT-VEHICLE"
         temp_keystore.store_key(vehicle_id, original_key)
-        password = "import-password-456"
+        password = "import-password-456"  # noqa: S105
         export_data = temp_keystore.export_key(vehicle_id, password)
 
         temp_keystore.delete_key(vehicle_id)
@@ -213,8 +211,8 @@ class TestSigningKeystoreExportImport:
         key = temp_keystore.generate_key()
         vehicle_id = "WRONG-PASSWORD-VEHICLE"
         temp_keystore.store_key(vehicle_id, key)
-        correct_password = "correct-password"
-        wrong_password = "wrong-password"
+        correct_password = "correct-password"  # noqa: S105
+        wrong_password = "wrong-password"  # noqa: S105
         export_data = temp_keystore.export_key(vehicle_id, correct_password)
 
         temp_keystore.delete_key(vehicle_id)
@@ -262,8 +260,7 @@ class TestSigningKeystoreValidation:
         """Create a keystore using temporary storage."""
         with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
             mock_dir.return_value = str(tmp_path)
-            keystore = SigningKeystore(use_keyring=False)
-            return keystore
+            return SigningKeystore(use_keyring=False)
 
     def test_invalid_key_length_raises_error(self, temp_keystore) -> None:
         """
