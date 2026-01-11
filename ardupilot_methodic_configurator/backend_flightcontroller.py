@@ -479,7 +479,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     # MAVLink Signing Functionality
 
-    def setup_signing(
+    def setup_signing(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         key: bytes,
         sign_outgoing: bool = True,
