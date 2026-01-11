@@ -27,6 +27,12 @@ APP_NAME = "ArduPilot Methodic Configurator"
 KEYSTORE_FILENAME = "mavlink_signing_keys.json"
 KEYSTORE_VERSION = 1
 
+# PBKDF2 iteration counts
+# File storage uses lower iterations as vehicle_id provides limited entropy
+PBKDF2_ITERATIONS_FILE = 480_000
+# Export/import uses higher iterations for password-based encryption
+PBKDF2_ITERATIONS_EXPORT = 600_000
+
 
 @dataclass
 class StoredKey:
@@ -39,12 +45,12 @@ class StoredKey:
     salt: str  # Base64 encoded salt for encryption
     description: str = ""
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, str]:
         """Convert to dictionary for JSON serialization."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "StoredKey":
+    def from_dict(cls, data: dict[str, str]) -> "StoredKey":
         """Create from dictionary."""
         return cls(**data)
 
@@ -56,7 +62,7 @@ class KeystoreData:
     version: int = KEYSTORE_VERSION
     keys: dict[str, StoredKey] = field(default_factory=dict)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         """Convert to dictionary for JSON serialization."""
         return {
             "version": self.version,
@@ -64,10 +70,11 @@ class KeystoreData:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "KeystoreData":
+    def from_dict(cls, data: dict[str, object]) -> "KeystoreData":
         """Create from dictionary."""
-        keys = {k: StoredKey.from_dict(v) for k, v in data.get("keys", {}).items()}
-        return cls(version=data.get("version", KEYSTORE_VERSION), keys=keys)
+        keys_data: dict[str, dict[str, str]] = data.get("keys", {})  # type: ignore[assignment]
+        keys = {k: StoredKey.from_dict(v) for k, v in keys_data.items()}
+        return cls(version=data.get("version", KEYSTORE_VERSION), keys=keys)  # type: ignore[arg-type]
 
 
 class SigningKeystore:
@@ -83,6 +90,14 @@ class SigningKeystore:
     - Per-vehicle key isolation
     - Password-protected export/import
     - Encrypted storage with key derivation
+
+    **IMPORTANT SECURITY LIMITATION:**
+    The file-based fallback storage uses vehicle_id as the encryption key derivation input.
+    This provides obfuscation but NOT strong encryption against attackers with filesystem access.
+    For production use, consider:
+    - Using the OS keyring when available (provides proper security)
+    - Implementing additional master password protection
+    - Restricting filesystem access to the keystore file
 
     Attributes:
         keyring_available: Whether OS keyring is available
@@ -141,7 +156,10 @@ class SigningKeystore:
             # Test with a dummy operation
             test_key = f"_test_keyring_{secrets.token_hex(4)}"
             keyring.set_password(self._keyring_service, test_key, "test")
-            keyring.delete_password(self._keyring_service, test_key)
+            try:
+                keyring.delete_password(self._keyring_service, test_key)
+            except Exception as cleanup_exc:  # pylint: disable=broad-except
+                self._logger.warning("Failed to cleanup keyring test: %s", cleanup_exc)
             return True
         except ImportError:
             self._logger.debug("Keyring package not installed")
@@ -223,7 +241,7 @@ class SigningKeystore:
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=salt,
-                iterations=480000,
+                iterations=PBKDF2_ITERATIONS_FILE,
             )
             derived_key = kdf.derive(vehicle_id.encode())
             fernet_key = base64.urlsafe_b64encode(derived_key)
@@ -306,14 +324,15 @@ class SigningKeystore:
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=salt,
-                iterations=480000,
+                iterations=PBKDF2_ITERATIONS_FILE,
             )
             derived_key = kdf.derive(vehicle_id.encode())
             fernet_key = base64.urlsafe_b64encode(derived_key)
             fernet = Fernet(fernet_key)
 
             # Decrypt the signing key
-            return fernet.decrypt(encrypted_key)
+            decrypted_key: bytes = fernet.decrypt(encrypted_key)
+            return decrypted_key
 
         except Exception as exc:  # pylint: disable=broad-except
             self._logger.exception("Failed to retrieve key from file: %s", exc)
@@ -409,7 +428,7 @@ class SigningKeystore:
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=salt,
-                iterations=600000,  # Higher iterations for password-based
+                iterations=PBKDF2_ITERATIONS_EXPORT,
             )
             derived_key = kdf.derive(password.encode())
             fernet_key = base64.urlsafe_b64encode(derived_key)
@@ -464,7 +483,7 @@ class SigningKeystore:
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=salt,
-                iterations=600000,
+                iterations=PBKDF2_ITERATIONS_EXPORT,
             )
             derived_key = kdf.derive(password.encode())
             fernet_key = base64.urlsafe_b64encode(derived_key)
@@ -495,12 +514,12 @@ class SigningKeystore:
             with open(self._fallback_path, encoding="utf-8") as f:
                 data = json.load(f)
             return KeystoreData.from_dict(data)
-        except Exception as exc:  # pylint: disable=broad-except
+        except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as exc:
             self._logger.warning("Failed to load keystore file: %s", exc)
             return KeystoreData()
 
     def _save_keystore_file(self, keystore: KeystoreData) -> None:
-        """Save keystore to file."""
+        """Save keystore to file with file locking for concurrent access protection."""
         # Ensure directory exists
         self._fallback_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -508,6 +527,11 @@ class SigningKeystore:
         temp_path = self._fallback_path.with_suffix(".tmp")
         try:
             with open(temp_path, "w", encoding="utf-8") as f:
+                # Apply file lock on Unix systems to prevent concurrent writes
+                if os.name != "nt":
+                    import fcntl  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX)
                 json.dump(keystore.to_dict(), f, indent=2)
 
             # Atomic rename

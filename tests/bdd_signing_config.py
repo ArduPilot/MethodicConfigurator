@@ -82,6 +82,46 @@ class TestSigningConfigCreation:
         assert config.allow_unsigned_in is False
         assert config.accept_unsigned_callbacks is False
 
+    def test_user_can_compare_configs_for_equality(self) -> None:
+        """
+        User can compare two configs to see if they're equal.
+
+        GIVEN: Two SigningConfig instances with same values
+        WHEN: User compares them with ==
+        THEN: They should be equal
+        AND: They should have the same hash
+        AND: Config should not equal non-config object
+        """
+        config1 = SigningConfig(
+            enabled=True,
+            sign_outgoing=True,
+            allow_unsigned_in=False,
+            accept_unsigned_callbacks=True,
+            timestamp_offset=0,
+            link_id=1,
+        )
+        config2 = SigningConfig(
+            enabled=True,
+            sign_outgoing=True,
+            allow_unsigned_in=False,
+            accept_unsigned_callbacks=True,
+            timestamp_offset=0,
+            link_id=1,
+        )
+        config3 = SigningConfig(
+            enabled=False,
+            sign_outgoing=False,
+            allow_unsigned_in=True,
+            accept_unsigned_callbacks=False,
+            timestamp_offset=100,
+            link_id=2,
+        )
+
+        assert config1 == config2
+        assert hash(config1) == hash(config2)
+        assert config1 != config3
+        assert config1 != "not a config"
+
 
 class TestSigningConfigSerialization:
     """Test signing configuration serialization in BDD style."""
@@ -401,3 +441,173 @@ class TestSigningConfigManager:
         result = temp_config_manager.delete_vehicle_config("NONEXISTENT-VEHICLE")
 
         assert result is False
+
+
+class TestSigningConfigFieldValidation:
+    """Test configuration field validation in BDD style."""
+
+    def test_link_id_must_be_in_valid_range(self) -> None:
+        """
+        Link ID must be between 0 and 255.
+
+        GIVEN: The user wants to create a signing configuration
+        WHEN: An invalid link_id (>255) is provided
+        THEN: A ValueError should be raised with helpful message
+        """
+        with pytest.raises(ValueError, match="link_id must be an integer between 0 and 255"):
+            SigningConfig(
+                enabled=True,
+                sign_outgoing=True,
+                allow_unsigned_in=False,
+                accept_unsigned_callbacks=True,
+                timestamp_offset=0,
+                link_id=256,
+            )
+
+    def test_link_id_cannot_be_negative(self) -> None:
+        """
+        Link ID cannot be negative.
+
+        GIVEN: The user wants to create a signing configuration
+        WHEN: A negative link_id is provided
+        THEN: A ValueError should be raised
+        """
+        with pytest.raises(ValueError, match="link_id must be an integer between 0 and 255"):
+            SigningConfig(
+                enabled=True,
+                sign_outgoing=True,
+                allow_unsigned_in=False,
+                accept_unsigned_callbacks=True,
+                timestamp_offset=0,
+                link_id=-1,
+            )
+
+    def test_enabled_must_be_boolean(self) -> None:
+        """
+        Enabled field must be a boolean value.
+
+        GIVEN: The user wants to create a signing configuration
+        WHEN: A non-boolean value is provided for enabled
+        THEN: A ValueError should be raised with type information
+        """
+        with pytest.raises(ValueError, match="enabled must be a boolean"):
+            SigningConfig(
+                enabled="yes",  # type: ignore[arg-type]
+                sign_outgoing=True,
+                allow_unsigned_in=False,
+                accept_unsigned_callbacks=True,
+                timestamp_offset=0,
+                link_id=1,
+            )
+
+    def test_vehicle_id_cannot_be_empty(self) -> None:
+        """
+        Vehicle ID cannot be empty or whitespace.
+
+        GIVEN: The user wants to create a vehicle configuration
+        WHEN: An empty or whitespace-only vehicle_id is provided
+        THEN: A ValueError should be raised
+        """
+        with pytest.raises(ValueError, match="vehicle_id cannot be empty"):
+            VehicleSigningConfig(
+                vehicle_id="   ",
+                signing_config=SigningConfig(),
+            )
+
+
+class TestSigningConfigPersistence:
+    """Test configuration persistence and file operations in BDD style."""
+
+    def test_configurations_persist_across_manager_instances(self, tmp_path) -> None:
+        """
+        Configurations persist across manager instances.
+
+        GIVEN: A configuration is saved with one manager instance
+        WHEN: A new manager instance is created
+        THEN: The configuration should still be accessible
+        """
+        # Save with first instance
+        manager1 = SigningConfigManager(config_dir=tmp_path)
+        config = VehicleSigningConfig(
+            vehicle_id="TEST-VEHICLE",
+            signing_config=SigningConfig(enabled=True),
+        )
+        manager1.save_vehicle_config(config)
+
+        # Load with second instance
+        manager2 = SigningConfigManager(config_dir=tmp_path)
+        loaded_config = manager2.load_vehicle_config("TEST-VEHICLE")
+
+        assert loaded_config is not None
+        assert loaded_config.vehicle_id == "TEST-VEHICLE"
+        assert loaded_config.signing_config.enabled is True
+
+    def test_manager_creates_data_directory_automatically(self, tmp_path) -> None:
+        """
+        Config manager creates data directory if it doesn't exist.
+
+        GIVEN: The data directory doesn't exist
+        WHEN: The user creates a config manager
+        THEN: The directory should be created automatically
+        AND: Configurations can be saved normally
+        """
+        data_dir = tmp_path / "nonexistent" / "subdir"
+        manager = SigningConfigManager(config_dir=data_dir)
+
+        config = VehicleSigningConfig(
+            vehicle_id="TEST-VEHICLE",
+            signing_config=SigningConfig(),
+        )
+        manager.save_vehicle_config(config)
+
+        assert data_dir.exists()
+        assert manager._config_file.exists()
+
+    def test_empty_vehicle_id_raises_error(self, tmp_path) -> None:
+        """
+        Creating configuration with empty vehicle ID raises error.
+
+        GIVEN: A user wants to create a vehicle configuration
+        WHEN: An empty vehicle_id is provided
+        THEN: A ValueError should be raised
+        """
+        with pytest.raises(ValueError, match="vehicle_id cannot be empty"):
+            VehicleSigningConfig(
+                vehicle_id="  ",  # Whitespace triggers validation
+                signing_config=SigningConfig(),
+            )
+
+    def test_configurations_survive_file_format_version_upgrade(self, tmp_path) -> None:
+        """
+        Configurations are preserved during file format upgrades.
+
+        GIVEN: A configuration file from an older version exists
+        WHEN: The manager loads it
+        THEN: The configuration should be readable
+        AND: The file should be upgraded to current version
+        """
+        manager = SigningConfigManager(config_dir=tmp_path)
+
+        # Create old format file (without version or with old version)
+        old_format = {
+            "configs": {
+                "TEST-VEHICLE": {
+                    "vehicle_id": "TEST-VEHICLE",
+                    "signing_config": {
+                        "enabled": True,
+                        "sign_outgoing": True,
+                        "allow_unsigned_in": False,
+                        "accept_unsigned_callbacks": True,
+                        "timestamp_offset": 0,
+                        "link_id": 1,
+                    },
+                }
+            }
+        }
+        manager._config_file.write_text(json.dumps(old_format))
+
+        # Load should work despite missing version
+        loaded_config = manager.load_vehicle_config("TEST-VEHICLE")
+
+        assert loaded_config is not None
+        assert loaded_config.vehicle_id == "TEST-VEHICLE"

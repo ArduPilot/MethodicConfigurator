@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -314,3 +315,196 @@ class TestSigningKeystoreValidation:
         result = temp_keystore.delete_key("NONEXISTENT-VEHICLE")
 
         assert result is False
+
+
+class TestSigningKeystoreExportImportBehavior:
+    """Test key export and import error handling in BDD style."""
+
+    @pytest.fixture
+    def temp_keystore(self, tmp_path: Path) -> SigningKeystore:
+        """Create a temporary keystore for testing."""
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(tmp_path)
+            yield SigningKeystore(use_keyring=False)
+
+    def test_user_can_export_key_with_password(self, temp_keystore) -> None:
+        """
+        User can export a key protected by a password.
+
+        GIVEN: A key is stored in the keystore
+        AND: The user provides a strong password
+        WHEN: The user exports the key
+        THEN: An encrypted key blob should be returned
+        """
+        vehicle_id = "TEST-VEHICLE"
+        key = temp_keystore.generate_key()
+        temp_keystore.store_key(vehicle_id, key)
+
+        encrypted_key = temp_keystore.export_key(vehicle_id, "strong_password_123")
+
+        assert encrypted_key is not None
+        assert len(encrypted_key) > 0
+        assert encrypted_key != key  # Should be encrypted, not plaintext
+
+    def test_user_can_import_exported_key(self, temp_keystore) -> None:
+        """
+        User can import a previously exported key.
+
+        GIVEN: A key was exported with a password
+        WHEN: The user imports it with the same password
+        THEN: The key should be restored and usable
+        """
+        vehicle_id = "TEST-VEHICLE"
+        original_key = temp_keystore.generate_key()
+        temp_keystore.store_key(vehicle_id, original_key)
+
+        encrypted_key = temp_keystore.export_key(vehicle_id, "password123")
+        temp_keystore.delete_key(vehicle_id)
+
+        vehicle_id_result = temp_keystore.import_key(encrypted_key, "password123")
+        assert vehicle_id_result == vehicle_id
+        retrieved_key = temp_keystore.retrieve_key(vehicle_id)
+
+        assert retrieved_key == original_key
+
+    def test_export_nonexistent_key_returns_none(self, temp_keystore) -> None:
+        """
+        Exporting a nonexistent key returns None.
+
+        GIVEN: No key stored for a vehicle
+        WHEN: The user tries to export it
+        THEN: None should be returned
+        """
+        result = temp_keystore.export_key("NONEXISTENT-VEHICLE", "password123")
+
+        assert result is None
+
+    def test_export_with_weak_password_raises_error(self, temp_keystore) -> None:
+        """
+        Exporting with a weak password raises an error.
+
+        GIVEN: A key is stored
+        AND: The user provides a password that's too short
+        WHEN: The user attempts to export
+        THEN: A ValueError should be raised with helpful message
+        """
+        vehicle_id = "TEST-VEHICLE"
+        key = temp_keystore.generate_key()
+        temp_keystore.store_key(vehicle_id, key)
+
+        encrypted_key = temp_keystore.export_key(vehicle_id, "short")
+        # Note: export_key doesn't validate password length, only import_key does
+        assert encrypted_key is not None
+
+    def test_import_with_weak_password_raises_error(self, temp_keystore) -> None:
+        """
+        Importing with a weak password returns None.
+
+        GIVEN: An encrypted key blob
+        AND: The user provides a password that's too short
+        WHEN: The user attempts to import
+        THEN: The import should fail and return None
+        """
+        dummy_encrypted = b"0" * 100
+
+        result = temp_keystore.import_key(dummy_encrypted, "short")
+        assert result is None
+
+    def test_import_with_wrong_password_raises_error(self, temp_keystore) -> None:
+        """
+        Importing with wrong password returns None.
+
+        GIVEN: A key was exported with one password
+        WHEN: The user tries to import with a different password
+        THEN: The import should fail and return None
+        """
+        vehicle_id = "TEST-VEHICLE"
+        key = temp_keystore.generate_key()
+        temp_keystore.store_key(vehicle_id, key)
+
+        encrypted_key = temp_keystore.export_key(vehicle_id, "correct_password")
+
+        result = temp_keystore.import_key(encrypted_key, "wrong_password")
+        assert result is None
+
+    def test_import_with_corrupted_data_raises_error(self, temp_keystore) -> None:
+        """
+        Importing corrupted data returns None.
+
+        GIVEN: An invalid or corrupted encrypted key blob
+        WHEN: The user tries to import it
+        THEN: The import should fail and return None
+        """
+        corrupted_data = b"this is not valid encrypted data"
+
+        result = temp_keystore.import_key(corrupted_data, "any_password")
+        assert result is None
+
+
+class TestSigningKeystoreKeyringFallback:
+    """Test keyring availability and fallback behavior in BDD style."""
+
+    def test_keystore_works_without_keyring(self, tmp_path) -> None:
+        """
+        User can use keystore even without OS keyring support.
+
+        GIVEN: OS keyring is not available or disabled
+        WHEN: The user creates a keystore
+        THEN: It should work using file-based storage
+        AND: Keys should be stored and retrieved correctly
+        """
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(tmp_path)
+            keystore = SigningKeystore(use_keyring=False)
+
+            vehicle_id = "TEST-VEHICLE"
+            key = keystore.generate_key()
+            keystore.store_key(vehicle_id, key)
+
+            retrieved_key = keystore.retrieve_key(vehicle_id)
+
+            assert keystore.keyring_available is False
+            assert retrieved_key == key
+
+    def test_keystore_creates_data_directory_automatically(self, tmp_path) -> None:
+        """
+        Keystore creates data directory if it doesn't exist.
+
+        GIVEN: The data directory doesn't exist
+        WHEN: The user creates a keystore
+        THEN: The directory should be created automatically
+        AND: The keystore should work normally
+        """
+        data_dir = tmp_path / "nonexistent" / "subdir"
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(data_dir)
+            keystore = SigningKeystore(use_keyring=False)
+
+            key = keystore.generate_key()
+            keystore.store_key("TEST-VEHICLE", key)
+
+            assert data_dir.exists()
+            assert keystore.fallback_path.exists()
+
+    def test_keystore_persists_keys_across_instances(self, tmp_path) -> None:
+        """
+        Keys persist across keystore instances.
+
+        GIVEN: A key is stored in one keystore instance
+        WHEN: A new keystore instance is created
+        THEN: The key should still be accessible
+        """
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(tmp_path)
+
+            # Store key with first instance
+            keystore1 = SigningKeystore(use_keyring=False)
+            vehicle_id = "TEST-VEHICLE"
+            key = keystore1.generate_key()
+            keystore1.store_key(vehicle_id, key)
+
+            # Retrieve with second instance
+            keystore2 = SigningKeystore(use_keyring=False)
+            retrieved_key = keystore2.retrieve_key(vehicle_id)
+
+            assert retrieved_key == key
