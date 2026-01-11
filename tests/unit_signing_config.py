@@ -116,14 +116,7 @@ class TestSigningConfigManagerFileErrorHandling:
             "configs": {
                 "TEST-VEHICLE": {
                     "vehicle_id": "TEST-VEHICLE",
-                    "signing_config": {
-                        "enabled": True,
-                        "sign_outgoing": True,
-                        "allow_unsigned_in": False,
-                        "accept_unsigned_callbacks": True,
-                        "timestamp_offset": 0,
-                        "link_id": 1,
-                    },
+                    "signing_config": STANDARD_CONFIG_PARAMS,
                 }
             },
         }
@@ -180,14 +173,7 @@ class TestSigningConfigManagerFileErrorHandling:
             "configs": {
                 "VALID-VEHICLE": {
                     "vehicle_id": "VALID-VEHICLE",
-                    "signing_config": {
-                        "enabled": True,
-                        "sign_outgoing": True,
-                        "allow_unsigned_in": False,
-                        "accept_unsigned_callbacks": True,
-                        "timestamp_offset": 0,
-                        "link_id": 1,
-                    },
+                    "signing_config": STANDARD_CONFIG_PARAMS,
                 },
                 "INVALID-VEHICLE": {
                     "vehicle_id": "INVALID-VEHICLE",
