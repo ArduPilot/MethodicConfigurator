@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-01-03 14:07+0100\n"
+"POT-Creation-Date: 2026-01-12 01:28+0100\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -510,51 +510,51 @@ msgstr "Bitmask-Parameter-Editor-Nutzungsfenster"
 msgid "Only changed parameters get upload explanation"
 msgstr "Nur geänderte Parameter werden hochgeladen – Erklärung"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:171
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:172
 msgid "Directory already exists, choose a different one"
 msgstr "Verzeichnis existiert bereits, wählen Sie ein anderes"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:176
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:177
 msgid "Error creating new vehicle directory: %s"
 msgstr "Fehler beim Erstellen des neuen Fahrzeugverzeichnisses: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:210
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:211
 msgid ""
 "The user configuration directory '{user_config_directory}' does not exist."
 msgstr ""
 "Das Benutzerkonfigurationsverzeichnis '{user_config_directory}' existiert "
 "nicht."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:213
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:214
 msgid "The path '{user_config_directory}' is not a directory."
 msgstr "Der Pfad '{user_config_directory}' ist kein Verzeichnis."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:229
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:230
 msgid ""
 "The site configuration directory '{site_config_directory}' does not exist."
 msgstr ""
 "Das Standortkonfigurationsverzeichnis '{site_config_directory}' existiert "
 "nicht."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:232
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:233
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "Der Pfad '{site_config_directory}' ist kein Verzeichnis."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:321
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:322
 msgid "site_directory: %s"
 msgstr "standort_verzeichnis: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:350
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:351
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr ""
 "Nutzungs-Popup-Typ '%s' wurde im Einstellungs-Wörterbuch nicht gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:360
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:397
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:361
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:398
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "Einstellung '%s' nicht im Einstellungs-Wörterbuch gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:378
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:379
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
@@ -562,15 +562,15 @@ msgstr ""
 "Kann verschachtelte Einstellung '%s' nicht setzen: übergeordneter Pfad '%s' "
 "nicht gefunden oder kein Wörterbuch"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:391
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:392
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr "Einstellungspfad '%s' nicht im Einstellungs-Wörterbuch gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:430
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:431
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "Mehrere Motordiagramme für Klasse %d und Typ %d gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:439
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:440
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "Motordiagramm für Klasse %d und Typ %d nicht gefunden"
 
@@ -1075,107 +1075,147 @@ msgstr "Timeout für Parameter %s ist nicht positiv, Anfrage wird übersprungen"
 msgid "Timeout waiting for parameter %s"
 msgstr "Zeitüberschreitung beim Warten auf Parameter %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:41
-msgid "URL or local filename not provided."
-msgstr "URL oder lokaler Dateiname nicht angegeben."
-
-#: ardupilot_methodic_configurator/backend_internet.py:44
-msgid "Downloading %s from %s"
-msgstr "Herunterladen von %s von %s"
-
-#: ardupilot_methodic_configurator/backend_internet.py:79
+#: ardupilot_methodic_configurator/backend_internet.py:98
 msgid "Downloading ... {:.1f}%"
 msgstr "Herunterladen ... {:.1f}%"
 
-#: ardupilot_methodic_configurator/backend_internet.py:83
-#: ardupilot_methodic_configurator/backend_internet.py:247
+#: ardupilot_methodic_configurator/backend_internet.py:145
+#: ardupilot_methodic_configurator/backend_internet.py:522
 msgid "Download complete"
 msgstr "Download abgeschlossen"
 
-#: ardupilot_methodic_configurator/backend_internet.py:87
-msgid "Download timed out"
-msgstr "Download-Zeitüberschreitung"
+#: ardupilot_methodic_configurator/backend_internet.py:166
+msgid "URL or local filename not provided."
+msgstr "URL oder lokaler Dateiname nicht angegeben."
 
-#: ardupilot_methodic_configurator/backend_internet.py:89
-msgid "Network error during download: {}"
-msgstr "Netzwerkfehler während des Downloads: {}"
+#: ardupilot_methodic_configurator/backend_internet.py:178
+msgid "Download timed out (attempt %d)"
+msgstr "Download-Zeitüberschreitung (Versuch %d)"
 
-#: ardupilot_methodic_configurator/backend_internet.py:91
-msgid "File system error: {}"
-msgstr "Dateisystemfehler: {}"
+#: ardupilot_methodic_configurator/backend_internet.py:180
+msgid "Network error during download (attempt %d): %s"
+msgstr "Netzwerkfehler beim Download (Versuch %d): %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:93
+#: ardupilot_methodic_configurator/backend_internet.py:183
+msgid "File system error during download (attempt %d): %s"
+msgstr "Dateisystemfehler beim Download (Versuch %d): %s"
+
+#: ardupilot_methodic_configurator/backend_internet.py:186
 msgid "Invalid data received from %s: %s"
 msgstr "Ungültige Daten empfangen von %s: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:126
+#: ardupilot_methodic_configurator/backend_internet.py:206
+msgid "Download failed after %d attempts, cleaning up partial file"
+msgstr "Download nach %d Versuchen fehlgeschlagen, räume Teildatei auf"
+
+#: ardupilot_methodic_configurator/backend_internet.py:240
 msgid "The latest continuous delivery build must be a pre-release"
 msgstr "Der neueste Continuous Delivery Build muss eine Vorabversion sein"
 
-#: ardupilot_methodic_configurator/backend_internet.py:128
+#: ardupilot_methodic_configurator/backend_internet.py:242
 msgid "The latest stable release must not be a pre-release"
 msgstr "Die neueste stabile Version darf keine Vorabversion sein"
 
-#: ardupilot_methodic_configurator/backend_internet.py:134
-#: ardupilot_methodic_configurator/backend_internet.py:142
+#: ardupilot_methodic_configurator/backend_internet.py:248
+#: ardupilot_methodic_configurator/backend_internet.py:256
 msgid "Failed to fetch release info: {}"
 msgstr "Abrufen der Release-Informationen fehlgeschlagen: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:139
+#: ardupilot_methodic_configurator/backend_internet.py:253
 msgid "Rate limit exceeded. Please try again after: %s (UTC)"
 msgstr ""
 "Anfragelimit überschritten. Bitte versuchen Sie es erneut nach: %s (UTC)"
 
-#: ardupilot_methodic_configurator/backend_internet.py:145
+#: ardupilot_methodic_configurator/backend_internet.py:259
 msgid "Invalid release data: {}"
 msgstr "Ungültige Release-Daten: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:174
-msgid "Downloading and installing new version for Windows..."
-msgstr "Neue Version für Windows wird heruntergeladen und installiert..."
+#: ardupilot_methodic_configurator/backend_internet.py:314
+msgid "Windows installer URL must be from github.com: %s"
+msgstr "Windows-Installer-URL muss von github.com sein: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:186
-msgid "Failed to download installer from %s"
-msgstr "Fehler beim Herunterladen des Installers von %s"
+#: ardupilot_methodic_configurator/backend_internet.py:321
+msgid "could not get expected SHA256 checksum from github.com"
+msgstr "Erwartete SHA256-Prüfsumme konnte nicht von github.com abgerufen werden"
 
-#: ardupilot_methodic_configurator/backend_internet.py:190
-#: ardupilot_methodic_configurator/backend_internet.py:240
-msgid "Starting installation..."
-msgstr "Installation wird gestartet..."
+#: ardupilot_methodic_configurator/backend_internet.py:326
+msgid "SHA256 mismatch for downloaded installer: expected %s got %s"
+msgstr "SHA256-Nichtübereinstimmung für heruntergeladenen Installer: erwartet %s erhalten %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:216
+#: ardupilot_methodic_configurator/backend_internet.py:338
+msgid "Downloaded installer too small: %d bytes"
+msgstr "Heruntergeladener Installer zu klein: %d Bytes"
+
+#: ardupilot_methodic_configurator/backend_internet.py:347
+msgid "Downloaded installer does not appear to be a Windows executable"
+msgstr "Heruntergeladener Installer scheint keine Windows-Anwendung zu sein"
+
+#: ardupilot_methodic_configurator/backend_internet.py:358
+msgid "Failed to validate downloaded installer: %s"
+msgstr "Validierung des heruntergeladenen Installers fehlgeschlagen: %s"
+
+#: ardupilot_methodic_configurator/backend_internet.py:391
 msgid "Installation ready. Application will restart now."
 msgstr "Installation bereit. Die Anwendung wird jetzt neu gestartet."
 
-#: ardupilot_methodic_configurator/backend_internet.py:230
+#: ardupilot_methodic_configurator/backend_internet.py:433
+msgid "Downloading and installing new version for Windows..."
+msgstr "Neue Version für Windows wird heruntergeladen und installiert..."
+
+#: ardupilot_methodic_configurator/backend_internet.py:446
+msgid "Failed to download installer from %s"
+msgstr "Fehler beim Herunterladen des Installers von %s"
+
+#: ardupilot_methodic_configurator/backend_internet.py:458
+#: ardupilot_methodic_configurator/backend_internet.py:476
+msgid "Starting installation..."
+msgstr "Installation wird gestartet..."
+
+#: ardupilot_methodic_configurator/backend_internet.py:467
 msgid "Installation failed: {}"
 msgstr "Installation fehlgeschlagen: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:232
+#: ardupilot_methodic_configurator/backend_internet.py:469
 msgid "File operation failed: {}"
 msgstr "Dateioperation fehlgeschlagen: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:237
+#: ardupilot_methodic_configurator/backend_internet.py:482
+msgid "Updating via uv for Linux and macOS..."
+msgstr "Aktualisierung über uv für Linux und macOS..."
+
+#: ardupilot_methodic_configurator/backend_internet.py:495
 msgid "Updating via pip for Linux and macOS..."
 msgstr "Aktualisierung über pip für Linux und macOS..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:264
+#: ardupilot_methodic_configurator/backend_internet.py:512
+msgid "Installation command failed: {}"
+msgstr "Installationsbefehl fehlgeschlagen: {}"
+
+#: ardupilot_methodic_configurator/backend_internet.py:516
+msgid "uv not found at expected path: {}"
+msgstr "uv nicht am erwarteten Pfad gefunden: {}"
+
+#: ardupilot_methodic_configurator/backend_internet.py:518
+msgid "pip module not available. Please install pip or uv: {}"
+msgstr "pip-Modul nicht verfügbar. Bitte installieren Sie pip oder uv: {}"
+
+#: ardupilot_methodic_configurator/backend_internet.py:548
 msgid "URL not provided."
 msgstr "URL nicht angegeben."
 
-#: ardupilot_methodic_configurator/backend_internet.py:267
+#: ardupilot_methodic_configurator/backend_internet.py:551
 msgid "Verifying URL: %s"
 msgstr "Überprüfe URL: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:284
+#: ardupilot_methodic_configurator/backend_internet.py:568
 msgid "Failed to access URL: %s. Error: %s"
 msgstr "Zugriff auf URL fehlgeschlagen: %s. Fehler: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:289
+#: ardupilot_methodic_configurator/backend_internet.py:573
 msgid "Opening URL in browser: %s"
 msgstr "Öffne URL im Browser: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:292
+#: ardupilot_methodic_configurator/backend_internet.py:576
 msgid "Failed to open URL in browser: %s"
 msgstr "Fehler beim Öffnen der URL im Browser: %s"
 
@@ -3307,7 +3347,9 @@ msgstr ""
 msgid ""
 "Current frame class %(class)d is not defined in motor configuration (max "
 "defined: %(max)d)"
-msgstr "Aktuelle Rahmenklasse %(class)d ist in der Motorkonfiguration nicht definiert (maximal definiert: %(max)d)"
+msgstr ""
+"Aktuelle Rahmenklasse %(class)d ist in der Motorkonfiguration nicht "
+"definiert (maximal definiert: %(max)d)"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:938
 msgid "Returning cached frame options with %(count)d classes"
@@ -4100,15 +4142,15 @@ msgstr ""
 "Verbindlichkeitsstufe für diesen Konfigurationsschritt nicht verfügbar "
 "({current_file})"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:50
+#: ardupilot_methodic_configurator/data_model_software_updates.py:51
 msgid "Current version: {_current_version}"
 msgstr "Aktuelle Version: {_current_version}"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:52
+#: ardupilot_methodic_configurator/data_model_software_updates.py:53
 msgid "Latest version: {_latest_release}"
 msgstr "Neueste Version: {_latest_release}"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:54
+#: ardupilot_methodic_configurator/data_model_software_updates.py:55
 msgid ""
 "Changes:\n"
 "{changes}"
@@ -4116,43 +4158,43 @@ msgstr ""
 "Änderungen:\n"
 "{changes}"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:77
+#: ardupilot_methodic_configurator/data_model_software_updates.py:89
 msgid "No suitable assets found for Windows installation"
 msgstr "Keine geeigneten Assets für die Windows-Installation gefunden"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:86
+#: ardupilot_methodic_configurator/data_model_software_updates.py:92
 msgid "Error accessing release assets: %s"
 msgstr "Fehler beim Zugriff auf Release-Assets: %s"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:89
+#: ardupilot_methodic_configurator/data_model_software_updates.py:95
 msgid "Error during Windows download: %s"
 msgstr "Fehler beim Windows-Download: %s"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:97
+#: ardupilot_methodic_configurator/data_model_software_updates.py:105
 msgid "Error during pip installation: %s"
 msgstr "Fehler bei der pip-Installation: %s"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:107
+#: ardupilot_methodic_configurator/data_model_software_updates.py:117
 msgid "Already running latest version."
 msgstr "Bereits auf der neuesten Version."
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:111
+#: ardupilot_methodic_configurator/data_model_software_updates.py:121
 msgid "No changes listed"
 msgstr "Keine Änderungen aufgelistet"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:120
+#: ardupilot_methodic_configurator/data_model_software_updates.py:130
 msgid "Key error during update process: %s"
 msgstr "Schlüsselfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:123
+#: ardupilot_methodic_configurator/data_model_software_updates.py:133
 msgid "Network error during update process: %s"
 msgstr "Netzwerkfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:126
+#: ardupilot_methodic_configurator/data_model_software_updates.py:136
 msgid "Value error during update process: %s"
 msgstr "Wertfehler während des Aktualisierungsprozesses: %s"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:134
+#: ardupilot_methodic_configurator/data_model_software_updates.py:144
 msgid ""
 "Skip check for software updates before staring the software. Default is "
 "%(default)s."
@@ -4160,15 +4202,15 @@ msgstr ""
 "Prüfung auf Softwareaktualisierungen vor dem Programmstart überspringen. "
 "Standard ist %(default)s."
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:143
+#: ardupilot_methodic_configurator/data_model_software_updates.py:153
 msgid "Running version: {} (git hash: {})"
 msgstr "Laufende Version: {} (Git Hash: {})"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:151
+#: ardupilot_methodic_configurator/data_model_software_updates.py:161
 msgid "Update check failed: {}"
 msgstr "Aktualisierungsprüfung fehlgeschlagen: {}"
 
-#: ardupilot_methodic_configurator/data_model_software_updates.py:159
+#: ardupilot_methodic_configurator/data_model_software_updates.py:169
 msgid ""
 "This main is for testing and development only, usually the "
 "check_for_software_updates is called from another script"
@@ -4582,7 +4624,7 @@ msgstr ""
 "Kann FC-Parameter nicht verwenden: keine Flugcontroller-Parameter verfügbar"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:311
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:150
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:154
 msgid "Flight Controller Connection"
 msgstr "Flugcontroller-Verbindung"
 
@@ -4727,7 +4769,14 @@ msgid ""
 "Copyright © 2024-2026 Amilcar do Carmo Lucas and ArduPilot.org\n"
 "\n"
 "Licensed under the GNU General Public License v3.0"
-msgstr "ArduPilot Methodic Configurator Version: {_version}\n\nEine klare Konfigurationssequenz für ArduPilot-Fahrzeuge.\n\nCopyright © 2024-2026 Amilcar do Carmo Lucas und ArduPilot.org\n\nLizenziert unter der GNU General Public License v3.0"
+msgstr ""
+"ArduPilot Methodic Configurator Version: {_version}\n"
+"\n"
+"Eine klare Konfigurationssequenz für ArduPilot-Fahrzeuge.\n"
+"\n"
+"Copyright © 2024-2026 Amilcar do Carmo Lucas und ArduPilot.org\n"
+"\n"
+"Lizenziert unter der GNU General Public License v3.0"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_about_popup_window.py:47
 msgid "Display usage popup"
@@ -4811,7 +4860,12 @@ msgid ""
 "  • Green: Safe voltage range [BATT_ARM_VOLT, MOT_BAT_VOLT_MAX]\n"
 "  • Red: Critical voltage (outside safe range)\n"
 "  • Gray: Battery monitoring disabled or unavailable"
-msgstr "Dieser Monitor zeigt Echtzeit-Batteriespannung und Stromwerte an.\nDie Spannungsanzeige ist farbcodiert:\n  • Grün: Sicherer Spannungsbereich [BATT_ARM_VOLT, MOT_BAT_VOLT_MAX]\n  • Rot: Kritische Spannung (außerhalb des sicheren Bereichs)\n  • Grau: Batterieüberwachung deaktiviert oder nicht verfügbar"
+msgstr ""
+"Dieser Monitor zeigt Echtzeit-Batteriespannung und Stromwerte an.\n"
+"Die Spannungsanzeige ist farbcodiert:\n"
+"  • Grün: Sicherer Spannungsbereich [BATT_ARM_VOLT, MOT_BAT_VOLT_MAX]\n"
+"  • Rot: Kritische Spannung (außerhalb des sicheren Bereichs)\n"
+"  • Grau: Batterieüberwachung deaktiviert oder nicht verfügbar"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:116
 msgid "Voltage:"
@@ -4831,7 +4885,11 @@ msgid ""
 "intermediate parameter file\n"
 "It will reset the FC if necessary, re-download all parameters and validate "
 "their value"
-msgstr "Ausgewählte Parameter zum Flugcontroller hochladen und in der aktuellen Zwischenparameterdatei bleiben\nEs wird den FC bei Bedarf zurücksetzen, alle Parameter erneut herunterladen und deren Wert validieren"
+msgstr ""
+"Ausgewählte Parameter zum Flugcontroller hochladen und in der aktuellen "
+"Zwischenparameterdatei bleiben\n"
+"Es wird den FC bei Bedarf zurücksetzen, alle Parameter erneut herunterladen "
+"und deren Wert validieren"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:166
 msgid "Battery status updated: %(voltage)s, %(current)s"
@@ -4871,13 +4929,17 @@ msgstr "AMC Batteriemonitor-Plugin Testfenster"
 msgid ""
 "This main is for testing and development only. Usually, the "
 "BatteryMonitorView is called from another script"
-msgstr "Dieses Hauptprogramm ist nur für Test- und Entwicklungszwecke. Normalerweise wird die BatteryMonitorView von einem anderen Skript aufgerufen"
+msgstr ""
+"Dieses Hauptprogramm ist nur für Test- und Entwicklungszwecke. Normalerweise "
+"wird die BatteryMonitorView von einem anderen Skript aufgerufen"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:394
 msgid ""
 "This main is for testing and development only, usually the "
 "BatteryMonitorView is called from another script"
-msgstr "Dieses Hauptprogramm ist nur für Test- und Entwicklungszwecke, normalerweise wird die BatteryMonitorView von einem anderen Skript aufgerufen"
+msgstr ""
+"Dieses Hauptprogramm ist nur für Test- und Entwicklungszwecke, normalerweise "
+"wird die BatteryMonitorView von einem anderen Skript aufgerufen"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:51
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:57
@@ -5091,15 +5153,15 @@ msgstr "Vorlage angewendet"
 msgid "{} has been applied to {}"
 msgstr "{} wurde auf {} angewendet"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:66
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:67
 msgid "flight controller connection:"
 msgstr "Verbindung zum Flugcontroller:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:74
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:75
 msgid "Port:"
 msgstr "Port:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:90
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:94
 msgid ""
 "Select the flight controller connection\n"
 "You can add a custom connection to the existing ones"
@@ -5107,11 +5169,11 @@ msgstr ""
 "Wählen Sie die Verbindung zum Flugcontroller\n"
 "Sie können eine benutzerdefinierte Verbindung zu den bestehenden hinzufügen"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:94
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:98
 msgid "Baudrate:"
 msgstr "Baudrate:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:110
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:114
 msgid ""
 "Select the baudrate for the connection\n"
 "Most flight controllers use 115200"
@@ -5119,16 +5181,16 @@ msgstr ""
 "Wählen Sie die Baudrate für die Verbindung\n"
 "Die meisten Flugcontroller verwenden 115200"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:115
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:119
 msgid "Connection combobox changed to: {selected_connection}"
 msgstr ""
 "Die Auswahlbox für Verbindung wurde geändert auf: {selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:133
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:137
 msgid "Baudrate combobox changed to: {_selected_baudrate}"
 msgstr "Baudrate-Auswahlfeld geändert zu: {_selected_baudrate}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:151
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:155
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
 "\n"
@@ -5145,12 +5207,12 @@ msgstr ""
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:160
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:165
 msgid "Will add new connection: {selected_connection} if not duplicated"
 msgstr ""
 "Neue Verbindung hinzufügen: {selected_connection}, falls nicht dupliziert"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:164
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:169
 msgid ""
 "Updated connection tuples: {connection_tuples} with selected connection: "
 "{selected_connection}"
@@ -5158,25 +5220,25 @@ msgstr ""
 "Aktualisierte Verbindungstupel: {connection_tuples} mit ausgewählter "
 "Verbindung: {selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:169
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:174
 msgid "Add connection canceled or string empty {selected_connection}"
 msgstr ""
 "Verbindung hinzufügen abgebrochen oder Zeichenfolge leer "
 "{selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:176
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:181
 msgid "Connecting with the FC"
 msgstr "Verbindung zum FC wird hergestellt"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:176
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:181
 msgid "Connection step {} of {}"
 msgstr "Verbindung Schritt {} von {}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:184
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:189
 msgid "Unsupported baudrate selected: {current_baudrate}"
 msgstr "Nicht unterstützte Baudrate ausgewählt: {current_baudrate}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:189
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:194
 msgid ""
 "Invalid baudrate selected: {selected_baudrate}, reverting to default: {self."
 "default_baudrate}"
@@ -5184,19 +5246,19 @@ msgstr ""
 "Ungültige Baudrate ausgewählt: {selected_baudrate}, zurücksetzend auf "
 "Standard: {self.default_baudrate}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:192
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:197
 msgid "Invalid Baudrate"
 msgstr "Ungültige Baudrate"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:231
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:236
 msgid "AMC {version} - Flight controller connection"
 msgstr "AMC {version} - Flugcontroller-Verbindung"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:237
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:242
 msgid "No ArduPilot flight controller was auto-detected detected yet."
 msgstr "Kein ArduPilot-Flugcontroller wurde bisher automatisch erkannt."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:246
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:251
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:66
 msgid ""
 "\n"
@@ -5205,11 +5267,11 @@ msgstr ""
 "\n"
 "Wählen Sie eine der folgenden drei Optionen:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:251
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:256
 msgid "Auto connection"
 msgstr "Auto-Verbindung"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:258
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:263
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5219,20 +5281,20 @@ msgstr ""
 "warten Sie 7 Sekunden, bis er vollständig hochgefahren ist, und klicken Sie\n"
 "auf die Schaltfläche Auto-Connect unten, um eine Verbindung herzustellen"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:265
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:270
 msgid "Auto-connect"
 msgstr "Automatische Verbindung"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:267
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:272
 msgid "Auto-connect to a 'Mavlink'-talking serial device"
 msgstr ""
 "Automatisch zu einem 'Mavlink'-kommunizierenden seriellen Gerät verbinden"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:270
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:275
 msgid "Manual connection"
 msgstr "Manuelle Verbindung"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:278
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:283
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5242,17 +5304,17 @@ msgstr ""
 "warten Sie 7 Sekunden, bis er vollständig hochgefahren ist, und wählen Sie\n"
 "manuell die Verbindung zum Flugcontroller aus oder fügen Sie eine neue hinzu"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:297
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:302
 msgid "No connection"
 msgstr "Keine Verbindung"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:309
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:314
 msgid "Skip FC connection, just edit the .param files on disk"
 msgstr ""
 "Überspringen Sie die FC-Verbindung, bearbeiten Sie einfach die .param-"
 "Dateien auf der Festplatte"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:315
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:320
 msgid ""
 "No parameter values will be fetched from the FC, default parameter values "
 "from disk will be used\n"
@@ -5264,7 +5326,7 @@ msgstr ""
 "(wenn die Datei '00_default.param' vorhanden ist) und bearbeiten Sie einfach "
 "die Zwischen-.param-Dateien auf der Festplatte"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:331
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:336
 msgid ""
 "Will proceed without FC connection. FC parameters will not be downloaded nor "
 "uploaded"
@@ -5272,12 +5334,12 @@ msgstr ""
 "Es wird ohne FC-Verbindung fortgefahren. FC-Parameter werden weder "
 "heruntergeladen noch hochgeladen"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:332
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:337
 msgid "Only the intermediate '.param' files on the PC disk will be edited"
 msgstr ""
 "Es werden nur die Zwischen-'.param'-Dateien auf der PC-Festplatte bearbeitet"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:348
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:353
 msgid ""
 "This main is for testing and development only. Usually, the "
 "ConnectionSelectionWidgets is called from another script"
@@ -5285,7 +5347,7 @@ msgstr ""
 "Dieser Hauptteil dient nur zu Test- und Entwicklungszwecken. Üblicherweise "
 "wird das ConnectionSelectionWidgets aus einem anderen Skript aufgerufen"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:364
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:369
 msgid ""
 "This main is for testing and development only, usually the "
 "ConnectionSelectionWindow is called from another script"
