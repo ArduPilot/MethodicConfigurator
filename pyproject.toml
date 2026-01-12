@@ -77,7 +77,7 @@ dev = [
     "pytest-mock==3.15.1",
     "python-gettext==5.0",
     "ruff==0.14.11",
-    "types-requests==2.32.4.20250913",
+    "types-requests==2.32.4.20260107",
 ]
 
 ci_headless_tests = [
