@@ -116,6 +116,50 @@ You might need to also do:
 brew install uv python-tk@3.9
 ```
 
+## OS Keyring Setup (Optional - For MAVLink Signing)
+
+If you plan to use [MAVLink 2.0 message signing](https://mavlink.io/en/guide/message_signing.html),
+the application can securely store signing keys using your operating system's keyring.
+
+### Windows
+
+**No setup required** - Uses Windows Credential Manager (built-in).
+
+### macOS
+
+**No setup required** - Uses Keychain (built-in).
+
+### Linux
+
+Most desktop environments have keyring support pre-installed:
+
+- **GNOME**: Uses GNOME Keyring / Secret Service
+- **KDE**: Uses KWallet
+- **Headless/Server**: Falls back to encrypted file storage (no keyring)
+
+**If keyring is not installed**, install it for your distribution:
+
+```bash
+# Ubuntu/Debian (GNOME)
+sudo apt install gnome-keyring libsecret-1-0
+
+# Fedora (GNOME)
+sudo dnf install gnome-keyring libsecret
+
+# Arch Linux
+sudo pacman -S gnome-keyring libsecret
+```
+
+### Verifying Keyring Availability
+
+```python
+from ardupilot_methodic_configurator.backend_signing_keystore import SigningKeystore
+keystore = SigningKeystore()
+print(f"Keyring available: {keystore.keyring_available}")
+```
+
+If keyring is not available, the application automatically falls back to encrypted file storage.
+
 ## Install *Mission Planner* software on a PC or Mac
 
 1. Download and install [Mission Planner](https://firmware.ardupilot.org/Tools/MissionPlanner/).

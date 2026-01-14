@@ -13,6 +13,7 @@ These tests focus on low-level implementation details, error paths with mocking,
 and edge cases that cannot be tested at the BDD level.
 """
 
+import base64
 import contextlib
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -197,3 +198,147 @@ class TestKeystoreFileOperationsErrorHandling:
 
             # Restore permissions
             tmp_path.chmod(0o755)
+
+
+class TestKeystorePrimaryKeyringMethod:
+    """Test the primary keyring storage method when keyring is available."""
+
+    def test_store_key_uses_keyring_when_available(self, tmp_path: Path) -> None:
+        """
+        Test that store_key uses keyring.set_password when keyring is available.
+
+        GIVEN: Keyring is available and functional
+        WHEN: User stores a signing key
+        THEN: keyring.set_password should be called with correct parameters
+        """
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(tmp_path)
+
+            mock_keyring = MagicMock()
+            mock_backend = MagicMock()
+            mock_keyring.get_keyring.return_value = mock_backend
+
+            with patch.dict("sys.modules", {"keyring": mock_keyring}):
+                keystore = SigningKeystore(use_keyring=True)
+                keystore._keyring_available = True
+
+                # Reset mock after keystore creation (constructor also calls keyring)
+                mock_keyring.reset_mock()
+
+                key = keystore.generate_key()
+                vehicle_id = "TEST-VEHICLE"
+                result = keystore.store_key(vehicle_id, key)
+
+                # Assert keyring.set_password was called
+                assert result is True
+                mock_keyring.set_password.assert_called_once()
+                call_args = mock_keyring.set_password.call_args
+                assert call_args[0][0] == "ardupilot_methodic_configurator_signing"
+                assert call_args[0][1] == vehicle_id
+
+    def test_retrieve_key_uses_keyring_when_available(self, tmp_path: Path) -> None:
+        """
+        Test that retrieve_key uses keyring.get_password when keyring is available.
+
+        GIVEN: A key was stored in keyring
+        WHEN: User retrieves the key
+        THEN: keyring.get_password should be called
+        AND: The correct key should be returned
+        """
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(tmp_path)
+
+            key = b"A" * 32  # 32-byte key
+            key_b64 = base64.b64encode(key).decode("ascii")
+
+            mock_keyring = MagicMock()
+            mock_backend = MagicMock()
+            mock_keyring.get_keyring.return_value = mock_backend
+            mock_keyring.get_password.return_value = key_b64
+
+            with patch.dict("sys.modules", {"keyring": mock_keyring}):
+                keystore = SigningKeystore(use_keyring=True)
+                keystore._keyring_available = True
+
+                # Reset mock after keystore creation
+                mock_keyring.reset_mock()
+                mock_keyring.get_password.return_value = key_b64
+
+                vehicle_id = "TEST-VEHICLE"
+                retrieved = keystore.retrieve_key(vehicle_id)
+
+                # Assert keyring.get_password was called
+                mock_keyring.get_password.assert_called_once()
+                call_args = mock_keyring.get_password.call_args
+                assert call_args[0][0] == "ardupilot_methodic_configurator_signing"
+                assert call_args[0][1] == vehicle_id
+                assert retrieved == key
+
+    def test_delete_key_uses_keyring_when_available(self, tmp_path: Path) -> None:
+        """
+        Test that delete_key uses keyring.delete_password when keyring is available.
+
+        GIVEN: A key exists in keyring
+        WHEN: User deletes the key
+        THEN: keyring.delete_password should be called
+        """
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(tmp_path)
+
+            key = b"B" * 32
+            key_b64 = base64.b64encode(key).decode("ascii")
+
+            mock_keyring = MagicMock()
+            mock_backend = MagicMock()
+            mock_keyring.get_keyring.return_value = mock_backend
+            mock_keyring.get_password.return_value = key_b64
+
+            with patch.dict("sys.modules", {"keyring": mock_keyring}):
+                keystore = SigningKeystore(use_keyring=True)
+                keystore._keyring_available = True
+
+                # Reset mock after keystore creation
+                mock_keyring.reset_mock()
+                mock_keyring.get_password.return_value = key_b64
+
+                vehicle_id = "TEST-VEHICLE"
+                result = keystore.delete_key(vehicle_id)
+
+                # Assert keyring.delete_password was called
+                assert result is True
+                mock_keyring.delete_password.assert_called_once()
+                call_args = mock_keyring.delete_password.call_args
+                assert call_args[0][0] == "ardupilot_methodic_configurator_signing"
+                assert call_args[0][1] == vehicle_id
+
+    def test_keyring_stores_base64_encoded_key(self, tmp_path: Path) -> None:
+        """
+        Test that keys are stored as base64-encoded strings in keyring.
+
+        GIVEN: Keyring is available
+        WHEN: User stores a binary key
+        THEN: The key should be base64-encoded before storing
+        """
+        with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
+            mock_dir.return_value = str(tmp_path)
+
+            mock_keyring = MagicMock()
+            mock_backend = MagicMock()
+            mock_keyring.get_keyring.return_value = mock_backend
+
+            with patch.dict("sys.modules", {"keyring": mock_keyring}):
+                keystore = SigningKeystore(use_keyring=True)
+                keystore._keyring_available = True
+
+                # Reset mock after keystore creation
+                mock_keyring.reset_mock()
+
+                key = b"C" * 32
+                expected_b64 = base64.b64encode(key).decode("ascii")
+                keystore.store_key("TEST-VEHICLE", key)
+
+                # Assert the stored value is base64 encoded
+                call_args = mock_keyring.set_password.call_args
+                stored_value = call_args[0][2]
+                assert stored_value == expected_b64
+

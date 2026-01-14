@@ -21,10 +21,12 @@ from unittest.mock import patch
 import pytest
 from signing_test_fixtures import STANDARD_CONFIG_PARAMS, create_standard_signing_config
 
+from ardupilot_methodic_configurator.backend_signing_config import (
+    SigningConfigManager,
+)
 from ardupilot_methodic_configurator.data_model_signing_config import (
     CONFIG_VERSION,
     SigningConfig,
-    SigningConfigManager,
     VehicleSigningConfig,
 )
 

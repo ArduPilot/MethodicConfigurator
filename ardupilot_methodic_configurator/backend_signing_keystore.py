@@ -22,7 +22,7 @@ from typing import Optional
 from platformdirs import user_data_dir
 
 # Constants
-SIGNING_KEY_LENGTH = 32  # 256 bits for HMAC-SHA256
+SIGNING_KEY_LENGTH = 32  
 APP_NAME = "ArduPilot Methodic Configurator"
 KEYSTORE_FILENAME = "mavlink_signing_keys.json"
 KEYSTORE_VERSION = 1
@@ -74,7 +74,7 @@ class KeystoreData:
         """Create from dictionary."""
         keys_data: dict[str, dict[str, str]] = data.get("keys", {})  # type: ignore[assignment]
         keys = {k: StoredKey.from_dict(v) for k, v in keys_data.items()}
-        return cls(version=data.get("version", KEYSTORE_VERSION), keys=keys)  # type: ignore[arg-type]
+        return cls(version=data.get("version", KEYSTORE_VERSION), keys=keys)  # type: ignore[arg-type] 
 
 
 class SigningKeystore:
@@ -90,6 +90,8 @@ class SigningKeystore:
     - Per-vehicle key isolation
     - Password-protected export/import
     - Encrypted storage with key derivation
+
+    See INSTALL.md for OS keyring setup instructions.
 
     **IMPORTANT SECURITY LIMITATION:**
     The file-based fallback storage uses vehicle_id as the encryption key derivation input.
@@ -168,9 +170,9 @@ class SigningKeystore:
             # Catches NoKeyringError and other keyring-specific errors
             exc_name = type(exc).__name__
             if exc_name == "NoKeyringError":
-                self._logger.debug("No keyring backend available")
+                self._logger.warning("No keyring backend available")
             else:
-                self._logger.debug("Keyring test failed: %s", exc)
+                self._logger.warning("Keyring test failed: %s", exc)
             return False
 
     def generate_key(self) -> bytes:
@@ -235,8 +237,6 @@ class SigningKeystore:
             # Generate salt for this key
             salt = secrets.token_bytes(16)
 
-            # Derive encryption key from vehicle_id (as a simple protection)
-            # Note: This provides obfuscation, not strong encryption without a password
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
@@ -285,7 +285,6 @@ class SigningKeystore:
         if not vehicle_id:
             return None
 
-        # Try keyring first
         if self._keyring_available:
             try:
                 import keyring  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
@@ -416,7 +415,7 @@ class SigningKeystore:
         try:
             from cryptography.fernet import Fernet  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
             from cryptography.hazmat.primitives import hashes  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
                 PBKDF2HMAC,
             )
 
@@ -467,7 +466,7 @@ class SigningKeystore:
         try:
             from cryptography.fernet import Fernet, InvalidToken  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
             from cryptography.hazmat.primitives import hashes  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
                 PBKDF2HMAC,
             )
 

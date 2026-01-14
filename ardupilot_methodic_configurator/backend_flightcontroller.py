@@ -486,7 +486,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         allow_unsigned_in: bool = True,
         initial_timestamp: int = 0,
         link_id: int = 0,
-    ) -> tuple[bool, str]:
+    ) -> bool:
         """
         Set up MAVLink 2.0 message signing for secure communication.
 
@@ -501,12 +501,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
             link_id: Link ID for signing (0-255, default: 0)
 
         Returns:
-            tuple[bool, str]: (success, error_message)
-                - success is True if signing was set up successfully
-                - error_message is empty on success or contains error description
+            bool: True if signing was set up successfully
 
         Raises:
+            ConnectionError: If no flight controller connection is available
             ValueError: If key is not 32 bytes or link_id is out of range
+            NotImplementedError: If pymavlink version doesn't support signing
+            RuntimeError: If signing setup fails for other reasons
 
         Note:
             MAVLink signing provides authentication (not encryption).
@@ -515,9 +516,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
         """
         if self.master is None:
-            error_msg = _("No flight controller connection available for signing setup")
-            logging_warning(error_msg)
-            return False, error_msg
+            msg = _("No flight controller connection available for signing setup")
+            logging_warning(msg)
+            raise ConnectionError(msg)
 
         if len(key) != 32:
             msg = f"Signing key must be 32 bytes, got {len(key)} bytes"
@@ -543,16 +544,16 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 _("MAVLink signing configured: sign_outgoing=%(sign)s, allow_unsigned=%(unsigned)s"),
                 {"sign": sign_outgoing, "unsigned": allow_unsigned_in},
             )
-            return True, ""
+            return True
 
-        except AttributeError:
-            error_msg = _("MAVLink signing not supported by this pymavlink version")
-            logging_error(error_msg)
-            return False, error_msg
-        except Exception as exc:  # pylint: disable=broad-except
-            error_msg = _("Failed to set up MAVLink signing: %(error)s") % {"error": str(exc)}
-            logging_error(error_msg)
-            return False, error_msg
+        except AttributeError as exc:
+            msg = _("MAVLink signing not supported by this pymavlink version")
+            logging_error(msg)
+            raise NotImplementedError(msg) from exc
+        except Exception as exc:
+            msg = _("Failed to set up MAVLink signing: %(error)s") % {"error": str(exc)}
+            logging_error(msg)
+            raise RuntimeError(msg) from exc
 
     def _unsigned_callback(self, msg: object) -> bool:
         """
@@ -581,37 +582,40 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # This allows communication during signing setup and transition periods
         return True
 
-    def disable_signing(self) -> tuple[bool, str]:
+    def disable_signing(self) -> bool:
         """
         Disable MAVLink message signing.
 
         This removes signing configuration and returns to unsigned communication.
 
         Returns:
-            tuple[bool, str]: (success, error_message)
-                - success is True if signing was disabled successfully
-                - error_message is empty on success or contains error description
+            bool: True if signing was disabled successfully
+
+        Raises:
+            ConnectionError: If no flight controller connection is available
+            NotImplementedError: If pymavlink version doesn't support signing
+            RuntimeError: If disabling signing fails for other reasons
 
         """
         if self.master is None:
-            error_msg = _("No flight controller connection available")
-            logging_warning(error_msg)
-            return False, error_msg
+            msg = _("No flight controller connection available")
+            logging_warning(msg)
+            raise ConnectionError(msg)
 
         try:
             # Disable signing by passing None as key
             # Type ignore needed because MavlinkConnection is a Union including object fallback
             self.master.setup_signing(None, sign_outgoing=False, allow_unsigned_callback=None)  # type: ignore[union-attr]
             logging_info(_("MAVLink signing disabled"))
-            return True, ""
-        except AttributeError:
-            error_msg = _("MAVLink signing not supported by this pymavlink version")
-            logging_error(error_msg)
-            return False, error_msg
-        except Exception as exc:  # pylint: disable=broad-except
-            error_msg = _("Failed to disable MAVLink signing: %(error)s") % {"error": str(exc)}
-            logging_error(error_msg)
-            return False, error_msg
+            return True
+        except AttributeError as exc:
+            msg = _("MAVLink signing not supported by this pymavlink version")
+            logging_error(msg)
+            raise NotImplementedError(msg) from exc
+        except Exception as exc:
+            msg = _("Failed to disable MAVLink signing: %(error)s") % {"error": str(exc)}
+            logging_error(msg)
+            raise RuntimeError(msg) from exc
 
     def get_signing_status(self) -> dict[str, object]:
         """
