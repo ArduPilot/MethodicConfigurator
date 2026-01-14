@@ -46,9 +46,7 @@ def signing_keystore(tmp_path) -> SigningKeystore:
 class TestSITLConnectionWithSigning:
     """Test MAVLink signing with actual SITL connection."""
 
-    def test_can_connect_to_sitl(
-        self, sitl_flight_controller: FlightController
-    ) -> None:
+    def test_can_connect_to_sitl(self, sitl_flight_controller: FlightController) -> None:
         """
         User can connect to SITL successfully.
 
@@ -60,9 +58,7 @@ class TestSITLConnectionWithSigning:
         assert sitl_flight_controller.master is not None
         assert sitl_flight_controller.info is not None
 
-    def test_can_get_signing_status(
-        self, sitl_flight_controller: FlightController
-    ) -> None:
+    def test_can_get_signing_status(self, sitl_flight_controller: FlightController) -> None:
         """
         User can check signing status on a connected FlightController.
 
@@ -163,9 +159,7 @@ class TestSITLSigningKeyPersistence:  # pylint: disable=too-few-public-methods
 class TestSITLSigningEdgeCases:
     """Test edge cases for signing with SITL connection."""
 
-    def test_signing_with_invalid_key_length_raises_error(
-        self, sitl_flight_controller: FlightController
-    ) -> None:
+    def test_signing_with_invalid_key_length_raises_error(self, sitl_flight_controller: FlightController) -> None:
         """
         Setting up signing with invalid key length raises an error.
 
@@ -177,9 +171,7 @@ class TestSITLSigningEdgeCases:
         with pytest.raises(ValueError, match="32 bytes"):
             sitl_flight_controller.setup_signing(invalid_key)
 
-    def test_signing_with_invalid_link_id_raises_error(
-        self, sitl_flight_controller: FlightController
-    ) -> None:
+    def test_signing_with_invalid_link_id_raises_error(self, sitl_flight_controller: FlightController) -> None:
         """
         Setting up signing with invalid link_id raises an error.
 

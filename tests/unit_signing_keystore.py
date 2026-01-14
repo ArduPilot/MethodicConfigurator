@@ -341,4 +341,3 @@ class TestKeystorePrimaryKeyringMethod:
                 call_args = mock_keyring.set_password.call_args
                 stored_value = call_args[0][2]
                 assert stored_value == expected_b64
-

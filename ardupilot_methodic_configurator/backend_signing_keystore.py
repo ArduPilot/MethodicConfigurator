@@ -22,7 +22,7 @@ from typing import Optional
 from platformdirs import user_data_dir
 
 # Constants
-SIGNING_KEY_LENGTH = 32  
+SIGNING_KEY_LENGTH = 32
 APP_NAME = "ArduPilot Methodic Configurator"
 KEYSTORE_FILENAME = "mavlink_signing_keys.json"
 KEYSTORE_VERSION = 1
@@ -74,7 +74,7 @@ class KeystoreData:
         """Create from dictionary."""
         keys_data: dict[str, dict[str, str]] = data.get("keys", {})  # type: ignore[assignment]
         keys = {k: StoredKey.from_dict(v) for k, v in keys_data.items()}
-        return cls(version=data.get("version", KEYSTORE_VERSION), keys=keys)  # type: ignore[arg-type] 
+        return cls(version=data.get("version", KEYSTORE_VERSION), keys=keys)  # type: ignore[arg-type]
 
 
 class SigningKeystore:

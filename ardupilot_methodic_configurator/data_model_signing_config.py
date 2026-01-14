@@ -251,4 +251,3 @@ class VehicleSigningConfig:
             signing_config=signing_config,
             auto_setup=data.get("auto_setup", False),
         )
-
