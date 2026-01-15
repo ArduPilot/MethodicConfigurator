@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from tkinter import Entry, Listbox, StringVar, ttk
-from tkinter.constants import END, HORIZONTAL, SINGLE, VERTICAL, E, N, S, W
+from tkinter.constants import END, HORIZONTAL, VERTICAL, E, N, S, W
 from typing import Callable, Union
 
 from ardupilot_methodic_configurator import _
@@ -118,7 +118,12 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         listbox_frame = ttk.Frame(self.master)
 
         self._listbox = Listbox(
-            listbox_frame, background="white", foreground="black", selectmode=SINGLE, activestyle="none", exportselection=False
+            listbox_frame,
+            background="white",
+            foreground="black",
+            selectmode=tk.EXTENDED,
+            activestyle="none",
+            exportselection=False,
         )
         self._listbox.grid(row=0, column=0, sticky=N + E + W + S)
 
@@ -177,6 +182,12 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
     def get_value(self) -> str:
         return self._entry_var.get()  # type: ignore[no-any-return] # mypy bug
+
+    def get_filtered_items(self) -> list[str]:
+        """Get the list of currently filtered items in the listbox."""
+        if self._listbox is None:
+            return []
+        return [self._listbox.get(i) for i in range(self._listbox.size())]
 
     def set_value(self, text: str, close_dialog: bool = False) -> None:
         self._set_var(text)
