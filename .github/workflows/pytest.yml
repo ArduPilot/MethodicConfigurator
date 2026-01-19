@@ -53,12 +53,31 @@ jobs:
       - name: Install system dependencies for GUI testing
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot tcl8.6 tk8.6 libtcl8.6 libtk8.6
+          if [[ "${{ matrix.python-version }}" == "3.9" ]]; then
+            # Python 3.9: keep using Tcl/Tk 8.6
+            sudo apt-get install -y \
+              python3-tk \
+              scrot xdotool x11-utils gnome-screenshot \
+              tcl8.6 tk8.6 libtcl8.6 libtk8.6
+          else
+            # Python 3.14 and 3.14t: use Tcl/Tk 9.0
+            sudo apt-get install -y \
+              python3-tk \
+              scrot xdotool x11-utils gnome-screenshot \
+              tcl9.0 tk9.0 libtcl9.0 libtk9.0
+          fi
 
       - name: Ensure Tcl/Tk search paths
         run: |
-          echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
-          echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
+          if [[ "${{ matrix.python-version }}" == "3.9" ]]; then
+            # Python 3.9: Tcl/Tk 8.6 paths
+            echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
+            echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
+          else
+            # Python 3.14 and 3.14t: Tcl/Tk 9.0 paths
+            echo "TCL_LIBRARY=/usr/share/tcltk/tcl9.0" >> $GITHUB_ENV
+            echo "TK_LIBRARY=/usr/share/tcltk/tk9.0" >> $GITHUB_ENV
+          fi
 
       - name: Install dependencies and application
         # without --editable, the coverage report is not generated correctly
