@@ -195,12 +195,14 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             logging_debug(_("Did not add empty connection"))
         return False
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def _register_and_try_connect(
         self,
         comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo],
         progress_callback: Union[None, Callable[[int, int], None]],
         baudrate: int,
         log_errors: bool,
+        retries: int = 3,
     ) -> str:
         """
         Register a device in the connection list (if missing) and attempt connection.
@@ -210,6 +212,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             progress_callback: Optional callback for progress updates
             baudrate: Baud rate for serial connections
             log_errors: Whether to log errors
+            retries: Number of connection attempts (default: 3)
 
         Returns:
             str: empty string on success, or error message.
@@ -226,6 +229,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             baudrate=baudrate,
             log_errors=log_errors,
             timeout=self.CONNECTION_RETRY_TIMEOUT,
+            retries=retries,
         )
 
     def connect(
@@ -307,6 +311,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 progress_callback=progress_callback,
                 baudrate=self._baudrate,
                 log_errors=False,
+                retries=2,
             )
             if err == "":
                 return ""
