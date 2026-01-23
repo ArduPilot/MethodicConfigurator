@@ -178,6 +178,12 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
     def get_value(self) -> str:
         return self._entry_var.get()  # type: ignore[no-any-return] # mypy bug
 
+    def get_filtered_items(self) -> list[str]:
+        """Get the list of currently filtered items in the listbox."""
+        if self._listbox is None:
+            return []
+        return list(self._listbox.get(0, END))
+
     def set_value(self, text: str, close_dialog: bool = False) -> None:
         self._set_var(text)
 

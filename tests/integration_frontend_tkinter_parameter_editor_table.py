@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 
 """
-BDD Integration Tests for Parameter Editor Table Frontend.
+Integration tests for the ParameterEditorTable class.
 
-This module contains integration tests that validate complete user workflows
-for the parameter editor table, focusing on user behavior and business value
-rather than implementation details.
+This file contains integration tests that verify component interactions and workflows
+in the parameter editor table. These tests validate how multiple components work together,
+testing through both public and internal APIs with appropriate mocking of external dependencies.
+
+While these tests are behavior-focused and include Given-When-Then structure, they are
+integration tests rather than pure BDD tests, as they:
+- Test internal methods and private APIs (prefixed with _)
+- Mock internal components (BaseWindow, tkinter widgets)
+- Verify implementation details and method calls
+
+For unit tests of individual methods and implementation details, see unit_frontend_tkinter_parameter_editor_table.py.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 

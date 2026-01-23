@@ -2637,6 +2637,180 @@ class TestParameterEditorFrontendAPI:
             assert exported_params[key] == value
 
 
+class TestBulkParameterAdditionWorkflows:
+    """Test bulk parameter addition workflows with different outcomes."""
+
+    def test_user_can_successfully_add_all_new_parameters_at_once(self, parameter_editor) -> None:
+        """
+        User can add multiple valid new parameters in a single bulk operation.
+
+        GIVEN: A user has a parameter file loaded with some parameters
+        WHEN: They attempt to add multiple new parameters that don't exist yet
+        THEN: All parameters should be added successfully
+        AND: The added list should contain all parameter names
+        AND: The skipped and failed lists should be empty
+        """
+        # Arrange: Set up parameter file and FC parameters
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        parameter_editor.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        parameter_editor._flight_controller.fc_parameters = {
+            "PARAM2": 2.0,
+            "PARAM3": 3.0,
+            "PARAM4": 4.0,
+        }
+
+        # Act: Bulk add parameters
+        added, skipped, failed = parameter_editor.bulk_add_parameters(["PARAM2", "PARAM3", "PARAM4"])
+
+        # Assert: All parameters added successfully
+        assert len(added) == 3
+        assert "PARAM2" in added
+        assert "PARAM3" in added
+        assert "PARAM4" in added
+        assert len(skipped) == 0
+        assert len(failed) == 0
+
+    def test_user_receives_skip_notification_when_adding_existing_parameters(self, parameter_editor) -> None:
+        """
+        User is notified when attempting to add parameters that already exist.
+
+        GIVEN: A user has a parameter file with existing parameters
+        WHEN: They attempt to bulk add parameters that already exist in the file
+        THEN: Those parameters should be skipped (failures due to InvalidParameterNameError)
+        AND: The failed list should contain the existing parameter names
+        AND: The added and skipped lists should be empty
+        """
+        # Arrange: Set up file with existing parameters
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {
+            "test_file.param": ParDict({"PARAM1": Par(1.0, "comment"), "PARAM2": Par(2.0, "comment")})
+        }
+        parameter_editor.current_step_parameters = {
+            "PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment")),
+            "PARAM2": ArduPilotParameter("PARAM2", Par(2.0, "comment")),
+        }
+        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+
+        # Act: Attempt to add existing parameters
+        added, skipped, failed = parameter_editor.bulk_add_parameters(["PARAM1", "PARAM2"])
+
+        # Assert: All parameters failed (already exist error)
+        assert len(added) == 0
+        assert len(skipped) == 0
+        assert len(failed) == 2
+        assert "PARAM1" in failed
+        assert "PARAM2" in failed
+
+    def test_user_receives_error_notification_when_adding_invalid_parameters(self, parameter_editor) -> None:
+        """
+        User is notified when attempting to add invalid parameters.
+
+        GIVEN: A user attempts to add parameters
+        WHEN: Some parameter names are invalid or not available in FC
+        THEN: Those parameters should fail
+        AND: The failed list should contain the invalid parameter names
+        AND: The added and skipped lists should be empty
+        """
+        # Arrange: Set up parameter file with limited FC parameters
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        parameter_editor.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 1.0}
+
+        # Act: Attempt to add non-existent parameters
+        added, skipped, failed = parameter_editor.bulk_add_parameters(["INVALID_PARAM", "NONEXISTENT"])
+
+        # Assert: All parameters failed
+        assert len(added) == 0
+        assert len(skipped) == 0
+        assert len(failed) == 2
+        assert "INVALID_PARAM" in failed
+        assert "NONEXISTENT" in failed
+
+    def test_user_receives_detailed_report_for_mixed_bulk_addition_results(self, parameter_editor) -> None:
+        """
+        User receives detailed categorization when bulk adding has mixed results.
+
+        GIVEN: A user has a parameter file loaded
+        WHEN: They bulk add a mix of valid new, existing, and invalid parameters
+        THEN: Parameters should be categorized into added, skipped, and failed
+        AND: Each category should contain the appropriate parameter names
+        """
+        # Arrange: Set up file with one existing parameter
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        parameter_editor.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+        parameter_editor._flight_controller.fc_parameters = {
+            "PARAM1": 1.0,  # Exists in file, will fail
+            "PARAM2": 2.0,  # New, valid
+            "PARAM3": 3.0,  # New, valid
+            # INVALID_PARAM not in FC, will fail
+        }
+
+        # Act: Bulk add mixed parameters
+        added, skipped, failed = parameter_editor.bulk_add_parameters(["PARAM1", "PARAM2", "PARAM3", "INVALID_PARAM"])
+
+        # Assert: Mixed results properly categorized
+        assert len(added) == 2
+        assert "PARAM2" in added
+        assert "PARAM3" in added
+
+        assert len(skipped) == 0  # No skipped - existing params throw errors
+
+        assert len(failed) == 2
+        assert "PARAM1" in failed  # Already exists
+        assert "INVALID_PARAM" in failed  # Not in FC
+
+    def test_bulk_add_empty_list_returns_empty_results(self, parameter_editor) -> None:
+        """
+        Bulk add with empty list returns empty results without errors.
+
+        GIVEN: A user has a parameter file loaded
+        WHEN: They call bulk_add_parameters with an empty list
+        THEN: All result lists should be empty
+        AND: No errors should occur
+        """
+        # Arrange: Set up basic parameter file
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0, "comment")})}
+        parameter_editor.current_step_parameters = {"PARAM1": ArduPilotParameter("PARAM1", Par(1.0, "comment"))}
+
+        # Act: Bulk add with empty list
+        added, skipped, failed = parameter_editor.bulk_add_parameters([])
+
+        # Assert: All lists empty
+        assert len(added) == 0
+        assert len(skipped) == 0
+        assert len(failed) == 0
+
+    def test_bulk_add_handles_parameter_case_insensitivity(self, parameter_editor) -> None:
+        """
+        Bulk add correctly handles parameter name case variations.
+
+        GIVEN: A user has parameters available in the FC
+        WHEN: They bulk add parameters using different case variations
+        THEN: Parameters should be normalized and added correctly
+        AND: Case variations should not cause duplicates
+        """
+        # Arrange: Set up FC parameters
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict()}
+        parameter_editor.current_step_parameters = {}
+        parameter_editor._flight_controller.fc_parameters = {
+            "PARAM_TEST": 1.0,
+        }
+
+        # Act: Bulk add with uppercase (normalized form)
+        added, skipped, failed = parameter_editor.bulk_add_parameters(["PARAM_TEST"])
+
+        # Assert: Parameter added successfully
+        assert len(added) == 1
+        assert "PARAM_TEST" in added
+        assert len(skipped) == 0
+        assert len(failed) == 0
+
+
 class TestParameterValueUpdatePresenter:
     """Verify the presenter-style results returned by update_parameter_value."""
 
