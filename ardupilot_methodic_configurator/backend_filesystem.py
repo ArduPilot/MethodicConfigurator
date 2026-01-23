@@ -785,9 +785,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
             # see https://github.com/ArduPilot/MethodicConfigurator/issues/1189
             if not self.vehicle_configuration_file_exists(param_filename):
-                self.export_to_param(
-                    param_dict, param_filename, annotate_doc=annotate_docs_into_param_files
-                )
+                self.export_to_param(param_dict, param_filename, annotate_doc=annotate_docs_into_param_files)
         return ""
 
     def merge_forced_or_derived_parameters(
