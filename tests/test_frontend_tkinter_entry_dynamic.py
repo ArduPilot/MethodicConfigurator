@@ -585,6 +585,75 @@ class TestEntryWithDynamicalyFilteredListbox:  # pylint: disable=too-many-public
             # In contains mode, empty string also matches all items
             assert result == widget._list_of_items
 
+    def test_user_can_retrieve_currently_filtered_items(self, setup_widget) -> None:
+        """
+        User can retrieve the list of currently filtered items from the listbox.
+
+        GIVEN: A user has a widget with a list of items
+        WHEN: They filter the list by typing text
+        THEN: They can retrieve the currently visible filtered items
+        AND: The list should reflect what's shown in the listbox
+        """
+        _, widget = setup_widget
+
+        # Act: Filter items by typing "item"
+        widget._entry_var.set("item")
+        widget._on_change_entry_var("", "", "")  # Trigger filtering
+
+        # Assert: Filtered items can be retrieved
+        # Note: Default is startswith_match=True, so only "item1", "item2", "item3" match
+        # "anotheritem" doesn't match because it doesn't start with "item"
+        filtered = widget.get_filtered_items()
+        assert len(filtered) == 3  # item1, item2, item3
+        assert "item1" in filtered
+        assert "item2" in filtered
+        assert "item3" in filtered
+        assert "anotheritem" not in filtered  # Doesn't start with "item"
+        assert "test" not in filtered
+
+    def test_user_receives_empty_list_when_no_listbox_is_displayed(self, setup_widget) -> None:
+        """
+        User receives an empty list when querying filtered items without active listbox.
+
+        GIVEN: A user has a widget without an active listbox
+        WHEN: They call get_filtered_items
+        THEN: An empty list should be returned
+        """
+        _, widget = setup_widget
+
+        # Ensure no listbox is active
+        widget._listbox = None
+
+        # Act: Get filtered items
+        filtered = widget.get_filtered_items()
+
+        # Assert: Empty list returned
+        assert filtered == []
+
+    def test_user_can_retrieve_all_items_when_listbox_shows_all_matches(self, setup_widget) -> None:
+        """
+        User can retrieve all items when the filter matches everything.
+
+        GIVEN: A user has a widget with filtered items
+        WHEN: The filter matches all items in the list
+        THEN: get_filtered_items should return all items
+        """
+        _, widget = setup_widget
+
+        # Act: Filter with empty string (matches all)
+        widget._entry_var.set("")
+        # Manually build listbox with all items for this test
+        widget._listbox = tk.Listbox(widget)
+        for item in widget._list_of_items:
+            widget._listbox.insert(END, item)
+
+        # Get filtered items
+        filtered = widget.get_filtered_items()
+
+        # Assert: All items returned
+        assert len(filtered) == len(widget._list_of_items)
+        assert filtered == widget._list_of_items
+
 
 # pylint: enable=protected-access
 
