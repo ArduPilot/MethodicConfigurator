@@ -766,6 +766,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         eval_variables = self.get_eval_variables()
         # the eval variables do not contain fc_parameter values
         # and that is intentional, the fc_parameters are not to be used in here
+        annotate_docs_into_param_files = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
         for param_filename, param_dict in self.file_parameters.items():
             for param_name, param in param_dict.items():
                 if source_param_values and param_name in source_param_values:
@@ -782,9 +783,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if error_msg:
                     return error_msg
                 self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
-            self.export_to_param(
-                param_dict, param_filename, annotate_doc=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
-            )
+            # see https://github.com/ArduPilot/MethodicConfigurator/issues/1189
+            if not self.vehicle_configuration_file_exists(param_filename):
+                self.export_to_param(
+                    param_dict, param_filename, annotate_doc=annotate_docs_into_param_files
+                )
         return ""
 
     def merge_forced_or_derived_parameters(
