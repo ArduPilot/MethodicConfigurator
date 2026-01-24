@@ -1138,6 +1138,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     @staticmethod
     def add_argparse_arguments(parser: ArgumentParser) -> ArgumentParser:
+        """Add parameter editor specific arguments to the parser."""
+        parser.add_argument(
+            "--export-fc-params-missing-or-different",
+            action="store_true",
+            help=_("Export FC params that are missing or different in the configuration steps. Default is %(default)s"),
+        )
         return parser
 
 

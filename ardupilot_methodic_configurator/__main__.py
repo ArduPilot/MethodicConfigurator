@@ -572,7 +572,9 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
             )
 
     # Call the GUI function with the starting intermediate parameter file
-    parameter_editor = ParameterEditor(start_file, state.flight_controller, state.local_filesystem)
+    parameter_editor = ParameterEditor(
+        start_file, state.flight_controller, state.local_filesystem, state.args.export_fc_params_missing_or_different
+    )
     window = ParameterEditorWindow(parameter_editor)
     window.run()
 

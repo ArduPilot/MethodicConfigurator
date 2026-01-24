@@ -59,6 +59,7 @@ def mock_args() -> MagicMock:
     args.baudrate = 115200
     args.skip_component_editor = False
     args.n = 0
+    args.export_fc_params_missing_or_different = False
     return args
 
 
@@ -955,7 +956,9 @@ class TestParameterEditorStartup:
 
             # Assert: Advanced mode with IMU calibration considered
             mock_fs.get_start_file.assert_called_once_with(0, True)  # noqa: FBT003 IMU tcal available and not simple GUI
-            mock_param_editor.assert_called_once_with("05_imu_temperature_calibration.param", mock_fc, mock_fs)
+            mock_param_editor.assert_called_once_with(
+                "05_imu_temperature_calibration.param", mock_fc, mock_fs, export_fc_params_missing_or_different=False
+            )
             mock_editor.assert_called_once_with(mock_param_editor.return_value)
 
     def test_user_gets_simplified_workflow_in_simple_mode(self, application_state: ApplicationState) -> None:

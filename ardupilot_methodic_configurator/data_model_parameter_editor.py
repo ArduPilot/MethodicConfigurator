@@ -98,11 +98,18 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     # and safety, allowing batch operations while maintaining user control.
     MAX_BULK_ADD_SUGGESTIONS = 15
 
-    def __init__(self, current_file: str, flight_controller: FlightController, filesystem: LocalFilesystem) -> None:
+    def __init__(
+        self,
+        current_file: str,
+        flight_controller: FlightController,
+        filesystem: LocalFilesystem,
+        export_fc_params_missing_or_different: bool = False,
+    ) -> None:
         self.current_file = current_file
         self._flight_controller = flight_controller
         self._local_filesystem = filesystem
         self._config_step_processor = ConfigurationStepProcessor(self._local_filesystem)
+        self._should_export_fc_params_diff = export_fc_params_missing_or_different
 
         # self.current_step_parameters is rebuilt on every repopulate(...) call and only contains the ArduPilotParameter
         # objects needed for the current table view.
@@ -1014,7 +1021,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             else:
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
 
-            self._export_fc_params_missing_or_different()
+            if self._should_export_fc_params_diff:
+                self._export_fc_params_missing_or_different()
 
         self._write_current_file()
         self._at_least_one_changed = False
