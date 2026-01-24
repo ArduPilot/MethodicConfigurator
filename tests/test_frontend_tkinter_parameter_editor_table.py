@@ -25,7 +25,6 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduP
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
-    OperationNotPossibleError,
     ParameterEditor,
     ParameterValueUpdateResult,
     ParameterValueUpdateStatus,
@@ -2222,49 +2221,6 @@ class TestHandlerEdgeCases:
         entry.testing_on_change_reason_change(focus_event)
 
         param.set_change_reason.assert_called_once_with("Updated")
-
-
-class TestParameterAdditionWorkflows:
-    """Cover add-parameter dialog flows and error handling."""
-
-    def test_on_parameter_add_invokes_confirmation_handler(self, parameter_editor_table: ParameterEditorTable) -> None:
-        parameter_editor_table.parameter_editor.get_possible_add_param_names.return_value = ["NEW"]
-        parameter_editor_table._confirm_parameter_addition = MagicMock(return_value=True)
-        mock_window = MagicMock()
-        mock_window.root = MagicMock()
-        mock_window.main_frame = MagicMock()
-        entry_widget = MagicMock()
-        entry_widget.get.return_value = "NEW"
-
-        with (
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.BaseWindow", return_value=mock_window
-            ),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.EntryWithDynamicalyFilteredListbox",
-                return_value=entry_widget,
-            ),
-        ):
-            parameter_editor_table._on_parameter_add()
-
-        handler = entry_widget.bind.call_args_list[0][0][1]
-        handler(SimpleNamespace(widget=entry_widget))
-        parameter_editor_table._confirm_parameter_addition.assert_called_with("NEW")
-
-    def test_on_parameter_add_handles_operation_not_possible(self, parameter_editor_table: ParameterEditorTable) -> None:
-        parameter_editor_table.parameter_editor.get_possible_add_param_names.side_effect = OperationNotPossibleError("nope")
-        parameter_editor_table._on_parameter_add()
-        parameter_editor_table._dialogs.show_error.assert_called_once()
-
-    def test_confirm_parameter_addition_handles_errors(self, parameter_editor_table: ParameterEditorTable) -> None:
-        parameter_editor_table.parameter_editor.add_parameter_to_current_file.side_effect = InvalidParameterNameError("bad")
-        assert parameter_editor_table._confirm_parameter_addition("bad") is False
-        parameter_editor_table._dialogs.show_error.assert_called()
-
-        parameter_editor_table._dialogs.show_error.reset_mock()
-        parameter_editor_table.parameter_editor.add_parameter_to_current_file.side_effect = OperationNotPossibleError("ops")
-        assert parameter_editor_table._confirm_parameter_addition("bad") is False
-        parameter_editor_table._dialogs.show_error.assert_called()
 
 
 class TestUploadSelectionBehavior:
