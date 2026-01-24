@@ -53,12 +53,27 @@ jobs:
       - name: Install system dependencies for GUI testing
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot tcl8.6 tk8.6 libtcl8.6 libtk8.6
+          # Only install system Tcl/Tk for Python < 3.13 (newer versions bundle their own)
+          if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
+            echo "Installing system Tcl/Tk 8.6 for Python ${{ matrix.python-version }}"
+            sudo apt-get install -y python3-tk tcl8.6 tk8.6 libtcl8.6 libtk8.6
+          else
+            echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, skipping system packages"
+            # Only install tools, not Tcl/Tk libraries
+            sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
+          fi
+          python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
 
       - name: Ensure Tcl/Tk search paths
         run: |
-          echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
-          echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
+          # Only set Tcl/Tk paths for Python < 3.13
+          if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
+            echo "Setting Tcl/Tk paths for Python ${{ matrix.python-version }}"
+            echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
+            echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
+          else
+            echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, no custom paths needed"
+          fi
 
       - name: Install dependencies and application
         # without --editable, the coverage report is not generated correctly
