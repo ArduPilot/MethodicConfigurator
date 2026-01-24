@@ -10,8 +10,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import os
-import sys
 import tkinter as tk
 from tkinter import ttk
 from unittest.mock import MagicMock, Mock, patch
