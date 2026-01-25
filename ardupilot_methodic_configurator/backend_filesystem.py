@@ -357,6 +357,46 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             logging_error(_("Error: %s is not a directory."), self.vehicle_dir)
         return parameters
 
+    def compound_params(self, last_filename: Optional[str] = None, skip_default: bool = True) -> tuple[ParDict, Optional[str]]:
+        """
+        Compound parameters from multiple .param files into a single ParDict.
+
+        This method iterates through file_parameters (loaded via read_params_from_files)
+        and compounds them into a single ParDict. By default, it excludes 00_default.param
+        and stops at the specified last_filename if provided.
+
+        Args:
+            last_filename: Optional filename to stop processing at (inclusive).
+                          If None, processes all files.
+            skip_default: If True, skips 00_default.param. Default is True.
+
+        Returns:
+            tuple[ParDict, Optional[str]]: A tuple containing:
+                - The compounded ParDict with all parameters
+                - The first config step filename (excluding 00_default.param if skip_default is True)
+
+        """
+        compound = ParDict()
+        first_config_step_filename = None
+
+        for file_name, file_params in self.file_parameters.items():
+            # Skip default file if requested
+            if skip_default and file_name == "00_default.param":
+                continue
+
+            # Track the first config step filename
+            if first_config_step_filename is None:
+                first_config_step_filename = file_name
+
+            # Append parameters from this file
+            compound.append(file_params)
+
+            # Stop at the specified filename if provided
+            if last_filename and file_name == last_filename:
+                break
+
+        return compound, first_config_step_filename
+
     @staticmethod
     def str_to_bool(s: str) -> Optional[bool]:
         """
