@@ -987,7 +987,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
     ) -> None:
         """Test copying template files with various file types and conditions."""
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
-        mock_listdir.return_value = ["file1.param", "file2.txt", "dir1", ".hidden_file", "dir2"]
+        mock_listdir.return_value = ["01_file1.param", "file2.txt", "dir1", ".hidden_file", "dir2"]
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.side_effect = lambda path: path.endswith(("dir1", "dir2"))
 
@@ -1007,7 +1007,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_copytree.assert_any_call("template_dir/dir2", "new_vehicle_dir/dir2")
 
         # Verify file copies
-        mock_copy2.assert_any_call("template_dir/file1.param", "new_vehicle_dir/file1.param")
+        mock_copy2.assert_any_call("template_dir/01_file1.param", "new_vehicle_dir/01_file1.param")
         mock_copy2.assert_any_call("template_dir/file2.txt", "new_vehicle_dir/file2.txt")
         mock_copy2.assert_any_call("template_dir/.hidden_file", "new_vehicle_dir/.hidden_file")
 
@@ -1027,7 +1027,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
     ) -> None:
         """Test that blank_change_reason parameter correctly strips comments from parameter files."""
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
-        mock_listdir.return_value = ["file1.param", "file2.txt", "dir1"]
+        mock_listdir.return_value = ["01_file1.param", "file2.txt", "dir1"]
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.side_effect = lambda path: path.endswith("dir1")
 
@@ -1074,7 +1074,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         )
 
         # Verify param file was copied normally
-        mock_copy2.assert_any_call("template_dir/file1.param", "new_vehicle_dir/file1.param")
+        mock_copy2.assert_any_call("template_dir/01_file1.param", "new_vehicle_dir/01_file1.param")
 
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
@@ -1093,7 +1093,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         """
         # Arrange: Set up template directory with vehicle.jpg
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
-        mock_listdir.return_value = ["vehicle.jpg", "config.param"]
+        mock_listdir.return_value = ["vehicle.jpg", "01_config.param"]
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.return_value = False
 
@@ -1109,7 +1109,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         # Assert: Vehicle image should be copied
         assert result == ""  # No error
         mock_copy2.assert_any_call("template_dir/vehicle.jpg", "new_vehicle_dir/vehicle.jpg")
-        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
+        mock_copy2.assert_any_call("template_dir/01_config.param", "new_vehicle_dir/01_config.param")
 
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
@@ -1129,7 +1129,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         """
         # Arrange: Set up template directory with vehicle.jpg and other files
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
-        mock_listdir.return_value = ["vehicle.jpg", "config.param", "readme.txt"]
+        mock_listdir.return_value = ["vehicle.jpg", "01_config.param", "readme.txt"]
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.return_value = False
 
@@ -1151,7 +1151,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         assert len(vehicle_jpg_calls) == 0, "vehicle.jpg should not be copied when copy_vehicle_image=False"
 
         # Verify other files were copied
-        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
+        mock_copy2.assert_any_call("template_dir/01_config.param", "new_vehicle_dir/01_config.param")
         mock_copy2.assert_any_call("template_dir/readme.txt", "new_vehicle_dir/readme.txt")
 
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
@@ -1169,7 +1169,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         """
         # Arrange: Set up template directory with vehicle.jpg
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
-        mock_listdir.return_value = ["vehicle.jpg", "config.param"]
+        mock_listdir.return_value = ["vehicle.jpg", "01_config.param"]
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.return_value = False
 
@@ -1191,7 +1191,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         assert len(vehicle_jpg_calls) == 0, "vehicle.jpg should not be copied when copy_vehicle_image=False"
 
         # Verify other files were copied
-        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
+        mock_copy2.assert_any_call("template_dir/01_config.param", "new_vehicle_dir/01_config.param")
 
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
@@ -1210,7 +1210,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         """
         # Arrange: Set up template directory without vehicle.jpg
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
-        mock_listdir.return_value = ["config.param", "readme.txt"]  # No vehicle.jpg
+        mock_listdir.return_value = ["01_config.param", "readme.txt"]  # No vehicle.jpg
         mock_join.side_effect = lambda *args: "/".join(args)
         mock_isdir.return_value = False
 
@@ -1225,7 +1225,7 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
 
         # Assert: No error and other files copied normally
         assert result == ""  # No error
-        mock_copy2.assert_any_call("template_dir/config.param", "new_vehicle_dir/config.param")
+        mock_copy2.assert_any_call("template_dir/01_config.param", "new_vehicle_dir/01_config.param")
         mock_copy2.assert_any_call("template_dir/readme.txt", "new_vehicle_dir/readme.txt")
 
 

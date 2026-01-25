@@ -105,6 +105,7 @@
                 "MOT_HOVER_LEARN": { "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 20_throttle_controller.param file" }
             },
             "derived_parameters": {
+                "ESC_HW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
                 "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
                 "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
                 "SERVO_FTW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
@@ -133,7 +134,7 @@
                 "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" },
                 "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell low'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Low voltage + 0.0) x no. of cells" },
                 "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
-                "BATT_I2C_BUS": { "New Value": "0 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C1' else 1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 4", "Change Reason": "Selected in component editor window" },
+                "BATT_I2C_BUS": { "New Value": "1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 3 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C4' else 0", "Change Reason": "Selected in component editor window" },
                 "MOT_BAT_VOLT_MAX": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell max']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Max voltage + 0.0) x no. of cells" },
                 "MOT_BAT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
             },

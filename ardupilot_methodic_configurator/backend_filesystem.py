@@ -623,6 +623,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             for item in os_listdir(template_dir):
                 if item in skip_files:
                     continue
+                if item.endswith(".param") and not item[0:2].isdigit():
+                    # Skip non-intermediate parameter files that do not start with NN_
+                    continue
                 source = os_path.join(template_dir, item)
                 dest = os_path.join(new_vehicle_dir, item)
                 if blank_change_reason and item.endswith(".param"):
