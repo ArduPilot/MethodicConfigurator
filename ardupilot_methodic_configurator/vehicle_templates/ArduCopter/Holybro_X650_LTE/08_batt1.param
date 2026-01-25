@@ -7,7 +7,7 @@ BATT_CURR_PIN,4  # from https://ardupilot.org/copter/docs/common-holybro-pixhawk
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,0  # no current monitor
-BATT_I2C_BUS,4  # Selected in component editor window
+BATT_I2C_BUS 0  # Selected in component editor window
 BATT_LOW_MAH,0  # No capacity based failsafes, no current monitor
 BATT_LOW_VOLT,20.4  # (Low voltage + 0.0) x no. of cells
 BATT_MONITOR,3  # Selected in component editor window

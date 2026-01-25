@@ -16,11 +16,13 @@ from logging import warning as logging_warning
 from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentDataModelBase
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     BATT_MONITOR_CONNECTION,
     CAN_PORTS,
     GNSS_RECEIVER_CONNECTION,
+    I2C_PORTS,
     MOT_PWM_TYPE_DICT,
     RC_PROTOCOLS_DICT,
     SERIAL_PORTS,
@@ -317,16 +319,48 @@ class ComponentDataModelImport(ComponentDataModelBase):
             protocol = str(MOT_PWM_TYPE_DICT[str(mot_pwm_type)]["protocol"])
             self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
 
-    def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:
+    def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:  # pylint: disable=too-many-branches
         """Process battery monitor parameters and update the data model."""
-        if "BATT_MONITOR" in fc_parameters:
+        if "BATT_MONITOR" in fc_parameters:  # pylint: disable=too-many-nested-blocks
             try:
                 batt_monitor = int(fc_parameters["BATT_MONITOR"])
-                fc_conn_type = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("type", "None")
-                fc_conn_protocol = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("protocol", "Disabled")
+                batt_monitor_str = str(batt_monitor)
 
+                if batt_monitor_str not in BATT_MONITOR_CONNECTION:
+                    logging_error(_("BATT_MONITOR value %s not found in BATT_MONITOR_CONNECTION"), batt_monitor)
+                    return
+
+                fc_conn_type = BATT_MONITOR_CONNECTION[batt_monitor_str].get("type", "None")
+                fc_conn_protocol = BATT_MONITOR_CONNECTION[batt_monitor_str].get("protocol", "Disabled")
+
+                # Handle list of possible connection types
                 if isinstance(fc_conn_type, list):
-                    fc_conn_type = fc_conn_type[0]
+                    # Check if it's I2C ports - need to determine which bus
+                    if set(fc_conn_type) <= set(I2C_PORTS):  # subset of I2C ports
+                        # Use BATT_I2C_BUS to determine the actual I2C bus
+                        # BATT_I2C_BUS: 0=I2C1, 1=I2C2, 2=I2C3, 3=I2C4, 4=I2C_INTERNAL (if exists)
+                        if "BATT_I2C_BUS" in fc_parameters:
+                            try:
+                                i2c_bus = int(fc_parameters["BATT_I2C_BUS"])
+                                if 0 <= i2c_bus < len(fc_conn_type):
+                                    fc_conn_type = fc_conn_type[i2c_bus]
+                                else:
+                                    logging_warning(
+                                        _("BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus"),
+                                        i2c_bus,
+                                        len(fc_conn_type) - 1,
+                                    )
+                                    fc_conn_type = fc_conn_type[0]
+                            except (ValueError, TypeError):
+                                logging_warning(_("Invalid BATT_I2C_BUS value, defaulting to first bus"))
+                                fc_conn_type = fc_conn_type[0]
+                        else:
+                            # Default to first I2C bus if BATT_I2C_BUS not specified
+                            fc_conn_type = fc_conn_type[0]
+                    else:
+                        # For other list types, take first element
+                        fc_conn_type = fc_conn_type[0]
+
                 if isinstance(fc_conn_protocol, list):
                     fc_conn_protocol = fc_conn_protocol[0]
 
@@ -334,17 +368,122 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 self.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), fc_conn_protocol)
             except (ValueError, KeyError, TypeError) as e:
                 logging_error(_("Error processing BATT_MONITOR parameter: %s"), str(e))
+        else:
+            logging_warning(_("BATT_MONITOR parameter not found in fc_parameters"))
 
         if "BATT_CAPACITY" in fc_parameters:
             try:
                 batt_capacity = int(fc_parameters["BATT_CAPACITY"])
                 if batt_capacity > 0:
                     self.set_component_value(("Battery", "Specifications", "Capacity mAh"), batt_capacity)
+                else:
+                    logging_warning(_("BATT_CAPACITY is zero or negative: %s"), batt_capacity)
             except (ValueError, TypeError) as e:
                 logging_error(_("Error processing BATT_CAPACITY parameter: %s"), str(e))
+        else:
+            logging_warning(_("BATT_CAPACITY parameter not found in fc_parameters"))
+
+        # Detect battery chemistry from voltage parameters before estimating cell count
+        # Only update if current chemistry is clearly wrong or not set
+        current_chemistry = str(self.get_component_value(("Battery", "Specifications", "Chemistry")))
+        detected_chemistry = self._detect_battery_chemistry_from_voltages(fc_parameters, current_chemistry)
+        if detected_chemistry and detected_chemistry != current_chemistry:
+            self.set_component_value(("Battery", "Specifications", "Chemistry"), detected_chemistry)
 
         # Estimate number of cells from voltage parameters
         self._estimate_battery_cell_count(fc_parameters)
+
+    def _get_volt_per_cell_for_type(self, chemistry: str, voltage_type: str) -> float:
+        """
+        Get voltage per cell for a given chemistry and voltage type.
+
+        Args:
+            chemistry: Battery chemistry type
+            voltage_type: One of "recommended_max", "recommended_low", "recommended_crit"
+
+        Returns:
+            Voltage per cell value
+
+        """
+        if voltage_type == "recommended_max":
+            return BatteryCell.recommended_max_voltage(chemistry)
+        if voltage_type == "recommended_low":
+            return BatteryCell.recommended_low_voltage(chemistry)
+        # voltage_type == "recommended_crit"
+        return BatteryCell.recommended_crit_voltage(chemistry)
+
+    def _detect_battery_chemistry_from_voltages(
+        self, fc_parameters: dict[str, float], current_chemistry: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Detect battery chemistry from voltage parameter ratios.
+
+        Analyzes voltage parameters and compares them against known chemistry profiles
+        to determine the most likely battery chemistry type. Only suggests a change if
+        the current chemistry is clearly inconsistent with the parameters.
+
+        Args:
+            fc_parameters: Dictionary of flight controller parameters
+            current_chemistry: Currently configured chemistry (if any)
+
+        Returns:
+            Detected chemistry string (e.g., "LiIon", "Lipo") or None if detection fails
+            or current chemistry is acceptable
+
+        """
+        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT
+        voltage_params = [
+            ("MOT_BAT_VOLT_MAX", "recommended_max"),
+            ("BATT_LOW_VOLT", "recommended_low"),
+            ("BATT_CRT_VOLT", "recommended_crit"),
+        ]
+
+        # Try each voltage parameter in priority order
+        for param_name, voltage_type in voltage_params:
+            if param_name not in fc_parameters:
+                continue
+
+            try:
+                total_voltage = float(fc_parameters[param_name])
+                if total_voltage <= 0:
+                    continue
+
+                # Check if current chemistry is consistent with this parameter
+                if current_chemistry and current_chemistry in BatteryCell.chemistries():
+                    volt_per_cell = self._get_volt_per_cell_for_type(current_chemistry, voltage_type)
+                    if volt_per_cell > 0:
+                        estimated_cells = total_voltage / volt_per_cell
+                        current_chemistry_score = abs(estimated_cells - round(estimated_cells))
+
+                        # If current chemistry gives acceptable results (<40% error), keep it
+                        # This very conservative threshold prevents changing chemistry unless clearly wrong
+                        if current_chemistry_score < 0.40:
+                            return None  # Keep current chemistry
+
+                # Find best matching chemistry
+                best_chemistry = None
+                best_score = float("inf")
+
+                for chemistry in BatteryCell.chemistries():
+                    volt_per_cell = self._get_volt_per_cell_for_type(chemistry, voltage_type)
+                    if volt_per_cell <= 0:
+                        continue
+
+                    estimated_cells = total_voltage / volt_per_cell
+                    score = abs(estimated_cells - round(estimated_cells))
+
+                    if score < best_score:
+                        best_score = score
+                        best_chemistry = chemistry
+
+                # Only accept if reasonably close to integer (within 3%)
+                if best_chemistry and best_score < 0.03:
+                    return best_chemistry
+
+            except (ValueError, TypeError, ZeroDivisionError):
+                continue
+
+        return None
 
     def _estimate_cells_from_voltage_param(
         self, param_name: str, param_value: float, volt_per_cell_spec: str
@@ -369,6 +508,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 volt_per_cell = float(volt_per_cell_value)
 
         if volt_per_cell <= 0:
+            logging_warning(_("Volt per cell value for %s is zero or invalid: %s"), volt_per_cell_spec, volt_per_cell_value)
             return None
 
         try:
@@ -431,10 +571,15 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
     def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:
         """Process motor parameters and update the data model."""
+        poles = 0.0
         if "MOT_PWM_TYPE" in fc_parameters:
-            mot_pwm_type_str = str(fc_parameters["MOT_PWM_TYPE"])
+            mot_pwm_type_str = str(int(fc_parameters["MOT_PWM_TYPE"]))
             if mot_pwm_type_str in MOT_PWM_TYPE_DICT and MOT_PWM_TYPE_DICT[mot_pwm_type_str].get("is_dshot", False):
-                if "SERVO_BLH_POLES" in fc_parameters:
-                    self.set_component_value(("Motors", "Specifications", "Poles"), fc_parameters["SERVO_BLH_POLES"])
-            elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
-                self.set_component_value(("Motors", "Specifications", "Poles"), fc_parameters["SERVO_FTW_POLES"])
+                if fc_parameters.get("SERVO_BLH_POLES"):  # DShot ESCs
+                    poles = fc_parameters["SERVO_BLH_POLES"]
+            elif fc_parameters.get("SERVO_FTW_MASK") and fc_parameters.get("SERVO_FTW_POLES"):
+                poles = fc_parameters["SERVO_FTW_POLES"]  # FETtec ESCs
+            elif fc_parameters.get("ESC_HW_POLES"):
+                poles = fc_parameters["ESC_HW_POLES"]  # Hobbywing ESCs
+        if poles:
+            self.set_component_value(("Motors", "Specifications", "Poles"), poles)

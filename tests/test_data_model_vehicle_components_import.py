@@ -351,6 +351,40 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         motor_poles = realistic_model.get_component_value(("Motors", "Specifications", "Poles"))
         assert motor_poles == 12
 
+    def test_user_can_import_motor_poles_for_hobbywing(self, realistic_model) -> None:
+        """
+        User can import motor pole count for Hobbywing ESCs.
+
+        GIVEN: Flight controller with Hobbywing ESC and motor poles configured
+        WHEN: User imports FC parameters
+        THEN: Motor poles should be set from ESC_HW_POLES parameter
+        """
+        fc_parameters = {"ESC_HW_POLES": 28, "MOT_PWM_TYPE": 0}
+        doc: dict[str, Any] = {}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        motor_poles = realistic_model.get_component_value(("Motors", "Specifications", "Poles"))
+        assert motor_poles == 28
+
+    def test_esc_hw_poles_takes_priority_over_servo_poles(self, realistic_model) -> None:
+        """
+        SERVO_BLH_POLES takes priority over ESC_HW_POLES when both present.
+
+        GIVEN: Flight controller with both ESC_HW_POLES and SERVO_BLH_POLES configured
+        WHEN: User imports FC parameters
+        THEN: Motor poles should be set from SERVO_BLH_POLES (higher priority for DShot)
+        """
+        fc_parameters = {"ESC_HW_POLES": 28, "MOT_PWM_TYPE": 6, "SERVO_BLH_POLES": 14}
+        doc: dict[str, Any] = {}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        motor_poles = realistic_model.get_component_value(("Motors", "Specifications", "Poles"))
+        assert motor_poles == 14  # Should use SERVO_BLH_POLES (DShot), not ESC_HW_POLES
+
     def test_system_imports_complete_fc_configuration(self, realistic_model) -> None:
         """
         System successfully imports complete flight controller configuration.

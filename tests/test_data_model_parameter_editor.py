@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from typing import Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -42,6 +43,37 @@ def mock_local_filesystem() -> MagicMock:
     mock_fs.forced_parameters = {}
     mock_fs.derived_parameters = {}
     mock_fs.export_to_param = MagicMock()
+
+    # Mock compound_params to compute first config filename based on file_parameters
+    def mock_compound_params(last_filename=None, skip_default=True) -> tuple[ParDict, Union[str, None]]:
+        """Mock compound_params that mimics the real behavior."""
+        compound = ParDict()
+        first_config_step_filename = None
+
+        for file_name, file_params in mock_fs.file_parameters.items():
+            # Skip default file if requested
+            if skip_default and file_name == "00_default.param":
+                continue
+
+            # Track the first config step filename
+            if first_config_step_filename is None:
+                first_config_step_filename = file_name
+
+            # Append parameters from this file (file_params could be dict or ParDict)
+            if isinstance(file_params, ParDict):
+                compound.append(file_params)
+            else:
+                # Convert dict to ParDict if needed
+                for param_name, param_value in file_params.items():
+                    compound[param_name] = param_value
+
+            # Stop at the specified filename if provided
+            if last_filename and file_name == last_filename:
+                break
+
+        return compound, first_config_step_filename
+
+    mock_fs.compound_params.side_effect = mock_compound_params
 
     # Mock get_documentation_text_and_url method with realistic return values
     def mock_get_documentation_text_and_url(file_name: str, _doc_type: str) -> tuple[str, str]:
