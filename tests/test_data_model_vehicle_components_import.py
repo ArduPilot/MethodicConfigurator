@@ -155,7 +155,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         THEN: GNSS connection type should be CAN2
         AND: GNSS protocol should be DroneCAN
         """
-        fc_parameters = {"GPS_TYPE": 9, "CAN_D2_PROTOCOL": 1, "CAN_P2_DRIVER": 2}
+        fc_parameters = {"GPS_TYPE": 9, "CAN_D2_PROTOCOL": 1, "CAN_P2_DRIVER": 1}
         doc = {"GPS_TYPE": {"values": {"9": "DroneCAN"}}}
 
         with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
@@ -1063,7 +1063,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             assert gnss_type == "CAN1"
 
             # Test CAN2 with correct configuration
-            fc_parameters_can2 = {"GPS_TYPE": 10, "CAN_D2_PROTOCOL": 1, "CAN_P2_DRIVER": 2}
+            fc_parameters_can2 = {"GPS_TYPE": 10, "CAN_D2_PROTOCOL": 1, "CAN_P2_DRIVER": 1}
 
             realistic_model._set_gnss_type_from_fc_parameters(fc_parameters_can2)
             gnss_type = realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
