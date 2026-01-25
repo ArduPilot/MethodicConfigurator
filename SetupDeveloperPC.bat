@@ -244,6 +244,26 @@ goto :eof
 
 :InstallDependencies
 echo Installing project dependencies...
+
+:: Check Python version and warn about build tools requirement for 3.14t
+for /f "tokens=2 delims= " %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
+echo Detected Python version: %PYTHON_VERSION%
+echo %PYTHON_VERSION% | findstr /C:"3.14" >nul
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo ========================================================================
+    echo WARNING: Python 3.14 free-threaded requires Microsoft C++ Build Tools
+    echo to compile the fastcrc dependency required by pymavlink.
+    echo.
+    echo If installation fails, please install Visual C++ Build Tools from:
+    echo https://visualstudio.microsoft.com/visual-cpp-build-tools/
+    echo.
+    echo Select "Desktop development with C++" during installation.
+    echo ========================================================================
+    echo.
+    timeout /t 5
+)
+
 python -m pip install uv
 uv pip install -e .[dev]
 goto :eof
