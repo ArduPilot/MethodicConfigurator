@@ -196,7 +196,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
                     "CAN_D2_PROTOCOL" in fc_parameters
                     and fc_parameters["CAN_D2_PROTOCOL"] == 1
                     and "CAN_P2_DRIVER" in fc_parameters
-                    and fc_parameters["CAN_P2_DRIVER"] == 2
+                    and fc_parameters["CAN_P2_DRIVER"] == 1
                 ):
                     self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "CAN2")
                 else:
