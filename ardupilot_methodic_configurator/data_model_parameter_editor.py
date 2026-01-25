@@ -1100,20 +1100,24 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return
 
         # Create the compounded state of all parameters stored in the AMC .param files
-        compound = ParDict()
-        first_config_step_filename = None
-        for file_name, file_params in self._local_filesystem.file_parameters.items():
-            if file_name != "00_default.param":
-                if first_config_step_filename is None:
-                    first_config_step_filename = file_name
-                compound.append(file_params)
-            if file_name == last_filename:
-                break
+        compound, first_config_step_filename = self._local_filesystem.compound_params(last_filename=last_filename)
 
         # Calculate parameters that only exist in fc_parameters or have a different value from compound
         params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound, is_within_tolerance)
 
         boot_calibration_params_to_remove = [
+            "COMPASS_DEC",
+            "INS_ACC1_CALTEMP",
+            "INS_ACC2_CALTEMP",
+            "INS_ACC2OFFS_X",
+            "INS_ACC2OFFS_Y",
+            "INS_ACC2OFFS_Z",
+            "INS_ACC3SCAL_X",
+            "INS_ACC3SCAL_Y",
+            "INS_ACC3SCAL_Z",
+            "INS_ACCOFFS_X",
+            "INS_ACCOFFS_Y",
+            "INS_ACCOFFS_Z",
             "INS_GYR1_CALTEMP",
             "INS_GYR2_CALTEMP",
             "INS_GYR3_CALTEMP",
