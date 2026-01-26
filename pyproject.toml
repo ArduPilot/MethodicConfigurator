@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=66.1.1", "wheel>=0.38.4"]
+requires = ["setuptools>=70.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -94,11 +94,9 @@ pypi_dist = [
     "build==1.4.0",
     "packaging==26.0",
     "setuptools==80.10.2",
-    "wheel==0.46.3",
 ]
 
 win_dist = [
-    "wheel==0.46.3",
     "pip==25.3",
     "pywin32==311",
     "pyinstaller==6.18.0",
