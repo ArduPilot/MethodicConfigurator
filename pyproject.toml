@@ -92,7 +92,7 @@ scripts = [
 
 pypi_dist = [
     "build==1.4.0",
-    "packaging==25.0",
+    "packaging==26.0",
     "setuptools==80.9.0",
     "wheel==0.45.1",
 ]
@@ -102,7 +102,7 @@ win_dist = [
     "pip==25.3",
     "pywin32==311",
     "pyinstaller==6.18.0",
-    "packaging==25.0",
+    "packaging==26.0",
 ]
 
 [project.scripts]
