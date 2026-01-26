@@ -123,7 +123,7 @@ def _monitor_bounds_windows(widget: tk.Misc) -> Optional[MonitorBounds]:  # pyli
     class MONITORINFO(ctypes.Structure):  # pylint: disable=too-few-public-methods # type: ignore[misc]
         """Win32 MONITORINFO structure for GetMonitorInfoW API."""
 
-        _fields_ = [  # noqa: RUF012  # ctypes requires untyped _fields_
+        _fields_ = [
             ("cbSize", wintypes.DWORD),
             ("rcMonitor", wintypes.RECT),
             ("rcWork", wintypes.RECT),
