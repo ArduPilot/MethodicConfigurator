@@ -45,6 +45,7 @@ classifiers = [
 
 dependencies = [
     "argcomplete==3.6.3",
+    "certifi==2026.1.4",
     "defusedxml==0.7.1",
     "jsonschema==4.25.1",
     "matplotlib==3.9.4; python_version < '3.10'",

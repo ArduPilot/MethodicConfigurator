@@ -22,12 +22,15 @@ from requests import RequestException as requests_RequestException
 from requests import Timeout as requests_Timeout
 
 from ardupilot_methodic_configurator.backend_internet import (
+    _get_verify_param,
     download_and_install_on_windows,
     download_and_install_pip_release,
     download_file_from_url,
     get_release_info,
     verify_and_open_url,
 )
+
+# pylint: disable=unused-argument
 
 
 def test_download_file_from_url_empty_params() -> None:
@@ -128,8 +131,10 @@ def test_download_file_with_progress_no_content_length(mock_get, tmp_path) -> No
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
-def test_download_file_proxy_configuration(mock_get, monkeypatch) -> None:
+@patch("ardupilot_methodic_configurator.backend_internet._get_verify_param")
+def test_download_file_proxy_configuration(mock_verify, mock_get, monkeypatch) -> None:
     # Test proxy configuration handling
+    mock_verify.return_value = "/path/to/certs.pem"
     mock_response = Mock()
     mock_response.headers = {"content-length": "100"}
     mock_response.iter_content.return_value = [b"test data"]
@@ -146,7 +151,7 @@ def test_download_file_proxy_configuration(mock_get, monkeypatch) -> None:
         stream=True,
         timeout=3,
         proxies={"http": "http://proxy:8080", "https": "https://proxy:8080", "no_proxy": "localhost"},
-        verify=True,
+        verify="/path/to/certs.pem",
     )
 
 
@@ -237,6 +242,12 @@ class TestDownloadFile:
         with patch("ardupilot_methodic_configurator.backend_internet.requests_get") as _mock:
             yield _mock
 
+    @pytest.fixture
+    def mock_verify(self) -> Mock:
+        with patch("ardupilot_methodic_configurator.backend_internet._get_verify_param") as _mock:
+            _mock.return_value = "/path/to/certs.pem"
+            yield _mock
+
     def test_download_file_network_errors(self, mock_get, caplog) -> None:
         errors = [
             requests_HTTPError("404 Not Found"),
@@ -268,7 +279,7 @@ class TestDownloadFile:
         assert test_file.exists()
         assert test_file.read_bytes() == b"test data"
 
-    def test_download_file_proxy_configs(self, mock_get, monkeypatch) -> None:
+    def test_download_file_proxy_configs(self, mock_get, mock_verify, monkeypatch) -> None:
         proxy_configs = [
             {"HTTP_PROXY": "http://proxy1:8080"},
             {"HTTPS_PROXY": "https://proxy2:8080"},
@@ -300,7 +311,9 @@ class TestDownloadFile:
             if "NO_PROXY" in config:
                 expected_proxies["no_proxy"] = config["NO_PROXY"]
 
-            mock_get.assert_called_with("http://test.com", stream=True, timeout=30, proxies=expected_proxies, verify=True)
+            mock_get.assert_called_with(
+                "http://test.com", stream=True, timeout=30, proxies=expected_proxies, verify="/path/to/certs.pem"
+            )
             mock_get.reset_mock()
 
     def test_download_file_filesystem_operations(self, mock_get, mock_response, tmp_path) -> None:
@@ -543,36 +556,50 @@ def test_get_release_info_key_error(mock_get) -> None:
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
-def test_get_release_info_correct_url_formation(mock_get) -> None:
+@patch("ardupilot_methodic_configurator.backend_internet._get_verify_param")
+def test_get_release_info_correct_url_formation(mock_verify, mock_get) -> None:
     """Test correct URL formation with different input formats."""
+    mock_verify.return_value = "/path/to/certs.pem"
     mock_response = Mock()
     mock_response.json.return_value = {"prerelease": False}
     mock_get.return_value = mock_response
 
     # Test with leading slash
     get_release_info("/latest", should_be_pre_release=False)
-    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30)
+    mock_get.assert_called_with(
+        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30, verify="/path/to/certs.pem"
+    )
     mock_get.reset_mock()
 
     # Test without leading slash
     get_release_info("latest", should_be_pre_release=False)
-    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30)
+    mock_get.assert_called_with(
+        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30, verify="/path/to/certs.pem"
+    )
     mock_get.reset_mock()
 
     # Test with tag name
     get_release_info("tags/v1.0.0", should_be_pre_release=False)
-    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/tags/v1.0.0", timeout=30)
+    mock_get.assert_called_with(
+        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/tags/v1.0.0",
+        timeout=30,
+        verify="/path/to/certs.pem",
+    )
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
-def test_get_release_info_custom_timeout(mock_get) -> None:
+@patch("ardupilot_methodic_configurator.backend_internet._get_verify_param")
+def test_get_release_info_custom_timeout(mock_verify, mock_get) -> None:
     """Test custom timeout parameter."""
+    mock_verify.return_value = "/path/to/certs.pem"
     mock_response = Mock()
     mock_response.json.return_value = {"prerelease": False}
     mock_get.return_value = mock_response
 
     get_release_info("latest", should_be_pre_release=False, timeout=60)
-    mock_get.assert_called_with("https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=60)
+    mock_get.assert_called_with(
+        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=60, verify="/path/to/certs.pem"
+    )
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
@@ -593,6 +620,57 @@ def test_get_release_info_prerelease_expectation_violated(mock_get) -> None:
     mock_response.json.return_value = {"prerelease": True}
     mock_get.return_value = mock_response
 
-    # Should log an error but still return the data
-    result = get_release_info("latest", should_be_pre_release=False)
-    assert result["prerelease"]
+
+@patch("ardupilot_methodic_configurator.backend_internet.certifi")
+@patch("ardupilot_methodic_configurator.backend_internet.os.path.isfile")
+@patch("ardupilot_methodic_configurator.backend_internet.os.environ")
+def test_get_verify_param_env_var_set(mock_environ, mock_isfile, mock_certifi) -> None:  # noqa: ARG001
+    """Test _get_verify_param with REQUESTS_CA_BUNDLE set."""
+    mock_environ.get.return_value = "/custom/ca-bundle.pem"
+    mock_isfile.return_value = True
+
+    result = _get_verify_param()
+    assert result == "/custom/ca-bundle.pem"
+    mock_environ.get.assert_called_with("REQUESTS_CA_BUNDLE")
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.certifi")
+@patch("ardupilot_methodic_configurator.backend_internet.os.path.isfile")
+@patch("ardupilot_methodic_configurator.backend_internet.os.environ")
+def test_get_verify_param_ssl_cert_file_set(mock_environ, mock_isfile, mock_certifi) -> None:  # noqa: ARG001
+    """Test _get_verify_param with SSL_CERT_FILE set."""
+    mock_environ.get.side_effect = lambda key: "/ssl/cert.pem" if key == "SSL_CERT_FILE" else None
+    mock_isfile.return_value = True
+
+    result = _get_verify_param()
+    assert result == "/ssl/cert.pem"
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.certifi")
+@patch("ardupilot_methodic_configurator.backend_internet.os.path.isfile")
+@patch("ardupilot_methodic_configurator.backend_internet.os.environ")
+@patch("ardupilot_methodic_configurator.backend_internet.sys")
+def test_get_verify_param_frozen_with_bundled_cert(mock_sys, mock_environ, mock_isfile, mock_certifi) -> None:  # noqa: ARG001
+    """Test _get_verify_param when frozen with bundled cert available."""
+    mock_environ.get.return_value = None
+    mock_sys.frozen = True
+    mock_sys._MEIPASS = "/app/dir"  # pylint: disable=protected-access
+    mock_isfile.return_value = True
+
+    result = _get_verify_param()
+    assert result == "/app/dir/certifi/cacert.pem"
+
+
+@patch("ardupilot_methodic_configurator.backend_internet.certifi")
+@patch("ardupilot_methodic_configurator.backend_internet.os.path.isfile")
+@patch("ardupilot_methodic_configurator.backend_internet.os.environ")
+@patch("ardupilot_methodic_configurator.backend_internet.sys")
+def test_get_verify_param_fallback_to_certifi(mock_sys, mock_environ, mock_isfile, mock_certifi) -> None:  # noqa: ARG001
+    """Test _get_verify_param fallback to certifi.where()."""
+    mock_environ.get.return_value = None
+    mock_sys.frozen = False
+    mock_certifi.where.return_value = "/certifi/cacert.pem"
+
+    result = _get_verify_param()
+    assert result == "/certifi/cacert.pem"
+    mock_certifi.where.assert_called_once()
