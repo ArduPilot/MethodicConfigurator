@@ -24,10 +24,11 @@ from logging import error as logging_error
 from logging import info as logging_info
 from logging import shutdown as logging_shutdown
 from logging import warning as logging_warning
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 from urllib.parse import urljoin
 from webbrowser import open as webbrowser_open
 
+import certifi
 from requests import HTTPError as requests_HTTPError
 from requests import RequestException as requests_RequestException
 from requests import Response
@@ -100,6 +101,27 @@ def _write_response(  # pylint: disable=too-many-arguments, too-many-positional-
     return downloaded_local
 
 
+def _get_verify_param() -> Union[str, bool]:
+    """
+    Return the CA bundle path to use with requests, especially for PyInstaller builds.
+
+    Respects REQUESTS_CA_BUNDLE/SSL_CERT_FILE if set.
+    """
+    env_bundle = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
+    if env_bundle and os.path.isfile(env_bundle):
+        return env_bundle
+
+    # When frozen, try the bundled certifi/cacert.pem
+    if getattr(sys, "frozen", False):
+        base_path = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
+        bundled_cert = os.path.join(base_path, "certifi", "cacert.pem")
+        if os.path.isfile(bundled_cert):
+            return bundled_cert
+
+    # Fallback: normal certifi location
+    return certifi.where()
+
+
 def _attempt_download_once(  # pylint: disable=too-many-arguments, too-many-positional-arguments
     url: str,
     local_filename: str,
@@ -118,7 +140,7 @@ def _attempt_download_once(  # pylint: disable=too-many-arguments, too-many-posi
         "stream": True,
         "timeout": timeout,
         "proxies": proxies,
-        "verify": True,
+        "verify": _get_verify_param(),
     }
     if headers:
         request_kwargs["headers"] = headers
@@ -231,7 +253,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 
     try:
         url = urljoin(GITHUB_API_URL_RELEASES, name.lstrip("/"))
-        response = requests_get(url, timeout=timeout)
+        response = requests_get(url, timeout=timeout, verify=_get_verify_param())
         response.raise_for_status()
 
         release_info = response.json()
@@ -289,7 +311,7 @@ def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str
             if not url:
                 continue
             try:
-                resp = requests_get(url, timeout=timeout)
+                resp = requests_get(url, timeout=timeout, verify=_get_verify_param())
                 resp.raise_for_status()
                 text = resp.text
                 # look for lines like: <hash>  filename
@@ -562,7 +584,7 @@ def verify_and_open_url(url: str) -> bool:
         proxies = {k: v for k, v in proxies_dict.items() if v is not None}
 
         # Use requests.get with allow_redirects to handle HTTP redirects properly
-        response = requests_get(url, timeout=5, stream=True, allow_redirects=True, proxies=proxies, verify=True)
+        response = requests_get(url, timeout=5, stream=True, allow_redirects=True, proxies=proxies, verify=_get_verify_param())
         url_found = response.status_code == 200
     except (requests_RequestException, requests_Timeout) as e:
         logging_error(_("Failed to access URL: %s. Error: %s"), url, str(e))
