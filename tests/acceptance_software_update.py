@@ -448,7 +448,9 @@ class TestAcceptanceSecurityRequirements:
 
         # Assert - SSL verification enforced
         call_kwargs = mock_get.call_args.kwargs
-        assert call_kwargs["verify"] is True
+        assert call_kwargs["verify"] is True or isinstance(
+            call_kwargs["verify"], str
+        )  # SSL verification enabled (cert path provided)
 
         # Assert - HTTPS URL required (tested in other tests)
         # Assert - File integrity checks (tested in other tests)

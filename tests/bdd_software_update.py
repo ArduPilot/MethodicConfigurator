@@ -503,4 +503,6 @@ class TestSecurityAndIntegrity:
 
         # Assert - SSL verification enabled
         call_kwargs = mock_get.call_args.kwargs
-        assert call_kwargs["verify"] is True  # SSL verification enabled
+        assert call_kwargs["verify"] is True or isinstance(
+            call_kwargs["verify"], str
+        )  # SSL verification enabled (cert path provided)
