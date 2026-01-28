@@ -1,7 +1,7 @@
-ATC_ACCEL_P_MAX,221000  # Derived from vehicle component editor propeller size
-ATC_ACCEL_R_MAX,221000  # Derived from vehicle component editor propeller size
-ATC_ACCEL_Y_MAX,35100  # Derived from vehicle component editor propeller size
-ATC_ANG_YAW_P,5.8  # Derived from vehicle component editor propeller size
+ATC_ACCEL_P_MAX,235800  # Derived from vehicle component editor propeller size
+ATC_ACCEL_R_MAX,235800  # Derived from vehicle component editor propeller size
+ATC_ACCEL_Y_MAX,36000  # Derived from vehicle component editor propeller size
+ATC_ANG_YAW_P,6  # Derived from vehicle component editor propeller size
 ATC_RAT_PIT_FLTD,144.5  # INS_GYRO_FILTER / 2
 ATC_RAT_PIT_FLTE,0  # Initial value, will be improved at a later step
 ATC_RAT_PIT_FLTT,144.5  # INS_GYRO_FILTER / 2
