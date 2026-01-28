@@ -183,6 +183,6 @@
             "Notes": "UART1 For Telemetry Module. Bluetooth Telem is UART8."
         }
     },
-    "Program version": "2.9.5",
+    "Program version": "2.9.6",
     "Configuration template": "Holybro_X500_V2"
 }
