@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import NEW_VALUE_DIFFERENT_STR
 
 # ==================== SHARED TKINTER TESTING CONFIGURATION ====================
 
@@ -167,7 +168,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE = (
     "-/+",
     "Parameter",
     "Current Value",
-    " ",
+    NEW_VALUE_DIFFERENT_STR,
     "New Value",
     "Unit",
     "Why are you changing this parameter?",
@@ -177,7 +178,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED = (
     "-/+",
     "Parameter",
     "Current Value",
-    " ",
+    NEW_VALUE_DIFFERENT_STR,
     "New Value",
     "Unit",
     "Upload",

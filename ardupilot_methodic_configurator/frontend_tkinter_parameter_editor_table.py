@@ -135,7 +135,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             _("-/+"),
             _("Parameter"),
             _("Current Value"),
-            " ",  # intentionally left blank
+            NEW_VALUE_DIFFERENT_STR,
             _("New Value"),
             _("Unit"),
         ]
