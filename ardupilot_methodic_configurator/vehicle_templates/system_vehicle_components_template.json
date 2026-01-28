@@ -127,6 +127,22 @@
                 },
                 "Notes": "It has 10 channels and an integrated RC transmitter"
             }
+        },
+        {
+            "name": "CubePilot Herelink Controller",
+            "data": {
+                "Product": {
+                    "Manufacturer": "CubePilot",
+                    "Model": "Herelink Controller",
+                    "Version": "",
+                    "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+                },
+                "Firmware": {
+                    "Type": "Android",
+                    "Version": "7.1.2"
+                },
+                "Notes": ""
+            }
         }
     ],
     "RC Transmitter": [
@@ -144,6 +160,22 @@
                     "Version": "4.0.0"
                 },
                 "Notes": "This RC transmitter piggie-backs on the back of the Radiomaster TX16S"
+            }
+        },
+        {
+            "name": "FlySky ACCESS ",
+            "data": {
+                "Product": {
+                    "Manufacturer": "FlySky",
+                    "Model": "ACCESS ",
+                    "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/",
+                    "Version": "1.1.1"
+                },
+                "Firmware": {
+                    "Type": "ISRM-M",
+                    "Version": "2.1.0EU"
+                },
+                "Notes": "integrated in RC controller"
             }
         },
         {
@@ -241,6 +273,22 @@
                 },
                 "Notes": "Using the internal RF module"
             }
+        },
+        {
+            "name": "CubePilot Herelink Controller",
+            "data": {
+                "Product": {
+                    "Manufacturer": "CubePilot",
+                    "Model": "Herelink Controller",
+                    "Version": "",
+                    "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+                },
+                "Firmware": {
+                    "Type": "Android",
+                    "Version": "7.1.2"
+                },
+                "Notes": ""
+            }
         }
     ],
     "RC Receiver": [
@@ -282,6 +330,26 @@
                     "Protocol": "CRSF"
                 },
                 "Notes": "This receiver is on the vehicle and is connected to the flight controller"
+            }
+        },
+        {
+            "name": "FlySky Archer R6",
+            "data": {
+                "Product": {
+                    "Manufacturer": "FlySky",
+                    "Model": "Archer R6",
+                    "URL": "https://www.frsky-rc.com/archer-r6/",
+                    "Version": "V1.0"
+                },
+                "Firmware": {
+                    "Type": "AFHDS 2A",
+                    "Version": "V1.0.52"
+                },
+                "FC Connection": {
+                    "Type": "RCin/SBUS",
+                    "Protocol": "SBUS"
+                },
+                "Notes": ""
             }
         },
         {
@@ -443,6 +511,26 @@
                 },
                 "Notes": "This receiver is on the vehicle and is connected to the flight controller"
             }
+        },
+        {
+            "name": "CubePilot Herelink Airunit",
+            "data": {
+                "Product": {
+                    "Manufacturer": "CubePilot",
+                    "Model": "Herelink Airunit",
+                    "Version": "",
+                    "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "RCin/SBUS",
+                    "Protocol": "SBUS"
+                },
+                "Notes": ""
+            }
         }
     ],
     "Telemetry": [
@@ -564,6 +652,26 @@
                     "Protocol": "MAVLink2"
                 },
                 "Notes": "High range and strength telemetry."
+            }
+        },
+        {
+            "name": "CubePilot Herelink Airunit and controller",
+            "data": {
+                "Product": {
+                    "Manufacturer": "CubePilot",
+                    "Model": "Herelink Airunit and controller",
+                    "Version": "",
+                    "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "SERIAL1",
+                    "Protocol": "MAVLink2"
+                },
+                "Notes": ""
             }
         }
     ],
@@ -771,6 +879,26 @@
             }
         },
         {
+            "name": "HOBBYWING X9 Plus",
+            "data": {
+                "Product": {
+                    "Manufacturer": "HOBBYWING",
+                    "Model": "X9 Plus",
+                    "Version": "XRotor 150A-FOC",
+                    "URL": "https://www.hobbywing.com/en/products/xrotor-x9-plus112"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "Main Out",
+                    "Protocol": "Normal"
+                },
+                "Notes": "18-65V, Fixed throttle pulse width: 1050-1950µs"
+            }
+        },
+        {
             "name": "HOBBYWING X11 Plus",
             "data": {
                 "Product": {
@@ -787,7 +915,7 @@
                     "Type": "Main Out",
                     "Protocol": "Normal"
                 },
-                "Notes": ""
+                "Notes": "max 61V, Fixed throttle pulse width: 1050-1950µs"
             }
         },
         {
@@ -929,6 +1057,26 @@
                 },
                 "Notes": "ESCs are integrated in the motor arm sets"
             }
+        },
+        {
+            "name": "DJI S900 integrated",
+            "data": {
+                "Product": {
+                    "Manufacturer": "DJI",
+                    "Model": "S900 integrated",
+                    "Version": "40A, 6S",
+                    "URL": "https://www.dji.com/spreading-wings-s900?backup_page=index&target=us"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "Main Out",
+                    "Protocol": "Normal"
+                },
+                "Notes": ""
+            }
         }
     ],
     "Motors": [
@@ -948,18 +1096,33 @@
             }
         },
         {
-            "name": "T-Motor F15507",
+            "name": "T-Motor F1507",
             "data": {
                 "Product": {
                     "Manufacturer": "T-Motor",
-                    "Model": "F15507",
-                    "Version": "3800kv",
+                    "Model": "F1507",
+                    "Version": "3800KV",
                     "URL": "https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s"
                 },
                 "Specifications": {
                     "Poles": 14
                 },
-                "Notes": "store.tmotor.com offline at time of filling out this form, so no tmotor link available"
+                "Notes": ""
+            }
+        },
+        {
+            "name": "Holybro 2216-880KV",
+            "data": {
+                "Product": {
+                    "Manufacturer": "Holybro",
+                    "Model": "2216-880KV",
+                    "URL": "https://www.mybotshop.de/Holybro-Brushless-S500-V2-Motor",
+                    "Version": ""
+                },
+                "Specifications": {
+                    "Poles": 14
+                },
+                "Notes": ""
             }
         },
         {
@@ -974,7 +1137,7 @@
                 "Specifications": {
                     "Poles": 14
                 },
-                "Notes": "High thrust and powerful motors"
+                "Notes": ""
             }
         },
         {
@@ -989,7 +1152,22 @@
                 "Specifications": {
                     "Poles": 14
                 },
-                "Notes": "High thrust and powerful motors"
+                "Notes": ""
+            }
+        },
+        {
+            "name": "HOBBYWING X9 Plus 9620-100KV",
+            "data": {
+                "Product": {
+                    "Manufacturer": "HOBBYWING",
+                    "Model": "X9 Plus 9620-100KV",
+                    "Version": "",
+                    "URL": "https://www.hobbywing.com/en/products/xrotor-x9-plus112"
+                },
+                "Specifications": {
+                    "Poles": 40
+                },
+                "Notes": "36N40P"
             }
         },
         {
@@ -1002,9 +1180,9 @@
                     "URL": "https://www.hobbywing.com/en/products/xrotor-x11-plus270.html"
                 },
                 "Specifications": {
-                    "Poles": 14
+                    "Poles": 40
                 },
-                "Notes": "High thrust and powerful motors"
+                "Notes": "36N40P?"
             }
         },
         {
@@ -1068,33 +1246,33 @@
             }
         },
         {
-            "name": "T-Motor T-Motor MN7005(7206) 230KV",
+            "name": "T-Motor MN7005(7206) 230KV",
             "data": {
                 "Product": {
                     "Manufacturer": "T-Motor",
-                    "Model": "T-Motor MN7005(7206) 230KV",
+                    "Model": "MN7005(7206) 230KV",
                     "Version": "",
                     "URL": "https://store.tmotor.com/product/mn7005-kv230-motor-antigravity-type.html"
                 },
                 "Specifications": {
                     "Poles": 28
                 },
-                "Notes": "T-Motor MN7005 (7206) 230KV with integrated ESC"
+                "Notes": "with integrated ESC"
             }
         },
         {
-            "name": "HOBBYWING X11  Plus 1118-85KV",
+            "name": "DJI 4114 PRO",
             "data": {
                 "Product": {
-                    "Manufacturer": "HOBBYWING",
-                    "Model": "X11  Plus 1118-85KV",
-                    "Version": "",
-                    "URL": "https://vi.aliexpress.com/i/1005005384267348.html?gatewayAdapt=glo2vnm"
+                    "Manufacturer": "DJI",
+                    "Model": "4114 PRO",
+                    "Version": "400KV",
+                    "URL": "https://www.dji.com/spreading-wings-s900?backup_page=index&target=us"
                 },
                 "Specifications": {
-                    "Poles": 14
+                    "Poles": 24
                 },
-                "Notes": "High thrust and powerful motors"
+                "Notes": "22N24P"
             }
         }
     ],
@@ -1233,6 +1411,21 @@
                 },
                 "Notes": "Mejzlik 24 inch 8.1 \"light and firm\" version"
             }
+        },
+        {
+            "name": "DJI Foldable Propeller 1552",
+            "data": {
+                "Product": {
+                    "Manufacturer": "DJI",
+                    "Model": "Foldable Propeller 1552",
+                    "Version": "1552/1552R",
+                    "URL": "https://www.dji.com/spreading-wings-s900?backup_page=index&target=us"
+                },
+                "Specifications": {
+                    "Diameter_inches": 15.0
+                },
+                "Notes": "15\u00d75.2inch"
+            }
         }
     ],
     "Frame": [
@@ -1362,6 +1555,22 @@
                     "TOW max Kg": 7
                 },
                 "Notes": "A frame with 960mm diameter (motor to notor) using T-Motor MN7005(7206) propulsion sets for 25mm tube arms"
+            }
+        },
+        {
+            "name": "DJI S900",
+            "data": {
+                "Product": {
+                    "Manufacturer": "DJI",
+                    "Model": "S900",
+                    "Version": "2014",
+                    "URL": "https://www.dji.com/spreading-wings-s900?backup_page=index&target=us"
+                },
+                "Specifications": {
+                    "TOW min Kg": 4.7,
+                    "TOW max Kg": 8.2
+                },
+                "Notes": ""
             }
         }
     ],
@@ -1504,6 +1713,26 @@
                     "Protocol": "ESC"
                 },
                 "Notes": "ESC Telemetry is used as battery monitor"
+            }
+        },
+        {
+            "name": "Mauch HS-050-LV",
+            "data": {
+                "Product": {
+                    "Manufacturer": "Mauch",
+                    "Model": "HS-050-LV",
+                    "Version": "",
+                    "URL": "https://ardupilot.org/copter/docs/common-mauch-power-modules.html"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "Analog",
+                    "Protocol": "Analog Voltage and Current"
+                },
+                "Notes": ""
             }
         }
     ],
@@ -1706,6 +1935,26 @@
                     "Protocol": "AUTO"
                 },
                 "Notes": "Standard GPS"
+            }
+        },
+        {
+            "name": "Drotek Sirius F9P rover",
+            "data": {
+                "Product": {
+                    "Manufacturer": "Drotek",
+                    "Model": "Sirius F9P rover",
+                    "Version": "",
+                    "URL": "https://store-drotek.com/911-sirius-rtk-gnss-rover-f9p.html"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "SERIAL3",
+                    "Protocol": "uBlox"
+                },
+                "Notes": "It uses two similar modules, the second is connected to GPS2"
             }
         }
     ]
