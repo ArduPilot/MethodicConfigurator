@@ -257,9 +257,9 @@
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
             },
             "derived_parameters": {
-                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] > 16 else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others" },
-                "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] > 16 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" },
-                "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] > 16 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" }
+                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others" },
+                "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" },
+                "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" }
             },
             "old_filenames": ["13_logging.param"]
         },
