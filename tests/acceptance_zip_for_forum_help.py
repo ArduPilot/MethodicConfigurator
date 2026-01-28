@@ -858,19 +858,19 @@ class TestZipVehicleForForumHelpErrorHandling:
 
         setup_zip_mock(parameter_editor, vehicle_dir, {"01_setup.param": {}})
 
-        # Make directory read-only after preparing files
-        vehicle_dir.chmod(0o444)
-
         mock_show_info = MagicMock()
         mock_show_error = MagicMock()
 
-        try:
-            result = parameter_editor.create_forum_help_zip_workflow(
-                show_info=mock_show_info,
-                show_error=mock_show_error,
-            )
-        finally:
-            vehicle_dir.chmod(0o755)
+        # Simulate permission error in a platform-independent way by
+        # making zip_files raise PermissionError when called.
+        filesystem = get_filesystem(parameter_editor)
+        fs_any: Any = filesystem
+        fs_any.zip_files = MagicMock(side_effect=PermissionError("Permission denied"))
+
+        result = parameter_editor.create_forum_help_zip_workflow(
+            show_info=mock_show_info,
+            show_error=mock_show_error,
+        )
 
         assert result is False
         mock_show_info.assert_not_called()

@@ -316,14 +316,14 @@ class TestFileSimulationErrorHandling:
             params_manager = FlightControllerParams(connection_manager=mock_conn_mgr)
 
             # When/Then: Attempting to download params should raise appropriate error
-            with (
-                patch(
-                    "ardupilot_methodic_configurator.backend_flightcontroller_params.Path.cwd",
-                    return_value=Path(temp_vehicle_dir),
-                ),
-                pytest.raises(FileNotFoundError, match=r"params.param"),
-            ):
-                params_manager.download_params()
+            # Change working directory so that params.param is looked for in temp_vehicle_dir
+            original_cwd = os.getcwd()
+            os.chdir(temp_vehicle_dir)
+            try:
+                with pytest.raises(FileNotFoundError, match=r"params.param"):
+                    params_manager.download_params()
+            finally:
+                os.chdir(original_cwd)
 
     def test_file_simulation_requires_no_master_connection(self) -> None:
         """

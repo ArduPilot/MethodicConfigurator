@@ -132,7 +132,13 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         assert isinstance(result, ET.Element)
 
         # Assert that the requests.get function was called once
-        mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5)
+        # get_xml_data may pass a proxies argument depending on environment;
+        # only assert URL and timeout to keep this test platform-independent.
+        mock_get.assert_called_once()
+        called_url = mock_get.call_args[0][0]
+        called_timeout = mock_get.call_args[1].get("timeout")
+        assert called_url == "http://example.com/test.xml"
+        assert called_timeout == 5
 
     @patch("os.path.isfile")
     @patch("ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict")
