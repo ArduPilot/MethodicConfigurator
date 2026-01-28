@@ -1096,21 +1096,6 @@
             }
         },
         {
-            "name": "T-Motor F1507",
-            "data": {
-                "Product": {
-                    "Manufacturer": "T-Motor",
-                    "Model": "F1507",
-                    "Version": "3800KV",
-                    "URL": "https://www.fpv24.com/de/t-motor/t-motor-f-serie-f1507-cinematic-3800kv-3s-4s"
-                },
-                "Specifications": {
-                    "Poles": 14
-                },
-                "Notes": ""
-            }
-        },
-        {
             "name": "Holybro 2216-880KV",
             "data": {
                 "Product": {
@@ -1186,12 +1171,27 @@
             }
         },
         {
-            "name": "T-Motor F1507",
+            "name": "T-Motor F1507-2700KV",
             "data": {
                 "Product": {
                     "Manufacturer": "T-Motor",
                     "Model": "F1507",
-                    "Version": "3800kv",
+                    "Version": "2700KV",
+                    "URL": "https://shop.tmotor.com/products/cinewhoop-drones-fpv-brushless-motor-f1507"
+                },
+                "Specifications": {
+                    "Poles": 14
+                },
+                "Notes": ""
+            }
+        },
+        {
+            "name": "T-Motor F1507-3800KV",
+            "data": {
+                "Product": {
+                    "Manufacturer": "T-Motor",
+                    "Model": "F1507",
+                    "Version": "3800KV",
                     "URL": "https://shop.tmotor.com/products/cinewhoop-drones-fpv-brushless-motor-f1507"
                 },
                 "Specifications": {
@@ -1424,7 +1424,7 @@
                 "Specifications": {
                     "Diameter_inches": 15.0
                 },
-                "Notes": "15\u00d75.2inch"
+                "Notes": "15x5.2inch"
             }
         }
     ],
