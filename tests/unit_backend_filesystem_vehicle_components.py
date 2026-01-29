@@ -153,6 +153,33 @@ class TestVehicleComponentsInternals:
         assert error is True
         assert "OS error" in msg
 
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_path.exists")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    def test_save_component_templates_to_file_uses_local_dir_when_local_file_exists(
+        self, mock_get_base_dir, mock_makedirs, mock_file, mock_exists
+    ) -> None:
+        """
+        Test that system templates use local directory when local file exists.
+
+        GIVEN: Saving system templates and local system template file exists
+        WHEN: Attempting to save templates
+        THEN: Should use local directory instead of system directory
+        """
+        mock_get_base_dir.return_value = "/system/templates"
+        mock_makedirs.return_value = None
+        mock_exists.return_value = True  # Local file exists
+
+        vehicle_components_system = VehicleComponents(save_component_to_system_templates=True)
+        templates_to_save = {"Component1": [{"name": "Test", "data": {}}]}
+
+        error, msg = vehicle_components_system.save_component_templates_to_file(templates_to_save)
+
+        assert error is False
+        # Should use local dir, which contains "ardupilot_methodic_configurator/vehicle_templates"
+        assert "ardupilot_methodic_configurator/vehicle_templates/system_vehicle_components_template.json" in msg
+
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "save_component_templates_to_file")
     def test_save_component_templates_template_without_name(self, mock_save_to_file, mock_load_system) -> None:
@@ -174,12 +201,12 @@ class TestVehicleComponentsInternals:
         }
 
         mock_load_system.return_value = system_templates
-        mock_save_to_file.return_value = (False, "")
+        mock_save_to_file.return_value = (False, "/test/templates/user_vehicle_components_template.json")
 
         result, msg = self.vehicle_components.save_component_templates(templates_no_name)
 
         assert not result
-        assert msg == ""
+        assert msg == "/test/templates/user_vehicle_components_template.json"
 
         # pylint: disable=duplicate-code  # Common assertion pattern
         saved_templates = mock_save_to_file.call_args[0][0]
@@ -209,12 +236,12 @@ class TestVehicleComponentsInternals:
 
         # pylint: disable=duplicate-code  # Common assertion pattern
         mock_load_system.return_value = system_templates
-        mock_save_to_file.return_value = (False, "")
+        mock_save_to_file.return_value = (False, "/test/templates/system_vehicle_components_template.json")
 
         result, msg = vehicle_components_system.save_component_templates(new_templates)
 
         assert not result
-        assert msg == ""
+        assert msg == "/test/templates/system_vehicle_components_template.json"
 
         saved_templates = mock_save_to_file.call_args[0][0]
 

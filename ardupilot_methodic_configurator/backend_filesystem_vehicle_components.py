@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from importlib.resources import files as importlib_files
 from json import JSONDecodeError
 from json import dump as json_dump
 from json import load as json_load
@@ -135,7 +136,7 @@ class VehicleComponents:
         For system templates: Merge with existing system templates, adding new ones.
 
         :param templates: The templates to save
-        :return: A tuple of (error_occurred, error_message)
+        :return: A tuple of (error_occurred, message), where message is the filepath on success or error message on failure
         """
         # Load system templates to compare against
         system_templates = self._load_system_templates()
@@ -211,13 +212,27 @@ class VehicleComponents:
         return self.save_component_templates_to_file(templates_to_save)
 
     def save_component_templates_to_file(self, templates_to_save: dict[str, list[dict[str, Any]]]) -> tuple[bool, str]:
-        if self.save_component_to_system_templates:
-            # Save to system templates file
-            templates_filename = "system_vehicle_components_template.json"
-        else:
-            # Save to user templates file
-            templates_filename = "user_vehicle_components_template.json"
         templates_dir = ProgramSettings.get_templates_base_dir()
+        if self.save_component_to_system_templates:
+            # Save to system templates file.
+            # System templates are part of the software installation and get updated when the program
+            # is updated and deleted when the program is un-installed.
+            templates_filename = "system_vehicle_components_template.json"
+            # Check if local system template file exists, use local dir if so.
+            # This allows developers to directly add templates to their local git repository
+            # system template file and create a github pull-request with the newly added component templates
+            try:
+                local_dir = importlib_files("ardupilot_methodic_configurator") / "vehicle_templates"
+                local_filepath = local_dir / templates_filename
+                if os_path.exists(str(local_filepath)):
+                    templates_dir = str(local_dir)
+            except (OSError, ValueError) as e:
+                logging_debug("Failed to check local template file: %s", e)
+                # Fall back to default templates_dir
+        else:
+            # Save to user templates file, for normal non-developer users.
+            # This file will not get deleted when the program is updated or un-installed.
+            templates_filename = "user_vehicle_components_template.json"
 
         # Create the directory if it doesn't exist
         try:
@@ -233,7 +248,7 @@ class VehicleComponents:
         try:
             with open(filepath, "w", encoding="utf-8") as file:
                 json_dump(templates_to_save, file, indent=4)
-            return False, ""  # Success
+            return False, filepath  # Success, return the filepath
         except FileNotFoundError:
             msg = _("File not found when writing to '{}': {}").format(filepath, _("Path not found"))
             logging_error(msg)
