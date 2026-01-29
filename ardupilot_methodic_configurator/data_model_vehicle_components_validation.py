@@ -254,7 +254,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("Frame", "Specifications", "TOW max Kg"): (float, (0.01, 600), "Takeoff Weight"),
             ("Battery", "Specifications", "Number of cells"): (int, (1, 50), "Nr of cells"),
             ("Battery", "Specifications", "Capacity mAh"): (int, (100, 1000000), "mAh capacity"),
-            ("Motors", "Specifications", "Poles"): (int, (3, 50), "Motor Poles"),
+            ("Motors", "Specifications", "Poles"): (int, (2, 59), "Motor Poles"),
             ("Propellers", "Specifications", "Diameter_inches"): (float, (0.3, 400), "Propeller Diameter"),
         }
     )
@@ -454,8 +454,9 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     error_msg = _("{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
                     limited_value = limits[0] if typed_value < limits[0] else limits[1]
                     return error_msg.format(name=name, data_type=data_type, limits=limits), limited_value
-            except ValueError as e:
-                return str(e), None
+            except ValueError:
+                error_msg = _("Invalid {data_type.__name__} value for {name}")
+                return error_msg.format(data_type=data_type, name=name), None
 
             # Validate takeoff weight limits
             if path[0] == "Frame" and path[1] == "Specifications" and "TOW" in path[2]:
@@ -620,7 +621,21 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                         self.set_component_value(path, corrected_value)
                     continue
 
+            self._validate_motor_poles(errors, path, value, paths_str)
+
         return len(errors) == 0, errors
+
+    def _validate_motor_poles(self, errors: list, path: ComponentPath, value: str, paths_str: str) -> None:
+        if path == ("Motors", "Specifications", "Poles"):
+            # Nr of magnetic rotor poles + 1 must be a multiple of 3
+            try:
+                poles = int(value)
+                if (poles + 1) % 3 != 0:
+                    error_msg = _("Number of magnetic rotor poles + 1 must be a multiple of 3 for {paths_str}")
+                    errors.append(error_msg.format(paths_str=paths_str))
+            except ValueError:
+                error_msg = _("Invalid integer value for {paths_str}")
+                errors.append(error_msg.format(paths_str=paths_str))
 
     def correct_display_values_in_loaded_data(self) -> None:
         """

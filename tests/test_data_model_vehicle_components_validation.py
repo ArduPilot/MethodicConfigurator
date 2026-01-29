@@ -316,7 +316,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             (("Frame", "Specifications", "TOW max Kg"), "1000", False),  # Above maximum
             (("Battery", "Specifications", "Number of cells"), "0", False),  # Below minimum
             (("Battery", "Specifications", "Number of cells"), "100", False),  # Above maximum
-            (("Motors", "Specifications", "Poles"), "2", False),  # Below minimum
+            (("Motors", "Specifications", "Poles"), "1", False),  # Below minimum
             (("Motors", "Specifications", "Poles"), "100", False),  # Above maximum
         ]
 
@@ -816,6 +816,91 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert is_valid is True
         assert len(errors) == 0
 
+    def test_validate_all_data_motor_poles_valid_values(self, realistic_model) -> None:
+        """
+        Test validate_all_data with valid motor poles values.
+
+        GIVEN: A model with motor component data
+        WHEN: Validating motor poles values where (poles + 1) % 3 == 0
+        THEN: Validation should pass with no errors
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        # Valid motor poles: (poles + 1) % 3 == 0
+        # poles = 2: (2+1) % 3 = 0 ✓
+        # poles = 5: (5+1) % 3 = 0 ✓
+        # poles = 8: (8+1) % 3 = 0 ✓
+        # poles = 11: (11+1) % 3 = 0 ✓
+        valid_entries = {
+            ("Motors", "Specifications", "Poles"): "2",
+        }
+
+        is_valid, errors = model.validate_all_data(valid_entries)
+        assert is_valid is True
+        assert len(errors) == 0
+
+        valid_entries = {
+            ("Motors", "Specifications", "Poles"): "5",
+        }
+
+        is_valid, errors = model.validate_all_data(valid_entries)
+        assert is_valid is True
+        assert len(errors) == 0
+
+    def test_validate_all_data_motor_poles_invalid_values(self, realistic_model) -> None:
+        """
+        Test validate_all_data with invalid motor poles values.
+
+        GIVEN: A model with motor component data
+        WHEN: Validating motor poles values where (poles + 1) % 3 != 0
+        THEN: Validation should fail with error messages about motor poles requirement
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        # Invalid motor poles: (poles + 1) % 3 != 0
+        # poles = 3: (3+1) % 3 = 1 ≠ 0 ✗
+        # poles = 4: (4+1) % 3 = 2 ≠ 0 ✗
+        # poles = 6: (6+1) % 3 = 1 ≠ 0 ✗
+        invalid_entries = {
+            ("Motors", "Specifications", "Poles"): "3",
+        }
+
+        is_valid, errors = model.validate_all_data(invalid_entries)
+        assert is_valid is False
+        assert len(errors) > 0
+        assert "must be a multiple of 3" in errors[0]
+
+        invalid_entries = {
+            ("Motors", "Specifications", "Poles"): "4",
+        }
+
+        is_valid, errors = model.validate_all_data(invalid_entries)
+        assert is_valid is False
+        assert len(errors) > 0
+        assert "must be a multiple of 3" in errors[0]
+
+    def test_validate_all_data_motor_poles_invalid_string(self, realistic_model) -> None:
+        """
+        Test validate_all_data with invalid motor poles string values.
+
+        GIVEN: A model with motor component data
+        WHEN: Validating motor poles with non-integer string values
+        THEN: Validation should fail with error messages about invalid integer values
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        invalid_entries = {
+            ("Motors", "Specifications", "Poles"): "not_a_number",
+        }
+
+        is_valid, errors = model.validate_all_data(invalid_entries)
+        assert is_valid is False
+        assert len(errors) > 0
+        assert "Invalid int value" in errors[0]
+
     # Test get_combobox_values_for_path method (inherited from base class)
     def test_get_combobox_values_for_path(self, realistic_model) -> None:
         """
@@ -1132,12 +1217,12 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
         # Test TOW max with non-float value
         error_msg, corrected_value = model.validate_entry_limits("not_a_float", ("Frame", "Specifications", "TOW max Kg"))
-        assert "could not convert" in error_msg  # The actual error message from ValueError
+        assert "Invalid float value" in error_msg  # The actual error message from ValueError
         assert corrected_value is None
 
         # Test TOW min with non-float value
         error_msg, corrected_value = model.validate_entry_limits("invalid", ("Frame", "Specifications", "TOW min Kg"))
-        assert "could not convert" in error_msg  # The actual error message from ValueError
+        assert "Invalid float value" in error_msg  # The actual error message from ValueError
         assert corrected_value is None
 
     def test_validate_cell_voltage_complex_relationships(self, realistic_model) -> None:
