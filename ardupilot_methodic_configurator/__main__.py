@@ -25,6 +25,7 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
+from logging import warning as logging_warning
 from pathlib import Path
 from sys import exit as sys_exit
 from typing import Union
@@ -224,6 +225,16 @@ def initialize_flight_controller(state: ApplicationState) -> None:
     # Get default parameter values from flight controller
     if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
         vehicle_dir = Path(state.args.vehicle_dir) if hasattr(state.args, "vehicle_dir") else Path.cwd()
+
+        # Check if vehicle_dir is writable; if not, use a writable user directory
+        if not os.access(vehicle_dir, os.W_OK):
+            original_vehicle_dir = vehicle_dir
+            vehicle_dir = ProgramSettings.get_vehicles_default_dir()
+            vehicle_dir.mkdir(parents=True, exist_ok=True)
+            logging_warning(
+                _("Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."),
+                {"old_dir": original_vehicle_dir, "new_dir": vehicle_dir},
+            )
         fciw = FlightControllerInfoWindow(state.flight_controller, vehicle_dir)
         state.param_default_values = fciw.get_param_default_values()
 

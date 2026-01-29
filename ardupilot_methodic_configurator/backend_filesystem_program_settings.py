@@ -323,6 +323,11 @@ class ProgramSettings:
         return str(package_path / "vehicle_templates")
 
     @staticmethod
+    def get_vehicles_default_dir() -> Path:
+        settings_directory = Path(ProgramSettings._user_config_dir())
+        return settings_directory / "vehicles"
+
+    @staticmethod
     def get_recently_used_dirs() -> tuple[str, str, str]:
         settings_directory = ProgramSettings._user_config_dir()
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")
