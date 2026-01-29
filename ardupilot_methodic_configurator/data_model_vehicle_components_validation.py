@@ -627,11 +627,12 @@ class ComponentDataModelValidation(ComponentDataModelBase):
 
     def _validate_motor_poles(self, errors: list, path: ComponentPath, value: str, paths_str: str) -> None:
         if path == ("Motors", "Specifications", "Poles"):
-            # Nr of magnetic rotor poles + 1 must be a multiple of 3
+            # Number of magnetic rotor poles must be even
+            # On a common 12N14P BLDC/PMSM motor this is 14, the P number
             try:
                 poles = int(value)
-                if (poles + 1) % 3 != 0:
-                    error_msg = _("Number of magnetic rotor poles + 1 must be a multiple of 3 for {paths_str}")
+                if poles % 2 != 0:
+                    error_msg = _("Number of magnetic rotor poles must be even for {paths_str}")
                     errors.append(error_msg.format(paths_str=paths_str))
             except ValueError:
                 error_msg = _("Invalid integer value for {paths_str}")

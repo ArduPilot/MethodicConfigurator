@@ -821,17 +821,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         Test validate_all_data with valid motor poles values.
 
         GIVEN: A model with motor component data
-        WHEN: Validating motor poles values where (poles + 1) % 3 == 0
+        WHEN: Validating motor poles values where even
         THEN: Validation should pass with no errors
         """
         model = realistic_model
         model.init_possible_choices({})
 
-        # Valid motor poles: (poles + 1) % 3 == 0
-        # poles = 2: (2+1) % 3 = 0 ✓
-        # poles = 5: (5+1) % 3 = 0 ✓
-        # poles = 8: (8+1) % 3 = 0 ✓
-        # poles = 11: (11+1) % 3 = 0 ✓
+        # Valid motor poles: even
         valid_entries = {
             ("Motors", "Specifications", "Poles"): "2",
         }
@@ -841,7 +837,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(errors) == 0
 
         valid_entries = {
-            ("Motors", "Specifications", "Poles"): "5",
+            ("Motors", "Specifications", "Poles"): "40",
         }
 
         is_valid, errors = model.validate_all_data(valid_entries)
@@ -853,16 +849,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         Test validate_all_data with invalid motor poles values.
 
         GIVEN: A model with motor component data
-        WHEN: Validating motor poles values where (poles + 1) % 3 != 0
+        WHEN: Validating motor poles values where poles is an odd number
         THEN: Validation should fail with error messages about motor poles requirement
         """
         model = realistic_model
         model.init_possible_choices({})
 
-        # Invalid motor poles: (poles + 1) % 3 != 0
-        # poles = 3: (3+1) % 3 = 1 ≠ 0 ✗
-        # poles = 4: (4+1) % 3 = 2 ≠ 0 ✗
-        # poles = 6: (6+1) % 3 = 1 ≠ 0 ✗
+        # Invalid number of motor poles: 3
         invalid_entries = {
             ("Motors", "Specifications", "Poles"): "3",
         }
@@ -870,16 +863,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         is_valid, errors = model.validate_all_data(invalid_entries)
         assert is_valid is False
         assert len(errors) > 0
-        assert "must be a multiple of 3" in errors[0]
-
-        invalid_entries = {
-            ("Motors", "Specifications", "Poles"): "4",
-        }
-
-        is_valid, errors = model.validate_all_data(invalid_entries)
-        assert is_valid is False
-        assert len(errors) > 0
-        assert "must be a multiple of 3" in errors[0]
+        assert "must be even" in errors[0]
 
     def test_validate_all_data_motor_poles_invalid_string(self, realistic_model) -> None:
         """
