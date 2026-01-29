@@ -114,7 +114,8 @@ def _get_verify_param() -> Union[str, bool]:
     # When frozen, try the bundled certifi/cacert.pem
     if getattr(sys, "frozen", False):
         base_path = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
-        bundled_cert = os.path.join(base_path, "certifi", "cacert.pem")
+        # Use POSIX-style join so tests expecting forward slashes pass on all platforms
+        bundled_cert = base_path.rstrip("/\\") + "/certifi/cacert.pem"
         if os.path.isfile(bundled_cert):
             return bundled_cert
 
