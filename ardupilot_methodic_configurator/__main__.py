@@ -226,8 +226,24 @@ def initialize_flight_controller(state: ApplicationState) -> None:
     if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
         vehicle_dir = Path(state.args.vehicle_dir) if hasattr(state.args, "vehicle_dir") else Path.cwd()
 
-        # Check if vehicle_dir is writable; if not, use a writable user directory
-        if not os.access(vehicle_dir, os.W_OK):
+        # Check if vehicle_dir is writable; if not, use a writable user directory.
+        # On some platforms (notably Windows with UAC) os.access() may report
+        # writable even when actual file creation fails for normal users, so
+        # we also perform a small write test.
+        def _is_writable(path: Path) -> bool:
+            if not os.access(path, os.W_OK):
+                return False
+            try:
+                path.mkdir(parents=True, exist_ok=True)
+                test_file = path / ".write_test.tmp"
+                with open(test_file, "w", encoding="utf-8") as tmp:
+                    tmp.write("test")
+                test_file.unlink(missing_ok=True)
+                return True
+            except OSError:
+                return False
+
+        if not _is_writable(vehicle_dir):
             original_vehicle_dir = vehicle_dir
             vehicle_dir = ProgramSettings.get_vehicles_default_dir()
             vehicle_dir.mkdir(parents=True, exist_ok=True)
@@ -235,6 +251,10 @@ def initialize_flight_controller(state: ApplicationState) -> None:
                 _("Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."),
                 {"old_dir": original_vehicle_dir, "new_dir": vehicle_dir},
             )
+        logging_debug(
+            _("Using Vehicle directory %(new_dir)s for initial parameter download."),
+            {"new_dir": vehicle_dir},
+        )
         fciw = FlightControllerInfoWindow(state.flight_controller, vehicle_dir)
         state.param_default_values = fciw.get_param_default_values()
 
