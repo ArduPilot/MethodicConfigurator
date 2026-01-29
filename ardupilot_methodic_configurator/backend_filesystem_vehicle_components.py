@@ -243,23 +243,26 @@ class VehicleComponents:
             return True, msg
 
         # Now create the file path and write to it
+        # Use a consistent forward-slash path representation for return value so
+        # tests comparing literal strings work across platforms.
         filepath = os_path.join(templates_dir, templates_filename)
+        normalized_filepath = filepath.replace("\\", "/")
 
         try:
             with open(filepath, "w", encoding="utf-8") as file:
                 json_dump(templates_to_save, file, indent=4)
-            return False, filepath  # Success, return the filepath
+            return False, normalized_filepath  # Success, return the filepath
         except FileNotFoundError:
-            msg = _("File not found when writing to '{}': {}").format(filepath, _("Path not found"))
+            msg = _("File not found when writing to '{}': {}").format(normalized_filepath, _("Path not found"))
             logging_error(msg)
         except PermissionError:
-            msg = _("Permission denied when writing to file '{}'").format(filepath)
+            msg = _("Permission denied when writing to file '{}'").format(normalized_filepath)
             logging_error(msg)
         except OSError as e:
-            msg = _("OS error when writing to file '{}': {}").format(filepath, str(e))
+            msg = _("OS error when writing to file '{}': {}").format(normalized_filepath, str(e))
             logging_error(msg)
         except Exception as e:  # pylint: disable=broad-exception-caught
-            msg = _("Unexpected error saving templates to file '{}': {}").format(filepath, str(e))
+            msg = _("Unexpected error saving templates to file '{}': {}").format(normalized_filepath, str(e))
             logging_error(msg)
         return True, msg
 
