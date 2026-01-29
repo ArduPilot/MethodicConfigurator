@@ -659,7 +659,7 @@ class TestVehicleComponents:
 
         # Verify results
         assert not result  # False means success
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
 
         # Verify directory was created
         mock_makedirs.assert_called_once_with("/templates", exist_ok=True)
@@ -722,7 +722,7 @@ class TestVehicleComponents:
 
         # Verify results
         assert not result  # False means success
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
 
         # Verify only Template A was saved (with is_user_modified flag removed)
         expected_save = {"Component1": [{"name": "Template A", "data": {"original": "value"}}]}
@@ -771,7 +771,7 @@ class TestVehicleComponents:
 
         # Verify results
         assert not result  # False means success
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
 
         # Verify Template A was saved with new data
         expected_save = {"Component1": [{"name": "Template A", "data": {"modified": "new_value"}}]}
@@ -821,7 +821,7 @@ class TestVehicleComponents:
 
         # Verify results
         assert not result  # False means success
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
 
         # Verify only the new template was saved
         expected_save = {"Component1": [{"name": "New Template", "data": {"new": "value"}}]}
@@ -960,7 +960,7 @@ class TestVehicleComponents:
 
         # Verify results
         assert not result  # False means success
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
         # Should save empty dict
         mock_json_dump.assert_called_once_with({}, mock_file(), indent=4)
 
@@ -1024,14 +1024,14 @@ class TestVehicleComponents:
 
         # Mock loading system templates
         mock_load_system.return_value = system_templates
-        mock_save_to_file.return_value = (False, "")  # No error
+        mock_save_to_file.return_value = (False, "/templates/system_vehicle_components_template.json")  # No error
 
         # Call the method
         result, msg = self.vehicle_components.save_component_templates(new_templates)
 
         # Verify success
         assert not result  # False means success
-        assert msg == ""
+        assert msg == "/templates/system_vehicle_components_template.json"
 
         # Capture what was passed to save_component_templates_to_file
         saved_templates = mock_save_to_file.call_args[0][0]
@@ -1165,14 +1165,14 @@ class TestVehicleComponents:
         }
 
         mock_load_system.return_value = system_templates
-        mock_save_to_file.return_value = (False, "")
+        mock_save_to_file.return_value = (False, "/templates/user_vehicle_components_template.json")
 
         # Call the method
         result, msg = self.vehicle_components.save_component_templates(templates_with_flag)
 
         # Verify success
         assert not result
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
 
         # pylint: disable=duplicate-code  # Common assertion pattern
         # Get the templates that were saved
@@ -1206,14 +1206,14 @@ class TestVehicleComponents:
         }
 
         mock_load_system.return_value = system_templates
-        mock_save_to_file.return_value = (False, "")
+        mock_save_to_file.return_value = (False, "/templates/user_vehicle_components_template.json")
 
         # Call the method
         result, msg = self.vehicle_components.save_component_templates(modified_templates)
 
         # Verify success
         assert not result
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
 
         # Get the templates that were saved
         saved_templates = mock_save_to_file.call_args[0][0]
@@ -1244,14 +1244,14 @@ class TestVehicleComponents:
         }
 
         mock_load_system.return_value = system_templates
-        mock_save_to_file.return_value = (False, "")
+        mock_save_to_file.return_value = (False, "/templates/user_vehicle_components_template.json")
 
         # Call the method
         result, msg = self.vehicle_components.save_component_templates(identical_templates)
 
         # Verify success
         assert not result
-        assert msg == ""
+        assert msg == "/templates/user_vehicle_components_template.json"
 
         # Get the templates that were saved
         saved_templates = mock_save_to_file.call_args[0][0]
@@ -1391,14 +1391,14 @@ class TestVehicleComponents:
 
         # pylint: disable=duplicate-code  # Common assertion pattern
         mock_load_system.return_value = system_templates
-        mock_save_to_file.return_value = (False, "")
+        mock_save_to_file.return_value = (False, "/templates/system_vehicle_components_template.json")
 
         # Call the method
         result, msg = vehicle_components_system.save_component_templates(new_templates)
 
         # Verify success
         assert not result
-        assert msg == ""
+        assert msg == "/templates/system_vehicle_components_template.json"
 
         # Get the templates that were saved
         saved_templates = mock_save_to_file.call_args[0][0]
