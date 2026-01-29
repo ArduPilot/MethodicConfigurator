@@ -109,6 +109,7 @@ def _get_verify_param() -> Union[str, bool]:
     """
     env_bundle = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
     if env_bundle and os.path.isfile(env_bundle):
+        logging_info("_get_verify_param() return env_bundle %s", env_bundle)
         return env_bundle
 
     # When frozen, try the bundled certifi/cacert.pem
@@ -117,10 +118,13 @@ def _get_verify_param() -> Union[str, bool]:
         # Use POSIX-style join so tests expecting forward slashes pass on all platforms
         bundled_cert = base_path.rstrip("/\\") + "/certifi/cacert.pem"
         if os.path.isfile(bundled_cert):
+            logging_info("_get_verify_param() return bundled_cert %s", bundled_cert)
             return bundled_cert
 
     # Fallback: normal certifi location
-    return certifi.where()
+    certifi_path = certifi.where()
+    logging_info("_get_verify_param() return certifi.where %s", certifi_path)
+    return certifi_path
 
 
 def _attempt_download_once(  # pylint: disable=too-many-arguments, too-many-positional-arguments
