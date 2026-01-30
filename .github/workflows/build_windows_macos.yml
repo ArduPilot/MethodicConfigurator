@@ -1,4 +1,4 @@
-name: Windows Installer
+name: Build Windows and macOS Installers
 
 on:
   release:
@@ -150,6 +150,90 @@ jobs:
           path: windows/Output/*.exe
           retention-days: 7
 
+  build_macos:
+    runs-on: 'macos-latest'
+    strategy:
+      matrix:
+        python-version: ['3.13']
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v6.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install .[mac_dist]
+
+      - name: Verify tkinter is available
+        run: |
+          python - <<'PY'
+          import tkinter
+          print(f"tkinter OK, TkVersion={tkinter.TkVersion}")
+          PY
+
+      - name: Write the git commit hash to file
+        run: |
+          git rev-parse HEAD | tr -d '\n' > git_hash.txt
+
+      - name: Prepare macOS icon
+        run: |
+          set -euo pipefail
+          ICON_SRC="ardupilot_methodic_configurator/images/ArduPilot_icon.png"
+          ICON_SET="macos/ArduPilotMethodicConfigurator.iconset"
+          ICON_OUT="macos/ArduPilotMethodicConfigurator.icns"
+          rm -rf "$ICON_SET" "$ICON_OUT"
+          mkdir -p "$ICON_SET"
+          sips -z 16 16 "$ICON_SRC" --out "$ICON_SET/icon_16x16.png"
+          sips -z 32 32 "$ICON_SRC" --out "$ICON_SET/icon_16x16@2x.png"
+          sips -z 32 32 "$ICON_SRC" --out "$ICON_SET/icon_32x32.png"
+          sips -z 64 64 "$ICON_SRC" --out "$ICON_SET/icon_32x32@2x.png"
+          sips -z 128 128 "$ICON_SRC" --out "$ICON_SET/icon_128x128.png"
+          sips -z 256 256 "$ICON_SRC" --out "$ICON_SET/icon_128x128@2x.png"
+          sips -z 256 256 "$ICON_SRC" --out "$ICON_SET/icon_256x256.png"
+          sips -z 512 512 "$ICON_SRC" --out "$ICON_SET/icon_256x256@2x.png"
+          sips -z 512 512 "$ICON_SRC" --out "$ICON_SET/icon_512x512.png"
+          sips -z 1024 1024 "$ICON_SRC" --out "$ICON_SET/icon_512x512@2x.png"
+          iconutil -c icns "$ICON_SET" -o "$ICON_OUT"
+
+      - name: Build macOS app with PyInstaller
+        run: |
+          pyinstaller --clean macos/ardupilot_methodic_configurator.spec
+
+      - name: Build DMG
+        run: |
+          set -euo pipefail
+          VERSION=$(cd windows && python return_version.py)
+          APP_NAME="ArduPilot Methodic Configurator.app"
+          DMG_NAME="ardupilot_methodic_configurator_setup_${VERSION}.dmg"
+          STAGING_DIR="macos/dmg-staging"
+          OUTPUT_DIR="macos/Output"
+
+          rm -rf "$STAGING_DIR"
+          mkdir -p "$STAGING_DIR" "$OUTPUT_DIR"
+          cp -R "dist/${APP_NAME}" "$STAGING_DIR/"
+          ln -s /Applications "$STAGING_DIR/Applications"
+
+          hdiutil create -volname "ArduPilot Methodic Configurator" \
+            -srcfolder "$STAGING_DIR" \
+            -ov -format UDZO "$OUTPUT_DIR/$DMG_NAME"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: macos-dmg
+          path: macos/Output/*.dmg
+          retention-days: 7
+
   # Generate SLSA provenance using the official generic workflow
 #  provenance:
 #    needs: [build]
@@ -165,8 +249,8 @@ jobs:
 
   # Release job that depends on provenance generation
   release:
-#    needs: [build, provenance]
-    needs: [build]
+    #    needs: [build, provenance]
+    needs: [build, build_macos]
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     permissions:
@@ -181,16 +265,32 @@ jobs:
         with:
           name: windows-installer
           path: release-artifacts
+      
+      - name: Download macOS build artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: macos-dmg
+          path: release-artifacts
 
       - name: Rename installer for pre-release
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         shell: pwsh
         run: |
-          $files = Get-ChildItem release-artifacts\*.exe
+          $files = Get-ChildItem release-artifacts\*.* | Where-Object { $_.Extension -in '.exe', '.dmg' }
           foreach ($file in $files) {
-            $newName = $file.Name -replace '_setup_.*\.exe$', '_setup_latest_pre_release.exe'
-            Rename-Item $file.FullName $newName
-            Write-Host "Renamed $($file.Name) to $newName"
+            if ($file.Extension -eq '.exe') {
+              $newName = $file.Name -replace '_setup_.*\.exe$', '_setup_latest_pre_release.exe'
+            } elseif ($file.Extension -eq '.dmg') {
+              $newName = $file.Name -replace '_setup_.*\.dmg$', '_setup_latest_pre_release.dmg'
+            } else {
+              continue
+            }
+            if ($newName -ne $file.Name) {
+              Rename-Item $file.FullName $newName
+              Write-Host "Renamed $($file.Name) to $newName"
+            } else {
+              Write-Host "Skipped rename for $($file.Name) (pattern did not match)"
+            }
           }
 
       - name: Generate categorized release notes
