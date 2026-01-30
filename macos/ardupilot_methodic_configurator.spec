@@ -5,7 +5,13 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 import certifi
 import os
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+spec_file = globals().get("__file__")
+if spec_file:
+    spec_dir = os.path.abspath(os.path.dirname(spec_file))
+else:
+    spec_dir = os.path.abspath(os.getcwd())
+
+PROJECT_ROOT = os.path.abspath(os.path.join(spec_dir, ".."))
 PACKAGE_ROOT = os.path.join(PROJECT_ROOT, "ardupilot_methodic_configurator")
 
 
