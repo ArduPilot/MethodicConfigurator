@@ -206,7 +206,7 @@ jobs:
       - name: Build DMG
         run: |
           set -euo pipefail
-          VERSION=$(python windows/return_version.py)
+          VERSION=$(cd windows && python return_version.py)
           APP_NAME="ArduPilot Methodic Configurator.app"
           DMG_NAME="ardupilot_methodic_configurator_setup_${VERSION}.dmg"
           STAGING_DIR="macos/dmg-staging"
