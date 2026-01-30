@@ -8,6 +8,10 @@ ardupilot_methodic_configurator_setup_*.exe
 build/
 dist/
 git_hash.txt
+macos/*.icns
+macos/*.iconset
+macos/Output/
+macos/dmg-staging/
 
 /.coverage
 venv/
