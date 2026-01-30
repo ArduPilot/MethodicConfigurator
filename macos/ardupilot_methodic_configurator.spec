@@ -11,7 +11,16 @@ if spec_file:
 else:
     spec_dir = os.path.abspath(os.getcwd())
 
-PROJECT_ROOT = os.path.abspath(os.path.join(spec_dir, ".."))
+def _find_project_root(base_dir: str) -> str:
+    candidates = [base_dir, os.path.abspath(os.path.join(base_dir, ".."))]
+    for candidate in candidates:
+        package_init = os.path.join(candidate, "ardupilot_methodic_configurator", "__init__.py")
+        if os.path.exists(package_init):
+            return candidate
+    return base_dir
+
+
+PROJECT_ROOT = _find_project_root(spec_dir)
 PACKAGE_ROOT = os.path.join(PROJECT_ROOT, "ardupilot_methodic_configurator")
 
 
