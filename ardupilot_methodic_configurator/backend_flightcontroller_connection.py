@@ -148,15 +148,30 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
         )
 
-    def discover_connections(self) -> None:
+    def discover_connections(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
         """
         Discover all available connections (serial and network ports).
 
         Populates the list of available serial ports and network ports
         that can be used to connect to a flight controller.
+
+        Args:
+            progress_callback: Optional callback for progress updates. Signature: callback(current, total)
+
         """
+        if progress_callback:
+            progress_callback(82, 100)
+
         comports = self._serial_port_discovery.get_available_ports()
+
+        if progress_callback:
+            progress_callback(90, 100)
+
         netports = self.get_network_ports()
+
+        if progress_callback:
+            progress_callback(95, 100)
+
         # list of tuples with the first element being the port name and the second element being the port description
         self._connection_tuples = [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
         logging_info(_("Available connection ports are:"))
@@ -277,6 +292,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             )
 
         # Try to autodetect serial ports
+        if progress_callback:
+            progress_callback(10, 100)  # Starting serial detection
         autodetect_serial = self._auto_detect_serial()
         if autodetect_serial:
             # Resolve the soft link if it's a Linux system
@@ -292,6 +309,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                     logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
                 except OSError:
                     pass  # Not a soft link, proceed with the original device path
+            if progress_callback:
+                progress_callback(25, 100)  # Trying serial
             err = self._register_and_try_connect(
                 comport=autodetect_serial[-1],
                 progress_callback=progress_callback,
@@ -302,8 +321,10 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 return ""
 
         # Try to autodetect network ports
+        if progress_callback:
+            progress_callback(50, 100)  # Starting network detection
         netports = self.get_network_ports()
-        for port in netports:
+        for i, port in enumerate(netports):
             # try to connect to each "standard" ArduPilot UDP and TCP ports
             logging_debug(_("Trying network port %s"), port)
             err = self._register_and_try_connect(
@@ -313,6 +334,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 log_errors=False,
                 retries=2,
             )
+            if progress_callback:
+                # Calculate progress: 50-100% range, update before attempting connection
+                progress_callback(50 + int(i * 50 / len(netports)), 100)
             if err == "":
                 return ""
 

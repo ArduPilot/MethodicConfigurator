@@ -100,6 +100,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         params_manager: Optional[FlightControllerParamsProtocol] = None,
         commands_manager: Optional[FlightControllerCommandsProtocol] = None,
         files_manager: Optional[FlightControllerFilesProtocol] = None,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> None:
         """
         Initialize the FlightController communication object.
@@ -113,6 +114,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
             params_manager: Optional params manager (for dependency injection in tests)
             commands_manager: Optional commands manager (for dependency injection in tests)
             files_manager: Optional files manager (for dependency injection in tests)
+            progress_callback: Optional callback function for displaying initialization progress.
+                             If None, no progress updates are shown. Signature: callback(current, total)
+                             Used to provide user feedback during component initialization phases
 
         Note:
             If not provided, managers are created in dependency order:
@@ -124,22 +128,38 @@ class FlightController:  # pylint: disable=too-many-public-methods
         if os_path.exists("/usr/sbin/ModemManager"):
             logging_warning(_("You should uninstall ModemManager as it conflicts with ArduPilot"))
 
+        if progress_callback:
+            progress_callback(5, 100)
+
         self._reboot_time = reboot_time
         self._network_ports = network_ports if network_ports is not None else FlightControllerConnection.DEFAULT_NETWORK_PORTS
+
+        if progress_callback:
+            progress_callback(10, 100)
 
         # Component managers (delegation pattern with dependency injection support)
         # If managers are provided via DI, use them; otherwise create default instances
         # Connection manager is created first as it owns master, comport, and info (accessed via properties)
         # Share the same FlightControllerInfo instance across all managers
         _info = info or FlightControllerInfo()
+
+        if progress_callback:
+            progress_callback(20, 100)
+
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager or FlightControllerConnection(
             info=_info, baudrate=baudrate, network_ports=self._network_ports
         )
+
+        if progress_callback:
+            progress_callback(35, 100)
 
         self._params_manager: FlightControllerParamsProtocol = params_manager or FlightControllerParams(
             connection_manager=self._connection_manager,
             fc_parameters=None,  # Let params_manager create its own fc_parameters dict
         )
+
+        if progress_callback:
+            progress_callback(50, 100)
 
         self._commands_manager: FlightControllerCommandsProtocol = cast(
             "FlightControllerCommandsProtocol",
@@ -150,12 +170,18 @@ class FlightController:  # pylint: disable=too-many-public-methods
             ),
         )
 
+        if progress_callback:
+            progress_callback(65, 100)
+
         self._files_manager: FlightControllerFilesProtocol = files_manager or FlightControllerFiles(
             connection_manager=self._connection_manager
         )
 
+        if progress_callback:
+            progress_callback(80, 100)
+
         # Discover available connections
-        self.discover_connections()
+        self.discover_connections(progress_callback=progress_callback)
 
     @property
     def master(self) -> Optional[MavlinkConnection]:
@@ -293,9 +319,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Reconnect to the flight controller
         return self.create_connection_with_retry(connection_progress_callback, baudrate=self.baudrate)
 
-    def discover_connections(self) -> None:
+    def discover_connections(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
         """Discover available connections - delegates to connection manager."""
-        self._connection_manager.discover_connections()
+        self._connection_manager.discover_connections(progress_callback=progress_callback)
 
     def disconnect(self) -> None:
         """Close the connection to the flight controller - delegates to connection manager."""
