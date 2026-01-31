@@ -1,4 +1,4 @@
-name: Windows and macOS Installer
+name: Build Windows and macOS Installers
 
 on:
   release:
@@ -164,16 +164,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      # https://docs.astral.sh/uv/guides/integration/github/
-      - name: Install uv and set the python version
-        uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v6.1.0
         with:
           python-version: ${{ matrix.python-version }}
-          activate-environment: true
 
       - name: Install dependencies
         run: |
-          uv pip install .[mac_dist]
+          python -m pip install .[mac_dist]
+
+      - name: Verify tkinter is available
+        run: |
+          python - <<'PY'
+          import tkinter
+          print(f"tkinter OK, TkVersion={tkinter.TkVersion}")
+          PY
 
       - name: Write the git commit hash to file
         run: |
