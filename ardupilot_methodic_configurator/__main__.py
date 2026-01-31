@@ -45,6 +45,9 @@ from ardupilot_methodic_configurator.data_model_software_updates import UpdateMa
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
+from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress import (
+    FlightControllerConnectionProgress,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
@@ -185,9 +188,25 @@ def display_first_use_documentation() -> None:
 
 
 def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
-    flight_controller = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
+    # Create UI components with automatic cleanup via context manager
+    with FlightControllerConnectionProgress() as connection_progress:
+        # Update progress for FC initialization start
+        connection_progress.update_init_progress_bar(0, 100)
 
-    error_str = flight_controller.connect(args.device, log_errors=False)
+        flight_controller = FlightController(
+            reboot_time=args.reboot_time,
+            baudrate=args.baudrate,
+            progress_callback=connection_progress.update_init_progress_bar,
+        )
+
+        # FC init done, starting connect
+        connection_progress.update_init_progress_bar(100, 100)
+
+        error_str = flight_controller.connect(
+            args.device, progress_callback=connection_progress.update_connect_progress_bar, log_errors=False
+        )
+
+        connection_progress.update_connect_progress_bar(100, 100)
 
     if error_str:
         if args.device and _("No serial ports found") not in error_str:
