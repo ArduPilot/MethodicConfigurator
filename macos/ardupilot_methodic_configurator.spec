@@ -1,5 +1,9 @@
 # -*- mode: python -*-
 # spec file for pyinstaller to build ardupilot_methodic_configurator for macOS
+#
+# SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 import certifi
