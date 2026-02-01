@@ -840,3 +840,130 @@ class TestFlightControllerResetAndDelegation:
 
         mock_conn_mgr._select_supported_autopilot.assert_called_once()
         mock_conn_mgr._populate_flight_controller_info.assert_called_once_with(dummy_msg)
+
+
+class TestFlightControllerProgressCallbacks:
+    """Test progress callback functionality during initialization and connection."""
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_user_receives_progress_updates_during_initialization(self, mock_discover) -> None:
+        """
+        User receives progress updates during flight controller initialization.
+
+        GIVEN: User is initializing a flight controller
+        WHEN: Providing a progress callback
+        THEN: Callback should be invoked with progress updates
+        AND: Progress should increase from 0 to 100
+        """
+        # Arrange: Create progress tracking
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        mock_discover.return_value = None
+
+        # Act: Initialize with progress callback
+        FlightController(reboot_time=2, baudrate=115200, progress_callback=track_progress)
+
+        # Assert: Progress updates received
+        assert len(progress_updates) > 0
+        # Check that progress increases
+        values = [current for current, total in progress_updates]
+        assert values[0] < values[-1]  # Progress increased
+        # Check total is consistent
+        assert all(total == 100 for _, total in progress_updates)
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_initialization_without_progress_callback_works_normally(self, mock_discover) -> None:
+        """
+        Initialization works normally when no progress callback is provided.
+
+        GIVEN: User initializes flight controller without progress tracking
+        WHEN: No progress callback is provided
+        THEN: Initialization should complete successfully
+        AND: No errors should occur
+        """
+        # Arrange/Act: Initialize without callback
+        mock_discover.return_value = None
+        fc = FlightController(reboot_time=2, baudrate=115200, progress_callback=None)
+
+        # Assert: Initialization successful
+        assert fc is not None
+        assert fc.reboot_time == 2
+
+    @patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections")
+    def test_progress_callback_receives_discover_connections_updates(self, mock_discover) -> None:
+        """
+        Progress callback receives updates during connection discovery.
+
+        GIVEN: Flight controller is discovering available connections
+        WHEN: Progress callback is provided
+        THEN: Callback should receive discovery progress updates
+        """
+        # Arrange: Track progress
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # Override mock to call real method with progress tracking
+        def discover_with_progress(progress_callback=None) -> None:
+            if progress_callback:
+                progress_callback(95, 100)
+
+        mock_discover.side_effect = discover_with_progress
+
+        # Act: Initialize with progress callback
+        FlightController(reboot_time=2, baudrate=115200, progress_callback=track_progress)
+
+        # Assert: Discovery progress received
+        assert any(current >= 95 for current, _ in progress_updates)
+
+    def test_connect_method_forwards_progress_callback(self) -> None:
+        """
+        Connect method properly forwards progress callback to connection manager.
+
+        GIVEN: User connects to flight controller with progress tracking
+        WHEN: Calling connect with progress_callback parameter
+        THEN: Progress callback should be forwarded to connection manager
+        """
+        # Arrange: Create flight controller with mocked connection manager
+        fc, mock_conn_mgr, *_ = _build_flight_controller_with_mocks()
+
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # Act: Connect with progress callback
+        fc.connect(device="tcp:127.0.0.1:5760", progress_callback=track_progress)
+
+        # Assert: Connection manager received progress callback
+        mock_conn_mgr.connect.assert_called_once()
+        call_kwargs = mock_conn_mgr.connect.call_args.kwargs
+        assert "progress_callback" in call_kwargs
+        assert call_kwargs["progress_callback"] is track_progress
+
+    def test_discover_connections_forwards_progress_callback(self) -> None:
+        """
+        Discover connections method forwards progress callback to connection manager.
+
+        GIVEN: User is discovering available connections with progress tracking
+        WHEN: Calling discover_connections with progress callback
+        THEN: Callback should be forwarded to connection manager
+        """
+        # Arrange: Create flight controller with mocked connection manager
+        fc, mock_conn_mgr, *_ = _build_flight_controller_with_mocks()
+
+        def track_progress(current: int, total: int) -> None:  # pylint: disable=unused-argument
+            pass
+
+        # Reset call history after __init__ calls discover_connections
+        mock_conn_mgr.discover_connections.reset_mock()
+
+        # Act: Discover connections with progress callback
+        fc.discover_connections(progress_callback=track_progress)
+
+        # Assert: Connection manager received progress callback
+        mock_conn_mgr.discover_connections.assert_called_once_with(progress_callback=track_progress)
