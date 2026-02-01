@@ -12,6 +12,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import platform
+import subprocess
 from csv import writer as csv_writer
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -1484,6 +1486,60 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return should_write_file
 
+    @staticmethod
+    def _open_file_explorer_and_select(file_path: Path) -> None:
+        """
+        Open file explorer and select/highlight the specified file.
+
+        This method opens the system's file manager and attempts to highlight the specified file.
+        Behavior is OS-specific:
+        - Windows: Uses explorer.exe with /select flag
+        - macOS: Uses open command with -R flag
+        - Linux: Attempts various file managers, falls back to opening parent directory
+
+        Args:
+            file_path: Path to the file to select in the file explorer.
+
+        """
+        try:
+            system = platform.system()
+            file_path_str = str(file_path.resolve())
+
+            if system == "Windows":
+                # Windows: explorer.exe /select,"path\to\file"
+                subprocess.run(["explorer", "/select,", file_path_str], check=False)  # noqa: S603, S607
+            elif system == "Darwin":
+                # macOS: open -R /path/to/file
+                subprocess.run(["open", "-R", file_path_str], check=False)  # noqa: S603, S607
+            else:
+                # Linux: Try various file managers in order of preference
+                # Most support --select or similar flags for highlighting
+                file_managers = [
+                    ["nautilus", "--select", file_path_str],  # GNOME
+                    ["dolphin", "--select", file_path_str],  # KDE
+                    ["nemo", file_path_str],  # Cinnamon
+                    ["thunar", file_path_str],  # XFCE
+                ]
+
+                opened = False
+                for fm_cmd in file_managers:
+                    try:
+                        subprocess.run(fm_cmd, check=False)  # noqa: S603
+                        opened = True
+                        break
+                    except FileNotFoundError:
+                        continue
+
+                # Fallback: just open the parent directory with xdg-open
+                if not opened:
+                    try:
+                        subprocess.run(["xdg-open", str(file_path.parent)], check=False)  # noqa: S603, S607
+                    except FileNotFoundError:
+                        logging_warning("Could not open file explorer - no suitable file manager found")
+
+        except (subprocess.SubprocessError, OSError) as e:
+            logging_warning("Failed to open file explorer: %s", e)
+
     def create_forum_help_zip_workflow(
         self,
         show_info: ShowInfoCallback,
@@ -1494,6 +1550,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         This method orchestrates the complete forum help zip creation process including:
         - Creating the zip file with relevant files and small enough for forum upload
+        - Opening file explorer with the zip file selected/highlighted
         - Displaying notification with file location and instructions
         - Opening the ArduPilot forum in browser
 
@@ -1531,6 +1588,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             zip_path = self._local_filesystem.zip_files(files_to_zip, zip_file_name=zip_filename, include_apm_pdef=False)
 
             logging_info("Created forum help zip file: %s", zip_path)
+
+            # Open file explorer and select the created zip file
+            self._open_file_explorer_and_select(Path(zip_path))
 
             webbrowser_open_url("https://discuss.ardupilot.org")
 
