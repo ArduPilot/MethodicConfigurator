@@ -140,8 +140,21 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             selected_params: Dictionary of parameters to upload
 
         """
+        upload_progress_window: ProgressWindow | None = None
         reset_progress_window: ProgressWindow | None = None
         download_progress_window: ProgressWindow | None = None
+
+        def get_upload_progress_callback() -> Callable[[int, int], None] | None:
+            """Create and return progress window callback for parameter upload only when needed."""
+            nonlocal upload_progress_window
+            show_only_on_update = True
+            upload_progress_window = self.create_progress_window(
+                parent_window,
+                _("Uploading FC parameters"),
+                _("Uploaded {} of {} parameters"),
+                show_only_on_update,
+            )
+            return upload_progress_window.update_progress_bar
 
         def get_reset_progress_callback() -> Callable[[int, int], None] | None:
             """Create and return progress window callback for FC reset only when needed."""
@@ -173,11 +186,14 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                 ask_confirmation=self.ask_yesno,
                 ask_retry_cancel=self.ask_retry_cancel,
                 show_error=self.show_error,
+                get_upload_progress_callback=get_upload_progress_callback,
                 get_reset_progress_callback=get_reset_progress_callback,
                 get_download_progress_callback=get_download_progress_callback,
             )
         finally:
             # Clean up progress windows if they were created
+            if upload_progress_window is not None:
+                upload_progress_window.destroy()
             if reset_progress_window is not None:
                 reset_progress_window.destroy()
             if download_progress_window is not None:

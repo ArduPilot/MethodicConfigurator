@@ -818,13 +818,19 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return True  # No reset needed
 
-    def _upload_parameters_to_fc(self, selected_params: dict, show_error: Callable[[str, str], None]) -> int:
+    def _upload_parameters_to_fc(  # pylint: disable=too-many-locals
+        self,
+        selected_params: dict,
+        show_error: Callable[[str, str], None],
+        progress_callback: Optional[Callable] = None,
+    ) -> int:
         """
         Upload selected parameters to flight controller.
 
         Args:
             selected_params: Dictionary of parameters to upload.
             show_error: Callback to show error messages to the user.
+            progress_callback: Optional callback for progress updates.
 
         Returns:
             int: Number of changed parameters.
@@ -833,8 +839,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         error_messages = []
         nr_changed = 0
         nr_unchanged = 0
+        total_params = len(selected_params)
 
-        for param_name, param in selected_params.items():
+        for idx, (param_name, param) in enumerate(selected_params.items(), start=1):
+            if progress_callback:
+                progress_callback(idx, total_params)
             try:
                 success, error_msg = self._flight_controller.set_param(param_name, param.value)
                 if not success:
@@ -945,12 +954,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     row.append(value)
                 writer.writerow(row)
 
-    def upload_selected_params_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def upload_selected_params_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals
         self,
         selected_params: dict,
         ask_confirmation: AskConfirmationCallback,
         ask_retry_cancel: AskRetryCancelCallback,
         show_error: ShowErrorCallback,
+        get_upload_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
         get_reset_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
         get_download_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
     ) -> None:
@@ -962,6 +972,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             ask_confirmation: Callback to ask user for confirmation.
             ask_retry_cancel: Callback to ask user to retry or cancel on upload error.
             show_error: Callback to show error messages.
+            get_upload_progress_callback: Optional factory function that creates and returns an upload progress callback.
             get_reset_progress_callback: Optional factory function that creates and returns a reset progress callback.
             get_download_progress_callback: Optional factory function that creates and returns a download progress callback.
 
@@ -973,6 +984,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         )
 
         # Get progress callbacks from factories if provided
+        progress_callback_for_upload = get_upload_progress_callback() if get_upload_progress_callback else None
         progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
         progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
         # Upload parameters that require reset
@@ -990,7 +1002,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Upload remaining parameters (excluding those already uploaded in reset workflow)
         remaining_params = {k: v for k, v in selected_params.items() if k not in already_uploaded_params}
-        nr_changed = self._upload_parameters_to_fc(remaining_params, show_error)
+        nr_changed = self._upload_parameters_to_fc(remaining_params, show_error, progress_callback_for_upload)
 
         # Add count of already uploaded params to total changed count
         nr_changed += len(already_uploaded_params)
@@ -1016,6 +1028,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         ask_confirmation,
                         ask_retry_cancel,
                         show_error,
+                        get_upload_progress_callback,
                         get_reset_progress_callback,
                         get_download_progress_callback,
                     )
