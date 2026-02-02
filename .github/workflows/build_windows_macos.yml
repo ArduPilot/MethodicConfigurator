@@ -172,6 +172,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           python -m pip install .[mac_dist]
 
       - name: Verify tkinter is available
@@ -225,7 +226,10 @@ jobs:
 
           hdiutil create -volname "ArduPilot Methodic Configurator" \
             -srcfolder "$STAGING_DIR" \
-            -ov -format UDZO "$OUTPUT_DIR/$DMG_NAME"
+            -ov -format UDZO \
+            -fs HFS+ \
+            -imagekey zlib-level=9 \
+            "$OUTPUT_DIR/$DMG_NAME"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
