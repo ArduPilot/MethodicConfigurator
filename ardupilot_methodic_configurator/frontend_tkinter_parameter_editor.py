@@ -142,6 +142,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         """
         upload_progress_window: ProgressWindow | None = None
         reset_progress_window: ProgressWindow | None = None
+        connection_progress_window: ProgressWindow | None = None
         download_progress_window: ProgressWindow | None = None
 
         def get_upload_progress_callback() -> Callable[[int, int], None] | None:
@@ -168,6 +169,18 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             )
             return reset_progress_window.update_progress_bar
 
+        def get_connection_progress_callback() -> Callable[[int, int], None] | None:
+            """Create and return progress window callback for FC connection only when needed."""
+            nonlocal connection_progress_window
+            show_only_on_update = True
+            connection_progress_window = self.create_progress_window(
+                parent_window,
+                _("Reconnecting to Flight Controller"),
+                _("{} of {} percent"),
+                show_only_on_update,
+            )
+            return connection_progress_window.update_progress_bar
+
         def get_download_progress_callback() -> Callable[[int, int], None] | None:
             """Create and return progress window callback for parameter download only when needed."""
             nonlocal download_progress_window
@@ -188,6 +201,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                 show_error=self.show_error,
                 get_upload_progress_callback=get_upload_progress_callback,
                 get_reset_progress_callback=get_reset_progress_callback,
+                get_connection_progress_callback=get_connection_progress_callback,
                 get_download_progress_callback=get_download_progress_callback,
             )
         finally:
@@ -196,6 +210,8 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                 upload_progress_window.destroy()
             if reset_progress_window is not None:
                 reset_progress_window.destroy()
+            if connection_progress_window is not None:
+                connection_progress_window.destroy()
             if download_progress_window is not None:
                 download_progress_window.destroy()
 

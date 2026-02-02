@@ -747,6 +747,9 @@ class TestUploadSelectedParameters:
         reset_window = MagicMock()
         reset_window.update_progress_bar = MagicMock()
         reset_window.destroy = MagicMock()
+        connection_window = MagicMock()
+        connection_window.update_progress_bar = MagicMock()
+        connection_window.destroy = MagicMock()
         download_window = MagicMock()
         download_window.update_progress_bar = MagicMock()
         download_window.destroy = MagicMock()
@@ -757,6 +760,8 @@ class TestUploadSelectedParameters:
         def fake_progress_window(_parent: object, title: str, *_args: object, **_kwargs: object) -> MagicMock:
             if "Resetting" in title:
                 return reset_window
+            if "Reconnecting" in title:
+                return connection_window
             if "Uploading" in title:
                 return upload_window
             return download_window
@@ -773,6 +778,7 @@ class TestUploadSelectedParameters:
             show_error: Callable[[str, str], None],
             get_upload_progress_callback: Callable[[], Callable | None],
             get_reset_progress_callback: Callable[[], Callable | None],
+            get_connection_progress_callback: Callable[[], Callable | None],
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
             assert selected_params == {"ROLL_P": 0.12}
@@ -781,15 +787,19 @@ class TestUploadSelectedParameters:
             assert show_error is parameter_editor_window.ui.show_error
             upload_cb = get_upload_progress_callback()
             reset_cb = get_reset_progress_callback()
+            connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
             assert upload_cb is upload_window.update_progress_bar
             assert reset_cb is reset_window.update_progress_bar
+            assert connection_cb is connection_window.update_progress_bar
             assert download_cb is download_window.update_progress_bar
             assert upload_cb is not None
             assert reset_cb is not None
+            assert connection_cb is not None
             assert download_cb is not None
             upload_cb(0, 1)
             reset_cb(1, 2)
+            connection_cb(2, 3)
             download_cb(3, 4)
 
         param_editor_mock.upload_selected_params_workflow.side_effect = fake_upload_workflow
@@ -798,6 +808,7 @@ class TestUploadSelectedParameters:
 
         upload_window.destroy.assert_called_once()
         reset_window.destroy.assert_called_once()
+        connection_window.destroy.assert_called_once()
         download_window.destroy.assert_called_once()
         assert parameter_editor_window._reset_progress_window is None
         assert parameter_editor_window._param_download_progress_window_upload is None
@@ -809,12 +820,15 @@ class TestUploadSelectedParameters:
         reset_window = MagicMock()
         reset_window.update_progress_bar = MagicMock()
         reset_window.destroy = MagicMock()
+        connection_window = MagicMock()
+        connection_window.update_progress_bar = MagicMock()
+        connection_window.destroy = MagicMock()
         download_window = MagicMock()
         download_window.update_progress_bar = MagicMock()
         download_window.destroy = MagicMock()
 
         parameter_editor_window.ui.create_progress_window = MagicMock(
-            side_effect=[upload_window, reset_window, download_window]
+            side_effect=[upload_window, reset_window, connection_window, download_window]
         )
         param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
 
@@ -826,6 +840,7 @@ class TestUploadSelectedParameters:
             show_error: Callable[[str, str], None],
             get_upload_progress_callback: Callable[[], Callable | None],
             get_reset_progress_callback: Callable[[], Callable | None],
+            get_connection_progress_callback: Callable[[], Callable | None],
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
             assert selected_params == {}
@@ -834,16 +849,20 @@ class TestUploadSelectedParameters:
             assert show_error is parameter_editor_window.ui.show_error
             upload_cb = get_upload_progress_callback()
             reset_cb = get_reset_progress_callback()
+            connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
             assert upload_cb is upload_window.update_progress_bar
             assert reset_cb is reset_window.update_progress_bar
+            assert connection_cb is connection_window.update_progress_bar
             assert download_cb is download_window.update_progress_bar
             assert upload_cb is not None
             assert reset_cb is not None
+            assert connection_cb is not None
             assert download_cb is not None
             upload_cb(0, 0)
             reset_cb(1, 1)
-            download_cb(2, 2)
+            connection_cb(2, 2)
+            download_cb(3, 3)
             msg = "boom"
             raise RuntimeError(msg)
 
@@ -854,6 +873,7 @@ class TestUploadSelectedParameters:
 
         upload_window.destroy.assert_called_once()
         reset_window.destroy.assert_called_once()
+        connection_window.destroy.assert_called_once()
         download_window.destroy.assert_called_once()
         assert parameter_editor_window._reset_progress_window is None
         assert parameter_editor_window._param_download_progress_window_upload is None
@@ -1585,14 +1605,17 @@ class TestParameterUploads:
             *,
             get_upload_progress_callback: Callable[[], Callable],
             get_reset_progress_callback: Callable[[], Callable],
+            get_connection_progress_callback: Callable[[], Callable],
             get_download_progress_callback: Callable[[], Callable],
             **_ignored: object,
         ) -> None:
             upload_cb = get_upload_progress_callback()
             reset_cb = get_reset_progress_callback()
+            connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
             upload_cb(0, 1)
             reset_cb(1, 2)
+            connection_cb(2, 3)
             download_cb(3, 4)
 
         parameter_editor.upload_selected_params_workflow.side_effect = _workflow
@@ -1608,6 +1631,7 @@ class TestParameterUploads:
             show_error=ANY,
             get_upload_progress_callback=ANY,
             get_reset_progress_callback=ANY,
+            get_connection_progress_callback=ANY,
             get_download_progress_callback=ANY,
         )
         assert all(window.destroy.called for window in created_windows)
