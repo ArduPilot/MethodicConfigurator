@@ -659,12 +659,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return fc_parameters, param_default_values
 
-    def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals
+    def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
         self,
         selected_params: dict,
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        progress_callback: Optional[Callable] = None,
+        reset_progress_callback: Optional[Callable] = None,
+        connection_progress_callback: Optional[Callable] = None,
     ) -> tuple[bool, set[str]]:
         """
         Upload parameters that require reset to the flight controller.
@@ -673,7 +674,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             selected_params: Dictionary of parameters to upload.
             ask_confirmation: Callback to ask user for confirmation.
             show_error: Callback to show error messages.
-            progress_callback: Optional callback for progress updates.
+            reset_progress_callback: Optional callback for reset progress updates.
+            connection_progress_callback: Optional callback for connection progress updates.
 
         Returns:
             tuple[bool, set[str]]: (reset_happened, uploaded_param_names) - reset_happened indicates if reset occurred,
@@ -733,7 +735,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         for error_msg in error_messages:
             show_error(_("ArduPilot methodic configurator"), error_msg)
 
-        self.reset_and_reconnect_workflow(reset_required, reset_unsure_params, ask_confirmation, show_error, progress_callback)
+        self.reset_and_reconnect_workflow(
+            reset_required,
+            reset_unsure_params,
+            ask_confirmation,
+            show_error,
+            reset_progress_callback,
+            connection_progress_callback,
+        )
 
         reset_happened = reset_required or bool(reset_unsure_params)
         return reset_happened, uploaded_params
@@ -755,13 +764,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return int(max(param_boot_delay, flightcontroller_boot_delay) // 1000 + 1)  # round up
 
     def _reset_and_reconnect_flight_controller(
-        self, progress_callback: Optional[Callable] = None, sleep_time: Optional[int] = None
+        self,
+        reset_progress_callback: Optional[Callable] = None,
+        connection_progress_callback: Optional[Callable] = None,
+        sleep_time: Optional[int] = None,
     ) -> Optional[str]:
         """
         Reset and reconnect to the flight controller.
 
         Args:
-            progress_callback: Optional callback function for progress updates.
+            reset_progress_callback: Optional callback function for progress updates.
+            connection_progress_callback: Optional callback function for connection progress updates.
             sleep_time: Optional sleep time override. If None, calculates based on boot delay parameters.
 
         Returns:
@@ -772,7 +785,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             sleep_time = self._calculate_reset_time()
 
         # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-        return self._flight_controller.reset_and_reconnect(progress_callback, None, int(sleep_time))
+        return self._flight_controller.reset_and_reconnect(
+            reset_progress_callback, connection_progress_callback, int(sleep_time)
+        )
 
     def reset_and_reconnect_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -780,7 +795,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         fc_reset_unsure: list[str],
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        progress_callback: Optional[Callable] = None,
+        reset_progress_callback: Optional[Callable] = None,
+        connection_progress_callback: Optional[Callable] = None,
     ) -> bool:
         """
         Complete workflow for resetting and reconnecting to flight controller with user interaction.
@@ -795,7 +811,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             fc_reset_unsure: List of parameters that potentially require reset
             ask_confirmation: Callback to ask user for confirmation
             show_error: Callback to show error messages
-            progress_callback: Optional callback for progress updates
+            reset_progress_callback: Optional callback for reset progress updates
+            connection_progress_callback: Optional callback for connection progress updates
 
         Returns:
             bool: True if reset was performed (or not needed), False if reset failed
@@ -810,7 +827,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             should_reset = ask_confirmation(_("Possible reset required"), msg.format(param_list_str=param_list_str))
 
         if should_reset:
-            error_message = self._reset_and_reconnect_flight_controller(progress_callback)
+            error_message = self._reset_and_reconnect_flight_controller(reset_progress_callback, connection_progress_callback)
             if error_message:
                 show_error(_("ArduPilot methodic configurator"), error_message)
                 return False
@@ -962,6 +979,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         show_error: ShowErrorCallback,
         get_upload_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
         get_reset_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
+        get_connection_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
         get_download_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
     ) -> None:
         """
@@ -974,6 +992,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_error: Callback to show error messages.
             get_upload_progress_callback: Optional factory function that creates and returns an upload progress callback.
             get_reset_progress_callback: Optional factory function that creates and returns a reset progress callback.
+            get_connection_progress_callback: Optional factory function that creates and returns a connection prog. callback.
             get_download_progress_callback: Optional factory function that creates and returns a download progress callback.
 
         """
@@ -986,13 +1005,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Get progress callbacks from factories if provided
         progress_callback_for_upload = get_upload_progress_callback() if get_upload_progress_callback else None
         progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
+        progress_callback_for_connection = get_connection_progress_callback() if get_connection_progress_callback else None
         progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
         # Upload parameters that require reset
         reset_happened, already_uploaded_params = self.upload_parameters_that_require_reset_workflow(
-            selected_params,
-            ask_confirmation,
-            show_error,
-            progress_callback_for_reset,
+            selected_params, ask_confirmation, show_error, progress_callback_for_reset, progress_callback_for_connection
         )
 
         # If reset happened, fc_parameters cache was cleared during disconnect/reconnect
