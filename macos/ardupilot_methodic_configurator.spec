@@ -78,7 +78,7 @@ exe = EXE(
     name="ardupilot_methodic_configurator",
     debug=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
 )
 
@@ -88,7 +88,7 @@ coll = COLLECT(
     analysis.zipfiles,
     analysis.datas,
     strip=False,
-    upx=True,
+    upx=False,
     name="ardupilot_methodic_configurator",
 )
 
