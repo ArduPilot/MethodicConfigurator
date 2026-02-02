@@ -157,7 +157,8 @@ class ComponentDataModelBase:
 
             # Special handling for list/dict types
             if datatype in (list, dict):
-                logging_error(_("Invalid datatype '%s' for path %s"), value, datatype.__name__, path)
+                type_name = getattr(datatype, "__name__", repr(datatype))
+                logging_error(_("Invalid value '%s' for datatype %s at path %s"), value, type_name, path)
                 return ""
 
             # Standard type conversion
@@ -165,7 +166,8 @@ class ComponentDataModelBase:
 
         except (ValueError, TypeError, AttributeError) as e:
             # Log the error and fall back to the original processing method
-            logging_warning(_("Failed to cast value '%s' to %s for path %s: %s"), value, datatype.__name__, path, e)
+            type_name = getattr(datatype, "__name__", repr(datatype))
+            logging_warning(_("Failed to cast value '%s' to %s for path %s: %s"), value, type_name, path, e)
             return self._process_value(path, str(value) if value is not None else None)
 
     def _process_value(self, path: ComponentPath, value: Union[str, None]) -> ComponentValue:

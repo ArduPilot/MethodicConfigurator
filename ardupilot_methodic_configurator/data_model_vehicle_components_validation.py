@@ -451,12 +451,14 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             try:
                 typed_value = data_type(value)
                 if typed_value < limits[0] or typed_value > limits[1]:
-                    error_msg = _("{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
+                    error_msg = _("{name} must be a {data_type_name} between {min} and {max}")
                     limited_value = limits[0] if typed_value < limits[0] else limits[1]
-                    return error_msg.format(name=name, data_type=data_type, limits=limits), limited_value
+                    type_name = getattr(data_type, "__name__", repr(data_type))
+                    return error_msg.format(name=name, data_type_name=type_name, min=limits[0], max=limits[1]), limited_value
             except ValueError:
-                error_msg = _("Invalid {data_type.__name__} value for {name}")
-                return error_msg.format(data_type=data_type, name=name), None
+                error_msg = _("Invalid {data_type_name} value for {name}")
+                type_name = getattr(data_type, "__name__", repr(data_type))
+                return error_msg.format(data_type_name=type_name, name=name), None
 
             # Validate takeoff weight limits
             if path[0] == "Frame" and path[1] == "Specifications" and "TOW" in path[2]:
