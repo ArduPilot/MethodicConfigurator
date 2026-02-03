@@ -29,7 +29,7 @@ from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 from shutil import rmtree as shutil_rmtree
 from subprocess import SubprocessError, run
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 from zipfile import ZipFile
 
 from argcomplete.completers import DirectoriesCompleter
@@ -785,7 +785,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return variables
 
     def update_and_export_vehicle_params_from_fc(
-        self, source_param_values: Union[dict[str, float], None], existing_fc_params: list[str]
+        self,
+        source_param_values: Union[dict[str, float], None],
+        existing_fc_params: list[str],
+        ask_user_confirmation: Optional[Callable[[str, str], bool]] = None,
     ) -> str:
         """
         Update parameter values from flight controller data and export to vehicle files.
@@ -801,6 +804,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                                 source (typically flight controller). If None, no direct updates occur.
             existing_fc_params: List of params that exist in the FC if empty or None all parameters are
                                 assumed to exist
+            ask_user_confirmation: Optional callback to confirm saving derived parameter changes.
+                                   If provided, users will be asked before writing derived changes to disk.
 
         Returns:
             str: Empty string if successful, error message otherwise.
@@ -809,7 +814,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         eval_variables = self.get_eval_variables()
         # the eval variables do not contain fc_parameter values
         # and that is intentional, the fc_parameters are not to be used in here
+        annotate_doc = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
         for param_filename, param_dict in self.file_parameters.items():
+            derived_changed: bool = False
             for param_name, param in param_dict.items():
                 if source_param_values and param_name in source_param_values:
                     param.value = source_param_values[param_name]
@@ -824,9 +831,24 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 )
                 if error_msg:
                     return error_msg
-                self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
+                derived_changed = self.merge_forced_or_derived_parameters(
+                    param_filename, self.derived_parameters, existing_fc_params
+                )
+            if (
+                derived_changed
+                and ask_user_confirmation is not None
+                and self.vehicle_configuration_file_exists(param_filename)
+            ):
+                confirm_message = _(
+                    "Derived parameters were recalculated for '{param_filename}'.\nDo you want to save these changes to disk?"
+                ).format(param_filename=param_filename)
+                if not ask_user_confirmation(_("Confirm derived parameter changes"), confirm_message):
+                    logging_info("User declined saving derived changes for %s", param_filename)
+                    continue
             self.export_to_param(
-                param_dict, param_filename, annotate_doc=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
+                param_dict,
+                param_filename,
+                annotate_doc=annotate_doc,
             )
         return ""
 
