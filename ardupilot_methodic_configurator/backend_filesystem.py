@@ -838,8 +838,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     derived_changed_by_file[param_filename] = True
             if derived_changed_by_file.get(param_filename, False) and ask_user_confirmation is not None:
                 confirm_message = _(
-                    "Derived parameters were recalculated for '{param_filename}'.\n"
-                    "Do you want to save these changes to disk?"
+                    "Derived parameters were recalculated for '{param_filename}'.\nDo you want to save these changes to disk?"
                 ).format(param_filename=param_filename)
                 if not ask_user_confirmation(_("Confirm derived parameter changes"), confirm_message):
                     logging_info("User declined saving derived changes for %s", param_filename)
