@@ -589,3 +589,15 @@ def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> T
 
 def show_tooltip_on_richtext_tag(widget: tk.Text, text: str, tag_name: str, position_below: bool = True) -> Tooltip:
     return Tooltip(widget, text, position_below=position_below, tag_name=tag_name)
+
+
+def ask_yesno_message(title: str, message: str, root: Optional[tk.Tk] = None) -> bool:
+    if root is None:
+        root = tk.Tk(className="ArduPilotMethodicConfigurator")
+        style = ttk.Style()
+        style.theme_use("alt")
+        root.withdraw()  # Hide the main window
+        result = messagebox.askyesno(title, message)
+        root.destroy()
+        return result
+    return messagebox.askyesno(title, message)
