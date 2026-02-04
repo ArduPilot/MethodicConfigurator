@@ -68,8 +68,8 @@ jobs:
         run: |
           WARNINGS=0
 
-          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
-          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
+          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
+          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
 
           if [ -z "$PIP_VERSION" ]; then
             echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
@@ -424,8 +424,8 @@ jobs:
       - name: Install python-gettext requirement
         continue-on-error: true
         run: |
-          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
-          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
+          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
+          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
 
           if [ -z "$PIP_VERSION" ]; then
             echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
@@ -540,7 +540,10 @@ jobs:
 
       - name: Compile .mo files
         run: |
-          python create_mo_files.py
+          if ! python create_mo_files.py; then
+            echo "❌ Failed to compile .mo files"
+            exit 1
+          fi
           echo "✅ .mo files compiled successfully"
 
       - name: Stage all changes
