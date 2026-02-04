@@ -68,10 +68,12 @@ msgstr "Fahrzeugtyp nicht explizit eingestellt, automatisch erkannt %s."
 #: ardupilot_methodic_configurator/__main__.py:252
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:228
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:463
+msgstr "Das Fahrzeugverzeichnis %(old_dir)s ist nicht schreibbar. Stattdessen wird %(new_dir)s verwendet."
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
 msgid "Fatal error reading parameter files"
 msgstr "Schwerwiegender Fehler beim Lesen der Parameterdateien"
+msgstr "Das Fahrzeugverzeichnis %(new_dir)s wird für den initialen Parameter-Download verwendet."
 
 #: ardupilot_methodic_configurator/__main__.py:289
 msgid ""
@@ -397,6 +399,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:223
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+msgstr "In Datei '{self.configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' ergab einen mathematischen Fehler: {math_error}"
 "parameter '{parameter}' could not be computed: {_e}"
 msgstr ""
 "In der Datei '{self.configuration_steps_filename}': '{filename}' konnte der "
@@ -457,6 +460,7 @@ msgid "Cannot save invalid JSON data: {}"
 msgstr "Kann ungültige JSON-Daten nicht speichern: {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:133
+msgstr "Validierungsfehler"
 msgid "Directory '{}' not found"
 msgstr "Verzeichnis '{}' nicht gefunden"
 
@@ -4434,14 +4438,16 @@ msgid ""
 "count"
 msgstr ""
 "Alle Volt-pro-Zelle-Werte sind null oder ungültig; Batteriezellenzahl kann "
+msgstr "BATT_MONITOR-Wert %s wurde in BATT_MONITOR_CONNECTION nicht gefunden"
 "nicht geschätzt werden"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:426
 msgid "Estimated battery cell count %s is out of valid range (%d to %d)"
-msgstr ""
+msgstr "BATT_I2C_BUS-Wert %d außerhalb des Bereichs (0-%d), Standard auf ersten Bus gesetzt"
 "Geschätzte Batteriezellenzahl %s liegt außerhalb des gültigen Bereichs (%d "
 "bis %d)"
 
+msgstr "Ungültiger BATT_I2C_BUS-Wert, Standard auf ersten Bus gesetzt"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:118
 msgid "Cannot modify schema: Schema could not be loaded"
 msgstr "Schema kann nicht geändert werden: Schema konnte nicht geladen werden"
@@ -4450,10 +4456,12 @@ msgstr "Schema kann nicht geändert werden: Schema konnte nicht geladen werden"
 msgid "Could not find Specifications in flight controller schema"
 msgstr "Spezifikationen im Flugcontroller-Schema nicht gefunden"
 
+msgstr "BATT_MONITOR-Parameter in fc_parameters nicht gefunden"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:149
 msgid "Modified schema: MCU Series x-is-optional=%s to value=%u"
 msgstr "Schema geändert: MCU-Serie x-is-optional=%s auf Wert=%u"
 
+msgstr "BATT_CAPACITY ist null oder negativ: %s"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:154
 msgid "Error modifying schema for MCU Series: %s"
 msgstr "Fehler beim Ändern des Schemas für MCU-Serie: %s"
@@ -4462,10 +4470,12 @@ msgstr "Fehler beim Ändern des Schemas für MCU-Serie: %s"
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr "Ausnahme aufgetreten in get_component_property_description: {}"
 
+msgstr "BATT_CAPACITY-Parameter in fc_parameters nicht gefunden"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:316
 msgid "No fallback values found for %s"
 msgstr "Keine Fallback-Werte für %s gefunden"
 
+msgstr "Spannung pro Zelle für %s ist null oder ungültig: %s"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:454
 msgid ""
 "{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
@@ -4512,10 +4522,12 @@ msgstr "liegt über dem {limit_name} von {limit_value}"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:581
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:276
 msgid ""
+msgstr "{name} muss ein(e) {data_type_name} zwischen {min} und {max} sein"
 "Invalid value '{value}' for {paths_str}\n"
 "Allowed values are: {allowed_str}"
 msgstr ""
 "Ungültiger Wert '{value}' für {paths_str}\n"
+msgstr "Ungültiger {data_type_name}-Wert für {name}"
 "Erlaubte Werte sind: {allowed_str}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:600
@@ -4569,11 +4581,12 @@ msgstr ""
 "Erstellen Sie eine neue leere Fahrzeugkonfiguration ohne Komponentendaten "
 "aus der Vorlage."
 
+msgstr "Anzahl der magnetischen Rotorpole muss für {paths_str} gerade sein"
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:100
 msgid ""
 "Reset flight controller parameters to their defaults. WARNING: This will "
 "delete all parameters stored on the flight controller."
-msgstr ""
+msgstr "Ungültiger Ganzzahlwert für {paths_str}"
 "Flugcontroller-Parameter auf Standardwerte zurücksetzen. WARNUNG: Dies "
 "löscht alle im Flugcontroller gespeicherten Parameter."
 
@@ -5012,6 +5025,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:149
 msgid "Warning"
+msgstr "Fehler beim Hochladen der Parameter:"
 msgstr "Warnung"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:150
@@ -5236,10 +5250,12 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:137
 msgid "Baudrate combobox changed to: {_selected_baudrate}"
+msgstr "Vorlage nicht gespeichert"
 msgstr "Baudrate-Auswahlfeld geändert zu: {_selected_baudrate}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:155
 msgid ""
+msgstr "Vorlage wurde in Datei '{}' aktualisiert"
 "Enter the connection string to the flight controller. Examples are:\n"
 "\n"
 "COM4 (on windows)\n"
@@ -5249,6 +5265,7 @@ msgid ""
 msgstr ""
 "Geben Sie die Verbindungszeichenfolge zum Flugcontroller ein. Beispiele "
 "sind:\n"
+msgstr "Vorlage wurde in Datei '{}' gespeichert"
 "\n"
 "COM4 (unter Windows)\n"
 "/dev/serial/by-id/usb-xxx (unter Linux)\n"
@@ -5496,18 +5513,22 @@ msgstr "2. Motor-Reihenfolge/Richtungs-Konfiguration"
 msgid "Throttle:"
 msgstr "Drossel:"
 
+msgstr "Initialisiere Flugsteuerung"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:199
 msgid "Duration:"
 msgstr "Dauer:"
 
+msgstr "Initialisierung wird gestartet..."
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:222
 msgid "Test All"
 msgstr "Alle testen"
 
+msgstr "Ungültiger max_value bei update_init_progress_bar Fortschrittsaktualisierung: %d"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:225
 msgid "Test in Sequence"
 msgstr "In Sequenz testen"
 
+msgstr "Ungültiger max_value bei update_connect_progress_bar Fortschrittsaktualisierung: %d"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:228
 msgid "Stop All Motors"
 msgstr "Alle Motoren stoppen"
@@ -5534,6 +5555,7 @@ msgstr "Motor %(label)s testen"
 msgid "Motor %(num)d %(dir)s"
 msgstr "Motor %(num)d %(dir)s"
 
+msgstr "Fehler beim Herunterladen der Parameter"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:274
 msgid "Detected:"
 msgstr "Erkannt:"
@@ -5899,19 +5921,22 @@ msgid "Not available"
 msgstr "Nicht verfügbar"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:352
+msgstr "Lade FC-Parameter hoch"
 msgid "This parameter is not available on the connected flight controller"
 msgstr ""
 "Dieser Parameter ist auf dem angeschlossenen Flugcontroller nicht verfügbar"
 
+msgstr "Hochgeladen {} von {} Parametern"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:354
 msgid "Not editable"
 msgstr "Nicht editierbar"
 
+msgstr "Wiederverbindung zum Flugcontroller"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:357
 msgid ""
 "This value has been automatically calculated by the software using data\n"
 "from the component editor window or from the 'configuration_steps.json' file"
-msgstr ""
+msgstr "{} von {} Prozent"
 "Dieser Wert wurde automatisch von der Software unter Verwendung von Daten\n"
 "aus dem Komponentenbearbeitungsfenster oder aus der Datei "
 "'configuration_steps.json' berechnet"
@@ -6227,6 +6252,7 @@ msgstr "Aktueller Wert"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:139
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:238
 msgid "New Value"
+msgstr "Exportiere FC-Parameter, die in den Konfigurationsschritten fehlen oder abweichen. Standard ist %(default)s"
 msgstr "Neuer Wert"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:140

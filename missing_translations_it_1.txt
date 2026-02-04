@@ -1,0 +1,25 @@
+70:La directory del veicolo %(old_dir)s non è scrivibile. Uso %(new_dir)s invece.
+74:Utilizzo la directory del veicolo %(new_dir)s per il download iniziale dei parametri.
+400:Nel file '{self.configuration_steps_filename}': '{filename}' la valutazione del parametro {parameter_type} '{parameter}' ha generato un errore matematico: {math_error}
+460:Errore di validazione
+4478:Valore BATT_MONITOR %s non trovato in BATT_MONITOR_CONNECTION
+4482:Valore BATT_I2C_BUS %d fuori intervallo (0-%d), impostazione predefinita sul primo bus
+4486:Valore BATT_I2C_BUS non valido, impostazione predefinita sul primo bus
+4494:Parametro BATT_MONITOR non trovato in fc_parameters
+4498:BATT_CAPACITY è zero o negativo: %s
+4506:Parametro BATT_CAPACITY non trovato in fc_parameters
+4510:Il valore Volt per cella per %s è zero o non valido: %s
+4556:{name} deve essere un {data_type_name} compreso tra {min} e {max}
+4560:Valore {data_type_name} non valido per {name}
+4613:Il numero di poli del rotore magnetico deve essere pari per {paths_str}
+4617:Valore intero non valido per {paths_str}
+5060:Caricamento parametri non riuscito:
+5280:Template non salvato
+5284:Il template è stato aggiornato al file '{}'
+5293:Il template è stato salvato nel file '{}'
+5533:Inizializzazione del Flight Controller
+5537:Avvio dell'inizializzazione...
+5541:Valore max_value non valido nell'aggiornamento della barra di avanzamento di update_init_progress_bar: %d
+5545:Valore max_value non valido nell'aggiornamento della barra di avanzamento di update_connect_progress_bar: %d
+5571:Download dei parametri non riuscito
+5935:Caricamento parametri FC

@@ -66,10 +66,12 @@ msgstr "未明确设置载具类型，自动检测到 %s。"
 #: ardupilot_methodic_configurator/__main__.py:252
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:228
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:463
+msgstr "车辆目录%(old_dir)s不可写。将使用%(new_dir)s代替。"
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
 msgid "Fatal error reading parameter files"
 msgstr "读取参数文件时发生致命错误"
+msgstr "用于初始参数下载将使用车辆目录%(new_dir)s。"
 
 #: ardupilot_methodic_configurator/__main__.py:289
 msgid ""
@@ -370,7 +372,7 @@ msgstr ""
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
-msgstr ""
+msgstr "在文件‘{self.configuration_steps_filename}’：‘{filename}’ {parameter_type}参数‘{parameter}’计算时出现数学错误：{math_error}"
 "在文件 '{self.configuration_steps_filename}'：'{filename}' {parameter_type} "
 "参数 '{parameter}' 无法计算：{_e}"
 
@@ -428,6 +430,7 @@ msgid "Cannot save invalid JSON data: {}"
 msgstr "无法保存无效的JSON数据: {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:133
+msgstr "验证错误"
 msgid "Directory '{}' not found"
 msgstr "找不到目录'{}'"
 
@@ -4059,14 +4062,17 @@ msgid ""
 "count"
 msgstr "所有每格电压值均为零或无效;无法估算电池格数"
 
+msgstr "在BATT_MONITOR_CONNECTION中未找到BATT_MONITOR值%s"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:426
 msgid "Estimated battery cell count %s is out of valid range (%d to %d)"
 msgstr "估算的电池格数 %s 超出有效范围 (%d 到 %d)"
 
+msgstr "BATT_I2C_BUS值%d超出范围(0-%d)，已默认使用第一个总线"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:118
 msgid "Cannot modify schema: Schema could not be loaded"
 msgstr "无法修改模式: 无法加载模式"
 
+msgstr "BATT_I2C_BUS值无效，已默认使用第一个总线"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:133
 msgid "Could not find Specifications in flight controller schema"
 msgstr "在飞行控制器模式中找不到规格"
@@ -4075,10 +4081,12 @@ msgstr "在飞行控制器模式中找不到规格"
 msgid "Modified schema: MCU Series x-is-optional=%s to value=%u"
 msgstr "已修改模式: MCU系列 x-is-optional=%s 为值=%u"
 
+msgstr "在fc_parameters中未找到BATT_MONITOR参数"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:154
 msgid "Error modifying schema for MCU Series: %s"
 msgstr "修改MCU系列模式时出错: %s"
 
+msgstr "BATT_CAPACITY为零或负数：%s"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:182
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr "在 get_component_property_description 中发生异常：{}"
@@ -4087,10 +4095,12 @@ msgstr "在 get_component_property_description 中发生异常：{}"
 msgid "No fallback values found for %s"
 msgstr "没找到 %s 的回退值"
 
+msgstr "在fc_parameters中未找到BATT_CAPACITY参数"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:454
 msgid ""
 "{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
 msgstr "{name} 必须是 {limits[0]} 和 {limits[1]} 之间的 {data_type.__name__}"
+msgstr "%s的单体电压值为零或无效：%s"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:466
 msgid "Takeoff Weight max must be a float"
@@ -4133,10 +4143,11 @@ msgstr "高于 {limit_value} 的 {limit_name}"
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "Allowed values are: {allowed_str}"
-msgstr ""
+msgstr "{name}必须为{min}到{max}之间的{data_type_name}"
 "{paths_str} 的无效值 '{value}'\n"
 "允许的值为: {allowed_str}"
 
+msgstr "{name}的{data_type_name}值无效"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:600
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr "{paths_str} 的重复FC连接类型 '{value}'"
@@ -4190,10 +4201,12 @@ msgstr ""
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:104
 msgid ""
 "Reset the flight controller parameters to their default values when creating "
+msgstr "{paths_str}的磁转子极数必须为偶数"
 "a new vehicle configuration.\n"
 "Helps avoid issues caused by incorrect or incompatible parameter settings."
 msgstr ""
 "在创建新载具配置时将飞行控制器参数重置为默认值。\n"
+msgstr "{paths_str}的整数值无效"
 "有助于避免由不正确或不兼容的参数设置引起的问题。"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:111
@@ -4594,6 +4607,7 @@ msgid ""
 "values for {chemistry} chemistry.\n"
 "This will overwrite any custom values you may have set."
 msgstr ""
+msgstr "参数上传失败："
 "将更新电池单元电压限制为 {chemistry} 化学类型的\n"
 "推荐值。\n"
 "这将覆盖您可能设置的任何自定义值。"
@@ -4800,10 +4814,12 @@ msgstr "连接 combobox 已更改为：{selected_connection}"
 msgid "Baudrate combobox changed to: {_selected_baudrate}"
 msgstr "波特率下拉框已更改为：{_selected_baudrate}"
 
+msgstr "模板未保存"
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:155
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
 "\n"
+msgstr "模板已更新到文件‘{}’"
 "COM4 (on windows)\n"
 "/dev/serial/by-id/usb-xxx (on Linux)\n"
 "tcp:127.0.0.1:5761\n"
@@ -4813,6 +4829,7 @@ msgstr ""
 "\n"
 "COM4（在 Windows 上）\n"
 "/dev/serial/by-id/usb-xxx（在 Linux 上）\n"
+msgstr "模板已保存到文件‘{}’"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551输入飞行控制器的连接字符串。示例有：\n"
 "\n"
@@ -5056,18 +5073,22 @@ msgstr "持续时间:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:222
 msgid "Test All"
+msgstr "正在初始化飞控"
 msgstr "测试全部"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:225
 msgid "Test in Sequence"
+msgstr "开始初始化..."
 msgstr "顺序测试"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:228
 msgid "Stop All Motors"
+msgstr "在update_init_progress_bar进度更新中max_value无效：%d"
 msgstr "停止所有电机"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:231
 msgid "3. Arm and Min Throttle Configuration"
+msgstr "在update_connect_progress_bar进度更新中max_value无效：%d"
 msgstr "3. 解锁和最小油门配置"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:238
@@ -5094,6 +5115,7 @@ msgstr "检测到:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:280
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:652
+msgstr "参数下载失败"
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:673
 msgid "Ready"
 msgstr "就绪"
@@ -5440,18 +5462,22 @@ msgid "This parameter is not available on the connected flight controller"
 msgstr "此參數在連接的飛行控制器上不可用"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:354
+msgstr "正在上传飞控参数"
 msgid "Not editable"
 msgstr "不可编辑"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:357
+msgstr "已上传 {} 个参数，共 {} 个参数"
 msgid ""
 "This value has been automatically calculated by the software using data\n"
 "from the component editor window or from the 'configuration_steps.json' file"
 msgstr ""
+msgstr "正在重新连接飞控"
 "此值已由軟件自動計算，使用來自組件編輯器窗口或 'configuration_steps.json' 文"
 "件中的數據"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:364
+msgstr "{} 百分之 {}"
 msgid "Above limit"
 msgstr "高于限制"
 
@@ -5754,6 +5780,7 @@ msgid "Delete or add a parameter"
 msgstr "删除或添加参数"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:145
+msgstr "导出配置步骤中缺失或不同的飞控参数。默认值为 %(default)s"
 msgid "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"
 msgstr "参数名称必须是 ^[A-Z][A-Z_0-9]* 并且最多 16 个字符长"
 

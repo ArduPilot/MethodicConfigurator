@@ -1,0 +1,4 @@
+5894:Carregado(s) {} de {} parâmetros  
+5898:A restabelecer ligação ao Controlador de Voo  
+5902:{} de {} por cento  
+6215:Exportar parâmetros do FC que faltam ou são diferentes nos passos de configuração. O valor por defeito é %(default)s

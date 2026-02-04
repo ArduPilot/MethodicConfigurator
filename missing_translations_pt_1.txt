@@ -1,0 +1,25 @@
+69:O diretório de veículo %(old_dir)s não é gravável. A usar %(new_dir)s em vez disso.
+73:A usar o diretório de veículo %(new_dir)s para o download inicial de parâmetros.
+397:No ficheiro '{self.configuration_steps_filename}': avaliação do parâmetro '{parameter}' de tipo {parameter_type} em '{filename}' resultou num erro matemático: {math_error}
+457:Erro de validação
+4433:Valor de BATT_MONITOR %s não encontrado em BATT_MONITOR_CONNECTION
+4437:Valor de BATT_I2C_BUS %d fora do intervalo (0-%d), a usar o primeiro bus por defeito
+4441:Valor inválido de BATT_I2C_BUS, a usar o primeiro bus por defeito
+4449:Parâmetro BATT_MONITOR não encontrado em fc_parameters
+4453:BATT_CAPACITY é zero ou negativo: %s
+4461:Parâmetro BATT_CAPACITY não encontrado em fc_parameters
+4465:Valor de volts por célula para %s é zero ou inválido: %s
+4512:{name} deve ser um(a) {data_type_name} entre {min} e {max}
+4516:Valor inválido de {data_type_name} para {name}
+4569:Número de polos magnéticos do rotor deve ser par para {paths_str}
+4573:Valor inteiro inválido para {paths_str}
+5014:Falha ao enviar parâmetros:
+5233:Modelo não guardado
+5237:Modelo foi atualizado para o ficheiro '{}'
+5246:Modelo foi guardado no ficheiro '{}'
+5488:A inicializar o controlador de voo
+5492:A iniciar a inicialização...
+5496:Valor max_value inválido na atualização da barra de progresso de update_init_progress_bar: %d
+5500:Valor max_value inválido na atualização da barra de progresso de update_connect_progress_bar: %d
+5526:Falha ao descarregar parâmetros
+5890:A enviar parâmetros do FC

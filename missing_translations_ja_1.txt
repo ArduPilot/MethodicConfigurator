@@ -1,0 +1,25 @@
+67:Vehicle directory %(old_dir)s は書き込み不可です。代わりに %(new_dir)s を使用します。
+71:初期パラメータのダウンロードに %(new_dir)s を使用します。
+391:ファイル『{self.configuration_steps_filename}』:『{filename}』 {parameter_type} パラメータ『{parameter}』の評価で数学エラーが発生しました: {math_error}
+452:検証エラー
+4291:BATT_MONITOR の値 %s が BATT_MONITOR_CONNECTION に見つかりません
+4295:BATT_I2C_BUS の値 %d が範囲外です (0～%d)、最初のバスにデフォルト設定します
+4299:無効な BATT_I2C_BUS の値です、最初のバスにデフォルト設定します
+4307:BATT_MONITOR パラメータが fc_parameters に見つかりません
+4311:BATT_CAPACITY がゼロまたは負です: %s
+4319:BATT_CAPACITY パラメータが fc_parameters に見つかりません
+4323:%s のセルあたりの電圧値がゼロまたは無効です: %s
+4367:{name} は {min} から {max} の間の {data_type_name} でなければなりません
+4371:{name} の {data_type_name} の値が無効です
+4424:{paths_str} の磁気ローターポール数は偶数でなければなりません
+4428:{paths_str} に対する整数値が無効です
+4855:パラメータのアップロードに失敗しました:
+5070:テンプレートが保存されていません
+5074:テンプレートがファイル『{}』に更新されました
+5083:テンプレートがファイル『{}』に保存されました
+5319:フライトコントローラーの初期化中
+5323:初期化を開始しています...
+5327:update_init_progress_bar 進捗更新で max_value が無効です: %d
+5331:update_connect_progress_bar 進捗更新で max_value が無効です: %d
+5357:パラメータのダウンロードに失敗しました
+5719:FCパラメータをアップロード中

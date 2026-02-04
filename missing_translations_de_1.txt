@@ -1,0 +1,25 @@
+69:Das Fahrzeugverzeichnis %(old_dir)s ist nicht schreibbar. Stattdessen wird %(new_dir)s verwendet.
+73:Das Fahrzeugverzeichnis %(new_dir)s wird für den initialen Parameter-Download verwendet.
+398:In Datei '{self.configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' ergab einen mathematischen Fehler: {math_error}
+458:Validierungsfehler
+4435:BATT_MONITOR-Wert %s wurde in BATT_MONITOR_CONNECTION nicht gefunden
+4439:BATT_I2C_BUS-Wert %d außerhalb des Bereichs (0-%d), Standard auf ersten Bus gesetzt
+4443:Ungültiger BATT_I2C_BUS-Wert, Standard auf ersten Bus gesetzt
+4451:BATT_MONITOR-Parameter in fc_parameters nicht gefunden
+4455:BATT_CAPACITY ist null oder negativ: %s
+4463:BATT_CAPACITY-Parameter in fc_parameters nicht gefunden
+4467:Spannung pro Zelle für %s ist null oder ungültig: %s
+4513:{name} muss ein(e) {data_type_name} zwischen {min} und {max} sein
+4517:Ungültiger {data_type_name}-Wert für {name}
+4570:Anzahl der magnetischen Rotorpole muss für {paths_str} gerade sein
+4574:Ungültiger Ganzzahlwert für {paths_str}
+5013:Fehler beim Hochladen der Parameter:
+5237:Vorlage nicht gespeichert
+5241:Vorlage wurde in Datei '{}' aktualisiert
+5250:Vorlage wurde in Datei '{}' gespeichert
+5497:Initialisiere Flugsteuerung
+5501:Initialisierung wird gestartet...
+5505:Ungültiger max_value bei update_init_progress_bar Fortschrittsaktualisierung: %d
+5509:Ungültiger max_value bei update_connect_progress_bar Fortschrittsaktualisierung: %d
+5535:Fehler beim Herunterladen der Parameter
+5900:Lade FC-Parameter hoch

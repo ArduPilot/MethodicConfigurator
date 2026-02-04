@@ -1,0 +1,25 @@
+67:车辆目录%(old_dir)s不可写。将使用%(new_dir)s代替。
+71:用于初始参数下载将使用车辆目录%(new_dir)s。
+371:在文件‘{self.configuration_steps_filename}’：‘{filename}’ {parameter_type}参数‘{parameter}’计算时出现数学错误：{math_error}
+429:验证错误
+4060:在BATT_MONITOR_CONNECTION中未找到BATT_MONITOR值%s
+4064:BATT_I2C_BUS值%d超出范围(0-%d)，已默认使用第一个总线
+4068:BATT_I2C_BUS值无效，已默认使用第一个总线
+4076:在fc_parameters中未找到BATT_MONITOR参数
+4080:BATT_CAPACITY为零或负数：%s
+4088:在fc_parameters中未找到BATT_CAPACITY参数
+4092:%s的单体电压值为零或无效：%s
+4134:{name}必须为{min}到{max}之间的{data_type_name}
+4138:{name}的{data_type_name}值无效
+4191:{paths_str}的磁转子极数必须为偶数
+4195:{paths_str}的整数值无效
+4595:参数上传失败：
+4801:模板未保存
+4805:模板已更新到文件‘{}’
+4814:模板已保存到文件‘{}’
+5057:正在初始化飞控
+5061:开始初始化...
+5065:在update_init_progress_bar进度更新中max_value无效：%d
+5069:在update_connect_progress_bar进度更新中max_value无效：%d
+5095:参数下载失败
+5441:正在上传飞控参数

@@ -66,10 +66,12 @@ msgstr "機体タイプが明示的に設定されていないため、%sを自�
 #: ardupilot_methodic_configurator/__main__.py:252
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:228
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:463
+msgstr "Vehicle directory %(old_dir)s は書き込み不可です。代わりに %(new_dir)s を使用します。"
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
 msgid "Fatal error reading parameter files"
 msgstr "パラメータファイルの読み込みで致命的なエラーが発生しました"
+msgstr "初期パラメータのダウンロードに %(new_dir)s を使用します。"
 
 #: ardupilot_methodic_configurator/__main__.py:289
 msgid ""
@@ -390,6 +392,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:223
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+msgstr "ファイル『{self.configuration_steps_filename}』:『{filename}』 {parameter_type} パラメータ『{parameter}』の評価で数学エラーが発生しました: {math_error}"
 "parameter '{parameter}' could not be computed: {_e}"
 msgstr ""
 "ファイル'{self.configuration_steps_filename}'内: "
@@ -451,6 +454,7 @@ msgid "Cannot save invalid JSON data: {}"
 msgstr "無効なJSONデータを保存できません: {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:133
+msgstr "検証エラー"
 msgid "Directory '{}' not found"
 msgstr "ディレクトリ '{}' が見つかりません"
 
@@ -4290,14 +4294,17 @@ msgid ""
 "count"
 msgstr ""
 "すべてのセルあたりの電圧値がゼロまたは無効です。バッテリーセル数を推定できま"
+msgstr "BATT_MONITOR の値 %s が BATT_MONITOR_CONNECTION に見つかりません"
 "せん"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:426
 msgid "Estimated battery cell count %s is out of valid range (%d to %d)"
+msgstr "BATT_I2C_BUS の値 %d が範囲外です (0～%d)、最初のバスにデフォルト設定します"
 msgstr "推定バッテリーセル数 %s が有効範囲外です (%d から %d)"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:118
 msgid "Cannot modify schema: Schema could not be loaded"
+msgstr "無効な BATT_I2C_BUS の値です、最初のバスにデフォルト設定します"
 msgstr "スキーマを変更できません: スキーマを読み込めませんでした"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:133
@@ -4306,10 +4313,12 @@ msgstr "フライトコントローラーのスキーマに仕様が見つかり
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:149
 msgid "Modified schema: MCU Series x-is-optional=%s to value=%u"
+msgstr "BATT_MONITOR パラメータが fc_parameters に見つかりません"
 msgstr "スキーマ変更: MCUシリーズ x-is-optional=%s を値=%uに"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:154
 msgid "Error modifying schema for MCU Series: %s"
+msgstr "BATT_CAPACITY がゼロまたは負です: %s"
 msgstr "MCUシリーズのスキーマ変更中にエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_json_schema.py:182
@@ -4318,10 +4327,12 @@ msgstr "get_component_property_description で例外が発生しました: {}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:316
 msgid "No fallback values found for %s"
+msgstr "BATT_CAPACITY パラメータが fc_parameters に見つかりません"
 msgstr "%sのフォールバック値が見つかりません"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:454
 msgid ""
+msgstr "%s のセルあたりの電圧値がゼロまたは無効です: %s"
 "{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}"
 msgstr ""
 "{name}は{limits[0]}と{limits[1]}の間の{data_type.__name__}である必要がありま"
@@ -4366,10 +4377,12 @@ msgstr "{limit_name}の{limit_value}を超えています"
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:581
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:276
 msgid ""
+msgstr "{name} は {min} から {max} の間の {data_type_name} でなければなりません"
 "Invalid value '{value}' for {paths_str}\n"
 "Allowed values are: {allowed_str}"
 msgstr ""
 "{paths_str}に対する無効な値'{value}'\n"
+msgstr "{name} の {data_type_name} の値が無効です"
 "許可される値: {allowed_str}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:600
@@ -4423,10 +4436,12 @@ msgstr ""
 "す。"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:100
+msgstr "{paths_str} の磁気ローターポール数は偶数でなければなりません"
 msgid ""
 "Reset flight controller parameters to their defaults. WARNING: This will "
 "delete all parameters stored on the flight controller."
 msgstr ""
+msgstr "{paths_str} に対する整数値が無効です"
 "フライトコントローラーのパラメータをデフォルト値にリセットします。警告：これ"
 "によりフライトコントローラーに保存されているすべてのパラメータが削除されま"
 "す。"
@@ -4854,6 +4869,7 @@ msgstr ""
 msgid "Warning"
 msgstr "警告"
 
+msgstr "パラメータのアップロードに失敗しました:"
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:150
 msgid ""
 "Will update the cell voltage limits to the recommended\n"
@@ -5069,10 +5085,12 @@ msgstr "接続コンボボックスが次に変更されました: {selected_con
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:137
 msgid "Baudrate combobox changed to: {_selected_baudrate}"
 msgstr "ボーレートコンボボックスが変更されました: {_selected_baudrate}"
+msgstr "テンプレートが保存されていません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:155
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
+msgstr "テンプレートがファイル『{}』に更新されました"
 "\n"
 "COM4 (on windows)\n"
 "/dev/serial/by-id/usb-xxx (on Linux)\n"
@@ -5082,6 +5100,7 @@ msgstr ""
 "フライトコントローラーへの接続文字列を入力してください。例：\n"
 "\n"
 "COM4 (Windowsの場合)\n"
+msgstr "テンプレートがファイル『{}』に保存されました"
 "/dev/serial/by-id/usb-xxx (Linuxの場合)\n"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
@@ -5318,18 +5337,22 @@ msgstr "スロットル:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:199
 msgid "Duration:"
+msgstr "フライトコントローラーの初期化中"
 msgstr "持続時間:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:222
 msgid "Test All"
+msgstr "初期化を開始しています..."
 msgstr "すべてテスト"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:225
 msgid "Test in Sequence"
+msgstr "update_init_progress_bar 進捗更新で max_value が無効です: %d"
 msgstr "順次テスト"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:228
 msgid "Stop All Motors"
+msgstr "update_connect_progress_bar 進捗更新で max_value が無効です: %d"
 msgstr "すべてのモータを停止"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:231
@@ -5356,6 +5379,7 @@ msgstr "モータ %(num)d %(dir)s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:274
 msgid "Detected:"
+msgstr "パラメータのダウンロードに失敗しました"
 msgstr "検出:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:280
@@ -5718,18 +5742,22 @@ msgstr "利用不可"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:352
 msgid "This parameter is not available on the connected flight controller"
+msgstr "FCパラメータをアップロード中"
 msgstr "このパラメータは接続されたフライトコントローラでは利用できません"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:354
 msgid "Not editable"
+msgstr "全パラメータのうち、{}個をアップロードしました"
 msgstr "編集不可"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:357
 msgid ""
+msgstr "フライトコントローラーに再接続しています"
 "This value has been automatically calculated by the software using data\n"
 "from the component editor window or from the 'configuration_steps.json' file"
 msgstr ""
 "この値はソフトウェアがコンポーネントエディタウィンドウまた"
+msgstr "{}パーセント／{}パーセント"
 "は'configuration_steps.json'ファイルの\n"
 "データを使用して自動的に計算されたものです"
 
@@ -6043,6 +6071,7 @@ msgid "Unit"
 msgstr "単位"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:144
+msgstr "設定手順で不足または異なるFCパラメータをエクスポートします。デフォルトは%(default)sです"
 msgid "Delete or add a parameter"
 msgstr "パラメータの削除または追加"
 
