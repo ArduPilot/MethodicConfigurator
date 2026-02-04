@@ -445,6 +445,14 @@ jobs:
 
           python -m pip install "$PIP_INSTALL" "$PYTHON_GETTEXT_INSTALL"
 
+      - name: Extract and merge strings into .po files
+        run: |
+          # Re-run the extraction and merge steps to ensure .po files have the new msgid entries
+          # This is necessary because the extract_strings job's changes are not persisted
+          python create_pot_file.py
+          python merge_pot_file.py
+          echo "✅ POT extracted and merged into .po files"
+
       - name: Download all translated files
         if: needs.extract_strings.outputs.translations-to-process == 'true'
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
@@ -572,6 +580,14 @@ jobs:
           fi
 
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Clean up temporary translation files
+        if: always()
+        run: |
+          # Remove temporary translation files to ensure they're not committed
+          rm -f missing_translations_*.txt
+          rm -f missing_translations_*.txt.raw
+          echo "🧹 Cleaned up temporary translation files"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
