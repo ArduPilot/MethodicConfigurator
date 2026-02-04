@@ -23,7 +23,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
-from functools import partial
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -649,7 +648,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         """Return a motor label to the Ready state after a delay."""
         self.root_window.after(
             delay_ms,
-            partial(self._update_motor_status, motor_number, _("Ready"), "blue"),
+            lambda: self._update_motor_status(motor_number, _("Ready"), "blue"),
         )
 
     def _update_motor_status(self, motor_number: int, status: str, color: str = "black") -> None:
