@@ -1,4 +1,4 @@
-5939:Caricati {} di {} parametri  
-5943:Riconnessione al Controller di Volo  
-5947:{} su {} percento  
+5939:Caricati {} di {} parametri
+5943:Riconnessione al Controller di Volo
+5947:{} su {} percento
 6262:Esporta i parametri FC che mancano o sono diversi nei passaggi di configurazione. Il valore predefinito è %(default)s

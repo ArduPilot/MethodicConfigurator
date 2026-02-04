@@ -1,4 +1,4 @@
-5904:Hochgeladen {} von {} Parametern  
-5908:Wiederverbindung zum Flugcontroller  
-5912:{} von {} Prozent  
+5904:Hochgeladen {} von {} Parametern
+5908:Wiederverbindung zum Flugcontroller
+5912:{} von {} Prozent
 6228:Exportiere FC-Parameter, die in den Konfigurationsschritten fehlen oder abweichen. Standard ist %(default)s
