@@ -80,8 +80,9 @@ run_sitl_tests() {
     # Set environment variable for SITL binary
     export SITL_BINARY="$SITL_BINARY"
 
-    # Run only SITL-marked tests
+    # Run SITL tests including signing integration tests
     python -m pytest tests/test_backend_flightcontroller_sitl.py \
+        tests/bdd_signing_sitl_integration.py \
         -v \
         --tb=short \
         --capture=no \
