@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 Filesystem operations.
 
@@ -787,77 +788,161 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return variables
 
     def update_and_export_vehicle_params_from_fc(
-        self, source_param_values: Union[dict[str, float], None], existing_fc_params: list[str]
-    ) -> str:
+        self,
+        source_param_values: Union[dict[str, float], None],
+        existing_fc_params: list[str],
+    ) -> dict[str, ParDict]:
         """
-        Update parameter values from flight controller data and export to vehicle files.
+        Compute updated parameter values without mutating the in-memory data model.
 
-        This function performs several operations in sequence:
-        1. Updates parameter values using the provided source values
-        2. Computes forced parameters based on configuration steps
-        3. Computes derived parameters that depend on other parameters
-        4. Exports the updated parameters to files in the vehicle directory
+        This method performs a purely read-only computation phase:
+        1. For each parameter file, deep-copies the current in-memory state.
+        2. Applies any values received from the flight controller to the copy.
+        3. Computes forced and derived parameters and merges them into the copy.
+        4. Compares each copy against the unmodified original in ``self.file_parameters``.
+        5. Returns only copies that differ - ``self.file_parameters`` is never mutated.
+
+        To apply accepted changes to the data model call
+        :meth:`apply_pending_changes` with the returned dict. To persist them to
+        disk call :meth:`save_vehicle_params_to_files` afterwards.
 
         Args:
             source_param_values: Dictionary mapping parameter names to their values from the
-                                source (typically flight controller). If None, no direct updates occur.
-            existing_fc_params: List of params that exist in the FC if empty or None all parameters are
-                                assumed to exist
+                                source (typically the flight controller). If None, no direct
+                                updates occur.
+            existing_fc_params: List of parameter names that exist in the FC.  If empty or
+                                None all parameters are assumed to exist.
 
         Returns:
-            str: Empty string if successful, error message otherwise.
+            dict[str, ParDict]: Mapping of filenames to their fully-computed ``ParDict``
+                                for every file whose computed state differs from the
+                                loaded in-memory original.
+                                An empty dict means no changes were detected.
+
+        Raises:
+            ValueError: If there is an error computing forced or derived parameters.
+
+        Example:
+            pending = fs.update_and_export_vehicle_params_from_fc(
+                source_param_values={"PARAM1": 10.0},
+                existing_fc_params=["PARAM1"],
+            )
+            if pending:
+                if user_confirms:
+                    fs.apply_pending_changes(pending)
+                    fs.save_vehicle_params_to_files(list(fs.file_parameters))
+                # else: nothing - self.file_parameters was never mutated
+            else:
+                # No changes detected - nothing to do
+                pass
 
         """
         eval_variables = self.get_eval_variables()
         # the eval variables do not contain fc_parameter values
         # and that is intentional, the fc_parameters are not to be used in here
+
+        pending: dict[str, ParDict] = {}
+
         for param_filename, param_dict in self.file_parameters.items():
-            for param_name, param in param_dict.items():
+            # Build a working copy - Phase 1 must never mutate self.file_parameters
+            working = param_dict.deep_copy()
+
+            # Apply Flight Controller source values to the copy
+            for param_name, par in working.items():
                 if source_param_values and param_name in source_param_values:
-                    param.value = source_param_values[param_name]
+                    par.value = source_param_values[param_name]
+
+            # Compute and merge forced / derived parameters into the working copy
             if self.configuration_steps and param_filename in self.configuration_steps:
                 step_dict = self.configuration_steps[param_filename]
                 error_msg = self.compute_parameters(param_filename, step_dict, "forced", eval_variables)
                 if error_msg:
-                    return error_msg
-                self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, existing_fc_params)
+                    msg = f"Error computing forced parameters for {param_filename}: {error_msg}"
+                    raise ValueError(msg)
+                self.merge_forced_or_derived_parameters(
+                    param_filename, self.forced_parameters, existing_fc_params, target=working
+                )
+
                 error_msg = self.compute_parameters(
                     param_filename, step_dict, "derived", eval_variables, ignore_fc_derived_param_warnings=True
                 )
                 if error_msg:
-                    return error_msg
-                self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
-            self.export_to_param(
-                param_dict, param_filename, annotate_doc=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
-            )
-        return ""
+                    msg = f"Error computing derived parameters for {param_filename}: {error_msg}"
+                    raise ValueError(msg)
+                self.merge_forced_or_derived_parameters(
+                    param_filename, self.derived_parameters, existing_fc_params, target=working
+                )
 
-    def merge_forced_or_derived_parameters(
-        self, filename: str, new_parameters: dict[str, ParDict], existing_fc_params: Optional[list[str]]
-    ) -> bool:
+            # Include in pending if the working copy differs from the loaded in-memory state
+            if working.differs_from(param_dict):
+                pending[param_filename] = working
+
+        return pending
+
+    def save_vehicle_params_to_files(self, filenames: list[str]) -> None:
         """
-        Merge forced or derived parameter values in the self.file_parameter list.
+        Write the current in-memory parameter values for the given files to disk.
 
         Args:
-            filename: The name of the parameter file
-            new_parameters: Dictionary of new parameters to potentially add
-            existing_fc_params: Optional list of flight controller parameters names
+            filenames: List of parameter filenames (keys of :attr:`file_parameters`) to save.
+
+        """
+        annotate_docs = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
+        for filename in filenames:
+            self.export_to_param(self.file_parameters[filename], filename, annotate_doc=annotate_docs)
+
+    def apply_pending_changes(self, pending: dict[str, ParDict]) -> None:
+        """
+        Apply pre-computed parameter changes to the in-memory data model.
+
+        Call this after the user confirms they want to accept the derived-parameter
+        changes returned by :meth:`update_and_export_vehicle_params_from_fc`.  Each
+        entry in *pending* replaces the corresponding entry in :attr:`file_parameters`.
+
+        Args:
+            pending: Mapping of filenames to their fully-computed ``ParDict`` as
+                     returned by :meth:`update_and_export_vehicle_params_from_fc`.
+
+        """
+        self.file_parameters.update(pending)
+
+    def merge_forced_or_derived_parameters(
+        self,
+        filename: str,
+        new_parameters: dict[str, ParDict],
+        existing_fc_params: Optional[list[str]],
+        target: Optional[ParDict] = None,
+    ) -> bool:
+        """
+        Merge forced or derived parameter values into a target parameter dict.
+
+        Args:
+            filename: The name of the parameter file.
+            new_parameters: Dictionary of new parameters to potentially merge.
+            existing_fc_params: Optional list of flight controller parameter names.
+            target: ParDict to merge into.  When *None* (default), merges into
+                    ``self.file_parameters[filename]`` (legacy behaviour used by the
+                    parameter-editor upload path).  Pass the working copy from
+                    :meth:`update_and_export_vehicle_params_from_fc` to keep that
+                    method's computation non-mutating.
 
         """
         if new_parameters is None or filename not in new_parameters:
             return False
 
+        dest = target if target is not None else self.file_parameters.get(filename)
+        if dest is None:
+            return False
+
         at_least_one_param_changed = False
         for param_name, param in new_parameters[filename].items():
-            if filename not in self.file_parameters:
-                continue
             if existing_fc_params is None or not existing_fc_params or param_name in existing_fc_params:
-                if param_name in self.file_parameters[filename]:
-                    if not is_within_tolerance(self.file_parameters[filename][param_name].value, param.value):
+                if param_name in dest:
+                    if not is_within_tolerance(dest[param_name].value, param.value):
                         at_least_one_param_changed = True
                 else:
                     at_least_one_param_changed = True
-                self.file_parameters[filename][param_name] = param
+                dest[param_name] = param
         return at_least_one_param_changed
 
     def write_param_default_values(self, param_default_values: ParDict) -> bool:

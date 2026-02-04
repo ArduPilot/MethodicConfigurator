@@ -110,7 +110,7 @@ class PopupWindow:
         try:
             # Show the window now that it's positioned. Calls may fail if the
             # main application has been destroyed (for example during shutdown)
-            # — guard against tk.TclError so the caller doesn't crash the app.
+            # - guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
             popup_window.root.lift()
             popup_window.root.update()  # Ensure the window is fully rendered before setting focus
