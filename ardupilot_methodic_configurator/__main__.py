@@ -52,7 +52,10 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connectio
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
-from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
+from ardupilot_methodic_configurator.frontend_tkinter_show import (
+    ask_yesno_message,
+    show_error_message,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
@@ -578,14 +581,36 @@ def process_component_editor_results(
         existing_fc_params = list(local_filesystem.param_default_dict.keys())
 
     # Update and export vehicle parameters
-    error_message = local_filesystem.update_and_export_vehicle_params_from_fc(
-        source_param_values=source_param_values, existing_fc_params=existing_fc_params
-    )
-
-    if error_message:
-        logging_error(error_message)
-        show_error_message(_("Error in derived parameters"), error_message)
+    try:
+        pending_changes = local_filesystem.update_and_export_vehicle_params_from_fc(
+            source_param_values=source_param_values,
+            existing_fc_params=existing_fc_params,
+        )
+    except ValueError as e:
+        error_msg = str(e)
+        logging_error(error_msg)
+        show_error_message(_("Error in derived parameters"), error_msg)
         sys_exit(1)
+        return  # to make the tests work, even though sys_exit is mocked in the tests # pylint: disable=unreachable
+
+    # Check if there are pending changes that need user confirmation
+    if pending_changes:
+        msg = (
+            _("The component or connection changes you just did will have repercussions on the following parameter files:\n\n")
+            + f"{', '.join(pending_changes)}\n\n"
+            + _("Please review the changes, and upload the updated parameter files to the flight controller.\n")
+            + _("Do you want to apply these updates to the configuration?")
+        )
+
+        if ask_yesno_message(_("Confirm derived changes"), msg):
+            # User confirmed: apply computed values to the in-memory data model.
+            # self.file_parameters was not mutated by Phase 1, so this is the first write.
+            # Actual disk writes happen later, file by file, as the user steps
+            # through each configuration step in the Parameter Editor.
+            local_filesystem.apply_pending_changes(pending_changes)
+            logging_info(_("User accepted derived parameter changes. Values updated in memory."))
+        # else: User declined - self.file_parameters was never mutated, nothing to undo.
+    # When pending_changes is empty the computed state already matches disk - nothing to do.
 
 
 def write_parameter_defaults(state: ApplicationState) -> None:
