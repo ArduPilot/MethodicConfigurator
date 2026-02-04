@@ -871,6 +871,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return True  # New file counts as a change
 
         return False
+
     def merge_forced_or_derived_parameters(
         self, filename: str, new_parameters: dict[str, ParDict], existing_fc_params: Optional[list[str]]
     ) -> bool:
