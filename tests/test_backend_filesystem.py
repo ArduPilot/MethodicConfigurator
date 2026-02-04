@@ -643,31 +643,40 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         )
         fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
 
-        # Test with empty file_parameters
+        # Test with empty file_parameters - returns empty dict
         result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
-        assert result == ""
+        assert not result  # Empty dict means no pending changes
 
-        # Test with file_parameters and configuration_steps
-        param1_mock = MagicMock()
-        param1_mock.value = 0.0
-        param2_mock = MagicMock()
-        param2_mock.value = 0.0
+        # Test with file_parameters and configuration steps:
+        # Phase 1 must NOT mutate self.file_parameters
+        param1 = Par(0.0, None)
+        param2 = Par(0.0, None)
 
         # Create a ParDict instead of a regular dict
-        param_dict = ParDict({"PARAM1": param1_mock, "PARAM2": param2_mock})
+        param_dict = ParDict({"PARAM1": param1, "PARAM2": param2})
         lfs.file_parameters = {"test.param": param_dict}
         lfs.configuration_steps = {"test.param": {"forced": {}, "derived": {}}}
 
+        result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
+        # FC values (1.0, 2.0) differ from loaded values (0.0, 0.0) so pending is non-empty
+        assert result  # Non-empty dict means pending changes detected
+        assert "test.param" in result
+        # Original Par objects in file_parameters must be untouched
+        assert param1.value == 0.0  # NOT mutated by Phase 1
+        assert param2.value == 0.0  # NOT mutated by Phase 1
+
+        # apply_pending_changes updates file_parameters
+        computed = ParDict({"PARAM1": Par(1.0, None), "PARAM2": Par(2.0, None)})
+        lfs.apply_pending_changes({"test.param": computed})
+        assert lfs.file_parameters["test.param"] is computed
+
+        # save_vehicle_params_to_files writes the current file_parameters to disk
         with (
-            patch.object(param_dict, "export_to_param") as mock_export,
+            patch.object(computed, "export_to_param") as mock_export,
             patch("ardupilot_methodic_configurator.backend_filesystem.ParDict._format_params") as mock_format,
         ):
             mock_format.return_value = "formatted_params"
-
-            result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
-            assert result == ""
-            assert param1_mock.value == 1.0
-            assert param2_mock.value == 2.0
+            lfs.save_vehicle_params_to_files(list(lfs.file_parameters))
             mock_export.assert_called_once_with(os_path.join("vehicle_dir", "test.param"))
 
     def test_write_param_default_values_to_file(self) -> None:

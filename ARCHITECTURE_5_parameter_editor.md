@@ -198,6 +198,21 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
 - **Directory Selection**: Works within selected vehicle directory
 - **Documentation System**: Integrates with online and cached documentation
 
+### Derived Parameter Confirmation Workflow
+
+After the Component Editor closes and before the Parameter Editor opens,
+`process_component_editor_results()` recalculates forced/derived parameters and asks the
+user to confirm any differences before they are applied.
+
+**Phase 1 - Pure computation** (`update_and_export_vehicle_params_from_fc`):
+For each file, deep-copies the loaded `ParDict`, applies FC values, computes forced/derived
+parameters, and compares the result against the unmodified original.  Returns a
+`dict[str, ParDict]` of files that differ.  `self.file_parameters` is never mutated.
+
+**Phase 2 - User confirmation** (`process_component_editor_results` in `__main__.py`):
+**Yes** -> `apply_pending_changes(pending)` updates the in-memory model; disk writes happen
+later in the Parameter Editor.  **No** -> nothing to undo.  Empty dict -> no dialog shown.
+
 ### Parameter Management System
 
 #### Parameter Types

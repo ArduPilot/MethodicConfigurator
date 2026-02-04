@@ -119,7 +119,7 @@ This ensures consistency across different machines and simplifies dependency man
 ## Executing the code
 
 You can either install the Methodic Configurator as a package or run it locally from your development codebase.
-Installing the package will fetch the latest stable release version — see the [installation guide](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html) for details.
+Installing the package will fetch the latest stable release version - see the [installation guide](https://ardupilot.github.io/MethodicConfigurator/INSTALL.html) for details.
 
 To run it locally (from your cloned repository):
 

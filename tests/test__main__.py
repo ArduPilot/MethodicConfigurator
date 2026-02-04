@@ -102,7 +102,7 @@ def mock_local_filesystem() -> MagicMock:
 
     # Configure realistic return values
     fs.write_param_default_values.return_value = False
-    fs.update_and_export_vehicle_params_from_fc.return_value = None
+    fs.update_and_export_vehicle_params_from_fc.return_value = {}  # Empty dict = no pending changes
     fs.get_start_file.return_value = "01_basic.param"
     fs.find_lowest_available_backup_number.return_value = 1
 
@@ -1240,7 +1240,7 @@ class TestComponentEditorHelperFunctions:
         mock_fc = MagicMock()
         mock_fc.fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
         mock_filesystem = MagicMock()
-        mock_filesystem.update_and_export_vehicle_params_from_fc.return_value = None  # No error
+        mock_filesystem.update_and_export_vehicle_params_from_fc.return_value = {}  # Empty dict = no pending changes
 
         mock_vehicle_dir_window = MagicMock()
         mock_vehicle_dir_window.configuration_template = "template1"
@@ -1258,6 +1258,9 @@ class TestComponentEditorHelperFunctions:
         call_args = mock_filesystem.update_and_export_vehicle_params_from_fc.call_args
         assert call_args.kwargs["source_param_values"] == mock_fc.fc_parameters
 
+        # Assert: No disk write - in-memory model already matches disk when pending list is empty
+        mock_filesystem.save_vehicle_params_to_files.assert_not_called()
+
     def test_process_component_editor_results_error_handling(self) -> None:
         """
         User gets clear error message when parameter processing fails.
@@ -1270,7 +1273,7 @@ class TestComponentEditorHelperFunctions:
         mock_fc = MagicMock()
         mock_fc.fc_parameters = {"PARAM1": 1.0}
         mock_filesystem = MagicMock()
-        mock_filesystem.update_and_export_vehicle_params_from_fc.return_value = "Parameter error occurred"
+        mock_filesystem.update_and_export_vehicle_params_from_fc.side_effect = ValueError("Parameter error occurred")
 
         with (
             patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_logging,
