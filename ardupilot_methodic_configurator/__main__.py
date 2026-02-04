@@ -531,7 +531,6 @@ def process_component_editor_results(
     # Check if the backend returned a dict (meaning pending changes)
     if isinstance(result, dict):
         changed_files = list(result.keys())
-        # Use explicit concatenation (+) to avoid Ruff syntax errors
         msg = (
             _("To ensure configuration consistency, the following parameter files require updates based on your changes:\n\n")
             + f"{', '.join(changed_files)}\n\n"

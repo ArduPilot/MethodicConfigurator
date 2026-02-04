@@ -594,7 +594,6 @@ def show_tooltip_on_richtext_tag(widget: tk.Text, text: str, tag_name: str, posi
 def ask_yesno_message(title: str, message: str, root: Optional[tk.Tk] = None) -> bool:
     if root is None:
         root = tk.Tk(className="ArduPilotMethodicConfigurator")
-        # Set the theme to 'alt'
         style = ttk.Style()
         style.theme_use("alt")
         root.withdraw()  # Hide the main window
