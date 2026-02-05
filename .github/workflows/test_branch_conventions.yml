@@ -30,8 +30,8 @@ jobs:
         run: |
           git remote -v
           git remote add upstream ${{ github.event.pull_request.base.repo.clone_url }}
-          git fetch upstream ${{ github.base_ref }}
-          git show upstream/${{ github.base_ref }}
+          git fetch upstream "${{ github.base_ref }}"
+          git show upstream/"${{ github.base_ref }}"
 
       - name: Check for merge commits in PR branch
         run: |
@@ -40,28 +40,82 @@ jobs:
           echo "github.event.pull_request.base.ref=${{ github.event.pull_request.base.ref }} "
 
           # Look for merge commits in PR branch only
-          MERGE_COMMITS=$(git log upstream/${{ github.base_ref }}..HEAD --merges --oneline)
+          MERGE_COMMITS=$(git log upstream/"${{ github.base_ref }}"..HEAD --merges --oneline)
           echo "Merge commits:"
           echo "$MERGE_COMMITS"
 
           if [[ -n "$MERGE_COMMITS" ]]; then
             echo "❌ Merge commits detected in the PR branch (not allowed):"
+            while IFS= read -r line; do
+              if [[ -n "$line" ]]; then
+                echo "   $line"
+              fi
+            done <<< "$MERGE_COMMITS"
             echo "Please see https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md"
             exit 1
           else
             echo "✅ No merge commits found in the PR branch."
           fi
 
-          # Look for fixup! commits in PR branch only
-          COMMITS=$(git log upstream/${{ github.base_ref }}..HEAD --oneline)
+          # Get all commits in PR branch only
+          COMMITS=$(git log upstream/"${{ github.base_ref }}"..HEAD --oneline)
           echo "Commits:"
           echo "$COMMITS"
 
-          if [[ "$COMMITS" == *"fixup!"* ]]; then
-            echo "❌ fixup commits detected in the PR branch (not allowed):"
-            echo "$COMMITS"
-            echo "Please see https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md"
-            exit 1
-          else
-            echo "✅ No fixup commits found in the PR branch."
+          # Check for empty commits list
+          if [[ -z "$COMMITS" ]]; then
+            echo "⚠️  Warning: No commits found to validate"
+            exit 0
           fi
+
+          # Validate all commits in a single pass for better performance
+          # Checks: fixup commits, conventional commits format, and subject line length
+          # allowed types based on conventional commits specification
+          ALLOWED_TYPES="feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert"
+          # Note: For revert commits, use format: revert: <description> or revert(scope): <description>
+          # Git's automatic "Revert \"original message\"" format does not match and should be edited.
+          # the regex pattern matches: ^(allowed_types)(\([^)]+\))?!?:[[:space:]]+[^[:space:]].+
+          # - (allowed_types) = validated type from ALLOWED_TYPES
+          # - (\([^)]+\))? = optional non-empty scope in parentheses
+          # - !? = optional breaking change indicator
+          # - :[[:space:]]+ = required colon separator with at least one space
+          # - [^[:space:]].+ = description starting with non-whitespace character
+          COMMIT_REGEX="^($ALLOWED_TYPES)(\([^)]+\))?!?:[[:space:]]+[^[:space:]].+"
+          while IFS= read -r line; do
+            if [[ -z "$line" ]]; then continue; fi
+            # Extract hash and message from "hash message" format
+            commit_hash="${line%% *}"
+            commit_msg="${line#* }"
+            if [[ -z "$commit_msg" ]]; then
+              commit_msg="$line"
+            fi
+
+            # Check 1: Look for fixup! commits (not allowed)
+            if [[ "$commit_msg" == fixup!* ]]; then
+              echo "❌ Commit $commit_hash is a fixup commit (not allowed):"
+              echo "   $commit_msg"
+              echo "Please see https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md"
+              exit 1
+            fi
+
+            # Check 2: Validate conventional commits format
+            if ! [[ "$commit_msg" =~ $COMMIT_REGEX ]] ; then
+              echo "❌ Commit $commit_hash does not follow conventional commits format:"
+              echo "   $commit_msg"
+              echo ""
+              echo "Expected format: type(optional scope): description"
+              echo "Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+              echo "Examples: feat: add new feature, fix(parser): resolve bug, docs(readme)!: breaking change"
+              echo "Please see https://www.conventionalcommits.org/ and https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md"
+              exit 1
+            fi
+
+            # Check 3: Ensure subject line doesn't exceed 160 characters
+            if [[ ${#commit_msg} -gt 160 ]]; then
+              echo "❌ Commit $commit_hash subject line exceeds 160 characters (${#commit_msg} chars):"
+              echo "   $commit_msg"
+              echo "Please keep the commit subject line to 160 characters or fewer."
+              exit 1
+            fi
+          done <<< "$COMMITS"
+          echo "✅ All commits passed validation (no fixup commits, conventional format, max 160 chars)."
