@@ -65,3 +65,26 @@ jobs:
           else
             echo "✅ No fixup commits found in the PR branch."
           fi
+
+          # require a ":" to appear somewhere in each commit message:
+          while IFS= read -r x; do
+            if [[ -z "$x" ]]; then continue; fi
+            if ! [[ "$x" == *":"* ]] ; then
+              echo "❌ Commit message ($x) does not follow conventional commits conventions"
+              exit 1
+            fi
+          done <<< "$COMMITS"
+          echo "✅ Commit messages follow conventional commits conventions."
+
+          # check that no commit subject line exceeds 160 characters:
+          while IFS= read -r line; do
+            subject=${line#* }
+            if [[ -z "$line" ]]; then continue; fi
+            if [[ ${#subject} -gt 160 ]]; then
+              echo "❌ Commit subject line exceeds 160 characters:"
+              echo "$line"
+              echo "Please keep the commit subject line to 160 characters or fewer."
+              exit 1
+            fi
+          done <<< "$COMMITS"
+          echo "✅ All commit subject lines are within 160 characters."
