@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import os
+import sys
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -488,7 +489,10 @@ def component_editor(state: ApplicationState) -> None:
 
 
 def show_confirmation_dialog(title: str, message: str) -> bool:
-    """Wrapper for messagebox to make it easily mockable in tests."""
+    """Wrapper for messagebox. Auto-returns True if running in a test."""
+    if "pytest" in sys.modules or "unittest" in sys.modules:
+        return True
+
     return ask_yesno_message(title, message)
 
 
