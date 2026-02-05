@@ -68,8 +68,8 @@ jobs:
         run: |
           WARNINGS=0
 
-          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
-          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
+          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
+          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
 
           if [ -z "$PIP_VERSION" ]; then
             echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
@@ -207,7 +207,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.extract_strings.outputs.translation-matrix) }}
       fail-fast: false  # Continue processing other languages even if one fails
-      max-parallel: 5   # Limit concurrent AI requests
+      max-parallel: 1   # Limit concurrent AI requests to avoid rate limiting
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -236,9 +236,18 @@ jobs:
           echo "📊 Translation file size: $file_size bytes"
           echo "✅ Translation file validation completed successfully"
 
+      - name: Prepare translation content
+        id: translation_content
+        run: |
+          # Read file and indent each line by 2 spaces (except the first)
+          awk 'NR==1 {print} NR>1 {print "  " $0}' "${{ matrix.file }}" > indented_content.txt
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          cat indented_content.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Run AI translation
         id: ai_translate
-        uses: actions/ai-inference@334892bb203895caaed82ec52d23c1ed9385151e # v2.0.4
+        uses: actions/ai-inference@a6101c89c6feaecc585efdd8d461f18bb7896f20 # v2.0.5
         with:
           system-prompt-file: .github/prompts/ai-translation-system.prompt.yml
           prompt-file: .github/prompts/ai-translation-user.prompt.yml
@@ -246,10 +255,8 @@ jobs:
             language: ${{ matrix.language }}
             lang_code: ${{ matrix.lang_code }}
             translation_file: ${{ matrix.file }}
-          file_input: |
-            translation_content: ${{ matrix.file }}
-          enable-github-mcp: true
-          github-mcp-toolsets: "context,repos"
+            translation_content: |
+              ${{ steps.translation_content.outputs.content }}
           model: openai/gpt-4.1
           max-tokens: 8000
           token: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}
@@ -308,22 +315,32 @@ jobs:
           # Save the AI response back to the original translation file
           if [ "${{ steps.check_translation.outputs.output_method }}" = "file" ]; then
             echo "📄 Using response file: ${{ steps.ai_translate.outputs.response-file }}"
-            cp "${{ steps.ai_translate.outputs.response-file }}" "${{ matrix.file }}"
+            cp "${{ steps.ai_translate.outputs.response-file }}" "${{ matrix.file }}.raw"
           elif [ "${{ steps.check_translation.outputs.output_method }}" = "content" ]; then
             echo "📝 Using response content"
-            echo "${{ steps.ai_translate.outputs.response }}" > "${{ matrix.file }}"
+            echo "${{ steps.ai_translate.outputs.response }}" > "${{ matrix.file }}.raw"
           else
             echo "❌ Unexpected output method: ${{ steps.check_translation.outputs.output_method }}"
             exit 1
           fi
 
-          # Validate the saved file
+          # Clean up AI output: keep only lines starting with number followed by colon
+          echo "🧹 Cleaning AI output..."
+          grep -E '^[0-9]+:' "${{ matrix.file }}.raw" > "${{ matrix.file }}" || {
+            echo "❌ Failed to extract valid translations from AI output"
+            echo "Raw output preview:"
+            head -20 "${{ matrix.file }}.raw"
+            exit 1
+          }
+
+          # Validate the cleaned file
           if [ -f "${{ matrix.file }}" ] && [ -s "${{ matrix.file }}" ]; then
-            echo "✅ AI translation saved successfully for ${{ matrix.language }} (${{ matrix.file }})"
-            echo "📊 File size: $(wc -c < "${{ matrix.file }}") bytes"
-            echo "📊 Line count: $(wc -l < "${{ matrix.file }}") lines"
+            echo "✅ AI translation saved and cleaned successfully for ${{ matrix.language }}"
+            echo "📊 Raw file size: $(wc -c < "${{ matrix.file }}.raw") bytes"
+            echo "📊 Cleaned file size: $(wc -c < "${{ matrix.file }}") bytes"
+            echo "📊 Valid translation lines: $(wc -l < "${{ matrix.file }}") lines"
           else
-            echo "❌ Translation file is empty or missing: ${{ matrix.file }}"
+            echo "❌ Translation file is empty or missing after cleanup: ${{ matrix.file }}"
             exit 1
           fi
 
@@ -407,8 +424,8 @@ jobs:
       - name: Install python-gettext requirement
         continue-on-error: true
         run: |
-          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
-          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml || echo '')
+          export PIP_VERSION=$(grep -oP 'pip\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
+          export PYTHON_GETTEXT_VERSION=$(grep -oP 'python-gettext\s*==\s*\K[0-9]+(\.[0-9]+)*' pyproject.toml | head -1 || echo '')
 
           if [ -z "$PIP_VERSION" ]; then
             echo "::warning::Could not detect pip version in pyproject.toml; falling back to latest."
@@ -428,6 +445,14 @@ jobs:
 
           python -m pip install "$PIP_INSTALL" "$PYTHON_GETTEXT_INSTALL"
 
+      - name: Extract and merge strings into .po files
+        run: |
+          # Re-run the extraction and merge steps to ensure .po files have the new msgid entries
+          # This is necessary because the extract_strings job's changes are not persisted
+          python create_pot_file.py
+          python merge_pot_file.py
+          echo "✅ POT extracted and merged into .po files"
+
       - name: Download all translated files
         if: needs.extract_strings.outputs.translations-to-process == 'true'
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
@@ -437,7 +462,10 @@ jobs:
 
       - name: Insert AI translations into .po files
         if: needs.extract_strings.outputs.translations-to-process == 'true'
+        shell: bash  # Don't use -e flag to prevent premature exit
         run: |
+          set -x  # Enable command tracing for debugging
+
           # Check if we have any translated files
           if ls missing_translations_*.txt 1> /dev/null 2>&1; then
             echo "📥 Processing AI translations..."
@@ -450,12 +478,12 @@ jobs:
               if [ -f "$file" ]; then
                 if grep -q "# Translation failed" "$file" 2>/dev/null; then
                   echo "⚠️ Found failed translation: $file"
-                  ((failed_translations++))
+                  failed_translations=$((failed_translations + 1))
                   # Remove failed translation files so they don't get processed
                   rm "$file"
                 else
                   echo "✅ Found successful translation: $file"
-                  ((successful_translations++))
+                  successful_translations=$((successful_translations + 1))
                 fi
               fi
             done
@@ -466,8 +494,39 @@ jobs:
 
             if [ $successful_translations -gt 0 ]; then
               echo "🔄 Processing successful translations with insert_missing_translations.py"
-              python insert_missing_translations.py
-              echo "✅ AI translations inserted into .po files"
+
+              # Show files that will be processed
+              echo "Files to process:"
+              ls -lh missing_translations_*.txt
+
+              # Validate file format before processing
+              echo "Validating translation file format..."
+              for file in missing_translations_*.txt; do
+                echo "Checking $file:"
+                if grep -qE '^[0-9]+:' "$file"; then
+                  echo "✅ File format is valid"
+                else
+                  echo "❌ ERROR: File $file does not contain valid translation lines (format: number:text)"
+                  echo "File contents:"
+                  cat "$file"
+                  exit 1
+                fi
+
+                # Show file preview
+                echo "First 5 lines of $file:"
+                head -5 "$file"
+                echo "---"
+              done
+
+              # Run with full error output captured
+              echo "Running insert_missing_translations.py..."
+              if python insert_missing_translations.py 2>&1; then
+                echo "✅ AI translations inserted into .po files"
+              else
+                exit_code=$?
+                echo "❌ insert_missing_translations.py failed with exit code $exit_code"
+                exit $exit_code
+              fi
             else
               echo "⚠️ No successful translations to process"
             fi
@@ -481,7 +540,10 @@ jobs:
 
       - name: Compile .mo files
         run: |
-          python create_mo_files.py
+          if ! python create_mo_files.py; then
+            echo "❌ Failed to compile .mo files"
+            exit 1
+          fi
           echo "✅ .mo files compiled successfully"
 
       - name: Stage all changes
@@ -522,6 +584,14 @@ jobs:
 
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Clean up temporary translation files
+        if: always()
+        run: |
+          # Remove temporary translation files to ensure they're not committed
+          rm -f missing_translations_*.txt
+          rm -f missing_translations_*.txt.raw
+          echo "🧹 Cleaned up temporary translation files"
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
@@ -536,14 +606,7 @@ jobs:
 
             🤖 **AI-Powered Translation Applied with Enhanced Matrix Processing**:
             - Automatically extracted missing translations using `extract_missing_translations.py`
-            - Used GitHub Actions matrix strategy to process numbered files in parallel
             - Applied AI-powered translations using GitHub Models (GPT-4o) for multiple languages
-            - **GITHUB PROMPT.YML FORMAT**: Using official GitHub prompt.yml template format with separated files
-            - **SEPARATED PROMPT.YML FILES**: Organized in .github/prompts/ directory for better structure
-            - **CLEAN ORGANIZATION**: ai-translation-system.prompt.yml and ai-translation-user.prompt.yml separated from workflows
-            - **PERSONAL ACCESS TOKEN**: Using amilcarlucas PAT for GitHub MCP access instead of GITHUB_TOKEN
-            - **GITHUB MCP ENABLED**: AI can read translation files directly from repository using Model Context Protocol
-            - **FILE-BASED PROMPTS**: AI reads translation files directly instead of embedding content in YAML prompts
             - Supports processing unlimited translations per language with automatic chunking
             - Inserted translated strings into .po files using `insert_missing_translations.py`
             - Compiled binary .mo files for immediate use
@@ -553,22 +616,11 @@ jobs:
             **Languages processed**: Portuguese (pt), German (de), Italian (it), Japanese (ja), Chinese Simplified (zh_CN)
 
             **Enhanced Matrix Processing & Scaling**:
-            - ✅ **Parallel processing** of translation files for better performance
             - ✅ **Automatic chunking** when >50 strings per language (configurable)
             - ✅ **Robust error handling** for failed AI translation requests with detailed debugging
             - ✅ **File validation** before and after AI processing
             - ✅ **Consistent terminology** guidelines applied across all chunks for each language
             - Robust error handling for failed AI translation requests
-
-            **Technical Improvements Made**:
-            - 🔧 **Organized prompt structure**: Moved prompt files to .github/prompts/ directory to avoid confusion with workflows
-            - 🔧 **GitHub MCP enabled**: AI can read translation files directly from repository using Model Context Protocol
-            - 🔧 **Separated prompt architecture**: System prompt and user prompt in separate files for better maintainability
-            - 🔧 **File-based AI prompts**: AI reads translation files directly, eliminating YAML content embedding issues
-            - 🔧 **Reusable system prompts**: System prompt can be reused across different translation tasks
-            - 🔧 **Enhanced reliability**: No more YAML syntax issues from embedded content with special characters
-            - 🔧 **Better scalability**: File-based approach handles large translation batches without prompt size limits
-            - 🔧 **403 error fix**: Enabled GitHub MCP to resolve permission issues when reading repository files
 
             **Translation Guidelines Applied**:
             - Technical aviation/drone context preservation

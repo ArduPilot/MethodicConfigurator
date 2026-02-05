@@ -76,6 +76,16 @@ def mock_webbrowser_open_url() -> Iterator[MagicMock]:
         yield mock_browser
 
 
+@pytest.fixture(autouse=True)
+def mock_open_file_explorer() -> Iterator[MagicMock]:
+    """Prevent tests from opening file explorer which blocks in CI without a display."""
+    with patch(
+        "ardupilot_methodic_configurator.data_model_parameter_editor.ParameterEditor._open_file_explorer_and_select",
+        autospec=True,
+    ) as mock_explorer:
+        yield mock_explorer
+
+
 def get_filesystem(parameter_editor: ParameterEditor) -> LocalFilesystem:
     """Helper to access the underlying filesystem with relaxed typing."""
     return parameter_editor._local_filesystem

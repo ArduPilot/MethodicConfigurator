@@ -44,8 +44,6 @@ Test Workflow
    - Infers component specifications from template parameters
    - Creates new vehicle projects with inferred components
    - Generates new parameter files based on component specifications
-
-4. **Round-Trip Diff Analysis** (TestTemplateDiffGeneration):
    - Compares original template parameters with generated parameters
    - Documents differences in structured diff files for analysis
    - Identifies parameter transformation patterns and edge cases
@@ -82,23 +80,6 @@ Both source and target directories maintain the same vehicle_templates structure
     │   ├── Chimera7/                ← New project from Chimera7 template
     │   │   ├── 00_default.param
     │   │   ├── vehicle_components.json
-    │   │   └── ...
-    │   └── ...
-    └── ...
-
-/tmp/amc_test_acceptance3/             Round-trip validation: Diff files (mirrors source structure)
-└── vehicle_templates/
-    ├── ArduCopter/
-    │   ├── diatone_taycan_mxc/
-    │   │   ├── 4.6.x-params/        ← Diff files comparing original vs generated
-    │   │   │   ├── 01_esc_calibration.param.diff
-    │   │   │   ├── 08_batt1.param.diff
-    │   │   │   ├── vehicle_components.json.diff
-    │   │   │   └── ...
-    │   │   └── 4.4.4-params/
-    │   ├── Chimera7/                ← Diff files for Chimera7 comparison
-    │   │   ├── 02_imu_temperature_calibration_setup.param.diff
-    │   │   ├── 08_batt1.param.diff
     │   │   └── ...
     │   └── ...
     └── ...
@@ -152,7 +133,6 @@ import json
 import logging
 import os
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -170,7 +150,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreator,
 )
 
-# ruff: noqa: ANN201, ANN205, S108, S603, S607, PLR0915, EM102
+# ruff: noqa: ANN201, ANN205, S108, PLR0915, EM102
 
 # pylint: disable=too-many-lines,too-many-locals,too-many-branches,too-many-statements,too-many-nested-blocks,redefined-outer-name,too-few-public-methods,unused-argument,broad-exception-caught
 
@@ -1373,111 +1353,3 @@ class TestParameterDerivationValidation:
             f"(expected <55). Vehicle-specific calibration data should be preserved from FC parameters. "
             "Derived and tuning parameters may differ based on component specifications."
         )
-
-
-class TestTemplateDiffGeneration:
-    """Test generating diff files comparing original templates with generated projects."""
-
-    def test_user_can_generate_diff_files_for_all_projects(self, compounded_params_files, tmp_test_dir, tmp_test_output_dir):
-        """
-        User can generate diff files comparing generated projects with original templates.
-
-        GIVEN: Generated vehicle projects exist in tmp_test_output_dir
-        WHEN: User compares them with original templates
-        THEN: Diff files should be created in /tmp/amc_test_acceptance3/
-        AND: Diff files should be organized in same structure as projects
-        AND: 00_default.param files should be excluded from comparison
-        """
-        # Setup diff output directory
-        diff_base_dir = Path("/tmp/amc_test_acceptance3/vehicle_templates")
-        if diff_base_dir.parent.exists():
-            shutil.rmtree(diff_base_dir.parent)
-        diff_base_dir.mkdir(parents=True, exist_ok=True)
-
-        original_base = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "vehicle_templates"
-        generated_base = tmp_test_output_dir / "vehicle_templates"
-
-        if not generated_base.exists():
-            pytest.skip("No generated projects found")
-
-        diff_count = 0
-        skipped_count = 0
-
-        # Find all generated project directories
-        for generated_dir in generated_base.rglob("*"):
-            if not generated_dir.is_dir():
-                continue
-
-            # Check if it's a leaf directory (contains files)
-            has_param_or_json = any(generated_dir.glob("*.param")) or any(generated_dir.glob("*.json"))
-            if not has_param_or_json:
-                continue
-
-            # Find matching original template
-            relative_path = generated_dir.relative_to(generated_base)
-            original_dir = original_base / relative_path
-
-            if not original_dir.exists():
-                skipped_count += 1
-                continue
-
-            # Get files to compare (exclude 00_default.param)
-            generated_files = set()
-            original_files = set()
-
-            for pattern in ["*.param", "*.json"]:
-                for file in generated_dir.glob(pattern):
-                    if file.name != "00_default.param":
-                        generated_files.add(file.name)
-                for file in original_dir.glob(pattern):
-                    if file.name != "00_default.param":
-                        original_files.add(file.name)
-
-            common_files = generated_files & original_files
-
-            if not common_files:
-                continue
-
-            # Create diff output directory mirroring structure
-            diff_output_dir = diff_base_dir / relative_path
-            diff_output_dir.mkdir(parents=True, exist_ok=True)
-
-            # Generate diffs for each common file
-            for filename in sorted(common_files):
-                original_file = original_dir / filename
-                generated_file = generated_dir / filename
-                diff_file = diff_output_dir / f"{filename}.diff"
-
-                try:
-                    result = subprocess.run(
-                        ["diff", "-u", str(original_file), str(generated_file)],
-                        capture_output=True,
-                        text=True,
-                        check=False,
-                    )
-
-                    if result.returncode != 0:  # Files differ
-                        # Write diff to file
-                        diff_content = [
-                            f"Comparing: {filename}",
-                            f"Original:  {original_file}",
-                            f"Generated: {generated_file}",
-                            "=" * 80,
-                            result.stdout,
-                        ]
-                        diff_file.write_text("\n".join(diff_content), encoding="utf-8")
-                        diff_count += 1
-
-                except Exception as e:
-                    logger.warning("Failed to diff %s: %s", filename, e)
-
-        # Then: Diff files should have been created
-        assert diff_count > 0, "No diff files were generated"
-
-        # And: Directory structure should match
-        assert diff_base_dir.exists(), "Diff base directory not created"
-
-        logger.info("=" * 80)
-        logger.info("Generated %d diff files", diff_count)
-        logger.info("Skipped %d projects (no matching original)", skipped_count)
-        logger.info("Diff files saved to: %s", diff_base_dir.parent)

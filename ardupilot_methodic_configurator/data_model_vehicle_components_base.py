@@ -158,8 +158,14 @@ class ComponentDataModelBase:
             # Special handling for list/dict types
             if datatype in (list, dict):
                 type_name = getattr(datatype, "__name__", repr(datatype))
-                logging_error(_("Invalid value '%s' for datatype %s at path %s"), value, type_name, path)
-                return ""
+                logging_warning(
+                    _("Failed to cast value '%s' to %s for path %s: %s"),
+                    value,
+                    type_name,
+                    path,
+                    "list and dict types require structured data",
+                )
+                return self._process_value(path, str(value) if value is not None else None)
 
             # Standard type conversion
             return datatype(value)

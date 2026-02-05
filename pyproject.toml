@@ -104,6 +104,12 @@ win_dist = [
     "packaging==26.0",
 ]
 
+mac_dist = [
+    "pip==25.3",
+    "pyinstaller==6.18.0",
+    "packaging==26.0",
+]
+
 [project.scripts]
 ardupilot_methodic_configurator = "ardupilot_methodic_configurator.__main__:main"
 extract_param_defaults = "ardupilot_methodic_configurator.extract_param_defaults:main"
