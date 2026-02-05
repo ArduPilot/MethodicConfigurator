@@ -834,8 +834,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 derived_changed = self.merge_forced_or_derived_parameters(
                     param_filename, self.derived_parameters, existing_fc_params
                 )
-            if derived_changed and ask_user_confirmation is not None and self.vehicle_configuration_file_exists(
-                param_filename
+            if (
+                derived_changed
+                and ask_user_confirmation is not None
+                and self.vehicle_configuration_file_exists(param_filename)
             ):
                 confirm_message = _(
                     "Derived parameters were recalculated for '{param_filename}'.\nDo you want to save these changes to disk?"
