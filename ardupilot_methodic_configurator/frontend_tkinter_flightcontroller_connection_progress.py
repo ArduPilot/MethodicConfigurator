@@ -8,15 +8,19 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from logging import error as logging_error
 from types import TracebackType
 from typing import Literal, Optional
 
-from typing_extensions import Self
-
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:  # Python 3.9 and 3.10
+    from typing_extensions import Self
 
 PROGRESS_FC_INIT_COMPLETE = 20
 
