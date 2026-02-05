@@ -814,9 +814,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         eval_variables = self.get_eval_variables()
         # the eval variables do not contain fc_parameter values
         # and that is intentional, the fc_parameters are not to be used in here
-        derived_changed_by_file: dict[str, bool] = {}
+        annotate_doc = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
         for param_filename, param_dict in self.file_parameters.items():
-            derived_changed_by_file[param_filename] = False
+            derived_changed: bool = False
             for param_name, param in param_dict.items():
                 if source_param_values and param_name in source_param_values:
                     param.value = source_param_values[param_name]
@@ -834,9 +834,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 derived_changed = self.merge_forced_or_derived_parameters(
                     param_filename, self.derived_parameters, existing_fc_params
                 )
-                if derived_changed:
-                    derived_changed_by_file[param_filename] = True
-            if derived_changed_by_file.get(param_filename, False) and ask_user_confirmation is not None:
+            if derived_changed and ask_user_confirmation is not None and self.vehicle_configuration_file_exists(
+                param_filename
+            ):
                 confirm_message = _(
                     "Derived parameters were recalculated for '{param_filename}'.\nDo you want to save these changes to disk?"
                 ).format(param_filename=param_filename)
@@ -846,7 +846,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             self.export_to_param(
                 param_dict,
                 param_filename,
-                annotate_doc=bool(ProgramSettings.get_setting("annotate_docs_into_param_files")),
+                annotate_doc=annotate_doc,
             )
         return ""
 
