@@ -166,7 +166,7 @@ jobs:
 
       - name: Set up Python
         id: setup-python
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
