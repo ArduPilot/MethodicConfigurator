@@ -23,6 +23,7 @@ from logging import exception as logging_exception
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from sys import exit as sys_exit
+from sys import platform as sys_platform
 from tkinter import filedialog, ttk
 from typing import TYPE_CHECKING, Callable, Optional, Protocol, Union, cast
 
@@ -929,9 +930,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             x = parent_x + (parent_width - dialog_width) // 2
             y = parent_y + (parent_height - dialog_height) // 2
             dialog.geometry(f"+{x}+{y}")
+            dialog.lift()
+            dialog.update()  # Ensure the window is fully rendered before setting focus
 
             # Show dialog at correct position and make it modal
-            dialog.grab_set()
+            # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
+            if sys_platform != "darwin":
+                dialog.focus_force()
+                dialog.grab_set()
 
             # Set focus after dialog is shown and modal
             close_button.focus_set()  # Give the Close button focus
