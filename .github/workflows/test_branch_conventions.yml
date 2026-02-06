@@ -78,9 +78,12 @@ jobs:
 
           # check that no commit subject line exceeds 160 characters:
           while IFS= read -r line; do
-            subject=${line#* }
             if [[ -z "$line" ]]; then continue; fi
-            if [[ ${#subject} -gt 160 ]]; then
+            commit_subject=${line#* }
+            if [[ -z "$commit_subject" ]]; then
+              commit_subject="$line"
+            fi
+            if [[ ${#commit_subject} -gt 160 ]]; then
               echo "❌ Commit subject line exceeds 160 characters:"
               echo "$line"
               echo "Please keep the commit subject line to 160 characters or fewer."
