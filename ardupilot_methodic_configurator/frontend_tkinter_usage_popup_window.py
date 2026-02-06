@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
 import tkinter as tk
+from sys import platform as sys_platform
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
@@ -82,7 +83,11 @@ class PopupWindow:
         parent: Optional[tk.Tk],
         close_callback: Callable[[], None],
     ) -> None:
-        """Finalize window setup: center, make topmost, disable parent, set close handler."""
+        """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
+        # Set window as a transient dialog of the parent
+        if parent:
+            popup_window.root.transient(parent)
+
         # Resize window height to ensure all widgets are fully visible
         # as some Linux Window managers like KDE, like to change font sizes and padding.
         # So we need to dynamically accommodate for that after placing the widgets
@@ -100,8 +105,14 @@ class PopupWindow:
             # main application has been destroyed (for example during shutdown)
             # — guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
-            popup_window.root.attributes("-topmost", True)  # noqa: FBT003
-            popup_window.root.grab_set()  # Make the popup modal
+            popup_window.root.lift()
+            popup_window.root.update()  # Ensure the window is fully rendered before setting focus
+
+            # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
+            # On Windows/Linux, make the popup modal and give it focus
+            if sys_platform != "darwin":
+                popup_window.root.focus_force()
+                popup_window.root.grab_set()  # Make the popup modal
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
         except tk.TclError:
@@ -112,7 +123,8 @@ class PopupWindow:
     @staticmethod
     def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
         """Close the popup window and re-enable the parent window."""
-        popup_window.root.grab_release()  # Release the modal grab
+        if sys_platform != "darwin":
+            popup_window.root.grab_release()  # Release the modal grab
         popup_window.root.destroy()
         if parent:
             parent.focus_set()

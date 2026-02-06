@@ -16,6 +16,7 @@ from logging import exception as logging_exception
 from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
+from sys import platform as sys_platform
 from tkinter import ttk
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
@@ -53,6 +54,8 @@ if TYPE_CHECKING:  # pragma: no cover - import for type checking only
 
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
+
+# pylint: disable=too-many-lines
 
 
 @dataclass
@@ -624,7 +627,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if isinstance(event.widget, ttk.Entry):
                 self._update_new_value_entry_text(event.widget, param)
 
-            # Destroy the window
+            # Release the modal grab and destroy the window
+            if sys_platform != "darwin":
+                window.grab_release()
             window.destroy()
             # Issue a FocusIn event on something else than new_value_entry to prevent endless looping
             self.main_frame.focus_set()
@@ -701,13 +706,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         for child in window.winfo_children():
             child.bind("<FocusOut>", focus_out_handler)
 
-        # Make sure the window is visible before disabling the parent window
+        # Make sure the window is visible and properly positioned
+        window.transient(self._get_parent_toplevel())
         window.deiconify()
 
-        # Center the window on the parent window using the utility function
-        BaseWindow.center_window(window, self._get_parent_toplevel())
-
-        window.grab_set()  # Make the window modal, disable the parent window
+        self._center_and_focus_window(window)
 
         window.wait_window()  # Wait for the window to be closed
 
@@ -863,6 +866,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Call business logic method
         added, skipped, failed = self.parameter_editor.add_parameters_to_current_file(param_names)
         self._show_bulk_add_parameters_feedback(added, skipped, failed)
+
+        # Release the modal grab before destroying the window
+        if sys_platform != "darwin":
+            dialog_window.root.grab_release()
         dialog_window.root.destroy()
 
     def _show_bulk_add_parameters_feedback(self, added: list[str], skipped: list[str], failed: list[str]) -> None:
@@ -898,7 +905,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         add_parameter_window.root.title(_("Add parameter(s)"))
         add_parameter_window.root.geometry("250x400")
         add_parameter_window.root.transient(self._get_parent_toplevel())
-        add_parameter_window.root.grab_set()
 
         all_params = self.parameter_editor.get_possible_add_param_names()
         search_var, search_entry, listbox, add_button = self._create_parameter_add_dialog_widgets(add_parameter_window)
@@ -962,11 +968,28 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         listbox.bind("<Control-D>", lambda _: (listbox.selection_clear(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
         # pylint: enable=line-too-long
         add_parameter_window.root.bind("<Return>", lambda _: add_selected())
-        add_parameter_window.root.bind("<Escape>", lambda _: add_parameter_window.root.destroy())
+
+        def on_escape(_event: tk.Event) -> None:
+            """Handle Escape key to close the window."""
+            if sys_platform != "darwin":
+                add_parameter_window.root.grab_release()
+            add_parameter_window.root.destroy()
+
+        add_parameter_window.root.bind("<Escape>", on_escape)
         add_button.config(command=add_selected)
 
         refresh_list()
-        BaseWindow.center_window(add_parameter_window.root, self._get_parent_toplevel())
+        self._center_and_focus_window(add_parameter_window.root)
+
+    def _center_and_focus_window(self, window: Union[tk.Toplevel, tk.Tk]) -> None:
+        BaseWindow.center_window(window, self._get_parent_toplevel())
+        window.lift()
+        window.update()  # Ensure the window is fully rendered before setting focus
+
+        # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
+        if sys_platform != "darwin":
+            window.focus_force()
+            window.grab_set()
 
     def _confirm_parameter_addition(self, param_name: str) -> bool:
         """Confirm and process parameter addition using ParameterEditor."""
