@@ -66,11 +66,22 @@ jobs:
             echo "✅ No fixup commits found in the PR branch."
           fi
 
-          # require a ":" to appear somewhere in each commit message:
+          # validate conventional commits format: type(optional scope): description
+          # the regex pattern matches: ^(\w+)(\(.+\))?\s*!?\s*:\s*(.+)$
+          # - (\w+) = type (e.g., feat, fix, docs)
+          # - (\(.+\))? = optional scope in parentheses
+          # - \s*!?\s* = optional breaking change indicator (!)
+          # - : = required colon separator
+          # - \s*(.+) = description
           while IFS= read -r x; do
             if [[ -z "$x" ]]; then continue; fi
-            if ! [[ "$x" == *":"* ]] ; then
-              echo "❌ Commit message ($x) does not follow conventional commits conventions"
+            if ! [[ "$x" =~ ^([a-zA-Z0-9_]+)(\(.+\))?[[:space:]]*!?[[:space:]]*:[[:space:]]*(.+)$ ]] ; then
+              echo "❌ Commit message does not follow conventional commits format:"
+              echo "   $x"
+              echo ""
+              echo "Expected format: type(optional scope): description"
+              echo "Examples: feat: add new feature, fix(parser): resolve bug, docs(readme)!: breaking change"
+              echo "Please see https://www.conventionalcommits.org/ and https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md"
               exit 1
             fi
           done <<< "$COMMITS"
