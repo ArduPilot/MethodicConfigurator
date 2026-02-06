@@ -71,8 +71,8 @@ jobs:
           # - ([a-zA-Z0-9_]+) = type (e.g., feat, fix, docs)
           # - (\(.+\))? = optional scope in parentheses
           # - [[:space:]]*!?[[:space:]]* = optional breaking change indicator (!)
-          # - : = required colon separator
-          # - [[:space:]]*(.+) = description
+          # - :[[:space:]]* = required colon separator with optional spaces
+          # - (.+) = description
           while IFS= read -r x; do
             if [[ -z "$x" ]]; then continue; fi
             if ! [[ "$x" =~ ^([a-zA-Z0-9_]+)(\(.+\))?[[:space:]]*!?[[:space:]]*:[[:space:]]*(.+)$ ]] ; then
