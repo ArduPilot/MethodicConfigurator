@@ -65,3 +65,40 @@ jobs:
           else
             echo "✅ No fixup commits found in the PR branch."
           fi
+
+          # validate conventional commits format: type(optional scope): description
+          # the regex pattern matches: ^([a-zA-Z0-9_]+)(\(.+\))?[[:space:]]*!?[[:space:]]*:[[:space:]]*(.+)$
+          # - ([a-zA-Z0-9_]+) = type (e.g., feat, fix, docs)
+          # - (\(.+\))? = optional scope in parentheses
+          # - [[:space:]]*!?[[:space:]]* = optional breaking change indicator (!)
+          # - :[[:space:]]* = required colon separator with optional spaces
+          # - (.+) = description
+          while IFS= read -r x; do
+            if [[ -z "$x" ]]; then continue; fi
+            if ! [[ "$x" =~ ^([a-zA-Z0-9_]+)(\(.+\))?[[:space:]]*!?[[:space:]]*:[[:space:]]*(.+)$ ]] ; then
+              echo "❌ Commit message does not follow conventional commits format:"
+              echo "   $x"
+              echo ""
+              echo "Expected format: type(optional scope): description"
+              echo "Examples: feat: add new feature, fix(parser): resolve bug, docs(readme)!: breaking change"
+              echo "Please see https://www.conventionalcommits.org/ and https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md"
+              exit 1
+            fi
+          done <<< "$COMMITS"
+          echo "✅ Commit messages follow conventional commits conventions."
+
+          # check that no commit subject line exceeds 160 characters:
+          while IFS= read -r line; do
+            if [[ -z "$line" ]]; then continue; fi
+            commit_subject=${line#* }
+            if [[ -z "$commit_subject" ]]; then
+              commit_subject="$line"
+            fi
+            if [[ ${#commit_subject} -gt 160 ]]; then
+              echo "❌ Commit subject line exceeds 160 characters:"
+              echo "$line"
+              echo "Please keep the commit subject line to 160 characters or fewer."
+              exit 1
+            fi
+          done <<< "$COMMITS"
+          echo "✅ All commit subject lines are within 160 characters."
