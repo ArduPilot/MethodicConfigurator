@@ -67,12 +67,12 @@ jobs:
           fi
 
           # validate conventional commits format: type(optional scope): description
-          # the regex pattern matches: ^(\w+)(\(.+\))?\s*!?\s*:\s*(.+)$
-          # - (\w+) = type (e.g., feat, fix, docs)
+          # the regex pattern matches: ^([a-zA-Z0-9_]+)(\(.+\))?[[:space:]]*!?[[:space:]]*:[[:space:]]*(.+)$
+          # - ([a-zA-Z0-9_]+) = type (e.g., feat, fix, docs)
           # - (\(.+\))? = optional scope in parentheses
-          # - \s*!?\s* = optional breaking change indicator (!)
+          # - [[:space:]]*!?[[:space:]]* = optional breaking change indicator (!)
           # - : = required colon separator
-          # - \s*(.+) = description
+          # - [[:space:]]*(.+) = description
           while IFS= read -r x; do
             if [[ -z "$x" ]]; then continue; fi
             if ! [[ "$x" =~ ^([a-zA-Z0-9_]+)(\(.+\))?[[:space:]]*!?[[:space:]]*:[[:space:]]*(.+)$ ]] ; then
