@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import sys
 import tkinter as tk
 from logging import error as logging_error
+from tkinter import ttk
 from types import TracebackType
 from typing import Literal, Optional
 
@@ -34,8 +35,12 @@ class FlightControllerConnectionProgress:
 
     def __init__(self) -> None:
         # Needed because ProgressWindow needs a master and there is no application root window at this point
-        self.temp_root: tk.Tk = tk.Tk()
-        self.temp_root.withdraw()
+        self.temp_root: tk.Tk = tk.Tk(className="ArduPilotMethodicConfigurator")
+        self.temp_root.withdraw()  # Hide the temporary root window, we only want to show the progress window
+
+        # Set the theme to 'alt'
+        style = ttk.Style()
+        style.theme_use("alt")
 
         self.progress_window: ProgressWindow = ProgressWindow(
             self.temp_root,
@@ -43,6 +48,7 @@ class FlightControllerConnectionProgress:
             _("Starting initialization..."),
             only_show_when_update_progress_called=True,
         )
+        # Note: ProgressWindow handles centering itself when parent is a minimal temp root
 
     def update_init_progress_bar(self, value: int, max_value: int) -> None:
         """
