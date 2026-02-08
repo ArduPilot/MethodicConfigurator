@@ -1466,5 +1466,243 @@ class TestWindowLifecycleBehavior:
             child_window.root.destroy()
 
 
+class TestCenterWindowOnScreenBehavior:
+    """Test screen-centered window positioning with multi-monitor support."""
+
+    def test_centers_window_on_single_monitor(self) -> None:
+        """
+        Centers window on single monitor setup.
+
+        GIVEN: User has a single monitor
+        WHEN: Window needs to be centered on screen
+        THEN: Should position window at the center of that monitor
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: Single 1920x1080 monitor at origin
+            mock_monitor = MagicMock()
+            mock_monitor.x = 0
+            mock_monitor.y = 0
+            mock_monitor.width = 1920
+            mock_monitor.height = 1080
+            mock_monitors.return_value = [mock_monitor]
+
+            # Mock window with 300x200 dimensions
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 300
+            mock_window.winfo_reqheight.return_value = 200
+            mock_window.winfo_pointerx.return_value = 960  # Center of monitor
+            mock_window.winfo_pointery.return_value = 540
+
+            # Act: Center window on screen
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Window positioned at monitor center (810, 440)
+            # Center calculation: x = 0 + (1920 - 300) / 2 = 810
+            #                     y = 0 + (1080 - 200) / 2 = 440
+            mock_window.geometry.assert_called_once_with("+810+440")
+            mock_window.update.assert_called_once()
+
+    def test_centers_window_on_monitor_with_pointer(self) -> None:
+        """
+        Centers window on the monitor containing the mouse pointer.
+
+        GIVEN: User has multiple monitors
+        WHEN: Mouse pointer is on a specific monitor
+        THEN: Window should center on that monitor, not the primary one
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: Two 1920x1080 monitors side by side
+            monitor1 = MagicMock()
+            monitor1.x = 0
+            monitor1.y = 0
+            monitor1.width = 1920
+            monitor1.height = 1080
+
+            monitor2 = MagicMock()
+            monitor2.x = 1920  # Second monitor to the right
+            monitor2.y = 0
+            monitor2.width = 1920
+            monitor2.height = 1080
+            mock_monitors.return_value = [monitor1, monitor2]
+
+            # Mock 400x300 window with pointer on second monitor
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 400
+            mock_window.winfo_reqheight.return_value = 300
+            mock_window.winfo_pointerx.return_value = 2880  # Middle of second monitor (1920 + 960)
+            mock_window.winfo_pointery.return_value = 540
+
+            # Act: Center window on screen
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Window positioned at center of SECOND monitor (2680, 390)
+            # Center calculation: x = 1920 + (1920 - 400) / 2 = 2680
+            #                     y = 0 + (1080 - 300) / 2 = 390
+            mock_window.geometry.assert_called_once_with("+2680+390")
+            mock_window.update.assert_called_once()
+
+    def test_handles_pointer_outside_any_monitor(self) -> None:
+        """
+        Handles pointer outside any monitor bounds gracefully.
+
+        GIVEN: Pointer coordinates are outside any monitor bounds
+        WHEN: Attempting to center window
+        THEN: Should default to primary monitor center
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: Single 1920x1080 monitor with pointer far outside
+            monitor = MagicMock()
+            monitor.x = 0
+            monitor.y = 0
+            monitor.width = 1920
+            monitor.height = 1080
+            mock_monitors.return_value = [monitor]
+
+            # Mock 200x150 window with pointer outside bounds
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 200
+            mock_window.winfo_reqheight.return_value = 150
+            mock_window.winfo_pointerx.return_value = 5000  # Way outside
+            mock_window.winfo_pointery.return_value = 5000
+
+            # Act: Should not raise exception, fall back to primary monitor
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Window positioned at center of primary monitor (860, 465)
+            # Center calculation: x = 0 + (1920 - 200) / 2 = 860
+            #                     y = 0 + (1080 - 150) / 2 = 465
+            mock_window.geometry.assert_called_once_with("+860+465")
+            mock_window.update.assert_called_once()
+
+    def test_respects_monitor_bounds(self) -> None:
+        """
+        Ensures window stays within monitor bounds.
+
+        GIVEN: Window size and monitor dimensions
+        WHEN: Centering window on monitor
+        THEN: Window position should respect monitor boundaries
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: 1024x768 monitor with 500x400 window
+            monitor = MagicMock()
+            monitor.x = 0
+            monitor.y = 0
+            monitor.width = 1024
+            monitor.height = 768
+            mock_monitors.return_value = [monitor]
+
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 500
+            mock_window.winfo_reqheight.return_value = 400
+            mock_window.winfo_pointerx.return_value = 512  # Center of monitor
+            mock_window.winfo_pointery.return_value = 384
+
+            # Act: Center window
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Window centered at (262, 184)
+            # Center calculation: x = 0 + (1024 - 500) / 2 = 262
+            #                     y = 0 + (768 - 400) / 2 = 184
+            # Both values are within bounds [0, 1024-500] and [0, 768-400]
+            mock_window.geometry.assert_called_once_with("+262+184")
+            mock_window.update.assert_called_once()
+
+    def test_handles_monitor_with_offset_coordinates(self) -> None:
+        """
+        Handles monitors with non-zero origin coordinates.
+
+        GIVEN: Monitor positioned with offset (e.g., laptop below external monitor)
+        WHEN: Centering window on that monitor
+        THEN: Should calculate position relative to monitor's origin coordinates
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: Monitor above primary (negative Y coordinate)
+            monitor = MagicMock()
+            monitor.x = 100
+            monitor.y = -1080  # Positioned above main monitor
+            monitor.width = 1920
+            monitor.height = 1080
+            mock_monitors.return_value = [monitor]
+
+            # Mock 300x200 window with pointer on this offset monitor
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 300
+            mock_window.winfo_reqheight.return_value = 200
+            mock_window.winfo_pointerx.return_value = 1060  # On the offset monitor
+            mock_window.winfo_pointery.return_value = -540  # Negative Y
+
+            # Act: Center window
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Window centered relative to monitor offset (910, -640)
+            # Center calculation: x = 100 + (1920 - 300) / 2 = 910
+            #                     y = -1080 + (1080 - 200) / 2 = -640
+            mock_window.geometry.assert_called_once_with("+910+-640")
+            mock_window.update.assert_called_once()
+
+    def test_handles_empty_monitor_list_gracefully(self) -> None:
+        """
+        Handles empty monitor list with fallback behavior.
+
+        GIVEN: No monitors detected (unusual error condition)
+        WHEN: Attempting to center window
+        THEN: Should fallback to tkinter's winfo_screen* methods
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: No monitors returned (edge case)
+            mock_monitors.return_value = []
+
+            # Mock window with fallback screen dimensions
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 200
+            mock_window.winfo_reqheight.return_value = 150
+            mock_window.winfo_screenwidth.return_value = 1920
+            mock_window.winfo_screenheight.return_value = 1080
+
+            # Act: Should use fallback positioning
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Window positioned using fallback screen center (860, 465)
+            # Fallback calculation: x = (1920 - 200) / 2 = 860
+            #                       y = (1080 - 150) / 2 = 465
+            mock_window.geometry.assert_called_once_with("+860+465")
+            mock_window.update.assert_called_once()
+
+    def test_calls_update_idletasks_before_positioning(self) -> None:
+        """
+        Calls update_idletasks before measuring window.
+
+        GIVEN: Window needs accurate dimension measurements
+        WHEN: Centering window on screen
+        THEN: Should call update_idletasks first to ensure accurate winfo_req* values
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            monitor = MagicMock()
+            monitor.x = 0
+            monitor.y = 0
+            monitor.width = 1920
+            monitor.height = 1080
+            mock_monitors.return_value = [monitor]
+
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 400
+            mock_window.winfo_reqheight.return_value = 300
+            mock_window.winfo_pointerx.return_value = 960
+            mock_window.winfo_pointery.return_value = 540
+
+            # Act: Center window
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Calls in correct order
+            assert mock_window.update_idletasks.called
+            assert mock_window.geometry.called
+            assert mock_window.update.called
+            # Verify update_idletasks was called before winfo methods
+            call_order = [call[0] for call in mock_window.method_calls]
+            update_idx = call_order.index("update_idletasks")
+            winfo_idx = call_order.index("winfo_reqwidth")
+            assert update_idx < winfo_idx, "update_idletasks should be called before dimension queries"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
