@@ -31,6 +31,7 @@ from tkinter import messagebox, ttk
 from typing import Optional, Union
 
 from PIL import Image
+from screeninfo import get_monitors
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -299,6 +300,75 @@ class BaseWindow:
         # logging_error(_("Window size: %dx%d"), window_width, window_height)
         x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
         y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
+        window.geometry(f"+{x}+{y}")
+        window.update()
+
+    @staticmethod
+    def center_window_on_screen(window: Union[tk.Toplevel, tk.Tk]) -> None:
+        """
+        Center a window on the screen where the mouse pointer is located.
+
+        This method handles multiple monitors by querying individual monitor geometry
+        and centering the window on the monitor containing the pointer.
+        Works cross-platform on Linux, Windows, and macOS.
+
+        Args:
+            window (Union[tk.Toplevel, tk.Tk]): The window to center on screen
+
+        Note:
+            This method calls update_idletasks() to ensure accurate dimension
+            calculations before positioning the window. Requires screeninfo library.
+
+        Example:
+            >>> progress_window = tk.Toplevel()
+            >>> BaseWindow.center_window_on_screen(progress_window)
+
+        """
+        window.update_idletasks()
+
+        # Get the window dimensions
+        window_width = window.winfo_reqwidth()
+        window_height = window.winfo_reqheight()
+
+        # Get pointer position to determine which monitor it's on
+        pointer_x = window.winfo_pointerx()
+        pointer_y = window.winfo_pointery()
+
+        # Try to get individual monitor geometry using screeninfo
+        try:
+            monitors = get_monitors()
+        except Exception:  # pylint: disable=broad-exception-caught
+            monitors = []  # screeninfo may fail on headless/Wayland/permission issues
+
+        # Find the monitor containing the pointer
+        target_monitor = None
+        for monitor in monitors:
+            if monitor.x <= pointer_x < monitor.x + monitor.width and monitor.y <= pointer_y < monitor.y + monitor.height:
+                target_monitor = monitor
+                break
+
+        # Fallback to primary monitor if pointer is not on any monitor
+        if target_monitor is None and monitors:
+            target_monitor = monitors[0]
+
+        if target_monitor:
+            # Center window on the target monitor
+            x = target_monitor.x + (target_monitor.width - window_width) // 2
+            y = target_monitor.y + (target_monitor.height - window_height) // 2
+
+            # Ensure window stays within monitor bounds
+            x = max(target_monitor.x, min(x, target_monitor.x + target_monitor.width - window_width))
+            y = max(target_monitor.y, min(y, target_monitor.y + target_monitor.height - window_height))
+        else:
+            # Fallback to simple screen centering if screeninfo fails
+            screen_width = window.winfo_screenwidth()
+            screen_height = window.winfo_screenheight()
+            x = (screen_width - window_width) // 2
+            y = (screen_height - window_height) // 2
+            x = max(0, x)
+            y = max(0, y)
+
+        # Set the position
         window.geometry(f"+{x}+{y}")
         window.update()
 

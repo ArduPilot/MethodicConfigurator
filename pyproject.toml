@@ -59,6 +59,7 @@ dependencies = [
     "pymavlink==2.4.49",
     "pyserial==3.5",
     "requests==2.32.5",
+    "screeninfo==0.8.1",
 ]
 
 dynamic = ["version"]
