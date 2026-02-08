@@ -1668,6 +1668,34 @@ class TestCenterWindowOnScreenBehavior:
             mock_window.geometry.assert_called_once_with("+860+465")
             mock_window.update.assert_called_once()
 
+    def test_handles_get_monitors_exception_gracefully(self) -> None:
+        """
+        Handles screeninfo exceptions with fallback behavior.
+
+        GIVEN: screeninfo raises exception (headless/Wayland/permission issues)
+        WHEN: Attempting to center window
+        THEN: Should catch exception and fallback to tkinter's winfo_screen* methods
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: Simulate screeninfo failure (OSError for headless, permission issues)
+            mock_monitors.side_effect = OSError("Cannot query displays")
+
+            # Mock window with fallback screen dimensions
+            mock_window = MagicMock()
+            mock_window.winfo_reqwidth.return_value = 300
+            mock_window.winfo_reqheight.return_value = 200
+            mock_window.winfo_screenwidth.return_value = 1920
+            mock_window.winfo_screenheight.return_value = 1080
+
+            # Act: Should handle exception and use fallback positioning
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Window positioned using fallback screen center (810, 440)
+            # Fallback calculation: x = (1920 - 300) / 2 = 810
+            #                       y = (1080 - 200) / 2 = 440
+            mock_window.geometry.assert_called_once_with("+810+440")
+            mock_window.update.assert_called_once()
+
     def test_calls_update_idletasks_before_positioning(self) -> None:
         """
         Calls update_idletasks before measuring window.
