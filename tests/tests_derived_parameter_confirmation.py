@@ -84,15 +84,16 @@ class TestParameterSafetyChecks:
         fs = filesystem_with_derived_logic
 
         # WHEN: Call update without permission (commit_derived_changes=False)
-        result = fs.update_and_export_vehicle_params_from_fc(
+        pending_changes = fs.update_and_export_vehicle_params_from_fc(
             source_param_values={},
             existing_fc_params=[],
             commit_derived_changes=False,
         )
 
-        # THEN: Result should be a dict (Pending changes), not an empty string (Success)
-        assert isinstance(result, dict)
-        assert "08_batt1.param" in result
+        # THEN: Result should be a non-empty list with the changed file
+        assert isinstance(pending_changes, list)
+        assert len(pending_changes) > 0
+        assert "08_batt1.param" in pending_changes
 
         # AND: Verify the file on disk was NOT touched
         with open(os.path.join(fs.vehicle_dir, "08_batt1.param"), encoding="utf-8") as f:
@@ -110,14 +111,14 @@ class TestParameterSafetyChecks:
         fs = filesystem_with_derived_logic
 
         # WHEN: Call update WITH permission (commit_derived_changes=True)
-        result = fs.update_and_export_vehicle_params_from_fc(
+        pending_changes = fs.update_and_export_vehicle_params_from_fc(
             source_param_values={},
             existing_fc_params=[],
             commit_derived_changes=True,
         )
 
-        # THEN: Result should be empty string (Success)
-        assert result == ""
+        # THEN: Result should be empty list (Success, no pending changes)
+        assert pending_changes == []
 
         # AND: Verify the file on disk WAS updated
         with open(os.path.join(fs.vehicle_dir, "08_batt1.param"), encoding="utf-8") as f:
@@ -141,15 +142,16 @@ class TestParameterSafetyChecks:
         fs.derived_parameters["08_batt1.param"]["BATT_ARM_VOLT"].value = 15.7
 
         # WHEN: Call update without permission
-        result = fs.update_and_export_vehicle_params_from_fc(
+        pending_changes = fs.update_and_export_vehicle_params_from_fc(
             source_param_values={},
             existing_fc_params=[],
             commit_derived_changes=False,
         )
 
         # THEN: It should still detect the change vs Disk
-        assert isinstance(result, dict)
-        assert "08_batt1.param" in result
+        assert isinstance(pending_changes, list)
+        assert len(pending_changes) > 0
+        assert "08_batt1.param" in pending_changes
 
         # AND: Disk should still be 1.0
         with open(os.path.join(fs.vehicle_dir, "08_batt1.param"), encoding="utf-8") as f:
@@ -160,7 +162,7 @@ class TestParameterSafetyChecks:
 class TestUserConfirmationWorkflow:
     """Tests the user interaction workflow for confirming changes."""
 
-    @patch("ardupilot_methodic_configurator.__main__.show_confirmation_dialog")
+    @patch("ardupilot_methodic_configurator.__main__.ask_yesno_message")
     def test_user_declines_changes_triggers_revert(self, mock_dialog) -> None:
         """
         User declines changes triggers revert.
@@ -179,7 +181,7 @@ class TestUserConfirmationWorkflow:
         mock_fs = MagicMock()
         mock_controller = MagicMock()
         mock_project_manager = MagicMock()
-        mock_fs.update_and_export_vehicle_params_from_fc.return_value = {"08_batt1.param": True}
+        mock_fs.update_and_export_vehicle_params_from_fc.return_value = ["08_batt1.param"]
 
         # WHEN: User responds NO
         mock_dialog.return_value = False
@@ -196,7 +198,7 @@ class TestUserConfirmationWorkflow:
         # AND: Verify REVERT: read_params_from_files must be called
         mock_fs.read_params_from_files.assert_called_once()
 
-    @patch("ardupilot_methodic_configurator.__main__.show_confirmation_dialog")
+    @patch("ardupilot_methodic_configurator.__main__.ask_yesno_message")
     def test_user_accepts_changes_triggers_save(self, mock_dialog) -> None:
         """
         User accepts changes triggers save.
@@ -214,7 +216,7 @@ class TestUserConfirmationWorkflow:
         mock_fs = MagicMock()
         mock_controller = MagicMock()
         mock_project_manager = MagicMock()
-        mock_fs.update_and_export_vehicle_params_from_fc.side_effect = [{"08_batt1.param": True}, ""]
+        mock_fs.update_and_export_vehicle_params_from_fc.side_effect = [["08_batt1.param"], []]
 
         # WHEN: User responds YES
         mock_dialog.return_value = True

@@ -645,7 +645,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
         # Test with empty file_parameters
         result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
-        assert result == ""
+        assert result == []  # Empty list means success
 
         # Test with file_parameters and configuration_steps
         param1_mock = MagicMock()
@@ -665,7 +665,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             mock_format.return_value = "formatted_params"
 
             result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
-            assert result == ""
+            assert result == []  # Empty list means success
             assert param1_mock.value == 1.0
             assert param2_mock.value == 2.0
             mock_export.assert_called_once_with(os_path.join("vehicle_dir", "test.param"))

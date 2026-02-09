@@ -226,11 +226,10 @@ def perform_component_inference(
 
     # Regenerate parameter files from the inferred component data
     existing_fc_params = list(fc_parameters.keys())
-    error_message = local_filesystem.update_and_export_vehicle_params_from_fc(
+    local_filesystem.update_and_export_vehicle_params_from_fc(
         source_param_values=fc_parameters, existing_fc_params=existing_fc_params, commit_derived_changes=True
     )
-    if error_message:
-        return False, f"Failed to update and export parameters: {error_message}"
+    # With commit_derived_changes=True, the function returns an empty list on success or raises ValueError on error
 
     return True, ""
 
