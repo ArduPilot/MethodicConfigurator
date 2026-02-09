@@ -20,7 +20,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import os
-import sys
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -488,14 +487,6 @@ def component_editor(state: ApplicationState) -> None:
     component_editor_window.root.mainloop()
 
 
-def show_confirmation_dialog(title: str, message: str) -> bool:
-    """Wrapper for messagebox. Auto-returns True if running in a test."""
-    if "pytest" in sys.modules or "unittest" in sys.modules:
-        return True
-
-    return ask_yesno_message(title, message)
-
-
 def process_component_editor_results(
     flight_controller: FlightController,
     local_filesystem: LocalFilesystem,
@@ -526,40 +517,47 @@ def process_component_editor_results(
         existing_fc_params = list(local_filesystem.param_default_dict.keys())
 
     # Update and export vehicle parameters (Safety ON: commit_derived_changes=False)
-    result = local_filesystem.update_and_export_vehicle_params_from_fc(
-        source_param_values=source_param_values,
-        existing_fc_params=existing_fc_params,
-        commit_derived_changes=False,
-    )
+    try:
+        pending_changes = local_filesystem.update_and_export_vehicle_params_from_fc(
+            source_param_values=source_param_values,
+            existing_fc_params=existing_fc_params,
+            commit_derived_changes=False,
+        )
+    except ValueError as e:
+        # Handle errors from parameter computation
+        error_msg = str(e)
+        logging_error(error_msg)
+        show_error_message(_("Error in derived parameters"), error_msg)
+        sys_exit(1)
+        return  # to make the tests work, even though sys_exit is mocked in the tests
 
-    # Check if the backend returned a dict (meaning pending changes)
-    if isinstance(result, dict):
-        changed_files = list(result.keys())
+    # Check if there are pending changes that need user confirmation
+    if pending_changes:
         msg = (
             _("To ensure configuration consistency, the following parameter files require updates based on your changes:\n\n")
-            + f"{', '.join(changed_files)}\n\n"
+            + f"{', '.join(pending_changes)}\n\n"
             + _("The system has recalculated these derived values for safety.\n")
             + _("Do you want to save these updates to disk now?")
         )
 
-        if show_confirmation_dialog(_("Confirm Derived Changes"), msg):
+        if ask_yesno_message(_("Confirm Derived Changes"), msg):
             # User confirmed: Save with permission
-            result = local_filesystem.update_and_export_vehicle_params_from_fc(
-                source_param_values=source_param_values,
-                existing_fc_params=existing_fc_params,
-                commit_derived_changes=True,
-            )
+            try:
+                local_filesystem.update_and_export_vehicle_params_from_fc(
+                    source_param_values=source_param_values,
+                    existing_fc_params=existing_fc_params,
+                    commit_derived_changes=True,
+                )
+            except ValueError as e:
+                error_msg = str(e)
+                logging_error(error_msg)
+                show_error_message(_("Error saving derived parameters"), error_msg)
+                sys_exit(1)
         else:
             # User declined: Revert in-memory changes from disk
             logging_info(_("User declined derived parameter changes. Reverting to disk values."))
             local_filesystem.file_parameters = local_filesystem.read_params_from_files()
             return
-
-    # Handle standard error strings
-    if isinstance(result, str) and result:
-        logging_error(result)
-        show_error_message(_("Error in derived parameters"), result)
-        sys_exit(1)
 
 
 def write_parameter_defaults(state: ApplicationState) -> None:
