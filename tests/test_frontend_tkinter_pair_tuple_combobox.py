@@ -237,11 +237,9 @@ class TestPairTupleComboboxTooltip(unittest.TestCase):
         self.combobox.winfo_id = MagicMock(return_value=12345)
         # Mock current combo style
         self.combobox.cget = MagicMock(
-            side_effect=lambda arg: "TCombobox"
-            if arg == "style"
-            else ("Value 1", "Value 2", "Value 3")
-            if arg == "values"
-            else None
+            side_effect=lambda arg: (
+                "TCombobox" if arg == "style" else ("Value 1", "Value 2", "Value 3") if arg == "values" else None
+            )
         )
 
         # Mock the configure method on the combobox
