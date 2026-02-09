@@ -162,28 +162,31 @@ That is harder to do once the autopilot is assembled inside the vehicle, hence i
 1. Once the flight controller is completely cooled down to its minimum expected operation temperature, take it out and power it.
    **Do not move the flight controller** for one or two hours.
    If the flight controller does not have a heater, place it in a warm place to make sure the target temperature gets reached fast enough.
-   The data collection process will automatically stop once the temperature rises less than 0.5 deg C in 10 minutes.
+   The data collection process will automatically stop once the temperature increase is less than 0.5 °C in 10 minutes.
 1. Monitor the data collection process:
    - If you have a buzzer connected, you will hear a short periodic beep while the calibration is in progress.
      When the calibration is complete, a completion tune will play.
    - If you have [notification LEDs](https://ardupilot.org/copter/docs/common-leds-pixhawk.html) on your flight controller they will cyclically flash red, blue and green while calibrating.
-   - If you do not have a buzzer connected nor notification LEDs, monitor the `INS_TCALn_ENABLE` parameters using Mission Planner.
-     On completion, the `INS_TCALn_ENABLE` parameters will change to 1 (*enable*) for each calibrated IMU.
-     Use Mission Planner’s Live Tuning Screen found on the Data Screen:
-        1. Connect the Flight Controller to Mission Planner
-        1. Check the Tuning checkbox on the bottom of the Data Screen.
-        1. Double-click in the screen and select IMUx from the Sensor fields, where x represents the IMU’s you have configured to collect data.
-        1. Monitor the progress in the Live Tuning screen as well as the Messages Screen under the HUD.
+   - If you do not have a buzzer connected nor notification LEDs, monitor the parameters using Mission Planner.
+     Use Mission Planner's Live Tuning Screen found on the Data Screen:
+        1. Connect the flight controller to Mission Planner
+        1. Check the *Tuning* checkbox on the bottom of the Data Screen.
+        1. Double-click in the screen and select `IMUx` from the Sensor fields, where `x` represents the IMUs you have configured to collect data.
+        1. Monitor the progress in the *Tuning* screen as well as the *Messages* screen under the HUD.
         1. The images below show an example of the Start of the process and the Completion.
+        1. You can also periodically refresh (re-read) the parameters from the flight controller.
+           On completion, the `INS_TCALn_ENABLE` parameters will change to 1 (*enable*) for each calibrated IMU.
 1. Power it off, and remove the micro SDCard
 1. Copy the latest `.bin` log file in the micro SDcard from `/APM/LOGS` to your PC
 1. Insert the micro SDcard back into the flight controller
 
 ![MP IMU temperature calibration started](images/blog/MP_IMU_temperature_calibration_started.jpeg)
-Mission planner tuning screen showing IMU temperature calibration start and messages window
+
+The Figure above depicts the Mission Planner tuning screen showing IMU temperature calibration start (low temperatures) and messages window
 
 ![MP IMU temperature calibration completed](images/blog/MP_IMU_temperature_calibration_completed.jpeg)
-Mission planner tuning screen showing IMU temperature calibration completed and messages window
+
+The Figure above depicts the Mission Planner tuning screen showing IMU temperature calibration completed (high temperatures) and messages window
 
 ## 4.2 Calculate IMU temperature calibration
 
@@ -799,7 +802,7 @@ And the weight that EKF should use for each source on the `23_ekf_config.param` 
 
 ## 8.4 Second Flight: PID VTOL-Quiktune lua script or manual PID tune
 
-If your flight controller can run lua scripts perform a [PID lua VTOL-Quicktune](https://ardupilot.org/copter/docs/quiktune.html).
+If your flight controller can run lua scripts perform a [PID lua VTOL-Quiktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
 
 Setup the lua script using:
@@ -815,8 +818,8 @@ Setup the lua script using:
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
-WARNING: Quicktune requires moderate wind disturbances to calibrate properly.
-Flying in completely calm conditions or perfectly steady wind can cause Quicktune to calculate overly aggressive PID values.
+WARNING: Quiktune requires moderate wind disturbances to calibrate properly.
+Flying in completely calm conditions or perfectly steady wind can cause Quiktune to calculate overly aggressive PID values.
 These excessive settings may cause dangerous oscillations and potential crashes when your vehicle later encounters normal wind conditions.
 
 - Quiktune relies on external disturbance to tune against. Run it outdoors in light wind conditions.
@@ -882,10 +885,10 @@ The report should now look like this:
 
 ## 9.2 Fourth Flight: PID VTOL-Quiktune lua script or manual PID tune (optional)
 
-If your flight controller can run lua scripts perform a [PID lua VTOL-Quicktune](https://ardupilot.org/copter/docs/quiktune.html).
+If your flight controller can run lua scripts perform a [PID lua VTOL-Quiktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
 
-### 9.2.1 Setup quicktune
+### 9.2.1 Setup Quiktune
 
 Setup the lua script using:
 
@@ -899,8 +902,8 @@ Setup the lua script using:
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
 
-WARNING: Quicktune requires moderate wind disturbances to calibrate properly.
-Flying in completely calm conditions or perfectly steady wind can cause Quicktune to calculate overly aggressive PID values.
+WARNING: Quiktune requires moderate wind disturbances to calibrate properly.
+Flying in completely calm conditions or perfectly steady wind can cause Quiktune to calculate overly aggressive PID values.
 These excessive settings may cause dangerous oscillations and potential crashes when your vehicle later encounters normal wind conditions.
 
 - Quiktune relies on external disturbance to tune against. Run it outdoors in light wind conditions.
@@ -908,7 +911,7 @@ These excessive settings may cause dangerous oscillations and potential crashes 
 
 Perform the flight and afterward:
 
-### 9.2.2 Store quicktune results to file
+### 9.2.2 Store Quiktune results to file
 
 1. Connect the flight controller to the PC
 1. On *ArduPilot Methodic Configurator* select `25_quicktune_results.param` on the *Current intermediate parameter file:* Combobox.
@@ -929,7 +932,7 @@ Follow the first part of [evaluating the aircraft tune](https://ardupilot.org/co
 
 After landing take a look at the `RATE.*out` values in the `.bin` log file, they all should be below 0.1.
 
-If the vehicle is not behaving well, perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) or a [lua Quicktune](https://ardupilot.org/copter/docs/quiktune.html) before proceeding.
+If the vehicle is not behaving well, perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) or a [lua Quiktune](https://ardupilot.org/copter/docs/quiktune.html) before proceeding.
 
 ## 9.4 Sixth flight: Evaluate the aircraft tune - part 2
 
