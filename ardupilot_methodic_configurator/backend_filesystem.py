@@ -521,7 +521,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def zip_file_path(self, zip_file_name: str = "") -> str:
         vehicle_name = self.get_vehicle_directory_name()
-        return os_path.join(self.vehicle_dir, zip_file_name if zip_file_name else f"{vehicle_name}.zip")
+        return os_path.join(self.vehicle_dir, zip_file_name or f"{vehicle_name}.zip")
 
     def zip_file_exists(self, zip_file_name: str = "") -> bool:
         zip_file_path = self.zip_file_path(zip_file_name)
@@ -871,11 +871,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             self.param_default_dict.export_to_param(os_path.join(self.vehicle_dir, filename))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
-        if (
-            selected_file in self.configuration_steps
-            and "download_file" in self.configuration_steps[selected_file]
-            and self.configuration_steps[selected_file]["download_file"]
-        ):
+        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("download_file"):
             src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
             dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
             if self.vehicle_dir and src and dst:
@@ -883,11 +879,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return "", ""
 
     def get_upload_local_and_remote_filenames(self, selected_file: str) -> tuple[str, str]:
-        if (
-            selected_file in self.configuration_steps
-            and "upload_file" in self.configuration_steps[selected_file]
-            and self.configuration_steps[selected_file]["upload_file"]
-        ):
+        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("upload_file"):
             src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
             dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
             if self.vehicle_dir and src and dst:

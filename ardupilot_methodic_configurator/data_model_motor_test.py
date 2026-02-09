@@ -357,7 +357,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             raise MotorTestSafetyError(_("Could not read battery status."))
         if voltage_status == "critical":
             battery_status = self.battery_monitor.get_battery_status()
-            voltage, _current = battery_status if battery_status else (nan, nan)
+            voltage, _current = battery_status or (nan, nan)
             min_voltage, max_voltage = self.battery_monitor.get_voltage_thresholds()
             raise MotorTestSafetyError(
                 _("Battery voltage %(voltage).1fV is outside safe range (%(min).1fV - %(max).1fV)")
@@ -1191,9 +1191,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             return "green"
         if voltage_status == "low":
             return "orange"
-        if voltage_status == "critical":
-            return "red"
-        return "gray"
+        return "red" if voltage_status == "critical" else "gray"
 
     def get_battery_display_text(self) -> tuple[str, str]:
         """
