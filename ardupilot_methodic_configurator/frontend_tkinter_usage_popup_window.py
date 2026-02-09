@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
+import contextlib
 import tkinter as tk
 from sys import platform as sys_platform
 
@@ -82,53 +83,64 @@ class PopupWindow:
         popup_window: BaseWindow,
         parent: Optional[tk.Tk],
         close_callback: Callable[[], None],
+        min_width: int = 1,
+        min_height: int = 1,
     ) -> None:
         """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
-        # Set window as a transient dialog of the parent
-        if parent:
+        # Only set transient on non-macOS
+        if parent and sys_platform != "darwin":
             popup_window.root.transient(parent)
 
-        # Resize window height to ensure all widgets are fully visible
-        # as some Linux Window managers like KDE, like to change font sizes and padding.
-        # So we need to dynamically accommodate for that after placing the widgets
         popup_window.root.update_idletasks()
         req_height = popup_window.root.winfo_reqheight()
         req_width = popup_window.root.winfo_reqwidth()
-        popup_window.root.geometry(f"{req_width}x{req_height}")
+        safe_w = req_width if isinstance(req_width, int) else 0
+        safe_h = req_height if isinstance(req_height, int) else 0
 
-        if parent:  # If parent exists center on parent
+        final_width = max(safe_w, min_width)
+        final_height = max(safe_h, min_height)
+
+        popup_window.root.geometry(f"{final_width}x{final_height}")
+
+        if parent:
             BaseWindow.center_window(popup_window.root, parent)
-        # For parent-less, center on screen
 
         try:
-            # Show the window now that it's positioned. Calls may fail if the
-            # main application has been destroyed (for example during shutdown)
-            # — guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
-            popup_window.root.lift()
-            popup_window.root.update()  # Ensure the window is fully rendered before setting focus
-
-            # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
-            # On Windows/Linux, make the popup modal and give it focus
+            popup_window.root.update()
             if sys_platform != "darwin":
-                popup_window.root.focus_force()
-                popup_window.root.grab_set()  # Make the popup modal
+                popup_window.root.wait_visibility()
+
+            popup_window.root.lift()
+            popup_window.root.focus_force()
+
+            # Skip grab_set only on macOS
+            if sys_platform != "darwin":
+                popup_window.root.grab_set()
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
         except tk.TclError:
-            # Application / interpreter has been destroyed or the underlying
-            # Tk root is no longer available; there's nothing more to do.
             pass
 
     @staticmethod
     def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
         """Close the popup window and re-enable the parent window."""
         if sys_platform != "darwin":
-            popup_window.root.grab_release()  # Release the modal grab
-        popup_window.root.destroy()
+            with contextlib.suppress(tk.TclError):
+                popup_window.root.grab_release()
+
+        # Destroy the window safely
+        try:  # noqa: SIM105
+            popup_window.root.destroy()
+        except tk.TclError:
+            pass
+
         if parent:
-            parent.focus_set()
-            parent.lift()
+            try:
+                parent.focus_set()
+                parent.lift()
+            except tk.TclError:
+                pass
 
 
 class UsagePopupWindow(PopupWindow):
