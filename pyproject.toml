@@ -95,7 +95,7 @@ scripts = [
 pypi_dist = [
     "build==1.4.0",
     "packaging==26.0",
-    "setuptools==80.10.2",
+    "setuptools==82.0.0",
 ]
 
 win_dist = [
