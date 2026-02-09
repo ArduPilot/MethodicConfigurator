@@ -139,7 +139,6 @@ def get_file(mav_ftp: mavftp.MAVFTP, remote_filename: str, local_filename: str, 
     mav_ftp.cmd_get([remote_filename, local_filename])
     ret = mav_ftp.process_ftp_reply("OpenFileRO", timeout=timeout)
     ret.display_message()
-    # mav_ftp.session = session # FIXME: this is a huge workaround hack # pylint: disable=fixme
     debug_class_member_variable_changes(mav_ftp)
     # time.sleep(0.2)
 

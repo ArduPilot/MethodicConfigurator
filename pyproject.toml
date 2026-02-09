@@ -178,14 +178,6 @@ exclude = [
 
 # https://docs.astral.sh/ruff/rules/
 lint.select = [
-    "F",    # Pyflakes
-    "E",    # pycodestyle -Error
-    "W",    # pycodestyle - Warning
-    "C90",  # maccabe
-    "I",    # isort
-    "N",    # pep8-naming
-    "D",    # pydocstyle
-    "UP",   # pyupgrade
     #"ERA",  # eradicate
     "YTT",  # flake8-2020
     "ANN",  # flake8-annotations
@@ -197,40 +189,56 @@ lint.select = [
     "A",    # flake8-builtins
     "COM",  # flake8-commas
     "C4",   # flake8-comprehensions
+    #"CPY",  # flake8-copyright
     "DTZ",  # flake8-datetimez
     "T10",  # flake8-debugger
     "EM",   # flake8-errmsg
     "EXE",  # flake8-executable
-    #"FIX",  # flake8-fixme
+    "FIX",  # flake8-fixme
+    "FA",   # flake8-future-annotations
+    "INT",  # flake8-gettext
     "ISC",  # flake8-implicit-str-concat
     "ICN",  # flake8-import-conventions
     "LOG",  # flake8-logging
     "G",    # flake8-logging-format
     "INP",  # flake8-no-pep420
     "PIE",  # flake8-pie
-    "T20",  # flake8-print (T20)
-    "PYI",  # flake8-pyi (PYI)
-    "PT",   # flake8-pytest-style (PT)
-    "Q",    # flake8-quotes (Q)
-    "RSE",  # flake8-raise (RSE)
-    "RET",  # flake8-return (RET)
-    "SLF",  # flake8-self (SLF)
+    "T20",  # flake8-print
+    "PYI",  # flake8-pyi
+    "PT",   # flake8-pytest-style
+    "Q",    # flake8-quotes
+    "RSE",  # flake8-raise
+    "RET",  # flake8-return
+    "SLF",  # flake8-self
     "SIM",  # flake8-simplify
-    "SLOT", # flake8-slots (SLOT)
+    "SLOT", # flake8-slots
     "TID",  # flake8-tidy-imports
-    #"TD",   # flake8-todos
+    "TD",   # flake8-todos
     "TC",   # flake8-type-checking
     "ARG",  # flake8-unused-arguments
     #"PTH",  # flake8-use-pathlib
-    "INT",  # flake8-gettext
+    "FLY",  # flynt
+    "I",    # isort
+    "C90",  # maccabe
+    "NPY",  # NumPy-specific rules
     "PD",   # pandas-vet
+    "N",    # pep8-naming
+    "PERF", # Performance-related issues
+    "E",    # pycodestyle -Error
+    "W",    # pycodestyle - Warning
+    #"DOC",  # pydoclint
+    "D",    # pydocstyle
+    "F",    # Pyflakes
     "PGH",  # pygrep-hooks
     "PL",   # Pylint
-    "FLY",  # flynt
-    "PERF", # Performance-related issues
+    "PLC",  # Convention
+    "PLE",  # Error
+    "PLR",  # Refactor
+    "PLW",  # Warning
+    "UP",   # pyupgrade
     "FURB", # refurb
-    "DOC",  # pydoclint
     "RUF",  # Ruff-specific codes
+    #"TRY",  # tryceratops
 ]
 
 lint.ignore = [
@@ -248,6 +256,8 @@ lint.ignore = [
     "FBT001",  # Boolean-typed positional argument in function definition
     "FBT002",  # Boolean default positional argument in function definition
     "LOG015",  # `error()` call on root logger, Use own logger instead
+    "FA100",   # Add `from __future__ import annotations` to simplify xxx
+    "TRY400",  # Use logging.exception instead of logging.error
 ]
 
 line-length = 127
