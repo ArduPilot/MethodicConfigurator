@@ -159,11 +159,31 @@ That is harder to do once the autopilot is assembled inside the vehicle, hence i
 1. When *ArduPilot Methodic Configurator* asks you *Do you want to provide a .bin log file and run the IMU temperature calibration using it?* select `No` and close the program.
 1. Power off the flight controller and remove the battery.
 1. Place the flight controller **without battery** in a freezer capable of reaching your vehicle's minimum expected operation temperature (-18°C in our case).
-1. Once the flight controller is completely cooled down to its minimum expected operation temperature, take it out and power it. **Do not move the flight controller** for one or two hours.
-1. If you have a buzzer connected, you will hear a short periodic beep while the calibration is in progress. When the calibration is complete, a completion tune will play. If you have [notification LEDs](https://ardupilot.org/copter/docs/common-leds-pixhawk.html) on your flight controller they will cyclically flash red, blue and green while calibrating. If you do not have a buzzer connected nor notification LEDs, monitor the `INS_TCALn_ENABLE` parameters. On completion, the `INS_TCALn_ENABLE` parameters will change to 1 (*enable*) for each calibrated IMU.
+1. Once the flight controller is completely cooled down to its minimum expected operation temperature, take it out and power it.
+   **Do not move the flight controller** for one or two hours.
+   If the flight controller does not have a heater, place it in a warm place to make sure the target temperature gets reached fast enough.
+   The data collection process will automatically stop once the temperature rises less than 0.5 deg C in 10 minutes.
+1. Monitor the data collection process:
+   - If you have a buzzer connected, you will hear a short periodic beep while the calibration is in progress.
+     When the calibration is complete, a completion tune will play.
+   - If you have [notification LEDs](https://ardupilot.org/copter/docs/common-leds-pixhawk.html) on your flight controller they will cyclically flash red, blue and green while calibrating.
+   - If you do not have a buzzer connected nor notification LEDs, monitor the `INS_TCALn_ENABLE` parameters using Mission Planner.
+     On completion, the `INS_TCALn_ENABLE` parameters will change to 1 (*enable*) for each calibrated IMU.
+     Use Mission Planner’s Live Tuning Screen found on the Data Screen:
+        1. Connect the Flight Controller to Mission Planner
+        1. Check the Tuning checkbox on the bottom of the Data Screen.
+        1. Double-click in the screen and select IMUx from the Sensor fields, where x represents the IMU’s you have configured to collect data.
+        1. Monitor the progress in the Live Tuning screen as well as the Messages Screen under the HUD.
+        1. The images below show an example of the Start of the process and the Completion.
 1. Power it off, and remove the micro SDCard
 1. Copy the latest `.bin` log file in the micro SDcard from `/APM/LOGS` to your PC
 1. Insert the micro SDcard back into the flight controller
+
+![MP IMU temperature calibration started](images/blog/MP_IMU_temperature_calibration_started.jpeg)
+Mission planner tuning screen showing IMU temperature calibration start and messages window
+
+![MP IMU temperature calibration completed](images/blog/MP_IMU_temperature_calibration_completed.jpeg)
+Mission planner tuning screen showing IMU temperature calibration completed and messages window
 
 ## 4.2 Calculate IMU temperature calibration
 
@@ -799,6 +819,9 @@ WARNING: Quicktune requires moderate wind disturbances to calibrate properly.
 Flying in completely calm conditions or perfectly steady wind can cause Quicktune to calculate overly aggressive PID values.
 These excessive settings may cause dangerous oscillations and potential crashes when your vehicle later encounters normal wind conditions.
 
+- Quiktune relies on external disturbance to tune against. Run it outdoors in light wind conditions.
+- Autotune provides its own, known disturbance (twitch) against which to tune. Run it in the calmest environment practical.
+
 Perform the flight and afterward:
 
 1. Connect the flight controller to the PC
@@ -880,6 +903,9 @@ WARNING: Quicktune requires moderate wind disturbances to calibrate properly.
 Flying in completely calm conditions or perfectly steady wind can cause Quicktune to calculate overly aggressive PID values.
 These excessive settings may cause dangerous oscillations and potential crashes when your vehicle later encounters normal wind conditions.
 
+- Quiktune relies on external disturbance to tune against. Run it outdoors in light wind conditions.
+- Autotune provides its own, known disturbance (twitch) against which to tune. Run it in the calmest environment practical.
+
 Perform the flight and afterward:
 
 ### 9.2.2 Store quicktune results to file
@@ -923,6 +949,11 @@ The [Autotune](https://ardupilot.org/copter/docs/autotune.html) is an automated 
 1. It changes the parameter values of the attitude PID controllers
 1. Tests the [overshoot and settling-time](https://aleksandarhaber.com/transient-response-specifications-peak-time-settling-time-rise-time-and-percent-overshoot/) of the control loop using the new PID values
 1. If they are within the desired requirements, the process is over. If not, it gets repeated from the beginning
+
+And remember:
+
+- Quiktune relies on external disturbance to tune against. Run it outdoors in light wind conditions.
+- Autotune provides its own, known disturbance (twitch) against which to tune. Run it in the calmest environment practical.
 
 If the battery gets depleted before you can complete the Autotune flight(s), download the latest `.bin` log file from the micro SDCard directory `/APM/LOGS`.
 Take a look at the `ATUN` messages.
