@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # https://wiki.tcl-lang.org/page/Changing+Widget+Colors
 
+import contextlib
 import tkinter as tk
 from sys import platform as sys_platform
 
@@ -84,8 +85,8 @@ class PopupWindow:
         close_callback: Callable[[], None],
     ) -> None:
         """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
-        # Set window as a transient dialog of the parent
-        if parent:
+        # Only set transient on non-macOS
+        if parent and sys_platform != "darwin":
             popup_window.root.transient(parent)
 
         # Resize window height to ensure all widgets are fully visible
@@ -94,6 +95,7 @@ class PopupWindow:
         popup_window.root.update_idletasks()
         req_height = popup_window.root.winfo_reqheight()
         req_width = popup_window.root.winfo_reqwidth()
+
         popup_window.root.geometry(f"{req_width}x{req_height}")
 
         if parent:  # If parent exists center on parent
@@ -107,11 +109,11 @@ class PopupWindow:
             popup_window.root.deiconify()
             popup_window.root.lift()
             popup_window.root.update()  # Ensure the window is fully rendered before setting focus
+            popup_window.root.focus_force()
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus
             if sys_platform != "darwin":
-                popup_window.root.focus_force()
                 popup_window.root.grab_set()  # Make the popup modal
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
@@ -124,11 +126,21 @@ class PopupWindow:
     def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
         """Close the popup window and re-enable the parent window."""
         if sys_platform != "darwin":
-            popup_window.root.grab_release()  # Release the modal grab
-        popup_window.root.destroy()
+            with contextlib.suppress(tk.TclError):
+                popup_window.root.grab_release()
+
+        # Destroy the window safely
+        try:  # noqa: SIM105
+            popup_window.root.destroy()
+        except tk.TclError:
+            pass
+
         if parent:
-            parent.focus_set()
-            parent.lift()
+            try:
+                parent.focus_set()
+                parent.lift()
+            except tk.TclError:
+                pass
 
 
 class UsagePopupWindow(PopupWindow):
