@@ -41,7 +41,7 @@ It directly uses:
 | [setuptools](https://setuptools.pypa.io/) | [MIT License](https://github.com/pypa/setuptools/blob/main/LICENSE) |
 | [jsonschema](https://python-jsonschema.readthedocs.io/en/stable/) | [MIT License](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING) |
 | [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
-| [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.txt) |
+| [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.md) |
 
 It indirectly uses:
 
@@ -77,7 +77,7 @@ Credits also go to these other software projects that helped in developing ArduP
 - [bestpractices.dev](https://www.bestpractices.dev/en): A site for checking best practices in software development.
 - [isitmaintained.com](https://isitmaintained.com/): A service to check the maintenance status of open-source projects.
 - [renovate](https://github.com/renovatebot/renovate): Cross-platform Dependency Automation by Mend.io
-- [gurubase](https://github.com/Gurubase/gurubase): An open-source RAG system that we used to create an AI-powered Q&A assistant.
+- [gurubase](https://github.com/Gurubase/): An open-source RAG system that we used to create an AI-powered Q&A assistant.
 - [gitleaks](https://github.com/gitleaks/gitleaks): a tool for detecting secrets like passwords, API keys, and tokens in git repos.
 - [pre-commit](https://pre-commit.com/): A framework for managing and maintaining multi-language git pre-commit hooks.
 - [OpenSSF Scorecard](https://securityscorecards.dev/): Quickly assess open source projects for risky practices.
