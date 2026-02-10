@@ -3,7 +3,7 @@ Flight controller connection management.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -70,6 +70,7 @@ class FakeSerialForTests:
 
 
 DEFAULT_BAUDRATE: int = 115200
+DEVICE_FC_PARAM_FROM_FILE: str = "file"  # Special device name to simulate FC parameters from params.param file
 # https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_SerialManager/AP_SerialManager.cpp#L741C1-L757C32
 SUPPORTED_BAUDRATES: list[str] = [
     "1200",
@@ -147,15 +148,30 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
         )
 
-    def discover_connections(self) -> None:
+    def discover_connections(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
         """
         Discover all available connections (serial and network ports).
 
         Populates the list of available serial ports and network ports
         that can be used to connect to a flight controller.
+
+        Args:
+            progress_callback: Optional callback for progress updates. Signature: callback(current, total)
+
         """
+        if progress_callback:
+            progress_callback(82, 100)
+
         comports = self._serial_port_discovery.get_available_ports()
+
+        if progress_callback:
+            progress_callback(90, 100)
+
         netports = self.get_network_ports()
+
+        if progress_callback:
+            progress_callback(95, 100)
+
         # list of tuples with the first element being the port name and the second element being the port description
         self._connection_tuples = [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
         logging_info(_("Available connection ports are:"))
@@ -194,12 +210,14 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             logging_debug(_("Did not add empty connection"))
         return False
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def _register_and_try_connect(
         self,
         comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo],
         progress_callback: Union[None, Callable[[int, int], None]],
         baudrate: int,
         log_errors: bool,
+        retries: int = 3,
     ) -> str:
         """
         Register a device in the connection list (if missing) and attempt connection.
@@ -209,6 +227,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             progress_callback: Optional callback for progress updates
             baudrate: Baud rate for serial connections
             log_errors: Whether to log errors
+            retries: Number of connection attempts (default: 3)
 
         Returns:
             str: empty string on success, or error message.
@@ -225,6 +244,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             baudrate=baudrate,
             log_errors=log_errors,
             timeout=self.CONNECTION_RETRY_TIMEOUT,
+            retries=retries,
         )
 
     def connect(
@@ -272,6 +292,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             )
 
         # Try to autodetect serial ports
+        if progress_callback:
+            progress_callback(10, 100)  # Starting serial detection
         autodetect_serial = self._auto_detect_serial()
         if autodetect_serial:
             # Resolve the soft link if it's a Linux system
@@ -287,6 +309,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                     logging_debug(_("Resolved soft link %s to %s"), dev, resolved_path)
                 except OSError:
                     pass  # Not a soft link, proceed with the original device path
+            if progress_callback:
+                progress_callback(25, 100)  # Trying serial
             err = self._register_and_try_connect(
                 comport=autodetect_serial[-1],
                 progress_callback=progress_callback,
@@ -297,8 +321,10 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 return ""
 
         # Try to autodetect network ports
+        if progress_callback:
+            progress_callback(50, 100)  # Starting network detection
         netports = self.get_network_ports()
-        for port in netports:
+        for i, port in enumerate(netports):
             # try to connect to each "standard" ArduPilot UDP and TCP ports
             logging_debug(_("Trying network port %s"), port)
             err = self._register_and_try_connect(
@@ -306,7 +332,11 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 progress_callback=progress_callback,
                 baudrate=self._baudrate,
                 log_errors=False,
+                retries=2,
             )
+            if progress_callback:
+                # Calculate progress: 50-100% range, update before attempting connection
+                progress_callback(50 + int(i * 50 / len(netports)), 100)
             if err == "":
                 return ""
 
@@ -359,13 +389,21 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         detected_vehicles: dict[tuple[int, int], Any] = {}
 
         while time_time() - start_time < timeout:
-            m = (
-                self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                    type="HEARTBEAT", blocking=False
+            try:
+                m = (
+                    self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                        type="HEARTBEAT", blocking=False
+                    )
+                    if self.master
+                    else None
                 )
-                if self.master
-                else None
-            )
+            except TypeError:
+                # pymavlink internals may occasionally raise TypeError while
+                # processing incoming messages (e.g. message dicts not fully
+                # initialized). Treat this as a transient error and keep polling
+                # until we either get a message or timeout.
+                time_sleep(self.HEARTBEAT_POLL_DELAY)
+                continue
             if m is None:
                 time_sleep(self.HEARTBEAT_POLL_DELAY)
                 continue
@@ -393,7 +431,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         for (sysid, compid), m in detected_vehicles.items():
             self.info.set_system_id_and_component_id(str(sysid), str(compid))
             logging_debug(
-                _("Connection established with systemID %d, componentID %d."), self.info.system_id, self.info.component_id
+                _("Connection established with systemID %s, componentID %s."), self.info.system_id, self.info.component_id
             )
             self.info.set_autopilot(m.autopilot)
             if self.info.is_supported:
@@ -747,7 +785,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 indicating a successful connection.
 
         """
-        if self.comport is None or self.comport.device == "file":
+        if self.comport is None or self.comport.device == DEVICE_FC_PARAM_FROM_FILE:
             # will read parameters from a params.param file instead of a from a flight controller
             return ""
         if self.comport.device.startswith("udp") or self.comport.device.startswith("tcp"):

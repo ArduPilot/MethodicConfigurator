@@ -15,7 +15,7 @@ MotorTestWindow class provides a standalone window for development/testing.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -23,7 +23,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
-from functools import partial
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -122,6 +121,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._diagram_needs_update = True  # Track if diagram needs to be updated
         self._content_frame: Optional[ttk.Frame] = None  # Store reference to content frame for widget searches
         self._motor_grid_frame: Optional[ttk.Frame] = None  # Direct handle for motor grid frame
+        self._timer_id: Optional[str] = None  # Track scheduled update timer for cleanup
 
         self._create_widgets()
 
@@ -290,7 +290,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._update_motor_buttons_layout()
         self._update_battery_status()
         self._update_spinbox_values()
-        self.after(1000, self._update_view)  # Schedule periodic update
+        self._timer_id = self.after(1000, self._update_view)  # Schedule periodic update
 
     def _update_spinbox_values(self) -> None:
         """Update spinbox values from the data model only if not currently being edited."""
@@ -648,7 +648,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         """Return a motor label to the Ready state after a delay."""
         self.root_window.after(
             delay_ms,
-            partial(self._update_motor_status, motor_number, _("Ready"), "blue"),
+            lambda: self._update_motor_status(motor_number, _("Ready"), "blue"),
         )
 
     def _update_motor_status(self, motor_number: int, status: str, color: str = "black") -> None:
@@ -703,7 +703,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         Called when the plugin becomes inactive (hidden).
 
         Stops all running motor tests for safety when switching away from this plugin.
+        Also cancels any pending update timers to prevent resource leaks.
         """
+        # Cancel any pending update timer to prevent updating hidden widget
+        if self._timer_id:
+            self.after_cancel(self._timer_id)
+            self._timer_id = None
+
         # Critical safety requirement: stop all motors when user navigates away
         # to prevent motors running unattended in the background
         try:
@@ -721,6 +727,18 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             # We log as error and re-raise to prevent silently continuing with motors potentially running.
             logging_error(_("Critical error during motor stop at deactivation: %(error)s"), {"error": str(e)})
             raise
+
+    def destroy(self) -> None:
+        """
+        Clean up resources before widget destruction.
+
+        Cancels any pending timers to prevent resource leaks and ensure
+        no operations continue after the widget is destroyed.
+        """
+        if self._timer_id:
+            self.after_cancel(self._timer_id)
+            self._timer_id = None
+        super().destroy()
 
 
 class MotorTestWindow(BaseWindow):
@@ -758,7 +776,7 @@ class MotorTestWindow(BaseWindow):
         self.root.destroy()
 
 
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -787,7 +805,7 @@ def argument_parser() -> Namespace:
 
 
 # pylint: disable=duplicate-code
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     state = ApplicationState(args)
@@ -846,5 +864,5 @@ def register_motor_test_plugin() -> None:
     plugin_factory.register(PLUGIN_MOTOR_TEST, _create_motor_test_view)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

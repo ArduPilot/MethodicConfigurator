@@ -5,7 +5,7 @@ BDD tests for frontend_tkinter_project_creator module.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -19,7 +19,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreationError,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow, argument_parser, main
+from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
 
 # pylint: disable=redefined-outer-name, unused-argument, duplicate-code
 
@@ -432,130 +432,3 @@ class TestVehicleProjectCreatorWindowIntegration:
             # Assert: Window was created with flight controller configuration
             # The NewVehicleProjectSettings.get_all_settings_metadata should be called with fc_connected=True
             assert mock_settings.get_all_settings_metadata.called
-
-
-class TestArgumentParserAndMainFunction:
-    """Test argument parser and main function for coverage."""
-
-    def test_user_can_parse_command_line_arguments_successfully(self) -> None:
-        """
-        User can parse command line arguments for the application.
-
-        GIVEN: A user wants to run the application with command line arguments
-        WHEN: Arguments are parsed with argument_parser
-        THEN: Parser should return valid namespace with expected defaults
-        """
-        # Arrange: Mock sys.argv to provide clean arguments
-        with patch("sys.argv", ["test_script"]):
-            # Act: Parse arguments using the argument_parser function
-            args = argument_parser()
-
-            # Assert: Arguments parsed correctly with proper attributes
-            assert hasattr(args, "loglevel")
-            assert hasattr(args, "vehicle_dir")
-            assert hasattr(args, "vehicle_type")
-            assert hasattr(args, "allow_editing_template_files")
-            assert hasattr(args, "save_component_to_system_templates")
-
-    def test_user_can_access_main_function_window_creation_path(self) -> None:
-        """
-        User can access main function window creation path for coverage.
-
-        GIVEN: A user runs the main function with valid configuration
-        WHEN: Main function creates window
-        THEN: Window creation path should be covered
-        """
-        # Arrange: Mock all dependencies for main function
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.argument_parser") as mock_parser,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.logging_basicConfig"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.logging_warning"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.LocalFilesystem"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.VehicleProjectManager") as mock_pm,
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_project_creator.VehicleProjectCreatorWindow"
-            ) as mock_window_class,
-        ):
-            # Set up mock arguments
-            mock_args = MagicMock()
-            mock_args.loglevel = "INFO"
-            mock_args.vehicle_dir = "/test/dir"
-            mock_args.vehicle_type = "ArduCopter"
-            mock_args.allow_editing_template_files = False
-            mock_args.save_component_to_system_templates = False
-            mock_parser.return_value = mock_args
-
-            # Set up project manager with files found
-            mock_project_manager = MagicMock()
-            mock_project_manager.get_file_parameters_list.return_value = ["file1.param", "file2.param"]
-            mock_pm.return_value = mock_project_manager
-
-            # Set up window mock
-            mock_window = MagicMock()
-            mock_window_class.return_value = mock_window
-
-            # Act: Call main function (covers lines 491, 493-494)
-            main()
-
-            # Assert: Window was created and mainloop called
-            mock_window_class.assert_called_once_with(mock_project_manager)
-            mock_window.root.mainloop.assert_called_once()
-
-
-class TestMainFunctionErrorPaths:
-    """Test main function error paths for coverage."""
-
-    def test_user_sees_error_when_no_parameter_files_found_in_main(self) -> None:
-        """
-        User sees error when no parameter files found in main function.
-
-        GIVEN: A main function call with no parameter files
-        WHEN: Main function checks for parameter files but finds none
-        THEN: Error should be logged and logged appropriately
-        """
-        # Arrange: Mock dependencies with empty file list
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.argument_parser") as mock_parser,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.logging_basicConfig"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.logging_warning"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.logging_error") as mock_error,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.LocalFilesystem"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.VehicleProjectManager") as mock_pm,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.VehicleProjectCreatorWindow"),
-        ):
-            # Set up mock arguments
-            mock_args = MagicMock()
-            mock_args.loglevel = "INFO"
-            mock_args.vehicle_dir = "/test/dir"
-            mock_args.vehicle_type = "ArduCopter"
-            mock_args.allow_editing_template_files = False
-            mock_args.save_component_to_system_templates = False
-            mock_parser.return_value = mock_args
-
-            # Set up project manager with NO files found (covers line 491)
-            mock_project_manager = MagicMock()
-            mock_project_manager.get_file_parameters_list.return_value = []  # Empty list
-            mock_pm.return_value = mock_project_manager
-
-            # Act: Call main function - should hit error path
-            main()
-
-            # Assert: Error logging called for missing files (line 491)
-            mock_error.assert_called()
-
-    def test_if_name_main_calls_main_function(self) -> None:
-        """
-        Test that if __name__ == '__main__' calls main function.
-
-        GIVEN: A module run as main script
-        WHEN: The if __name__ == '__main__' block executes
-        THEN: The main function should be called
-        """
-        # This test covers line 498: if __name__ == "__main__": main()
-        # We can't easily test this directly as it's module-level code
-        # But we can test the main function exists and is callable
-
-        # Assert: main function exists and is callable
-        assert callable(main)
-        # This implicitly tests that the main function is importable and available
-        # which covers the import structure that supports line 498

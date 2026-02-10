@@ -5,7 +5,7 @@ Behavior-driven tests for ComponentEditorWindowBase.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -14,7 +14,7 @@ import tkinter as tk
 from argparse import ArgumentParser
 from platform import system as platform_system
 from tkinter import ttk
-from typing import Union, get_args, get_origin
+from typing import Union, cast, get_args, get_origin
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -626,12 +626,15 @@ class TestSaveOperationWorkflows:
                 return_value=False,
             ),
             patch.object(editor_for_save_tests.root, "destroy"),
+            patch.object(editor_for_save_tests, "save_component_json", return_value=False) as mock_save,
         ):
             # Act: Trigger validate and save operation
             editor_for_save_tests.on_save_pressed()
 
         # Assert: Validation and save should proceed
-        editor_for_save_tests.validate_data_and_highlight_errors_in_red.assert_called_once()
+        validation_mock = cast("MagicMock", editor_for_save_tests.validate_data_and_highlight_errors_in_red)
+        validation_mock.assert_called_once()
+        mock_save.assert_called_once()
 
 
 class TestWindowClosingWorkflows:
@@ -1436,7 +1439,6 @@ class TestValidationWorkflows:
         editor = ComponentEditorWindowBase.create_for_testing(version="1.0.0", local_filesystem=mock_filesystem)
         # Mock validation method since it's abstract in base class
         editor.validate_data_and_highlight_errors_in_red = MagicMock(return_value="")
-        editor._confirm_component_properties = MagicMock(return_value=True)
         return editor
 
     @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.show_error_message")
@@ -1455,11 +1457,14 @@ class TestValidationWorkflows:
         editor_for_validation_tests.validate_data_and_highlight_errors_in_red.return_value = error_message
 
         # Act: Attempt to validate and save
-        editor_for_validation_tests.on_save_pressed()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.confirm_component_properties"
+        ) as mock_confirm:
+            editor_for_validation_tests.on_save_pressed()
 
         # Assert: Error should be displayed and save should not proceed
         mock_error.assert_called_once_with(_("Error"), error_message)
-        editor_for_validation_tests._confirm_component_properties.assert_not_called()
+        mock_confirm.assert_not_called()
 
     def test_user_must_confirm_component_properties_before_save(
         self, editor_for_validation_tests: ComponentEditorWindowBase
@@ -1468,34 +1473,53 @@ class TestValidationWorkflows:
         User must confirm that component properties are correct before saving.
 
         GIVEN: A user has valid component data
-        WHEN: They attempt to save the configuration
-        THEN: They should be asked to confirm all properties are correct
+        WHEN: The confirmation popup is enabled
+        THEN: They should be asked to confirm all properties are correct before saving
         """
-        # Arrange: Configure successful validation
         editor_for_validation_tests.save_component_json = MagicMock()
 
-        # Remove the mock to test the actual method behavior
-        editor_for_validation_tests._confirm_component_properties = (
-            ComponentEditorWindowBase._confirm_component_properties.__get__(editor_for_validation_tests)  # pylint: disable=no-value-for-parameter
-        )
-
-        # Track if should_display was called, then return False to skip popup creation
-        # This simulates the popup being disabled by user preference
         with (
+            patch.object(editor_for_validation_tests.root, "destroy") as mock_destroy,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base."
+                "ConfirmationPopupWindow.should_display",
+                return_value=True,
+            ) as mock_should_display,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.confirm_component_properties",
+                return_value=True,
+            ) as mock_confirm,
+        ):
+            editor_for_validation_tests.on_save_pressed()
+
+        mock_should_display.assert_called_once_with("component_editor_validation")
+        mock_confirm.assert_called_once()
+        editor_for_validation_tests.save_component_json.assert_called_once()
+        mock_destroy.assert_called_once()
+
+    def test_user_can_save_without_confirmation_when_popup_disabled(
+        self, editor_for_validation_tests: ComponentEditorWindowBase
+    ) -> None:
+        """If the confirmation popup is disabled, saving should proceed immediately."""
+        editor_for_validation_tests.save_component_json = MagicMock()
+
+        with (
+            patch.object(editor_for_validation_tests.root, "destroy") as mock_destroy,
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base."
                 "ConfirmationPopupWindow.should_display",
                 return_value=False,
             ) as mock_should_display,
-            patch.object(editor_for_validation_tests.root, "destroy"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.confirm_component_properties"
+            ) as mock_confirm,
         ):
-            # Act: Attempt to validate and save
             editor_for_validation_tests.on_save_pressed()
 
-            # Assert: should_display should be checked
-            mock_should_display.assert_called_once_with("component_editor_validation")
-            # When popup is skipped, save should proceed
-            editor_for_validation_tests.save_component_json.assert_called_once()
+        mock_should_display.assert_called_once_with("component_editor_validation")
+        mock_confirm.assert_not_called()
+        editor_for_validation_tests.save_component_json.assert_called_once()
+        mock_destroy.assert_called_once()
 
     def test_user_can_cancel_save_by_clicking_no_in_confirmation(
         self, editor_for_validation_tests: ComponentEditorWindowBase
@@ -1509,16 +1533,25 @@ class TestValidationWorkflows:
         """
         # Arrange: Configure successful validation
         editor_for_validation_tests.save_component_json = MagicMock()
-        # Mock _confirm_component_properties to return False (user clicked No)
-        editor_for_validation_tests._confirm_component_properties = MagicMock(return_value=False)
 
-        # Mock destroy to track if it's called
-        with patch.object(editor_for_validation_tests.root, "destroy") as mock_destroy:
+        # Mock destroy to track if it's called and force confirmation popup flow
+        with (
+            patch.object(editor_for_validation_tests.root, "destroy") as mock_destroy,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base."
+                "ConfirmationPopupWindow.should_display",
+                return_value=True,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.confirm_component_properties",
+                return_value=False,
+            ) as mock_confirm,
+        ):
             # Act: Attempt to validate and save
             editor_for_validation_tests.on_save_pressed()
 
             # Assert: Confirmation was checked
-            editor_for_validation_tests._confirm_component_properties.assert_called_once()
+            mock_confirm.assert_called_once()
             # Save should NOT be called when user clicks No
             editor_for_validation_tests.save_component_json.assert_not_called()
             # Window should NOT be destroyed when user clicks No
@@ -1702,57 +1735,39 @@ class TestUsageInstructionsWorkflows:
 
         # Mock UI elements needed for usage instructions
         editor.main_frame = MagicMock()
+        editor.root = MagicMock()
+        editor.root.after = MagicMock()
 
         return editor
 
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.UsagePopupWindow")
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.BaseWindow")
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.RichText")
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ttk.Style")
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.create_scaled_font")
-    @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.get_safe_font_config")
-    def test_user_sees_helpful_usage_instructions_on_first_use(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self,
-        mock_get_safe_font_config: MagicMock,
-        mock_create_scaled_font: MagicMock,
-        mock_style_class: MagicMock,
-        mock_rich_text_class: MagicMock,
-        mock_base_window_class: MagicMock,
-        mock_usage_popup_class: MagicMock,
-        editor_for_usage_tests: ComponentEditorWindowBase,
-    ) -> None:
-        """
-        User sees helpful usage instructions when using the component editor for the first time.
+    def test_usage_popup_scheduled_when_enabled(self, editor_for_usage_tests: ComponentEditorWindowBase) -> None:
+        """Usage popup should be scheduled when the preference allows it."""
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.UsagePopupWindow.should_display",
+                return_value=True,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.display_component_editor_usage_popup",
+            ) as mock_display,
+        ):
+            # Simulate Tk after executing immediately
+            editor_for_usage_tests.root.after.side_effect = lambda _delay, callback: callback()
+            editor_for_usage_tests._check_show_usage_instructions()
 
-        GIVEN: A user opens the component editor for the first time
-        WHEN: The usage instructions are displayed
-        THEN: Comprehensive instructions should guide the user through the interface
-        """
-        # Arrange: Mock all UI elements for instructions
-        mock_usage_popup_window = MagicMock()
-        mock_base_window_class.return_value = mock_usage_popup_window
-        mock_rich_text = MagicMock()
-        mock_rich_text_class.return_value = mock_rich_text
-        mock_style = MagicMock()
-        mock_style_class.return_value = mock_style
+        mock_display.assert_called_once()
 
-        # Mock font functions to avoid tkinter initialization issues
-        mock_font_config = {"family": "Arial", "size": 10}
-        mock_get_safe_font_config.return_value = mock_font_config
-        mock_font = MagicMock()
-        mock_create_scaled_font.return_value = mock_font
+    def test_usage_popup_skipped_when_disabled(self, editor_for_usage_tests: ComponentEditorWindowBase) -> None:
+        """Usage popup should not display when the user disabled it."""
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.UsagePopupWindow.should_display",
+                return_value=False,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.display_component_editor_usage_popup",
+            ) as mock_display,
+        ):
+            editor_for_usage_tests._check_show_usage_instructions()
 
-        # Create a mock Tk parent for testing
-        mock_parent = MagicMock()
-        mock_parent.winfo_exists.return_value = True
-
-        # Act: Display usage instructions
-        editor_for_usage_tests._display_component_editor_usage_instructions(mock_parent)
-
-        # Assert: Usage instructions should be properly displayed
-        mock_base_window_class.assert_called_once_with(mock_parent)
-        mock_rich_text_class.assert_called_once()
-        mock_usage_popup_class.display.assert_called_once()
-
-        # Assert: Rich text should contain instructional content
-        assert mock_rich_text.insert.call_count >= 5  # Multiple instruction steps should be inserted
+        mock_display.assert_not_called()

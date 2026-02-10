@@ -37,16 +37,16 @@ jobs:
     steps:
       - name: Harden the runner (Audit all outbound calls)
         if: matrix.os != 'windows-latest'
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       # https://docs.astral.sh/uv/guides/integration/github/
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
@@ -55,7 +55,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-tk scrot xdotool x11-utils gnome-screenshot tcl8.6 tk8.6 libtcl8.6 libtk8.6
+          # Only install system Tcl/Tk for Python < 3.13 (newer versions bundle their own)
+          if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
+            echo "Installing system Tcl/Tk 8.6 for Python ${{ matrix.python-version }}"
+            sudo apt-get install -y python3-tk tcl8.6 tk8.6 libtcl8.6 libtk8.6
+          else
+            echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, skipping system packages"
+            # Only install tools, not Tcl/Tk libraries
+            sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
+          fi
+          python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
 
       - name: Install system dependencies for GUI testing on macOS
         if: matrix.os == 'macos-latest'
@@ -68,8 +77,14 @@ jobs:
       - name: Ensure Tcl/Tk search paths
         if: matrix.os == 'ubuntu-latest'
         run: |
-          echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
-          echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
+          # Only set Tcl/Tk paths for Python < 3.13
+          if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
+            echo "Setting Tcl/Tk paths for Python ${{ matrix.python-version }}"
+            echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
+            echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
+          else
+            echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, no custom paths needed"
+          fi
 
       - name: Install dependencies and application
         # without --editable, the coverage report is not generated correctly
@@ -117,7 +132,7 @@ jobs:
         continue-on-error: true
 
       - name: Cache SITL files
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: sitl-cache/
           key: sitl-cache-${{ github.run_id }}
@@ -159,7 +174,7 @@ jobs:
       - name: Upload coverage xml report
         # Use always() to always run this step to publish test results when there are test failures
         if: matrix.os == 'ubuntu-latest' && always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
             name: coverage-${{ matrix.python-version }}-xml
             path: tests/*.xml
@@ -168,7 +183,7 @@ jobs:
       - name: Upload coverage report
         # Use always() to always run this step to publish test results when there are test failures
         if: matrix.os == 'ubuntu-latest' && always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
             name: coverage-${{ matrix.python-version }}
             path: .coverage
@@ -182,15 +197,15 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Download coverage xml report
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: coverage-3.9-xml
 
@@ -209,21 +224,21 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Download coverage report
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: coverage-3.9
 
       # https://docs.astral.sh/uv/guides/integration/github/
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
         with:
           python-version: '3.9'  # Match with the coverage report Python version
           activate-environment: true
@@ -254,17 +269,17 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
 
       - name: Download Artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: artifacts
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf # v2.21.0
+        uses: EnricoMi/publish-unit-test-result-action@27d65e188ec43221b20d26de30f4892fad91df2f # v2.22.0
         id: test-results
         with:
           files: "artifacts/**/results-junit.xml"
@@ -313,15 +328,15 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Download coverage xml report
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: coverage-3.9-xml
 

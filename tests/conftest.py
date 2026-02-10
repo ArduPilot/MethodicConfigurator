@@ -5,7 +5,7 @@ Shared pytest fixtures for vehicle components data model tests.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import NEW_VALUE_DIFFERENT_STR
 
 # ==================== SHARED TKINTER TESTING CONFIGURATION ====================
 
@@ -167,7 +168,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE = (
     "-/+",
     "Parameter",
     "Current Value",
-    " ",
+    NEW_VALUE_DIFFERENT_STR,
     "New Value",
     "Unit",
     "Why are you changing this parameter?",
@@ -177,7 +178,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED = (
     "-/+",
     "Parameter",
     "Current Value",
-    " ",
+    NEW_VALUE_DIFFERENT_STR,
     "New Value",
     "Unit",
     "Upload",

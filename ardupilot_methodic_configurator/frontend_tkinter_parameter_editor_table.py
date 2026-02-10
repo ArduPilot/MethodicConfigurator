@@ -3,7 +3,7 @@ Parameter editor table GUI using the "Ardupilot Parameter data model".
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -16,6 +16,7 @@ from logging import exception as logging_exception
 from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
+from sys import platform as sys_platform
 from tkinter import ttk
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
@@ -34,8 +35,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     ask_yesno_popup,
     show_error_popup,
     show_info_popup,
+    show_warning_popup,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_entry_dynamic import EntryWithDynamicalyFilteredListbox
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import (
     PairTupleCombobox,
     setup_combobox_mousewheel_handling,
@@ -43,12 +44,18 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (  # pylint: disable=cyclic-import
+    display_bitmask_parameters_editor_usage_popup,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 
 NEW_VALUE_WIDGET_WIDTH = 9
 NEW_VALUE_DIFFERENT_STR = "\u2260" if platform_system() == "Windows" else "!="
+
+# pylint: disable=too-many-lines
 
 
 @dataclass
@@ -131,7 +138,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             _("-/+"),
             _("Parameter"),
             _("Current Value"),
-            " ",  # intentionally left blank
+            NEW_VALUE_DIFFERENT_STR,
             _("New Value"),
             _("Unit"),
         ]
@@ -168,9 +175,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         return tuple(base_headers), tuple(base_tooltips)
 
-    def repopulate_table(  # pylint: disable=too-many-locals
-        self, show_only_differences: bool, gui_complexity: str, regenerate_from_disk: bool
-    ) -> None:
+    def repopulate_table(self, show_only_differences: bool, gui_complexity: str) -> None:
         for widget in self.view_port.winfo_children():
             widget.destroy()
         # Clear the last return values tracking dictionary when repopulating
@@ -190,15 +195,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(label, tooltips[i])
 
         self.upload_checkbutton_var = {}
-
-        # Process configuration step and create domain model parameters
-        if regenerate_from_disk:
-            (ui_errors, ui_infos) = self.parameter_editor.repopulate_configuration_step_parameters()
-
-            for title, msg in ui_errors:
-                self._dialogs.show_error(title, msg)
-            for title, msg in ui_infos:
-                self._dialogs.show_info(title, msg)
 
         if show_only_differences:
             # Filter to show only different parameters
@@ -227,11 +223,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         current_param_name: str = ""
         show_upload_column = self._should_show_upload_column(gui_complexity)
 
+        should_try_to_display_bitmask_parameter_editor_usage = False
         try:
             for i, (param_name, param) in enumerate(params.items(), 1):
                 current_param_name = param_name
 
                 row_widgets: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
+                if self.parameter_editor.should_display_bitmask_parameter_editor_usage(param_name):
+                    should_try_to_display_bitmask_parameter_editor_usage = True
                 self._grid_column_widgets(row_widgets, i, show_upload_column)
 
             # Add the "Add" button at the bottom of the table
@@ -251,6 +250,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             sys_exit(1)
 
         self._configure_table_columns(show_upload_column)
+        parent_root = self._get_parent_root()
+        if (
+            parent_root
+            and should_try_to_display_bitmask_parameter_editor_usage
+            and UsagePopupWindow.should_display("bitmask_parameter_editor")
+        ):
+            display_bitmask_parameters_editor_usage_popup(parent_root)
 
     def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
@@ -621,7 +627,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             if isinstance(event.widget, ttk.Entry):
                 self._update_new_value_entry_text(event.widget, param)
 
-            # Destroy the window
+            # Release the modal grab and destroy the window
+            if sys_platform != "darwin":
+                window.grab_release()
             window.destroy()
             # Issue a FocusIn event on something else than new_value_entry to prevent endless looping
             self.main_frame.focus_set()
@@ -698,13 +706,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         for child in window.winfo_children():
             child.bind("<FocusOut>", focus_out_handler)
 
-        # Make sure the window is visible before disabling the parent window
+        # Make sure the window is visible and properly positioned
+        window.transient(self._get_parent_toplevel())
         window.deiconify()
 
-        # Center the window on the parent window using the utility function
-        BaseWindow.center_window(window, self._get_parent_toplevel())
-
-        window.grab_set()  # Make the window modal, disable the parent window
+        self._center_and_focus_window(window)
 
         window.wait_window()  # Wait for the window to be closed
 
@@ -782,58 +788,216 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             # Delete the parameter
             self.parameter_editor.delete_parameter_from_current_file(param_name)
-            self.parameter_editor_window.repopulate_parameter_table(regenerate_from_disk=False)
+            self.parameter_editor_window.repopulate_parameter_table()
 
             # Restore the scroll position
             self.canvas.yview_moveto(current_scroll_position)
 
+    def _create_parameter_add_dialog_widgets(
+        self,
+        window: BaseWindow,
+    ) -> tuple[tk.StringVar, ttk.Entry, tk.Listbox, ttk.Button]:
+        """Create and configure all widgets for the parameter add dialog."""
+        ttk.Label(window.main_frame, text=_("Name filter:")).pack(pady=(5, 0))
+
+        search_var: tk.StringVar = tk.StringVar()
+        search_entry: ttk.Entry = ttk.Entry(window.main_frame, textvariable=search_var)
+        search_entry.pack(fill="x", padx=10)
+        search_entry.focus()
+        show_tooltip(
+            search_entry,
+            _(
+                "Type part of a parameter name to filter the list.\n"
+                "Press Enter to add all filtered parameters,\n"
+                "or only the selected ones if any are selected."
+            ),
+        )
+
+        ttk.Label(window.main_frame, text=_("(Use Ctrl/Shift for multiple selection)"), font=("TkDefaultFont", 8)).pack(
+            pady=(5, 0)
+        )
+        frame = ttk.Frame(window.main_frame)
+        frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+        listbox: tk.Listbox = tk.Listbox(frame, selectmode=tk.EXTENDED)
+        listbox.pack(side="left", fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=listbox.yview)
+        scrollbar.pack(side="right", fill="y")
+        listbox.configure(yscrollcommand=scrollbar.set)
+        show_tooltip(
+            listbox,
+            _(
+                "Double-click to add single parameter\n"
+                "Ctrl+click to select multiple one-by-one\n"
+                "Shift+click to select multiple by range\n"
+                "Ctrl+A: Select all\n"
+                "Ctrl+D: Deselect all\n"
+                "Return: Add selected"
+            ),
+        )
+
+        add_button: ttk.Button = ttk.Button(window.main_frame, text=_("No parameter selected"), state="disabled")
+        add_button.pack(pady=10)
+
+        return search_var, search_entry, listbox, add_button
+
+    def _bulk_add_parameters_and_show_feedback(self, param_names: list[str], dialog_window: BaseWindow) -> None:
+        """
+        Execute bulk parameter addition and display feedback to user.
+
+        Args:
+            param_names: List of parameter names to add (should be uppercase)
+            dialog_window: The add parameter dialog window to close after operation
+
+        Side Effects:
+            - Adds parameters to the current configuration file
+            - Updates the parameter editor table display
+            - Scrolls to bottom if parameters were added
+            - Displays feedback popup based on operation results
+            - Closes the dialog window
+
+        Note:
+            This method orchestrates the UI workflow. The business logic is in
+            ParameterEditor.bulk_add_parameters() and message generation is in
+            ParameterEditor.generate_bulk_add_feedback_message() for better testability.
+
+        """
+        # Call business logic method
+        added, skipped, failed = self.parameter_editor.add_parameters_to_current_file(param_names)
+        self._show_bulk_add_parameters_feedback(added, skipped, failed)
+
+        # Release the modal grab before destroying the window
+        if sys_platform != "darwin":
+            dialog_window.root.grab_release()
+        dialog_window.root.destroy()
+
+    def _show_bulk_add_parameters_feedback(self, added: list[str], skipped: list[str], failed: list[str]) -> None:
+        """
+        Show bulk add parameter(s) results/feedback.
+
+        Args:
+            added: List of successfully added parameter names
+            skipped: List of skipped parameter names (already exist)
+            failed: List of failed parameter names (invalid or errors)
+
+        """
+        # Update UI if parameters were added
+        if added:
+            self._pending_scroll_to_bottom = True
+            self.parameter_editor_window.repopulate_parameter_table()
+
+        # Generate and show feedback message
+        message_type, title, message = self.parameter_editor.generate_bulk_add_feedback_message(added, skipped, failed)
+
+        if message_type == "success":
+            pass  # Silent success - no popup needed for clean operation
+        elif message_type == "warning":
+            show_warning_popup(title, message)
+        elif message_type == "info":
+            show_info_popup(title, message)
+        elif message_type == "error":
+            show_error_popup(title, message)
+
     def _on_parameter_add(self) -> None:
         """Handle parameter addition."""
         add_parameter_window = BaseWindow(self._get_parent_root())
-        add_parameter_window.root.title(_("Add Parameter to ") + self.parameter_editor.current_file)
-        add_parameter_window.root.geometry("450x300")
+        add_parameter_window.root.title(_("Add parameter(s)"))
+        add_parameter_window.root.geometry("250x400")
+        add_parameter_window.root.transient(self._get_parent_toplevel())
 
-        # Label for instruction
-        instruction_label = ttk.Label(add_parameter_window.main_frame, text=_("Enter the parameter name to add:"))
-        instruction_label.pack(pady=5)
+        all_params = self.parameter_editor.get_possible_add_param_names()
+        search_var, search_entry, listbox, add_button = self._create_parameter_add_dialog_widgets(add_parameter_window)
 
-        try:
-            possible_add_param_names = self.parameter_editor.get_possible_add_param_names()
-        except OperationNotPossibleError as e:
-            self._dialogs.show_error(_("Operation not possible"), str(e))
-            return
-
-        # Prompt the user for a parameter name
-        parameter_name_combobox = EntryWithDynamicalyFilteredListbox(
-            add_parameter_window.main_frame,
-            possible_add_param_names,
-            startswith_match=False,
-            ignorecase_match=True,
-            listbox_height=12,
-            width=28,
-        )
-        parameter_name_combobox.pack(padx=5, pady=5)
-        BaseWindow.center_window(add_parameter_window.root, self._get_parent_toplevel())
-        parameter_name_combobox.focus()
-
-        def custom_selection_handler(event: tk.Event) -> None:
-            parameter_name_combobox.update_entry_from_listbox(event)
-            param_name = parameter_name_combobox.get().upper()
-            if self._confirm_parameter_addition(param_name):
-                add_parameter_window.root.destroy()
+        # Define event handlers as closures with access to widgets
+        def update_selection_info() -> None:
+            count = len(listbox.curselection())  # type: ignore[no-untyped-call]
+            if count == 0:
+                add_button.config(text=_("No parameter selected"), state="disabled")
+            elif count == 1:
+                add_button.config(text=_("Add selected parameter"), state="normal")
             else:
-                add_parameter_window.root.focus()
+                add_button.config(text=_("Add %d selected parameters") % count, state="normal")
 
-        # Bindings to handle Enter press and selection while respecting original functionalities
-        parameter_name_combobox.bind("<Return>", custom_selection_handler)
-        parameter_name_combobox.bind("<<ComboboxSelected>>", custom_selection_handler)
+        def refresh_list(*_: object) -> None:
+            listbox.delete(0, tk.END)
+            query = search_var.get().lower()
+            for p in [p for p in all_params if query in p.lower()]:
+                listbox.insert(tk.END, p)
+            update_selection_info()
+
+        def add_selected() -> None:
+            selected = [listbox.get(i).upper() for i in listbox.curselection()]  # type: ignore[no-untyped-call]
+            if not selected:
+                return
+            if len(selected) > ParameterEditor.MAX_BULK_ADD_SUGGESTIONS:
+                message = _(
+                    "Adding many parameters at once can make it difficult to track changes and may impact GUI performance.\n"
+                    "Are you sure you want to add all %d parameters?"
+                ) % len(selected)
+                if not self._dialogs.ask_yes_no(_("Confirm bulk addition"), message):
+                    return
+            self._bulk_add_parameters_and_show_feedback(selected, add_parameter_window)
+
+        # pylint: disable=line-too-long
+        # Bind events
+        search_var.trace_add("write", refresh_list)
+        search_entry.bind(
+            "<Return>",
+            lambda _: (
+                listbox.selection_set(0, tk.END) if not listbox.curselection() and listbox.size() > 0 else None,  # type: ignore[func-returns-value, no-untyped-call]
+                add_selected(),  # type: ignore[func-returns-value]
+            )[1],
+        )
+        listbox.bind("<<ListboxSelect>>", lambda _: update_selection_info())
+        listbox.bind(
+            "<Double-Button-1>",
+            lambda _: (
+                self._bulk_add_parameters_and_show_feedback(
+                    [listbox.get(listbox.curselection()[0]).upper()],  # type: ignore[no-untyped-call]
+                    add_parameter_window,
+                )
+                if listbox.curselection()  # type: ignore[no-untyped-call]
+                else None
+            ),
+        )
+        listbox.bind("<Return>", lambda _: add_selected())
+        listbox.bind("<Control-a>", lambda _: (listbox.selection_set(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
+        listbox.bind("<Control-A>", lambda _: (listbox.selection_set(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
+        listbox.bind("<Control-d>", lambda _: (listbox.selection_clear(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
+        listbox.bind("<Control-D>", lambda _: (listbox.selection_clear(0, tk.END), update_selection_info(), "break")[2])  # type: ignore[func-returns-value]
+        # pylint: enable=line-too-long
+        add_parameter_window.root.bind("<Return>", lambda _: add_selected())
+
+        def on_escape(_event: tk.Event) -> None:
+            """Handle Escape key to close the window."""
+            if sys_platform != "darwin":
+                add_parameter_window.root.grab_release()
+            add_parameter_window.root.destroy()
+
+        add_parameter_window.root.bind("<Escape>", on_escape)
+        add_button.config(command=add_selected)
+
+        refresh_list()
+        self._center_and_focus_window(add_parameter_window.root)
+
+    def _center_and_focus_window(self, window: Union[tk.Toplevel, tk.Tk]) -> None:
+        BaseWindow.center_window(window, self._get_parent_toplevel())
+        window.lift()
+        window.update()  # Ensure the window is fully rendered before setting focus
+
+        # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
+        if sys_platform != "darwin":
+            window.focus_force()
+            window.grab_set()
 
     def _confirm_parameter_addition(self, param_name: str) -> bool:
         """Confirm and process parameter addition using ParameterEditor."""
         try:
             if self.parameter_editor.add_parameter_to_current_file(param_name):
                 self._pending_scroll_to_bottom = True
-                self.parameter_editor_window.repopulate_parameter_table(regenerate_from_disk=False)
+                self.parameter_editor_window.repopulate_parameter_table()
+
                 return True
         except InvalidParameterNameError as exc:
             self._dialogs.show_error(_("Invalid parameter name."), str(exc))

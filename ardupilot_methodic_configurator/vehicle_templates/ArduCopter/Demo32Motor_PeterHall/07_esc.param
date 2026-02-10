@@ -1,0 +1,55 @@
+ATC_RAT_PIT_SMAX,0
+ATC_RAT_RLL_SMAX,0
+ATC_RAT_YAW_SMAX,0
+MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
+MOT_PWM_MAX,1940  # as per ESC specification
+MOT_PWM_MIN,1100  # as per ESC specification
+MOT_PWM_TYPE,0  # Specified in component editor window
+MOT_SPOOL_TIME,0.5
+NTF_BUZZ_TYPES,5
+NTF_LED_TYPES,647399
+PSC_ACCZ_SMAX,0
+SERVO_BLH_POLES,14  # Specified in component editor window
+SERVO_FTW_POLES,14  # Specified in component editor window
+SERVO1_MAX,1940  # as per ESC specification
+SERVO1_MIN,1100
+SERVO1_TRIM,1500
+SERVO10_MAX,1940  # as per ESC specification
+SERVO11_MAX,1940  # as per ESC specification
+SERVO12_MAX,1940  # as per ESC specification
+SERVO13_MAX,1940  # as per ESC specification
+SERVO14_MAX,1940  # as per ESC specification
+SERVO15_MAX,1940  # as per ESC specification
+SERVO16_MAX,1940  # as per ESC specification
+SERVO17_MAX,1940  # as per ESC specification
+SERVO18_MAX,1940  # as per ESC specification
+SERVO19_MAX,1940  # as per ESC specification
+SERVO2_MAX,1940  # as per ESC specification
+SERVO2_MIN,1100
+SERVO2_TRIM,1500
+SERVO20_MAX,1940  # as per ESC specification
+SERVO21_MAX,1940  # as per ESC specification
+SERVO22_MAX,1940  # as per ESC specification
+SERVO23_MAX,1940  # as per ESC specification
+SERVO24_MAX,1940  # as per ESC specification
+SERVO25_MAX,1940  # as per ESC specification
+SERVO26_MAX,1940  # as per ESC specification
+SERVO27_MAX,1940  # as per ESC specification
+SERVO28_MAX,1940  # as per ESC specification
+SERVO29_MAX,1940  # as per ESC specification
+SERVO3_MAX,1940  # as per ESC specification
+SERVO3_MIN,1100
+SERVO3_TRIM,1500
+SERVO30_MAX,1940  # as per ESC specification
+SERVO31_MAX,1940  # as per ESC specification
+SERVO32_MAX,1940  # as per ESC specification
+SERVO4_MAX,1940  # as per ESC specification
+SERVO4_MIN,1100
+SERVO4_TRIM,1500
+SERVO5_MAX,1940  # as per ESC specification
+SERVO6_MAX,1940  # as per ESC specification
+SERVO7_MAX,1940  # as per ESC specification
+SERVO8_MAX,1940  # as per ESC specification
+SERVO9_MAX,1940  # as per ESC specification
+TKOFF_RPM_MIN,0
+TKOFF_SLEW_TIME,2

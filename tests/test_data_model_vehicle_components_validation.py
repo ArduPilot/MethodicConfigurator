@@ -5,7 +5,7 @@ Vehicle Components data model validation tests.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -54,7 +54,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test initialization and basic functionality
     def test_initialization_empty_model(self, empty_model) -> None:
-        """Test initialization of empty ComponentDataModelValidation."""
+        """
+        Test initialization of empty ComponentDataModelValidation.
+
+        GIVEN: A fresh ComponentDataModelValidation instance
+        WHEN: The model is created with empty data
+        THEN: All required attributes should be initialized
+        """
         assert empty_model is not None
         assert hasattr(empty_model, "VALIDATION_RULES")
         assert hasattr(empty_model, "_data")
@@ -63,7 +69,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert hasattr(empty_model, "_component_datatypes")
 
     def test_initialization_realistic_model(self, realistic_model) -> None:
-        """Test initialization of realistic ComponentDataModelValidation."""
+        """
+        Test initialization of realistic ComponentDataModelValidation.
+
+        GIVEN: A ComponentDataModelValidation instance with realistic data
+        WHEN: The model is created from a JSON file
+        THEN: Battery chemistry and component data should be properly loaded
+        """
         assert realistic_model is not None
         assert realistic_model._battery_chemistry == "Lipo"
         data = realistic_model.get_component_data()
@@ -71,7 +83,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(data["Components"]) > 0
 
     def test_validation_rules_class_attribute(self, empty_model) -> None:
-        """Test that VALIDATION_RULES class attribute is properly defined."""
+        """
+        Test that VALIDATION_RULES class attribute is properly defined.
+
+        GIVEN: A ComponentDataModelValidation instance
+        WHEN: Accessing the VALIDATION_RULES class attribute
+        THEN: It should contain all expected validation rules with proper structure
+        """
         rules = empty_model.VALIDATION_RULES
         assert hasattr(rules, "__getitem__")  # Check if it behaves like a dict (MappingProxyType)
 
@@ -95,12 +113,24 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test is_valid_component_data method
     def test_is_valid_component_data_valid_structures(self, realistic_model, empty_model) -> None:
-        """Test is_valid_component_data with valid data structures."""
+        """
+        Test is_valid_component_data with valid data structures.
+
+        GIVEN: Models with valid component data structures
+        WHEN: Validating the component data
+        THEN: Validation should pass for both realistic and empty models
+        """
         assert realistic_model.is_valid_component_data() is True
         assert empty_model.is_valid_component_data() is True
 
     def test_is_valid_component_data_invalid_structures(self) -> None:
-        """Test is_valid_component_data with invalid data structures."""
+        """
+        Test is_valid_component_data with invalid data structures.
+
+        GIVEN: Component data with invalid structures (missing Components key, wrong types)
+        WHEN: Validating the component data
+        THEN: Validation should fail for all invalid structures
+        """
         vehicle_components = VehicleComponents()
         schema = VehicleComponentsJsonSchema(vehicle_components.load_schema())
         component_datatypes = schema.get_all_value_datatypes()
@@ -122,7 +152,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test set_component_value method with battery chemistry side effects
     def test_set_component_value_battery_chemistry_side_effects(self, empty_model) -> None:
-        """Test that setting battery chemistry triggers side effects."""
+        """
+        Test that setting battery chemistry triggers side effects.
+
+        GIVEN: An empty model without battery chemistry set
+        WHEN: Setting the battery chemistry value
+        THEN: Battery voltage values should be automatically set to recommended values
+        """
         model = empty_model
 
         # Set battery chemistry
@@ -146,7 +182,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert crit_voltage == BatteryCell.recommended_crit_voltage("Lipo")
 
     def test_set_component_value_different_chemistries(self, empty_model) -> None:
-        """Test battery chemistry side effects with different chemistries."""
+        """
+        Test battery chemistry side effects with different chemistries.
+
+        GIVEN: A model and all available battery chemistries
+        WHEN: Setting each chemistry type
+        THEN: Recommended voltages should match each chemistry's specifications
+        """
         model = empty_model
 
         for chemistry in BatteryCell.chemistries():
@@ -163,7 +205,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert crit_voltage == BatteryCell.recommended_crit_voltage(chemistry)
 
     def test_set_component_value_no_side_effects_for_non_chemistry(self, empty_model) -> None:
-        """Test that setting non-chemistry values doesn't trigger side effects."""
+        """
+        Test that setting non-chemistry values doesn't trigger side effects.
+
+        GIVEN: A model with a specific battery chemistry
+        WHEN: Setting a non-chemistry component value
+        THEN: Battery chemistry should remain unchanged
+        """
         model = empty_model
         original_chemistry = model._battery_chemistry
 
@@ -175,7 +223,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test init_possible_choices method
     def test_init_possible_choices_with_doc_dict(self, empty_model, sample_doc_dict) -> None:
-        """Test init_possible_choices with a valid doc_dict."""
+        """
+        Test init_possible_choices with a valid doc_dict.
+
+        GIVEN: An empty model and a valid parameter documentation dictionary
+        WHEN: Initializing possible choices from the doc_dict
+        THEN: Component connection type and protocol choices should be populated
+        """
         model = empty_model
         model.init_possible_choices(sample_doc_dict)
 
@@ -189,7 +243,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert ("Battery", "Specifications", "Chemistry") in model._possible_choices
 
     def test_init_possible_choices_with_empty_doc_dict(self, empty_model) -> None:
-        """Test init_possible_choices with an empty doc_dict."""
+        """
+        Test init_possible_choices with an empty doc_dict.
+
+        GIVEN: An empty model and an empty parameter documentation dictionary
+        WHEN: Initializing possible choices
+        THEN: Fallback choices should still be available
+        """
         model = empty_model
         model.init_possible_choices({})
 
@@ -198,7 +258,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(model._possible_choices) > 0
 
     def test_init_possible_choices_fallbacks(self, empty_model) -> None:
-        """Test that fallback values are used when doc_dict is incomplete."""
+        """
+        Test that fallback values are used when doc_dict is incomplete.
+
+        GIVEN: A model and an incomplete parameter documentation dictionary
+        WHEN: Initializing possible choices with missing parameters
+        THEN: Fallback choices should be used for missing parameters
+        """
         model = empty_model
         incomplete_doc = {"RC_PROTOCOLS": {"Bitmask": {"9": "CRSF"}}}
         model.init_possible_choices(incomplete_doc)
@@ -206,93 +272,15 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         # Should have fallback choices for missing parameters
         assert isinstance(model._possible_choices, dict)
 
-    # Test _update_possible_choices_for_path method
-    def test_update_possible_choices_rc_receiver(self, realistic_model) -> None:
-        """Test updating possible choices for RC Receiver connection types."""
-        model = realistic_model
-        model.init_possible_choices({})
-
-        # Test different connection types
-        test_cases = [
-            ("None", ("None",)),
-            ("SERIAL7", ["CRSF", "SBUS", "PPM"]),  # Should include protocols that support SERIAL ports
-            ("RCin/SBUS", ["CRSF", "SBUS", "PPM"]),
-        ]
-
-        for conn_type, expected_protocols in test_cases:
-            model._update_possible_choices_for_path(("RC Receiver", "FC Connection", "Type"), conn_type)
-            protocol_choices = model._possible_choices.get(("RC Receiver", "FC Connection", "Protocol"), ())
-
-            if conn_type == "None":
-                assert protocol_choices == expected_protocols
-            else:
-                # At least some protocols should be available
-                assert len(protocol_choices) > 0
-
-    def test_update_possible_choices_telemetry(self, realistic_model) -> None:
-        """Test updating possible choices for Telemetry connection types."""
-        model = realistic_model
-        model.init_possible_choices({})
-
-        # Test None connection
-        model._update_possible_choices_for_path(("Telemetry", "FC Connection", "Type"), "None")
-        protocol_choices = model._possible_choices.get(("Telemetry", "FC Connection", "Protocol"), ())
-        assert protocol_choices == ("None",)
-
-        # Test serial connection
-        model._update_possible_choices_for_path(("Telemetry", "FC Connection", "Type"), "SERIAL1")
-        protocol_choices = model._possible_choices.get(("Telemetry", "FC Connection", "Protocol"), ())
-        assert len(protocol_choices) > 0
-        assert "MAVLink2" in protocol_choices or "MAVLink1" in protocol_choices
-
-    def test_update_possible_choices_esc(self, realistic_model) -> None:
-        """Test updating possible choices for ESC connection types."""
-        model = realistic_model
-        model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}})
-
-        # Test CAN connection
-        model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "CAN1")
-        protocol_choices = model._possible_choices.get(("ESC", "FC Connection", "Protocol"), ())
-        assert protocol_choices == ("DroneCAN",)
-
-        # Test PWM connection
-        model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "Main Out")
-        protocol_choices = model._possible_choices.get(("ESC", "FC Connection", "Protocol"), ())
-        assert len(protocol_choices) > 0
-
-    def test_update_possible_choices_gnss_receiver(self, realistic_model) -> None:
-        """Test updating possible choices for GNSS Receiver connection types."""
-        model = realistic_model
-        model.init_possible_choices({})
-
-        # Test None connection
-        model._update_possible_choices_for_path(("GNSS Receiver", "FC Connection", "Type"), "None")
-        protocol_choices = model._possible_choices.get(("GNSS Receiver", "FC Connection", "Protocol"), ())
-        assert protocol_choices == ("None",)
-
-        # Test serial connection
-        model._update_possible_choices_for_path(("GNSS Receiver", "FC Connection", "Type"), "SERIAL3")
-        protocol_choices = model._possible_choices.get(("GNSS Receiver", "FC Connection", "Protocol"), ())
-        assert len(protocol_choices) > 0
-
-    def test_update_possible_choices_battery_monitor(self, realistic_model) -> None:
-        """Test updating possible choices for Battery Monitor connection types."""
-        model = realistic_model
-        model.init_possible_choices({})
-
-        # Test None connection
-        model._update_possible_choices_for_path(("Battery Monitor", "FC Connection", "Type"), "None")
-        protocol_choices = model._possible_choices.get(("Battery Monitor", "FC Connection", "Protocol"), ())
-        assert protocol_choices == ("None",)
-
-        # Test analog connection
-        model._update_possible_choices_for_path(("Battery Monitor", "FC Connection", "Type"), "Analog")
-        protocol_choices = model._possible_choices.get(("Battery Monitor", "FC Connection", "Protocol"), ())
-        assert len(protocol_choices) > 0
-
     # Test validate_entry_limits method
     def test_validate_entry_limits_valid_values(self, realistic_model) -> None:
-        """Test validate_entry_limits with valid values."""
+        """
+        Test validate_entry_limits with valid values.
+
+        GIVEN: A realistic model with validation rules
+        WHEN: Validating component values within acceptable limits
+        THEN: Validation should pass without errors or corrections
+        """
         model = realistic_model
 
         test_cases = [
@@ -314,7 +302,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
                 assert corrected_value is not None
 
     def test_validate_entry_limits_invalid_values(self, realistic_model) -> None:
-        """Test validate_entry_limits with invalid values."""
+        """
+        Test validate_entry_limits with invalid values.
+
+        GIVEN: A realistic model with validation rules
+        WHEN: Validating component values outside acceptable limits
+        THEN: Validation should return error messages and corrected values
+        """
         model = realistic_model
 
         test_cases = [
@@ -322,7 +316,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             (("Frame", "Specifications", "TOW max Kg"), "1000", False),  # Above maximum
             (("Battery", "Specifications", "Number of cells"), "0", False),  # Below minimum
             (("Battery", "Specifications", "Number of cells"), "100", False),  # Above maximum
-            (("Motors", "Specifications", "Poles"), "2", False),  # Below minimum
+            (("Motors", "Specifications", "Poles"), "1", False),  # Below minimum
             (("Motors", "Specifications", "Poles"), "100", False),  # Above maximum
         ]
 
@@ -333,7 +327,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
                 assert corrected_value is not None
 
     def test_validate_entry_limits_value_errors(self, realistic_model) -> None:
-        """Test validate_entry_limits with non-numeric values."""
+        """
+        Test validate_entry_limits with non-numeric values.
+
+        GIVEN: A realistic model with validation rules
+        WHEN: Validating non-numeric string values
+        THEN: Validation should return error messages without corrections
+        """
         model = realistic_model
 
         test_cases = [
@@ -348,7 +348,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert corrected_value is None
 
     def test_validate_entry_limits_tow_relationships(self, realistic_model) -> None:
-        """Test validate_entry_limits for takeoff weight relationships."""
+        """
+        Test validate_entry_limits for takeoff weight relationships.
+
+        GIVEN: A model with TOW min and max values set
+        WHEN: Validating TOW values against each other
+        THEN: TOW min must be below TOW max and vice versa
+        """
         model = realistic_model
 
         # Set up TOW values
@@ -376,7 +382,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert corrected_value is not None
 
     def test_validate_entry_limits_non_validation_paths(self, realistic_model) -> None:
-        """Test validate_entry_limits with paths not in validation rules."""
+        """
+        Test validate_entry_limits with paths not in validation rules.
+
+        GIVEN: A realistic model with validation rules
+        WHEN: Validating a path not defined in VALIDATION_RULES
+        THEN: Validation should pass without errors (no validation applied)
+        """
         model = realistic_model
 
         # Test with a path not in VALIDATION_RULES
@@ -386,7 +398,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test validate_cell_voltage method
     def test_validate_cell_voltage_valid_voltages(self, realistic_model) -> None:
-        """Test validate_cell_voltage with valid voltages."""
+        """
+        Test validate_cell_voltage with valid voltages.
+
+        GIVEN: A model with battery chemistry and valid voltage relationships
+        WHEN: Validating cell voltages that respect max > low > crit ordering
+        THEN: Validation should pass without errors or corrections
+        """
         model = realistic_model
         model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
 
@@ -407,7 +425,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert corrected_value is None
 
     def test_validate_cell_voltage_invalid_relationships(self, realistic_model) -> None:
-        """Test validate_cell_voltage with invalid voltage relationships."""
+        """
+        Test validate_cell_voltage with invalid voltage relationships.
+
+        GIVEN: A model with battery chemistry and established voltage values
+        WHEN: Validating voltages that violate max > low > crit ordering
+        THEN: Validation should return error messages and corrected values
+        """
         model = realistic_model
         model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
 
@@ -432,7 +456,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert corrected_value is not None
 
     def test_validate_cell_voltage_chemistry_limits(self, realistic_model) -> None:
-        """Test validate_cell_voltage against chemistry-specific limits."""
+        """
+        Test validate_cell_voltage against chemistry-specific limits.
+
+        GIVEN: A model and all available battery chemistries
+        WHEN: Validating voltages outside chemistry-specific limits
+        THEN: Validation should enforce chemistry min/max voltage limits
+        """
         model = realistic_model
 
         for chemistry in BatteryCell.chemistries():
@@ -455,7 +485,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert corrected_value == min_limit
 
     def test_validate_cell_voltage_invalid_values(self, realistic_model) -> None:
-        """Test validate_cell_voltage with invalid string values."""
+        """
+        Test validate_cell_voltage with invalid string values.
+
+        GIVEN: A model with battery chemistry set
+        WHEN: Validating non-numeric string values for cell voltages
+        THEN: Validation should return error messages with recommended corrections
+        """
         model = realistic_model
         model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
 
@@ -472,7 +508,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert isinstance(corrected_value, float)
 
     def test_validate_cell_voltage_non_battery_paths(self, realistic_model) -> None:
-        """Test validate_cell_voltage with non-battery paths."""
+        """
+        Test validate_cell_voltage with non-battery paths.
+
+        GIVEN: A realistic model
+        WHEN: Validating a non-battery component path
+        THEN: Validation should pass without checking (not applicable)
+        """
         model = realistic_model
 
         # Test with non-battery path
@@ -482,7 +524,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test recommended_cell_voltage method
     def test_recommended_cell_voltage_all_paths(self, realistic_model) -> None:
-        """Test recommended_cell_voltage for all voltage paths."""
+        """
+        Test recommended_cell_voltage for all voltage paths.
+
+        GIVEN: A model with all available battery chemistries
+        WHEN: Requesting recommended voltages for max, low, and crit
+        THEN: Returned values should match chemistry-specific recommendations
+        """
         model = realistic_model
 
         for chemistry in BatteryCell.chemistries():
@@ -504,7 +552,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert recommended == expected
 
     def test_recommended_cell_voltage_unknown_path(self, realistic_model) -> None:
-        """Test recommended_cell_voltage for unknown voltage path."""
+        """
+        Test recommended_cell_voltage for unknown voltage path.
+
+        GIVEN: A realistic model
+        WHEN: Requesting recommended voltage for an unknown voltage type
+        THEN: A default voltage value should be returned
+        """
         model = realistic_model
 
         # Test unknown voltage path - should return default
@@ -513,7 +567,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test validate_against_another_value method
     def test_validate_against_another_value_valid_comparisons(self, realistic_model) -> None:
-        """Test validate_against_another_value with valid comparisons."""
+        """
+        Test validate_against_another_value with valid comparisons.
+
+        GIVEN: A model and various value/limit/direction combinations
+        WHEN: Validating values that satisfy the comparison constraints
+        THEN: Validation should pass without errors or corrections
+        """
         model = realistic_model
 
         test_cases = [
@@ -533,7 +593,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
                 assert corrected_value is not None
 
     def test_validate_against_another_value_invalid_comparisons(self, realistic_model) -> None:
-        """Test validate_against_another_value with invalid comparisons."""
+        """
+        Test validate_against_another_value with invalid comparisons.
+
+        GIVEN: A model and value/limit combinations that violate constraints
+        WHEN: Validating values in wrong direction relative to limits
+        THEN: Validation should return errors and corrected values with delta applied
+        """
         model = realistic_model
 
         test_cases = [
@@ -552,7 +618,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
                     assert corrected_value == limit_value - delta
 
     def test_validate_against_another_value_string_limit_values(self, realistic_model) -> None:
-        """Test validate_against_another_value with string limit values."""
+        """
+        Test validate_against_another_value with string limit values.
+
+        GIVEN: A model and limit values as strings
+        WHEN: Validating with valid and invalid string limit values
+        THEN: Valid strings should be converted and checked; invalid strings should error
+        """
         model = realistic_model
 
         # Test with valid string that can be converted to float
@@ -566,7 +638,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert corrected_value is None
 
     def test_validate_against_another_value_invalid_limit_types(self, realistic_model) -> None:
-        """Test validate_against_another_value with invalid limit value types."""
+        """
+        Test validate_against_another_value with invalid limit value types.
+
+        GIVEN: A model and limit values that are neither float nor string
+        WHEN: Validating with None or other invalid types as limits
+        THEN: Validation should return errors without corrections
+        """
         model = realistic_model
 
         # Test with limit value that's neither float nor string
@@ -580,7 +658,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test validate_all_data method
     def test_validate_all_data_valid_entries(self, realistic_model) -> None:
-        """Test validate_all_data with valid entry values."""
+        """
+        Test validate_all_data with valid entry values.
+
+        GIVEN: A model with initialized choices and valid component entries
+        WHEN: Validating all entries for connection types and protocols
+        THEN: Validation should pass with no errors
+        """
         model = realistic_model
         model.init_possible_choices(
             {
@@ -604,7 +688,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(errors) == 0
 
     def test_validate_all_data_invalid_combobox_values(self, realistic_model) -> None:
-        """Test validate_all_data with invalid combobox values."""
+        """
+        Test validate_all_data with invalid combobox values.
+
+        GIVEN: A model with initialized choices
+        WHEN: Validating entries with invalid protocol values not in choices
+        THEN: Validation should fail with error messages about invalid values
+        """
         model = realistic_model
         model.init_possible_choices(
             {
@@ -622,7 +712,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert "Invalid value" in errors[0]
 
     def test_validate_all_data_duplicate_connections(self, realistic_model) -> None:
-        """Test validate_all_data with duplicate FC connections."""
+        """
+        Test validate_all_data with duplicate FC connections.
+
+        GIVEN: A model with initialized choices
+        WHEN: Validating entries with duplicate serial port connections
+        THEN: Validation should fail with error about duplicate FC connection
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -638,7 +734,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert "Duplicate FC connection" in errors[0]
 
     def test_validate_all_data_allowed_duplicates(self, realistic_model) -> None:
-        """Test validate_all_data with allowed duplicate connections."""
+        """
+        Test validate_all_data with allowed duplicate connections.
+
+        GIVEN: A model with initialized choices
+        WHEN: Validating entries with duplicate CAN connections (which are allowed)
+        THEN: Validation should pass without errors
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -653,7 +755,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(errors) == 0
 
     def test_validate_all_data_telemetry_rc_combinations(self, realistic_model) -> None:
-        """Test validate_all_data with allowed Telemetry/RC Receiver combinations."""
+        """
+        Test validate_all_data with allowed Telemetry/RC Receiver combinations.
+
+        GIVEN: A model with initialized choices
+        WHEN: Validating Telemetry and RC Receiver on same serial port
+        THEN: Validation should pass (this combination is explicitly allowed)
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -668,7 +776,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(errors) == 0
 
     def test_validate_all_data_battery_esc_combinations(self, realistic_model) -> None:
-        """Test validate_all_data with allowed Battery Monitor/ESC combinations."""
+        """
+        Test validate_all_data with allowed Battery Monitor/ESC combinations.
+
+        GIVEN: A model with battery monitor using ESC protocol
+        WHEN: Validating Battery Monitor and ESC on compatible ports
+        THEN: Validation should pass when protocol is ESC
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -688,7 +802,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(errors) == 0
 
     def test_validate_all_data_empty_entries(self, realistic_model) -> None:
-        """Test validate_all_data with empty entry values."""
+        """
+        Test validate_all_data with empty entry values.
+
+        GIVEN: A model with initialized choices
+        WHEN: Validating an empty dictionary of entries
+        THEN: Validation should pass with no errors
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -696,9 +816,84 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert is_valid is True
         assert len(errors) == 0
 
+    def test_validate_all_data_motor_poles_valid_values(self, realistic_model) -> None:
+        """
+        Test validate_all_data with valid motor poles values.
+
+        GIVEN: A model with motor component data
+        WHEN: Validating motor poles values where even
+        THEN: Validation should pass with no errors
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        # Valid motor poles: even
+        valid_entries = {
+            ("Motors", "Specifications", "Poles"): "2",
+        }
+
+        is_valid, errors = model.validate_all_data(valid_entries)
+        assert is_valid is True
+        assert len(errors) == 0
+
+        valid_entries = {
+            ("Motors", "Specifications", "Poles"): "40",
+        }
+
+        is_valid, errors = model.validate_all_data(valid_entries)
+        assert is_valid is True
+        assert len(errors) == 0
+
+    def test_validate_all_data_motor_poles_invalid_values(self, realistic_model) -> None:
+        """
+        Test validate_all_data with invalid motor poles values.
+
+        GIVEN: A model with motor component data
+        WHEN: Validating motor poles values where poles is an odd number
+        THEN: Validation should fail with error messages about motor poles requirement
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        # Invalid number of motor poles: 3
+        invalid_entries = {
+            ("Motors", "Specifications", "Poles"): "3",
+        }
+
+        is_valid, errors = model.validate_all_data(invalid_entries)
+        assert is_valid is False
+        assert len(errors) > 0
+        assert "must be even" in errors[0]
+
+    def test_validate_all_data_motor_poles_invalid_string(self, realistic_model) -> None:
+        """
+        Test validate_all_data with invalid motor poles string values.
+
+        GIVEN: A model with motor component data
+        WHEN: Validating motor poles with non-integer string values
+        THEN: Validation should fail with error messages about invalid integer values
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        invalid_entries = {
+            ("Motors", "Specifications", "Poles"): "not_a_number",
+        }
+
+        is_valid, errors = model.validate_all_data(invalid_entries)
+        assert is_valid is False
+        assert len(errors) > 0
+        assert "Invalid int value" in errors[0]
+
     # Test get_combobox_values_for_path method (inherited from base class)
     def test_get_combobox_values_for_path(self, realistic_model) -> None:
-        """Test get_combobox_values_for_path method."""
+        """
+        Test get_combobox_values_for_path method.
+
+        GIVEN: A model with initialized possible choices
+        WHEN: Requesting combobox values for existing and non-existing paths
+        THEN: Existing paths should return choices; non-existing paths return empty tuple
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -714,7 +909,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test edge cases and error handling
     def test_edge_cases_empty_strings(self, realistic_model) -> None:
-        """Test handling of empty strings in validation methods."""
+        """
+        Test handling of empty strings in validation methods.
+
+        GIVEN: A realistic model with validation rules
+        WHEN: Validating empty strings in entry limits and cell voltage
+        THEN: Validation should return errors (cannot convert empty string to number)
+        """
         model = realistic_model
 
         # Test empty string in validate_entry_limits
@@ -728,7 +929,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert corrected_value is not None
 
     def test_edge_cases_boundary_values(self, empty_model) -> None:
-        """Test boundary values in validation rules."""
+        """
+        Test boundary values in validation rules.
+
+        GIVEN: An empty model with validation rules
+        WHEN: Validating values at, below, and above validation boundaries
+        THEN: Boundary values should pass; out-of-range values should be corrected
+        """
         model = empty_model
 
         rules = model.VALIDATION_RULES
@@ -763,7 +970,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert corrected_value == max_val
 
     def test_edge_cases_none_values(self, realistic_model) -> None:
-        """Test handling of None values in various methods."""
+        """
+        Test handling of None values in various methods.
+
+        GIVEN: A realistic model
+        WHEN: Setting a component value to None
+        THEN: The value should be stored as an empty string
+        """
         model = realistic_model
 
         # Test setting None value
@@ -771,7 +984,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert model.get_component_value(("Test", "Component")) == ""
 
     def test_edge_cases_chemistry_unknown(self, empty_model) -> None:
-        """Test behavior with unknown battery chemistry."""
+        """
+        Test behavior with unknown battery chemistry.
+
+        GIVEN: A model with unknown battery chemistry set
+        WHEN: Requesting recommended cell voltage
+        THEN: Should return NaN for unknown chemistry
+        """
         model = empty_model
         model._battery_chemistry = "UnknownChemistry"
 
@@ -782,7 +1001,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert math.isnan(recommended)  # Proper NaN check
 
     def test_large_validation_dataset(self, realistic_model) -> None:
-        """Test validation with a large dataset to ensure performance."""
+        """
+        Test validation with a large dataset to ensure performance.
+
+        GIVEN: A model and 100 component entries
+        WHEN: Validating a large dataset
+        THEN: Validation should complete without errors or performance issues
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -798,7 +1023,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert isinstance(errors, list)
 
     def test_protocol_choice_consistency(self, realistic_model) -> None:
-        """Test that protocol choices remain consistent across multiple calls."""
+        """
+        Test that protocol choices remain consistent across multiple calls.
+
+        GIVEN: A model with initialized choices
+        WHEN: Updating possible choices multiple times for the same path
+        THEN: Protocol choices should remain consistent across calls
+        """
         model = realistic_model
         model.init_possible_choices({})
 
@@ -814,7 +1045,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             assert choices1 == choices2
 
     def test_validation_rules_immutability(self, realistic_model) -> None:
-        """Test that VALIDATION_RULES cannot be modified."""
+        """
+        Test that VALIDATION_RULES cannot be modified.
+
+        GIVEN: A model with VALIDATION_RULES class attribute
+        WHEN: Attempting to modify VALIDATION_RULES
+        THEN: Should raise TypeError or AttributeError (MappingProxyType is immutable)
+        """
         model = realistic_model
 
         # VALIDATION_RULES should be immutable (MappingProxyType)
@@ -822,7 +1059,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             model.VALIDATION_RULES[("New", "Rule", "Path")] = (float, (0, 1), "New Rule")
 
     def test_comprehensive_chemistry_validation(self, empty_model) -> None:
-        """Test comprehensive validation across all battery chemistries."""
+        """
+        Test comprehensive validation across all battery chemistries.
+
+        GIVEN: A model and all available battery chemistry types
+        WHEN: Setting each chemistry and validating its recommended voltages
+        THEN: Each chemistry should set appropriate voltage values and validate correctly
+        """
         model = empty_model
 
         for chemistry in BatteryCell.chemistries():
@@ -841,7 +1084,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
                     # Some relationships might fail due to initialization order, that's OK
 
     def test_post_init_integration(self, realistic_model) -> None:
-        """Test that post_init is properly called and integrates well."""
+        """
+        Test that post_init is properly called and integrates well.
+
+        GIVEN: A realistic model that has been initialized
+        WHEN: Checking post_init effects and calling it again
+        THEN: Battery chemistry should be initialized and remain stable across calls
+        """
         model = realistic_model
 
         # post_init should have been called in fixture
@@ -860,7 +1109,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
     # Test missing coverage areas
     def test_fallback_values_missing_param(self, empty_model) -> None:
-        """Test fallback handling when parameters are missing from doc_dict."""
+        """
+        Test fallback handling when parameters are missing from doc_dict.
+
+        GIVEN: A model and doc_dict without expected parameters
+        WHEN: Initializing possible choices with incomplete doc_dict
+        THEN: Should use fallback choices for missing parameters
+        """
         model = empty_model
 
         # Test with doc_dict that doesn't have expected parameters
@@ -876,7 +1131,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(model._possible_choices) > 0
 
     def test_mot_pwm_type_coverage(self, empty_model) -> None:
-        """Test MOT_PWM_TYPE and Q_M_PWM_TYPE handling."""
+        """
+        Test MOT_PWM_TYPE and Q_M_PWM_TYPE handling.
+
+        GIVEN: A model and doc_dicts with MOT_PWM_TYPE or Q_M_PWM_TYPE
+        WHEN: Initializing possible choices from both parameter types
+        THEN: Motor PWM types should be available from either parameter
+        """
         model = empty_model
 
         # Test with MOT_PWM_TYPE
@@ -895,7 +1156,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert hasattr(model, "_mot_pwm_types")
 
     def test_battery_monitor_connection_list_type(self, realistic_model) -> None:
-        """Test battery monitor connection handling with list types."""
+        """
+        Test battery monitor connection handling with list types.
+
+        GIVEN: A model with initialized choices
+        WHEN: Updating choices for battery monitor with I2C connection
+        THEN: Protocol choices should be populated for the connection type
+        """  # pylint: disable=duplicate-code  # Common connection test pattern
         model = realistic_model
         model.init_possible_choices({})
 
@@ -903,9 +1170,16 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         model._update_possible_choices_for_path(("Battery Monitor", "FC Connection", "Type"), "I2C1")
         protocol_choices = model._possible_choices.get(("Battery Monitor", "FC Connection", "Protocol"), ())
         assert len(protocol_choices) > 0
+        # pylint: enable=duplicate-code
 
     def test_gnss_receiver_connection_list_type(self, realistic_model) -> None:
-        """Test GNSS receiver connection handling with list types."""
+        """
+        Test GNSS receiver connection handling with list types.
+
+        GIVEN: A model with initialized choices
+        WHEN: Updating choices for GNSS receiver with different connection types
+        THEN: Protocol choices should be populated for each connection type
+        """  # pylint: disable=duplicate-code  # Common connection test pattern
         model = realistic_model
         model.init_possible_choices({})
 
@@ -913,23 +1187,36 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         model._update_possible_choices_for_path(("GNSS Receiver", "FC Connection", "Type"), "CAN1")
         protocol_choices = model._possible_choices.get(("GNSS Receiver", "FC Connection", "Protocol"), ())
         assert len(protocol_choices) > 0
+        # pylint: enable=duplicate-code
 
     def test_validate_entry_limits_tow_value_errors(self, realistic_model) -> None:
-        """Test TOW validation with invalid values that trigger value errors."""
+        """
+        Test TOW validation with invalid values that trigger value errors.
+
+        GIVEN: A realistic model with TOW validation rules
+        WHEN: Validating TOW values with non-numeric strings
+        THEN: Should return conversion error messages without corrections
+        """
         model = realistic_model
 
         # Test TOW max with non-float value
         error_msg, corrected_value = model.validate_entry_limits("not_a_float", ("Frame", "Specifications", "TOW max Kg"))
-        assert "could not convert" in error_msg  # The actual error message from ValueError
+        assert "Invalid float value" in error_msg  # The actual error message from ValueError
         assert corrected_value is None
 
         # Test TOW min with non-float value
         error_msg, corrected_value = model.validate_entry_limits("invalid", ("Frame", "Specifications", "TOW min Kg"))
-        assert "could not convert" in error_msg  # The actual error message from ValueError
+        assert "Invalid float value" in error_msg  # The actual error message from ValueError
         assert corrected_value is None
 
     def test_validate_cell_voltage_complex_relationships(self, realistic_model) -> None:
-        """Test complex cell voltage validation relationships."""
+        """
+        Test complex cell voltage validation relationships.
+
+        GIVEN: A model with battery chemistry and established voltage values
+        WHEN: Setting low voltage above max voltage (cascade violation)
+        THEN: Should detect and correct the validation violation
+        """
         model = realistic_model
         model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
 
@@ -945,7 +1232,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert corrected_value is not None
 
     def test_bitmask_fallback_coverage(self, empty_model) -> None:
-        """Test bitmask handling in doc_dict parsing."""
+        """
+        Test bitmask handling in doc_dict parsing.
+
+        GIVEN: A model and doc_dict using Bitmask instead of values
+        WHEN: Initializing possible choices from bitmask parameter
+        THEN: Should correctly parse bitmask entries into protocol choices
+        """
         model = empty_model
 
         # Test with Bitmask instead of values
@@ -961,7 +1254,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert "All" in rc_protocols
 
     def test_doc_dict_missing_values_error_path(self, empty_model) -> None:
-        """Test error paths when doc_dict has parameter but no values or bitmask."""
+        """
+        Test error paths when doc_dict has parameter but no values or bitmask.
+
+        GIVEN: A model and doc_dict with parameters lacking values/bitmask
+        WHEN: Initializing possible choices with incomplete parameter definitions
+        THEN: Should gracefully handle missing data and use fallbacks
+        """
         model = empty_model
 
         # Create a doc_dict with parameter that has neither values nor Bitmask
@@ -977,7 +1276,13 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert isinstance(model._possible_choices, dict)
 
     def test_pwm_output_protocol_choices(self, realistic_model) -> None:
-        """Test PWM output protocol choices for ESC."""
+        """
+        Test PWM output protocol choices for ESC.
+
+        GIVEN: A model with MOT_PWM_TYPE initialized
+        WHEN: Updating ESC connection choices for PWM outputs
+        THEN: Protocol choices should include motor PWM types
+        """  # pylint: disable=duplicate-code  # Common connection test pattern
         model = realistic_model
         model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}})
 
@@ -988,9 +1293,16 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         # Should use motor PWM types for PWM outputs
         assert len(protocol_choices) > 0
         assert "Normal" in protocol_choices or "DShot600" in protocol_choices
+        # pylint: enable=duplicate-code
 
     def test_comprehensive_connection_type_coverage(self, realistic_model) -> None:
-        """Test comprehensive coverage of connection type handling."""
+        """
+        Test comprehensive coverage of connection type handling.
+
+        GIVEN: A model with initialized choices and various components
+        WHEN: Testing all major connection types for different components
+        THEN: Each component/connection combination should have appropriate protocol choices
+        """
         model = realistic_model
         model.init_possible_choices({})
 

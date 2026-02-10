@@ -5,13 +5,14 @@ Tests for the frontend_tkinter_flightcontroller_info.py file.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from unittest.mock import Mock, patch
+from pathlib import Path
+from unittest.mock import ANY, Mock, patch
 
 import pytest
 
@@ -57,9 +58,15 @@ def configured_flight_controller() -> Mock:
 
 
 @pytest.fixture
-def presenter_with_flight_controller(configured_flight_controller: Mock) -> FlightControllerInfoPresenter:
+def presenter_with_flight_controller(configured_flight_controller: Mock, tmp_path: Path) -> FlightControllerInfoPresenter:
     """Create a presenter configured with a realistic flight controller for user testing."""
-    return FlightControllerInfoPresenter(configured_flight_controller)
+    return FlightControllerInfoPresenter(configured_flight_controller, tmp_path)
+
+
+@pytest.fixture
+def test_vehicle_dir(tmp_path: Path) -> Path:
+    """Create a test vehicle directory for window tests."""
+    return tmp_path
 
 
 # ==================== PRESENTER TESTS ====================
@@ -127,7 +134,7 @@ class TestFlightControllerInfoPresenter:
         result = presenter_with_flight_controller.download_parameters(progress_callback)
 
         # Then
-        configured_flight_controller.download_params.assert_called_once_with(progress_callback)
+        configured_flight_controller.download_params.assert_called_once_with(progress_callback, ANY, ANY)
         assert result is not None
         assert isinstance(result, dict)
         assert "PARAM1" in result
@@ -147,7 +154,7 @@ class TestFlightControllerInfoPresenter:
         result = presenter_with_flight_controller.download_parameters()
 
         # Then
-        configured_flight_controller.download_params.assert_called_once_with(None)
+        configured_flight_controller.download_params.assert_called_once_with(None, ANY, ANY)
         assert result is not None
         assert isinstance(result, dict)
 
@@ -260,7 +267,7 @@ class TestFlightControllerInfoPresenter:
             progress_updates.append((current, total))
 
         # Configure mock to simulate calling the progress callback
-        def mock_download_with_progress(callback) -> tuple[dict, dict]:
+        def mock_download_with_progress(callback, _param_file=None, _default_file=None) -> tuple[dict, dict]:
             if callback:
                 callback(1, 3)
                 callback(2, 3)
@@ -278,7 +285,9 @@ class TestFlightControllerInfoPresenter:
         assert progress_updates[1] == (2, 3)
         assert progress_updates[2] == (3, 3)
 
-    def test_user_can_work_with_various_flight_controller_info_formats(self, configured_flight_controller: Mock) -> None:
+    def test_user_can_work_with_various_flight_controller_info_formats(
+        self, configured_flight_controller: Mock, tmp_path: Path
+    ) -> None:
         """
         Test that users can work with various flight controller information formats.
 
@@ -297,7 +306,7 @@ class TestFlightControllerInfoPresenter:
         configured_flight_controller.info.get_info.return_value = complex_info
 
         # When
-        presenter = FlightControllerInfoPresenter(configured_flight_controller)
+        presenter = FlightControllerInfoPresenter(configured_flight_controller, tmp_path)
         result = presenter.get_info_data()
 
         # Then
@@ -320,7 +329,7 @@ class TestFlightControllerInfoWindow:
     """
 
     def test_user_can_create_flight_controller_info_window(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users can create a flight controller info window successfully.
@@ -349,13 +358,13 @@ class TestFlightControllerInfoWindow:
             ):
                 # When
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
 
                 # Then
                 assert window.presenter.flight_controller == configured_flight_controller
 
     def test_user_can_access_parameter_defaults_through_window(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users can access parameter defaults through the window interface.
@@ -382,7 +391,7 @@ class TestFlightControllerInfoWindow:
                 patch("tkinter.Tk.after"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
 
                 # Download parameters to make them available
                 window.presenter.download_parameters()
@@ -395,7 +404,7 @@ class TestFlightControllerInfoWindow:
                 assert isinstance(result, dict)
 
     def test_user_can_trigger_parameter_download_from_window(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users can trigger parameter download from the window.
@@ -422,7 +431,7 @@ class TestFlightControllerInfoWindow:
                 patch("tkinter.messagebox.showerror") as mock_showerror,
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.root = Mock()
                 window.progress_frame = Mock()
                 window.progress_label = Mock()
@@ -436,7 +445,7 @@ class TestFlightControllerInfoWindow:
                 mock_showerror.assert_not_called()
 
     def test_user_experiences_graceful_handling_of_download_failures(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that download failures are handled gracefully for users.
@@ -464,7 +473,7 @@ class TestFlightControllerInfoWindow:
                 patch("tkinter.messagebox.showerror") as mock_showerror,
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.root = Mock()
                 window.progress_frame = Mock()
                 window.progress_label = Mock()
@@ -478,7 +487,7 @@ class TestFlightControllerInfoWindow:
                 mock_showerror.assert_called_once()
 
     def test_user_sees_formatted_flight_controller_information_display(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users see properly formatted flight controller information.
@@ -507,7 +516,7 @@ class TestFlightControllerInfoWindow:
                 patch("tkinter.Tk.after"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.main_frame = Mock()
                 window.info_frame = mock_ttk_frame
 
@@ -520,7 +529,7 @@ class TestFlightControllerInfoWindow:
                 configured_flight_controller.info.get_info.assert_called_once()
 
     def test_user_can_view_multiple_information_categories(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User can view multiple categories of flight controller information.
@@ -557,7 +566,7 @@ class TestFlightControllerInfoWindow:
                 patch("tkinter.Tk.after"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.main_frame = Mock()
                 window.info_frame = Mock()
 
@@ -570,7 +579,7 @@ class TestFlightControllerInfoWindow:
                 assert configured_flight_controller.info.format_display_value.call_count >= len(diverse_info)
 
     def test_user_experiences_smooth_progress_feedback_during_download(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User experiences smooth progress feedback during parameter download.
@@ -606,7 +615,7 @@ class TestFlightControllerInfoWindow:
             ):
                 # Create window and mock progress components
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.presenter.download_parameters = Mock(side_effect=mock_download_with_progress)
                 window.root = Mock()
                 window.progress_bar = Mock()
@@ -626,7 +635,7 @@ class TestFlightControllerInfoWindow:
                 assert progress_calls[4] == (5, 5)
 
     def test_user_can_access_downloaded_parameter_data_after_completion(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User can access downloaded parameter data after completion.
@@ -645,7 +654,7 @@ class TestFlightControllerInfoWindow:
         }
 
         # Configure presenter with downloaded parameters
-        presenter = FlightControllerInfoPresenter(configured_flight_controller)
+        presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
         param_dict = ParDict()
         for name, value in expected_params.items():
             param_dict[name] = Par(value, f"Test parameter {name}")
@@ -677,7 +686,7 @@ class TestFlightControllerInfoWindow:
                     assert result[name].value == expected_value
 
     def test_user_sees_informative_error_message_on_connection_failure(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User sees informative error message when connection fails during download.
@@ -708,7 +717,7 @@ class TestFlightControllerInfoWindow:
                 patch("logging.error") as mock_logging,
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.root = Mock()
                 window.progress_frame = Mock()
                 window.progress_label = Mock()
@@ -731,7 +740,7 @@ class TestFlightControllerInfoWindow:
                 window.root.destroy.assert_called_once()
 
     def test_user_can_view_nested_information_structures(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User can view flight controller information with nested data structures.
@@ -772,7 +781,7 @@ class TestFlightControllerInfoWindow:
                 patch("tkinter.Tk.after"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.main_frame = Mock()
                 window.info_frame = Mock()
 
@@ -786,7 +795,7 @@ class TestFlightControllerInfoWindow:
                 assert configured_flight_controller.info.format_display_value.call_count == len(nested_info)
 
     def test_user_experiences_responsive_ui_during_long_download(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User experiences responsive UI during long parameter downloads.
@@ -800,7 +809,7 @@ class TestFlightControllerInfoWindow:
         # Given
         stack, patches = mock_tkinter_context()
 
-        def mock_long_download(callback) -> tuple[dict, dict]:
+        def mock_long_download(callback, _param_file=None, _default_file=None) -> tuple[dict, dict]:
             # Simulate a long download with many parameters
             total_params = 50
             for current in range(1, total_params + 1):
@@ -823,7 +832,7 @@ class TestFlightControllerInfoWindow:
                 patch("tkinter.Tk.after"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.root = Mock()
                 window.progress_bar = Mock()
                 window.progress_label = Mock()
@@ -853,7 +862,7 @@ class TestFlightControllerParameterWorkflow:
     """Test user workflows around flight controller parameter handling in BDD style."""
 
     def test_user_can_retrieve_parameter_defaults_after_successful_download(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User can retrieve parameter defaults after successful download.
@@ -886,7 +895,7 @@ class TestFlightControllerParameterWorkflow:
                 stack.enter_context(patch_obj)
 
             window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-            window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+            window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
             window.presenter.download_parameters = Mock(side_effect=mock_successful_download)
             window.root = Mock()
             window.progress_bar = Mock()
@@ -909,7 +918,7 @@ class TestFlightControllerParameterWorkflow:
                 assert name in result
 
     def test_user_receives_empty_parameter_defaults_when_no_parameters_downloaded(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User receives empty parameter defaults when no parameters have been downloaded.
@@ -927,7 +936,7 @@ class TestFlightControllerParameterWorkflow:
                 stack.enter_context(patch_obj)
 
             window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-            window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+            window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
 
             # When
             result = window.get_param_default_values()
@@ -942,7 +951,7 @@ class TestFlightControllerErrorHandling:
     """Test error handling scenarios for flight controller operations in BDD style."""
 
     def test_user_receives_helpful_message_on_parameter_download_timeout(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User receives helpful message when parameter download times out.
@@ -966,7 +975,7 @@ class TestFlightControllerErrorHandling:
 
             with patch("tkinter.messagebox.showerror") as mock_showerror:
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.presenter.download_parameters = Mock(side_effect=mock_timeout_download)
                 window.root = Mock()
                 window.progress_frame = Mock()
@@ -987,7 +996,7 @@ class TestFlightControllerErrorHandling:
                 window.root.destroy.assert_called_once()
 
     def test_user_sees_informative_display_when_flight_controller_info_unavailable(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         User sees informative display when flight controller info is unavailable.
@@ -1009,7 +1018,7 @@ class TestFlightControllerErrorHandling:
 
             with patch("tkinter.ttk.Frame"), patch("tkinter.ttk.Label"), patch("tkinter.ttk.Entry") as mock_entry:
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
                 window.main_frame = Mock()
                 window.info_frame = Mock()
 
@@ -1027,7 +1036,7 @@ class TestFlightControllerInfoWindowInitialization:  # pylint: disable=too-few-p
     """Test window initialization and setup behavior in BDD style."""
 
     def test_user_experiences_proper_window_initialization_and_setup(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users experience proper window initialization and setup.
@@ -1060,7 +1069,7 @@ class TestFlightControllerInfoWindowInitialization:  # pylint: disable=too-few-p
                 patch.object(mock_root, "after") as mock_after,
             ):
                 # When
-                window = FlightControllerInfoWindow(configured_flight_controller)
+                window = FlightControllerInfoWindow(configured_flight_controller, test_vehicle_dir)
 
                 # Then - Window is properly initialized
                 mock_tk.assert_called_once()
@@ -1089,7 +1098,7 @@ class TestFlightControllerInfoProgressBarErrorHandling:
     """Test progress bar error handling in BDD style."""
 
     def test_user_sees_graceful_handling_when_progress_bar_widgets_are_destroyed(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users see graceful handling when progress bar widgets are destroyed.
@@ -1115,7 +1124,7 @@ class TestFlightControllerInfoProgressBarErrorHandling:
                 patch("tkinter.Tk.mainloop"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
 
                 # Simulate progress bar widget being destroyed
                 window.progress_bar = None
@@ -1126,7 +1135,7 @@ class TestFlightControllerInfoProgressBarErrorHandling:
                 # Then - No errors occur, method returns early safely
 
     def test_user_sees_graceful_handling_when_window_lift_fails_due_to_tcl_error(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users see graceful handling when window lift fails due to TclError.
@@ -1152,7 +1161,7 @@ class TestFlightControllerInfoProgressBarErrorHandling:
                 patch("tkinter.Tk.mainloop"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
 
                 # Set up mock widgets
                 mock_progress_bar = Mock()
@@ -1178,7 +1187,7 @@ class TestFlightControllerInfoProgressBarErrorHandling:
                 mock_progress_bar.__setitem__.assert_not_called()
 
     def test_user_sees_progress_bar_hidden_when_download_completes(
-        self, mock_tkinter_context, configured_flight_controller: Mock
+        self, mock_tkinter_context, configured_flight_controller: Mock, test_vehicle_dir: Path
     ) -> None:
         """
         Test that users see progress bar hidden when download completes.
@@ -1204,7 +1213,7 @@ class TestFlightControllerInfoProgressBarErrorHandling:
                 patch("tkinter.Tk.mainloop"),
             ):
                 window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
-                window.presenter = FlightControllerInfoPresenter(configured_flight_controller)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, test_vehicle_dir)
 
                 # Set up mock widgets
                 mock_progress_bar = Mock()
@@ -1223,3 +1232,123 @@ class TestFlightControllerInfoProgressBarErrorHandling:
 
                 # Then - Progress bar is hidden
                 mock_progress_frame.pack_forget.assert_called_once()
+
+
+class TestFlightControllerInfoIntegration:
+    """Integration tests for flight controller info with file system operations."""
+
+    def test_parameter_files_are_created_in_vehicle_directory(
+        self, configured_flight_controller: Mock, tmp_path: Path
+    ) -> None:
+        """
+        Test that parameter files are created in the correct vehicle directory.
+
+        GIVEN: A vehicle directory path and a flight controller ready for parameter download
+        WHEN: The presenter downloads parameters with file paths
+        THEN: The download_params is called with correct file paths in vehicle directory
+        AND: The file paths contain complete.param and 00_default.param in vehicle directory
+        """
+        # Given
+        vehicle_dir = tmp_path / "test_vehicle"
+        vehicle_dir.mkdir()
+
+        presenter = FlightControllerInfoPresenter(configured_flight_controller, vehicle_dir)
+
+        # When
+        presenter.download_parameters()
+
+        # Then - Verify download_params was called with correct file paths
+        configured_flight_controller.download_params.assert_called_once()
+        call_args = configured_flight_controller.download_params.call_args
+
+        # Extract the file path arguments (positions 1 and 2)
+        complete_param_path = call_args[0][1]
+        default_param_path = call_args[0][2]
+
+        # Verify paths are in the vehicle directory
+        assert complete_param_path == vehicle_dir / "complete.param"
+        assert default_param_path == vehicle_dir / "00_default.param"
+
+        # Verify paths use the correct filenames
+        assert complete_param_path.name == "complete.param"
+        assert default_param_path.name == "00_default.param"
+
+        # Verify paths point to the vehicle directory
+        assert complete_param_path.parent == vehicle_dir
+        assert default_param_path.parent == vehicle_dir
+
+    def test_parameter_download_with_progress_creates_correct_file_paths(
+        self, configured_flight_controller: Mock, tmp_path: Path
+    ) -> None:
+        """
+        Test that parameter download with progress callback uses correct file paths.
+
+        GIVEN: A vehicle directory and a progress callback function
+        WHEN: Parameters are downloaded with progress tracking
+        THEN: File paths in vehicle directory are passed to backend
+        AND: Progress callback is also passed correctly
+        """
+        # Given
+        vehicle_dir = tmp_path / "vehicle_with_progress"
+        vehicle_dir.mkdir()
+        presenter = FlightControllerInfoPresenter(configured_flight_controller, vehicle_dir)
+
+        progress_updates = []
+
+        def progress_callback(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # When
+        presenter.download_parameters(progress_callback)
+
+        # Then - Verify all three arguments were passed correctly
+        configured_flight_controller.download_params.assert_called_once_with(
+            progress_callback,
+            vehicle_dir / "complete.param",
+            vehicle_dir / "00_default.param",
+        )
+
+    def test_window_initialization_uses_vehicle_directory_for_file_paths(
+        self, mock_tkinter_context, configured_flight_controller: Mock, tmp_path: Path
+    ) -> None:
+        """
+        Test that FlightControllerInfoWindow correctly uses vehicle_dir for parameter files.
+
+        GIVEN: A FlightControllerInfoWindow initialized with a specific vehicle directory
+        WHEN: The window downloads parameters
+        THEN: The backend receives file paths in the correct vehicle directory
+        """
+        # Given
+        vehicle_dir = tmp_path / "window_vehicle_dir"
+        vehicle_dir.mkdir()
+        stack, patches = mock_tkinter_context()
+
+        with stack:
+            for patch_obj in patches:
+                stack.enter_context(patch_obj)
+
+            with (
+                patch("tkinter.ttk.Frame"),
+                patch("tkinter.ttk.Label"),
+                patch("tkinter.ttk.Entry"),
+                patch("tkinter.ttk.Progressbar"),
+                patch.object(FlightControllerInfoWindow, "_create_info_display"),
+                patch("tkinter.Tk.mainloop"),
+                patch("tkinter.Tk.after"),
+            ):
+                # When
+                window = FlightControllerInfoWindow.__new__(FlightControllerInfoWindow)
+                window.presenter = FlightControllerInfoPresenter(configured_flight_controller, vehicle_dir)
+
+                # Simulate parameter download
+                window.presenter.download_parameters()
+
+                # Then - Verify correct paths were used
+                call_args = configured_flight_controller.download_params.call_args
+                complete_param_path = call_args[0][1]
+                default_param_path = call_args[0][2]
+
+                assert complete_param_path.parent == vehicle_dir
+                assert default_param_path.parent == vehicle_dir
+                assert complete_param_path.name == "complete.param"
+                assert default_param_path.name == "00_default.param"

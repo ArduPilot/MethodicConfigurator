@@ -5,7 +5,7 @@ Data-dependent part of the component editor GUI.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -200,6 +200,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 f"{' > '.join(path)}",
             )
             cb.config(foreground=fg_color)
+            cb.config(width=20)
 
             cb.bind("<FocusOut>", on_validate_combobox)
             cb.bind("<KeyRelease>", on_validate_combobox)
@@ -311,7 +312,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
 
 # pylint: disable=duplicate-code
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")

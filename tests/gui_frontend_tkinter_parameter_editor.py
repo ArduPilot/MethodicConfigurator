@@ -8,7 +8,7 @@ Tests verify that the GUI initializes correctly and displays expected elements.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -82,47 +82,6 @@ class TestParameterEditorWindow:
         # 5. Verify GUI behavior
 
         pytest.skip("Full GUI test requires display environment")
-
-    def test_display_usage_popup_window(self, mocker) -> None:
-        """Test that the usage popup window can be created."""
-        # Create a mock parent window
-        parent = tk.Tk()
-        parent.withdraw()  # Hide the parent window
-
-        try:
-            # Mock the UsagePopupWindow.display method to avoid actually showing the window
-            mock_display = mocker.patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.display"
-            )
-
-            # Call the method
-            ParameterEditorWindow._display_usage_popup_window(parent)  # pylint: disable=protected-access
-
-            # Verify that UsagePopupWindow.display was called
-            mock_display.assert_called_once()
-            args = mock_display.call_args[0]
-
-            # Check that the correct arguments were passed
-            assert len(args) >= 5  # parent, window, title, key, size
-            assert "How to use the parameter file editor and uploader window" in args[2]  # title
-            assert args[3] == "parameter_editor"  # key
-            assert args[4] == "690x360"  # size
-
-        finally:
-            parent.destroy()
-
-    def test_user_skips_usage_popup_when_parent_is_gone(self, mocker) -> None:
-        """Usage instructions are not shown if the parent window vanished."""
-        parent = MagicMock()
-        parent.winfo_exists.return_value = False
-
-        mock_display = mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.display"
-        )
-
-        ParameterEditorWindow._display_usage_popup_window(parent)  # pylint: disable=protected-access
-
-        mock_display.assert_not_called()
 
     def test_show_about_window(self, mocker) -> None:  # pylint: disable=too-many-locals
         """Test that the about window can be created."""
@@ -255,7 +214,7 @@ class TestParameterEditorWindow:
                 self.pack_called = True
 
         def fake_get_setting(key: str) -> object:
-            return {"gui_complexity": "advanced", "annotate_docs_into_param_files": False}.get(key, False)
+            return {"gui_complexity": "normal", "annotate_docs_into_param_files": False}.get(key, False)
 
         def create_progress_window(*_args, **_kwargs) -> MagicMock:
             progress = MagicMock()

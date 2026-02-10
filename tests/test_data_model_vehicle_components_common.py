@@ -5,7 +5,7 @@ Common test utilities and fixtures for vehicle components data model tests.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -140,6 +140,7 @@ SAMPLE_DOC_DICT = {
     "BATT_MONITOR": {"values": {"0": "Disabled", "4": "Analog Voltage and Current"}},
     "MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}},
     "GPS_TYPE": {"values": {"0": "None", "2": "uBlox"}},
+    # pylint: disable=duplicate-code  # Shared test fixture
     "SERIAL1_PROTOCOL": {
         "values": {
             "1": "MAVLink1",
@@ -148,6 +149,7 @@ SAMPLE_DOC_DICT = {
             "23": "RCIN",
         }
     },
+    # pylint: enable=duplicate-code
 }
 
 
@@ -177,7 +179,7 @@ class ComponentDataModelFixtures:
     @staticmethod
     def create_simple_schema() -> dict[str, Any]:
         """Create a simplified schema for testing."""
-        return {
+        return {  # pylint: disable=duplicate-code  # Minimal schema structure for tests
             "properties": {
                 "Components": {
                     "properties": {
@@ -195,6 +197,7 @@ class ComponentDataModelFixtures:
                     }
                 }
             },
+            # pylint: enable=duplicate-code
             "definitions": {
                 "product": {
                     "properties": {
@@ -326,29 +329,63 @@ class CommonAssertions:
 class BasicTestMixin:
     """Mixin class providing common test methods for basic functionality."""
 
-    def test_init_with_data(self, basic_model) -> None:
-        """Test initialization with data."""
+    def test_user_can_initialize_model_with_basic_data(self, basic_model) -> None:
+        """
+        User can initialize data model with basic component data.
+
+        GIVEN: Basic component data with Battery, Frame, and Flight Controller
+        WHEN: Model is initialized
+        THEN: Model structure should be valid
+        AND: Basic components should be present
+        AND: Format version should be set correctly
+        """
         CommonAssertions.assert_basic_structure(basic_model)
         CommonAssertions.assert_basic_components(basic_model)
         data = basic_model.get_component_data()
         assert data["Format version"] == 1
 
-    def test_init_empty(self, empty_model) -> None:
-        """Test initialization with no data."""
+    def test_user_can_initialize_empty_model(self, empty_model) -> None:
+        """
+        User can initialize data model with minimal data.
+
+        GIVEN: Empty component data
+        WHEN: Model is initialized
+        THEN: Model structure should be valid
+        AND: Auto-populated components should be present
+        """
         CommonAssertions.assert_basic_structure(empty_model)
         CommonAssertions.assert_empty_components(empty_model)
 
-    def test_get_component_data(self, basic_model) -> None:
-        """Test getting component data."""
+    def test_user_can_retrieve_component_data(self, basic_model) -> None:
+        """
+        User can retrieve complete component data from model.
+
+        GIVEN: Initialized data model
+        WHEN: Retrieving component data
+        THEN: Data structure should be valid
+        """
         CommonAssertions.assert_basic_structure(basic_model)
 
-    def test_basic_component_data_structure(self, basic_model, empty_model) -> None:
-        """Test basic component data structure validation."""
+    def test_system_validates_component_data_structure(self, basic_model, empty_model) -> None:
+        """
+        System validates component data structure for all model types.
+
+        GIVEN: Both basic and empty models
+        WHEN: Checking data structure
+        THEN: Both should have valid structure
+        """
         CommonAssertions.assert_basic_structure(basic_model)
         CommonAssertions.assert_basic_structure(empty_model)
 
-    def test_get_all_components(self, basic_model, empty_model) -> None:
-        """Test getting all components."""
+    def test_user_can_retrieve_all_components(self, basic_model, empty_model) -> None:
+        """
+        User can retrieve all components from model.
+
+        GIVEN: Models with basic or empty data
+        WHEN: Retrieving all components
+        THEN: Auto-populated components should be present
+        AND: Component names should match expected set
+        """
         # Test with basic model - should have auto-populated components
         components = basic_model.get_all_components()
         expected_auto_components = {"Battery", "Frame", "Flight Controller"}
@@ -363,15 +400,31 @@ class BasicTestMixin:
 class RealisticDataTestMixin:
     """Mixin class providing common test methods for realistic data functionality."""
 
-    def test_realistic_vehicle_component_access(self, realistic_model) -> None:
-        """Test accessing components from realistic vehicle data."""
+    def test_user_can_access_realistic_vehicle_components(self, realistic_model) -> None:
+        """
+        User can access all components from realistic vehicle configuration.
+
+        GIVEN: Realistic vehicle data with complete component specifications
+        WHEN: Accessing component data
+        THEN: Flight controller data should be accessible
+        AND: Frame specifications should be accessible
+        AND: Battery specifications should be accessible
+        AND: Motor specifications should be accessible
+        """
         CommonAssertions.assert_realistic_flight_controller(realistic_model)
         CommonAssertions.assert_realistic_frame_specs(realistic_model)
         CommonAssertions.assert_realistic_battery_specs(realistic_model)
         CommonAssertions.assert_realistic_motor_specs(realistic_model)
 
-    def test_has_components_check(self, realistic_model, empty_model) -> None:
-        """Test checking if data model has components."""
+    def test_system_detects_when_model_has_components(self, realistic_model, empty_model) -> None:
+        """
+        System correctly detects whether model has components.
+
+        GIVEN: Models with realistic or empty data
+        WHEN: Checking if components exist
+        THEN: Realistic model should have components
+        AND: Empty model should have auto-populated components
+        """
         # Realistic data should have components
         assert realistic_model.has_components()
 

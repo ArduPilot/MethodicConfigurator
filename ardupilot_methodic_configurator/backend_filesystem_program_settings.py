@@ -3,13 +3,14 @@ Manages program settings at the filesystem level.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
 from contextlib import suppress as contextlib_suppress
+from dataclasses import dataclass
 from glob import glob as glob_glob
 from importlib.resources import files as importlib_files
 from json import dump as json_dump
@@ -31,6 +32,36 @@ from platformdirs import site_config_dir, user_config_dir
 from ardupilot_methodic_configurator import _
 
 
+@dataclass(frozen=True)
+class UsagePopupWindowDefinition:
+    """Definition for a registered UsagePopupWindow."""
+
+    description: str
+
+
+USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
+    # Element insertion order determines the order in which they appear in the settings and About dialogs
+    "workflow_explanation": UsagePopupWindowDefinition(
+        description=_("General AMC workflow"),
+    ),
+    "component_editor": UsagePopupWindowDefinition(
+        description=_("Component editor window introduction"),
+    ),
+    "component_editor_validation": UsagePopupWindowDefinition(
+        description=_("Component editor window data validation"),
+    ),
+    "parameter_editor": UsagePopupWindowDefinition(
+        description=_("Parameter file editor and uploader window"),
+    ),
+    "bitmask_parameter_editor": UsagePopupWindowDefinition(
+        description=_("Bitmask parameter editor usage window"),
+    ),
+    "only_changed_get_uploaded": UsagePopupWindowDefinition(
+        description=_("Only changed parameters get upload explanation"),
+    ),
+}
+
+
 class ProgramSettings:
     """
     A class responsible for managing various settings related to the ArduPilot Methodic Configurator.
@@ -44,7 +75,7 @@ class ProgramSettings:
         pass
 
     @classmethod
-    def _get_settings_defaults(cls) -> dict[str, Union[int, bool, str, float, dict]]:
+    def _get_settings_defaults(cls) -> dict[str, Union[int, bool, str, float, dict, list]]:
         """
         Get the default settings dictionary with dynamically computed paths.
 
@@ -57,12 +88,8 @@ class ProgramSettings:
 
         return {
             "Format version": 1,
-            "display_usage_popup": {
-                "workflow_explanation": True,
-                "component_editor": True,
-                "component_editor_validation": True,
-                "parameter_editor": True,
-            },
+            "display_usage_popup": dict.fromkeys(USAGE_POPUP_WINDOWS, True),
+            "connection_history": [],
             "directory_selection": {
                 "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
                 "new_base_dir": os_path.join(settings_directory, "vehicles"),
@@ -132,6 +159,11 @@ class ProgramSettings:
     def workflow_image_filepath() -> str:
         package_path = importlib_files("ardupilot_methodic_configurator")
         return str(package_path / "images" / "AMC_general_workflow.png")
+
+    @staticmethod
+    def what_gets_uploaded_image_filepath() -> str:
+        package_path = importlib_files("ardupilot_methodic_configurator")
+        return str(package_path / "images" / "what_gets_uploaded.png")
 
     @staticmethod
     def create_new_vehicle_dir(new_vehicle_dir: str) -> str:
@@ -291,6 +323,11 @@ class ProgramSettings:
         return str(package_path / "vehicle_templates")
 
     @staticmethod
+    def get_vehicles_default_dir() -> Path:
+        settings_directory = Path(ProgramSettings._user_config_dir())
+        return settings_directory / "vehicles"
+
+    @staticmethod
     def get_recently_used_dirs() -> tuple[str, str, str]:
         settings_directory = ProgramSettings._user_config_dir()
         vehicles_default_dir = os_path.join(settings_directory, "vehicles")
@@ -311,10 +348,12 @@ class ProgramSettings:
 
     @staticmethod
     def set_display_usage_popup(ptype: str, value: bool) -> None:
-        if ptype in {"workflow_explanation", "component_editor", "component_editor_validation", "parameter_editor"}:
-            settings = ProgramSettings._get_settings_as_dict()
+        settings = ProgramSettings._get_settings_as_dict()
+        if ptype in settings.get("display_usage_popup", {}):
             settings["display_usage_popup"][ptype] = value
             ProgramSettings._set_settings_from_dict(settings)
+        else:
+            logging_error(_("Usage popup type '%s' not found in settings dictionary"), ptype)
 
     @staticmethod
     def get_setting(setting: str) -> Optional[Union[int, bool, str, float]]:
@@ -422,3 +461,63 @@ class ProgramSettings:
         """
         filepath, _error_msg = ProgramSettings.motor_diagram_filepath(frame_class, frame_type)
         return filepath != "" and os_path.exists(filepath)
+
+    @staticmethod
+    def get_connection_history() -> list[str]:
+        """
+        Get the list of previously used connection strings.
+
+        Returns the connection history from settings, filtering out any invalid entries.
+        Only valid string entries are returned.
+
+        Returns:
+            List of connection strings in most-recent-first order (up to 10 items).
+
+        """
+        settings = ProgramSettings._get_settings_as_dict()
+        history = settings.get("connection_history", [])
+
+        if not isinstance(history, list):
+            return []
+
+        return [item for item in history if isinstance(item, str)]
+
+    @staticmethod
+    def store_connection(connection_string: str) -> None:
+        """
+        Save a new connection string to history.
+
+        The history maintains up to 10 most recent connections in chronological order.
+        If the connection already exists, it's moved to the top of the list.
+        Empty strings, whitespace-only strings, and strings longer than 200 characters
+        are ignored.
+
+        Args:
+            connection_string: The connection string to store (max 200 characters).
+
+        """
+        if not connection_string or not connection_string.strip():
+            return
+
+        connection_string = connection_string.strip()
+
+        # Reject connection strings that are too long
+        if len(connection_string) > 200:
+            return
+
+        settings = ProgramSettings._get_settings_as_dict()
+        history = settings.get("connection_history", [])
+        if not isinstance(history, list):
+            logging_error("The ProgramSetting connection_history was not a list")
+            history = []
+
+        if connection_string in history:
+            history.remove(connection_string)
+
+        history.insert(0, connection_string)
+
+        if len(history) > 10:
+            history = history[:10]
+
+        settings["connection_history"] = history
+        ProgramSettings._set_settings_from_dict(settings)

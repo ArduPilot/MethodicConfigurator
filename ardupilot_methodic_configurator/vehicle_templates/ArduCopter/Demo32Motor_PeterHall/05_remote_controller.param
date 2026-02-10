@@ -1,0 +1,9 @@
+ARMING_RUDDER,2
+RC_OPTIONS,32
+RC_PROTOCOLS,1  # Selected in the component editor
+RC10_OPTION,0
+RC6_OPTION,31  # To stop all motors immediately if the vehicle starts moving dangerously
+RC7_OPTION,0
+RC8_OPTION,0
+RC9_OPTION,300
+RSSI_TYPE,0

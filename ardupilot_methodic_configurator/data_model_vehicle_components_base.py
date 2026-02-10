@@ -3,7 +3,7 @@ Data model for vehicle components.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -157,15 +157,23 @@ class ComponentDataModelBase:
 
             # Special handling for list/dict types
             if datatype in (list, dict):
-                logging_error(_("Invalid datatype '%s' for path %s"), value, datatype.__name__, path)
-                return ""
+                type_name = getattr(datatype, "__name__", repr(datatype))
+                logging_warning(
+                    _("Failed to cast value '%s' to %s for path %s: %s"),
+                    value,
+                    type_name,
+                    path,
+                    "list and dict types require structured data",
+                )
+                return self._process_value(path, str(value) if value is not None else None)
 
             # Standard type conversion
             return datatype(value)
 
         except (ValueError, TypeError, AttributeError) as e:
             # Log the error and fall back to the original processing method
-            logging_warning(_("Failed to cast value '%s' to %s for path %s: %s"), value, datatype.__name__, path, e)
+            type_name = getattr(datatype, "__name__", repr(datatype))
+            logging_warning(_("Failed to cast value '%s' to %s for path %s: %s"), value, type_name, path, e)
             return self._process_value(path, str(value) if value is not None else None)
 
     def _process_value(self, path: ComponentPath, value: Union[str, None]) -> ComponentValue:
@@ -261,6 +269,21 @@ class ComponentDataModelBase:
             # These protocols don't require specific hardware connections, so we can safely migrate them
             battery_monitor = self._data.setdefault("Components", {}).setdefault("Battery Monitor", {})
             battery_monitor.setdefault("FC Connection", {})["Type"] = "other"
+
+        # Handle GNSS protocol name migration from older versions
+        # Protocol names were made more descriptive with manufacturer names
+        gnss_protocol_migration = {
+            "SBF": "Septentrio(SBF)",
+            "GSOF": "Trimble(GSOF)",
+            "SBF-DualAntenna": "Septentrio-DualAntenna(SBF)",
+        }
+        gnss_receiver_protocol = (
+            self._data.get("Components", {}).get("GNSS Receiver", {}).get("FC Connection", {}).get("Protocol")
+        )
+        if gnss_receiver_protocol in gnss_protocol_migration:
+            # Migrate to new protocol name
+            gnss_receiver = self._data.setdefault("Components", {}).setdefault("GNSS Receiver", {})
+            gnss_receiver.setdefault("FC Connection", {})["Protocol"] = gnss_protocol_migration[gnss_receiver_protocol]
 
         # Merge existing data onto default structure (preserves existing values)
         self._data = self._deep_merge_dicts(default_structure, self._data)

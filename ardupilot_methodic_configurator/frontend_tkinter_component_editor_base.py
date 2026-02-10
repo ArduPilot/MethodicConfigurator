@@ -5,7 +5,7 @@ Component editor GUI that is not data dependent.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -32,12 +32,14 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import C
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
-from ardupilot_methodic_configurator.frontend_tkinter_font import create_scaled_font, get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import ConfirmationPopupWindow, UsagePopupWindow
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (
+    confirm_component_properties,
+    display_component_editor_usage_popup,
+)
 
 
 def argument_parser() -> Namespace:
@@ -290,44 +292,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Check if usage instructions should be displayed."""
         if UsagePopupWindow.should_display("component_editor"):
             # Cast to Tk since we know root is a Tk instance in this context
-            self.root.after(1, lambda: self._display_component_editor_usage_instructions(cast("tk.Tk", self.root)))
-
-    def _display_component_editor_usage_instructions(self, parent: tk.Tk) -> None:
-        """Display usage instructions for the component editor."""
-        # Check if parent window still exists before showing popup
-        if not parent.winfo_exists():
-            return
-
-        # pylint: disable=duplicate-code
-        usage_popup_window = BaseWindow(parent)
-        style = ttk.Style()
-
-        instructions_text = RichText(
-            usage_popup_window.main_frame,
-            wrap=tk.WORD,
-            height=6,
-            bd=0,
-            background=style.lookup("TLabel", "background"),
-            font=create_scaled_font(get_safe_font_config(), 1.2),
-        )
-        # pylint: enable=duplicate-code
-        instructions_text.insert(tk.END, _("1. Describe the properties of the vehicle components in the window below.\n"))
-        instructions_text.insert(tk.END, _("2. Each field has mouse-over tooltips for additional guidance.\n"))
-        instructions_text.insert(tk.END, _("3. Optional fields are marked with gray text and can be left blank.\n"))
-        instructions_text.insert(tk.END, _("4. Scroll to the bottom of the window to ensure all properties are edited.\n"))
-        instructions_text.insert(tk.END, _("5. Press the "))
-        instructions_text.insert(tk.END, _("Save data and start configuration"), "italic")
-        instructions_text.insert(tk.END, _(" button only after verifying that all information is correct.\n"))
-        instructions_text.config(state=tk.DISABLED)
-
-        UsagePopupWindow.display(
-            parent,
-            usage_popup_window,
-            _("How to use the component editor window"),
-            "component_editor",
-            "690x210",
-            instructions_text,
-        )
+            self.root.after(1, lambda: display_component_editor_usage_popup(cast("tk.Tk", self.root)))
 
     def set_component_value_and_update_ui(self, path: ComponentPath, value: str) -> None:
         """Set a component value and update the UI to reflect it."""
@@ -342,7 +307,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         """Set the configuration template name in the data."""
         self.data_model.set_configuration_template(configuration_template)
 
-    def set_values_from_fc_parameters(self, fc_parameters: dict[str, Any], doc: dict[str, Any]) -> None:
+    def set_values_from_fc_parameters(self, fc_parameters: dict[str, float], doc: dict[str, Any]) -> None:
         """
         Process flight controller parameters and update the data model.
 
@@ -539,51 +504,11 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         if error_msg:
             show_error_message(_("Error"), error_msg)
             return
-        if self._confirm_component_properties():
+        if (not ConfirmationPopupWindow.should_display("component_editor_validation")) or confirm_component_properties(
+            cast("tk.Tk", self.root)
+        ):
             self.save_component_json()
             self.root.destroy()
-
-    def _confirm_component_properties(self) -> bool:
-        """Show confirmation dialog for component properties."""
-        if not ConfirmationPopupWindow.should_display("component_editor_validation"):
-            return True
-
-        # Create a popup window similar to the usage instructions
-        validation_popup_window = BaseWindow(cast("tk.Tk", self.root))
-        style = ttk.Style()
-
-        # Create a 20% larger font
-        font_config = get_safe_font_config()
-        larger_font = create_scaled_font(font_config, 1.2)
-
-        confirmation_text = RichText(
-            validation_popup_window.main_frame,
-            wrap=tk.WORD,
-            height=6,
-            bd=0,
-            background=style.lookup("TLabel", "background"),
-            font=larger_font,
-        )
-        confirmation_text.insert(
-            tk.END,
-            _(
-                "ArduPilot Methodic Configurator only operates correctly if all component properties are correct."
-                " ArduPilot parameter values depend on the components used and their connections.\n\n"
-                " Have you used the scrollbar on the right side of the window and "
-                "entered the correct values for all components?"
-            ),
-        )
-        confirmation_text.config(state=tk.DISABLED)
-
-        # Use ConfirmationPopupWindow.display with yes/no buttons
-        return ConfirmationPopupWindow.display(
-            cast("tk.Tk", self.root),
-            validation_popup_window,
-            _("Confirm that all component properties are correct"),
-            "component_editor_validation",
-            "600x220",
-            confirmation_text,
-        )
 
     def save_component_json(self) -> bool:
         """Save component JSON data to file."""
@@ -627,7 +552,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
                 err_msg = self.local_filesystem.remove_created_files_and_vehicle_dir()
                 if err_msg:
                     show_error_message(_("Error"), err_msg)
-                ret = bool(err_msg)
+                    ret = True
             logging_info(_("Changes discarded. No data saved."))
         # Close the window and exit. ret indicates if there was an error earlier (e.g. cleanup failed).
         self.root.destroy()
@@ -720,7 +645,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             return instance
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")

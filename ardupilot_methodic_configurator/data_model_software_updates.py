@@ -5,7 +5,7 @@ Check for software updates and install them if available.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
+SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -14,7 +14,7 @@ import platform
 import re
 from argparse import ArgumentParser
 from logging import basicConfig as logging_basicConfig
-from logging import debug as logging_error
+from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_internet import (
     download_and_install_on_windows,
     download_and_install_pip_release,
+    get_expected_sha256_from_release,
     get_release_info,
     webbrowser_open_url,
 )
@@ -62,6 +63,7 @@ class UpdateManager:
         self.dialog: Optional[UpdateDialog] = None
 
     def _perform_download(self, latest_release: dict[str, Any]) -> bool:
+        result = False
         if platform.system() == "Windows":
             try:
                 # Look for .exe files first
@@ -69,33 +71,41 @@ class UpdateManager:
                     asset for asset in latest_release.get("assets", []) if asset.get("name", "").lower().endswith(".exe")
                 ]
 
+                asset = None
                 if exe_assets:
                     asset = exe_assets[0]  # Use the first .exe file
                 elif latest_release.get("assets"):
                     asset = latest_release["assets"][0]  # Fallback to first asset
+
+                if asset is not None:
+                    expected_sha256 = get_expected_sha256_from_release(latest_release, asset["name"])
+                    result = download_and_install_on_windows(
+                        download_url=asset["browser_download_url"],
+                        file_name=asset["name"],
+                        progress_callback=self.dialog.update_progress if self.dialog else None,
+                        expected_sha256=expected_sha256,
+                    )
                 else:
                     logging_error(_("No suitable assets found for Windows installation"))
-                    return False
-
-                return download_and_install_on_windows(
-                    download_url=asset["browser_download_url"],
-                    file_name=asset["name"],
-                    progress_callback=self.dialog.update_progress if self.dialog else None,
-                )
+                    result = False
             except (KeyError, IndexError) as e:
                 logging_error(_("Error accessing release assets: %s"), e)
-                return False
+                result = False
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logging_error(_("Error during Windows download: %s"), e)
-                return False
+                result = False
+        else:
+            # For Linux/macOS, install from PyPI using pip
+            try:
+                result = (
+                    download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None)
+                    == 0
+                )
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logging_error(_("Error during pip installation: %s"), e)
+                result = False
 
-        try:
-            return (
-                download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None) == 0
-            )
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logging_error(_("Error during pip installation: %s"), e)
-            return False
+        return result
 
     def check_and_update(self, latest_release: dict[str, Any], current_version_str: str) -> bool:
         try:
@@ -153,7 +163,7 @@ def check_for_software_updates() -> bool:
         return False
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     logging_basicConfig(level=logging_getLevelName("DEBUG"), format="%(asctime)s - %(levelname)s - %(message)s")
     logging_warning(
         _(

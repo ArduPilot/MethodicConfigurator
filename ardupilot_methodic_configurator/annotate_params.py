@@ -19,7 +19,7 @@ Supports sorting the parameters
 
 Has unit tests with 88% coverage
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -28,16 +28,16 @@ import argparse
 import glob
 import logging
 import re
-from os import environ as os_environ
 from os import path as os_path
 from sys import exit as sys_exit
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
 import argcomplete
 from argcomplete.completers import FilesCompleter
 from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
 
+from ardupilot_methodic_configurator.backend_internet import download_file_from_url
 from ardupilot_methodic_configurator.data_model_par_dict import PARAM_NAME_MAX_LEN, PARAM_NAME_REGEX, ParDict
 
 # URL of the XML file
@@ -133,11 +133,11 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
-def get_xml_data(  # pylint: disable=too-many-locals, too-many-statements # noqa: PLR0915
+def get_xml_data(
     base_url: str, directory: str, filename: str, vehicle_type: str, fallback_xml_url: Optional[str] = None
 ) -> ET.Element:
     """
-    Fetches XML data from a local file or a URL.
+    Fetch XML data from a local file or a URL.
 
     Args:
         base_url (str): The base URL for fetching the XML file.
@@ -162,62 +162,33 @@ def get_xml_data(  # pylint: disable=too-many-locals, too-many-statements # noqa
             xml_data = file.read()
     else:
         # No locally cached file exists, get it from the internet
-        try:
-            # pylint: disable=import-outside-toplevel
-            from requests import exceptions as requests_exceptions  # type: ignore[import-untyped] # noqa: PLC0415
-            from requests import get as requests_get  # noqa: PLC0415
 
-            # pylint: enable=import-outside-toplevel
-        except ImportError as exc:
-            logging.critical("The requests package was not found")
-            logging.critical("Please install it by running 'pip install requests' in your terminal.")
-            msg = "requests package is not installed"
-            raise SystemExit(msg) from exc
-        # Send a GET request to the URL
-        url = base_url + filename
-        proxies = get_env_proxies()
+        # Build a priority list of URLs to try
+        urls_to_try = []
+        urls_to_try.append(base_url + filename)  # 1. Main URL
+        if fallback_xml_url:
+            urls_to_try.append(fallback_xml_url)  # 2. Fallback
+        # 3. Dev URL (Master branch)
+        urls_to_try.append(BASE_URL + vehicle_type + "/" + PARAM_DEFINITION_XML_FILE)
+
+        # Try to download from each URL until one works
+        success = False
+        for url in urls_to_try:
+            logging.info("Attempting download from: %s", url)
+            if download_file_from_url(url, file_path):
+                success = True
+                break
+
+        if not success:
+            logging.critical("Unable to fetch online XML documentation from any source.")
+            msg = "Download failed."
+            raise SystemExit(msg)
+
         try:
-            response = requests_get(url, timeout=5, proxies=proxies) if proxies else requests_get(url, timeout=5)
-            if response.status_code != 200:
-                logging.warning("Remote URL: %s", url)
-                msg = f"HTTP status code {response.status_code}"
-                raise requests_exceptions.RequestException(msg)
-        except requests_exceptions.RequestException as e:
-            logging.warning("Unable to fetch XML data: %s", e)
-            # Send a GET request to the URL to the fallback (DEV) URL
-            try:
-                if fallback_xml_url is None:
-                    msg = "No fallback XML URL provided."
-                    raise ValueError(msg) from e
-                url = fallback_xml_url
-                logging.warning("Falling back to the latest stable release XML file: %s", url)
-                response = requests_get(url, timeout=5, proxies=proxies)
-                if response.status_code != 200:
-                    logging.warning("Remote URL: %s", url)
-                    msg = f"HTTP status code {response.status_code}"
-                    raise requests_exceptions.RequestException(msg)
-            except (ValueError, requests_exceptions.RequestException) as ex:
-                logging.warning("Unable to fetch XML data: %s", ex)
-                try:
-                    url = BASE_URL + vehicle_type + "/" + PARAM_DEFINITION_XML_FILE
-                    logging.warning("Falling back to the DEV XML file: %s", url)
-                    response = requests_get(url, timeout=5, proxies=proxies)
-                    if response.status_code != 200:
-                        logging.critical("Remote URL: %s", url)
-                        msg = f"HTTP status code {response.status_code}"
-                        raise requests_exceptions.RequestException(msg)
-                except requests_exceptions.RequestException as exp:
-                    logging.critical("Unable to fetch XML data: %s", exp)
-                    msg = "Unable to fetch online XML documentation."
-                    msg += f"\nDownload it manually from {url} and"
-                    msg += f"\nplace it in the {directory} directory"
-                    raise SystemExit(msg) from exp
-        # Get the text content of the response
-        xml_data = response.text
-        try:
-            # Write the content to a file
-            with open(os_path.join(directory, filename), "w", encoding="utf-8") as file:
-                file.write(xml_data)
+            # Write the content to a file is handled by download_file_from_url
+            # We just need to read it back
+            with open(file_path, encoding="utf-8") as file:
+                xml_data = file.read()
         except PermissionError as e:
             logging.critical("Permission denied to write XML data to file: %s", e)
             msg = "permission denied to write online XML documentation to file"
@@ -225,23 +196,6 @@ def get_xml_data(  # pylint: disable=too-many-locals, too-many-statements # noqa
 
     # Parse the XML data
     return DET.fromstring(xml_data)  # type: ignore[no-any-return]
-
-
-def get_env_proxies() -> Union[dict[str, str], None]:
-    proxies_env = {
-        "http": os_environ.get("HTTP_PROXY") or os_environ.get("http_proxy"),
-        "https": os_environ.get("HTTPS_PROXY") or os_environ.get("https_proxy"),
-        "no_proxy": os_environ.get("NO_PROXY") or os_environ.get("no_proxy"),
-    }
-    # Remove None values
-    proxies_dict: dict[str, str] = {k: v for k, v in proxies_env.items() if v is not None}
-    # define as None if no proxies are defined in the OS environment variables
-    proxies = proxies_dict if proxies_dict else None
-    if proxies:
-        logging.info("Proxies: %s", proxies)
-    else:
-        logging.debug("Proxies: %s", proxies)
-    return proxies
 
 
 def load_default_param_file(directory: str) -> ParDict:

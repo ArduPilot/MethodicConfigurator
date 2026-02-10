@@ -5,7 +5,7 @@ Tests for the frontend_tkinter_pair_tuple_combobox.py file.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -237,11 +237,9 @@ class TestPairTupleComboboxTooltip(unittest.TestCase):
         self.combobox.winfo_id = MagicMock(return_value=12345)
         # Mock current combo style
         self.combobox.cget = MagicMock(
-            side_effect=lambda arg: "TCombobox"
-            if arg == "style"
-            else ("Value 1", "Value 2", "Value 3")
-            if arg == "values"
-            else None
+            side_effect=lambda arg: (
+                "TCombobox" if arg == "style" else ("Value 1", "Value 2", "Value 3") if arg == "values" else None
+            )
         )
 
         # Mock the configure method on the combobox

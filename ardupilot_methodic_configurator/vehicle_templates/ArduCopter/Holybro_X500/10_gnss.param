@@ -1,9 +1,9 @@
 BRD_BOOT_DELAY,0
 BRD_SAFETY_DEFLT,0  # The button is broken on this vehicle
-CAN_D1_PROTOCOL,0
-CAN_P1_DRIVER,0
+CAN_D1_PROTOCOL,0  # Nothing connected to CAN1
+CAN_P1_DRIVER,0  # Nothing connected to CAN1
 GPS_AUTO_SWITCH,0
-GPS1_GNSS_MODE,7
+GPS1_GNSS_MODE,7  # Limit the number of constellations, to make sure the update rate does not drop below 5Hz
 GPS1_POS_X,0
 GPS1_POS_Y,0
 GPS1_POS_Z,0

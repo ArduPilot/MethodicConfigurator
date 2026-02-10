@@ -5,7 +5,7 @@ Tests for the ComponentTemplateManager class.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -108,6 +108,10 @@ class TestComponentTemplateManager:
 
         # Setup mock for template manager
         template_manager.template_manager.load_component_templates.return_value = {"TestComponent": []}
+        template_manager.template_manager.save_component_templates.return_value = (
+            False,
+            "/test/path/user_vehicle_components_template.json",
+        )
 
         # Call the method
         template_manager.save_component_as_template("TestComponent")
@@ -138,6 +142,10 @@ class TestComponentTemplateManager:
         # Setup mock for template manager with existing template
         existing_templates = {"TestComponent": [{"name": "Existing Template", "data": {"old": "data"}}]}
         template_manager.template_manager.load_component_templates.return_value = existing_templates
+        template_manager.template_manager.save_component_templates.return_value = (
+            False,
+            "/test/path/user_vehicle_components_template.json",
+        )
 
         # Call the method
         template_manager.save_component_as_template("TestComponent")
@@ -269,6 +277,10 @@ class TestComponentTemplateManager:
         # When we load templates, the system and user templates will be merged
         merged_templates = {"TestComponent": [{"name": "System Template", "data": {"Model": "Original", "Version": "1.0"}}]}
         template_manager.template_manager.load_component_templates.return_value = merged_templates
+        template_manager.template_manager.save_component_templates.return_value = (
+            False,
+            "/test/path/user_vehicle_components_template.json",
+        )
 
         # Call the method
         template_manager.save_component_as_template("TestComponent")
@@ -299,6 +311,10 @@ class TestComponentTemplateManager:
         # Setup templates - no existing template for this name
         templates = {"TestComponent": [{"name": "Other Template", "data": {}}]}
         template_manager.template_manager.load_component_templates.return_value = templates
+        template_manager.template_manager.save_component_templates.return_value = (
+            False,
+            "/test/path/user_vehicle_components_template.json",
+        )
 
         # Call the method
         template_manager.save_component_as_template("TestComponent")

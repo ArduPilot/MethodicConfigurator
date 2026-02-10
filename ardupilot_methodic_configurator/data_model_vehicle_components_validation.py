@@ -3,7 +3,7 @@ Data model for vehicle components.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -141,6 +141,8 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "44": {"type": SERIAL_PORTS, "protocol": "IRC Tramp", "component": None},
     "45": {"type": SERIAL_PORTS, "protocol": "DDS XRCE", "component": None},
     "46": {"type": SERIAL_PORTS, "protocol": "IMUDATA", "component": None},
+    "48": {"type": SERIAL_PORTS, "protocol": "PPP", "component": "Telemetry"},
+    "49": {"type": SERIAL_PORTS, "protocol": "i-BUS Telemetry", "component": None},
 }
 
 BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
@@ -183,10 +185,10 @@ GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
     "7": {"type": SERIAL_PORTS, "protocol": "HIL"},
     "8": {"type": SERIAL_PORTS, "protocol": "SwiftNav"},
     "9": {"type": CAN_PORTS, "protocol": "DroneCAN"},
-    "10": {"type": SERIAL_PORTS, "protocol": "SBF"},
-    "11": {"type": SERIAL_PORTS, "protocol": "GSOF"},
+    "10": {"type": SERIAL_PORTS, "protocol": "Septentrio(SBF)"},
+    "11": {"type": SERIAL_PORTS, "protocol": "Trimble(GSOF)"},
     "13": {"type": SERIAL_PORTS, "protocol": "ERB"},
-    "14": {"type": SERIAL_PORTS, "protocol": "MAV"},
+    "14": {"type": SERIAL_PORTS, "protocol": "MAVLink"},
     "15": {"type": SERIAL_PORTS, "protocol": "NOVA"},
     "16": {"type": SERIAL_PORTS, "protocol": "HemisphereNMEA"},
     "17": {"type": SERIAL_PORTS, "protocol": "uBlox-MovingBaseline-Base"},
@@ -198,7 +200,7 @@ GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
     "23": {"type": CAN_PORTS, "protocol": "DroneCAN-MovingBaseline-Rover"},
     "24": {"type": SERIAL_PORTS, "protocol": "UnicoreNMEA"},
     "25": {"type": SERIAL_PORTS, "protocol": "UnicoreMovingBaselineNMEA"},
-    "26": {"type": SERIAL_PORTS, "protocol": "SBF-DualAntenna"},
+    "26": {"type": SERIAL_PORTS, "protocol": "Septentrio-DualAntenna(SBF)"},
 }
 
 MOT_PWM_TYPE_DICT: dict[str, dict[str, Union[list[str], str, bool]]] = {
@@ -211,25 +213,30 @@ MOT_PWM_TYPE_DICT: dict[str, dict[str, Union[list[str], str, bool]]] = {
     "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
     "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
     "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
+    "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
 }
 
+# RC_PROTOCOLS is a bitmask parameter, so keys are actual bitmask values (2^bit_position)
+# Special case: value 1 = All protocols enabled
+# Bit 1 (value 2) = PPM, Bit 2 (value 4) = IBUS, Bit 3 (value 8) = SBUS, etc.
 RC_PROTOCOLS_DICT: dict[str, dict[str, Union[list[str], str]]] = {
-    "0": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "All"},
-    "1": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "PPM"},
-    "2": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "IBUS"},
-    "3": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS"},
-    "4": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS_NI"},
-    "5": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "DSM"},
-    "6": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SUMD"},
-    "7": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL"},
-    "8": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL2"},
-    "9": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "CRSF"},
-    "10": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "ST24"},
-    "11": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT"},
-    "12": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT2"},
-    "13": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FastSBUS"},
-    "14": {"type": CAN_PORTS, "protocol": "DroneCAN"},
-    "15": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "Ghost"},
+    "1": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "All"},  # Special case: 1 = All protocols
+    "2": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "PPM"},  # Bit 1
+    "4": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "IBUS"},  # Bit 2
+    "8": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS"},  # Bit 3
+    "16": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SBUS_NI"},  # Bit 4
+    "32": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "DSM"},  # Bit 5
+    "64": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SUMD"},  # Bit 6
+    "128": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL"},  # Bit 7
+    "256": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "SRXL2"},  # Bit 8
+    "512": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "CRSF"},  # Bit 9
+    "1024": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "ST24"},  # Bit 10
+    "2048": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT"},  # Bit 11
+    "4096": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FPORT2"},  # Bit 12
+    "8192": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "FastSBUS"},  # Bit 13
+    "16384": {"type": CAN_PORTS, "protocol": "DroneCAN"},  # Bit 14
+    "32768": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "Ghost"},  # Bit 15
+    "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
 }
 
 
@@ -247,7 +254,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("Frame", "Specifications", "TOW max Kg"): (float, (0.01, 600), "Takeoff Weight"),
             ("Battery", "Specifications", "Number of cells"): (int, (1, 50), "Nr of cells"),
             ("Battery", "Specifications", "Capacity mAh"): (int, (100, 1000000), "mAh capacity"),
-            ("Motors", "Specifications", "Poles"): (int, (3, 50), "Motor Poles"),
+            ("Motors", "Specifications", "Poles"): (int, (2, 59), "Motor Poles"),
             ("Propellers", "Specifications", "Diameter_inches"): (float, (0.3, 400), "Propeller Diameter"),
         }
     )
@@ -294,6 +301,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             "BATT_MONITOR": get_all_protocols(BATT_MONITOR_CONNECTION),
             "MOT_PWM_TYPE": get_all_protocols(MOT_PWM_TYPE_DICT),
             "GPS_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),
+            "GPS1_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),  # GPS_TYPE was renamed to GPS1_TYPE in 4.6
         }
 
         def get_combobox_values(param_name: str) -> tuple[str, ...]:
@@ -340,7 +348,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("ESC", "FC Connection", "Type"): (*PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
             ("ESC", "FC Connection", "Protocol"): self._mot_pwm_types,
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
-            ("GNSS Receiver", "FC Connection", "Protocol"): get_combobox_values("GPS_TYPE"),
+            ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
         for component in ["RC Receiver", "Telemetry", "Battery Monitor", "ESC", "GNSS Receiver"]:
@@ -443,11 +451,14 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             try:
                 typed_value = data_type(value)
                 if typed_value < limits[0] or typed_value > limits[1]:
-                    error_msg = _("{name} must be a {data_type.__name__} between {limits[0]} and {limits[1]}")
+                    error_msg = _("{name} must be a {data_type_name} between {min} and {max}")
                     limited_value = limits[0] if typed_value < limits[0] else limits[1]
-                    return error_msg.format(name=name, data_type=data_type, limits=limits), limited_value
-            except ValueError as e:
-                return str(e), None
+                    type_name = getattr(data_type, "__name__", repr(data_type))
+                    return error_msg.format(name=name, data_type_name=type_name, min=limits[0], max=limits[1]), limited_value
+            except ValueError:
+                error_msg = _("Invalid {data_type_name} value for {name}")
+                type_name = getattr(data_type, "__name__", repr(data_type))
+                return error_msg.format(data_type_name=type_name, name=name), None
 
             # Validate takeoff weight limits
             if path[0] == "Frame" and path[1] == "Specifications" and "TOW" in path[2]:
@@ -612,7 +623,22 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                         self.set_component_value(path, corrected_value)
                     continue
 
+            self._validate_motor_poles(errors, path, value, paths_str)
+
         return len(errors) == 0, errors
+
+    def _validate_motor_poles(self, errors: list, path: ComponentPath, value: str, paths_str: str) -> None:
+        if path == ("Motors", "Specifications", "Poles"):
+            # Number of magnetic rotor poles must be even
+            # On a common 12N14P BLDC/PMSM motor this is 14, the P number
+            try:
+                poles = int(value)
+                if poles % 2 != 0:
+                    error_msg = _("Number of magnetic rotor poles must be even for {paths_str}")
+                    errors.append(error_msg.format(paths_str=paths_str))
+            except ValueError:
+                error_msg = _("Invalid integer value for {paths_str}")
+                errors.append(error_msg.format(paths_str=paths_str))
 
     def correct_display_values_in_loaded_data(self) -> None:
         """

@@ -5,11 +5,12 @@ Tests for the ParameterEditor class.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
+SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from typing import Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -42,6 +43,37 @@ def mock_local_filesystem() -> MagicMock:
     mock_fs.forced_parameters = {}
     mock_fs.derived_parameters = {}
     mock_fs.export_to_param = MagicMock()
+
+    # Mock compound_params to compute first config filename based on file_parameters
+    def mock_compound_params(last_filename=None, skip_default=True) -> tuple[ParDict, Union[str, None]]:
+        """Mock compound_params that mimics the real behavior."""
+        compound = ParDict()
+        first_config_step_filename = None
+
+        for file_name, file_params in mock_fs.file_parameters.items():
+            # Skip default file if requested
+            if skip_default and file_name == "00_default.param":
+                continue
+
+            # Track the first config step filename
+            if first_config_step_filename is None:
+                first_config_step_filename = file_name
+
+            # Append parameters from this file (file_params could be dict or ParDict)
+            if isinstance(file_params, ParDict):
+                compound.append(file_params)
+            else:
+                # Convert dict to ParDict if needed
+                for param_name, param_value in file_params.items():
+                    compound[param_name] = param_value
+
+            # Stop at the specified filename if provided
+            if last_filename and file_name == last_filename:
+                break
+
+        return compound, first_config_step_filename
+
+    mock_fs.compound_params.side_effect = mock_compound_params
 
     # Mock get_documentation_text_and_url method with realistic return values
     def mock_get_documentation_text_and_url(file_name: str, _doc_type: str) -> tuple[str, str]:
@@ -534,12 +566,14 @@ class TestParameterUploadWorkflows:
         parameter_editor._reset_and_reconnect_flight_controller = MagicMock(return_value=None)
 
         # Act: Upload parameters requiring reset
-        reset_required = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
-        # Assert: Reset required
+        # Assert: Reset required and both parameters were uploaded
         assert reset_required is True
+        assert "PARAM_RESET_REQ" in uploaded_params
+        assert "PARAM_TYPE" in uploaded_params
         mock_show_error.assert_not_called()
 
     def test_user_handles_parameter_upload_errors_gracefully(self, parameter_editor) -> None:
@@ -561,12 +595,13 @@ class TestParameterUploadWorkflows:
         mock_show_error = MagicMock()
 
         # Act: Upload parameters with errors
-        reset_required = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: Errors handled via callback
         assert reset_required is False  # No successful uploads
+        assert len(uploaded_params) == 0  # No parameters were uploaded
         mock_show_error.assert_called_once()
         error_call_args = mock_show_error.call_args[0]
         assert "Failed to set parameter" in error_call_args[1]  # Second argument is the error message
@@ -597,7 +632,7 @@ class TestFileDownloadUrlWorkflows:
         # Mock the download_file_from_url function to return success
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url", return_value=True):
             # Act: Execute download workflow
-            result = parameter_editor.should_download_file_from_url_workflow(
+            result = parameter_editor._should_download_file_from_url_workflow(
                 selected_file,
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
@@ -630,7 +665,7 @@ class TestFileDownloadUrlWorkflows:
         # Mock the download_file_from_url function to return failure
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.download_file_from_url", return_value=False):
             # Act: Execute download workflow
-            result = parameter_editor.should_download_file_from_url_workflow(
+            result = parameter_editor._should_download_file_from_url_workflow(
                 selected_file,
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
@@ -647,7 +682,7 @@ class TestFileDownloadUrlWorkflows:
 
         GIVEN: A user has a file that could be downloaded
         WHEN: They decline the download confirmation
-        THEN: No download should occur and workflow should return True
+        THEN: No download should occur and workflow should return False
         """
         # Arrange: Set up file info and declining user
         selected_file = "test_file.param"
@@ -661,14 +696,14 @@ class TestFileDownloadUrlWorkflows:
         show_error_mock = MagicMock()
 
         # Act: Execute download workflow
-        result = parameter_editor.should_download_file_from_url_workflow(
+        result = parameter_editor._should_download_file_from_url_workflow(
             selected_file,
             ask_confirmation=ask_confirmation_mock,
             show_error=show_error_mock,
         )
 
         # Assert: Workflow succeeded without download
-        assert result is True
+        assert result is False
         ask_confirmation_mock.assert_called_once()
         show_error_mock.assert_not_called()
 
@@ -917,6 +952,60 @@ class TestFlightControllerDownloadWorkflows:
         assert defaults is None
         parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
 
+    def test_download_updates_fc_values_in_current_step_parameters(self, parameter_editor) -> None:
+        """
+        Downloaded FC parameters update FC values in current step ArduPilotParameter objects.
+
+        GIVEN: Current step has parameters with old FC values
+        WHEN: Parameters are downloaded from FC
+        THEN: ArduPilotParameter objects should have updated FC values
+        """
+        # Arrange: Set up current step parameters with old FC values
+        param1 = ArduPilotParameter("ROLL_P", Par(0.1))
+        param1._fc_value = 0.1  # Old value
+        param2 = ArduPilotParameter("PITCH_P", Par(0.15))
+        param2._fc_value = 0.15  # Old value
+
+        parameter_editor.current_step_parameters = {
+            "ROLL_P": param1,
+            "PITCH_P": param2,
+        }
+
+        # Mock download to return new values
+        new_fc_params = {"ROLL_P": 0.12, "PITCH_P": 0.18, "YAW_P": 0.25}
+        parameter_editor._flight_controller.download_params.return_value = (new_fc_params, None)
+
+        # Act: Download parameters
+        parameter_editor.download_flight_controller_parameters()
+
+        # Assert: FC values are updated in existing parameter objects
+        assert param1._fc_value == 0.12
+        assert param2._fc_value == 0.18
+        # YAW_P not in current_step_parameters, so not updated anywhere
+
+    def test_download_skips_updating_parameters_not_in_current_step(self, parameter_editor) -> None:
+        """
+        Downloaded parameters not in current step don't cause errors.
+
+        GIVEN: Downloaded parameters include ones not in current step
+        WHEN: Parameters are downloaded from FC
+        THEN: Only current step parameters should be updated
+        AND: No errors should occur for extra parameters
+        """
+        # Arrange: Current step has only one parameter
+        param1 = ArduPilotParameter("ROLL_P", Par(0.1))
+        parameter_editor.current_step_parameters = {"ROLL_P": param1}
+
+        # Download includes parameters not in current step
+        new_fc_params = {"ROLL_P": 0.12, "PITCH_P": 0.18, "YAW_P": 0.25}
+        parameter_editor._flight_controller.download_params.return_value = (new_fc_params, None)
+
+        # Act: Download parameters (should not raise)
+        parameter_editor.download_flight_controller_parameters()
+
+        # Assert: Only ROLL_P was updated
+        assert param1._fc_value == 0.12
+
 
 class TestFlightControllerResetWorkflows:
     """Test flight controller reset and reconnection business logic workflows."""
@@ -1092,25 +1181,88 @@ class TestFileCopyWorkflows:
         assert relevant_params is None
         assert auto_changed_by is None
 
-    def test_user_can_copy_fc_values_to_file(self, parameter_editor) -> None:
+    def test_user_can_update_parameters_from_fc_values(self, parameter_editor) -> None:
         """
-        User can copy FC values to configuration file.
+        User can update in-memory parameters from FC values.
 
-        GIVEN: A user has relevant FC parameters to copy
-        WHEN: They copy values to file
-        THEN: Parameters should be copied successfully
+        GIVEN: A user has relevant FC parameters to copy that exist in current_step_parameters
+        WHEN: They call _update_parameters_from_fc_values
+        THEN: The in-memory parameter values should be updated and the method reports success
         """
-        # Arrange: Set up copy operation
-        selected_file = "test_file.param"
+        # Arrange (Given): Set up parameters in current_step_parameters
+        param1 = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1.0,
+        )
+        param2 = ArduPilotParameter(
+            name="PARAM2",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=2.0,
+        )
+        parameter_editor.current_step_parameters = {"PARAM1": param1, "PARAM2": param2}
         relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0}
-        parameter_editor._local_filesystem.copy_fc_values_to_file.return_value = 2
 
-        # Act: Copy values to file
-        result = parameter_editor._copy_fc_values_to_file(selected_file, relevant_params)
+        # Act (When): Update parameters from FC values
+        result = parameter_editor._update_parameters_from_fc_values(relevant_params)
 
-        # Assert: Values were copied
+        # Assert (Then): In-memory values were updated
         assert result is True
-        parameter_editor._local_filesystem.copy_fc_values_to_file.assert_called_once_with(selected_file, relevant_params)
+        assert param1.get_new_value() == pytest.approx(1.0)
+        assert param2.get_new_value() == pytest.approx(2.0)
+
+    def test_user_sees_ui_updated_when_copying_fc_values_to_current_file(self, parameter_editor) -> None:
+        """
+        User sees the in-memory parameters updated immediately when copying FC values.
+
+        GIVEN: A user has a configuration step open with parameters different from FC values
+        WHEN: They copy current FC values to update in-memory parameters
+        THEN: The underlying ArduPilotParameter values should be updated immediately
+        AND: Parameters remain dirty until saved to disk (via upload or skip)
+        """
+        # Arrange (Given): Set current file and in-memory parameters
+        selected_file = "test_file.param"
+        parameter_editor.current_file = selected_file
+
+        # Create ArduPilotParameter instances with different initial values
+        param1 = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1.0,
+        )
+        param2 = ArduPilotParameter(
+            name="PARAM2",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=2.0,
+        )
+        parameter_editor.current_step_parameters = {"PARAM1": param1, "PARAM2": param2}
+
+        # FC values that will be copied
+        relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0}
+
+        # Act (When): Copy FC values into in-memory parameters
+        result = parameter_editor._update_parameters_from_fc_values(relevant_params)
+
+        # Assert (Then):
+        # 1) Method reports success
+        assert result is True
+
+        # 2) In-memory ArduPilotParameter values were updated to match FC values
+        assert param1.get_new_value() == pytest.approx(1.0)
+        assert param2.get_new_value() == pytest.approx(2.0)
+
+        # 3) Parameters remain dirty (not saved to file yet)
+        # They will be saved when user uploads to FC or skips to next file
+        assert param1.is_dirty is True
+        assert param2.is_dirty is True
 
     def test_user_handles_failed_copy_operation(self, parameter_editor) -> None:
         """
@@ -1120,16 +1272,83 @@ class TestFileCopyWorkflows:
         WHEN: User attempts to copy values
         THEN: False should be returned
         """
-        # Arrange: Set up failed copy
-        selected_file = "test_file.param"
+        # Arrange: Set up failed copy - current_step_parameters is empty by default
+        # so trying to copy PARAM1 will fail because it doesn't exist in current_step_parameters
         relevant_params = {"PARAM1": 1.0}
-        parameter_editor._local_filesystem.copy_fc_values_to_file.return_value = 0
 
         # Act: Attempt copy
-        result = parameter_editor._copy_fc_values_to_file(selected_file, relevant_params)
+        result = parameter_editor._update_parameters_from_fc_values(relevant_params)
 
         # Assert: Copy failed
         assert result is False
+
+    def test_partial_update_when_some_params_fail(self, parameter_editor) -> None:
+        """
+        User gets partial success when some parameters fail to update.
+
+        GIVEN: Multiple FC parameters where some exist and some don't in current_step_parameters
+        WHEN: They attempt to update all parameters from FC values
+        THEN: Only valid parameters should be updated and method returns True if at least one succeeds
+        """
+        # Arrange: Set up mixed scenario
+        param1 = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1.0,
+        )
+        param2 = ArduPilotParameter(
+            name="PARAM2",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=2.0,
+        )
+        # Only PARAM1 and PARAM2 exist, PARAM3 will fail
+        parameter_editor.current_step_parameters = {"PARAM1": param1, "PARAM2": param2}
+        relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0, "PARAM3": 3.0}
+
+        # Act: Attempt to update all parameters
+        result = parameter_editor._update_parameters_from_fc_values(relevant_params)
+
+        # Assert: Partial success
+        assert result is True  # At least some succeeded
+        assert param1.get_new_value() == pytest.approx(1.0)
+        assert param2.get_new_value() == pytest.approx(2.0)
+        # PARAM3 was logged as error but didn't prevent other updates
+
+    def test_updated_values_visible_in_subsequent_operations(self, parameter_editor) -> None:
+        """
+        User can see updated values persist in memory for subsequent operations.
+
+        GIVEN: Parameters have been updated from FC values
+        WHEN: User performs subsequent operations that read parameter values
+        THEN: The updated values should be visible and persist
+        """
+        # Arrange: Set up parameters and update them
+        param1 = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, "original comment"),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=5.0,
+        )
+        parameter_editor.current_step_parameters = {"PARAM1": param1}
+        relevant_params = {"PARAM1": 5.0}
+
+        # Act: Update from FC values
+        parameter_editor._update_parameters_from_fc_values(relevant_params)
+
+        # Verify immediate visibility
+        assert param1.get_new_value() == pytest.approx(5.0)
+
+        # Act: Simulate subsequent operation - get parameters as dict
+        param_dict = {"PARAM1": Par(param1.get_new_value(), param1.change_reason)}
+
+        # Assert: Updated value is visible in subsequent operations
+        assert param_dict["PARAM1"].value == pytest.approx(5.0)
+        assert param1.is_dirty is True  # Still dirty until saved to disk
 
 
 class TestFileNavigationWorkflows:  # pylint: disable=too-few-public-methods
@@ -1182,7 +1401,9 @@ class TestFileDownloadWorkflows:  # pylint: disable=too-few-public-methods
         mock_show_error = MagicMock()
 
         # Act: Download file
-        result = parameter_editor.should_download_file_from_url_workflow(selected_file, mock_ask_confirmation, mock_show_error)
+        result = parameter_editor._should_download_file_from_url_workflow(
+            selected_file, mock_ask_confirmation, mock_show_error
+        )
 
         # Assert: Download successful
         assert result is True
@@ -2064,7 +2285,8 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        progress_callback_mock = MagicMock()
+        reset_progress_callback_mock = MagicMock()
+        connection_progress_callback_mock = MagicMock()
 
         # Mock successful reset
         with patch.object(parameter_editor, "_reset_and_reconnect_flight_controller", return_value=None):
@@ -2074,7 +2296,8 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=[],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                progress_callback=progress_callback_mock,
+                reset_progress_callback=reset_progress_callback_mock,
+                connection_progress_callback=connection_progress_callback_mock,
             )
 
         # Assert: Workflow completed successfully
@@ -2097,7 +2320,8 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock(return_value=True)  # User confirms
         show_error_mock = MagicMock()
-        progress_callback_mock = MagicMock()
+        reset_progress_callback_mock = MagicMock()
+        connection_progress_callback_mock = MagicMock()
 
         # Mock successful reset
         with patch.object(parameter_editor, "_reset_and_reconnect_flight_controller", return_value=None):
@@ -2107,7 +2331,8 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=["PARAM1", "PARAM2"],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                progress_callback=progress_callback_mock,
+                reset_progress_callback=reset_progress_callback_mock,
+                connection_progress_callback=connection_progress_callback_mock,
             )
 
         # Assert: Workflow completed successfully
@@ -2134,7 +2359,8 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock(return_value=False)  # User declines
         show_error_mock = MagicMock()
-        progress_callback_mock = MagicMock()
+        reset_progress_callback_mock = MagicMock()
+        connection_progress_callback_mock = MagicMock()
 
         # Act: Execute workflow with uncertain parameters
         result = parameter_editor.reset_and_reconnect_workflow(
@@ -2142,7 +2368,8 @@ class TestResetAndReconnectWorkflow:
             fc_reset_unsure=["PARAM1"],
             ask_confirmation=ask_confirmation_mock,
             show_error=show_error_mock,
-            progress_callback=progress_callback_mock,
+            reset_progress_callback=reset_progress_callback_mock,
+            connection_progress_callback=connection_progress_callback_mock,
         )
 
         # Assert: Workflow completed without reset
@@ -2165,7 +2392,8 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        progress_callback_mock = MagicMock()
+        reset_progress_callback_mock = MagicMock()
+        connection_progress_callback_mock = MagicMock()
 
         # Mock failed reset with error message
         error_message = "Connection timeout during reset"
@@ -2176,7 +2404,8 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=[],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                progress_callback=progress_callback_mock,
+                reset_progress_callback=reset_progress_callback_mock,
+                connection_progress_callback=connection_progress_callback_mock,
             )
 
         # Assert: Workflow failed
@@ -2196,7 +2425,8 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        progress_callback_mock = MagicMock()
+        reset_progress_callback_mock = MagicMock()
+        connection_progress_callback_mock = MagicMock()
 
         # Mock reset returning error message
         error_message = "Failed to reset flight controller: Communication error"
@@ -2207,7 +2437,8 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=[],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                progress_callback=progress_callback_mock,
+                reset_progress_callback=reset_progress_callback_mock,
+                connection_progress_callback=connection_progress_callback_mock,
             )
 
         # Assert: Workflow failed
@@ -2227,7 +2458,8 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        progress_callback_mock = MagicMock()
+        reset_progress_callback_mock = MagicMock()
+        connection_progress_callback_mock = MagicMock()
 
         # Act: Execute workflow with no reset requirements
         result = parameter_editor.reset_and_reconnect_workflow(
@@ -2235,7 +2467,8 @@ class TestResetAndReconnectWorkflow:
             fc_reset_unsure=[],
             ask_confirmation=ask_confirmation_mock,
             show_error=show_error_mock,
-            progress_callback=progress_callback_mock,
+            reset_progress_callback=reset_progress_callback_mock,
+            connection_progress_callback=connection_progress_callback_mock,
         )
 
         # Assert: Workflow completed without reset
@@ -2353,7 +2586,7 @@ class TestParameterEditorFrontendAPI:
         test_params = {"PARAM1": Par(1.0, ""), "PARAM2": Par(2.0, "")}
         parameter_editor._local_filesystem.file_parameters = {"test_file.param": test_params}
 
-        # Populate domain model (simulating what repopulate_configuration_step_parameters does)
+        # Populate domain model (simulating what _repopulate_configuration_step_parameters does)
         parameter_editor.current_step_parameters = {
             "PARAM1": ArduPilotParameter("PARAM1", test_params["PARAM1"], {}, {}),
             "PARAM2": ArduPilotParameter("PARAM2", test_params["PARAM2"], {}, {}),
@@ -2427,7 +2660,7 @@ class TestParameterEditorFrontendAPI:
         test_params = {"PARAM1": Par(1.0, "")}
         parameter_editor._local_filesystem.file_parameters = {"test_file.param": test_params}
 
-        # Populate domain model (simulating what repopulate_configuration_step_parameters does)
+        # Populate domain model (simulating what _repopulate_configuration_step_parameters does)
         parameter_editor.current_step_parameters = {
             "PARAM1": ArduPilotParameter("PARAM1", test_params["PARAM1"], {}, {}),
         }
@@ -2737,7 +2970,7 @@ class TestUnsavedChangesTracking:
         # Assert: Changes detected
         assert parameter_editor._has_unsaved_changes()
 
-        # This is where the UI would prompt before calling repopulate_configuration_step_parameters
+        # This is where the UI would prompt before calling _repopulate_configuration_step_parameters
         # The test validates that the check returns True so the UI knows to prompt
 
     def test_tracking_reset_when_navigating_to_new_file(self, parameter_editor) -> None:
@@ -2767,7 +3000,7 @@ class TestUnsavedChangesTracking:
         # Assert: Changes detected
         assert parameter_editor._has_unsaved_changes()
 
-        # Act: Navigate to new file (simulating what repopulate_configuration_step_parameters does)
+        # Act: Navigate to new file (simulating what _repopulate_configuration_step_parameters does)
         parameter_editor.current_file = "other_file.param"
         parameter_editor._added_parameters.clear()
         parameter_editor._deleted_parameters.clear()
@@ -2785,7 +3018,7 @@ class TestDerivedParameterApplication:
         Test that valid derived parameters are applied correctly.
 
         GIVEN: A parameter editor with derived parameters to apply
-        WHEN: repopulate_configuration_step_parameters is called
+        WHEN: _repopulate_configuration_step_parameters is called
         THEN: Derived parameters should be applied using set_forced_or_derived_value
         """
         # Setup file parameters with a derived parameter
@@ -2816,7 +3049,7 @@ class TestDerivedParameterApplication:
                 derived_params,  # derived_params
             ),
         ):
-            parameter_editor.repopulate_configuration_step_parameters()
+            parameter_editor._repopulate_configuration_step_parameters()
 
         # Verify the derived value was applied
         assert parameter_editor.current_step_parameters["BATT_CAPACITY"].get_new_value() == 6000.0
@@ -2827,7 +3060,7 @@ class TestDerivedParameterApplication:
         Test that readonly parameters in derived_params are skipped with error logging.
 
         GIVEN: A derived parameter that is marked as readonly
-        WHEN: repopulate_configuration_step_parameters attempts to apply it
+        WHEN: _repopulate_configuration_step_parameters attempts to apply it
         THEN: The parameter should be skipped and an error should be logged
         """
         # Setup file parameters with a readonly parameter
@@ -2863,7 +3096,7 @@ class TestDerivedParameterApplication:
             ),
             patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
         ):
-            parameter_editor.repopulate_configuration_step_parameters()
+            parameter_editor._repopulate_configuration_step_parameters()
 
         # Verify error was logged
         mock_log_error.assert_any_call(
@@ -2880,7 +3113,7 @@ class TestDerivedParameterApplication:
         Test that parameters in derived_params that aren't marked as forced/derived are skipped.
 
         GIVEN: A parameter in derived_params that is not marked as forced or derived
-        WHEN: repopulate_configuration_step_parameters attempts to apply it
+        WHEN: _repopulate_configuration_step_parameters attempts to apply it
         THEN: The parameter should be skipped and an error should be logged
         """
         parameter_editor._local_filesystem.file_parameters = {
@@ -2911,7 +3144,7 @@ class TestDerivedParameterApplication:
             ),
             patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
         ):
-            parameter_editor.repopulate_configuration_step_parameters()
+            parameter_editor._repopulate_configuration_step_parameters()
 
         # Verify error was logged
         mock_log_error.assert_any_call(
@@ -2925,7 +3158,7 @@ class TestDerivedParameterApplication:
         Test that derived parameters not in self.current_step_parameters are logged as errors.
 
         GIVEN: A derived parameter that doesn't exist in self.current_step_parameters
-        WHEN: repopulate_configuration_step_parameters attempts to apply it
+        WHEN: _repopulate_configuration_step_parameters attempts to apply it
         THEN: An error should be logged about the missing parameter
         """
         parameter_editor._local_filesystem.file_parameters = {
@@ -2951,7 +3184,7 @@ class TestDerivedParameterApplication:
             ),
             patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
         ):
-            parameter_editor.repopulate_configuration_step_parameters()
+            parameter_editor._repopulate_configuration_step_parameters()
 
         # Verify error was logged
         mock_log_error.assert_any_call(

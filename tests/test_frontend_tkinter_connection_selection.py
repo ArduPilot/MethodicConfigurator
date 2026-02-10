@@ -5,7 +5,7 @@ Tests for the frontend_tkinter_connection_selection.py file.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -62,6 +62,10 @@ class TestConnectionSelectionWidgets(unittest.TestCase):
                 return_value=self.mock_combobox,
             ),
             patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.show_tooltip"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.get_connection_history",
+                return_value=[],
+            ),
         ):
             self.widget = ConnectionSelectionWidgets(
                 self.mock_parent,
@@ -226,7 +230,10 @@ class TestConnectionSelectionWidgets(unittest.TestCase):
         self.mock_flight_controller.add_connection.reset_mock()
 
         # Patch the reconnect method to prevent it from being called
-        with patch.object(self.widget, "reconnect"):
+        with (
+            patch.object(self.widget, "reconnect"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection"),
+        ):
             # Call the method
             result = self.widget.add_connection()
 
@@ -239,7 +246,10 @@ class TestConnectionSelectionWidgets(unittest.TestCase):
 
         # Test with empty string input
         mock_askstring.return_value = ""
-        with patch.object(self.widget, "reconnect"):
+        with (
+            patch.object(self.widget, "reconnect"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection"),
+        ):
             result = self.widget.add_connection()
             assert result == ""
             self.mock_flight_controller.add_connection.assert_not_called()
@@ -262,13 +272,17 @@ class TestConnectionSelectionWidgets(unittest.TestCase):
             ("Add another", "Add another connection"),
         ]
 
-        # Reset mocks
+        # Reset mocks to clear any previous test state
+        self.mock_flight_controller.add_connection.reset_mock()
         self.mock_flight_controller.get_connection_tuples.reset_mock()
         self.mock_flight_controller.get_connection_tuples.return_value = updated_tuples
         self.mock_combobox.reset_mock()
 
-        # Patch the reconnect method
-        with patch.object(self.widget, "reconnect") as mock_reconnect:
+        # Patch the reconnect method and ProgramSettings
+        with (
+            patch.object(self.widget, "reconnect") as mock_reconnect,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection"),
+        ):
             # Call the method
             result = self.widget.add_connection()
 
@@ -409,7 +423,7 @@ class TestConnectionSelectionWindow(unittest.TestCase):  # pylint: disable=too-m
 
         # Patch the filesystem icon path
         self.icon_path_patcher = patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_base_window.LocalFilesystem.application_icon_filepath",
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.ProgramSettings.application_icon_filepath",
             return_value="mock_icon_path.png",
         )
         self.mock_icon_path = self.icon_path_patcher.start()

@@ -5,7 +5,7 @@ A combobox GUI with support for complex lists.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -348,7 +348,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
             self.tooltip = None
 
 
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -367,7 +367,7 @@ def argument_parser() -> Namespace:
     return add_common_arguments(parser).parse_args()
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     argsp = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(argsp.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
@@ -417,5 +417,5 @@ def main() -> None:
     root.mainloop()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

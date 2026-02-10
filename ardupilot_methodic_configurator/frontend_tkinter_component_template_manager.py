@@ -3,7 +3,7 @@ Component template manager for the ArduPilot methodic configurator.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>, 2025 Francisco Fonseca
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>, 2025 Francisco Fonseca
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -105,13 +105,19 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
                 confirm = messagebox.askyesno(_("Template exists"), _("A template with this name already exists. Overwrite?"))
                 if confirm:
                     templates[component_name][i] = new_template
-                    self.template_manager.save_component_templates(templates)
-                    messagebox.showinfo(_("Template Saved"), _("Template has been updated"))
+                    error, msg = self.template_manager.save_component_templates(templates)
+                    if error:
+                        messagebox.showerror(_("Template not Saved"), msg)
+                    else:
+                        messagebox.showinfo(_("Template Saved"), _("Template has been updated to file '{}'").format(msg))
                 return
 
         templates[component_name].append(new_template)
-        self.template_manager.save_component_templates(templates)
-        messagebox.showinfo(_("Template Saved"), _("Template has been saved"))
+        error, msg = self.template_manager.save_component_templates(templates)
+        if error:
+            messagebox.showerror(_("Template not Saved"), msg)
+        else:
+            messagebox.showinfo(_("Template Saved"), _("Template has been saved to file '{}'").format(msg))
 
     def derive_initial_template_name(self, component_data: dict[str, Any]) -> str:
         """Derive an initial template name from the component data."""

@@ -19,7 +19,7 @@ Type Checking Pattern:
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -94,7 +94,7 @@ class FlightControllerConnectionProtocol(Protocol):
         """Get the default baud rate for serial connections."""
         ...  # pylint: disable=unnecessary-ellipsis
 
-    def discover_connections(self) -> None: ...
+    def discover_connections(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> None: ...
 
     def disconnect(self) -> None: ...
 

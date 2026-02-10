@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -16,7 +16,7 @@ We are thankful to the developers of those software packages.
 It directly uses:
 
 | Software | License |
-|----------|---------|
+| -------- | ------- |
 | [tkinter](https://docs.python.org/3/library/tkinter.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [argparse](https://docs.python.org/3/library/argparse.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
 | [logging](https://docs.python.org/3/library/logging.html) | [Python Software Foundation License](https://docs.python.org/3/license.html) |
@@ -40,12 +40,13 @@ It directly uses:
 | [requests](https://requests.readthedocs.io/) | [Apache 2.0 License](https://github.com/psf/requests/blob/main/LICENSE) |
 | [setuptools](https://setuptools.pypa.io/) | [MIT License](https://github.com/pypa/setuptools/blob/main/LICENSE) |
 | [jsonschema](https://python-jsonschema.readthedocs.io/en/stable/) | [MIT License](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING) |
+| [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
+| [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.md) |
 
 It indirectly uses:
 
 | Software | License |
-|----------|---------|
-| [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
+| -------- | ------- |
 | [charset-normalizer](https://github.com/Ousret/charset_normalizer) | [MIT License](https://github.com/Ousret/charset_normalizer/blob/master/LICENSE) |
 | [future](https://github.com/PythonCharmers/python-future) | [MIT License](https://github.com/PythonCharmers/python-future/blob/master/LICENSE.txt) |
 | [urllib3](https://github.com/urllib3/urllib3) | [MIT License](https://github.com/urllib3/urllib3/blob/main/LICENSE.txt) |
@@ -76,7 +77,7 @@ Credits also go to these other software projects that helped in developing ArduP
 - [bestpractices.dev](https://www.bestpractices.dev/en): A site for checking best practices in software development.
 - [isitmaintained.com](https://isitmaintained.com/): A service to check the maintenance status of open-source projects.
 - [renovate](https://github.com/renovatebot/renovate): Cross-platform Dependency Automation by Mend.io
-- [gurubase](https://github.com/Gurubase/gurubase): An open-source RAG system that we used to create an AI-powered Q&A assistant.
+- [gurubase](https://github.com/Gurubase/): An open-source RAG system that we used to create an AI-powered Q&A assistant.
 - [gitleaks](https://github.com/gitleaks/gitleaks): a tool for detecting secrets like passwords, API keys, and tokens in git repos.
 - [pre-commit](https://pre-commit.com/): A framework for managing and maintaining multi-language git pre-commit hooks.
 - [OpenSSF Scorecard](https://securityscorecards.dev/): Quickly assess open source projects for risky practices.
@@ -92,3 +93,7 @@ These books helped shape this software:
 - [Modern Software Engineering by David Farley](https://www.oreilly.com/library/view/modern-software-engineering/9780137314942/)
 - [The DevOps Handbook by Gene Kim, Patrick Debois, John Willis, and Jez Humble](https://www.oreilly.com/library/view/the-devsecops-handbook/9781098182281/)
 - [Fundamentals of Software Architecture by Mark Richards, Neal Ford](https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/)
+- [The Pragmatic Programmer: 20th Anniversary Edition, 2nd Edition by David Thomas, Andrew Hunt](https://www.audible.com/pd/The-Pragmatic-Programmer-20th-Anniversary-Edition-2nd-Edition-Audiobook/B0833FMYH9)
+- [The Clean Coder: A Code of Conduct for Professional Programmers by Robert C. Martin](https://www.oreilly.com/library/view/clean-coder-the/9780132542913/)
+- [The Mythical Man-Month: 2nd Edition by Frederick P. Brooks](https://www.oreilly.com/library/view/mythical-man-month-the/0201835959/)
+- [Clean Agile: Back to Basics by Robert C. Martin](https://www.oreilly.com/library/view/clean-agile-back/9780135782002/)

@@ -8,7 +8,7 @@ connection establishment, heartbeat detection, and error handling.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -17,6 +17,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import serial.tools.list_ports_common
+from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
@@ -33,7 +34,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
 )
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-lines
 
 
 class TestFlightControllerConnectionServiceInjection:
@@ -980,6 +981,285 @@ class TestConnectionStateManagement:
 
         # Then: Comport should be None initially
         assert connection.comport is None
+
+
+def test_select_supported_autopilot_with_string_ids_does_not_raise() -> None:
+    """
+    Ensure that system/component IDs stored as strings do not cause logging to raise (previously %d was used).
+
+    This is to prevent future regressions
+    GIVEN: FlightControllerConnection and a detected vehicle
+    WHEN: _select_supported_autopilot is called and FlightControllerInfo stores
+          string IDs
+    THEN: The function returns success and does not raise
+    """
+    connection = FlightControllerConnection(info=FlightControllerInfo())
+
+    # Minimal dummy heartbeat message - use supported autopilot constant
+    class DummyHeartbeat:  # pylint: disable=too-few-public-methods
+        """Dummy MAVLink heartbeat used as input to _select_supported_autopilot."""
+
+        autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+        type = mavutil.mavlink.MAV_TYPE_GROUND_ROVER
+
+    dummy = DummyHeartbeat()
+
+    # Call with integer keys (function converts to strings internally) and ensure no exception
+    result = connection._select_supported_autopilot({(1, 1): dummy})
+
+    # Successful selection returns empty string and system/component IDs are stored as strings
+    assert result == ""
+    assert connection.info.system_id == "1"
+    assert connection.info.component_id == "1"
+
+
+def test_detect_vehicles_handles_recv_match_type_error() -> None:
+    """Ensure _detect_vehicles_from_heartbeats swallows transient TypeError and recovers."""
+    connection = FlightControllerConnection(info=FlightControllerInfo())
+
+    class DummyMsg:  # pylint: disable=missing-class-docstring
+        def __init__(self, sysid: int, compid: int) -> None:
+            self._sysid = sysid
+            self._compid = compid
+            self.autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+            self.type = mavutil.mavlink.MAV_TYPE_GROUND_ROVER
+
+        def get_srcSystem(self) -> int:  # noqa: N802 - mimic pymavlink camelCase API; pylint: disable=invalid-name
+            return self._sysid
+
+        def get_srcComponent(self) -> int:  # noqa: N802 - mimic pymavlink camelCase API; pylint: disable=invalid-name
+            return self._compid
+
+    calls = [TypeError("broken internal state"), DummyMsg(42, 17), None]
+
+    def fake_recv_match(*_args, **_kwargs) -> object:
+        """Return next queued value, raise if it's Exception, otherwise None when exhausted."""
+        if not calls:
+            return None
+        val = calls.pop(0)
+        if isinstance(val, Exception):
+            raise val
+        return val
+
+    # Attach a dummy master object with the fake recv_match
+    connection.master = type("M", (), {"recv_match": staticmethod(fake_recv_match)})()
+
+    detected = connection._detect_vehicles_from_heartbeats(timeout=1)
+
+    # Should have recovered and collected our DummyMsg
+    assert (42, 17) in detected
+
+
+class TestFlightControllerConnectionProgressCallbacks:
+    """Test progress callback functionality during connection operations."""
+
+    def test_discover_connections_reports_progress_during_serial_discovery(self) -> None:
+        """
+        Connection discovery reports progress during serial port scanning.
+
+        GIVEN: User is discovering available flight controller connections
+        WHEN: Providing a progress callback during discovery
+        THEN: Callback should be invoked with progress updates
+        AND: Progress should cover serial port discovery phase
+        """
+        # Arrange: Create connection with fake serial ports
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "Flight Controller")
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+        )
+
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # Act: Discover connections with progress tracking
+        connection.discover_connections(progress_callback=track_progress)
+
+        # Assert: Progress updates received
+        assert len(progress_updates) > 0
+        # Should include serial discovery progress (82%, 90%)
+        assert any(current >= 82 for current, _ in progress_updates)
+        assert any(current >= 90 for current, _ in progress_updates)
+        # Total should be 100
+        assert all(total == 100 for _, total in progress_updates)
+
+    def test_discover_connections_reports_progress_during_network_discovery(self) -> None:
+        """
+        Connection discovery reports progress during network port detection.
+
+        GIVEN: User is discovering network-based flight controller connections
+        WHEN: Network ports are being scanned
+        THEN: Progress callback should receive network discovery updates
+        """
+        # Arrange: Create connection with network ports
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            network_ports=["tcp:127.0.0.1:5760"],
+        )
+
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # Act: Discover connections with progress tracking
+        connection.discover_connections(progress_callback=track_progress)
+
+        # Assert: Network discovery progress received (95%)
+        assert any(current >= 95 for current, _ in progress_updates)
+
+    def test_discover_connections_without_callback_works_normally(self) -> None:
+        """
+        Connection discovery works without progress callback.
+
+        GIVEN: User discovers connections without progress tracking
+        WHEN: No progress callback is provided
+        THEN: Discovery should complete successfully
+        AND: No errors should occur
+        """
+        # Arrange: Create connection
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        # Act/Assert: Discover without callback - should not raise
+        connection.discover_connections(progress_callback=None)
+
+        # Assert: Discovery completed
+        assert connection.get_connection_tuples() is not None
+
+    def test_connect_reports_progress_during_serial_autodetection(self) -> None:
+        """
+        Connect reports progress during serial port autodetection.
+
+        GIVEN: User connects without specifying device (autodetect mode)
+        WHEN: Connection attempts serial port autodetection
+        THEN: Progress callback should receive serial detection updates
+        """
+        # Arrange: Create connection with fake serial port
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "Flight Controller")
+
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # Act: Connect with autodetection
+        serial_port = mavutil.SerialPort(device="/dev/ttyUSB0", description="Flight Controller")
+        with patch.object(connection, "_auto_detect_serial", return_value=[serial_port]):
+            connection.connect(device=None, progress_callback=track_progress)
+
+        # Assert: Serial detection progress received (10%, 25%)
+        assert any(current >= 10 for current, _ in progress_updates)
+
+    def test_connect_reports_progress_during_network_port_attempts(self) -> None:
+        """
+        Connect reports progress during network port connection attempts.
+
+        GIVEN: User connects via network (TCP/UDP)
+        WHEN: Connection tries multiple network ports
+        THEN: Progress callback should receive updates for each attempt
+        AND: Progress should increase from 50% to 100%
+        """
+        # Arrange: Create connection with network ports
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            network_ports=["tcp:127.0.0.1:5760", "tcp:127.0.0.1:5761"],
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # Act: Connect with network ports
+        with patch.object(connection, "_auto_detect_serial", return_value=None):
+            connection.connect(device=None, progress_callback=track_progress)
+
+        # Assert: Network port progress received (50% to 100%)
+        assert any(current >= 50 for current, _ in progress_updates)
+        # Progress should increase through network port attempts
+        values = [current for current, _ in progress_updates]
+        # Should have multiple updates in 50-100 range
+        network_updates = [v for v in values if 50 <= v <= 100]
+        assert len(network_updates) > 0
+
+    def test_connect_without_callback_works_normally(self) -> None:
+        """
+        Connect works without progress callback.
+
+        GIVEN: User connects to flight controller without progress tracking
+        WHEN: No progress callback is provided
+        THEN: Connection should work normally
+        AND: No errors should occur
+        """
+        # Arrange: Create connection with fake components
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "FC")
+
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        # Act: Connect without callback
+        serial_port = mavutil.SerialPort(device="/dev/ttyUSB0", description="FC")
+        with patch.object(connection, "_auto_detect_serial", return_value=[serial_port]):
+            error = connection.connect(device=None, progress_callback=None)
+
+        # Assert: Connection attempted (may succeed or fail, but shouldn't crash)
+        assert error is not None  # Returns either "" or error message
+
+    def test_progress_updates_are_monotonically_increasing(self) -> None:
+        """
+        Progress updates increase monotonically during connection process.
+
+        GIVEN: User monitors connection progress
+        WHEN: Connection process is ongoing
+        THEN: Progress values should never decrease
+        AND: Progress should reach 100% on completion
+        """
+        # Arrange: Create connection
+        fake_mavlink = FakeMavlinkConnectionFactory()
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            network_ports=["tcp:127.0.0.1:5760"],
+            mavlink_connection_factory=fake_mavlink,
+        )
+
+        progress_updates = []
+
+        def track_progress(current: int, total: int) -> None:
+            progress_updates.append((current, total))
+
+        # Act: Connect with progress tracking
+        with patch.object(connection, "_auto_detect_serial", return_value=None):
+            connection.connect(device=None, progress_callback=track_progress)
+
+        # Assert: Progress is monotonically increasing
+        if len(progress_updates) > 1:
+            values = [current for current, _ in progress_updates]
+            # Check each value is >= previous (allowing duplicates)
+            for i in range(1, len(values)):
+                assert values[i] >= values[i - 1], f"Progress decreased: {values[i - 1]} -> {values[i]}"
 
 
 if __name__ == "__main__":

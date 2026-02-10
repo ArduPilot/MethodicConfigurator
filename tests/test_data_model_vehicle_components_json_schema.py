@@ -5,7 +5,7 @@ Vehicle components JSON schema tests.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -16,8 +16,6 @@ from unittest.mock import patch
 import pytest
 
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
-
-# pylint: disable=protected-access
 
 
 class TestVehicleComponentsJsonSchema:
@@ -437,21 +435,20 @@ class TestVehicleComponentsJsonSchema:
         assert description == "RC controller component"
         assert not is_optional
 
-        # Act & Assert: Test deeply nested reference (this works through _traverse_nested_path)
+        # Act & Assert: Test deeply nested reference resolution through public API
         description, is_optional = json_schema.get_component_property_description(("Motors", "Config", "Advanced", "Feature"))
         assert description == "Feature toggle"
 
-        # Test reference resolution method directly
-        ref_result = json_schema._resolve_schema_reference({"$ref": "#/definitions/product"})
-        assert "Manufacturer" in ref_result["properties"]
-        assert ref_result["properties"]["Manufacturer"]["description"] == "Manufacturer name"
+        # Act & Assert: Test product reference resolution through public API
+        description, is_optional = json_schema.get_component_property_description(("RC Controller", "Product", "Manufacturer"))
+        assert description == "Manufacturer name"
 
     def test_schema_reference_resolution_handles_missing_refs(self) -> None:
         """
         User receives appropriate handling when schema references are broken.
 
         GIVEN: A schema with broken or missing references
-        WHEN: The user tries to resolve references
+        WHEN: The user tries to get property descriptions from broken references
         THEN: The system should handle missing references gracefully
         """
         # Arrange: Schema with broken reference
@@ -462,117 +459,12 @@ class TestVehicleComponentsJsonSchema:
 
         json_schema = VehicleComponentsJsonSchema(broken_ref_schema)
 
-        # Act: Try to resolve broken reference
-        result = json_schema._resolve_schema_reference({"$ref": "#/definitions/nonexistent"})
+        # Act: Try to get description for component with broken reference
+        description, is_optional = json_schema.get_component_property_description(("Broken",))
 
-        # Assert: Broken reference returns empty dict
-        assert result == {}
-
-    # ==================== EDGE CASE TESTS ====================
-
-    def test_json_type_conversion_edge_cases(self, json_schema_instance) -> None:
-        """
-        User receives appropriate type conversions for edge cases.
-
-        GIVEN: A schema with edge case JSON types
-        WHEN: The user requests type conversions
-        THEN: They should receive appropriate Python types or defaults
-        """
-        # Test direct type conversion method
-        assert json_schema_instance._json_type_to_python_type("string") is str
-        assert json_schema_instance._json_type_to_python_type("number") is float
-        assert json_schema_instance._json_type_to_python_type("integer") is int
-        assert json_schema_instance._json_type_to_python_type("boolean") is bool
-        assert json_schema_instance._json_type_to_python_type("array") is list
-        assert json_schema_instance._json_type_to_python_type("object") is dict
-        assert json_schema_instance._json_type_to_python_type("null") is type(None)
-
-        # Test unknown type defaults to str
-        assert json_schema_instance._json_type_to_python_type("unknown") is str
-        assert json_schema_instance._json_type_to_python_type("") is str
-
-    def test_nested_path_traversal_edge_cases(self, json_schema_instance) -> None:
-        """
-        User can handle complex nested path traversal scenarios.
-
-        GIVEN: A schema with various nested structures
-        WHEN: The user traverses complex paths
-        THEN: The system should handle all traversal scenarios gracefully
-        """
-        # Test direct properties check
-        schema_obj = {"properties": {"test": {"description": "test desc"}}}
-        found, result = json_schema_instance._check_direct_properties(schema_obj, "test")
-        assert found
-        assert result == {"description": "test desc"}
-
-        # Test missing properties
-        found, result = json_schema_instance._check_direct_properties(schema_obj, "missing")
-        assert not found
-
-        # Test allOf constructs
-        allof_schema = {
-            "allOf": [
-                {"properties": {"test1": {"type": "string"}}},
-                {"$ref": "#/definitions/test", "properties": {"test2": {"type": "integer"}}},
-            ]
-        }
-        json_schema_instance.schema = {"definitions": {"test": {"properties": {"ref_prop": {"type": "boolean"}}}}}
-
-        found, result = json_schema_instance._check_allof_constructs(allof_schema, "test1")
-        assert found
-        assert result == {"type": "string"}
-
-    def test_schema_modification_with_debug_logging(self, json_schema_instance) -> None:
-        """
-        User receives debug information during schema modifications.
-
-        GIVEN: A schema being modified
-        WHEN: Debug logging is enabled
-        THEN: Appropriate debug messages should be logged
-        """
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_json_schema.logging_debug") as mock_debug:
-            # Test successful modification
-            json_schema_instance.modify_schema_for_mcu_series(is_optional=True)
-
-            # Verify debug logging occurred
-            mock_debug.assert_called()
-            call_args = str(mock_debug.call_args)
-            assert "Modified schema: MCU Series" in call_args
-
-    def test_comprehensive_error_scenarios(self) -> None:
-        """
-        User receives comprehensive error handling across all error scenarios.
-
-        GIVEN: Various error-inducing conditions
-        WHEN: The user performs operations
-        THEN: All errors should be handled gracefully with appropriate logging
-        """
-        # Test schema modification with exception in MCU field access
-        # pylint: disable=duplicate-code
-        problematic_schema = {
-            "definitions": {
-                "flightController": {
-                    "allOf": [
-                        {
-                            "properties": {
-                                "Specifications": {
-                                    "properties": {
-                                        "MCU Series": None  # This will cause an exception
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-        # pylint: enable=duplicate-code
-
-        json_schema = VehicleComponentsJsonSchema(problematic_schema)
-
-        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_json_schema.logging_error") as mock_log:
-            json_schema.modify_schema_for_mcu_series(is_optional=True)
-            mock_log.assert_called()
+        # Assert: Should return empty description without crashing
+        assert description == ""
+        assert not is_optional
 
     def test_schema_initialization_and_attribute_access(self, minimal_schema) -> None:
         """

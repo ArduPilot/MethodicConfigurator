@@ -3,7 +3,7 @@ Manages JSON files at the filesystem level.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -158,5 +158,8 @@ class FilesystemJSONWithSchema:
             msg = _("Unexpected error saving data to file '{}': {}").format(filepath, str(e))
             logging_error(msg)
             return True, msg
+
+        # Update the in-memory data after successful save
+        self.data = data
 
         return False, ""

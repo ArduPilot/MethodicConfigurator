@@ -7,16 +7,18 @@ Following pytest_testing_instructions.md guidelines for testability and maintain
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator import __main__ as amc_main
 from ardupilot_methodic_configurator.__main__ import (
     ApplicationState,
     backup_fc_parameters,
@@ -34,12 +36,10 @@ from ardupilot_methodic_configurator.__main__ import (
     vehicle_directory_selection,
     write_parameter_defaults,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import (
-    PopupWindow,
-    UsagePopupWindow,
-)
+from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 
-# pylint: disable=,too-many-lines,redefined-outer-name,too-few-public-methods
+# pylint: disable=too-many-lines,redefined-outer-name,too-few-public-methods
 
 # ====== Fixtures following pytest_testing_instructions.md ======
 
@@ -51,7 +51,7 @@ def mock_args() -> MagicMock:
     args.loglevel = "INFO"
     args.skip_check_for_updates = False
     args.vehicle_dir = "/test/vehicle/dir"
-    args.device = "test"
+    args.device = DEVICE_FC_PARAM_FROM_FILE
     args.vehicle_type = "ArduCopter"
     args.allow_editing_template_files = False
     args.save_component_to_system_templates = False
@@ -59,6 +59,7 @@ def mock_args() -> MagicMock:
     args.baudrate = 115200
     args.skip_component_editor = False
     args.n = 0
+    args.export_fc_params_missing_or_different = False
     return args
 
 
@@ -222,23 +223,21 @@ class TestApplicationStartup:
                 "ardupilot_methodic_configurator.__main__.PopupWindow.should_display",
                 return_value=True,
             ) as mock_should_display,
-            patch(
-                "ardupilot_methodic_configurator.__main__.UsagePopupWindow.display_workflow_explanation"
-            ) as mock_display_popup,
+            patch("ardupilot_methodic_configurator.__main__.display_workflow_explanation") as module_display,
         ):
             mock_popup_window = MagicMock()
-            mock_display_popup.return_value = mock_popup_window
+            module_display.return_value = mock_popup_window
 
             # Act: Simulate the startup popup logic from main()
             if PopupWindow.should_display("workflow_explanation"):
-                UsagePopupWindow.display_workflow_explanation()
+                amc_main.display_workflow_explanation()
                 # Note: We don't call mainloop() in tests to avoid blocking
 
             # Assert: User preference was checked
             mock_should_display.assert_called_once_with("workflow_explanation")
 
             # Assert: Popup was displayed for user guidance
-            mock_display_popup.assert_called_once()
+            module_display.assert_called_once()
 
     def test_user_can_skip_workflow_popup_when_previously_disabled(self) -> None:
         """
@@ -368,7 +367,7 @@ class TestFlightControllerConnection:
         THEN: Application should work with simulated data
         """
         # Arrange: Simulation mode setup
-        application_state.args.device = "test"
+        application_state.args.device = DEVICE_FC_PARAM_FROM_FILE
 
         with (
             patch("ardupilot_methodic_configurator.__main__.connect_to_fc_and_set_vehicle_type") as mock_connect,
@@ -392,7 +391,11 @@ class TestFlightControllerConnection:
             # Assert: Simulation mode works
             assert application_state.flight_controller is mock_fc
             assert application_state.vehicle_type == "ArduCopter"
-            mock_fc_window.assert_called_once_with(mock_fc)
+            # Verify FlightControllerInfoWindow was called with flight controller and vehicle_dir
+            mock_fc_window.assert_called_once()
+            call_args = mock_fc_window.call_args[0]
+            assert call_args[0] is mock_fc
+            assert isinstance(call_args[1], Path)
 
     def test_user_receives_clear_error_when_configuration_invalid(self, application_state: ApplicationState) -> None:
         """
@@ -478,7 +481,7 @@ class TestVehicleDirectoryWorkflow:
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
         application_state.vehicle_type = "ArduCopter"  # This is what actually gets used
-        application_state.args.device = "serial"  # Not "test" to avoid FC info window
+        application_state.args.device = "serial"  # Not DEVICE_FC_PARAM_FROM_FILE to avoid FC info window
 
         with (
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
@@ -524,7 +527,7 @@ class TestVehicleDirectoryWorkflow:
         mock_fc.reset_all_parameters_to_default.return_value = (True, "")  # Mock successful reset
         mock_fc.reset_and_reconnect.return_value = ""  # Mock successful reconnect
         application_state.flight_controller = mock_fc
-        application_state.args.device = "serial"  # Not "test" to avoid FC info window
+        application_state.args.device = "serial"  # Not DEVICE_FC_PARAM_FROM_FILE to avoid FC info window
 
         with (
             patch("ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow") as mock_window_class,
@@ -648,7 +651,7 @@ class TestFlightControllerConnectionLogic:
         # Arrange: Mock arguments with explicit vehicle type
         mock_args = MagicMock()
         mock_args.vehicle_type = "ArduPlane"
-        mock_args.device = "test"
+        mock_args.device = DEVICE_FC_PARAM_FROM_FILE
         mock_args.reboot_time = 10.0
         mock_args.baudrate = 115200
 
@@ -684,7 +687,7 @@ class TestFlightControllerConnectionLogic:
         # Arrange: Mock arguments without vehicle type
         mock_args = MagicMock()
         mock_args.vehicle_type = ""  # Not specified
-        mock_args.device = "test"
+        mock_args.device = DEVICE_FC_PARAM_FROM_FILE
         mock_args.reboot_time = 10.0
         mock_args.baudrate = 115200
 
@@ -944,7 +947,7 @@ class TestParameterEditorStartup:
         application_state.args.n = 0  # Start from beginning
 
         with (
-            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value="advanced"),
+            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting", return_value="normal"),
             patch("ardupilot_methodic_configurator.__main__.ParameterEditorWindow") as mock_editor,
             patch("ardupilot_methodic_configurator.__main__.ParameterEditor") as mock_param_editor,
         ):
@@ -953,7 +956,9 @@ class TestParameterEditorStartup:
 
             # Assert: Advanced mode with IMU calibration considered
             mock_fs.get_start_file.assert_called_once_with(0, True)  # noqa: FBT003 IMU tcal available and not simple GUI
-            mock_param_editor.assert_called_once_with("05_imu_temperature_calibration.param", mock_fc, mock_fs)
+            mock_param_editor.assert_called_once_with(
+                "05_imu_temperature_calibration.param", mock_fc, mock_fs, export_fc_params_missing_or_different=False
+            )
             mock_editor.assert_called_once_with(mock_param_editor.return_value)
 
     def test_user_gets_simplified_workflow_in_simple_mode(self, application_state: ApplicationState) -> None:

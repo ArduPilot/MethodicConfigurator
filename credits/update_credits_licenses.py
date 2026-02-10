@@ -5,7 +5,7 @@ Downloads the licenses of the direct and indirect dependencies of the project.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -72,7 +72,7 @@ def download_license(package_name: str, license_url: str) -> None:
         if package_name in {"Scrollable_TK_frame", "Python_Tkinter_ComboBox"}:
             filename = f"{package_name}-Mozilla_Public_License_version_2.0.html"
         else:
-            filename = f"{package_name}-{license_url.split('/')[-1]}"
+            filename = f"{package_name}-{license_url.rsplit('/', 1)[-1]}"
         with open(filename, "wb") as f:
             f.write(response.content)
         msg = f"Downloaded {filename}"

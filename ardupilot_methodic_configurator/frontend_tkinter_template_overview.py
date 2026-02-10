@@ -5,7 +5,7 @@ Vehicle template overview GUI.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -378,7 +378,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         return self.vehicle_components_provider.get_vehicle_image_filepath(template_path)
 
 
-def argument_parser() -> argparse.Namespace:
+def argument_parser() -> argparse.Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -401,7 +401,7 @@ def argument_parser() -> argparse.Namespace:
     return add_common_arguments(parser).parse_args()
 
 
-def setup_logging(loglevel: str) -> None:
+def setup_logging(loglevel: str) -> None:  # pragma: no cover
     """
     Set up logging with the specified log level.
 
@@ -412,7 +412,7 @@ def setup_logging(loglevel: str) -> None:
     logging_basicConfig(level=logging_getLevelName(loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     """Main entry point for the application."""
     args = argument_parser()
     setup_logging(args.loglevel)
@@ -424,5 +424,5 @@ def main() -> None:
         logging_info(ProgramSettings.get_recently_used_dirs()[0])
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

@@ -8,7 +8,7 @@ Original from MAVProxy/MAVProxy/modules/mavproxy_ftp.py
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2011-2024 Andrew Tridgell, 2024-2025 Amilcar Lucas
+SPDX-FileCopyrightText: 2011-2024 Andrew Tridgell, 2024-2026 Amilcar Lucas
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -432,7 +432,14 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
     def __terminate_session(self) -> None:
         """Terminate current session."""
         self.__send(FTP_OP(self.seq, self.session, OP_TerminateSession, 0, 0, 0, 0, None))
-        self.fh = None
+        # Ensure any open local file handle is properly closed to release OS resources
+        try:
+            if self.fh is not None:
+                self.fh.close()
+        except Exception as ex:  # pylint: disable=broad-except
+            logging.error("FTP: error closing local file handle: %s", ex)
+        finally:
+            self.fh = None
         self.filename = None
         self.write_list = None
         if self.callback is not None:

@@ -5,7 +5,7 @@ Tests for the ParameterEditorTable class.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar Lucas
+SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -25,7 +25,6 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduP
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
-    OperationNotPossibleError,
     ParameterEditor,
     ParameterValueUpdateResult,
     ParameterValueUpdateStatus,
@@ -121,6 +120,7 @@ def mock_parameter_editor_window() -> MagicMock:
     parent_window.gui_complexity = "simple"
     parent_window.repopulate_parameter_table = MagicMock()
     parent_window.on_skip_click = MagicMock()
+    parent_window.root = MagicMock(spec=tk.Tk)
     return parent_window
 
 
@@ -158,10 +158,10 @@ def parameter_editor_table(
 
         mock_param_editor.get_parameters_as_par_dict.return_value = get_current_file_parameters()
 
-        # Mock the repopulate_configuration_step_parameters method to return the expected tuple
-        mock_param_editor.repopulate_configuration_step_parameters.return_value = ([], [])
+        # Mock the _repopulate_configuration_step_parameters method to return the expected tuple
+        mock_param_editor._repopulate_configuration_step_parameters.return_value = ([], [])
 
-        # Mock the parameters attribute that gets populated during repopulate_configuration_step_parameters
+        # Mock the parameters attribute that gets populated during _repopulate_configuration_step_parameters
         mock_param_editor.current_step_parameters = {}
 
         # Mock the delete method to actually delete from the _local_filesystem parameters
@@ -177,9 +177,12 @@ def parameter_editor_table(
 
         # Mock _has_unsaved_changes to return False by default
         mock_param_editor._has_unsaved_changes.return_value = False
+        mock_param_editor.should_display_bitmask_parameter_editor_usage.return_value = False
 
         # Create the table instance
         table = ParameterEditorTable(mock_master, mock_param_editor, mock_parameter_editor_window, dialogs=table_dialogs)
+
+        mock_parameter_editor_window.root = mock_master
 
         # Mock necessary tkinter widgets and methods
         table.add_parameter_row = MagicMock()
@@ -302,7 +305,7 @@ def test_repopulate_empty_parameters(parameter_editor_table: ParameterEditorTabl
     parameter_editor_table.parameter_editor._local_filesystem.file_parameters = ParDict({test_file: ParDict({})})
 
     # Act: Repopulate the table
-    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: No parameter rows were added
     parameter_editor_table.add_parameter_row.assert_not_called()
@@ -328,7 +331,7 @@ def test_repopulate_clears_existing_content(parameter_editor_table: ParameterEdi
     parameter_editor_table.parameter_editor._local_filesystem.param_default_dict = ParDict({"PARAM1": Par(0.0, "default")})
 
     # Act: Repopulate the table
-    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: Existing content was cleared
     assert not dummy_widget.winfo_exists()
@@ -350,7 +353,7 @@ def test_repopulate_handles_none_current_file(parameter_editor_table: ParameterE
     parameter_editor_table.parameter_editor._local_filesystem.param_default_dict = ParDict({})
 
     # Act: Attempt to repopulate_table with no current file
-    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: No parameter rows were added
     parameter_editor_table.add_parameter_row.assert_not_called()
@@ -376,9 +379,7 @@ def test_repopulate_single_parameter(parameter_editor_table: ParameterEditorTabl
 
     # Act: Repopulate with single parameter
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate_table(
-            show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False
-        )
+        parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: Parameter row was added (implicitly tested through repopulate_table call)
 
@@ -421,9 +422,7 @@ def test_repopulate_multiple_parameters(parameter_editor_table: ParameterEditorT
 
     # Act: Repopulate with multiple parameters
     with patch.object(parameter_editor_table, "grid_slaves", return_value=[]):
-        parameter_editor_table.repopulate_table(
-            show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False
-        )
+        parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: All parameters were processed (implicitly tested through repopulate_table call)
 
@@ -454,7 +453,7 @@ def test_repopulate_preserves_checkbutton_states(parameter_editor_table: Paramet
     )
 
     # Act: Repopulate the table
-    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False)
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: Checkbutton states were preserved (implicitly tested through repopulate_table call)
 
@@ -495,7 +494,7 @@ def test_repopulate_show_only_differences(parameter_editor_table: ParameterEdito
     )
 
     # Act: Repopulate showing only differences
-    parameter_editor_table.repopulate_table(show_only_differences=True, gui_complexity="simple", regenerate_from_disk=False)
+    parameter_editor_table.repopulate_table(show_only_differences=True, gui_complexity="simple")
 
     # Assert: Only differing parameters were processed (implicitly tested through repopulate_table call)
 
@@ -513,7 +512,7 @@ def test_repopulate_uses_scroll_helper(parameter_editor_table: ParameterEditorTa
     # Arrange: Set pending scroll state
     parameter_editor_table._pending_scroll_to_bottom = pending_scroll
     parameter_editor_table.parameter_editor._local_filesystem.file_parameters = ParDict({"test_file": ParDict({})})
-    parameter_editor_table.parameter_editor.repopulate_configuration_step_parameters = MagicMock(return_value=([], []))
+    parameter_editor_table.parameter_editor._repopulate_configuration_step_parameters = MagicMock(return_value=([], []))
     parameter_editor_table._update_table = MagicMock()
     parameter_editor_table.view_port.winfo_children = MagicMock(return_value=[])
     parameter_editor_table._create_headers_and_tooltips = MagicMock(return_value=((), ()))
@@ -521,9 +520,7 @@ def test_repopulate_uses_scroll_helper(parameter_editor_table: ParameterEditorTa
 
     # Act: Repopulate and check scroll behavior
     with patch.object(parameter_editor_table, "_apply_scroll_position") as mock_scroll:
-        parameter_editor_table.repopulate_table(
-            show_only_differences=False, gui_complexity="simple", regenerate_from_disk=False
-        )
+        parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: Scroll position was applied correctly
     mock_scroll.assert_called_once_with(pending_scroll)
@@ -590,7 +587,7 @@ class TestUIComplexityBehavior:
         AND: Advanced users have complete control over parameter uploads
         """
         # Arrange: Set advanced mode
-        parameter_editor_table.parameter_editor_window.gui_complexity = "advanced"
+        parameter_editor_table.parameter_editor_window.gui_complexity = "normal"
 
         # Act: Check if upload column should be shown
         should_show = parameter_editor_table._should_show_upload_column()
@@ -610,8 +607,8 @@ class TestUIComplexityBehavior:
         # Arrange: Set simple mode as default
         parameter_editor_table.parameter_editor_window.gui_complexity = "simple"
 
-        # Act: Explicitly pass "advanced" to override the default
-        should_show = parameter_editor_table._should_show_upload_column("advanced")
+        # Act: Explicitly pass "normal" to override the default
+        should_show = parameter_editor_table._should_show_upload_column("normal")
 
         # Assert: Explicit parameter overrides default
         assert should_show is True
@@ -711,7 +708,7 @@ class TestIntegrationBehavior:
         assert column_index == 6  # No upload column
 
         # Act: Calculate columns for advanced mode override
-        show_upload_advanced = parameter_editor_table._should_show_upload_column("advanced")
+        show_upload_advanced = parameter_editor_table._should_show_upload_column("normal")
         column_index_advanced = parameter_editor_table._get_change_reason_column_index(show_upload_advanced)
 
         # Assert: Advanced mode calculations
@@ -917,9 +914,7 @@ class TestEventHandlerBehavior:
 
         # Assert: Parameter is deleted and table repopulated
         assert "TEST_PARAM" not in parameter_editor_table.parameter_editor._local_filesystem.file_parameters["test_file"]
-        parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with(
-            regenerate_from_disk=False
-        )
+        parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_on_parameter_delete_cancelled(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -1152,7 +1147,7 @@ class TestCompleteIntegrationWorkflows:
         assert column_index_simple == 6
 
         # Arrange & Act: Test advanced mode
-        parameter_editor_table.parameter_editor_window.gui_complexity = "advanced"
+        parameter_editor_table.parameter_editor_window.gui_complexity = "normal"
 
         headers_advanced, _ = parameter_editor_table._create_headers_and_tooltips(
             parameter_editor_table._should_show_upload_column()
@@ -1403,9 +1398,7 @@ class TestUserParameterEditingWorkflows:
         # Assert: Parameter addition was successful
         assert result is True
         add_mock.assert_called_once_with("NEW_PARAM")
-        parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with(
-            regenerate_from_disk=False
-        )
+        parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_user_can_delete_parameter_from_configuration_file(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -1429,9 +1422,7 @@ class TestUserParameterEditingWorkflows:
         # Assert: User was asked for confirmation and deletion proceeded
         ask_dialog.assert_called_once()
         delete_mock.assert_called_once_with("TEST_PARAM")
-        parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with(
-            regenerate_from_disk=False
-        )
+        parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_user_cannot_delete_parameter_when_cancelled(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -1491,7 +1482,7 @@ class TestUserParameterEditingWorkflows:
         AND: The selection persists across table refreshes
         """
         # Arrange: Set up parameters with upload checkboxes
-        parameter_editor_table.parameter_editor_window.gui_complexity = "advanced"
+        parameter_editor_table.parameter_editor_window.gui_complexity = "normal"
         parameter_editor_table.parameter_editor.is_fc_connected = True
 
         # Create mock parameters
@@ -1508,7 +1499,7 @@ class TestUserParameterEditingWorkflows:
         }
 
         # Act: Get upload parameters (simulating user selections)
-        result = parameter_editor_table.get_upload_selected_params("advanced")
+        result = parameter_editor_table.get_upload_selected_params("normal")
 
         # Assert: All parameters selected in advanced mode when FC connected
         assert len(result) == 2
@@ -1611,42 +1602,7 @@ class TestUserParameterEditingWorkflows:
 
 
 class TestUIErrorInfoHandling:
-    """Test UI error and info message handling in repopulate_table method."""
-
-    def test_repopulate_displays_ui_errors_and_infos(self, parameter_editor_table) -> None:
-        """
-        User sees UI error and info messages when repopulating the parameter table.
-
-        GIVEN: A parameter editor table with UI errors and infos from parameter editor data model
-        WHEN: The table is repopulated
-        THEN: Error messages are displayed using messagebox.showerror
-        AND: Info messages are displayed using messagebox.showinfo
-        """
-        # Arrange: Set up mock to return UI errors and infos
-        ui_errors = [("Error Title", "Error message"), ("Another Error", "Another message")]
-        ui_infos = [("Info Title", "Info message"), ("Another Info", "Another message")]
-
-        parameter_editor_table.parameter_editor.repopulate_configuration_step_parameters.return_value = (
-            ui_errors,
-            ui_infos,
-        )
-        parameter_editor_table.parameter_editor.current_step_parameters = {}
-        parameter_editor_table.parameter_editor_window.gui_complexity = "simple"
-        error_dialog = cast("MagicMock", parameter_editor_table._dialogs.show_error)
-        info_dialog = cast("MagicMock", parameter_editor_table._dialogs.show_info)
-
-        parameter_editor_table.repopulate_table(
-            show_only_differences=False,
-            gui_complexity="simple",
-            regenerate_from_disk=True,
-        )
-
-        assert error_dialog.call_count == len(ui_errors)
-        assert info_dialog.call_count == len(ui_infos)
-        error_dialog.assert_any_call("Error Title", "Error message")
-        error_dialog.assert_any_call("Another Error", "Another message")
-        info_dialog.assert_any_call("Info Title", "Info message")
-        info_dialog.assert_any_call("Another Info", "Another message")
+    """Test UI message handling in repopulate_table method."""
 
     def test_repopulate_handles_no_different_parameters_found(self, parameter_editor_table) -> None:
         """
@@ -1658,7 +1614,6 @@ class TestUIErrorInfoHandling:
         AND: The on_skip_click method is called
         """
         # Arrange: Set up mock to return no different parameters
-        parameter_editor_table.parameter_editor.repopulate_configuration_step_parameters.return_value = ([], [])
         parameter_editor_table.parameter_editor.get_different_parameters.return_value = {}
         parameter_editor_table.parameter_editor.current_file = "test_file.param"
         parameter_editor_table.parameter_editor_window.gui_complexity = "simple"
@@ -1668,7 +1623,6 @@ class TestUIErrorInfoHandling:
         parameter_editor_table.repopulate_table(
             show_only_differences=True,
             gui_complexity="simple",
-            regenerate_from_disk=True,
         )
 
         info_dialog.assert_called_once()
@@ -2269,49 +2223,6 @@ class TestHandlerEdgeCases:
         param.set_change_reason.assert_called_once_with("Updated")
 
 
-class TestParameterAdditionWorkflows:
-    """Cover add-parameter dialog flows and error handling."""
-
-    def test_on_parameter_add_invokes_confirmation_handler(self, parameter_editor_table: ParameterEditorTable) -> None:
-        parameter_editor_table.parameter_editor.get_possible_add_param_names.return_value = ["NEW"]
-        parameter_editor_table._confirm_parameter_addition = MagicMock(return_value=True)
-        mock_window = MagicMock()
-        mock_window.root = MagicMock()
-        mock_window.main_frame = MagicMock()
-        entry_widget = MagicMock()
-        entry_widget.get.return_value = "NEW"
-
-        with (
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.BaseWindow", return_value=mock_window
-            ),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.EntryWithDynamicalyFilteredListbox",
-                return_value=entry_widget,
-            ),
-        ):
-            parameter_editor_table._on_parameter_add()
-
-        handler = entry_widget.bind.call_args_list[0][0][1]
-        handler(SimpleNamespace(widget=entry_widget))
-        parameter_editor_table._confirm_parameter_addition.assert_called_with("NEW")
-
-    def test_on_parameter_add_handles_operation_not_possible(self, parameter_editor_table: ParameterEditorTable) -> None:
-        parameter_editor_table.parameter_editor.get_possible_add_param_names.side_effect = OperationNotPossibleError("nope")
-        parameter_editor_table._on_parameter_add()
-        parameter_editor_table._dialogs.show_error.assert_called_once()
-
-    def test_confirm_parameter_addition_handles_errors(self, parameter_editor_table: ParameterEditorTable) -> None:
-        parameter_editor_table.parameter_editor.add_parameter_to_current_file.side_effect = InvalidParameterNameError("bad")
-        assert parameter_editor_table._confirm_parameter_addition("bad") is False
-        parameter_editor_table._dialogs.show_error.assert_called()
-
-        parameter_editor_table._dialogs.show_error.reset_mock()
-        parameter_editor_table.parameter_editor.add_parameter_to_current_file.side_effect = OperationNotPossibleError("ops")
-        assert parameter_editor_table._confirm_parameter_addition("bad") is False
-        parameter_editor_table._dialogs.show_error.assert_called()
-
-
 class TestUploadSelectionBehavior:
     """Test upload selection helper based on GUI complexity."""
 
@@ -2330,5 +2241,5 @@ class TestUploadSelectionBehavior:
         }
         parameter_editor_table.parameter_editor.get_parameters_as_par_dict.return_value = ParDict({"A": Par(1.0, "")})
 
-        result = parameter_editor_table.get_upload_selected_params("advanced")
+        result = parameter_editor_table.get_upload_selected_params("normal")
         assert result == ParDict({"A": Par(1.0, "")})

@@ -31,7 +31,7 @@ between phases.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -201,7 +201,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
                     phase["bar"]["value"] = 0
 
 
-def argument_parser() -> argparse.Namespace:
+def argument_parser() -> argparse.Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -221,7 +221,7 @@ def argument_parser() -> argparse.Namespace:
     return add_common_arguments(parser).parse_args()
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
@@ -252,5 +252,5 @@ def main() -> None:
     root.mainloop()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

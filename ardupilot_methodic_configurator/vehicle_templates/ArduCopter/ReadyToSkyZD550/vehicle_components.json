@@ -42,7 +42,7 @@
                 "Version": "4.5.3"
             },
             "FC Connection": {
-                "Type": "I2C1",
+                "Type": "Analog",
                 "Protocol": "Analog Voltage and Current"
             },
             "Notes": "Voltage is done via the flight controller. Current is done via the ESC."
@@ -76,10 +76,10 @@
                 "Version": "32.10"
             },
             "FC Connection": {
-                "Type": "Main Out",
+                "Type": "AIO",
                 "Protocol": "DShot600"
             },
-            "Notes": "Runs BDshot600 on Main out and uses SERIAL3 as extra connection for low rate telemetry"
+            "Notes": "Runs BDshot600 on AIO and uses SERIAL3 as extra connection for low rate telemetry"
         },
         "Motors": {
             "Product": {
@@ -160,7 +160,7 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "SERIAL5",
+                "Type": "SERIAL4",
                 "Protocol": "CRSF"
             },
             "Notes": "ExpressLRS"
@@ -183,5 +183,5 @@
             "Notes": ""
         }
     },
-    "Program version": "2.0.1"
+    "Program version": "2.9.6"
 }

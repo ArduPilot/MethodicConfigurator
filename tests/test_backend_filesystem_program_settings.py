@@ -5,7 +5,7 @@ BDD-style tests for the backend_filesystem_program_settings.py file.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -403,8 +403,11 @@ class TestSettingsFileOperations:
         expected_result["annotate_docs_into_param_files"] = False  # Added by default
         expected_result["gui_complexity"] = "simple"  # Added by default
         expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
+        expected_result["connection_history"] = []  # Added by default
         expected_result["display_usage_popup"]["component_editor_validation"] = True  # Added by default
         expected_result["display_usage_popup"]["workflow_explanation"] = True  # Added by default
+        expected_result["display_usage_popup"]["bitmask_parameter_editor"] = True  # Added by default
+        expected_result["display_usage_popup"]["only_changed_get_uploaded"] = True  # Added by default
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
@@ -474,6 +477,8 @@ class TestSettingsFileOperations:
             # Assert: Popup settings initialized with defaults
             assert result["display_usage_popup"]["component_editor"] is True
             assert result["display_usage_popup"]["parameter_editor"] is True
+            assert result["display_usage_popup"]["bitmask_parameter_editor"] is True
+            assert result["display_usage_popup"]["only_changed_get_uploaded"] is True
 
     def test_user_can_load_settings_from_file_directly(self, mock_user_config) -> None:  # pylint: disable=unused-argument
         """

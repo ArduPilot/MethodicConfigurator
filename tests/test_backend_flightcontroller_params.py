@@ -8,7 +8,7 @@ setting, fetching, and clearing parameters.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
@@ -109,11 +110,11 @@ class TestFlightControllerParamsSetParameter:
         # When: Set parameter
         success, error = params_mgr.set_param("BATT_MONITOR", 4.0)
 
-        # Then: Parameter sent and cached
+        # Then: Parameter sent (but NOT cached - cache only updates from actual FC reads)
         assert success is True
         assert error == ""
         mock_master.param_set_send.assert_called_once_with("BATT_MONITOR", 4.0)
-        assert params_mgr.fc_parameters["BATT_MONITOR"] == 4.0
+        # Note: fc_parameters is NOT updated by set_param to ensure cache accuracy
 
     def test_set_parameter_fails_without_connection(self) -> None:
         """
@@ -530,7 +531,7 @@ class TestFlightControllerParamsDownload:
         """
         mock_conn_mgr = Mock()
         mock_conn_mgr.master = None
-        mock_conn_mgr.comport_device = "file"
+        mock_conn_mgr.comport_device = DEVICE_FC_PARAM_FROM_FILE
         mock_conn_mgr.info = FlightControllerInfo()
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)

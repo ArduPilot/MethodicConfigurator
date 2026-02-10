@@ -5,7 +5,7 @@ Tests for the battery_cell_voltages.py file.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -18,7 +18,7 @@ from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell, b
 
 class TestBatteryCell(unittest.TestCase):  # pylint: disable=missing-class-docstring
     def test_chemistries(self) -> None:
-        expected_chemistries = ("LiIon", "LiIonSS", "LiIonSSHV", "Lipo", "LipoHV", "LipoHVSS")
+        expected_chemistries = ("LiIon", "LiIonSS", "LiIonSSHV", "Lipo", "LipoHV", "LipoHVSS", "NiCd", "NiMH")
         chemistries = BatteryCell.chemistries()
         assert chemistries == expected_chemistries
 
@@ -30,7 +30,7 @@ class TestBatteryCell(unittest.TestCase):  # pylint: disable=missing-class-docst
     def test_limit_min_voltage(self) -> None:
         assert BatteryCell.limit_min_voltage("LiIon") == 2.5
         assert BatteryCell.limit_min_voltage("LipoHV") == 3.0
-        assert BatteryCell.limit_min_voltage("NonExistentChemistry") == 2.4
+        assert BatteryCell.limit_min_voltage("NonExistentChemistry") == 1.0
 
     def test_recommended_max_voltage(self) -> None:
         assert BatteryCell.recommended_max_voltage("LiIon") == 4.1

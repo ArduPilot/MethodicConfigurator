@@ -5,7 +5,7 @@ Behaviour-driven unit tests for the ConfigurationStepProcessor class.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -227,7 +227,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         # Arrange: Set up scenario that creates duplicates
         selected_file = "test_file.param"
         processor.local_filesystem.configuration_steps = {selected_file: {"rename_connection": "CAN2"}}
-        processor.local_filesystem.file_parameters[selected_file]["CAN_P2_DRIVER"] = Par(value=2.0, comment="Exists")
+        processor.local_filesystem.file_parameters[selected_file]["CAN_P2_DRIVER"] = Par(value=1.0, comment="Exists")
 
         # Act: Process configuration step with potential duplicates
         with patch.object(processor, "_calculate_connection_rename_operations") as mock_apply:
@@ -600,7 +600,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         # Arrange: Create params with potential duplicates
         # Add CAN_P2_DRIVER which will conflict when we try to rename CAN_P1_DRIVER -> CAN_P2_DRIVER
         params = connection_params["param_objects"].copy()
-        params["CAN_P2_DRIVER"] = Par(value=2.0, comment="Already exists")
+        params["CAN_P2_DRIVER"] = Par(value=1.0, comment="Already exists")
         original_keys = set(params.keys())
 
         # Act: Calculate renames for CAN1 to CAN2

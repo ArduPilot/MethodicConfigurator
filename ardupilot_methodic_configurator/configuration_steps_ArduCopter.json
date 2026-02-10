@@ -134,12 +134,16 @@
                 "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" },
                 "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell low'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Low voltage + 0.0) x no. of cells" },
                 "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
-                "BATT_I2C_BUS": { "New Value": "0 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C1' else 1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 4", "Change Reason": "Selected in component editor window" },
+                "BATT_I2C_BUS": { "New Value": "1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 3 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C4' else 0", "Change Reason": "Selected in component editor window" },
                 "MOT_BAT_VOLT_MAX": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell max']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Max voltage + 0.0) x no. of cells" },
                 "MOT_BAT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
             },
             "rename_connection": "vehicle_components['Battery Monitor']['FC Connection']['Type']",
-            "old_filenames": []
+            "old_filenames": [],
+            "plugin": {
+                "name": "battery_monitor",
+                "placement": "left"
+            }
         },
         "09_batt2.param": {
             "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
@@ -166,7 +170,8 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "derived_parameters": {
-                "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+                "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
+                "GPS1_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
             },
             "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
             "old_filenames": []
@@ -252,9 +257,9 @@
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
             },
             "derived_parameters": {
-                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] > 16 else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others" },
-                "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] > 16 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" },
-                "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] > 16 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" }
+                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others" },
+                "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" },
+                "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" }
             },
             "old_filenames": ["13_logging.param"]
         },

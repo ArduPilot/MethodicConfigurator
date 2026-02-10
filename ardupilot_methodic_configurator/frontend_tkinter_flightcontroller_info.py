@@ -3,13 +3,14 @@ Flight controller information GUI.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import logging
 import tkinter as tk
+from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import Callable, Optional, Union
 
@@ -26,8 +27,9 @@ class FlightControllerInfoPresenter:
     Separated from UI for better testability.
     """
 
-    def __init__(self, flight_controller: FlightController) -> None:
+    def __init__(self, flight_controller: FlightController, vehicle_dir: Path) -> None:
         self.flight_controller = flight_controller
+        self.vehicle_dir = vehicle_dir
         self.param_default_values: ParDict = ParDict()
 
     def get_info_data(self) -> dict[str, Union[str, dict[str, str]]]:
@@ -53,7 +55,11 @@ class FlightControllerInfoPresenter:
             We only need to store the default values for this window's use.
 
         """
-        _fc_parameters, param_default_values = self.flight_controller.download_params(progress_callback)
+        _fc_parameters, param_default_values = self.flight_controller.download_params(
+            progress_callback,
+            self.vehicle_dir / "complete.param",
+            self.vehicle_dir / "00_default.param",
+        )
         # Note: fc_parameters are already updated in the backend, no need to reassign
         self.param_default_values = param_default_values
         return param_default_values
@@ -66,12 +72,12 @@ class FlightControllerInfoPresenter:
 class FlightControllerInfoWindow(BaseWindow):
     """Display flight controller hardware, firmware and parameter information."""
 
-    def __init__(self, flight_controller: FlightController) -> None:
+    def __init__(self, flight_controller: FlightController, vehicle_dir: Path) -> None:
         super().__init__()
         self.root.title(_("AMC {version} - Flight Controller Info").format(version=__version__))  # Set the window title
         self.root.geometry("500x420")  # Adjust the window size as needed
 
-        self.presenter = FlightControllerInfoPresenter(flight_controller)
+        self.presenter = FlightControllerInfoPresenter(flight_controller, vehicle_dir)
 
         self._create_info_display()
         self.presenter.log_flight_controller_info()

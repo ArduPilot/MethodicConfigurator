@@ -3,7 +3,7 @@ Flight controller parameter management.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict, validate_param_name
@@ -103,7 +104,7 @@ class FlightControllerParams:
                 default_parameters is a ParDict of default parameter values
 
         """
-        if self.master is None and self.comport_device == "file":
+        if self.master is None and self.comport_device == DEVICE_FC_PARAM_FROM_FILE:
             filename = "params.param"
             logging_warning(_("Testing active, will load all parameters from the %s file"), filename)
             par_dict_with_comments = ParDict.from_file(filename)
@@ -237,7 +238,6 @@ class FlightControllerParams:
 
         Note: This method sends the parameter but does NOT wait for confirmation.
         This is an ArduPilot limitation - the parameter_set command does not return an ACK.
-        The local cache is updated optimistically.
 
         Args:
             param_name: The name of the parameter to set
@@ -264,8 +264,10 @@ class FlightControllerParams:
             return False, error_msg
 
         self.master.param_set_send(param_name, param_value)
-        # Update local cache optimistically
-        self.fc_parameters[param_name] = param_value
+        # Note: We do NOT update fc_parameters here because:
+        # 1. ArduPilot's param_set doesn't send confirmation (no ACK)
+        # 2. The parameter should only be updated when read back from FC (via MAVFTP or fetch_param)
+        # 3. This ensures fc_parameters always reflects the actual FC state
         return True, ""
 
     def get_param(self, param_name: str, default: float = nan) -> float:

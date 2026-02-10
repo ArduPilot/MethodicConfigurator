@@ -13,7 +13,7 @@ Calls five sub-applications in sequence:
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -25,6 +25,8 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
+from logging import warning as logging_warning
+from pathlib import Path
 from sys import exit as sys_exit
 from typing import Union
 
@@ -34,7 +36,7 @@ from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
-from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url, webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
@@ -43,11 +45,15 @@ from ardupilot_methodic_configurator.data_model_software_updates import UpdateMa
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
+from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress import (
+    FlightControllerConnectionProgress,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
-from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow, UsagePopupWindow
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
+from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
@@ -59,13 +65,16 @@ def register_plugins() -> None:
     This function explicitly imports and registers plugins, avoiding
     side-effect imports and potential race conditions.
     """
-    # Import and register motor test plugin
+    # Import and register plugins
     # pylint: disable=import-outside-toplevel, cyclic-import
+    from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (  # noqa: PLC0415
+        register_battery_monitor_plugin,
+    )
     from ardupilot_methodic_configurator.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
-
     # pylint: enable=import-outside-toplevel, cyclic-import
 
     register_motor_test_plugin()
+    register_battery_monitor_plugin()
 
     # Add more plugin registrations here in the future
 
@@ -179,9 +188,25 @@ def display_first_use_documentation() -> None:
 
 
 def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
-    flight_controller = FlightController(reboot_time=args.reboot_time, baudrate=args.baudrate)
+    # Create UI components with automatic cleanup via context manager
+    with FlightControllerConnectionProgress() as connection_progress:
+        # Update progress for FC initialization start
+        connection_progress.update_init_progress_bar(0, 100)
 
-    error_str = flight_controller.connect(args.device, log_errors=False)
+        flight_controller = FlightController(
+            reboot_time=args.reboot_time,
+            baudrate=args.baudrate,
+            progress_callback=connection_progress.update_init_progress_bar,
+        )
+
+        # FC init done, starting connect
+        connection_progress.update_init_progress_bar(100, 100)
+
+        error_str = flight_controller.connect(
+            args.device, progress_callback=connection_progress.update_connect_progress_bar, log_errors=False
+        )
+
+        connection_progress.update_connect_progress_bar(100, 100)
 
     if error_str:
         if args.device and _("No serial ports found") not in error_str:
@@ -191,20 +216,20 @@ def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[Flight
         FreeDesktop.setup_startup_notification(conn_sel_window.root)  # type: ignore[arg-type]
         conn_sel_window.root.mainloop()
 
-    vehicle_type = args.vehicle_type
-    if vehicle_type == "":  # not explicitly set, to try to guess it
-        if flight_controller.info.vehicle_type is not None:
-            vehicle_type = flight_controller.info.vehicle_type
-            logging_debug(_("Vehicle type not set explicitly, auto-detected %s."), vehicle_type)
-    else:
+    vehicle_type = ""  # default to empty string, downstream code will handle unknown vehicle type
+    if hasattr(args, "vehicle_type") and args.vehicle_type:
+        vehicle_type = args.vehicle_type
         logging_info(_("Vehicle type explicitly set to %s."), vehicle_type)
+    elif flight_controller.info.vehicle_type is not None:
+        vehicle_type = flight_controller.info.vehicle_type
+        logging_debug(_("Vehicle type not set explicitly, auto-detected %s."), vehicle_type)
 
     return flight_controller, vehicle_type
 
 
-def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None:
+def initialize_flight_controller(state: ApplicationState) -> None:
     """
-    Initialize flight controller connection and local filesystem.
+    Initialize flight controller connection.
 
     Args:
         state: Application state to populate with initialized objects
@@ -217,10 +242,53 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
     state.flight_controller, state.vehicle_type = connect_to_fc_and_set_vehicle_type(state.args)
 
     # Get default parameter values from flight controller
-    if state.flight_controller.master is not None or state.args.device == "test":
-        fciw = FlightControllerInfoWindow(state.flight_controller)
+    if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
+        vehicle_dir = Path(state.args.vehicle_dir) if hasattr(state.args, "vehicle_dir") else Path.cwd()
+
+        # Check if vehicle_dir is writable; if not, use a writable user directory.
+        # On some platforms (notably Windows with UAC) os.access() may report
+        # writable even when actual file creation fails for normal users, so
+        # we also perform a small write test.
+        def _is_writable(path: Path) -> bool:
+            if not os.access(path, os.W_OK):
+                return False
+            try:
+                path.mkdir(parents=True, exist_ok=True)
+                test_file = path / ".write_test.tmp"
+                with open(test_file, "w", encoding="utf-8") as tmp:
+                    tmp.write("test")
+                test_file.unlink(missing_ok=True)
+                return True
+            except OSError:
+                return False
+
+        if not _is_writable(vehicle_dir):
+            original_vehicle_dir = vehicle_dir
+            vehicle_dir = ProgramSettings.get_vehicles_default_dir()
+            vehicle_dir.mkdir(parents=True, exist_ok=True)
+            logging_warning(
+                _("Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."),
+                {"old_dir": original_vehicle_dir, "new_dir": vehicle_dir},
+            )
+        logging_debug(
+            _("Using Vehicle directory %(new_dir)s for initial parameter download."),
+            {"new_dir": vehicle_dir},
+        )
+        fciw = FlightControllerInfoWindow(state.flight_controller, vehicle_dir)
         state.param_default_values = fciw.get_param_default_values()
 
+
+def initialize_filesystem(state: ApplicationState) -> None:
+    """
+    Initialize local filesystem.
+
+    Args:
+        state: Application state to populate with initialized objects
+
+    Raises:
+        SystemExit: If there's a fatal error reading parameter files
+
+    """
     # Initialize local filesystem
     try:
         state.local_filesystem = LocalFilesystem(
@@ -237,6 +305,21 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
     # Write parameter default values if available
     if state.param_default_values:
         state.param_default_values_dirty = state.local_filesystem.write_param_default_values(state.param_default_values)
+
+
+def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None:
+    """
+    Initialize flight controller connection and local filesystem.
+
+    Args:
+        state: Application state to populate with initialized objects
+
+    Raises:
+        SystemExit: If there's a fatal error reading parameter files
+
+    """
+    initialize_flight_controller(state)
+    initialize_filesystem(state)
 
 
 def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProjectOpenerWindow, None]:
@@ -269,8 +352,8 @@ def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProject
         if not success:
             logging_error(_("Failed to reset parameters to defaults: %(error)s"), {"error": error_msg})
         state.flight_controller.reset_and_reconnect()
-        if state.flight_controller.master is not None or state.args.device == "test":
-            fciw = FlightControllerInfoWindow(state.flight_controller)
+        if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
+            fciw = FlightControllerInfoWindow(state.flight_controller, Path(state.args.vehicle_dir))
             default_values = fciw.get_param_default_values()
             state.param_default_values = ParDict(default_values) if default_values else ParDict()
 
@@ -539,7 +622,12 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
             )
 
     # Call the GUI function with the starting intermediate parameter file
-    parameter_editor = ParameterEditor(start_file, state.flight_controller, state.local_filesystem)
+    parameter_editor = ParameterEditor(
+        start_file,
+        state.flight_controller,
+        state.local_filesystem,
+        export_fc_params_missing_or_different=state.args.export_fc_params_missing_or_different,
+    )
     window = ParameterEditorWindow(parameter_editor)
     window.run()
 
@@ -569,8 +657,9 @@ def main() -> None:
 
     # Display workflow explanation popup
     if PopupWindow.should_display("workflow_explanation"):
-        popup_window = UsagePopupWindow.display_workflow_explanation()
-        popup_window.root.mainloop()
+        popup_window = display_workflow_explanation()
+        if popup_window:
+            popup_window.root.mainloop()
 
     # Validate that all configured plugins are registered
     if state.local_filesystem:

@@ -7,7 +7,7 @@ This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPil
 
 https://code.activestate.com/recipes/580770-combobox-autocomplete/
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -60,6 +60,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         self._use_hscrollbar = hscrollbar
 
         kwargs.setdefault("background", "white")
+        kwargs.setdefault("foreground", "black")
 
         if "textvariable" in kwargs:
             self._entry_var = kwargs["textvariable"]
@@ -117,7 +118,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         listbox_frame = ttk.Frame(self.master)
 
         self._listbox = Listbox(
-            listbox_frame, background="white", selectmode=SINGLE, activestyle="none", exportselection=False
+            listbox_frame, background="white", foreground="black", selectmode=SINGLE, activestyle="none", exportselection=False
         )
         self._listbox.grid(row=0, column=0, sticky=N + E + W + S)
 

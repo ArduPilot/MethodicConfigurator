@@ -5,12 +5,12 @@
 We have a very active (and friendly) developer group and would love to have the help!
 Possible ways you can help:
 
-* [Translating the software into your language](https://github.com/ArduPilot/MethodicConfigurator/blob/master/.github/instructions/manually_translate_the_user_interface.md#adding-a-translation)
 * Testing [the code](https://github.com/ArduPilot/MethodicConfigurator)
-* Filing [issues on github](https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose), when you see a problem (or adding detail to existing issues that affect you)
+* Filing [issues on github](https://github.com/ArduPilot/MethodicConfigurator/issues/new/choose), when you see a problem or adding detail to existing issues
 * Fixing issues
 * Adding new features
 * Reviewing [existing pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls), and notifying the maintainer if it passes your code review.
+* [Translating the software into your language](https://github.com/ArduPilot/MethodicConfigurator/blob/master/.github/instructions/manually_translate_the_user_interface.md#adding-a-translation)
 * Finding and fixing [security issues](SECURITY.md)
 
 ## Learning the Code
@@ -68,7 +68,7 @@ On Windows:
 
 ```powershell
 .venv\Scripts\activate.ps1
-python3 -m ardupilot_methodic_configurator
+python -m ardupilot_methodic_configurator
 ```
 
 On macOS & Linux:
@@ -127,6 +127,7 @@ The review includes both automated checks and manual inspection.
   [Pyright](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pyright.yml) validation
 * **Security Scanning**: Automated vulnerability detection via [CodeQL](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/codeql.yml) and dependency reviews
 * **Testing**: Comprehensive test suite execution with [pytest](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pytest.yml)
+* **Git branching conventions**: Is the [pull request branch free of merge commits](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/test_branch_conventions.yml)?
 
 ### Manual Review Criteria
 
@@ -142,7 +143,6 @@ We manually verify the following aspects:
 * Do the [git commit messages follow conventional commit standards](https://www.conventionalcommits.org/en/v1.0.0/)?
 * Is at least the last commit in the pull request branch [signed off](https://developercertificate.org/) by the contributor?
 * Does the pull request have a clear description of the changes and their rationale?
-* Is the pull request branch free of merge commits?
 
 #### Architecture & Design
 

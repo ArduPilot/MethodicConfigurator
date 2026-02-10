@@ -3,7 +3,7 @@ GUI to select the directory to store the vehicle configuration files.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -85,7 +85,9 @@ class DirectorySelectionWidgets:
 
         # Create a read-only entry for the directory
         dir_var = tk.StringVar(value=self.directory)
-        self.directory_entry = tk.Entry(directory_selection_subframe, textvariable=dir_var, state="readonly")
+        self.directory_entry = tk.Entry(
+            directory_selection_subframe, textvariable=dir_var, state="readonly", foreground="black"
+        )
         if autoresize_width:
             self.directory_entry.config(width=max(4, len(self.directory)))
         self.directory_entry.pack(side=tk.LEFT, fill="x", expand=True, anchor=tk.NW, pady=(4, 0))

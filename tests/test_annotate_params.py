@@ -7,7 +7,7 @@ These are the unit tests for the python script that fetches online ArduPilot
 parameter documentation (if not cached) and adds it to the specified file or
 to all *.param and *.parm files in the specified directory.
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -16,13 +16,13 @@ import contextlib
 import os
 import tempfile
 import unittest
+from collections.abc import Generator
 from unittest import mock
-from unittest.mock import patch
-from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
+from unittest.mock import MagicMock, Mock, patch
+from xml.etree import ElementTree as ET
 
 import pytest
-import requests  # type: ignore[import-untyped]
-from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
+from defusedxml import ElementTree as DET  # noqa: N814
 
 from ardupilot_methodic_configurator.annotate_params import (
     BASE_URL,
@@ -30,7 +30,6 @@ from ardupilot_methodic_configurator.annotate_params import (
     create_doc_dict,
     extract_parameter_name_and_validate,
     format_columns,
-    get_env_proxies,
     get_xml_data,
     get_xml_url,
     main,
@@ -43,23 +42,23 @@ from ardupilot_methodic_configurator.annotate_params import (
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
-# pylint: disable=too-many-lines, protected-access
+# pylint: disable=protected-access
 
 
 @pytest.fixture
-def mock_update() -> mock.Mock:
+def mock_update() -> Generator[MagicMock, None, None]:
     with patch("ardupilot_methodic_configurator.annotate_params.update_parameter_documentation") as mock_fun:
         yield mock_fun
 
 
 @pytest.fixture
-def mock_get_xml_dir() -> mock.Mock:
+def mock_get_xml_dir() -> Generator[MagicMock, None, None]:
     with patch("ardupilot_methodic_configurator.annotate_params.get_xml_dir") as mock_fun:
         yield mock_fun
 
 
 @pytest.fixture
-def mock_get_xml_url() -> mock.Mock:
+def mock_get_xml_url() -> Generator[MagicMock, None, None]:
     with patch("ardupilot_methodic_configurator.annotate_params.get_xml_url") as mock_fun:
         yield mock_fun
 
@@ -99,7 +98,12 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
     @patch("builtins.open", new_callable=mock.mock_open, read_data="<root></root>")
     @patch("os.path.isfile")
     @patch("ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict")
-    def test_get_xml_data_local_file(self, mock_load_param, mock_isfile, mock_open_) -> None:
+    def test_get_xml_data_local_file(  # type: ignore[misc]
+        self,
+        mock_load_param: MagicMock,
+        mock_isfile: MagicMock,
+        mock_open_: MagicMock,
+    ) -> None:
         # Mock the isfile function to return True
         mock_isfile.return_value = True
 
@@ -115,30 +119,35 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         # Assert that the file was opened correctly
         mock_open_.assert_called_once_with(os.path.join(".", "test.xml"), encoding="utf-8")
 
-    @patch("requests.get")
-    def test_get_xml_data_remote_file(self, mock_get) -> None:
-        # Mock the response
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = "<root></root>"
+    @patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url")
+    def test_get_xml_data_remote_file(self, mock_download: MagicMock) -> None:  # type: ignore[misc]
+        # Mock successful download
+        mock_download.return_value = True
 
         # Remove the test.xml file if it exists
         with contextlib.suppress(FileNotFoundError):
             os.remove("test.xml")
 
-        # Call the function with a remote file
-        result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
+        # Mock open to return dummy XML data since we aren't actually downloading a file
+        with patch("builtins.open", mock.mock_open(read_data="<root></root>")):
+            # Call the function with a remote file
+            result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
         # Check the result
         assert isinstance(result, ET.Element)
 
-        # Assert that the requests.get function was called once
-        mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5)
+        # Assert that download_file_from_url was called once with correct arguments
+        mock_download.assert_called_once_with("http://example.com/test.xml", os.path.join(".", "test.xml"))
 
     @patch("os.path.isfile")
     @patch("ardupilot_methodic_configurator.data_model_par_dict.ParDict.load_param_file_into_dict")
-    def test_get_xml_data_script_dir_file(self, mock_load_param, mock_isfile) -> None:
+    def test_get_xml_data_script_dir_file(  # type: ignore[misc]
+        self,
+        mock_load_param: MagicMock,
+        mock_isfile: MagicMock,
+    ) -> None:
         # Mock the isfile function to return False for the current directory and True for the script directory
-        def side_effect(_filename) -> bool:
+        def side_effect(_filename: str) -> bool:
             return True
 
         mock_isfile.side_effect = side_effect
@@ -158,80 +167,55 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         # Assert that the file was opened correctly
         mock_open.assert_called_once_with(os.path.join(".", PARAM_DEFINITION_XML_FILE), encoding="utf-8")
 
-    def test_get_xml_data_no_requests_package(self) -> None:
-        # Temporarily remove the requests module
-        with patch.dict("sys.modules", {"requests": None}):
-            # Remove the test.xml file if it exists
-            with contextlib.suppress(FileNotFoundError):
-                os.remove("test.xml")
-
-            # Call the function with a remote file
-            with pytest.raises(SystemExit):
-                get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
-
-    @patch("requests.get")
-    def test_get_xml_data_request_failure(self, mock_get) -> None:
-        # Mock the response
-        mock_get.side_effect = requests.exceptions.RequestException
+    @patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url")
+    def test_get_xml_data_download_failure(self, mock_download: MagicMock) -> None:  # type: ignore[misc]
+        # Mock failed download
+        mock_download.return_value = False
 
         # Remove the test.xml file if it exists
         with contextlib.suppress(FileNotFoundError):
             os.remove("test.xml")
 
-        # Call the function with a remote file
+        # Call the function with a remote file, expect exit
         with pytest.raises(SystemExit):
             get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
-    @patch("requests.get")
-    def test_get_xml_data_valid_xml(self, mock_get) -> None:
-        # Mock the response
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = "<root></root>"
+    @patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url")
+    def test_get_xml_data_valid_xml(self, mock_download: MagicMock) -> None:  # type: ignore[misc]
+        # Mock success
+        mock_download.return_value = True
 
-        # Call the function with a remote file
-        result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
+        # Mock open to return valid XML
+        with patch("builtins.open", mock.mock_open(read_data="<root></root>")):
+            result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
         # Check the result
         assert isinstance(result, ET.Element)
 
-    @patch("requests.get")
-    def test_get_xml_data_invalid_xml(self, mock_get) -> None:
-        # Mock the response
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = "<root><invalid></root>"
+    @patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url")
+    def test_get_xml_data_invalid_xml(self, mock_download: MagicMock) -> None:  # type: ignore[misc]
+        # Mock success
+        mock_download.return_value = True
 
-        # Remove the test.xml file if it exists
-        with contextlib.suppress(FileNotFoundError):
-            os.remove("test.xml")
-
-        # Call the function with a remote file
-        with pytest.raises(ET.ParseError):
+        # Mock open to return INVALID XML
+        with patch("builtins.open", mock.mock_open(read_data="<root><invalid></root>")), pytest.raises(ET.ParseError):
             get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
 
-    @patch("requests.get")
+    @patch("ardupilot_methodic_configurator.annotate_params.download_file_from_url")
     @patch("os.path.isfile")
-    def test_get_xml_data_missing_file(self, mock_isfile, mock_get) -> None:
+    def test_get_xml_data_missing_file(self, mock_isfile: MagicMock, mock_download: MagicMock) -> None:  # type: ignore[misc]
         # Mock the isfile function to return False
         mock_isfile.return_value = False
-        # Mock the requests.get call to raise FileNotFoundError
-        mock_get.side_effect = FileNotFoundError
+        # Mock download failure
+        mock_download.return_value = False
 
         # Remove the test.xml file if it exists
         with contextlib.suppress(FileNotFoundError):
             os.remove("test.xml")
 
         # Call the function with a local file
-        with pytest.raises(FileNotFoundError):
-            get_xml_data("/path/to/local/file/", ".", "test.xml", "ArduCopter")
-
-    @patch("requests.get")
-    def test_get_xml_data_network_issue(self, mock_get) -> None:
-        # Mock the response
-        mock_get.side_effect = requests.exceptions.ConnectionError
-
-        # Call the function with a remote file
         with pytest.raises(SystemExit):
-            get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
+            get_xml_data("/path/to/local/file/", ".", "test.xml", "ArduCopter")
 
     def test_remove_prefix(self) -> None:
         # Test case 1: Normal operation
@@ -494,7 +478,7 @@ PARAM_1\t100
         assert cm.value.code == "Invalid line in input file"
 
     @patch("logging.Logger.info")
-    def test_print_read_only_params(self, mock_info) -> None:
+    def test_print_read_only_params(self, mock_info: MagicMock) -> None:  # type: ignore[misc]
         # Mock XML data
         xml_data = """
         <root>
@@ -549,7 +533,7 @@ PARAM_1\t100
             update_parameter_documentation(self.doc_dict, self.temp_file.name)
 
     @patch("logging.Logger.warning")
-    def test_missing_parameter_documentation(self, mock_warning) -> None:
+    def test_missing_parameter_documentation(self, mock_warning: MagicMock) -> None:  # type: ignore[misc]
         # Write some initial content to the temporary file
         with open(self.temp_file.name, "w", encoding="utf-8") as file:
             file.write("MISSING_DOC_PARA 100\n")
@@ -633,7 +617,7 @@ PARAM_1\t100
         assert doc_dict["TEST_PARAM"]["humanName"] == "Test Parameter"
 
     @patch("os.path.isfile")
-    def test_update_parameter_documentation_sorting(self, mock_isfile) -> None:
+    def test_update_parameter_documentation_sorting(self, mock_isfile: MagicMock) -> None:  # type: ignore[misc]
         """Test parameter sorting in update_parameter_documentation."""
         # Mock file existence check
         mock_isfile.return_value = True
@@ -770,9 +754,9 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
     @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
     @patch("builtins.open", new_callable=mock.mock_open)
-    def test_main_ioerror(self, mock_file) -> None:
+    def test_main_ioerror(self, mock_file: MagicMock) -> None:  # type: ignore[misc]
         with patch("ardupilot_methodic_configurator.annotate_params.parse_arguments") as mock_arg_parser:
-            mock_arg_parser.return_value = mock.Mock(
+            mock_arg_parser.return_value = Mock(
                 vehicle_type="ArduCopter",
                 firmware_version="4.0",
                 target=".",
@@ -789,9 +773,9 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
 
     @pytest.mark.usefixtures("mock_update", "mock_get_xml_dir", "mock_get_xml_url")
     @patch("builtins.open", new_callable=mock.mock_open)
-    def test_main_oserror(self, mock_file) -> None:
+    def test_main_oserror(self, mock_file: MagicMock) -> None:  # type: ignore[misc]
         with patch("ardupilot_methodic_configurator.annotate_params.parse_arguments") as mock_arg_parser:
-            mock_arg_parser.return_value = mock.Mock(
+            mock_arg_parser.return_value = Mock(
                 vehicle_type="ArduCopter",
                 firmware_version="4.0",
                 target=".",
@@ -807,99 +791,10 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
             assert cm.value.code in [1, 2]
 
     @patch("ardupilot_methodic_configurator.annotate_params.get_xml_url")
-    def test_get_xml_url_exception(self, mock_get_xml_url_) -> None:
+    def test_get_xml_url_exception(self, mock_get_xml_url_: MagicMock) -> None:  # type: ignore[misc]
         mock_get_xml_url_.side_effect = ValueError("Mocked Value Error")
-        with pytest.raises(ValueError, match=r"Vehicle type 'NonExistingVehicle' is not supported\."):  # noqa: PT012
+        with pytest.raises(ValueError, match=r"Vehicle type 'NonExistingVehicle' is not supported\."):
             get_xml_url("NonExistingVehicle", "4.0")
-
-            @patch("requests.get")
-            def test_get_xml_data_remote_file(mock_get) -> None:
-                """Test fetching XML data from remote file."""
-                # Mock the response
-                mock_get.return_value.status_code = 200
-                mock_get.return_value.text = "<root></root>"
-
-                # Remove the test.xml file if it exists
-                with contextlib.suppress(FileNotFoundError):
-                    os.remove("test.xml")
-
-                # Call the function with a remote file
-                result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
-
-                # Check the result
-                assert isinstance(result, ET.Element)
-
-                # Assert that requests.get was called once with correct parameters including proxies
-                mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5, proxies=None)
-
-            @patch("requests.get")
-            def test_get_xml_data_remote_file_with_proxies(mock_get) -> None:
-                """Test fetching XML data with proxy configuration."""
-                # Mock environment variables
-                with patch.dict(
-                    os.environ,
-                    {"HTTP_PROXY": "http://proxy:8080", "HTTPS_PROXY": "https://proxy:8080", "NO_PROXY": "localhost"},
-                ):
-                    # Mock the response
-                    mock_get.return_value.status_code = 200
-                    mock_get.return_value.text = "<root></root>"
-
-                    # Call the function
-                    result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
-
-                    # Check the result
-                    assert isinstance(result, ET.Element)
-
-                    # Assert that requests.get was called with proxy settings
-                    expected_proxies = {"http": "http://proxy:8080", "https": "https://proxy:8080", "no_proxy": "localhost"}
-                    mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5, proxies=expected_proxies)
-
-            @patch("requests.get")
-            def test_get_xml_data_remote_file_no_proxies(mock_get) -> None:
-                """Test fetching XML data with no proxy configuration."""
-                # Clear environment variables
-                with patch.dict(os.environ, {}, clear=True):
-                    # Mock the response
-                    mock_get.return_value.status_code = 200
-                    mock_get.return_value.text = "<root></root>"
-
-                    # Call the function
-                    result = get_xml_data("http://example.com/", ".", "test.xml", "ArduCopter")
-
-                    # Check the result
-                    assert isinstance(result, ET.Element)
-
-                    # Assert that requests.get was called with no proxies
-                    mock_get.assert_called_once_with("http://example.com/test.xml", timeout=5, proxies=None)
-
-    @patch.dict(
-        "os.environ",
-        {
-            "HTTP_PROXY": "http://proxy-server:8080",
-            "HTTPS_PROXY": "https://proxy-server:8080",
-            "NO_PROXY": "localhost,127.0.0.1",
-        },
-    )
-    def test_get_env_proxies_with_proxies(self) -> None:
-        """Test getting proxies from environment variables."""
-        proxies = get_env_proxies()
-        assert proxies is not None
-        assert proxies["http"] == "http://proxy-server:8080"
-        assert proxies["https"] == "https://proxy-server:8080"
-        assert proxies["no_proxy"] == "localhost,127.0.0.1"
-
-    @patch.dict("os.environ", {}, clear=True)
-    def test_get_env_proxies_without_proxies(self) -> None:
-        """Test getting proxies when environment variables are not set."""
-        proxies = get_env_proxies()
-        assert proxies is None
-
-    @patch.dict("os.environ", {"http_proxy": "http://lowercase-proxy:8080"})
-    def test_get_env_proxies_lowercase(self) -> None:
-        """Test getting proxies from lowercase environment variables."""
-        proxies = get_env_proxies()
-        assert proxies is not None
-        assert proxies["http"] == "http://lowercase-proxy:8080"
 
     def test_extract_parameter_name_and_validate_edge_cases(self) -> None:
         """Test extract_parameter_name_and_validate with various edge cases."""

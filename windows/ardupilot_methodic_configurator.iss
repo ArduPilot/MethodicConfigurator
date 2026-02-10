@@ -58,6 +58,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X500";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X500_V2";
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Holybro_X650_LTE";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\ArduCopter\Demo32Motor_PeterHall";
 
 ; Remove Heli template files
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Heli\Allister";
@@ -65,6 +66,7 @@ Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\ve
 
 ; Remove Rover template files
 Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\AION_R1";
+Type: filesandordirs; Name: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates\Rover\Carisma_SCA-1E";
 
 ; Remove Outdated files
 Type: filesandordirs; Name: "{app}\_internal\ardupilot_methodic_configurator\ArduCopter_configuration_steps.json";
@@ -92,9 +94,9 @@ Source: "..\ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator
 Source: "..\ardupilot_methodic_configurator\vehicle_templates\*.*"; DestDir: "{commonappdata}\.ardupilot_methodic_configurator\vehicle_templates"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\git_hash.txt"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\windows\ardupilot_methodic_configurator.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\images\ArduPilot_icon.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
-Source: "..\ardupilot_methodic_configurator\images\ArduPilot_logo.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
+Source: "..\ardupilot_methodic_configurator\images\*.png"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\ardupilot_methodic_configurator\images\*.svg"; DestDir: "{app}\_internal\ardupilot_methodic_configurator\images"; Flags: ignoreversion
+Source: "..\ardupilot_methodic_configurator\AP_Motors_test*.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\configuration_steps_*.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\ardupilot_methodic_configurator\vehicle_components_schema.json"; DestDir: "{app}\_internal\ardupilot_methodic_configurator"; Flags: ignoreversion
 Source: "..\LICENSES\*.*"; DestDir: "{app}\LICENSES"; Flags: ignoreversion

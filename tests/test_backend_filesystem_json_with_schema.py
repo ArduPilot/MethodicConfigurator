@@ -5,7 +5,7 @@ Test the FilesystemJSONWithSchema class for JSON file operations with schema val
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -419,11 +419,12 @@ class TestJSONDataSaving:
 
         GIVEN: A user has valid data that conforms to the schema
         WHEN: They call save_json_data() with the data and directory
-        THEN: The data should be validated and saved successfully
+        THEN: The data should be validated, saved successfully, and cached internally
         """
         # Arrange: Valid data and directory
         valid_data = {"name": "Test Output", "count": 42}
         data_dir = "/output/directory"
+        json_manager_with_schema.data = None  # Start with empty cache
 
         with (
             patch.object(json_manager_with_schema, "validate_json_against_schema", return_value=(True, "")),
@@ -445,6 +446,9 @@ class TestJSONDataSaving:
             assert error_message == ""
             mock_file.assert_called_once_with("/output/directory/output.json", "w", encoding="utf-8", newline="\n")
             mock_dumps.assert_called_once_with(valid_data, indent=4)
+            # Assert: Internal cache updated immediately (regression test for commit ccc53bb)
+            assert json_manager_with_schema.data == valid_data
+            assert json_manager_with_schema.data is valid_data
 
     def test_user_cannot_save_invalid_data(self, json_manager_with_schema) -> None:
         """
@@ -452,11 +456,13 @@ class TestJSONDataSaving:
 
         GIVEN: A user has data that doesn't conform to the schema
         WHEN: They call save_json_data()
-        THEN: The save should fail with validation error and no file operations
+        THEN: The save should fail with validation error, no file operations, and cache unchanged
         """
-        # Arrange: Invalid data missing required field
+        # Arrange: Invalid data missing required field and existing cache
+        original_data = {"name": "Original Config", "count": 50}
         invalid_data = {"count": 42}  # Missing required "name" field
         data_dir = "/output/directory"
+        json_manager_with_schema.data = original_data
 
         with (
             patch.object(
@@ -474,6 +480,8 @@ class TestJSONDataSaving:
             assert "Missing required field" in error_message
             mock_file.assert_not_called()
             mock_error.assert_called_once()
+            assert json_manager_with_schema.data == original_data
+            assert json_manager_with_schema.data is not invalid_data
 
     def test_user_handles_missing_directory_error(self, json_manager_with_schema) -> None:
         """

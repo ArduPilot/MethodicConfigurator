@@ -3,27 +3,56 @@ Data model for vehicle components import from FC parameters.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
+
 # from logging import debug as logging_debug
 from logging import error as logging_error
-from math import log2
-from typing import Any
+from logging import warning as logging_warning
+from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentDataModelBase
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     BATT_MONITOR_CONNECTION,
     CAN_PORTS,
     GNSS_RECEIVER_CONNECTION,
+    I2C_PORTS,
     MOT_PWM_TYPE_DICT,
     RC_PROTOCOLS_DICT,
     SERIAL_PORTS,
     SERIAL_PROTOCOLS_DICT,
+    ComponentDataModelValidation,
 )
+
+
+def is_single_bit_set(value: int) -> bool:
+    """
+    Check if exactly one bit is set in a bitmask (value is a power of 2 and non-zero).
+
+    Args:
+        value: Integer value to check
+
+    Returns:
+        True if value is a power of 2 (exactly one bit set), False otherwise
+
+    Examples:
+        >>> is_single_bit_set(1)   # 0b0001
+        True
+        >>> is_single_bit_set(4)   # 0b0100
+        True
+        >>> is_single_bit_set(5)   # 0b0101 (multiple bits)
+        False
+        >>> is_single_bit_set(0)   # no bits set
+        False
+
+    """
+    return value > 0 and value & (value - 1) == 0
 
 
 class ComponentDataModelImport(ComponentDataModelBase):
@@ -65,25 +94,45 @@ class ComponentDataModelImport(ComponentDataModelBase):
         Verify that a dictionary is up-to-date with the apm.pdef.xml documentation metadata.
 
         Returns True if valid, False if there are discrepancies.
+        Note: Logs warnings (not errors) when firmware has protocols not in code dictionaries,
+        as this is expected when ArduPilot firmware is updated with new features.
+
+        For bitmask parameters (doc_dict == "Bitmask"), the documentation key represents a bit position,
+        but our dictionary keys are the actual bitmask values (2^bit_position), so we convert for comparison.
         """
         is_valid = True
         if not doc or doc_key not in doc or not doc[doc_key] or doc_dict not in doc[doc_key]:
             return False
 
+        is_bitmask = doc_dict == "Bitmask"
+
         for key, doc_protocol in doc[doc_key][doc_dict].items():
-            if key in dict_to_check:
-                code_protocol = dict_to_check[key].get("protocol", None)
+            # For bitmask parameters, convert bit position to bitmask value (2^bit_position)
+            # e.g., bit position "0" -> value "1", bit position "9" -> value "512"
+            if is_bitmask:
+                try:
+                    check_key = str(2 ** int(key))
+                except (ValueError, TypeError):
+                    logging_warning(_("Invalid bit position %s in %s metadata"), key, doc_key)
+                    continue
+            else:
+                check_key = key
+
+            if check_key in dict_to_check:
+                code_protocol = dict_to_check[check_key].get("protocol", None)
                 if code_protocol != doc_protocol:
-                    logging_error(_("Protocol %s does not match %s in %s metadata"), code_protocol, doc_protocol, doc_key)
+                    logging_warning(_("Protocol %s does not match %s in %s metadata"), code_protocol, doc_protocol, doc_key)
                     is_valid = False
             else:
-                logging_error(_("Protocol %s not found in %s metadata"), doc_protocol, doc_key)
+                logging_warning(
+                    _("Protocol %s (%s) not found in %s code dictionary (firmware may be newer)"), doc_protocol, key, doc_key
+                )
                 is_valid = False
         return is_valid
 
     def process_fc_parameters(
         self,
-        fc_parameters: dict[str, Any],
+        fc_parameters: dict[str, float],
         doc: dict[str, Any],
     ) -> None:
         """
@@ -94,7 +143,11 @@ class ComponentDataModelImport(ComponentDataModelBase):
         # First verify dictionaries match documentation
         self._verify_dict_is_uptodate(doc, SERIAL_PROTOCOLS_DICT, "SERIAL1_PROTOCOL", "values")
         self._verify_dict_is_uptodate(doc, BATT_MONITOR_CONNECTION, "BATT_MONITOR", "values")
-        self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values")
+        # GPS_TYPE was renamed to GPS1_TYPE in ArduPilot 4.6
+        if "GPS1_TYPE" in doc:
+            self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS1_TYPE", "values")
+        elif "GPS_TYPE" in doc:
+            self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values")
         self._verify_dict_is_uptodate(doc, MOT_PWM_TYPE_DICT, "MOT_PWM_TYPE", "values")
         self._verify_dict_is_uptodate(doc, RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask")
 
@@ -109,23 +162,29 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
     def _set_gnss_type_from_fc_parameters(self, fc_parameters: dict) -> None:
         """Process GNSS receiver parameters and update the data model."""
-        gps1_type = fc_parameters.get("GPS_TYPE", 0)
+        # GPS_TYPE was renamed to GPS1_TYPE in ArduPilot 4.6, check for both
+        gps1_type = fc_parameters.get("GPS1_TYPE", fc_parameters.get("GPS_TYPE", 0))
+        param_name = "GPS1_TYPE" if "GPS1_TYPE" in fc_parameters else "GPS_TYPE"
         try:
             gps1_type = int(gps1_type)
         except (ValueError, TypeError):
-            logging_error(_("Invalid non-integer value for GPS_TYPE %s"), gps1_type)
+            logging_error(_("Invalid non-integer value for %s: %s"), param_name, gps1_type)
             gps1_type = 0
 
         if str(gps1_type) in GNSS_RECEIVER_CONNECTION:
             gps1_connection_type = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("type")
             gps1_connection_protocol = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("protocol")
-            if gps1_connection_type == "None":
+            # Normalize gps1_connection_type to a list for consistent handling
+            if isinstance(gps1_connection_type, str):
+                gps1_connection_type = [gps1_connection_type]
+            # gps1_connection_type is now a list of possible connection types
+            if gps1_connection_type == ["None"]:
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), "None")
-            elif gps1_connection_type in SERIAL_PORTS:
+            elif gps1_connection_type and any(conn_type in SERIAL_PORTS for conn_type in gps1_connection_type):
                 # GNSS connection type will be detected later in set_serial_type_from_fc_parameters
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), str(gps1_connection_protocol))
-            elif gps1_connection_type in CAN_PORTS:
+            elif gps1_connection_type and any(conn_type in CAN_PORTS for conn_type in gps1_connection_type):
                 if (
                     "CAN_D1_PROTOCOL" in fc_parameters
                     and fc_parameters["CAN_D1_PROTOCOL"] == 1
@@ -137,7 +196,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
                     "CAN_D2_PROTOCOL" in fc_parameters
                     and fc_parameters["CAN_D2_PROTOCOL"] == 1
                     and "CAN_P2_DRIVER" in fc_parameters
-                    and fc_parameters["CAN_P2_DRIVER"] == 2
+                    and fc_parameters["CAN_P2_DRIVER"] == 1
                 ):
                     self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "CAN2")
                 else:
@@ -152,10 +211,12 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 logging_error("Invalid GNSS connection type %s", gps1_connection_type)
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
         else:
-            logging_error("GPS_TYPE %u not in GNSS_RECEIVER_CONNECTION", gps1_type)
+            logging_error("%s value %u not in GNSS_RECEIVER_CONNECTION", param_name, gps1_type)
             self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
 
-    def _set_serial_type_from_fc_parameters(self, fc_parameters: dict) -> bool:  # pylint: disable=too-many-branches
+    def _set_serial_type_from_fc_parameters(  # pylint: disable=too-many-branches,too-many-statements # noqa: PLR0915
+        self, fc_parameters: dict
+    ) -> bool:
         """Process serial port parameters and update the data model. Returns True if ESC is serial controlled."""
         if "RC_PROTOCOLS" in fc_parameters:
             try:
@@ -163,12 +224,20 @@ class ComponentDataModelImport(ComponentDataModelBase):
             except (ValueError, TypeError):
                 logging_error(_("Invalid non-integer value for RC_PROTOCOLS %s"), fc_parameters["RC_PROTOCOLS"])
                 rc_protocols_nr = 0
-            # check if rc_protocols_nr is a power of two (only one bit set) and not zero
-            if rc_protocols_nr > 0 and rc_protocols_nr & (rc_protocols_nr - 1) == 0:
-                # rc_bit is the number of the bit that is set
-                rc_bit = str(int(log2(rc_protocols_nr)))
-                protocol = RC_PROTOCOLS_DICT[rc_bit].get("protocol")
-                self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
+            # RC_PROTOCOLS is a bitmask where each bit represents an enabled protocol
+            # Only set a specific protocol if exactly one bit is set (power of 2)
+            # If multiple bits are set, we can't determine which protocol is actually in use
+            if is_single_bit_set(rc_protocols_nr):
+                # Exactly one bit is set (power of 2) - use the value directly as the key
+                rc_value = str(rc_protocols_nr)
+                if rc_value in RC_PROTOCOLS_DICT:
+                    protocol = RC_PROTOCOLS_DICT[rc_value].get("protocol")
+                    self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
+            elif rc_protocols_nr > 0:
+                # Multiple bits are set - cannot determine which protocol is active
+                logging_error(
+                    _("RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active protocol."), rc_protocols_nr
+                )
 
         rc = 1
         telem = 1
@@ -206,7 +275,13 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 self.set_component_value(("Telemetry", "FC Connection", "Protocol"), protocol)
                 telem += 1
             elif component == "GNSS Receiver" and gnss == 1:
-                self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), serial)
+                # Only set GNSS Type from SERIAL if it hasn't been set to a CAN port already
+                # Processing order dependency: _set_gnss_type_from_fc_parameters() is called first,
+                # which sets CAN ports based on GPS_TYPE/GPS1_TYPE parameter. This check prevents
+                # overwriting CAN configuration with SERIAL when a GNSS uses CAN for connection.
+                current_gnss_type = self.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+                if current_gnss_type not in CAN_PORTS:
+                    self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), serial)
                 gnss += 1
             elif component == "ESC":
                 if esc == 1:
@@ -218,7 +293,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
         return esc >= 2
 
-    def _set_esc_type_from_fc_parameters(self, fc_parameters: dict[str, Any], doc: dict[str, Any]) -> None:
+    def _set_esc_type_from_fc_parameters(self, fc_parameters: dict[str, float], doc: dict[str, Any]) -> None:
         """Process ESC parameters and update the data model."""
         mot_pwm_type = fc_parameters.get("MOT_PWM_TYPE", 0)
         try:
@@ -244,16 +319,48 @@ class ComponentDataModelImport(ComponentDataModelBase):
             protocol = str(MOT_PWM_TYPE_DICT[str(mot_pwm_type)]["protocol"])
             self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
 
-    def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, Any]) -> None:
+    def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:  # pylint: disable=too-many-branches
         """Process battery monitor parameters and update the data model."""
-        if "BATT_MONITOR" in fc_parameters:
+        if "BATT_MONITOR" in fc_parameters:  # pylint: disable=too-many-nested-blocks
             try:
                 batt_monitor = int(fc_parameters["BATT_MONITOR"])
-                fc_conn_type = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("type", "None")
-                fc_conn_protocol = BATT_MONITOR_CONNECTION[str(batt_monitor)].get("protocol", "Disabled")
+                batt_monitor_str = str(batt_monitor)
 
+                if batt_monitor_str not in BATT_MONITOR_CONNECTION:
+                    logging_error(_("BATT_MONITOR value %s not found in BATT_MONITOR_CONNECTION"), batt_monitor)
+                    return
+
+                fc_conn_type = BATT_MONITOR_CONNECTION[batt_monitor_str].get("type", "None")
+                fc_conn_protocol = BATT_MONITOR_CONNECTION[batt_monitor_str].get("protocol", "Disabled")
+
+                # Handle list of possible connection types
                 if isinstance(fc_conn_type, list):
-                    fc_conn_type = fc_conn_type[0]
+                    # Check if it's I2C ports - need to determine which bus
+                    if set(fc_conn_type) <= set(I2C_PORTS):  # subset of I2C ports
+                        # Use BATT_I2C_BUS to determine the actual I2C bus
+                        # BATT_I2C_BUS: 0=I2C1, 1=I2C2, 2=I2C3, 3=I2C4, 4=I2C_INTERNAL (if exists)
+                        if "BATT_I2C_BUS" in fc_parameters:
+                            try:
+                                i2c_bus = int(fc_parameters["BATT_I2C_BUS"])
+                                if 0 <= i2c_bus < len(fc_conn_type):
+                                    fc_conn_type = fc_conn_type[i2c_bus]
+                                else:
+                                    logging_warning(
+                                        _("BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus"),
+                                        i2c_bus,
+                                        len(fc_conn_type) - 1,
+                                    )
+                                    fc_conn_type = fc_conn_type[0]
+                            except (ValueError, TypeError):
+                                logging_warning(_("Invalid BATT_I2C_BUS value, defaulting to first bus"))
+                                fc_conn_type = fc_conn_type[0]
+                        else:
+                            # Default to first I2C bus if BATT_I2C_BUS not specified
+                            fc_conn_type = fc_conn_type[0]
+                    else:
+                        # For other list types, take first element
+                        fc_conn_type = fc_conn_type[0]
+
                 if isinstance(fc_conn_protocol, list):
                     fc_conn_protocol = fc_conn_protocol[0]
 
@@ -261,13 +368,218 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 self.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), fc_conn_protocol)
             except (ValueError, KeyError, TypeError) as e:
                 logging_error(_("Error processing BATT_MONITOR parameter: %s"), str(e))
+        else:
+            logging_warning(_("BATT_MONITOR parameter not found in fc_parameters"))
 
-    def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, Any]) -> None:
+        if "BATT_CAPACITY" in fc_parameters:
+            try:
+                batt_capacity = int(fc_parameters["BATT_CAPACITY"])
+                if batt_capacity > 0:
+                    self.set_component_value(("Battery", "Specifications", "Capacity mAh"), batt_capacity)
+                else:
+                    logging_warning(_("BATT_CAPACITY is zero or negative: %s"), batt_capacity)
+            except (ValueError, TypeError) as e:
+                logging_error(_("Error processing BATT_CAPACITY parameter: %s"), str(e))
+        else:
+            logging_warning(_("BATT_CAPACITY parameter not found in fc_parameters"))
+
+        # Detect battery chemistry from voltage parameters before estimating cell count
+        # Only update if current chemistry is clearly wrong or not set
+        current_chemistry = str(self.get_component_value(("Battery", "Specifications", "Chemistry")))
+        detected_chemistry = self._detect_battery_chemistry_from_voltages(fc_parameters, current_chemistry)
+        if detected_chemistry and detected_chemistry != current_chemistry:
+            self.set_component_value(("Battery", "Specifications", "Chemistry"), detected_chemistry)
+
+        # Estimate number of cells from voltage parameters
+        self._estimate_battery_cell_count(fc_parameters)
+
+    def _get_volt_per_cell_for_type(self, chemistry: str, voltage_type: str) -> float:
+        """
+        Get voltage per cell for a given chemistry and voltage type.
+
+        Args:
+            chemistry: Battery chemistry type
+            voltage_type: One of "recommended_max", "recommended_low", "recommended_crit"
+
+        Returns:
+            Voltage per cell value
+
+        """
+        if voltage_type == "recommended_max":
+            return BatteryCell.recommended_max_voltage(chemistry)
+        if voltage_type == "recommended_low":
+            return BatteryCell.recommended_low_voltage(chemistry)
+        # voltage_type == "recommended_crit"
+        return BatteryCell.recommended_crit_voltage(chemistry)
+
+    def _detect_battery_chemistry_from_voltages(
+        self, fc_parameters: dict[str, float], current_chemistry: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Detect battery chemistry from voltage parameter ratios.
+
+        Analyzes voltage parameters and compares them against known chemistry profiles
+        to determine the most likely battery chemistry type. Only suggests a change if
+        the current chemistry is clearly inconsistent with the parameters.
+
+        Args:
+            fc_parameters: Dictionary of flight controller parameters
+            current_chemistry: Currently configured chemistry (if any)
+
+        Returns:
+            Detected chemistry string (e.g., "LiIon", "Lipo") or None if detection fails
+            or current chemistry is acceptable
+
+        """
+        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT
+        voltage_params = [
+            ("MOT_BAT_VOLT_MAX", "recommended_max"),
+            ("BATT_LOW_VOLT", "recommended_low"),
+            ("BATT_CRT_VOLT", "recommended_crit"),
+        ]
+
+        # Try each voltage parameter in priority order
+        for param_name, voltage_type in voltage_params:
+            if param_name not in fc_parameters:
+                continue
+
+            try:
+                total_voltage = float(fc_parameters[param_name])
+                if total_voltage <= 0:
+                    continue
+
+                # Check if current chemistry is consistent with this parameter
+                if current_chemistry and current_chemistry in BatteryCell.chemistries():
+                    volt_per_cell = self._get_volt_per_cell_for_type(current_chemistry, voltage_type)
+                    if volt_per_cell > 0:
+                        estimated_cells = total_voltage / volt_per_cell
+                        current_chemistry_score = abs(estimated_cells - round(estimated_cells))
+
+                        # If current chemistry gives acceptable results (<40% error), keep it
+                        # This very conservative threshold prevents changing chemistry unless clearly wrong
+                        if current_chemistry_score < 0.40:
+                            return None  # Keep current chemistry
+
+                # Find best matching chemistry
+                best_chemistry = None
+                best_score = float("inf")
+
+                for chemistry in BatteryCell.chemistries():
+                    volt_per_cell = self._get_volt_per_cell_for_type(chemistry, voltage_type)
+                    if volt_per_cell <= 0:
+                        continue
+
+                    estimated_cells = total_voltage / volt_per_cell
+                    score = abs(estimated_cells - round(estimated_cells))
+
+                    if score < best_score:
+                        best_score = score
+                        best_chemistry = chemistry
+
+                # Only accept if reasonably close to integer (within 3%)
+                if best_chemistry and best_score < 0.03:
+                    return best_chemistry
+
+            except (ValueError, TypeError, ZeroDivisionError):
+                continue
+
+        return None
+
+    def _estimate_cells_from_voltage_param(
+        self, param_name: str, param_value: float, volt_per_cell_spec: str
+    ) -> Optional[int]:
+        """
+        Estimate cell count from a voltage parameter.
+
+        Args:
+            param_name: Name of the parameter for logging
+            param_value: Value of the voltage parameter
+            volt_per_cell_spec: Battery specification name (e.g., "Volt per cell max")
+
+        Returns:
+            Estimated cell count or None if estimation failed
+
+        """
+        volt_per_cell_value = self.get_component_value(("Battery", "Specifications", volt_per_cell_spec))
+
+        volt_per_cell = 0.0
+        if isinstance(volt_per_cell_value, (int, float, str)) and volt_per_cell_value:
+            with contextlib.suppress(ValueError, TypeError):
+                volt_per_cell = float(volt_per_cell_value)
+
+        if volt_per_cell <= 0:
+            logging_warning(_("Volt per cell value for %s is zero or invalid: %s"), volt_per_cell_spec, volt_per_cell_value)
+            return None
+
+        try:
+            voltage = float(param_value)
+            if voltage > 0:
+                return round(voltage / volt_per_cell)
+        except (ValueError, TypeError, ZeroDivisionError) as e:
+            logging_error(_("Error processing %s parameter: %s"), param_name, str(e))
+
+        return None
+
+    def _estimate_battery_cell_count(self, fc_parameters: dict[str, float]) -> None:
+        """
+        Estimate battery cell count from voltage parameters.
+
+        Uses MOT_BAT_VOLT_MAX, BATT_LOW_VOLT, or BATT_CRT_VOLT along with
+        current volt-per-cell values to estimate the number of cells.
+
+        Args:
+            fc_parameters: Dictionary of flight controller parameters
+
+        """
+        # Try to estimate cell count from available voltage parameters
+        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT
+        estimated_cells = None
+
+        if "MOT_BAT_VOLT_MAX" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "MOT_BAT_VOLT_MAX", fc_parameters["MOT_BAT_VOLT_MAX"], "Volt per cell max"
+            )
+
+        if estimated_cells is None and "BATT_LOW_VOLT" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "BATT_LOW_VOLT", fc_parameters["BATT_LOW_VOLT"], "Volt per cell low"
+            )
+
+        if estimated_cells is None and "BATT_CRT_VOLT" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "BATT_CRT_VOLT", fc_parameters["BATT_CRT_VOLT"], "Volt per cell crit"
+            )
+
+        # If no estimation succeeded, all volt per cell values must be invalid
+        if estimated_cells is None:
+            logging_error(_("All volt per cell values are zero or invalid; cannot estimate battery cell count"))
+            return
+
+        # Validate and set the estimated cell count
+        cell_path = ("Battery", "Specifications", "Number of cells")
+        if cell_path in ComponentDataModelValidation.VALIDATION_RULES:
+            _type, (min_cells, max_cells), _doc = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
+            if min_cells <= estimated_cells <= max_cells:
+                self.set_component_value(cell_path, estimated_cells)
+            else:
+                logging_error(
+                    _("Estimated battery cell count %s is out of valid range (%d to %d)"),
+                    estimated_cells,
+                    min_cells,
+                    max_cells,
+                )
+
+    def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:
         """Process motor parameters and update the data model."""
+        poles = 0.0
         if "MOT_PWM_TYPE" in fc_parameters:
-            mot_pwm_type_str = str(fc_parameters["MOT_PWM_TYPE"])
+            mot_pwm_type_str = str(int(fc_parameters["MOT_PWM_TYPE"]))
             if mot_pwm_type_str in MOT_PWM_TYPE_DICT and MOT_PWM_TYPE_DICT[mot_pwm_type_str].get("is_dshot", False):
-                if "SERVO_BLH_POLES" in fc_parameters:
-                    self.set_component_value(("Motors", "Specifications", "Poles"), fc_parameters["SERVO_BLH_POLES"])
-            elif "SERVO_FTW_MASK" in fc_parameters and fc_parameters["SERVO_FTW_MASK"] and "SERVO_FTW_POLES" in fc_parameters:
-                self.set_component_value(("Motors", "Specifications", "Poles"), fc_parameters["SERVO_FTW_POLES"])
+                if fc_parameters.get("SERVO_BLH_POLES"):  # DShot ESCs
+                    poles = fc_parameters["SERVO_BLH_POLES"]
+            elif fc_parameters.get("SERVO_FTW_MASK") and fc_parameters.get("SERVO_FTW_POLES"):
+                poles = fc_parameters["SERVO_FTW_POLES"]  # FETtec ESCs
+            elif fc_parameters.get("ESC_HW_POLES"):
+                poles = fc_parameters["ESC_HW_POLES"]  # Hobbywing ESCs
+        if poles:
+            self.set_component_value(("Motors", "Specifications", "Poles"), poles)

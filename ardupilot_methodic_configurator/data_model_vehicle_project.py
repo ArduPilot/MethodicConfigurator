@@ -7,7 +7,7 @@ a single point of contact for the frontend layer.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -16,10 +16,7 @@ from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
-    NewVehicleProjectSettings,
-    VehicleProjectCreator,
-)
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import NewVehicleProjectSettings, VehicleProjectCreator
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener
 
 if TYPE_CHECKING:
@@ -137,7 +134,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         """
         fc_connected = self.is_flight_controller_connected()
         new_path = self._creator.create_new_vehicle_from_template(
-            template_dir, new_base_dir, new_vehicle_name, settings, fc_connected
+            template_dir, new_base_dir, new_vehicle_name, settings, fc_connected, self.fc_parameters()
         )
         if new_path:
             self._settings = settings
@@ -243,6 +240,19 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             and hasattr(self._flight_controller, "master")
             and self._flight_controller.master is not None
         )
+
+    def fc_parameters(self) -> Optional[dict[str, float]]:
+        """
+        Return the flight controller's parameter dictionary if available.
+
+        Returns:
+            Dictionary of FC parameters if a flight controller is connected or --device=file was used,
+            or None if no flight controller is connected or params.param was empty or invalid.
+
+        """
+        if self._flight_controller is None:
+            return None
+        return self._flight_controller.fc_parameters
 
     def can_open_last_vehicle_directory(self, last_vehicle_dir: str) -> bool:
         """

@@ -3,7 +3,7 @@ Python package initialization file. Loads translations and declares version info
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -12,4 +12,4 @@ from ardupilot_methodic_configurator.internationalization import load_translatio
 
 _ = load_translation()
 
-__version__ = "2.8.0"
+__version__ = "2.9.9"

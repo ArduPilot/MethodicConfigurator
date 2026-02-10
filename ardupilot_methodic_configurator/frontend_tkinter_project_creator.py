@@ -5,7 +5,7 @@ GUI to create the directory to store the vehicle configuration files.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -20,6 +20,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
+from typing import Optional
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -56,20 +57,11 @@ class VehicleProjectCreatorWindow(BaseWindow):
         )
 
         fc_connected = project_manager.is_flight_controller_connected()
+        fc_parameters = project_manager.fc_parameters()
 
         # Initialize settings variables dynamically from data model
         self.new_project_settings_vars: dict[str, tk.BooleanVar] = {}
         self.new_project_settings_widgets: dict[str, ttk.Checkbutton] = {}
-        new_project_settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
-        new_project_settings_default_values = NewVehicleProjectSettings.get_default_values()
-        for setting_name in new_project_settings_metadata:
-            default_value = new_project_settings_default_values.get(setting_name, False)
-            self.new_project_settings_vars[setting_name] = tk.BooleanVar(value=default_value)
-
-        # Set dynamic window size based on number of settings
-        nr_new_project_settings = len(new_project_settings_metadata)
-        window_height = 250 + (nr_new_project_settings * 23)
-        self.root.geometry(f"800x{window_height}")  # Set the window size
 
         template_dir, new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
         logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
@@ -80,6 +72,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
             new_base_dir,
             self.project_manager.get_default_vehicle_name(),
             fc_connected,
+            fc_parameters,
             project_manager.get_vehicle_type(),
         )
 
@@ -95,6 +88,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
         initial_base_dir: str,
         initial_new_dir: str,
         fc_connected: bool,
+        fc_parameters: Optional[dict[str, float]],
         connected_fc_vehicle_type: str,
     ) -> None:
         # Option 1 - Create a new vehicle configuration directory based on an existing template
@@ -133,7 +127,16 @@ class VehicleProjectCreatorWindow(BaseWindow):
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
         # Create checkboxes dynamically from settings metadata
-        settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected)
+        settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected, fc_parameters)
+        new_project_settings_default_values = NewVehicleProjectSettings.get_default_values()
+        for setting_name in settings_metadata:
+            default_value = new_project_settings_default_values.get(setting_name, False)
+            self.new_project_settings_vars[setting_name] = tk.BooleanVar(value=default_value)
+
+        # Set dynamic window size based on number of settings
+        window_height = 250 + (len(settings_metadata) * 23)
+        self.root.geometry(f"800x{window_height}")  # Set the window size
+
         for setting_name, metadata in settings_metadata.items():
             checkbox = ttk.Checkbutton(
                 option1_label_frame,
@@ -201,7 +204,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
 
 
 # pylint: disable=duplicate-code
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Set up and parse command-line arguments for development/testing purposes.
 
@@ -219,7 +222,7 @@ def argument_parser() -> Namespace:
     return add_common_arguments(parser).parse_args()
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
@@ -251,5 +254,5 @@ def main() -> None:
 # pylint: enable=duplicate-code
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

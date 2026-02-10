@@ -3,7 +3,7 @@ TKinter progress window class.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -62,8 +62,12 @@ class ProgressWindow:
         if not self.only_show_when_update_progress_called:
             self.progress_window.deiconify()  # needs to be done before centering, but it does flicker :(
 
-        # Center the progress window on the parent window while still withdrawn
-        BaseWindow.center_window(self.progress_window, self.parent)
+        # Center the progress window on screen or on parent
+        # Use screen centering if parent is a minimal temp root (like in FlightControllerConnectionProgress)
+        if isinstance(self.parent, tk.Tk) and self.parent.winfo_width() <= 1:
+            BaseWindow.center_window_on_screen(self.progress_window)
+        else:
+            BaseWindow.center_window(self.progress_window, self.parent)
 
         if not self.only_show_when_update_progress_called:
             # Show the window now that it's properly positioned
@@ -96,7 +100,11 @@ class ProgressWindow:
             if self.only_show_when_update_progress_called and not self._shown:
                 self.progress_window.deiconify()
                 # Re-center the window when it's first shown
-                BaseWindow.center_window(self.progress_window, self.parent)
+                # Use screen centering if parent is a minimal temp root
+                if isinstance(self.parent, tk.Tk) and self.parent.winfo_width() <= 1:
+                    BaseWindow.center_window_on_screen(self.progress_window)
+                else:
+                    BaseWindow.center_window(self.progress_window, self.parent)
                 self.progress_window.lift()
                 self._shown = True
             elif not self.only_show_when_update_progress_called:

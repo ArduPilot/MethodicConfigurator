@@ -3,7 +3,7 @@ Manages configuration steps at the filesystem level.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -175,7 +175,7 @@ class ConfigurationSteps:
         if parameter_type + "_parameters" not in file_info or not variables:
             return ""
         destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
-        for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():  # pylint: disable=too-many-nested-blocks
+        for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
             try:
                 if ("fc_parameters" in str(parameter_info["New Value"])) and (
                     "fc_parameters" not in variables or variables["fc_parameters"] == {}
@@ -191,7 +191,24 @@ class ConfigurationSteps:
                     if not ignore_fc_derived_param_warnings:
                         logging_warning(error_msg)
                     continue
-                result = eval(str(parameter_info["New Value"]), {}, variables)  # noqa: S307 pylint: disable=eval-used
+
+                try:
+                    result = eval(str(parameter_info["New Value"]), {}, variables)  # noqa: S307 pylint: disable=eval-used
+                except (ZeroDivisionError, ValueError):
+                    # Handle math errors like:
+                    # - ZeroDivisionError: division by zero or 0.0 raised to negative power
+                    # - ValueError: math domain error (e.g., Diameter_inches**-0.838 when Diameter_inches is 0)
+                    error_msg = _(
+                        "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+                        "parameter '{parameter}' evaluation resulted in math error: {math_error}"
+                    )
+                    error_msg = error_msg.format(**locals())
+                    if parameter_type == "forced":
+                        logging_error(error_msg)
+                        return error_msg
+                    if not ignore_fc_derived_param_warnings:
+                        logging_warning(error_msg)
+                    continue
 
                 # convert (combobox) string text to (parameter value) string int or float
                 if isinstance(result, str):

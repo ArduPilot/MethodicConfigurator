@@ -1,4 +1,6 @@
 BRD_SAFETY_DEFLT,1  # Use a safety switch
+CAN_D2_PROTOCOL,1  # Enable DroneCAN on CAN2 for HERE4 GPS
+CAN_P2_DRIVER,1  # Enable DroneCAN driver for CAN2 port
 COMPASS_ORIENT,0  # none
 COMPASS_ORIENT2,0  # none
 GPS_AUTO_SWITCH,1  # because in our region lots of gps jamming and spoofing happening

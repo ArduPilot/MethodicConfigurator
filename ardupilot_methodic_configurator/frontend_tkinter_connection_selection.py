@@ -5,7 +5,7 @@ GUI to select the connection to the FC.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -22,6 +22,7 @@ from tkinter import messagebox, simpledialog, ttk
 from typing import Union
 
 from ardupilot_methodic_configurator import _, __version__
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import SUPPORTED_BAUDRATES, FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -73,6 +74,9 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Create a label for port
         port_label = ttk.Label(selection_frame, text=_("Port:"))
         port_label.pack(side=tk.LEFT, padx=(0, 5))
+        # Load saved connection history from ProgramSettings
+        for conn in ProgramSettings.get_connection_history():
+            self.flight_controller.add_connection(conn)
 
         # Create a read-only combobox for flight controller connection selection
         self.conn_selection_combobox = PairTupleCombobox(
@@ -157,6 +161,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             ),
         )
         if selected_connection:
+            ProgramSettings.store_connection(selected_connection)
             error_msg = _("Will add new connection: {selected_connection} if not duplicated")
             logging_debug(error_msg.format(**locals()))
             self.flight_controller.add_connection(selected_connection)
@@ -334,7 +339,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.root.destroy()
 
 
-def argument_parser() -> Namespace:
+def argument_parser() -> Namespace:  # pragma: no cover
     """
     Parses command-line arguments for the script.
 
@@ -355,7 +360,7 @@ def argument_parser() -> Namespace:
 
 
 # pylint: disable=duplicate-code
-def main() -> None:
+def main() -> None:  # pragma: no cover
     args = argument_parser()
 
     logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
@@ -374,5 +379,5 @@ def main() -> None:
     flight_controller.disconnect()  # Disconnect from the flight controller
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

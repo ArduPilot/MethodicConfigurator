@@ -7,7 +7,7 @@ Many fixtures are configured in the tests/conftest.py file.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import tkinter as tk
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Callable, cast
 from unittest.mock import ANY, MagicMock, patch
 
@@ -26,6 +27,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access
@@ -150,9 +152,9 @@ def parameter_editor() -> MagicMock:
                 manager.last_upload_progress_callback(10, 20)
 
     manager.should_upload_file_to_fc_workflow = MagicMock(side_effect=_should_upload_file_to_fc)
-    manager.should_download_file_from_url_workflow = MagicMock()
+    manager._should_download_file_from_url_workflow = MagicMock()
     manager.handle_imu_temperature_calibration_workflow = MagicMock()
-    manager.handle_file_jump_workflow = MagicMock()
+    manager._handle_file_jump_workflow = MagicMock()
     manager.get_non_default_params = MagicMock(return_value={})
     manager.is_fc_connected = True
     manager.is_configuration_step_optional.return_value = False
@@ -233,7 +235,7 @@ class TestParameterFileSelection:
         parameter_editor.get_last_configuration_step_number.return_value = None
 
         def fake_get_setting(key: str) -> object:
-            return {"gui_complexity": "advanced", "annotate_docs_into_param_files": False}.get(key, False)
+            return {"gui_complexity": "normal", "annotate_docs_into_param_files": False}.get(key, False)
 
         with (
             patch("tkinter.Tk", _DummyTkRoot),
@@ -261,7 +263,7 @@ class TestParameterFileSelection:
             window = ParameterEditorWindow(parameter_editor)
 
         assert window.parameter_editor is parameter_editor
-        assert window.gui_complexity == "advanced"
+        assert window.gui_complexity == "normal"
         assert window.current_plugin is None
         assert window.current_plugin_view is None
 
@@ -289,7 +291,7 @@ class TestParameterFileSelection:
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
-                side_effect=lambda key: "advanced" if key == "gui_complexity" else False,
+                side_effect=lambda key: "normal" if key == "gui_complexity" else False,
             ),
         ):
             window = ParameterEditorWindow(parameter_editor)
@@ -327,7 +329,7 @@ class TestParameterFileSelection:
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
-                side_effect=["advanced", False],
+                side_effect=["normal", False],
             ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.StageProgressBar",
@@ -344,6 +346,68 @@ class TestParameterFileSelection:
         )
         mock_stage.return_value.pack.assert_called_once_with(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
         assert window.stage_progress_bar is mock_stage.return_value
+
+
+class TestUsagePopupScheduling:
+    """Ensure the parameter editor schedules its usage popup correctly."""
+
+    @contextmanager
+    def _window_with_common_patches(
+        self,
+        parameter_editor: MagicMock,
+        *,
+        should_display: bool,
+    ) -> Iterator[tuple[ParameterEditorWindow, MagicMock]]:
+        parameter_editor.get_last_configuration_step_number.return_value = None
+
+        def fake_get_setting(key: str) -> object:
+            return {"gui_complexity": "normal", "annotate_docs_into_param_files": False}.get(key, False)
+
+        with (
+            patch("tkinter.Tk", _DummyTkRoot),
+            patch.object(ParameterEditorWindow, "_create_conf_widgets"),
+            patch.object(ParameterEditorWindow, "_create_parameter_area_widgets"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.DocumentationFrame",
+                return_value=MagicMock(documentation_frame=MagicMock()),
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.ttk.Style"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_font.safe_font_nametofont",
+                return_value=None,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FreeDesktop.setup_startup_notification"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
+                side_effect=fake_get_setting,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
+                return_value=should_display,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.display_parameter_editor_usage_popup"
+            ) as mock_display,
+        ):
+            window = ParameterEditorWindow(parameter_editor)
+            yield window, mock_display
+
+    def test_usage_popup_runs_when_enabled(self, parameter_editor: MagicMock) -> None:
+        """Parameter editor schedules its usage popup when user preference allows it."""
+        with self._window_with_common_patches(parameter_editor, should_display=True) as (window, mock_display):
+            root = cast("_DummyTkRoot", window.root)
+            popup_calls = [call for call in root.after.call_args_list if call.args[0] == 100]
+            assert len(popup_calls) == 1
+            popup_callback = popup_calls[0].args[1]
+            popup_callback()
+            mock_display.assert_called_once_with(root)
+
+    def test_usage_popup_not_scheduled_when_disabled(self, parameter_editor: MagicMock) -> None:
+        """Preference disabling the popup prevents the helper from being scheduled."""
+        with self._window_with_common_patches(parameter_editor, should_display=False) as (window, mock_display):
+            root = cast("_DummyTkRoot", window.root)
+            assert all(call.args[0] != 100 for call in root.after.call_args_list)
+            mock_display.assert_not_called()
 
 
 class TestRunLoop:  # pylint: disable=too-few-public-methods
@@ -363,7 +427,7 @@ class TestWidgetFactoryMethods:
     def test_create_conf_widgets_configures_combobox(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
         editor.main_frame = MagicMock()
-        editor.gui_complexity = "advanced"
+        editor.gui_complexity = "normal"
         parameter_editor.parameter_files.return_value = ["01_initial.param"]
         parameter_editor.current_file = "01_initial.param"
         parameter_editor.get_vehicle_directory.return_value = "vehicle_dir"
@@ -439,50 +503,6 @@ class TestWidgetFactoryMethods:
         for call in mock_tooltip.call_args_list:
             assert call.args[0] is not only_changed_checkbox
             assert call.args[0] is not annotate_checkbox
-
-
-class TestUsagePopupWindow:
-    """Cover the usage popup helper to document how the window opens."""
-
-    def test_popup_skips_when_parent_is_destroyed(self) -> None:
-        parent = MagicMock()
-        parent.winfo_exists.return_value = False
-
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.BaseWindow") as mock_base:
-            ParameterEditorWindow._display_usage_popup_window(parent)
-
-        mock_base.assert_not_called()
-
-    def test_popup_builds_rich_text_and_triggers_display(self) -> None:
-        parent = MagicMock()
-        parent.winfo_exists.return_value = True
-        usage_popup = MagicMock()
-        usage_popup.main_frame = MagicMock()
-        rich_text = MagicMock(insert=MagicMock(), config=MagicMock(), pack=MagicMock())
-        style = MagicMock(lookup=MagicMock(return_value="bg"))
-
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.BaseWindow", return_value=usage_popup),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Style", return_value=style),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.RichText",
-                return_value=rich_text,
-            ) as mock_rich_text,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.create_scaled_font", return_value="font"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.get_safe_font_config", return_value={}),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.display"
-            ) as mock_display,
-        ):
-            ParameterEditorWindow._display_usage_popup_window(parent)
-
-        args, kwargs = mock_rich_text.call_args
-        assert args[0] is usage_popup.main_frame
-        assert kwargs["wrap"] is tk.WORD
-        assert kwargs["background"] == style.lookup.return_value
-        assert kwargs["font"] == "font"
-        rich_text.config.assert_called_with(state=tk.DISABLED)
-        mock_display.assert_called_once_with(parent, usage_popup, ANY, "parameter_editor", "690x360", rich_text)
 
     def test_create_parameter_area_widgets_sets_skip_button_state(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
@@ -727,13 +747,23 @@ class TestUploadSelectedParameters:
         reset_window = MagicMock()
         reset_window.update_progress_bar = MagicMock()
         reset_window.destroy = MagicMock()
+        connection_window = MagicMock()
+        connection_window.update_progress_bar = MagicMock()
+        connection_window.destroy = MagicMock()
         download_window = MagicMock()
         download_window.update_progress_bar = MagicMock()
         download_window.destroy = MagicMock()
+        upload_window = MagicMock()
+        upload_window.update_progress_bar = MagicMock()
+        upload_window.destroy = MagicMock()
 
         def fake_progress_window(_parent: object, title: str, *_args: object, **_kwargs: object) -> MagicMock:
             if "Resetting" in title:
                 return reset_window
+            if "Reconnecting" in title:
+                return connection_window
+            if "Uploading" in title:
+                return upload_window
             return download_window
 
         parameter_editor_window.ui.create_progress_window = MagicMock(side_effect=fake_progress_window)
@@ -746,40 +776,60 @@ class TestUploadSelectedParameters:
             ask_confirmation: Callable[[str, str], bool],
             ask_retry_cancel: Callable[[str, str], bool],
             show_error: Callable[[str, str], None],
+            get_upload_progress_callback: Callable[[], Callable | None],
             get_reset_progress_callback: Callable[[], Callable | None],
+            get_connection_progress_callback: Callable[[], Callable | None],
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
             assert selected_params == {"ROLL_P": 0.12}
             assert ask_confirmation is parameter_editor_window.ui.ask_yesno
             assert ask_retry_cancel is parameter_editor_window.ui.ask_retry_cancel
             assert show_error is parameter_editor_window.ui.show_error
+            upload_cb = get_upload_progress_callback()
             reset_cb = get_reset_progress_callback()
+            connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
+            assert upload_cb is upload_window.update_progress_bar
             assert reset_cb is reset_window.update_progress_bar
+            assert connection_cb is connection_window.update_progress_bar
             assert download_cb is download_window.update_progress_bar
+            assert upload_cb is not None
             assert reset_cb is not None
+            assert connection_cb is not None
             assert download_cb is not None
+            upload_cb(0, 1)
             reset_cb(1, 2)
+            connection_cb(2, 3)
             download_cb(3, 4)
 
         param_editor_mock.upload_selected_params_workflow.side_effect = fake_upload_workflow
 
         parameter_editor_window.upload_selected_params({"ROLL_P": 0.12})
 
+        upload_window.destroy.assert_called_once()
         reset_window.destroy.assert_called_once()
+        connection_window.destroy.assert_called_once()
         download_window.destroy.assert_called_once()
         assert parameter_editor_window._reset_progress_window is None
         assert parameter_editor_window._param_download_progress_window_upload is None
 
     def test_user_still_cleans_upload_windows_on_failure(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        upload_window = MagicMock()
+        upload_window.update_progress_bar = MagicMock()
+        upload_window.destroy = MagicMock()
         reset_window = MagicMock()
         reset_window.update_progress_bar = MagicMock()
         reset_window.destroy = MagicMock()
+        connection_window = MagicMock()
+        connection_window.update_progress_bar = MagicMock()
+        connection_window.destroy = MagicMock()
         download_window = MagicMock()
         download_window.update_progress_bar = MagicMock()
         download_window.destroy = MagicMock()
 
-        parameter_editor_window.ui.create_progress_window = MagicMock(side_effect=[reset_window, download_window])
+        parameter_editor_window.ui.create_progress_window = MagicMock(
+            side_effect=[upload_window, reset_window, connection_window, download_window]
+        )
         param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
 
         def failing_workflow(  # pylint: disable=too-many-arguments
@@ -788,21 +838,31 @@ class TestUploadSelectedParameters:
             ask_confirmation: Callable[[str, str], bool],
             ask_retry_cancel: Callable[[str, str], bool],
             show_error: Callable[[str, str], None],
+            get_upload_progress_callback: Callable[[], Callable | None],
             get_reset_progress_callback: Callable[[], Callable | None],
+            get_connection_progress_callback: Callable[[], Callable | None],
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
             assert selected_params == {}
             assert ask_confirmation is parameter_editor_window.ui.ask_yesno
             assert ask_retry_cancel is parameter_editor_window.ui.ask_retry_cancel
             assert show_error is parameter_editor_window.ui.show_error
+            upload_cb = get_upload_progress_callback()
             reset_cb = get_reset_progress_callback()
+            connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
+            assert upload_cb is upload_window.update_progress_bar
             assert reset_cb is reset_window.update_progress_bar
+            assert connection_cb is connection_window.update_progress_bar
             assert download_cb is download_window.update_progress_bar
+            assert upload_cb is not None
             assert reset_cb is not None
+            assert connection_cb is not None
             assert download_cb is not None
+            upload_cb(0, 0)
             reset_cb(1, 1)
-            download_cb(2, 2)
+            connection_cb(2, 2)
+            download_cb(3, 3)
             msg = "boom"
             raise RuntimeError(msg)
 
@@ -811,7 +871,9 @@ class TestUploadSelectedParameters:
         with pytest.raises(RuntimeError):
             parameter_editor_window.upload_selected_params({})
 
+        upload_window.destroy.assert_called_once()
         reset_window.destroy.assert_called_once()
+        connection_window.destroy.assert_called_once()
         download_window.destroy.assert_called_once()
         assert parameter_editor_window._reset_progress_window is None
         assert parameter_editor_window._param_download_progress_window_upload is None
@@ -1179,7 +1241,7 @@ class TestPluginLoading:
         doc_frame.refresh_documentation_labels.assert_called_once()
         doc_frame.update_why_why_now_tooltip.assert_called_once()
         mock_plugin_layout.assert_called_once_with(parameter_editor.get_plugin.return_value)
-        mock_repopulate.assert_called_once_with(regenerate_from_disk=True)
+        mock_repopulate.assert_called_once_with()
         mock_skip_state.assert_called_once()
 
     def test_user_cancels_parameter_file_change_closes_application(
@@ -1293,31 +1355,6 @@ class TestCopyFlightControllerValues:
         wait_window_mock.assert_called_once_with(dialog)
 
 
-class TestFileJumpAndDownloadWorkflows:
-    """Exercise lightweight helper methods that delegate to parameter editor data model."""
-
-    def test_user_requests_file_jump_via_helper(
-        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
-    ) -> None:
-        parameter_editor.handle_file_jump_workflow.return_value = "02_next.param"
-
-        result = parameter_editor_window._should_jump_to_file("01_initial.param")
-
-        assert result == "02_next.param"
-        parameter_editor.handle_file_jump_workflow.assert_called_once()
-
-    def test_user_requests_download_from_url(
-        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
-    ) -> None:
-        parameter_editor_window._should_download_file_from_url("01_initial.param")
-
-        parameter_editor.should_download_file_from_url_workflow.assert_called_once_with(
-            "01_initial.param",
-            ask_confirmation=parameter_editor_window.ui.ask_yesno,
-            show_error=parameter_editor_window.ui.show_error,
-        )
-
-
 # ============================== PROGRESS AND DOWNLOADS ==============================
 
 
@@ -1416,7 +1453,7 @@ class TestTableRefresh:
         with patch.object(parameter_editor_window, "repopulate_parameter_table") as mock_repopulate:
             parameter_editor_window.on_show_only_changed_checkbox_change()
 
-        mock_repopulate.assert_called_once_with(regenerate_from_disk=False)
+        mock_repopulate.assert_called_once_with()
 
     def test_user_repopulates_table_for_selected_file(self, editor_factory, parameter_editor) -> None:
         """
@@ -1429,14 +1466,12 @@ class TestTableRefresh:
         editor = editor_factory()
         parameter_editor.current_file = "06_table.param"
 
-        regenerate_flag = True
-        editor.repopulate_parameter_table(regenerate_from_disk=regenerate_flag)
+        editor.repopulate_parameter_table()
 
         show_only_flag = editor.show_only_differences.get()
         editor.parameter_editor_table.repopulate_table.assert_called_once_with(
             show_only_flag,
             editor.gui_complexity,
-            regenerate_flag,
         )
 
 
@@ -1568,13 +1603,19 @@ class TestParameterUploads:
         def _workflow(
             _selected: dict[str, float],
             *,
+            get_upload_progress_callback: Callable[[], Callable],
             get_reset_progress_callback: Callable[[], Callable],
+            get_connection_progress_callback: Callable[[], Callable],
             get_download_progress_callback: Callable[[], Callable],
             **_ignored: object,
         ) -> None:
+            upload_cb = get_upload_progress_callback()
             reset_cb = get_reset_progress_callback()
+            connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
+            upload_cb(0, 1)
             reset_cb(1, 2)
+            connection_cb(2, 3)
             download_cb(3, 4)
 
         parameter_editor.upload_selected_params_workflow.side_effect = _workflow
@@ -1588,10 +1629,94 @@ class TestParameterUploads:
             ask_confirmation=ANY,
             ask_retry_cancel=ANY,
             show_error=ANY,
+            get_upload_progress_callback=ANY,
             get_reset_progress_callback=ANY,
+            get_connection_progress_callback=ANY,
             get_download_progress_callback=ANY,
         )
         assert all(window.destroy.called for window in created_windows)
+
+    def test_ui_services_upload_params_with_progress_handles_exceptions(
+        self, editor_factory, parameter_editor: MagicMock
+    ) -> None:
+        """
+        UI services properly handle exceptions during parameter upload.
+
+        GIVEN: The upload workflow raises an exception
+        WHEN: upload_params_with_progress is called
+        THEN: Progress windows should still be cleaned up
+        AND: Exception should propagate to caller
+        """
+        editor = editor_factory()
+
+        # Mock progress windows
+        reset_window = MagicMock()
+        download_window = MagicMock()
+
+        def fake_progress_window(_parent, title: str, *_args, **_kwargs) -> MagicMock:
+            if "Reset" in title:
+                return reset_window
+            return download_window
+
+        editor.ui.create_progress_window = MagicMock(side_effect=fake_progress_window)
+
+        # Mock workflow that raises exception
+        def failing_workflow(*_args, **_kwargs) -> None:
+            msg = "Upload failed"
+            raise RuntimeError(msg)
+
+        parameter_editor.upload_selected_params_workflow = MagicMock(side_effect=failing_workflow)
+
+        # Act & Assert: Exception is raised but cleanup happens
+        with pytest.raises(RuntimeError, match="Upload failed"):
+            editor.ui.upload_params_with_progress(
+                editor.root,
+                parameter_editor.upload_selected_params_workflow,
+                {"PARAM1": 1.0},
+            )
+
+        # Verify cleanup happened - windows are only created if callbacks are invoked
+        # Since workflow fails immediately, no callbacks are invoked, so no windows created
+        assert len([w for w in [reset_window, download_window] if w.destroy.called]) == 0
+
+    def test_upload_params_with_progress_only_creates_windows_when_callbacks_invoked(
+        self, editor_factory, parameter_editor: MagicMock
+    ) -> None:
+        """
+        Progress windows are only created when workflow invokes the factory callbacks.
+
+        GIVEN: An upload workflow that may or may not need reset/download
+        WHEN: The workflow only calls one of the progress factory callbacks
+        THEN: Only that progress window should be created
+        """
+        editor = editor_factory()
+
+        created_windows = []
+
+        def track_window_creation(*_args, **_kwargs) -> MagicMock:
+            window = MagicMock()
+            created_windows.append(window)
+            return window
+
+        editor.ui.create_progress_window = MagicMock(side_effect=track_window_creation)
+
+        # Mock workflow that only uses download progress (no reset needed)
+        def workflow_without_reset(_params, **kwargs) -> None:
+            # Don't call get_reset_progress_callback
+            download_cb = kwargs["get_download_progress_callback"]()
+            download_cb(50, 100)
+
+        parameter_editor.upload_selected_params_workflow = MagicMock(side_effect=workflow_without_reset)
+
+        # Act: Upload without reset
+        editor.ui.upload_params_with_progress(
+            editor.root,
+            parameter_editor.upload_selected_params_workflow,
+            {"PARAM1": 1.0},
+        )
+
+        # Assert: Only one window created (download, not reset)
+        assert len(created_windows) == 1
 
 
 # ============================== FILE DOWNLOADS ==============================
@@ -1760,3 +1885,108 @@ class TestSkipButtonWorkflows:
 
         skip_button_mock = cast("MagicMock", parameter_editor_window.skip_button)
         skip_button_mock.configure.assert_called_once_with(state="normal")
+
+
+class TestZipVehicleForForumHelpButton:
+    """Test the 'Zip Vehicle for Forum Help' button functionality."""
+
+    def test_user_clicks_button_and_workflow_succeeds(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given parameter files exist, when user clicks button, then workflow executes and shows success message."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = True
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert
+        param_editor_mock.create_forum_help_zip_workflow.assert_called_once_with(
+            show_error=parameter_editor_window.ui.show_error,
+            show_info=parameter_editor_window.ui.show_info,
+        )
+
+    def test_user_clicks_button_and_workflow_fails(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given workflow fails, when user clicks button, then error is shown to user."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = False
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - workflow was called even though it failed
+        param_editor_mock.create_forum_help_zip_workflow.assert_called_once()
+
+    def test_workflow_receives_correct_ui_callbacks(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given button is clicked, when workflow is invoked, then correct UI callbacks are injected."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = True
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - verify the exact callbacks passed
+        call_args = param_editor_mock.create_forum_help_zip_workflow.call_args
+        assert call_args is not None
+        assert call_args.kwargs["show_error"] == parameter_editor_window.ui.show_error
+        assert call_args.kwargs["show_info"] == parameter_editor_window.ui.show_info
+
+    def test_button_callback_is_properly_bound(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given ParameterEditorWindow is created, when checking button, then callback is correctly bound."""
+        # This tests the integration between button creation and the handler method
+        # We verify the method exists and is callable
+        assert hasattr(parameter_editor_window, "on_zip_vehicle_for_forum_help_click")
+        assert callable(parameter_editor_window.on_zip_vehicle_for_forum_help_click)
+
+    def test_workflow_error_handling_with_show_error(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given workflow encounters error, when executed, then error callback is available for use."""
+        # Arrange - simulate workflow calling show_error callback
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+
+        def workflow_with_error(**kwargs: Callable) -> bool:
+            # Simulate the workflow calling show_error
+            kwargs["show_error"]("Test Error", "Error details")
+            return False
+
+        param_editor_mock.create_forum_help_zip_workflow.side_effect = workflow_with_error
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - show_error was called by the workflow
+        ui_mock = cast("MagicMock", parameter_editor_window.ui.show_error)
+        ui_mock.assert_called_once_with("Test Error", "Error details")
+
+    def test_workflow_success_handling_with_show_info(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given workflow succeeds, when executed, then info callback is available for notification."""
+        # Arrange - simulate workflow calling show_info callback
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+
+        def workflow_with_success(**kwargs: Callable) -> bool:
+            # Simulate the workflow calling show_info
+            kwargs["show_info"]("Success", "Zip created successfully")
+            return True
+
+        param_editor_mock.create_forum_help_zip_workflow.side_effect = workflow_with_success
+
+        # Act
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - show_info was called by the workflow
+        ui_mock = cast("MagicMock", parameter_editor_window.ui.show_info)
+        ui_mock.assert_called_once_with("Success", "Zip created successfully")
+
+    def test_multiple_button_clicks_invoke_workflow_each_time(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Given button is clicked multiple times, when each click occurs, then workflow executes each time."""
+        # Arrange
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_forum_help_zip_workflow.return_value = True
+
+        # Act - click button three times
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+        parameter_editor_window.on_zip_vehicle_for_forum_help_click()
+
+        # Assert - workflow was called three times
+        assert param_editor_mock.create_forum_help_zip_workflow.call_count == 3

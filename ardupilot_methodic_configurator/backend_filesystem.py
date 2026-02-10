@@ -3,7 +3,7 @@ Filesystem operations.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
-SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 """
@@ -51,6 +51,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
 
+PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
 
 
@@ -153,7 +154,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         # Convert to set for O(1) lookup performance and compile pattern once
         file_set = set(files)
-        pattern = re_compile(r"^\d{2}_.*\.param$")
+        pattern = re_compile(PARAMETER_FILE_REGEXP)
 
         return self.vehicle_components_fs.json_filename in file_set and any(pattern.match(f) for f in file_set)
 
@@ -345,7 +346,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         parameters: dict[str, ParDict] = {}
         if os_path.isdir(self.vehicle_dir):
             # Regular expression pattern for filenames starting with two digits followed by an underscore and ending in .param
-            pattern = re_compile(r"^\d{2}_.*\.param$")
+            pattern = re_compile(PARAMETER_FILE_REGEXP)
 
             for filename in sorted(os_listdir(self.vehicle_dir)):
                 if pattern.match(filename):
@@ -355,6 +356,46 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         else:
             logging_error(_("Error: %s is not a directory."), self.vehicle_dir)
         return parameters
+
+    def compound_params(self, last_filename: Optional[str] = None, skip_default: bool = True) -> tuple[ParDict, Optional[str]]:
+        """
+        Compound parameters from multiple .param files into a single ParDict.
+
+        This method iterates through file_parameters (loaded via read_params_from_files)
+        and compounds them into a single ParDict. By default, it excludes 00_default.param
+        and stops at the specified last_filename if provided.
+
+        Args:
+            last_filename: Optional filename to stop processing at (inclusive).
+                          If None, processes all files.
+            skip_default: If True, skips 00_default.param. Default is True.
+
+        Returns:
+            tuple[ParDict, Optional[str]]: A tuple containing:
+                - The compounded ParDict with all parameters
+                - The first config step filename (excluding 00_default.param if skip_default is True)
+
+        """
+        compound = ParDict()
+        first_config_step_filename = None
+
+        for file_name, file_params in self.file_parameters.items():
+            # Skip default file if requested
+            if skip_default and file_name == "00_default.param":
+                continue
+
+            # Track the first config step filename
+            if first_config_step_filename is None:
+                first_config_step_filename = file_name
+
+            # Append parameters from this file
+            compound.append(file_params)
+
+            # Stop at the specified filename if provided
+            if last_filename and file_name == last_filename:
+                break
+
+        return compound, first_config_step_filename
 
     @staticmethod
     def str_to_bool(s: str) -> Optional[bool]:
@@ -478,19 +519,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def get_vehicle_directory_name(self) -> str:
         return self.get_directory_name_from_full_path(self.vehicle_dir)
 
-    def zip_file_path(self) -> str:
+    def zip_file_path(self, zip_file_name: str = "") -> str:
         vehicle_name = self.get_vehicle_directory_name()
-        return os_path.join(self.vehicle_dir, f"{vehicle_name}.zip")
+        return os_path.join(self.vehicle_dir, zip_file_name or f"{vehicle_name}.zip")
 
-    def zip_file_exists(self) -> bool:
-        zip_file_path = self.zip_file_path()
+    def zip_file_exists(self, zip_file_name: str = "") -> bool:
+        zip_file_path = self.zip_file_path(zip_file_name)
         return os_path.exists(zip_file_path) and os_path.isfile(zip_file_path)
 
     def add_configuration_file_to_zip(self, zipf: ZipFile, filename: str) -> None:
         if self.vehicle_configuration_file_exists(filename):
             zipf.write(os_path.join(self.vehicle_dir, filename), arcname=filename)
 
-    def zip_files(self, files_to_zip: list[tuple[bool, str]]) -> None:
+    def zip_files(self, files_to_zip: list[tuple[bool, str]], zip_file_name: str = "", include_apm_pdef: bool = True) -> str:
         """
         Zips the intermediate parameter files that were written to, including specific summary files.
 
@@ -502,9 +543,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Args:
           files_to_zip (List[Tuple[bool, str]]): A list of tuples, where each tuple contains a boolean
                                             indicating if the file was written and a string for the filename.
+          zip_file_name (str, optional): The name where the zip file will be saved.
+                                         If empty, defaults to the path returned by self.zip_file_path().
+          include_apm_pdef (bool): Whether to include the 'apm.pdef.xml' file in the zip archive. Default is True.
 
         """
-        zip_file_path = self.zip_file_path()
+        zip_file_path = self.zip_file_path(zip_file_name)
         with ZipFile(zip_file_path, "w") as zipf:
             # Add all intermediate parameter files
             for file_name in self.file_parameters:
@@ -516,14 +560,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             # Check for and add specific files if they exist
             specific_files = [
                 "00_default.param",
-                "apm.pdef.xml",
                 self.configuration_steps_filename,
                 self.vehicle_components_fs.json_filename,
                 "vehicle.jpg",
                 "last_uploaded_filename.txt",
                 "tempcal_gyro.png",
                 "tempcal_acc.png",
+                "tuning_report.csv",
             ]
+            if include_apm_pdef:
+                specific_files.append("apm.pdef.xml")
             for file_name in specific_files:
                 self.add_configuration_file_to_zip(zipf, file_name)
 
@@ -532,6 +578,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.add_configuration_file_to_zip(zipf, filename)
 
         logging_info(_("Intermediate parameter files and summary files zipped to %s"), zip_file_path)
+        return zip_file_path
 
     def vehicle_image_filepath(self) -> str:
         return os_path.join(self.vehicle_dir, "vehicle.jpg")
@@ -575,6 +622,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
             for item in os_listdir(template_dir):
                 if item in skip_files:
+                    continue
+                if item.endswith(".param") and not item[0:2].isdigit():
+                    # Skip non-intermediate parameter files that do not start with NN_
                     continue
                 source = os_path.join(template_dir, item)
                 dest = os_path.join(new_vehicle_dir, item)
@@ -643,17 +693,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def tempcal_imu_result_param_tuple(self) -> tuple[str, str]:
         tempcal_imu_result_param_filename = "03_imu_temperature_calibration_results.param"
         return tempcal_imu_result_param_filename, os_path.join(self.vehicle_dir, tempcal_imu_result_param_filename)
-
-    def copy_fc_values_to_file(self, selected_file: str, params: dict[str, float]) -> int:
-        ret = 0
-        if selected_file in self.file_parameters:
-            for param, v in self.file_parameters[selected_file].items():
-                if param in params:
-                    v.value = params[param]
-                    ret += 1
-                else:
-                    logging_warning(_("Parameter %s not found in the current parameter file"), param)
-        return ret
 
     def write_last_uploaded_filename(self, current_file: str) -> None:
         try:
@@ -832,11 +871,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             self.param_default_dict.export_to_param(os_path.join(self.vehicle_dir, filename))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
-        if (
-            selected_file in self.configuration_steps
-            and "download_file" in self.configuration_steps[selected_file]
-            and self.configuration_steps[selected_file]["download_file"]
-        ):
+        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("download_file"):
             src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
             dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
             if self.vehicle_dir and src and dst:
@@ -844,11 +879,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return "", ""
 
     def get_upload_local_and_remote_filenames(self, selected_file: str) -> tuple[str, str]:
-        if (
-            selected_file in self.configuration_steps
-            and "upload_file" in self.configuration_steps[selected_file]
-            and self.configuration_steps[selected_file]["upload_file"]
-        ):
+        if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("upload_file"):
             src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
             dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
             if self.vehicle_dir and src and dst:
