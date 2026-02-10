@@ -30,12 +30,13 @@ jobs:
       fail-fast: false
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         # python-version: ["3.9", "3.10", "3.11", "3.12", "pypy3.9", "pypy3.10"]
-        os: [ubuntu-latest]
         python-version: ["3.9", "3.14", "3.14t"]
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
+        if: matrix.os != 'windows-latest'
         uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
@@ -50,7 +51,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: true
 
-      - name: Install system dependencies for GUI testing
+      - name: Install system dependencies for GUI testing on linux
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           # Only install system Tcl/Tk for Python < 3.13 (newer versions bundle their own)
@@ -64,7 +66,16 @@ jobs:
           fi
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
 
+      - name: Install system dependencies for GUI testing on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          # XQuartz is pre-installed on macOS runners for X11 support
+          # Tkinter is available with Python installation
+          # PyAutoGUI uses Quartz for screenshots and input on macOS
+          # No additional system dependencies needed
+
       - name: Ensure Tcl/Tk search paths
+        if: matrix.os == 'ubuntu-latest'
         run: |
           # Only set Tcl/Tk paths for Python < 3.13
           if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
@@ -81,6 +92,7 @@ jobs:
           uv pip install --editable .[dev,ci_headless_tests]
 
       - name: Download ArduCopter SITL (if available)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           # Create cache key based on current quarter (YYYY-Q)
           CURRENT_YEAR=$(date +%Y)
@@ -160,23 +172,23 @@ jobs:
         if: ${{ always() }}
 
       - name: Upload coverage xml report
+        # Use always() to always run this step to publish test results when there are test failures
+        if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
             name: coverage-${{ matrix.python-version }}-xml
             path: tests/*.xml
             retention-days: 1
-        # Use always() to always run this step to publish test results when there are test failures
-        if: ${{ always() }}
 
       - name: Upload coverage report
+        # Use always() to always run this step to publish test results when there are test failures
+        if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
             name: coverage-${{ matrix.python-version }}
             path: .coverage
             include-hidden-files: true
             retention-days: 1
-        # Use always() to always run this step to publish test results when there are test failures
-        if: ${{ always() }}
 
   upload_coverage_to_coveralls:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/master') && (success() || failure())
