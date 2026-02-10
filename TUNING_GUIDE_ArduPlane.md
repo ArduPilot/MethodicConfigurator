@@ -195,7 +195,7 @@ Always disconnect the USB cable (if you are using one) between the PC and the fl
 We connected the components as depicted below.
 The figure excludes the LiPo battery and the PM02 BEC with a voltage/current monitor.
 
-| Component | [Flight controller connections](http://www.mateksys.com/?portfolio=h743-slim#tab-id-5) |
+| Component | [Flight controller connections](https://www.mateksys.com/?portfolio=h743-slim-v4#tab-id-4) |
 | :--- | :---- |
 | T-Motor F45 4in1 ESC V2 | `G`, `G`, `Vbat`, not Connected, `S4`, `S3`, `S2`, `S1`, `Cur`, `Rx8` (SERIAL5) |
 | Holybro PM02 V3 | not connected, `G`, `Vbat2`, `Curr2`, not Connected, not Connected |
