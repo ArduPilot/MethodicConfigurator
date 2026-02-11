@@ -184,8 +184,14 @@ class TestGetWidgetFontFamilyAndSize(unittest.TestCase):
     def test_get_widget_font_family_and_size(self) -> None:
         label = ttk.Label(self.root, text="Test")
         family, size = get_widget_font_family_and_size(label)
-        expected_family = ["Segoe UI"] if platform_system() == "Windows" else ["Helvetica", "sans-serif"]
-        expected_size = [9] if platform_system() == "Windows" else [-12, 10]
+        expected_family = (
+            ["Segoe UI"]
+            if platform_system() == "Windows"
+            else [".AppleSystemUIFont"]
+            if platform_system() == "Darwin"
+            else ["Helvetica", "sans-serif"]
+        )
+        expected_size = [9] if platform_system() == "Windows" else [13] if platform_system() == "Darwin" else [-12, 10]
         assert isinstance(family, str)
         assert isinstance(size, int)
         assert family in expected_family
