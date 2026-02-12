@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 Filesystem operations.
 
@@ -719,7 +720,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             if not files:
                 return ""
 
-            # Determine the starting file based on the --n command line argument
             start_file_index = explicit_index  # Ensure the index is within the range of available files
             if start_file_index >= len(files):
                 start_file_index = len(files) - 1
@@ -785,50 +785,115 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return variables
 
     def update_and_export_vehicle_params_from_fc(
-        self, source_param_values: Union[dict[str, float], None], existing_fc_params: list[str]
-    ) -> str:
+        self,
+        source_param_values: Union[dict[str, float], None],
+        existing_fc_params: list[str],
+        commit_derived_changes: bool = False,
+    ) -> list[str]:
         """
         Update parameter values from flight controller data and export to vehicle files.
 
-        This function performs several operations in sequence:
-        1. Updates parameter values using the provided source values
-        2. Computes forced parameters based on configuration steps
-        3. Computes derived parameters that depend on other parameters
-        4. Exports the updated parameters to files in the vehicle directory
+        This method performs a two-phase update:
+        1. When commit_derived_changes=False (default): Checks for derived parameter changes
+           and returns files that would be modified without saving them.
+        2. When commit_derived_changes=True: Actually saves all changes to disk.
 
         Args:
             source_param_values: Dictionary mapping parameter names to their values from the
-                                source (typically flight controller). If None, no direct updates occur.
-            existing_fc_params: List of params that exist in the FC if empty or None all parameters are
-                                assumed to exist
+                                source. If None, no direct updates occur.
+            existing_fc_params: List of params that exist in the FC.
+            commit_derived_changes: If False, detects but doesn't save files with derived changes.
+                                   If True, saves all changes to disk.
 
         Returns:
-            str: Empty string if successful, error message otherwise.
+            list[str]: List of filenames with pending changes (empty list if all saved).
+
+        Raises:
+            ValueError: If there's an error computing forced or derived parameters.
+
+        Example:
+            # Phase 1: Check for changes
+            pending = fs.update_and_export_vehicle_params_from_fc(
+                source_param_values={"PARAM1": 10.0},
+                existing_fc_params=["PARAM1"],
+                commit_derived_changes=False
+            )
+            if pending:
+                # Ask user for confirmation
+                if user_confirms:
+                    # Phase 2: Save changes
+                    fs.update_and_export_vehicle_params_from_fc(
+                        source_param_values={"PARAM1": 10.0},
+                        existing_fc_params=["PARAM1"],
+                        commit_derived_changes=True
+                    )
 
         """
         eval_variables = self.get_eval_variables()
-        # the eval variables do not contain fc_parameter values
-        # and that is intentional, the fc_parameters are not to be used in here
+        annotate_docs = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
+
+        pending_changes: list[str] = []
+
         for param_filename, param_dict in self.file_parameters.items():
+            # 1. Update from Flight Controller Source
             for param_name, param in param_dict.items():
                 if source_param_values and param_name in source_param_values:
                     param.value = source_param_values[param_name]
+
+            # 2. Compute/Update derived parameters (Updates In-Memory Only)
             if self.configuration_steps and param_filename in self.configuration_steps:
                 step_dict = self.configuration_steps[param_filename]
                 error_msg = self.compute_parameters(param_filename, step_dict, "forced", eval_variables)
                 if error_msg:
-                    return error_msg
+                    msg = f"Error computing forced parameters for {param_filename}: {error_msg}"
+                    raise ValueError(msg)
                 self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, existing_fc_params)
+
                 error_msg = self.compute_parameters(
                     param_filename, step_dict, "derived", eval_variables, ignore_fc_derived_param_warnings=True
                 )
                 if error_msg:
-                    return error_msg
+                    msg = f"Error computing derived parameters for {param_filename}: {error_msg}"
+                    raise ValueError(msg)
                 self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
-            self.export_to_param(
-                param_dict, param_filename, annotate_doc=bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
-            )
-        return ""
+
+            # 3. Safety Check: If we don't have permission, check if we drifted from disk
+            if (
+                not commit_derived_changes
+                and self.vehicle_configuration_file_exists(param_filename)
+                and self._file_has_changed_vs_disk(param_filename, param_dict)
+            ):
+                pending_changes.append(param_filename)
+                continue  # Skip saving this file
+
+            # 4. Save to Disk (Only if permission granted OR no changes detected)
+            self.export_to_param(param_dict, param_filename, annotate_doc=annotate_docs)
+
+        # Return pending changes (empty list if all files were saved successfully)
+        return pending_changes
+
+    def _file_has_changed_vs_disk(self, filename: str, current_params: ParDict) -> bool:
+        """
+        Helper: Reads the file from disk and compares it to the current in-memory params.
+
+        Returns True if there is a difference.
+        """
+        try:
+            # Read the actual file from disk to compare
+            disk_params = ParDict.from_file(os_path.join(self.vehicle_dir, filename))
+
+            for name, param in current_params.items():
+                if name not in disk_params:
+                    return True  # Parameter added
+
+                # Compare values using the same tolerance logic as merge_forced_or_derived
+                if not is_within_tolerance(param.value, disk_params[name].value):
+                    return True
+
+        except (FileNotFoundError, OSError):
+            return True  # New file counts as a change
+
+        return False
 
     def merge_forced_or_derived_parameters(
         self, filename: str, new_parameters: dict[str, ParDict], existing_fc_params: Optional[list[str]]
