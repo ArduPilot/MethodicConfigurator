@@ -51,7 +51,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connectio
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
-from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
+from ardupilot_methodic_configurator.frontend_tkinter_show import ask_yesno_message, show_error_message
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
@@ -515,7 +515,9 @@ def process_component_editor_results(
 
     # Update and export vehicle parameters
     error_message = local_filesystem.update_and_export_vehicle_params_from_fc(
-        source_param_values=source_param_values, existing_fc_params=existing_fc_params
+        source_param_values=source_param_values,
+        existing_fc_params=existing_fc_params,
+        ask_user_confirmation=ask_yesno_message,
     )
 
     if error_message:
