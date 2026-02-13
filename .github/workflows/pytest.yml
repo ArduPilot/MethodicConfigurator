@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.14"]  # to make sure the latest AMC supported python version does not break
         include:
           - os: ubuntu-latest
@@ -80,10 +80,23 @@ jobs:
             echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, no custom paths needed"
           fi
 
+      - name: Install system dependencies for GUI testing on windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          # Python 3.14+ on Windows bundles Tcl/Tk, verify it works
+          python --version
+          python -c "import tkinter; print('Tcl version:', tkinter.TclVersion, 'Tk version:', tkinter.TkVersion)"
+
       - name: Install dependencies and application
         # without --editable, the coverage report is not generated correctly
+        shell: bash
         run: |
-          uv pip install --editable .[dev,ci_headless_tests]
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            uv pip install --editable ".[dev,ci_headless_tests]"
+          else
+            uv pip install --editable ".[dev]"
+          fi
 
       - name: Download ArduCopter SITL (if available)
         if: matrix.os == 'ubuntu-latest'
@@ -136,15 +149,18 @@ jobs:
       - name: Test with pytest
         id: pytest
         continue-on-error: false
+        shell: bash
         run: |
-          export LIBGL_ALWAYS_SOFTWARE=1
-          export DISPLAY=:99
-          # disable X authentication
-          export XAUTHORITY=/dev/null
-          # disable access control restrictions
-          Xvfb :99 -screen 0 1024x768x16 -ac &
-          # ensure Xvfb is fully started before running tests
-          sleep 2
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            export LIBGL_ALWAYS_SOFTWARE=1
+            export DISPLAY=:99
+            # disable X authentication
+            export XAUTHORITY=/dev/null
+            # disable access control restrictions
+            Xvfb :99 -screen 0 1024x768x16 -ac &
+            # ensure Xvfb is fully started before running tests
+            sleep 2
+          fi
           if [ "$SITL_AVAILABLE" = "true" ]; then
             echo "Running tests with SITL support"
             uv run pytest --cov=ardupilot_methodic_configurator --cov-report=xml:tests/coverage.xml --md=tests/results-${{ matrix.python-version }}.md --junit-xml=tests/results-junit.xml -m "sitl or not sitl"
@@ -162,6 +178,7 @@ jobs:
 
       - name: Display test results as GitHub job summary
         run: cat tests/results-${{ matrix.python-version }}.md >> $GITHUB_STEP_SUMMARY
+        shell: bash
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
 
