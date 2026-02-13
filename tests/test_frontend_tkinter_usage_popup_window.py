@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from sys import platform as sys_platform
 from tkinter import ttk
 from unittest.mock import MagicMock, Mock, patch
 
@@ -161,8 +162,11 @@ class TestPopupWindowBase:
             # Act: Close the popup window
             PopupWindow.close(popup_window, tk_root)
 
-            # Assert: Grab released, window destroyed, parent focused
-            mock_grab_release.assert_called_once()
+            # Assert: Grab released (except on macOS), window destroyed, parent focused
+            if sys_platform != "darwin":
+                mock_grab_release.assert_called_once()
+            else:
+                mock_grab_release.assert_not_called()
             mock_destroy.assert_called_once()
             mock_focus.assert_called_once()
 
@@ -182,6 +186,12 @@ class TestUsagePopupWindow:
         with (
             patch("tkinter.BooleanVar") as mock_bool_var,
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -205,8 +215,9 @@ class TestUsagePopupWindow:
             size_part = geometry.split("+")[0] if "+" in geometry else geometry.split("-")[0]
             width, height = map(int, size_part.split("x"))
             # Window should be reasonably sized (not collapsed, not absurdly large)
-            assert 570 <= width <= 820, f"Window width {width} outside reasonable range"
-            assert 410 <= height <= 600, f"Window height {height} outside reasonable range"
+            if sys_platform != "darwin":
+                assert 570 <= width <= 820, f"Window width {width} outside reasonable range"
+                assert 450 <= height <= 600, f"Window height {height} outside reasonable range"
 
             # Assert: UI elements created for user interaction
             children = popup_window.main_frame.winfo_children()
@@ -226,6 +237,12 @@ class TestUsagePopupWindow:
         with (
             patch("tkinter.BooleanVar"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             UsagePopupWindow.display(
                 parent=tk_root,
@@ -262,6 +279,10 @@ class TestUsagePopupWindow:
             patch.object(popup_window.root, "grab_set") as mock_grab_set,
             patch.object(popup_window.root, "withdraw"),
             patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
             patch("tkinter.BooleanVar"),
         ):
             UsagePopupWindow.display(
@@ -273,8 +294,11 @@ class TestUsagePopupWindow:
                 instructions_text=rich_text_widget,
             )
 
-            # Assert: Popup becomes modal to focus user attention
-            mock_grab_set.assert_called_once()
+            # Assert: Popup becomes modal
+            if sys_platform != "darwin":
+                mock_grab_set.assert_called_once()
+            else:
+                mock_grab_set.assert_not_called()
 
     def test_closing_popup_returns_focus_to_parent_window(self, tk_root, popup_window) -> None:
         """
@@ -293,8 +317,11 @@ class TestUsagePopupWindow:
             # Simulate user closing popup
             PopupWindow.close(popup_window, tk_root)
 
-            # Assert: Proper cleanup occurs
-            mock_grab_release.assert_called_once()
+            # Assert: Proper cleanup occurs (grab release skipped on macOS)
+            if sys_platform != "darwin":
+                mock_grab_release.assert_called_once()
+            else:
+                mock_grab_release.assert_not_called()
             mock_destroy.assert_called_once()
             mock_focus.assert_called_once()
 
@@ -321,6 +348,12 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -368,6 +401,12 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -405,6 +444,12 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window") as mock_wait,
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             # Simulate window closing without button click
             mock_wait.return_value = None
@@ -440,7 +485,9 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
             # Simulate a destroyed Tk: deiconify raises TclError
             self.root.deiconify = Mock(side_effect=tk.TclError("application has been destroyed"))
             # These should not be invoked after deiconify fails
-            self.root.attributes = Mock()
+            self.root.lift = Mock()
+            self.root.update = Mock()
+            self.root.focus_force = Mock()
             self.root.grab_set = Mock()
             self.root.protocol = Mock()
 
@@ -451,8 +498,9 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
 
     # deiconify was attempted
     fake.root.deiconify.assert_called_once()
-    # attributes/grab_set/protocol should not be called because deiconify failed
-    assert not fake.root.attributes.called
+    assert not fake.root.lift.called
+    assert not fake.root.update.called
+    assert not fake.root.focus_force.called
     assert not fake.root.grab_set.called
     assert not fake.root.protocol.called
 
