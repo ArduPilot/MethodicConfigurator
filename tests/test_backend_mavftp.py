@@ -17,8 +17,7 @@ import unittest
 
 # from unittest.mock import patch
 from io import StringIO
-
-from pymavlink import mavutil
+from unittest.mock import MagicMock
 
 # from ardupilot_methodic_configurator.backend_mavftp import ERR_NoErrorCodeInPayload
 # from ardupilot_methodic_configurator.backend_mavftp import ERR_NoErrorCodeInNack
@@ -65,7 +64,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         logger.setLevel(logging.DEBUG)
 
         # Mock mavutil.mavlink_connection to simulate a connection
-        self.mock_master = mavutil.mavlink_connection(device="udp:localhost:14550", source_system=1)
+        self.mock_master = MagicMock()
 
         # Initialize MAVFTP instance for testing
         self.mav_ftp = MAVFTP(self.mock_master, target_system=1, target_component=1)
