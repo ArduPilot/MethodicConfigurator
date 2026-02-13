@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from collections.abc import Generator
 from typing import Union
 from unittest.mock import MagicMock
 
@@ -24,13 +23,6 @@ from ardupilot_methodic_configurator.plugin_protocol import PluginView
 
 class TestPluginViewProtocol:
     """Test suite for PluginView protocol compliance."""
-
-    @pytest.fixture
-    def tk_root(self) -> Generator[tk.Tk, None, None]:
-        """Create a Tk root window for testing."""
-        root = tk.Tk()
-        yield root
-        root.destroy()
 
     @pytest.fixture
     def parent_frame(self, tk_root) -> tk.Frame:

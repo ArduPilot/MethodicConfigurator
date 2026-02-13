@@ -14,7 +14,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import contextlib
 import tkinter as tk
 from unittest.mock import MagicMock, patch
 
@@ -30,16 +29,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 # pylint: disable=redefined-outer-name,protected-access
-
-
-@pytest.fixture
-def tk_root() -> tk.Tk:
-    """Provide a real Tkinter root window for testing."""
-    root = tk.Tk()
-    root.withdraw()
-    yield root
-    with contextlib.suppress(tk.TclError):
-        root.destroy()
 
 
 @pytest.fixture

@@ -13,7 +13,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import contextlib
 import tkinter as tk
 from math import nan
 from typing import Callable
@@ -33,22 +32,9 @@ from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 # pylint: disable=redefined-outer-name,protected-access,too-many-lines
 
 
-# pylint: disable=duplicate-code
-@pytest.fixture
-def tk_root() -> tk.Tk:
-    """Provide a real Tkinter root window for testing GUI components."""
-    root = tk.Tk()
-    root.withdraw()  # Hide the window
-    yield root
-    # Cleanup
-    with contextlib.suppress(tk.TclError):
-        root.destroy()
-
-
 @pytest.fixture
 def mock_flight_controller_with_battery() -> MagicMock:
     """Provide mock flight controller with battery monitoring enabled and realistic values."""
-    # pylint: enable=duplicate-code
     mock_fc = MagicMock()
     mock_fc.fc_parameters = {
         "BATT_MONITOR": 4,  # Analog voltage and current

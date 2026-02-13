@@ -28,15 +28,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 
 
 @pytest.fixture
-def tk_root() -> tk.Tk:
-    """Fixture providing a Tk root window for popup tests."""
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window during tests
-    yield root
-    root.destroy()
-
-
-@pytest.fixture
 def popup_window(tk_root) -> BaseWindow:
     """Fixture providing a BaseWindow instance configured for popup display."""
     window = BaseWindow(tk_root)
@@ -200,10 +191,13 @@ class TestUsagePopupWindow:
             # Assert: Window configured correctly for user
             assert popup_window.root.title() == "Test Title"
             # Verify geometry is set to reasonable dimensions
-            # Extract width x height from geometry string (format: WxH+X+Y or WxH)
-            geometry = popup_window.root.geometry()
-            size_part = geometry.split("+")[0] if "+" in geometry else geometry.split("-")[0]
-            width, height = map(int, size_part.split("x"))
+            # Use winfo_reqwidth/winfo_reqheight because the window may not be
+            # mapped in test environments (parent is withdrawn), causing
+            # geometry() to return 1x1. The requested size reflects the actual
+            # computed layout dimensions set by finalize_setup_popupwindow.
+            popup_window.root.update_idletasks()
+            width = popup_window.root.winfo_reqwidth()
+            height = popup_window.root.winfo_reqheight()
             # Window should be reasonably sized (not collapsed, not absurdly large)
             assert 570 <= width <= 820, f"Window width {width} outside reasonable range"
             assert 410 <= height <= 600, f"Window height {height} outside reasonable range"
