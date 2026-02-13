@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MAVLink Signing Configuration",
+    "description": "Configuration for MAVLink 2.0 signing per vehicle",
+    "type": "object",
+    "patternProperties": {
+        "^.*$": {
+            "type": "object",
+            "properties": {
+                "vehicle_id": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "signing_config": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "sign_outgoing": {
+                            "type": "boolean"
+                        },
+                        "allow_unsigned_in": {
+                            "type": "boolean"
+                        },
+                        "accept_unsigned_callbacks": {
+                            "type": "boolean"
+                        },
+                        "timestamp_offset": {
+                            "type": "integer"
+                        },
+                        "link_id": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255
+                        }
+                    },
+                    "required": [
+                        "enabled"
+                    ],
+                    "additionalProperties": false
+                },
+                "auto_setup": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "vehicle_id",
+                "signing_config"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}
