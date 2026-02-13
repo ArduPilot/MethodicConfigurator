@@ -138,7 +138,7 @@ class TestVehicleProjectCreatorWindow:
         User can successfully create a new vehicle configuration from a template.
 
         GIVEN: A user has configured all required project settings
-        WHEN: They click "Create vehicle configuration directory from template"
+        WHEN: They click "Create a vehicle configuration directory from template"
         THEN: The project manager should create the new vehicle project
         AND: The window should close after successful creation
         """
