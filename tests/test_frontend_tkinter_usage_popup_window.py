@@ -30,10 +30,23 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 @pytest.fixture
 def tk_root() -> tk.Tk:
     """Fixture providing a Tk root window for popup tests."""
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window during tests
-    yield root
-    root.destroy()
+    # Reuse the existing default root to avoid 'tcl_findLibrary' errors
+    # on Python 3.14 when multiple Tk instances are created.
+    try:
+        existing_root = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
+        if existing_root is not None:
+            existing_root.withdraw()
+            yield existing_root
+            return
+    except (AttributeError, tk.TclError):
+        pass
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        yield root
+        root.destroy()
+    except tk.TclError:
+        pytest.skip("Tkinter not available in test environment")
 
 
 @pytest.fixture
@@ -200,10 +213,13 @@ class TestUsagePopupWindow:
             # Assert: Window configured correctly for user
             assert popup_window.root.title() == "Test Title"
             # Verify geometry is set to reasonable dimensions
-            # Extract width x height from geometry string (format: WxH+X+Y or WxH)
-            geometry = popup_window.root.geometry()
-            size_part = geometry.split("+")[0] if "+" in geometry else geometry.split("-")[0]
-            width, height = map(int, size_part.split("x"))
+            # Use winfo_reqwidth/winfo_reqheight because the window may not be
+            # mapped in test environments (parent is withdrawn), causing
+            # geometry() to return 1x1. The requested size reflects the actual
+            # computed layout dimensions set by finalize_setup_popupwindow.
+            popup_window.root.update_idletasks()
+            width = popup_window.root.winfo_reqwidth()
+            height = popup_window.root.winfo_reqheight()
             # Window should be reasonably sized (not collapsed, not absurdly large)
             assert 570 <= width <= 820, f"Window width {width} outside reasonable range"
             assert 410 <= height <= 600, f"Window height {height} outside reasonable range"

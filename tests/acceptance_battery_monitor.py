@@ -37,12 +37,24 @@ from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 @pytest.fixture
 def tk_root() -> tk.Tk:
     """Provide a real Tkinter root window for testing GUI components."""
-    root = tk.Tk()
-    root.withdraw()  # Hide the window
-    yield root
-    # Cleanup
-    with contextlib.suppress(tk.TclError):
-        root.destroy()
+    # Reuse existing default root to avoid 'tcl_findLibrary' errors on Python 3.14
+    try:
+        existing_root = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
+        if existing_root is not None:
+            existing_root.withdraw()
+            yield existing_root
+            return
+    except (AttributeError, tk.TclError):
+        pass
+    try:
+        root = tk.Tk()
+        root.withdraw()  # Hide the window
+        yield root
+        # Cleanup
+        with contextlib.suppress(tk.TclError):
+            root.destroy()
+    except tk.TclError:
+        pytest.skip("Tkinter not available in test environment")
 
 
 @pytest.fixture
