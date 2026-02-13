@@ -15,7 +15,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 import tkinter.font as tkfont
-from collections.abc import Generator
 from typing import Union
 from unittest.mock import MagicMock, patch
 
@@ -29,15 +28,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_font import (
     safe_font_nametofont,
 )
 
-# pylint: disable=unused-argument, redefined-outer-name
-
-
-@pytest.fixture
-def tk_root() -> Generator[tk.Tk, None, None]:
-    """Create and manage a Tkinter root window for tests."""
-    root = tk.Tk()
-    yield root
-    root.destroy()
+# pylint: disable=unused-argument
 
 
 class TestSafeFontNameToFont:

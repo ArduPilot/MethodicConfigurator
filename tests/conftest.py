@@ -99,6 +99,17 @@ def root() -> Generator[tk.Tk, None, None]:
 @pytest.fixture
 def tk_root() -> Generator[tk.Tk, None, None]:
     """Provide a real Tkinter root for integration tests (legacy name for compatibility)."""
+    # Reuse the existing default root to avoid 'tcl_findLibrary' errors
+    # on Python 3.14 when multiple Tk instances are created.
+    try:
+        existing_root = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
+        if existing_root is not None:
+            existing_root.withdraw()
+            existing_root.update_idletasks()
+            yield existing_root
+            return
+    except (AttributeError, tk.TclError):
+        pass
     tk_root_instance = None
     try:
         tk_root_instance = tk.Tk()

@@ -12,12 +12,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
-import tkinter as tk
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Optional, cast
 from unittest.mock import MagicMock
-
-import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import USAGE_POPUP_WINDOWS
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
@@ -30,7 +27,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
 )
 
 if TYPE_CHECKING:  # pragma: no cover - import for typing only
-    from collections.abc import Generator
+    import tkinter as tk
 
     from pytest_mock import MockerFixture
 
@@ -38,9 +35,6 @@ if TYPE_CHECKING:  # pragma: no cover - import for typing only
 
 MODULE_TABLE = "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table"
 MODULE_WINDOWS = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows"
-
-
-# pylint: disable=redefined-outer-name
 
 
 @dataclass
@@ -70,17 +64,6 @@ class StubParameterEditor:
 
     def get_parameters_as_par_dict(self) -> dict[str, object]:  # pragma: no cover - unused helper
         return {}
-
-
-@pytest.fixture
-def tk_root() -> Generator[tk.Tk, None, None]:
-    """Create a Tk root that stays hidden during the tests."""
-    root = tk.Tk()
-    root.withdraw()
-    try:
-        yield root
-    finally:
-        root.destroy()
 
 
 def _build_table(tk_root: tk.Tk, parameter_editor: StubParameterEditor) -> ParameterEditorTable:
