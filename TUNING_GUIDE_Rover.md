@@ -137,7 +137,7 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
    ![New vehicle](images/App_screenshot_Vehicle_directory1.png)
 1. From the existing templates, select the one most similar to your vehicle:
    ![New vehicle](images/App_screenshot_Vehicle_overview.png)
-1. select the destination directory, give it a name and press `Create vehicle configuration directory from template`
+1. select the destination directory, give it a name and press `Create a vehicle configuration directory from template`
 1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):
    ![Component editor window](images/App_screenshot_Component_Editor.png)
 1. Make sure to **scroll all the way down and enter all the information requested**, even if it does not seam important to you.

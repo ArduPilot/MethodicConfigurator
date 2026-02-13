@@ -86,13 +86,13 @@ class VehicleProjectOpenerWindow(BaseWindow):
 
         create_vehicle_directory_from_template_button = ttk.Button(
             option1_label_frame,
-            text=_("Create vehicle configuration directory from template"),
+            text=_("Create a vehicle configuration directory from template"),
             command=self.create_new_vehicle_from_template,
         )
         create_vehicle_directory_from_template_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
         show_tooltip(
             create_vehicle_directory_from_template_button,
-            _("Create a new vehicle configuration directory"),
+            _("Create a new vehicle configuration directory, choose this option when using the software for the first time"),
         )
 
     # pylint: enable=duplicate-code
@@ -147,7 +147,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
         button_state = tk.NORMAL if self.project_manager.can_open_last_vehicle_directory(last_vehicle_dir) else tk.DISABLED
         open_last_vehicle_directory_button = ttk.Button(
             option3_label_frame,
-            text=_("Open Last Used Vehicle Configuration Directory"),
+            text=_("Open last used vehicle configuration directory"),
             command=lambda last_vehicle_dir=last_vehicle_dir: self.open_last_vehicle_directory(  # type: ignore[misc]
                 last_vehicle_dir
             ),

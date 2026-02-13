@@ -122,7 +122,7 @@ class TestVehicleProjectOpenerWindow:
         User can create a new vehicle configuration by selecting the template option.
 
         GIVEN: A user has the project opener window displayed
-        WHEN: They click the "Create vehicle configuration directory from template" button
+        WHEN: They click the "Create a vehicle configuration directory from template" button
         THEN: The current window should close
         AND: A new VehicleProjectCreatorWindow should open with correct parameters
         """
