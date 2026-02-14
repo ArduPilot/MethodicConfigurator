@@ -75,12 +75,22 @@ class StubParameterEditor:
 @pytest.fixture
 def tk_root() -> Generator[tk.Tk, None, None]:
     """Create a Tk root that stays hidden during the tests."""
-    root = tk.Tk()
-    root.withdraw()
+    # Reuse existing default root to avoid 'tcl_findLibrary' errors on Python 3.14
     try:
+        existing_root = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
+        if existing_root is not None:
+            existing_root.withdraw()
+            yield existing_root
+            return
+    except (AttributeError, tk.TclError):
+        pass
+    try:
+        root = tk.Tk()
+        root.withdraw()
         yield root
-    finally:
         root.destroy()
+    except tk.TclError:
+        pytest.skip("Tkinter not available in test environment")
 
 
 def _build_table(tk_root: tk.Tk, parameter_editor: StubParameterEditor) -> ParameterEditorTable:

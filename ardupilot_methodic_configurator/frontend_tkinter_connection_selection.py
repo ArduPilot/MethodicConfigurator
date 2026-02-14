@@ -248,7 +248,7 @@ class ConnectionSelectionWindow(BaseWindow):
             self.main_frame,
             anchor=tk.CENTER,
             justify=tk.CENTER,
-            text=introduction_text + _("\nChoose one of the following three options:"),
+            text=introduction_text,
         )
         self.introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
 

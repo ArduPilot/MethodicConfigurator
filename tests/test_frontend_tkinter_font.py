@@ -35,9 +35,20 @@ from ardupilot_methodic_configurator.frontend_tkinter_font import (
 @pytest.fixture
 def tk_root() -> Generator[tk.Tk, None, None]:
     """Create and manage a Tkinter root window for tests."""
-    root = tk.Tk()
-    yield root
-    root.destroy()
+    # Reuse existing default root to avoid 'tcl_findLibrary' errors on Python 3.14
+    try:
+        existing_root = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
+        if existing_root is not None:
+            yield existing_root
+            return
+    except (AttributeError, tk.TclError):
+        pass
+    try:
+        root = tk.Tk()
+        yield root
+        root.destroy()
+    except tk.TclError:
+        pytest.skip("Tkinter not available in test environment")
 
 
 class TestSafeFontNameToFont:

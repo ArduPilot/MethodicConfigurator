@@ -170,7 +170,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
         self.new_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
         create_vehicle_directory_from_template_button = ttk.Button(
             option1_label_frame,
-            text=_("Create vehicle configuration directory from template"),
+            text=_("Create a vehicle configuration directory from template"),
             command=self.create_new_vehicle_from_template,
         )
         create_vehicle_directory_from_template_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)

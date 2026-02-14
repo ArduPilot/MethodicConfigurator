@@ -340,7 +340,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             if err == "":
                 return ""
 
-        return _("No auto-detected ports responded. Please connect a flight controller and try again.")
+        return _("No auto-detected ports responded.")
 
     def _create_mavlink_connection(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
