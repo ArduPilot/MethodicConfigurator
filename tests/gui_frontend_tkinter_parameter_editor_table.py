@@ -386,22 +386,124 @@ class TestParameterEditorTableUserWorkflows:
             # Verify that bitmask helper methods were called
             mock_helper.get_checked_keys.assert_called_once_with(5, mock_bitmask_param.bitmask_dict)
 
-    @pytest.mark.skip(reason="Full table population requires complex parameter data setup")
-    def test_user_can_work_with_fully_populated_parameter_table(self, parameter_table: ParameterEditorTable) -> None:  # pylint: disable=unused-argument
+    @staticmethod
+    def _create_diverse_test_params() -> dict[str, ArduPilotParameter]:
+        """Create diverse parameters that exercise different code paths."""
+        params = [
+            create_mock_data_model_ardupilot_parameter(
+                name="ANGLE_MAX",
+                value=3000.0,
+                default_value=3000.0,
+                fc_value=3000.0,
+                comment="Max lean angle",
+            ),
+            create_mock_data_model_ardupilot_parameter(
+                name="PILOT_SPEED_UP",
+                value=250.0,
+                default_value=500.0,
+                fc_value=500.0,
+                comment="Reduced climb rate for safety",
+            ),
+            create_mock_data_model_ardupilot_parameter(
+                name="INS_ACCOFFS_X",
+                value=0.01,
+                default_value=0.0,
+                fc_value=0.005,
+                is_calibration=True,
+                comment="Accelerometer calibration",
+            ),
+            create_mock_data_model_ardupilot_parameter(
+                name="INS_ACC_ID",
+                value=1114122.0,
+                default_value=0.0,
+                fc_value=1114122.0,
+                is_readonly=True,
+                comment="",
+            ),
+            create_mock_data_model_ardupilot_parameter(
+                name="ATC_RAT_RLL_P",
+                value=0.135,
+                default_value=0.135,
+                comment="Roll rate P gain",
+            ),
+        ]
+        return {p.name: p for p in params}
+
+    def test_user_can_work_with_fully_populated_parameter_table(self, parameter_table: ParameterEditorTable) -> None:
         """
         User can work with a fully populated parameter table (integration test).
 
-        GIVEN: A user has loaded a complete parameter set
+        GIVEN: A user has loaded a complete parameter set with diverse parameter types
         WHEN: The table is fully populated with real parameter data
-        THEN: All parameters should be displayed correctly
-        AND: User interactions should work as expected
-        AND: The table should handle large datasets efficiently
-
-        NOTE: This test is skipped because it requires complex setup with actual
-        parameter data and GUI components. Individual component tests above
-        verify the building blocks work correctly.
+        THEN: All parameters should be displayed correctly with appropriate widgets
+        AND: Each row has the expected column widgets (delete, upload, name, fc value, diff, new value, unit, change reason)
+        AND: The table handles parameters with different characteristics properly
         """
-        pytest.skip("Full table population requires complex parameter data setup - focus on component testing instead")
+        # Arrange: Create diverse parameters that exercise different code paths
+        test_params = self._create_diverse_test_params()
+
+        # Also update the parameter editor's current step parameters
+        parameter_table.parameter_editor.current_step_parameters = test_params
+
+        # Also update file_parameters so delete/update operations can find them
+        parameter_table.parameter_editor._local_filesystem.file_parameters = {
+            "04_board_orientation.param": ParDict(
+                {name: Par(float(p.value_as_string), p.change_reason) for name, p in test_params.items()}
+            )
+        }
+
+        # Act: Populate the table
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.UsagePopupWindow.should_display",
+            return_value=False,
+        ):
+            parameter_table._update_table(test_params, "normal")
+
+        # Assert: Verify the table has the correct number of child widgets
+        children = parameter_table.view_port.winfo_children()
+        assert len(children) > 0, "Table should have child widgets after population"
+
+        # Each parameter row has 8 widgets (del, name, fc_val, diff, new_val, unit, upload, change_reason)
+        # Plus 1 Add button at the bottom
+        # In "normal" mode, upload column is shown
+        expected_widgets_per_row = 8
+        assert len(children) == len(test_params) * expected_widgets_per_row + 1, (
+            f"Expected {len(test_params) * expected_widgets_per_row + 1} widgets "
+            f"({len(test_params)} rows x {expected_widgets_per_row} + Add button), got {len(children)}"
+        )
+
+        # Verify: Parameter names are present in labels
+        labels = [w for w in children if isinstance(w, ttk.Label)]
+        label_texts = [lbl.cget("text").strip() for lbl in labels]
+        for param_name in test_params:
+            assert param_name in label_texts, f"Parameter {param_name} should appear in table labels"
+
+        # Verify: Calibration parameter has yellow background
+        cal_labels = [lbl for lbl in labels if lbl.cget("text").strip() == "INS_ACCOFFS_X"]
+        assert len(cal_labels) == 1
+        assert str(cal_labels[0].cget("background")) == "yellow"
+
+        # Verify: Read-only parameter has purple background
+        ro_labels = [lbl for lbl in labels if lbl.cget("text").strip() == "INS_ACC_ID"]
+        assert len(ro_labels) == 1
+        assert str(ro_labels[0].cget("background")) == "purple1"
+
+        # Verify: Parameter without FC value shows "N/A"
+        na_labels = [lbl for lbl in labels if lbl.cget("text") == "N/A"]
+        assert len(na_labels) >= 1, "At least one parameter without FC value should show N/A"
+
+        # Verify: Add button exists at the bottom
+        buttons = [w for w in children if isinstance(w, ttk.Button)]
+        add_buttons = [b for b in buttons if b.cget("text") == "Add"]
+        assert len(add_buttons) == 1, "Should have exactly one Add button"
+
+        # Verify: Delete buttons exist for each parameter
+        del_buttons = [b for b in buttons if b.cget("text") == "Del"]
+        assert len(del_buttons) == len(test_params), f"Should have {len(test_params)} Del buttons"
+
+        # Verify: Upload checkbuttons exist (normal mode shows them)
+        checkbuttons = [w for w in children if isinstance(w, ttk.Checkbutton)]
+        assert len(checkbuttons) == len(test_params), f"Should have {len(test_params)} upload checkbuttons"
 
     def test_user_can_edit_multiple_parameters_in_complete_workflow(self, parameter_table: ParameterEditorTable) -> None:
         """
