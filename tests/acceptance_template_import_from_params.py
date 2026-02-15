@@ -152,7 +152,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 
 # ruff: noqa: ANN201, ANN205, S108, PLR0915, EM102
 
-# pylint: disable=too-many-lines,too-many-locals,too-many-branches,too-many-statements,too-many-nested-blocks,redefined-outer-name,too-few-public-methods,unused-argument,broad-exception-caught
+# pylint: disable=too-many-lines,too-many-locals,too-many-branches,too-many-statements,redefined-outer-name,too-few-public-methods,unused-argument,broad-exception-caught
 
 logger = logging.getLogger(__name__)
 
@@ -761,54 +761,90 @@ class TestComponentInferenceValidation:
         }
 
         fields_by_component: dict[str, list[tuple[str, ...]]] = {}
+        root_schema = schema.schema
+
+        def resolve_ref(ref: str) -> dict:
+            """
+            Resolve a JSON Schema $ref pointer against the root schema.
+
+            Raises:
+                ValueError: If the ref is not an internal JSON Pointer.
+                KeyError: If any path segment cannot be resolved.
+
+            """
+            if not ref.startswith("#"):
+                raise ValueError(f"Unsupported $ref '{ref}': only internal references are supported")
+
+            # Strip leading '#' and optional leading '/' to get the JSON Pointer
+            pointer = ref[1:]
+            pointer = pointer.removeprefix("/")
+
+            # Empty fragment refers to the root schema
+            if not pointer:
+                return root_schema
+
+            parts = pointer.split("/")
+            current: dict = root_schema
+            for raw_part in parts:
+                # JSON Pointer unescaping: ~1 -> '/', ~0 -> '~'
+                part = raw_part.replace("~1", "/").replace("~0", "~")
+                if not isinstance(current, dict) or part not in current:
+                    raise KeyError(f"Cannot resolve $ref '{ref}': segment '{raw_part}' not found")
+                current = current[part]
+            return current
+
+        def collect_sections(component_def: dict) -> dict:
+            """Collect all section properties from a component, resolving $ref and allOf."""
+            sections: dict = {}
+            # Resolve top-level $ref
+            if "$ref" in component_def:
+                component_def = resolve_ref(component_def["$ref"])
+            # Merge allOf entries (recursively resolving $ref within each)
+            for entry in component_def.get("allOf", []):
+                if "$ref" in entry:
+                    resolved = resolve_ref(entry["$ref"])
+                    sections.update(collect_sections(resolved))
+                sections.update(entry.get("properties", {}))
+            # Merge direct properties
+            sections.update(component_def.get("properties", {}))
+            return sections
 
         # Get the Components schema
-        components_schema = schema.schema.get("properties", {}).get("Components", {})
+        components_schema = root_schema.get("properties", {}).get("Components", {})
         if not components_schema:
             return fields_by_component
 
-        # Get all component definitions
-        all_of = components_schema.get("allOf", [])
-        if not all_of:
-            return fields_by_component
+        # Components are listed under "properties", each may use $ref
+        component_properties = components_schema.get("properties", {})
 
-        # Iterate through each component type definition
-        for component_def in all_of:
-            properties = component_def.get("properties", {})
+        for component_name, component_schema in component_properties.items():
+            if not isinstance(component_schema, dict):
+                continue
 
-            for component_name, component_schema in properties.items():
-                # Skip if not a proper component schema
-                if not isinstance(component_schema, dict):
+            # Resolve $ref and allOf to get all section schemas
+            all_sections = collect_sections(component_schema)
+
+            for section_name, section_schema in all_sections.items():
+                if not isinstance(section_schema, dict):
                     continue
 
-                component_props = component_schema.get("properties", {})
+                section_props = section_schema.get("properties", {})
 
-                # Check each section (Product, Firmware, Specifications, FC Connection, etc.)
-                for section_name, section_schema in component_props.items():
-                    if not isinstance(section_schema, dict):
+                for field_name, field_schema in section_props.items():
+                    if not isinstance(field_schema, dict):
                         continue
 
-                    section_props = section_schema.get("properties", {})
+                    is_optional = field_schema.get("x-is-optional", False)
 
-                    # Check each field in the section
-                    for field_name, field_schema in section_props.items():
-                        if not isinstance(field_schema, dict):
+                    if not is_optional:
+                        field_path = (component_name, section_name, field_name)
+
+                        if field_path in excluded_fields:
                             continue
 
-                        # Check if field is non-optional (required for simple mode)
-                        is_optional = field_schema.get("x-is-optional", False)
-
-                        if not is_optional:
-                            field_path = (component_name, section_name, field_name)
-
-                            # Skip excluded fields
-                            if field_path in excluded_fields:
-                                continue
-
-                            # Add to results
-                            if component_name not in fields_by_component:
-                                fields_by_component[component_name] = []
-                            fields_by_component[component_name].append((section_name, field_name))
+                        if component_name not in fields_by_component:
+                            fields_by_component[component_name] = []
+                        fields_by_component[component_name].append((section_name, field_name))
 
         return fields_by_component
 

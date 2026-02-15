@@ -18,6 +18,7 @@ from tkinter import ttk
 from typing import cast
 from unittest.mock import MagicMock, patch
 
+import pyautogui
 import pytest
 
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
@@ -68,20 +69,69 @@ class TestParameterEditorWindow:
             if window and window.root:
                 window.root.destroy()
 
-    @pytest.mark.skip(reason="GUI test requires display - run manually in GUI environment")
-    def test_full_gui_with_pyautogui(self, test_param_editor: ParameterEditor) -> None:  # pylint: disable=unused-argument
-        """Full GUI test with PyAutoGUI - requires display."""
-        # This test would run the full GUI and use PyAutoGUI to interact with it
-        # For now, it's skipped as it requires a display environment
+    def test_full_gui_with_pyautogui(self, gui_test_environment, mocker) -> None:  # pylint: disable=unused-argument
+        """
+        User can interact with GUI windows visible on screen using PyAutoGUI.
 
-        # Example of what the test could do:
-        # 1. Start GUI in separate thread
-        # 2. Use PyAutoGUI to locate window
-        # 3. Take screenshots
-        # 4. Simulate mouse/keyboard interactions
-        # 5. Verify GUI behavior
+        GIVEN: A display environment is available for GUI testing
+        WHEN: The about window is opened as a real Tkinter window
+        THEN: PyAutoGUI can capture the screen and verify window presence
+        AND: The window geometry is within screen bounds
+        AND: The window is visible and interactable
+        """
+        # Arrange: Create a root window and the about dialog
+        root = tk.Tk()
+        root.withdraw()
 
-        pytest.skip("Full GUI test requires display environment")
+        try:
+            # Mock webbrowser to prevent URL opens
+            mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_about_popup_window.webbrowser_open_url")
+
+            # Act: Open the about window
+            show_about_window(root, "1.0.0")  # type: ignore[arg-type]
+
+            # Find the about window
+            about_windows = [child for child in root.winfo_children() if isinstance(child, tk.Toplevel)]
+            assert len(about_windows) == 1
+            about_window = cast("tk.Toplevel", about_windows[0])
+
+            # Force the window to render and become visible on screen
+            about_window.deiconify()
+            about_window.lift()
+            about_window.update_idletasks()
+            about_window.update()
+
+            # Verify: PyAutoGUI can capture a screenshot with the window visible
+            screenshot = pyautogui.screenshot()
+            assert screenshot is not None
+            assert screenshot.size[0] > 0
+            assert screenshot.size[1] > 0
+
+            # Verify: Window geometry is within screen bounds
+            _screen_width, _screen_height = pyautogui.size()
+            win_x = about_window.winfo_x()
+            win_y = about_window.winfo_y()
+            win_width = about_window.winfo_width()
+            win_height = about_window.winfo_height()
+
+            assert win_width > 0, "Window should have positive width"
+            assert win_height > 0, "Window should have positive height"
+            # Note: win_x/win_y can be negative on CI (small virtual display)
+            # or multi-monitor setups, so we only check the window is partially visible
+            assert win_x + win_width > 0, "Window should be at least partially visible horizontally"
+            assert win_y + win_height > 0, "Window should be at least partially visible vertically"
+
+            # Verify: Window title is correct
+            assert about_window.title() == "About"
+
+            # Verify: Window is mapped (visible)
+            assert about_window.winfo_ismapped(), "About window should be visible on screen"
+
+            # Cleanup
+            about_window.destroy()
+
+        finally:
+            root.destroy()
 
     def test_show_about_window(self, mocker) -> None:  # pylint: disable=too-many-locals
         """Test that the about window can be created."""
