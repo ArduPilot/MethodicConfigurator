@@ -101,13 +101,13 @@ pypi_dist = [
 win_dist = [
     "pip==26.0.1",
     "pywin32==311",
-    "pyinstaller==6.18.0",
+    "pyinstaller==6.19.0",
     "packaging==26.0",
 ]
 
 mac_dist = [
     "pip==26.0.1",
-    "pyinstaller==6.18.0",
+    "pyinstaller==6.19.0",
     "packaging==26.0",
 ]
 
