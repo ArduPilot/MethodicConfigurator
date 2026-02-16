@@ -20,7 +20,7 @@ jobs:
     runs-on: 'windows-latest'
     strategy:
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.14']
 
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -154,7 +154,7 @@ jobs:
     runs-on: 'macos-latest'
     strategy:
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.14']
 
     permissions:
       contents: write
