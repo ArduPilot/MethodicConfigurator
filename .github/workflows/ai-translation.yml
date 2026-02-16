@@ -247,7 +247,7 @@ jobs:
 
       - name: Run AI translation
         id: ai_translate
-        uses: actions/ai-inference@a6101c89c6feaecc585efdd8d461f18bb7896f20 # v2.0.5
+        uses: actions/ai-inference@a380166897b5408b8fb7dddd148142794cb5624a # v2.0.6
         with:
           system-prompt-file: .github/prompts/ai-translation-system.prompt.yml
           prompt-file: .github/prompts/ai-translation-user.prompt.yml
