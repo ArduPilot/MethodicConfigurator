@@ -529,7 +529,7 @@ def process_component_editor_results(
         logging_error(error_msg)
         show_error_message(_("Error in derived parameters"), error_msg)
         sys_exit(1)
-        return  # to make the tests work, even though sys_exit is mocked in the tests
+        return  # to make the tests work, even though sys_exit is mocked in the tests # pylint: disable=unreachable
 
     # Check if there are pending changes that need user confirmation
     if pending_changes:
