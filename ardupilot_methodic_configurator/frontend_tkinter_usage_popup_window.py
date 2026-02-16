@@ -89,37 +89,26 @@ class PopupWindow:
         if parent and sys_platform != "darwin":
             popup_window.root.transient(parent)
 
-        # Resize window height to ensure all widgets are fully visible
-        # as some Linux Window managers like KDE, like to change font sizes and padding.
-        # So we need to dynamically accommodate for that after placing the widgets
         popup_window.root.update_idletasks()
         req_height = popup_window.root.winfo_reqheight()
         req_width = popup_window.root.winfo_reqwidth()
 
         popup_window.root.geometry(f"{req_width}x{req_height}")
 
-        if parent:  # If parent exists center on parent
+        if parent:
             BaseWindow.center_window(popup_window.root, parent)
-        # For parent-less, center on screen
 
         try:
-            # Show the window now that it's positioned. Calls may fail if the
-            # main application has been destroyed (for example during shutdown)
-            # — guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
             popup_window.root.lift()
-            popup_window.root.update()  # Ensure the window is fully rendered before setting focus
+            popup_window.root.update()
             popup_window.root.focus_force()
 
-            # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
-            # On Windows/Linux, make the popup modal and give it focus
             if sys_platform != "darwin":
-                popup_window.root.grab_set()  # Make the popup modal
+                popup_window.root.grab_set()
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
         except tk.TclError:
-            # Application / interpreter has been destroyed or the underlying
-            # Tk root is no longer available; there's nothing more to do.
             pass
 
     @staticmethod

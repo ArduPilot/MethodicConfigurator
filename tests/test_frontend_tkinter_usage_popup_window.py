@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from sys import platform as sys_platform
 from tkinter import ttk
 from unittest.mock import MagicMock, Mock, patch
 
@@ -148,14 +149,19 @@ class TestPopupWindowBase:
             patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
+            patch.object(tk_root, "lift") as mock_lift,
         ):
             # Act: Close the popup window
             PopupWindow.close(popup_window, tk_root)
 
             # Assert: Grab released, window destroyed, parent focused
-            mock_grab_release.assert_called_once()
+            if sys_platform != "darwin":
+                mock_grab_release.assert_called_once()
+            else:
+                mock_grab_release.assert_not_called()
             mock_destroy.assert_called_once()
             mock_focus.assert_called_once()
+            mock_lift.assert_called_once()
 
 
 class TestUsagePopupWindow:
@@ -173,6 +179,14 @@ class TestUsagePopupWindow:
         with (
             patch("tkinter.BooleanVar") as mock_bool_var,
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "wait_visibility"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -220,6 +234,14 @@ class TestUsagePopupWindow:
         with (
             patch("tkinter.BooleanVar"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "wait_visibility"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             UsagePopupWindow.display(
                 parent=tk_root,
@@ -255,7 +277,13 @@ class TestUsagePopupWindow:
         with (
             patch.object(popup_window.root, "grab_set") as mock_grab_set,
             patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "transient"),
             patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "wait_visibility"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
             patch("tkinter.BooleanVar"),
         ):
             UsagePopupWindow.display(
@@ -268,7 +296,10 @@ class TestUsagePopupWindow:
             )
 
             # Assert: Popup becomes modal to focus user attention
-            mock_grab_set.assert_called_once()
+            if sys_platform != "darwin":
+                mock_grab_set.assert_called_once()
+            else:
+                mock_grab_set.assert_not_called()
 
     def test_closing_popup_returns_focus_to_parent_window(self, tk_root, popup_window) -> None:
         """
@@ -283,14 +314,19 @@ class TestUsagePopupWindow:
             patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
+            patch.object(tk_root, "lift") as mock_lift,
         ):
             # Simulate user closing popup
             PopupWindow.close(popup_window, tk_root)
 
             # Assert: Proper cleanup occurs
-            mock_grab_release.assert_called_once()
+            if sys_platform != "darwin":
+                mock_grab_release.assert_called_once()
+            else:
+                mock_grab_release.assert_not_called()
             mock_destroy.assert_called_once()
             mock_focus.assert_called_once()
+            mock_lift.assert_called_once()
 
 
 class TestConfirmationPopupWindow:
@@ -315,6 +351,14 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "wait_visibility"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -362,6 +406,14 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "wait_visibility"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -399,6 +451,14 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window") as mock_wait,
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "transient"),
+            patch.object(popup_window.root, "withdraw"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "wait_visibility"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "focus_force"),
+            patch.object(popup_window.root, "protocol"),
         ):
             # Simulate window closing without button click
             mock_wait.return_value = None
@@ -434,7 +494,10 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
             # Simulate a destroyed Tk: deiconify raises TclError
             self.root.deiconify = Mock(side_effect=tk.TclError("application has been destroyed"))
             # These should not be invoked after deiconify fails
-            self.root.attributes = Mock()
+            self.root.update = Mock()
+            self.root.wait_visibility = Mock()
+            self.root.lift = Mock()
+            self.root.focus_force = Mock()
             self.root.grab_set = Mock()
             self.root.protocol = Mock()
 
@@ -446,7 +509,10 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
     # deiconify was attempted
     fake.root.deiconify.assert_called_once()
     # attributes/grab_set/protocol should not be called because deiconify failed
-    assert not fake.root.attributes.called
+    assert not fake.root.update.called
+    assert not fake.root.wait_visibility.called
+    assert not fake.root.lift.called
+    assert not fake.root.focus_force.called
     assert not fake.root.grab_set.called
     assert not fake.root.protocol.called
 
