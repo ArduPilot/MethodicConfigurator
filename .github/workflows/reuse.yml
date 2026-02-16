@@ -30,7 +30,7 @@ jobs:
 
     - name: Install REUSE tool
       run: |
-        uv pip install reuse==5.1.1
+        uv pip install reuse==6.2.0
 
     - name: Check REUSE compliance
       run: reuse lint
