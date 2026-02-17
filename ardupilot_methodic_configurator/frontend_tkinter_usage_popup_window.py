@@ -25,6 +25,11 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
 
 
+def _is_macos() -> bool:
+    """Return True if the current platform is macOS."""
+    return sys_platform == "darwin"
+
+
 class PopupWindow:
     """
     Base class for creating and managing popup windows in the application.
@@ -86,7 +91,7 @@ class PopupWindow:
     ) -> None:
         """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
         # Only set transient on non-macOS
-        if parent and sys_platform != "darwin":
+        if parent and not _is_macos():
             popup_window.root.transient(parent)
 
         # Resize window height to ensure all widgets are fully visible
@@ -113,7 +118,7 @@ class PopupWindow:
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus
-            if sys_platform != "darwin":
+            if not _is_macos():
                 popup_window.root.grab_set()  # Make the popup modal
 
             popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
@@ -125,7 +130,7 @@ class PopupWindow:
     @staticmethod
     def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
         """Close the popup window and re-enable the parent window."""
-        if sys_platform != "darwin":
+        if not _is_macos():
             with contextlib.suppress(tk.TclError):
                 popup_window.root.grab_release()
 
