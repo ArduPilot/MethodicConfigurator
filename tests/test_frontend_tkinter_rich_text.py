@@ -187,7 +187,7 @@ class TestGetWidgetFontFamilyAndSize(unittest.TestCase):
         expected_family = (
             ["Segoe UI"]
             if platform_system() == "Windows"
-            else [".AppleSystemUIFont"]
+            else [".AppleSystemUIFont", "Helvetica"]
             if platform_system() == "Darwin"
             else ["Helvetica", "sans-serif"]
         )
