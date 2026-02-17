@@ -65,7 +65,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         logger.setLevel(logging.DEBUG)
 
         # Mock mavutil.mavlink_connection to simulate a connection
-        self.mock_master = mavutil.mavlink_connection(device="udp:localhost:14550", source_system=1)
+        self.mock_master = mavutil.mavlink_connection(device="udp:localhost:0", source_system=1)
 
         # Initialize MAVFTP instance for testing
         self.mav_ftp = MAVFTP(self.mock_master, target_system=1, target_component=1)
