@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.14"]  # to make sure the latest AMC supported python version does not break
         include:
           - os: ubuntu-latest
@@ -67,6 +67,10 @@ jobs:
             sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
           fi
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
+
+      - name: Install system dependencies for GUI testing on macOS
+        if: matrix.os == 'macos-latest'
+        run: brew install python-tk
 
       - name: Ensure Tcl/Tk search paths
         if: matrix.os == 'ubuntu-latest'
@@ -170,6 +174,7 @@ jobs:
           fi
 
       - name: Fix coverage paths
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sed -i 's|<package name="." |<package name="ardupilot_methodic_configurator" |' tests/coverage.xml
           sed -i 's|<source>.*</source>|<source>.</source>|' tests/coverage.xml
