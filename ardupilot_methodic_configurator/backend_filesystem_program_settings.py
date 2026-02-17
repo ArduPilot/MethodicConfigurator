@@ -17,6 +17,7 @@ from json import dump as json_dump
 from json import load as json_load
 from logging import debug as logging_debug
 from logging import error as logging_error
+from logging import warning as logging_warning
 from os import makedirs as os_makedirs
 from os import path as os_path
 from os import sep as os_sep
@@ -30,6 +31,7 @@ from typing import Any, Optional, Union
 from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.data_model_recent_items_history_list import RecentItemsHistoryList
 
 
 @dataclass(frozen=True)
@@ -62,6 +64,26 @@ USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
 }
 
 
+def validate_connection_string(connection_string: str) -> None:
+    """
+    Validate a connection string.
+
+    Args:
+        connection_string: Connection string to validate
+
+    Raises:
+        ValueError: If connection string is invalid
+
+    """
+    if not connection_string or not connection_string.strip():
+        msg = "Connection string cannot be empty or whitespace-only"
+        raise ValueError(msg)
+
+    if len(connection_string.strip()) > 200:
+        msg = f"Connection string is too long ({len(connection_string.strip())} chars), maximum is 200"
+        raise ValueError(msg)
+
+
 class ProgramSettings:
     """
     A class responsible for managing various settings related to the ArduPilot Methodic Configurator.
@@ -70,6 +92,8 @@ class ProgramSettings:
     templates, and user preferences. It also manages the creation of new vehicle directories and
     validation of directory names according to specific rules.
     """
+
+    MAX_CONNECTION_HISTORY = 10  # Maximum number of connection strings to store
 
     def __init__(self) -> None:
         pass
@@ -462,6 +486,15 @@ class ProgramSettings:
         filepath, _error_msg = ProgramSettings.motor_diagram_filepath(frame_class, frame_type)
         return filepath != "" and os_path.exists(filepath)
 
+    # History manager for connection strings
+    _connection_history = RecentItemsHistoryList(
+        settings_key="connection_history",
+        max_items=MAX_CONNECTION_HISTORY,
+        normalizer=str.strip,
+        validator=validate_connection_string,
+        comparer=None,  # Use default identity function for simple string equality
+    )
+
     @staticmethod
     def get_connection_history() -> list[str]:
         """
@@ -471,53 +504,33 @@ class ProgramSettings:
         Only valid string entries are returned.
 
         Returns:
-            List of connection strings in most-recent-first order (up to 10 items).
+            List of connection strings in most-recent-first order (up to MAX_CONNECTION_HISTORY items).
 
         """
         settings = ProgramSettings._get_settings_as_dict()
-        history = settings.get("connection_history", [])
-
-        if not isinstance(history, list):
-            return []
-
-        return [item for item in history if isinstance(item, str)]
+        return ProgramSettings._connection_history.get_items(settings)
 
     @staticmethod
     def store_connection(connection_string: str) -> None:
         """
         Save a new connection string to history.
 
-        The history maintains up to 10 most recent connections in chronological order.
+        The history maintains up to MAX_CONNECTION_HISTORY most recent connections in chronological order.
         If the connection already exists, it's moved to the top of the list.
         Empty strings, whitespace-only strings, and strings longer than 200 characters
-        are ignored.
+        are rejected.
 
         Args:
             connection_string: The connection string to store (max 200 characters).
 
+        Raises:
+            ValueError: If connection string is invalid (logged as warning, not raised)
+
         """
-        if not connection_string or not connection_string.strip():
-            return
-
-        connection_string = connection_string.strip()
-
-        # Reject connection strings that are too long
-        if len(connection_string) > 200:
-            return
-
-        settings = ProgramSettings._get_settings_as_dict()
-        history = settings.get("connection_history", [])
-        if not isinstance(history, list):
-            logging_error("The ProgramSetting connection_history was not a list")
-            history = []
-
-        if connection_string in history:
-            history.remove(connection_string)
-
-        history.insert(0, connection_string)
-
-        if len(history) > 10:
-            history = history[:10]
-
-        settings["connection_history"] = history
-        ProgramSettings._set_settings_from_dict(settings)
+        try:
+            settings = ProgramSettings._get_settings_as_dict()
+            settings = ProgramSettings._connection_history.store_item(connection_string, settings)
+            ProgramSettings._set_settings_from_dict(settings)
+        except ValueError as e:
+            # Log validation errors but don't raise (backward compatible behavior)
+            logging_warning("Failed to store connection string to history: %s", e)
