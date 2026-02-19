@@ -129,10 +129,12 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         """Refresh the list of available ports and update the combobox."""
         # Prevent re-entrant calls
         if self._is_refreshing:
+            logging_debug(_("Port refresh already in progress, skipping"))
             return
 
         self._is_refreshing = True
         try:
+            logging_debug(_("Starting periodic port refresh"))
             # Get the currently selected port (if any)
             current_selection = self.conn_selection_combobox.get_selected_key()
 
@@ -145,12 +147,15 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             # Only update the combobox if the list has changed
             current_tuples = self.conn_selection_combobox.get_entries_tuple()
             if new_connection_tuples != current_tuples:
+                logging_debug(_("Port list changed, updating UI"))
                 # Preserve the current selection if the port still exists
                 if current_selection in [t[0] for t in new_connection_tuples]:
                     self.conn_selection_combobox.set_entries_tuple(new_connection_tuples, current_selection)
                 else:
                     # Port no longer available, update list without changing selection
                     self.conn_selection_combobox.set_entries_tuple(new_connection_tuples, None)
+            else:
+                logging_debug(_("Port list unchanged"))
 
         except Exception:  # pylint: disable=broad-exception-caught
             # Log error but don't disrupt the UI
@@ -165,6 +170,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
                     # Check if parent window still exists before scheduling
                     if self.parent.root.winfo_exists():
                         self._refresh_timer_id = self.parent.root.after(3000, self._refresh_ports)
+                        logging_debug(_("Scheduled next port refresh in 3 seconds"))
                 except tk.TclError:
                     # Window was destroyed, stop refreshing
                     self.stop_periodic_refresh()
