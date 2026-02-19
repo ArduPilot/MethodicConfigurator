@@ -788,7 +788,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             assert tooltip.tooltip == mock_toplevel
             mock_label.assert_called_once()
             mock_toplevel.bind.assert_any_call("<Enter>", tooltip._cancel_hide)
-            mock_toplevel.bind.assert_any_call("<Leave>", tooltip.hide)
+            mock_toplevel.bind.assert_any_call("<Leave>", tooltip.destroy_hide)
 
     def test_tooltip_position_tooltip(self, mock_widget, mock_toplevel) -> None:
         """
