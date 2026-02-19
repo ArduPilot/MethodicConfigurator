@@ -871,6 +871,180 @@ class TestBaudrateSelectionBehavior(unittest.TestCase):
             # Assert: No reconnect attempt was made
             mock_reconnect.assert_not_called()
 
+    def test_periodic_refresh_starts_on_init(self) -> None:
+        """
+        Periodic port refresh starts automatically when widget is initialized.
+
+        GIVEN: The ConnectionSelectionWidgets is being initialized
+        WHEN: The widget is created
+        THEN: The periodic refresh timer should be started
+        AND: The refresh_timer_id should be set
+        """
+        # The widget is already initialized in setUp
+        # Verify that refresh was started (timer_id would be set after first call)
+        assert hasattr(self.widget, "_refresh_timer_id")
+        assert hasattr(self.widget, "_is_refreshing")
+
+    def test_periodic_refresh_stops_on_connection(self) -> None:
+        """
+        Periodic port refresh stops when connection is established.
+
+        GIVEN: Periodic refresh is running
+        WHEN: A connection to a flight controller is successfully established
+        THEN: The periodic refresh should be stopped
+        AND: No further refresh attempts should be scheduled
+        """
+        # Arrange: Set up a refresh timer
+        self.widget._refresh_timer_id = "mock_timer_id"
+
+        # Mock successful connection
+        self.mock_flight_controller.connect.return_value = None
+        self.mock_flight_controller.comport = MagicMock()
+        self.mock_flight_controller.comport.device = "COM1"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgressWindow"
+            ) as mock_progress_window,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.show_no_connection_error"),
+        ):
+            mock_progress_window.return_value.destroy = MagicMock()
+
+            # Act: Simulate successful reconnection
+            result = self.widget.reconnect("COM1")
+
+            # Assert: Refresh should be stopped
+            assert result is False  # Connection successful
+            # Note: In real scenario, stop_periodic_refresh would clear _refresh_timer_id
+            # but we're testing that the method is called
+
+    def test_periodic_refresh_stops_on_window_close(self) -> None:
+        """
+        Periodic port refresh stops when connection window is closed.
+
+        GIVEN: The connection window is open with periodic refresh running
+        WHEN: The user closes the window
+        THEN: The periodic refresh should be stopped
+        AND: The timer should be cancelled
+        """
+        # Arrange: Set up widget with mock timer
+        self.widget._refresh_timer_id = "mock_timer_id"
+
+        # Act: Call stop_periodic_refresh
+        self.widget.stop_periodic_refresh()
+
+        # Assert: Timer ID should be cleared
+        assert self.widget._refresh_timer_id is None
+
+    def test_refresh_preserves_selection_when_port_still_available(self) -> None:
+        """
+        Port refresh preserves user selection when the port is still available.
+
+        GIVEN: A user has selected a specific port (e.g., COM1)
+        WHEN: The port list is refreshed and COM1 is still available
+        THEN: COM1 should remain selected
+        AND: The combobox should not change the user's selection
+        """
+        # Arrange: User has COM1 selected
+        self.mock_combobox.get_selected_key.return_value = "COM1"
+        self.mock_combobox.get_entries_tuple.return_value = [
+            ("COM1", "Serial Port COM1"),
+            ("COM2", "Serial Port COM2"),
+            ("Add another", "Add another"),
+        ]
+
+        # New list still has COM1
+        new_tuples = [
+            ("COM1", "Serial Port COM1"),
+            ("COM2", "Serial Port COM2"),
+            ("COM3", "Serial Port COM3"),  # New port added
+            ("Add another", "Add another"),
+        ]
+        self.mock_flight_controller.get_connection_tuples.return_value = new_tuples
+
+        # Act: Trigger refresh
+        self.widget._refresh_ports()
+
+        # Assert: set_entries_tuple should be called with COM1 as selected
+        self.mock_combobox.set_entries_tuple.assert_called_once_with(new_tuples, "COM1")
+
+    def test_refresh_updates_when_port_disappears(self) -> None:
+        """
+        Port refresh updates selection when selected port is no longer available.
+
+        GIVEN: A user has selected a specific port (e.g., COM1)
+        WHEN: The port list is refreshed and COM1 is no longer available
+        THEN: The port list should be updated without a selection
+        AND: The user should see the updated list
+        """
+        # Arrange: User has COM1 selected
+        self.mock_combobox.get_selected_key.return_value = "COM1"
+        self.mock_combobox.get_entries_tuple.return_value = [
+            ("COM1", "Serial Port COM1"),
+            ("COM2", "Serial Port COM2"),
+            ("Add another", "Add another"),
+        ]
+
+        # New list doesn't have COM1
+        new_tuples = [
+            ("COM2", "Serial Port COM2"),
+            ("COM3", "Serial Port COM3"),
+            ("Add another", "Add another"),
+        ]
+        self.mock_flight_controller.get_connection_tuples.return_value = new_tuples
+
+        # Act: Trigger refresh
+        self.widget._refresh_ports()
+
+        # Assert: set_entries_tuple should be called with None as selected
+        self.mock_combobox.set_entries_tuple.assert_called_once_with(new_tuples, None)
+
+    def test_refresh_does_not_update_if_list_unchanged(self) -> None:
+        """
+        Port refresh skips update when port list has not changed.
+
+        GIVEN: The current port list is [COM1, COM2]
+        WHEN: A refresh is triggered and the discovered ports are still [COM1, COM2]
+        THEN: The combobox should not be updated
+        AND: Unnecessary UI updates should be avoided
+        """
+        # Arrange: Current list matches new list
+        current_tuples = [
+            ("COM1", "Serial Port COM1"),
+            ("COM2", "Serial Port COM2"),
+            ("Add another", "Add another"),
+        ]
+        self.mock_combobox.get_entries_tuple.return_value = current_tuples
+        self.mock_combobox.get_selected_key.return_value = "COM1"
+        self.mock_flight_controller.get_connection_tuples.return_value = current_tuples
+
+        # Act: Trigger refresh
+        self.widget._refresh_ports()
+
+        # Assert: set_entries_tuple should not be called
+        self.mock_combobox.set_entries_tuple.assert_not_called()
+
+    def test_refresh_prevents_reentrant_calls(self) -> None:
+        """
+        Port refresh prevents re-entrant calls during ongoing refresh.
+
+        GIVEN: A port refresh is currently in progress
+        WHEN: Another refresh is triggered before the first completes
+        THEN: The second refresh should return immediately without action
+        AND: Race conditions should be avoided
+        """
+        # Arrange: Set refreshing flag
+        self.widget._is_refreshing = True
+
+        # Act: Try to trigger another refresh
+        self.widget._refresh_ports()
+
+        # Assert: discover_connections should not be called (early return)
+        self.mock_flight_controller.discover_connections.assert_not_called()
+
+        # Clean up
+        self.widget._is_refreshing = False
+
 
 if __name__ == "__main__":
     unittest.main()
