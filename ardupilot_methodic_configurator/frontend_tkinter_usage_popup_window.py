@@ -268,7 +268,7 @@ class ConfirmationPopupWindow(PopupWindow):
 
         # Poll the event loop until the user clicks Yes, No, or closes the window.
         tk_root = parent.nametowidget(".")
-        while not result["done"]:
+        while not result["done"] and usage_popup_window.root.winfo_exists():
             try:
                 tk_root.update()
                 tk_root.after(10)

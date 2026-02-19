@@ -257,6 +257,8 @@ class TestUsagePopupWindow:
             patch.object(popup_window.root, "withdraw"),
             patch.object(popup_window.root, "deiconify"),
             patch("tkinter.BooleanVar"),
+            # Tell the new polling loop the window is already closed.
+            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             UsagePopupWindow.display(
                 parent=tk_root,
@@ -315,6 +317,7 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -362,6 +365,7 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -399,6 +403,7 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window") as mock_wait,
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             # Simulate window closing without button click
             mock_wait.return_value = None
