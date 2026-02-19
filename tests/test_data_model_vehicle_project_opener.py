@@ -201,9 +201,9 @@ class TestVehicleDirectoryOpening:
         AND: The vehicle directory path should be returned
         """
         # Arrange: Valid vehicle directory
-        vehicle_dir = "/path/to/vehicle/directory"
+        vehicle_dir = "C:\\path\\to\\vehicle\\directory"
 
-        with patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store:
+        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store:
             # Act: Open vehicle directory
             result = project_opener.open_vehicle_directory(vehicle_dir)
 
@@ -261,10 +261,10 @@ class TestVehicleDirectoryOpening:
         THEN: The directory should open successfully
         """
         # Arrange: Template directory with editing enabled
-        vehicle_dir = "/path/to/vehicle_templates/ArduCopter/template"
+        vehicle_dir = "C:\\path\\to\\vehicle_templates\\ArduCopter\\template"
         mock_local_filesystem.allow_editing_template_files = True
 
-        with patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"):
+        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
             # Act: Open template directory
             result = project_opener.open_vehicle_directory(vehicle_dir)
 
@@ -322,9 +322,9 @@ class TestVehicleDirectoryOpening:
         THEN: The directory should be stored as recently used for future access
         """
         # Arrange: Valid vehicle directory
-        vehicle_dir = "/path/to/vehicle/directory"
+        vehicle_dir = "C:\\path\\to\\vehicle\\directory"
 
-        with patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store:
+        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store:
             # Act: Open vehicle directory
             project_opener.open_vehicle_directory(vehicle_dir)
 
@@ -423,12 +423,12 @@ class TestVehicleProjectOpenerIntegration:
         """
         # Arrange: Different vehicle directory types
         directories = [
-            "/vehicles/my_quadcopter",
-            "/projects/custom_plane",
-            "/configs/racing_drone",
+            "C:\\vehicles\\my_quadcopter",
+            "C:\\projects\\custom_plane",
+            "C:\\configs\\racing_drone",
         ]
 
-        with patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"):
+        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
             for vehicle_dir in directories:
                 # Act: Open each directory
                 result = project_opener.open_vehicle_directory(vehicle_dir)
@@ -446,8 +446,8 @@ class TestVehicleProjectOpenerIntegration:
         THEN: Both operations should succeed and update the filesystem accordingly
         """
         # Arrange: Last directory and new directory
-        last_dir = "/vehicles/last_used"
-        new_dir = "/vehicles/different_project"
+        last_dir = "C:\\vehicles\\last_used"
+        new_dir = "C:\\vehicles\\different_project"
 
         # Act: Open last directory first
         result1 = project_opener.open_last_vehicle_directory(last_dir)
@@ -456,7 +456,7 @@ class TestVehicleProjectOpenerIntegration:
         # Reset mock to track new calls
         mock_local_filesystem.re_init.reset_mock()
 
-        with patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store:
+        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store:
             # Act: Open new directory
             result2 = project_opener.open_vehicle_directory(new_dir)
 
@@ -474,8 +474,8 @@ class TestVehicleProjectOpenerIntegration:
         THEN: The second attempt should succeed despite the previous failure
         """
         # Arrange: Invalid directory followed by valid directory
-        invalid_dir = "/path/to/invalid"
-        valid_dir = "/path/to/valid"
+        invalid_dir = "C:\\path\\to\\invalid"
+        valid_dir = "C:\\path\\to\\valid"
 
         # First attempt should fail
         mock_local_filesystem.vehicle_configuration_files_exist.return_value = False
@@ -486,7 +486,7 @@ class TestVehicleProjectOpenerIntegration:
         # Second attempt should succeed
         mock_local_filesystem.vehicle_configuration_files_exist.return_value = True
 
-        with patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"):
+        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
             result = project_opener.open_vehicle_directory(valid_dir)
 
             # Assert: Valid directory opened successfully
@@ -503,12 +503,12 @@ class TestVehicleProjectOpenerIntegration:
         """
         # Arrange: Multiple directories to open
         directories = [
-            "/vehicles/project1",
-            "/vehicles/project2",
-            "/vehicles/project3",
+            "C:\\vehicles\\project1",
+            "C:\\vehicles\\project2",
+            "C:\\vehicles\\project3",
         ]
 
-        with patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"):
+        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
             for i, vehicle_dir in enumerate(directories):
                 # Act: Open directory
                 result = project_opener.open_vehicle_directory(vehicle_dir)
