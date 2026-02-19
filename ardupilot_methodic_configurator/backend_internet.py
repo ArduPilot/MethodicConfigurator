@@ -305,7 +305,7 @@ def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str
         if asset.get("name") == filename:
             digest = asset.get("digest", "")
             if digest.startswith("sha256:"):
-                return digest[7:]  # Remove "sha256:" prefix
+                return str(digest[7:])  # Remove "sha256:" prefix
 
     # Next, search for checksum files in release assets
     for asset in assets:
@@ -409,7 +409,7 @@ def _launch_installer_and_exit(batch_file_path: str, progress_callback: Optional
     with subprocess.Popen(  # noqa: S602
         [batch_file_path],
         shell=True,
-        creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,  # type: ignore[attr-defined]
+        creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,
     ) as _result:
         pass  # We don't need to do anything with the process object
 
