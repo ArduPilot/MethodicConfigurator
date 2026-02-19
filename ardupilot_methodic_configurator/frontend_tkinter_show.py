@@ -526,7 +526,7 @@ class Tooltip:
         self.position_tooltip()
         # Bind to tooltip to prevent hiding when mouse is over it
         self.tooltip.bind("<Enter>", self._cancel_hide)
-        self.tooltip.bind("<Leave>", self.hide)
+        self.tooltip.bind("<Leave>", self.destroy_hide)
 
     def position_tooltip(self) -> None:
         """Position tooltip within monitor bounds, handling widget destruction gracefully."""
