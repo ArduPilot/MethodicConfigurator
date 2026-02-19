@@ -59,6 +59,17 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         """
         return LocalFilesystem.get_recently_used_dirs()
 
+    def get_recent_vehicle_dirs(self) -> list[str]:
+        """
+        Get the list of recently opened vehicle directories.
+
+        Returns:
+            List of recent vehicle directory paths, ordered from most recent to oldest.
+            Returns empty list if no history exists.
+
+        """
+        return LocalFilesystem.get_recent_vehicle_dirs()
+
     def get_current_working_directory(self) -> str:
         """
         Get the current working directory.

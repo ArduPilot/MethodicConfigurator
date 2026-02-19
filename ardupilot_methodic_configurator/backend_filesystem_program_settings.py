@@ -17,21 +17,27 @@ from json import dump as json_dump
 from json import load as json_load
 from logging import debug as logging_debug
 from logging import error as logging_error
+from logging import info as logging_info
 from logging import warning as logging_warning
+from ntpath import normcase as ntpath_normcase
+from ntpath import normpath as ntpath_normpath
 from os import makedirs as os_makedirs
 from os import path as os_path
 from os import sep as os_sep
 from pathlib import Path
 from platform import system as platform_system
+from posixpath import normpath as posixpath_normpath
 from re import escape as re_escape
 from re import match as re_match
-from re import sub as re_sub
 from typing import Any, Optional, Union
 
 from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_recent_items_history_list import RecentItemsHistoryList
+
+# Platform detection constant to avoid repeated system calls
+IS_WINDOWS = platform_system() == "Windows"
 
 
 @dataclass(frozen=True)
@@ -64,6 +70,37 @@ USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
 }
 
 
+def _is_windows_absolute_path(path: str) -> bool:
+    r"""Return True if path looks like a Windows absolute path (e.g. C:\ or C:/)."""
+    return bool(re_match(r"^[A-Za-z]:[/\\]", path))
+
+
+def normalize_path(path: str) -> str:
+    """Normalize path with platform-appropriate separators for storage."""
+    if IS_WINDOWS:
+        if _is_windows_absolute_path(path):
+            # Already a Windows absolute path with drive letter - just normalize separators
+            return ntpath_normpath(path)
+        # Relative or Unix-style path on Windows - use abspath to get the full path with drive
+        return os_path.normpath(os_path.abspath(path))
+    if _is_windows_absolute_path(path):
+        # On non-Windows, don't call abspath on a Windows absolute path (would prepend the CWD)
+        return posixpath_normpath(path.replace("\\", "/"))
+    return os_path.normpath(os_path.abspath(path))
+
+
+def normalize_for_comparison(path: str) -> str:
+    """Normalize path for comparison (case-insensitive on Windows, case-sensitive on Unix)."""
+    if IS_WINDOWS:
+        if _is_windows_absolute_path(path):
+            return ntpath_normcase(ntpath_normpath(path))
+        return os_path.normcase(os_path.normpath(os_path.abspath(path)))
+    if _is_windows_absolute_path(path):
+        return posixpath_normpath(path.replace("\\", "/"))
+    normalized = os_path.normpath(os_path.abspath(path))
+    return os_path.normcase(normalized)
+
+
 def validate_connection_string(connection_string: str) -> None:
     """
     Validate a connection string.
@@ -87,7 +124,7 @@ def validate_connection_string(connection_string: str) -> None:
         raise ValueError(msg)
 
 
-class ProgramSettings:
+class ProgramSettings:  # pylint: disable=too-many-public-methods
     """
     A class responsible for managing various settings related to the ArduPilot Methodic Configurator.
 
@@ -96,6 +133,7 @@ class ProgramSettings:
     validation of directory names according to specific rules.
     """
 
+    MAX_RECENT_DIRS = 5  # Maximum number of recent vehicle directories to store
     MAX_CONNECTION_HISTORY = 10  # Maximum number of connection strings to store
 
     def __init__(self) -> None:
@@ -114,13 +152,13 @@ class ProgramSettings:
         settings_directory = cls._user_config_dir()
 
         return {
-            "Format version": 1,
+            "Format version": 2,  # Version 2: introduced recent_vehicle_history replacing vehicle_dir
             "display_usage_popup": dict.fromkeys(USAGE_POPUP_WINDOWS, True),
             "connection_history": [],
+            "recent_vehicle_history": [],
             "directory_selection": {
                 "template_dir": os_path.join(cls.get_templates_base_dir(), "ArduCopter", "empty_4.6.x"),
                 "new_base_dir": os_path.join(settings_directory, "vehicles"),
-                "vehicle_dir": os_path.join(settings_directory, "vehicles"),
             },
             "auto_open_doc_in_browser": True,
             "annotate_docs_into_param_files": False,
@@ -287,22 +325,17 @@ class ProgramSettings:
             json_dump(settings, settings_file, indent=4)
 
     @staticmethod
-    def _normalize_path_separators(path: str) -> str:
-        """
-        Normalize path separators for the current platform.
-
-        Args:
-            path: Path to normalize
-
-        Returns:
-            str: Path with normalized separators
-
-        """
-        # Regular expression pattern to match single backslashes
-        pattern = r"(?<!\\)\\(?!\\)|(?<!/)/(?!/)"
-        # Replacement string
-        replacement = r"\\" if platform_system() == "Windows" else r"/"
-        return re_sub(pattern, replacement, path)
+    def _is_template_directory(vehicle_dir: str) -> bool:
+        """Check if path is within templates directory (should not be migrated)."""
+        try:
+            templates_base = ProgramSettings.get_templates_base_dir()
+            normalized_dir = os_path.normpath(os_path.abspath(vehicle_dir))
+            normalized_templates = os_path.normpath(os_path.abspath(templates_base))
+            # Use commonpath to check if vehicle_dir is under templates_base
+            return os_path.commonpath([normalized_dir, normalized_templates]) == normalized_templates
+        except (ValueError, OSError):
+            # Can't determine - conservatively assume it's a template to be safe
+            return True
 
     @staticmethod
     def store_recently_used_template_dirs(template_dir: str, new_base_dir: str) -> None:
@@ -311,8 +344,8 @@ class ProgramSettings:
         # Update the settings with the new values
         settings["directory_selection"].update(
             {
-                "template_dir": ProgramSettings._normalize_path_separators(template_dir),
-                "new_base_dir": ProgramSettings._normalize_path_separators(new_base_dir),
+                "template_dir": normalize_path(template_dir),
+                "new_base_dir": normalize_path(new_base_dir),
             }
         )
 
@@ -325,18 +358,124 @@ class ProgramSettings:
         template_dir = os_path.join(ProgramSettings.get_templates_base_dir(), relative_template_dir)
 
         # Update the settings with the new values
-        settings["directory_selection"].update({"template_dir": ProgramSettings._normalize_path_separators(template_dir)})
+        settings["directory_selection"].update({"template_dir": normalize_path(template_dir)})
 
         ProgramSettings._set_settings_from_dict(settings)
+
+    # History manager for vehicle directories
+    _recent_vehicle_history = RecentItemsHistoryList(
+        settings_key="recent_vehicle_history",
+        max_items=MAX_RECENT_DIRS,
+        normalizer=normalize_path,
+        validator=None,  # No validation - history should be permissive
+        comparer=normalize_for_comparison,
+    )
 
     @staticmethod
     def store_recently_used_vehicle_dir(vehicle_dir: str) -> None:
+        """Store a vehicle directory in recent history (most recent first, max 5 entries)."""
         settings = ProgramSettings._get_settings_as_dict()
-
-        # Update the settings with the new values
-        settings["directory_selection"].update({"vehicle_dir": ProgramSettings._normalize_path_separators(vehicle_dir)})
-
+        settings = ProgramSettings._recent_vehicle_history.store_item(vehicle_dir, settings)
         ProgramSettings._set_settings_from_dict(settings)
+
+    @staticmethod
+    def migrate_settings_to_latest_version() -> None:
+        """
+        Automatically migrate settings to the latest format version.
+
+        Checks the current format version in settings and applies necessary
+        migrations to bring it up to the latest version. This should be called
+        during application startup.
+
+        Format versions:
+        - Version 1: Used vehicle_dir in directory_selection
+        - Version 2: Introduced recent_vehicle_history list replacing vehicle_dir
+        """
+        settings = ProgramSettings._get_settings_as_dict()
+        current_version = settings.get("Format version", 1)  # Default to 1 for old settings
+
+        # Migrate from version 1 to version 2
+        if current_version < 2:
+            logging_info("Migrating settings from version %d to version 2", current_version)
+            ProgramSettings._migrate_v1_to_v2(settings)
+            settings["Format version"] = 2
+            ProgramSettings._set_settings_from_dict(settings)
+            logging_info("Settings migration to version 2 complete")
+
+    @staticmethod
+    def _migrate_v1_to_v2(settings: dict) -> None:
+        """
+        Migrate settings from format version 1 to version 2.
+
+        Version 1 → Version 2 changes:
+        - Migrate legacy vehicle_dir to recent_vehicle_history list
+        - Remove legacy vehicle_dir from directory_selection
+
+        Args:
+            settings: Settings dictionary to modify in-place
+
+        Note: Invalid paths are logged but still removed from legacy settings
+        to avoid perpetual migration attempts.
+
+        """
+        recent_dirs = settings.get("recent_vehicle_history", [])
+
+        # Handle corrupted history data
+        if not isinstance(recent_dirs, list):
+            recent_dirs = []
+
+        # Check for legacy vehicle_dir setting
+        directory_selection = settings.get("directory_selection", {})
+        if not isinstance(directory_selection, dict):
+            return
+
+        legacy_vehicle_dir = directory_selection.get("vehicle_dir", "")
+
+        # Only proceed if legacy setting exists
+        if not legacy_vehicle_dir or not isinstance(legacy_vehicle_dir, str):
+            return
+
+        # Skip template directories (these are defaults, not user selections)
+        if ProgramSettings._is_template_directory(legacy_vehicle_dir):
+            # Remove template path from legacy setting to avoid confusion
+            directory_selection.pop("vehicle_dir", None)
+            settings["directory_selection"] = directory_selection
+            # Note: Changes are persisted by the caller (migrate_settings_to_latest_version)
+            return
+
+        # Normalize and migrate the legacy path (no validation - be permissive)
+        normalized_legacy = normalize_path(legacy_vehicle_dir)
+        normalized_comparison = normalize_for_comparison(normalized_legacy)
+
+        # Check if it's already in the history (avoid duplicates)
+        if not any(normalize_for_comparison(d) == normalized_comparison for d in recent_dirs):
+            # Add to front of history if not present
+            recent_dirs.insert(0, normalized_legacy)
+            # Limit to MAX_RECENT_DIRS
+            recent_dirs = recent_dirs[: ProgramSettings.MAX_RECENT_DIRS]
+            settings["recent_vehicle_history"] = recent_dirs
+            logging_info("Migrated legacy vehicle_dir to history: %s", normalized_legacy)
+
+        # Remove legacy vehicle_dir after migration (successful or not)
+        # This prevents repeated migration attempts on every startup
+        directory_selection.pop("vehicle_dir", None)
+        settings["directory_selection"] = directory_selection
+
+        # Note: Changes are persisted by the caller (migrate_settings_to_latest_version)
+
+    @staticmethod
+    def get_recent_vehicle_dirs() -> list[str]:
+        """Get recent vehicle directories (most recent first)."""
+        settings = ProgramSettings._get_settings_as_dict()
+        return ProgramSettings._recent_vehicle_history.get_items(settings)
+
+    @staticmethod
+    def store_vehicle_dir_to_history_safe(vehicle_dir: str) -> None:
+        """Store vehicle directory to history with error handling (logs errors, doesn't raise)."""
+        try:
+            ProgramSettings.store_recently_used_vehicle_dir(vehicle_dir)
+        except ValueError as e:
+            logging_warning(_("Failed to store vehicle directory to history: %s"), e)
 
     @staticmethod
     def get_templates_base_dir() -> str:
@@ -364,7 +503,10 @@ class ProgramSettings:
         settings = ProgramSettings._get_settings_as_dict()
         template_dir = settings["directory_selection"].get("template_dir")
         new_base_dir = settings["directory_selection"].get("new_base_dir")
-        vehicle_dir = settings["directory_selection"].get("vehicle_dir")
+
+        # Use the most recent vehicle directory from history, or fall back to default
+        recent_dirs = ProgramSettings.get_recent_vehicle_dirs()
+        vehicle_dir = recent_dirs[0] if recent_dirs else vehicles_default_dir
 
         return template_dir, new_base_dir, vehicle_dir
 

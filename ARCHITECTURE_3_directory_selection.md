@@ -50,6 +50,22 @@ backend services. This ensures loose coupling and better testability.
    - Must handle configuration file validation
    - Must support project metadata management
 
+6. **Recent Vehicle Directories History**
+   - Must maintain a list of the 5 most recently opened vehicle directories
+   - Must display recent directories in reverse chronological order (most recent first)
+   - Must persist the history list across application sessions in settings.json
+   - Must update history when a vehicle directory is successfully opened
+   - Must preserve history entries for directories that become temporarily unavailable
+   - Must be permissive when storing paths (directories may become valid later)
+   - Must validate paths strictly when opening/using them (show error if invalid or missing)
+   - Must display history in a read-only combobox widget with full absolute paths
+   - Must allow selection from history via dropdown selection only (no text editing)
+   - Must show error message if selected directory no longer exists
+   - Must maintain history order when the same directory is opened again (promote to top)
+   - Must limit history to maximum of 5 entries (oldest removed when limit exceeded)
+   - Must normalize path separators according to the operating system (backslashes on Windows, forward slashes on Unix)
+   - Must provide graceful fallback if history is empty or corrupted
+
 ### Non-Functional Requirements
 
 1. **Usability**
@@ -207,9 +223,11 @@ This architecture ensures:
 The data flow follows the layered architecture pattern with clear separation of concerns:
 
 1. **Application Initialization**
+   - Legacy settings migration: `ProgramSettings.migrate_settings_to_latest_version()` runs once on startup
    - VehicleProjectManager is instantiated with required backend services
    - VehicleProjectOpenerWindow receives VehicleProjectManager instance via dependency injection
-   - Recent directories and templates are loaded through VehicleProjectManager
+   - Recent directories history loaded via `ProgramSettings.get_recent_vehicle_dirs()`
+   - Templates are loaded through VehicleProjectManager
    - UI components are initialized with project manager reference
 
 2. **Project Selection Flow**
@@ -242,6 +260,74 @@ The data flow follows the layered architecture pattern with clear separation of 
    - Easy to test with mock VehicleProjectManager
    - Changes to backend services don't affect frontend code
    - Clean separation between project opening and project creation concerns
+
+6. **Recent Directories History Flow**
+   - On application startup, `ProgramSettings.get_recent_vehicle_dirs()` loads history from settings.json
+   - History is passed to VehicleProjectOpenerWindow to populate the combobox widget
+   - User selects a directory from the combobox dropdown
+   - Frontend calls `project_manager.open_vehicle_directory(selected_dir)`
+   - If successful, `ProgramSettings.store_recently_used_vehicle_dir(selected_dir)` is called
+   - History is updated: selected directory moved/added to position [0], oldest removed if > 5 entries
+   - Updated history is persisted to settings.json
+   - History order maintained: most recent [0] to oldest [4]
+
+### Data Models and Storage
+
+#### Recent Vehicle Directories History Storage
+
+The recent vehicle directories are stored in the `settings.json` file in the user configuration directory:
+
+**Settings File Location:**
+
+- Windows: `%APPDATA%\.ardupilot_methodic_configurator\settings.json`
+- Linux/macOS: `~/.config/.ardupilot_methodic_configurator/settings.json`
+
+**Data Structure in settings.json:**
+
+```json
+{
+    "Format version": 2,
+    "recent_vehicle_history": [
+        "C:\\Users\\username\\vehicles\\Quadcopter_Project_2026",
+        "C:\\Users\\username\\vehicles\\Hexacopter_Project",
+        "/mnt/projects/ArduPlane_Project",
+        "C:\\Users\\username\\Documents\\Old_Copter",
+        "/home/user/ardupilot/Test_Vehicle"
+    ],
+    "directory_selection": {
+        "template_dir": "...",
+        "new_base_dir": "..."
+    },
+    "display_usage_popup": { ... },
+    "connection_history": [ ... ]
+}
+```
+
+**Data Schema:**
+
+- **Field Name**: `recent_vehicle_history`
+- **Type**: Array of strings
+- **Maximum Length**: 5 entries
+- **Entry Format**: Full absolute path with OS-appropriate separators
+- **Ordering**: Index [0] = most recent, Index [4] = oldest
+- **Path Normalization**: Backslashes on Windows, forward slashes on Unix-like systems
+- **Persistence**: Updated on every successful directory open operation
+- **Migration Strategy**:
+  - Legacy `vehicle_dir` from `directory_selection` is migrated on first startup
+  - Permissive validation: paths failing strict validation are still migrated with warnings
+  - Template directories are excluded (detected via `_is_template_directory()` check)
+  - Legacy setting is removed after migration to prevent repeated migration attempts
+  - Migration occurs once and only once per installation
+- **Migration**: If key doesn't exist, it's initialized as empty array `[]`
+
+**Backward Compatibility:**
+
+- On first use after upgrade, legacy `vehicle_dir` in `directory_selection` is migrated to `recent_vehicle_history`
+- Migration is permissive: invalid paths are migrated with warnings (may become valid later)
+- Template directory paths are excluded from migration (not user selections)
+- Legacy `vehicle_dir` setting is always removed after migration attempt (prevents repeated migrations)
+- Once migrated, `vehicle_dir` is no longer used or written
+- The `get_recently_used_dirs()` method returns `recent_vehicle_history[0]` as the last opened directory, or defaults if empty
 
 ### Integration Points
 
@@ -346,6 +432,8 @@ The layered architecture enables comprehensive testing at each level:
 - **Clarity**: Test focus matches architectural responsibilities
 - **Reliability**: Mock interfaces provide consistent test behavior
 
+**Note**: Acceptance tests for the Recent Vehicle Directories History feature are implemented in `tests/acceptance_recent_vehicle_directories_history.py`.
+
 ## File Structure
 
 ```text
@@ -366,10 +454,11 @@ backend_filesystem_configuration_steps.py  # Configuration step management
 backend_filesystem_vehicle_components.py   # Vehicle component handling
 
 # Test Layer
-tests/test_frontend_tkinter_project_opener.py      # Project opener tests with mocked dependencies
-tests/test_frontend_tkinter_project_creator.py     # Project creator tests with mocked dependencies
-tests/test_frontend_tkinter_directory_selection.py # Directory widgets tests
-tests/test_frontend_tkinter_template_overview.py   # Template overview tests
+tests/test_frontend_tkinter_project_opener.py          # Project opener tests with mocked dependencies
+tests/test_frontend_tkinter_project_creator.py         # Project creator tests with mocked dependencies
+tests/test_frontend_tkinter_directory_selection.py     # Directory widgets tests
+tests/test_frontend_tkinter_template_overview.py       # Template overview tests
+tests/acceptance_recent_vehicle_directories_history.py # Acceptance tests for recent directories history feature
 ```
 
 ## Dependencies
