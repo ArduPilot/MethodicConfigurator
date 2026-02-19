@@ -283,14 +283,14 @@ class TestVehicleProjectCreationWorkflow:
         template_dir = "/valid/template/dir"
         new_base_dir = "/valid/base/dir"
         new_vehicle_name = "MyQuadcopter"
-        expected_vehicle_dir = "/valid/base/dir/MyQuadcopter"
+        expected_vehicle_dir = "C:\\valid\\base\\dir\\MyQuadcopter"
 
         with (
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
+            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"),
             patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="QuadCopter_Template"),
         ):
             # Act: Create new vehicle project
@@ -462,17 +462,17 @@ class TestVehicleProjectCreationWorkflow:
             blank_change_reason=True,
             copy_vehicle_image=True,
         )
-        template_dir = "/valid/template/dir"
-        new_base_dir = "/valid/base/dir"
+        template_dir = "C:\\valid\\template\\dir"
+        new_base_dir = "C:\\valid\\base\\dir"
         new_vehicle_name = "CustomQuadcopter"
-        expected_vehicle_dir = "/valid/base/dir/CustomQuadcopter"
+        expected_vehicle_dir = "C:\\valid\\base\\dir\\CustomQuadcopter"
 
         with (
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
+            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"),
             patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="Custom_Template"),
         ):
             # Act: Create vehicle project with custom settings
@@ -519,7 +519,7 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
+            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"),
             patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="FC_Template"),
         ):
             # Act: Create vehicle project with FC connection
@@ -543,17 +543,17 @@ class TestVehicleProjectCreationWorkflow:
         AND: The configuration template name should be available for reference
         """
         # Arrange: Valid inputs for successful creation
-        template_dir = "/valid/template/dir"
-        new_base_dir = "/valid/base/dir"
+        template_dir = "C:\\valid\\template\\dir"
+        new_base_dir = "C:\\valid\\base\\dir"
         new_vehicle_name = "MyQuadcopter"
-        expected_vehicle_dir = "/valid/base/dir/MyQuadcopter"
+        expected_vehicle_dir = "C:\\valid\\base\\dir\\MyQuadcopter"
 
         with (
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs") as mock_store_template,
-            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store_vehicle,
+            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store_vehicle,
         ):
             # Act: Create vehicle project
             project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)

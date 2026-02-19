@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings, normalize_path
 
 # pylint: disable=too-many-lines,protected-access,redefined-outer-name,too-few-public-methods
 
@@ -404,6 +404,7 @@ class TestSettingsFileOperations:
         expected_result["gui_complexity"] = "simple"  # Added by default
         expected_result["motor_test"] = {"duration": 2, "throttle_pct": 10}  # Added by default
         expected_result["connection_history"] = []  # Added by default
+        expected_result["recent_vehicle_history"] = []  # Added by default
         expected_result["display_usage_popup"]["component_editor_validation"] = True  # Added by default
         expected_result["display_usage_popup"]["workflow_explanation"] = True  # Added by default
         expected_result["display_usage_popup"]["bitmask_parameter_editor"] = True  # Added by default
@@ -411,7 +412,6 @@ class TestSettingsFileOperations:
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
-        expected_result["directory_selection"]["vehicle_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
 
         with (
             patch.object(ProgramSettings, "_user_config_dir", return_value=mock_user_config["config_dir"]),
@@ -537,7 +537,7 @@ class TestSettingsFileOperations:
 
             # Assert: All defaults added while preserving existing
             assert result["existing_key"] == "existing_value"  # Preserved
-            assert result["Format version"] == 1  # Added
+            assert result["Format version"] == 2  # Added (version 2 includes recent_vehicle_history)
             assert "directory_selection" in result  # Added
             assert "display_usage_popup" in result  # Added
             assert result["display_usage_popup"]["component_editor"] is True  # Added
@@ -556,12 +556,12 @@ class TestSettingsFileOperations:
         # Act & Assert: Test path normalization based on platform
         if platform.system() == "Windows":
             # Windows should use backslashes
-            assert ProgramSettings._normalize_path_separators("C:/path/to/file") == "C:\\path\\to\\file"
-            assert ProgramSettings._normalize_path_separators("C:\\path\\to\\file") == "C:\\path\\to\\file"
+            assert normalize_path("C:/path/to/file") == "C:\\path\\to\\file"
+            assert normalize_path("C:\\path\\to\\file") == "C:\\path\\to\\file"
         else:
             # Unix-like should use forward slashes
-            assert ProgramSettings._normalize_path_separators("C:\\path\\to\\file") == "C:/path/to/file"
-            assert ProgramSettings._normalize_path_separators("C:/path/to/file") == "C:/path/to/file"
+            assert normalize_path("C:\\path\\to\\file") == "C:/path/to/file"
+            assert normalize_path("C:/path/to/file") == "C:/path/to/file"
 
     def test_user_can_save_settings_to_file(self, mock_user_config) -> None:
         """
@@ -1022,13 +1022,13 @@ class TestTemplateDirectoryManagement:
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.exists", return_value=False),
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_makedirs") as mock_makedirs,
         ):
-            # Configure settings response
+            # Configure settings response with recent_vehicle_history
             mock_get_settings.return_value = {
+                "recent_vehicle_history": ["/saved/vehicle"],
                 "directory_selection": {
                     "template_dir": "/saved/template",
                     "new_base_dir": "/saved/base",
-                    "vehicle_dir": "/saved/vehicle",
-                }
+                },
             }
 
             # Act: Get recently used directories
@@ -1057,13 +1057,13 @@ class TestTemplateDirectoryManagement:
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_path.exists", return_value=True),
             patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.os_makedirs") as mock_makedirs,
         ):
-            # Configure settings response
+            # Configure settings response with recent_vehicle_history
             mock_get_settings.return_value = {
+                "recent_vehicle_history": ["/saved/vehicle"],
                 "directory_selection": {
                     "template_dir": "/saved/template",
                     "new_base_dir": "/saved/base",
-                    "vehicle_dir": "/saved/vehicle",
-                }
+                },
             }
 
             # Act: Get recently used directories
@@ -1100,10 +1100,8 @@ class TestTemplateDirectoryManagement:
             # Get the called arguments
             called_args = mock_set_settings.call_args[0][0]
             assert "directory_selection" in called_args
-            # Path will be normalized for current platform
-            expected_path = "/app/templates/Copter/QuadX"
-            if platform.system() == "Windows":
-                expected_path = "\\app\\templates\\Copter\\QuadX"
+            # Path will be normalized using os_path.abspath() which adds drive letter on Windows
+            expected_path = os_path.abspath("/app/templates/Copter/QuadX")
             assert called_args["directory_selection"]["template_dir"] == expected_path
 
     def test_user_can_store_recently_used_template_dirs(self) -> None:
@@ -1138,20 +1136,26 @@ class TestTemplateDirectoryManagement:
         WHEN: User stores the vehicle directory path
         THEN: The path should be saved with proper normalization
         """
-        # Arrange: Mock setting operations
+        # Arrange: Mock setting operations and use platform-appropriate absolute path
         with (
             patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
         ):
             mock_get_settings.return_value = {"directory_selection": {}}
 
-            # Act: Store recently used vehicle directory
-            ProgramSettings.store_recently_used_vehicle_dir("/vehicle/path")
+            # Use platform-appropriate absolute path
+            test_path = "C:\\vehicle\\path" if platform.system() == "Windows" else "/vehicle/path"
 
-            # Assert: Vehicle path saved with normalization
+            # Act: Store recently used vehicle directory
+            ProgramSettings.store_recently_used_vehicle_dir(test_path)
+
+            # Assert: Vehicle path saved in recent_vehicle_history
             mock_set_settings.assert_called_once()
             called_args = mock_set_settings.call_args[0][0]
-            assert "vehicle_dir" in called_args["directory_selection"]
+            assert "recent_vehicle_history" in called_args
+            # Path normalization may vary by platform
+            stored_path = called_args["recent_vehicle_history"][0]
+            assert stored_path in [test_path, test_path.replace("\\", "/"), test_path.replace("/", "\\")]
 
 
 class TestGUIComplexitySettings:

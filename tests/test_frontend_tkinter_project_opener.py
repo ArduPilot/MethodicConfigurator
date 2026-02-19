@@ -50,9 +50,11 @@ def configured_opener_window(mock_project_manager) -> VehicleProjectOpenerWindow
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Label"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.LabelFrame"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Button"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Combobox"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Frame"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.tk.StringVar"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.show_tooltip"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.DirectorySelectionWidgets"),
         patch("tkinter.Tk") as mock_tk,
     ):
         mock_root = MagicMock()
@@ -225,8 +227,8 @@ class TestVehicleProjectOpenerWindow:
         THEN: The "Open Last Used Vehicle Configuration Directory" button should be disabled
         AND: The user should understand this option is not available
         """
-        # Arrange: Configure project manager to indicate no last directory available
-        mock_project_manager.can_open_last_vehicle_directory.return_value = False
+        # Arrange: Configure project manager to indicate no recent directories available
+        mock_project_manager.get_recent_vehicle_dirs.return_value = []
 
         with (
             patch("tkinter.Toplevel"),
@@ -238,7 +240,9 @@ class TestVehicleProjectOpenerWindow:
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Button") as mock_button,
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.show_tooltip"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.DirectorySelectionWidgets"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Combobox"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Frame"),
+            patch("tkinter.StringVar"),
             patch("tkinter.Tk") as mock_tk,
         ):
             mock_root = MagicMock()
@@ -268,8 +272,8 @@ class TestVehicleProjectOpenerWindow:
         THEN: The "Open Last Used Vehicle Configuration Directory" button should be enabled
         AND: The user can click it to reopen their previous work
         """
-        # Arrange: Configure project manager to indicate last directory is available
-        mock_project_manager.can_open_last_vehicle_directory.return_value = True
+        # Arrange: Configure project manager to indicate recent directories are available
+        mock_project_manager.get_recent_vehicle_dirs.return_value = ["C:\\path\\to\\vehicle"]
 
         with (
             patch("tkinter.Toplevel"),
@@ -281,7 +285,9 @@ class TestVehicleProjectOpenerWindow:
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Button") as mock_button,
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.show_tooltip"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.DirectorySelectionWidgets"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Combobox"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Frame"),
+            patch("tkinter.StringVar"),
             patch("tkinter.Tk") as mock_tk,
         ):
             mock_root = MagicMock()
@@ -346,7 +352,9 @@ class TestVehicleProjectOpenerWindowIntegration:
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Button"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.show_tooltip"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.DirectorySelectionWidgets"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Combobox"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Frame"),
+            patch("tkinter.StringVar"),
             patch("tkinter.Tk") as mock_tk,
         ):
             mock_root = MagicMock()

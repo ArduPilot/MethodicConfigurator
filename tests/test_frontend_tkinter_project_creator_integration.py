@@ -129,7 +129,6 @@ def configured_opener_window(mock_project_manager: MagicMock) -> VehicleProjectO
         patch("tkinter.ttk.LabelFrame"),
         patch("tkinter.ttk.Button"),
         patch("tkinter.ttk.Frame"),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.DirectorySelectionWidgets"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
     ):
         window = VehicleProjectOpenerWindow(mock_project_manager)
@@ -251,7 +250,6 @@ class TestVehicleProjectWorkflows:
             patch("tkinter.ttk.LabelFrame"),
             patch("tkinter.ttk.Button"),
             patch("tkinter.ttk.Frame"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.DirectorySelectionWidgets"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.DirectorySelectionWidgets"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.PathEntryWidget"),
@@ -313,7 +311,6 @@ class TestVehicleProjectWorkflows:
             patch("tkinter.ttk.LabelFrame"),
             patch("tkinter.ttk.Button"),
             patch("tkinter.ttk.Frame"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.DirectorySelectionWidgets"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.DirectorySelectionWidgets"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.PathEntryWidget"),
