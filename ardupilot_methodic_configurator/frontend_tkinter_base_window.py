@@ -27,6 +27,7 @@ import tkinter as tk
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from logging import error as logging_error
+from platform import system as platform_system
 from tkinter import messagebox, ttk
 from typing import Optional, Union
 
@@ -301,7 +302,10 @@ class BaseWindow:
         x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
         y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
         window.geometry(f"+{x}+{y}")
-        window.update()
+        if platform_system() == "Darwin":
+            window.update_idletasks()
+        else:
+            window.update()
 
     @staticmethod
     def center_window_on_screen(window: Union[tk.Toplevel, tk.Tk]) -> None:
