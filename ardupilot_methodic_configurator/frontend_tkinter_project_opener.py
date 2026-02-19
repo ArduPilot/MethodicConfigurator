@@ -17,6 +17,7 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
+from os import path as os_path
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
 
@@ -27,7 +28,6 @@ from ardupilot_methodic_configurator.data_model_vehicle_project import VehiclePr
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import (
-    DirectorySelectionWidgets,
     VehicleDirectorySelectionWidgets,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
@@ -70,7 +70,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
         logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
         self.create_option1_widgets()
         self.create_option2_widgets(vehicle_dir)
-        self.create_option3_widgets(vehicle_dir)
+        self.create_option3_widgets()
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
@@ -125,39 +125,96 @@ class VehicleProjectOpenerWindow(BaseWindow):
         )
         self.connection_selection_widgets.container_frame.pack(expand=True, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
-    def create_option3_widgets(self, last_vehicle_dir: str) -> None:
+    def create_option3_widgets(self) -> None:
         # Option 3 - Open the last used vehicle configuration directory
         option3_label = ttk.Label(text=_("Re-Open vehicle"), style="Bold.TLabel")
         option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label)
         option3_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
 
-        last_dir = DirectorySelectionWidgets(
-            parent=self,
-            parent_frame=option3_label_frame,
-            initialdir=last_vehicle_dir or "",
-            label_text=_("Last used vehicle configuration directory:"),
-            autoresize_width=False,
-            dir_tooltip=_("Last used vehicle configuration directory"),
-            button_tooltip="",
-            on_directory_selected_callback=None,  # Use default file dialog behavior
-        )
-        last_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
+        # Get recent vehicle directories for the combobox
+        recent_vehicle_history = self.project_manager.get_recent_vehicle_dirs()
 
-        # Check if there is a last used vehicle configuration directory
-        button_state = tk.NORMAL if self.project_manager.can_open_last_vehicle_directory(last_vehicle_dir) else tk.DISABLED
-        open_last_vehicle_directory_button = ttk.Button(
+        # Create a label for the combobox
+        recent_dirs_label = ttk.Label(option3_label_frame, text=_("Recently opened vehicle directories:"))
+        recent_dirs_label.pack(side=tk.TOP, anchor=tk.NW, padx=3, pady=(5, 0))
+        show_tooltip(recent_dirs_label, _("Select from recently opened vehicle configuration directories"))
+
+        # Create a frame for the combobox
+        combobox_frame = ttk.Frame(option3_label_frame)
+        combobox_frame.pack(expand=False, fill=tk.X, padx=3, pady=(0, 5), anchor=tk.NW)
+
+        # Create a StringVar to track the selected value
+        self.recent_dir_var = tk.StringVar(value=recent_vehicle_history[0] if recent_vehicle_history else "")
+
+        # Create the readonly combobox
+        self.recent_dirs_combobox = ttk.Combobox(
+            combobox_frame,
+            textvariable=self.recent_dir_var,
+            values=recent_vehicle_history,
+            state="readonly",
+        )
+        self.recent_dirs_combobox.pack(side=tk.LEFT, fill=tk.X, expand=True, pady=(4, 0))
+        show_tooltip(self.recent_dirs_combobox, _("Select from recently opened vehicle configuration directories"))
+
+        # Check if there are any recent directories available
+        has_recent_dirs = bool(recent_vehicle_history)
+        button_state = tk.NORMAL if has_recent_dirs else tk.DISABLED
+
+        self.open_recent_vehicle_directory_button = ttk.Button(
             option3_label_frame,
-            text=_("Open last used vehicle configuration directory"),
-            command=lambda last_vehicle_dir=last_vehicle_dir: self.open_last_vehicle_directory(  # type: ignore[misc]
-                last_vehicle_dir
-            ),
+            text=_("Open selected vehicle configuration directory"),
+            command=self.open_selected_recent_vehicle_directory,
             state=button_state,
         )
-        open_last_vehicle_directory_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
+        self.open_recent_vehicle_directory_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
         show_tooltip(
-            open_last_vehicle_directory_button,
-            _("Directly open the last used vehicle configuration directory for configuring and tuning the vehicle"),
+            self.open_recent_vehicle_directory_button,
+            _("Open the selected vehicle configuration directory for configuring and tuning the vehicle"),
         )
+
+    def open_selected_recent_vehicle_directory(self) -> None:
+        """Open the vehicle directory selected in the recent directories combobox."""
+        selected_dir = self.recent_dir_var.get()
+        if not selected_dir:
+            messagebox.showerror(
+                _("No Directory Selected"), _("Please select a vehicle configuration directory from the list.")
+            )
+            return
+
+        # Check if the directory still exists and is accessible
+        try:
+            if not os_path.exists(selected_dir):
+                messagebox.showerror(
+                    _("Directory Not Found"),
+                    _("The selected directory no longer exists:\n\n{}\n\nIt may have been moved or deleted.").format(
+                        selected_dir
+                    ),
+                )
+                return
+
+            if not os_path.isdir(selected_dir):
+                messagebox.showerror(
+                    _("Invalid Directory"),
+                    _("The selected path is not a directory:\n\n{}").format(selected_dir),
+                )
+                return
+        except PermissionError:
+            messagebox.showerror(
+                _("Permission Denied"),
+                _(
+                    "You do not have permission to access the selected directory:\n\n{}\n\n"
+                    "Please check your file system permissions."
+                ).format(selected_dir),
+            )
+            return
+        except OSError as e:
+            messagebox.showerror(
+                _("File System Error"),
+                _("An error occurred while accessing the directory:\n\n{}\n\nError: {}").format(selected_dir, str(e)),
+            )
+            return
+
+        self.open_last_vehicle_directory(selected_dir)
 
     def create_new_vehicle_from_template(self) -> None:
         # close this window and open a VehicleProjectCreatorWindow instance

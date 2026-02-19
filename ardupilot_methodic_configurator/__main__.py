@@ -651,6 +651,9 @@ def main() -> None:
 
     setup_logging(state)
 
+    # Migrate settings to latest format version (backward compatibility)
+    ProgramSettings.migrate_settings_to_latest_version()
+
     # Check for software updates
     if check_updates(state):
         sys_exit(0)  # user asked to update, exit the old version

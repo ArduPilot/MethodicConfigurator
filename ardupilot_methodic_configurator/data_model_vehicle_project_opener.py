@@ -157,7 +157,9 @@ class VehicleProjectOpener:
                 ),
             )
 
-        LocalFilesystem.store_recently_used_vehicle_dir(vehicle_dir)
+        # Store to history - non-critical operation, log errors but don't fail
+        LocalFilesystem.store_vehicle_dir_to_history_safe(vehicle_dir)
+
         return vehicle_dir
 
     def _validate_existing_directory(self, vehicle_dir: str) -> None:
