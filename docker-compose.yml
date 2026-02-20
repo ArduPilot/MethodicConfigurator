@@ -1,0 +1,38 @@
+services:
+  dev:
+    build: .
+    volumes:
+      - .:/app
+      - sitl-cache:/app/sitl-cache
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: bash
+
+  test:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: pytest tests/ -v -m "not sitl and not integration"
+
+  sitl:
+    build: .
+    volumes:
+      - .:/app
+      - sitl-cache:/app/sitl-cache
+    working_dir: /app
+    command: >
+      bash -c "./scripts/run_sitl_tests.sh download &&
+               ./scripts/run_sitl_tests.sh test"
+
+  lint:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: >
+      bash -c "ruff format && ruff check . && pyright && pylint ardupilot_methodic_configurator/"
+
+volumes:
+  sitl-cache:

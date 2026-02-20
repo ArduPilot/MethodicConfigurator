@@ -57,6 +57,65 @@ The above scripts will:
 * Set up pre-commit hooks for linting and formatting
 * Install GNU gettext tools for internationalization support
 
+## Alternative: Using Docker for Development
+
+As an alternative to setting up the development environment locally, you can use Docker to run the project in a containerized environment.
+This ensures consistency across different machines and simplifies dependency management.
+
+### Prerequisites
+
+* [Install Docker](https://docs.docker.com/get-docker/) on your computer
+* [Install Docker Compose](https://docs.docker.com/compose/install/) (usually included with Docker Desktop)
+
+### Building and Running
+
+1. Clone the repository and navigate into it:
+
+    ```bash
+    git clone https://github.com/YOUR_USER_NAME/MethodicConfigurator.git
+    cd MethodicConfigurator
+    ```
+
+2. Build the Docker image:
+
+    ```bash
+    docker compose build
+    ```
+
+3. Run the development environment:
+
+    To start an interactive shell in the container:
+
+    ```bash
+    docker compose run --rm dev
+    ```
+
+    To run tests:
+
+    ```bash
+    docker compose run --rm test
+    ```
+
+    To run SITL (Software In The Loop) integration tests:
+
+    ```bash
+    docker compose run --rm sitl
+    ```
+
+    To run linters:
+
+    ```bash
+    docker compose run --rm lint
+    ```
+
+### Benefits of Docker Development
+
+* Consistent environment across all contributors
+* No need to install Python, dependencies, or tools locally
+* Isolated from your system's Python installation
+* Easy to test against different Python versions by changing the Dockerfile
+* Faster onboarding for new contributors
+
 ## Executing the code
 
 You can either install the Methodic Configurator as a package or run it locally from your development codebase.
