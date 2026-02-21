@@ -83,34 +83,46 @@ class PopupWindow:
         parent: Optional[tk.Tk],
         close_callback: Callable[[], None],
     ) -> None:
-        """Finalize window setup: center, show, make modal, set close handler."""
+        """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
+        # Detect macOS by windowing system rather than sys.platform
+        is_macos = popup_window.root.tk.call("tk", "windowingsystem") == "aqua"
+
+        # Only set transient on non-macOS
+        if parent and not is_macos:
+            popup_window.root.transient(parent)
+
+        # Resize window height to ensure all widgets are fully visible
+        # as some Linux Window managers like KDE, like to change font sizes and padding.
+        # So we need to dynamically accommodate for that after placing the widgets
+        popup_window.root.update_idletasks()
+        req_height = popup_window.root.winfo_reqheight()
+        req_width = popup_window.root.winfo_reqwidth()
+
+        popup_window.root.geometry(f"{req_width}x{req_height}")
+
+        if parent:  # If parent exists center on parent
+            BaseWindow.center_window(popup_window.root, parent)
+        # For parent-less, center on screen
+
         try:
-            # Resize window height to ensure all widgets are fully visible
-            popup_window.root.update_idletasks()
-            req_height = popup_window.root.winfo_reqheight()
-            req_width = popup_window.root.winfo_reqwidth()
-            popup_window.root.geometry(f"{req_width}x{req_height}")
-
-            if parent:
-                popup_window.root.transient(parent)
-                parent.update_idletasks()
-                px = parent.winfo_x()
-                py = parent.winfo_y()
-                pw = parent.winfo_width()
-                ph = parent.winfo_height()
-                x = px + (pw - req_width) // 2
-                y = py + (ph - req_height) // 2
-                popup_window.root.geometry(f"{req_width}x{req_height}+{x}+{y}")
-
+            # Bind close handler immediately so it is set even if later calls fail
+            popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
+            # Show the window now that it's positioned. Calls may fail if the
+            # main application has been destroyed (for example during shutdown)
+            # — guard against tk.TclError so the caller doesn't crash the app.
             popup_window.root.deiconify()
             popup_window.root.lift()
-            popup_window.root.update_idletasks()
+            popup_window.root.update()  # Ensure the window is fully rendered before setting focus
             popup_window.root.focus_force()
-            popup_window.root.grab_set()  # Make the popup modal
-            popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
+
+            # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
+            # On Windows/Linux, make the popup modal and give it focus
+            if not is_macos:
+                popup_window.root.wait_visibility()
+                popup_window.root.grab_set()  # Make the popup modal
         except tk.TclError:
             # Application has been destroyed or the underlying
-            # Tk root is no longer available.
+            # Tk root is no longer available, there's nothing more to do.
             pass
 
     @staticmethod
@@ -120,17 +132,13 @@ class PopupWindow:
             popup_window.root.grab_release()
 
         # Destroy the window safely
-        try:  # noqa: SIM105
+        with contextlib.suppress(tk.TclError):
             popup_window.root.destroy()
-        except tk.TclError:
-            pass
 
         if parent:
-            try:
+            with contextlib.suppress(tk.TclError):
                 parent.focus_set()
                 parent.lift()
-            except tk.TclError:
-                pass
 
 
 class UsagePopupWindow(PopupWindow):
@@ -237,7 +245,7 @@ class ConfirmationPopupWindow(PopupWindow):
         PopupWindow.add_show_again_checkbox(usage_popup_window, ptype)
 
         # Create result dictionary to capture user's choice
-        result = {"confirmed": False, "done": False}
+        result = {"confirmed": False}
 
         # Create Yes/No buttons for confirmation dialogs
         button_frame = ttk.Frame(usage_popup_window.main_frame)
@@ -245,12 +253,10 @@ class ConfirmationPopupWindow(PopupWindow):
 
         def on_yes() -> None:
             result["confirmed"] = True
-            result["done"] = True
             PopupWindow.close(usage_popup_window, parent)
 
         def on_no() -> None:
             result["confirmed"] = False
-            result["done"] = True
             PopupWindow.close(usage_popup_window, parent)
 
         yes_button = ttk.Button(button_frame, text=_("Yes"), command=on_yes, width=10)
@@ -263,16 +269,10 @@ class ConfirmationPopupWindow(PopupWindow):
         PopupWindow.finalize_setup_popupwindow(
             usage_popup_window,
             parent,
-            on_no,
+            lambda: PopupWindow.close(usage_popup_window, parent),
         )
 
-        # Poll the event loop until the user clicks Yes, No, or closes the window.
-        tk_root = parent.nametowidget(".")
-        while not result["done"] and usage_popup_window.root.winfo_exists():
-            try:
-                tk_root.update()
-                tk_root.after(10)
-            except tk.TclError:  # noqa: PERF203
-                break
+        # Wait for the window to be closed (modal behavior)
+        parent.wait_window(usage_popup_window.root)
 
         return result["confirmed"]

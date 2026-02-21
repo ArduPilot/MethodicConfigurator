@@ -301,7 +301,7 @@ class BaseWindow:
         x = parent.winfo_x() + (parent_width // 2) - (window_width // 2)
         y = parent.winfo_y() + (parent_height // 2) - (window_height // 2)
         window.geometry(f"+{x}+{y}")
-        window.update()
+        window.update_idletasks()
 
     @staticmethod
     def center_window_on_screen(window: Union[tk.Toplevel, tk.Tk]) -> None:

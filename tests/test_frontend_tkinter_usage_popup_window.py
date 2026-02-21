@@ -257,8 +257,6 @@ class TestUsagePopupWindow:
             patch.object(popup_window.root, "withdraw"),
             patch.object(popup_window.root, "deiconify"),
             patch("tkinter.BooleanVar"),
-            # Tell the new polling loop the window is already closed.
-            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             UsagePopupWindow.display(
                 parent=tk_root,
@@ -270,7 +268,14 @@ class TestUsagePopupWindow:
             )
 
             # Assert: Popup becomes modal to focus user attention
-            mock_grab_set.assert_called_once()
+            is_macos = popup_window.root.tk.call("tk", "windowingsystem") == "aqua"
+
+            if not is_macos:
+                # On Windows/Linux, it should become modal
+                mock_grab_set.assert_called_once()
+            else:
+                # On macOS, it should skip the grab to prevent UI freeze
+                mock_grab_set.assert_not_called()
 
     def test_closing_popup_returns_focus_to_parent_window(self, tk_root, popup_window) -> None:
         """
@@ -317,7 +322,6 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
-            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -365,7 +369,6 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
-            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -403,7 +406,6 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window") as mock_wait,
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
-            patch.object(popup_window.root, "winfo_exists", return_value=False),
         ):
             # Simulate window closing without button click
             mock_wait.return_value = None
@@ -453,7 +455,7 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
     # attributes/grab_set/protocol should not be called because deiconify failed
     assert not fake.root.attributes.called
     assert not fake.root.grab_set.called
-    assert not fake.root.protocol.called
+    fake.root.protocol.assert_called_once()
 
 
 if __name__ == "__main__":
