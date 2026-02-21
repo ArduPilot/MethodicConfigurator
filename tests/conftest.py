@@ -37,6 +37,11 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table imp
 
 # ==================== SHARED TKINTER TESTING CONFIGURATION ====================
 
+# deadlock on macOS (issue #1264).
+patch("tkinter.Misc.wait_window", lambda _self, *_args, **_kwargs: None).start()
+patch("tkinter.Misc.wait_visibility", lambda _self, *_args, **_kwargs: None).start()
+patch("tkinter.Misc.grab_set", lambda _self, *_args, **_kwargs: None).start()
+
 
 class MockConfiguration(NamedTuple):
     """Configuration for common mocking patterns in Tkinter tests."""
@@ -99,8 +104,28 @@ def root() -> Generator[tk.Tk, None, None]:
 @pytest.fixture
 def tk_root() -> Generator[tk.Tk, None, None]:
     """Provide a real Tkinter root for integration tests (legacy name for compatibility)."""
-    # Reuse the existing default root to avoid 'tcl_findLibrary' errors
-    # on Python 3.14 when multiple Tk instances are created.
+    # On macOS, a fresh Tk instance is created per test
+    try:
+        is_macos = tk.Tk.tk_setPalette  # just to get a root to check windowing system
+        temp = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
+        is_macos = temp is not None and temp.tk.call("tk", "windowingsystem") == "aqua"
+    except (AttributeError, tk.TclError):
+        is_macos = False
+
+    if is_macos:
+        tk_root_instance = tk.Tk()
+        tk_root_instance.withdraw()
+        yield tk_root_instance
+        for child in list(tk_root_instance.winfo_children()):
+            with contextlib.suppress(tk.TclError, Exception):
+                child.protocol("WM_DELETE_WINDOW", lambda: None)
+            with contextlib.suppress(tk.TclError, Exception):
+                child.destroy()
+        with contextlib.suppress(tk.TclError):
+            tk_root_instance.destroy()
+        return
+
+    # Non-macOS: reuse existing root
     try:
         existing_root = tk._default_root  # type: ignore[attr-defined] # pylint: disable=protected-access
         if existing_root is not None:
