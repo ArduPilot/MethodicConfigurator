@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-02-16 09:16+0000\n"
+"POT-Creation-Date: 2026-02-22 17:09+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -478,84 +478,88 @@ msgstr "将数据序列化为JSON时发生值错误: {}"
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr "保存数据到文件'{}'时发生意外错误: {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:45
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:47
 msgid "General AMC workflow"
 msgstr "AMC 总体工作流程"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:48
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:50
 msgid "Component editor window introduction"
 msgstr "组件编辑器窗口简介"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:51
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:53
 msgid "Component editor window data validation"
 msgstr "组件编辑器窗口数据验证"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:54
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:56
 msgid "Parameter file editor and uploader window"
 msgstr "参数文件编辑器和上传器"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:57
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:59
 msgid "Bitmask parameter editor usage window"
 msgstr "位掩码参数编辑器使用窗口"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:60
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:62
 msgid "Only changed parameters get upload explanation"
 msgstr "仅上传已更改参数的说明"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:172
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:80
+msgid "Connection string cannot be empty or whitespace-only"
+msgstr "连接字符串不能为空或仅包含空白字符"
+
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:199
 msgid "Directory already exists, choose a different one"
 msgstr "目录已存在, 请重新选择"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:177
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:204
 msgid "Error creating new vehicle directory: %s"
 msgstr "创建新的目录时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:211
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:238
 msgid ""
 "The user configuration directory '{user_config_directory}' does not exist."
 msgstr "用户配置目录 '{user_config_directory}' 不存在。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:214
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:241
 msgid "The path '{user_config_directory}' is not a directory."
 msgstr "路径 '{user_config_directory}' 不是一个目录。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:230
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:257
 msgid ""
 "The site configuration directory '{site_config_directory}' does not exist."
 msgstr "站点配置目录 '{site_config_directory}' 不存在。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:233
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:260
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "路径 '{site_config_directory}' 不是一个目录。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:322
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:349
 msgid "site_directory: %s"
 msgstr "站点目录: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:356
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:383
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr "在设置字典中找不到使用弹出窗口类型 '%s'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:366
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:403
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:393
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:430
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "在设置字典中未找到设置 '%s'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:384
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:411
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
 msgstr "无法设置嵌套设置 '%s'：未找到父路径 '%s' 或不是字典"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:397
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:424
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr "在设置字典中未找到设置路径 '%s'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:436
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:463
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "为类别 %d 和类型 %d 找到多个电机图"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:445
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:472
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "未找到类别 %d 和类型 %d 的电机图"
 
@@ -3327,12 +3331,12 @@ msgid "Update file with values from FC?"
 msgstr "将飞控的值更新到文件中吗？"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:252
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:264
 msgid "Yes"
 msgstr "是"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:255
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:267
 msgid "No"
 msgstr "否"
 
@@ -3842,6 +3846,14 @@ msgstr "此配置步骤（{current_file}中间参数文件）是{percentage}%强
 msgid ""
 "Mandatory level not available for this configuration step ({current_file})"
 msgstr "此配置步骤（{current_file}）的强制级别不可用"
+
+#: ardupilot_methodic_configurator/data_model_recent_items_history_list.py:92
+msgid "Cannot store empty string in history"
+msgstr "无法将空字符串存储到历史记录中"
+
+#: ardupilot_methodic_configurator/data_model_recent_items_history_list.py:95
+msgid "Cannot store item with null byte in history"
+msgstr "无法存储包含空字节的项目到历史记录中"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:51
 msgid "Current version: {_current_version}"
@@ -6404,11 +6416,11 @@ msgstr ""
 "择一个与您的飞行器组件设置最相近的模板，以简化配置过程。所选模板将作为更详细"
 "参数配置的起点。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:73
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:74
 msgid "Show this usage popup again"
 msgstr "再次顯示此使用彈出窗口"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:161
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:173
 msgid "I understand this"
 msgstr "我明白了"
 
