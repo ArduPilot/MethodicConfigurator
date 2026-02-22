@@ -75,12 +75,15 @@ def validate_connection_string(connection_string: str) -> None:
         ValueError: If connection string is invalid
 
     """
-    if not connection_string or not connection_string.strip():
-        msg = "Connection string cannot be empty or whitespace-only"
+    stripped_connection_string = connection_string.strip()
+    if not stripped_connection_string:
+        msg = _("Connection string cannot be empty or whitespace-only")
         raise ValueError(msg)
 
-    if len(connection_string.strip()) > 200:
-        msg = f"Connection string is too long ({len(connection_string.strip())} chars), maximum is 200"
+    if len(stripped_connection_string) > 200:
+        msg = _(
+            "Connection string is too long (%(length)d chars), maximum is 200",
+        ) % {"length": len(stripped_connection_string)}
         raise ValueError(msg)
 
 

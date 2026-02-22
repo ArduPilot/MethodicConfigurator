@@ -10,10 +10,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from typing import Any, Callable, Optional
 
+from ardupilot_methodic_configurator import _
+
 
 class RecentItemsHistoryList:
     """
-    Helper class to manage most-recent-first (FIFO) history lists with deduplication.
+    Helper class to manage most-recent-first (LIFO) history lists with deduplication.
 
     This class provides a reusable pattern for managing history lists in settings,
     with configurable validation, normalization, and comparison strategies.
@@ -87,10 +89,10 @@ class RecentItemsHistoryList:
         """
         # Minimal validation: reject truly invalid inputs
         if not item:
-            msg = "Cannot store empty string in history"
+            msg = _("Cannot store empty string in history")
             raise ValueError(msg)
         if "\x00" in item:
-            msg = "Cannot store item with null byte in history"
+            msg = _("Cannot store item with null byte in history")
             raise ValueError(msg)
 
         # Call the validator if provided
