@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-02-16 09:16+0000\n"
+"POT-Creation-Date: 2026-02-22 17:09+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -510,74 +510,78 @@ msgstr "Erro de valor ao serializar dados para JSON: {}"
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr "Erro inesperado ao guardar dados no ficheiro '{}': {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:45
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:47
 msgid "General AMC workflow"
 msgstr "Fluxo de trabalho geral do AMC"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:48
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:50
 msgid "Component editor window introduction"
 msgstr "Introdução à janela do editor de componentes"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:51
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:53
 msgid "Component editor window data validation"
 msgstr "Validação de dados da janela do editor de componentes"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:54
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:56
 msgid "Parameter file editor and uploader window"
 msgstr "Janela de edição e upload de parâmetros"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:57
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:59
 msgid "Bitmask parameter editor usage window"
 msgstr "Janela de utilização do editor de parâmetros bitmask"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:60
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:62
 msgid "Only changed parameters get upload explanation"
 msgstr "Explicação do envio apenas de parâmetros alterados"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:172
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:80
+msgid "Connection string cannot be empty or whitespace-only"
+msgstr "A cadeia de ligação não pode estar vazia ou conter apenas espaços em branco"
+
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:199
 msgid "Directory already exists, choose a different one"
 msgstr "Diretório já existe, escolha outro"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:177
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:204
 msgid "Error creating new vehicle directory: %s"
 msgstr "Erro ao criar novo diretório de veículo: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:211
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:238
 msgid ""
 "The user configuration directory '{user_config_directory}' does not exist."
 msgstr ""
 "O diretório de configuração do usuário '{user_config_directory}' não existe."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:214
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:241
 msgid "The path '{user_config_directory}' is not a directory."
 msgstr "O caminho '{user_config_directory}' não é um diretório."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:230
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:257
 msgid ""
 "The site configuration directory '{site_config_directory}' does not exist."
 msgstr ""
 "O diretório de configuração do site '{site_config_directory}' não existe."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:233
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:260
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "O caminho '{site_config_directory}' não é um diretório."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:322
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:349
 msgid "site_directory: %s"
 msgstr "diretório base de destino: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:356
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:383
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr ""
 "Tipo de popup de utilização '%s' não encontrado no dicionário de "
 "configurações"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:366
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:403
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:393
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:430
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "Definição '%s' não encontrada no dicionário de definições"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:384
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:411
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
@@ -585,15 +589,15 @@ msgstr ""
 "Não é possível definir a configuração aninhada '%s': caminho principal '%s' "
 "não encontrado ou não é um dicionário"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:397
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:424
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr "Caminho de definição '%s' não encontrado no dicionário de definições"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:436
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:463
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "Múltiplos diagramas de motores encontrados para a classe %d e tipo %d"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:445
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:472
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "Diagrama de motor não encontrado para a classe %d e tipo %d"
 
@@ -3667,12 +3671,12 @@ msgid "Update file with values from FC?"
 msgstr "Atualizar ficheiro com valores do FC?"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:252
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:264
 msgid "Yes"
 msgstr "Sim"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:255
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:267
 msgid "No"
 msgstr "Não"
 
@@ -4209,6 +4213,14 @@ msgid ""
 msgstr ""
 "Nível de obrigatoriedade não disponível para este passo de configuração "
 "({current_file})"
+
+#: ardupilot_methodic_configurator/data_model_recent_items_history_list.py:92
+msgid "Cannot store empty string in history"
+msgstr "Não é possível guardar uma cadeia vazia no histórico"
+
+#: ardupilot_methodic_configurator/data_model_recent_items_history_list.py:95
+msgid "Cannot store item with null byte in history"
+msgstr "Não é possível guardar um item com byte nulo no histórico"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:51
 msgid "Current version: {_current_version}"
@@ -6716,7 +6728,9 @@ msgstr ""
 msgid ""
 "Create a new vehicle configuration directory, choose this option when using "
 "the software for the first time"
-msgstr "Criar um novo diretório de configuração de veículo, escolha esta opção ao utilizar o software pela primeira vez"
+msgstr ""
+"Criar um novo diretório de configuração de veículo, escolha esta opção ao "
+"utilizar o software pela primeira vez"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:102
 msgid "Open vehicle"
@@ -6925,11 +6939,11 @@ msgstr ""
 "selecionado servirá como ponto de partida para uma configuração mais "
 "detalhada de parâmetros."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:73
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:74
 msgid "Show this usage popup again"
 msgstr "Voltar a mostrar esta mensagem"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:161
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:173
 msgid "I understand this"
 msgstr "Compreendo isto"
 
