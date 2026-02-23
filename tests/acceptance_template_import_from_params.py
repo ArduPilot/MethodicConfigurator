@@ -227,9 +227,9 @@ def perform_component_inference(
     # Regenerate parameter files from the inferred component data
     existing_fc_params = list(fc_parameters.keys())
     local_filesystem.update_and_export_vehicle_params_from_fc(
-        source_param_values=fc_parameters, existing_fc_params=existing_fc_params, commit_derived_changes=True
+        source_param_values=fc_parameters, existing_fc_params=existing_fc_params
     )
-    # With commit_derived_changes=True, the function returns an empty list on success or raises ValueError on error
+    local_filesystem.save_vehicle_params_to_files(list(local_filesystem.file_parameters))
 
     return True, ""
 
