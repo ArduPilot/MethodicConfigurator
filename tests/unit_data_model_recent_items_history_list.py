@@ -91,7 +91,7 @@ class TestRecentItemsHistoryListCustomComparerConfiguration:
         def extract_host(item: str) -> str:
             # Simplified: extract portion after "tcp:" and before ":"
             if "tcp:" in item:
-                return item.split("tcp:")[1].split(":")[0]
+                return item.split("tcp:")[1].split(":", maxsplit=1)[0]
             return item
 
         history = RecentItemsHistoryList(
