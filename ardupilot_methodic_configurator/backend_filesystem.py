@@ -793,39 +793,42 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Update parameter values from flight controller data and export to vehicle files.
 
         This method performs a two-phase update:
-        1. When commit_derived_changes=False (default): Checks for derived parameter changes
-           and returns files that would be modified without saving them.
-        2. When commit_derived_changes=True: Actually saves all changes to disk.
+        1. Updates in-memory parameter values from source and computes forced/derived parameters.
+        2. Detects which files on disk differ from the updated in-memory state and returns them
+           so the caller can seek user confirmation before writing.
+
+        Saving to disk is intentionally excluded from this method.  Call
+        :meth:`save_vehicle_params_to_files` after receiving confirmation.
 
         Args:
             source_param_values: Dictionary mapping parameter names to their values from the
-                                source. If None, no direct updates occur.
-            existing_fc_params: List of params that exist in the FC.
-            commit_derived_changes: If False, detects but doesn't save files with derived changes.
-                                   If True, saves all changes to disk.
+                                source (typically the flight controller). If None, no direct
+                                updates occur.
+            existing_fc_params: List of parameter names that exist in the FC.  If empty or
+                                None all parameters are assumed to exist.
 
         Returns:
-            list[str]: List of filenames with pending changes (empty list if all saved).
+            list[str]: List of filenames whose on-disk content differs from the updated
+                      in-memory state.  An empty list means no changes were detected.
 
         Raises:
-            ValueError: If there's an error computing forced or derived parameters.
+            ValueError: If there is an error computing forced or derived parameters.
 
         Example:
-            # Phase 1: Check for changes
+            # Phase 1: Compute in-memory updates and detect changes
             pending = fs.update_and_export_vehicle_params_from_fc(
                 source_param_values={"PARAM1": 10.0},
                 existing_fc_params=["PARAM1"],
-                commit_derived_changes=False
             )
             if pending:
-                # Ask user for confirmation
+                # Ask user for confirmation, then save
                 if user_confirms:
-                    # Phase 2: Save changes
-                    fs.update_and_export_vehicle_params_from_fc(
-                        source_param_values={"PARAM1": 10.0},
-                        existing_fc_params=["PARAM1"],
-                        commit_derived_changes=True
-                    )
+                    fs.save_vehicle_params_to_files(list(fs.file_parameters))
+                else:
+                    fs.file_parameters = fs.read_params_from_files()
+            else:
+                # No changes — save everything normally
+                fs.save_vehicle_params_to_files(list(fs.file_parameters))
 
         """
         eval_variables = self.get_eval_variables()
@@ -876,11 +879,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
             for name, param in current_params.items():
                 if name not in disk_params:
-                    return True  # Parameter added
+                    return True  # Parameter added in memory
 
                 # Compare values using the same tolerance logic as merge_forced_or_derived
                 if not is_within_tolerance(param.value, disk_params[name].value):
                     return True
+
+            # Also detect parameters removed from memory that still exist on disk
+            for name in disk_params:
+                if name not in current_params:
+                    return True  # Parameter deleted from memory
 
         except (FileNotFoundError, OSError):
             return True  # New file counts as a change
@@ -888,6 +896,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return False
 
     def save_vehicle_params_to_files(self, filenames: list[str]) -> None:
+        """
+        Write the current in-memory parameter values for the given files to disk.
+
+        Args:
+            filenames: List of parameter filenames (keys of :attr:`file_parameters`) to save.
+
+        """
         annotate_docs = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
         for filename in filenames:
             self.export_to_param(self.file_parameters[filename], filename, annotate_doc=annotate_docs)
