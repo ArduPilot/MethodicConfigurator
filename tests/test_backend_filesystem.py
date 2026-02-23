@@ -668,6 +668,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert not result  # Empty list means success
             assert param1_mock.value == 1.0
             assert param2_mock.value == 2.0
+            lfs.save_vehicle_params_to_files(list(lfs.file_parameters))
             mock_export.assert_called_once_with(os_path.join("vehicle_dir", "test.param"))
 
     def test_write_param_default_values_to_file(self) -> None:

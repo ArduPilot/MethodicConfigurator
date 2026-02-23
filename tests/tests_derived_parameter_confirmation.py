@@ -87,7 +87,6 @@ class TestParameterSafetyChecks:
         pending_changes = fs.update_and_export_vehicle_params_from_fc(
             source_param_values={},
             existing_fc_params=[],
-            commit_derived_changes=False,
         )
 
         # THEN: Result should be a non-empty list with the changed file
@@ -95,7 +94,7 @@ class TestParameterSafetyChecks:
         assert len(pending_changes) > 0
         assert "08_batt1.param" in pending_changes
 
-        # AND: Verify the file on disk was NOT touched
+        # AND: Verify the file on disk was NOT touched (we never called save)
         with open(os.path.join(fs.vehicle_dir, "08_batt1.param"), encoding="utf-8") as f:
             content = f.read().strip()
         assert content == "BATT_ARM_VOLT,1.0", "Silent overwrite occurred! The file should still be 1.0"
@@ -110,15 +109,15 @@ class TestParameterSafetyChecks:
         """
         fs = filesystem_with_derived_logic
 
-        # WHEN: Call update WITH permission (commit_derived_changes=True)
+        # WHEN: Call update to detect changes, then save with permission
         pending_changes = fs.update_and_export_vehicle_params_from_fc(
             source_param_values={},
             existing_fc_params=[],
-            commit_derived_changes=True,
         )
 
-        # THEN: Result should be empty list (Success, no pending changes)
-        assert pending_changes == []
+        # Changes detected — simulate user saying Yes
+        assert isinstance(pending_changes, list)
+        fs.save_vehicle_params_to_files(list(fs.file_parameters))
 
         # AND: Verify the file on disk WAS updated
         with open(os.path.join(fs.vehicle_dir, "08_batt1.param"), encoding="utf-8") as f:
@@ -145,7 +144,6 @@ class TestParameterSafetyChecks:
         pending_changes = fs.update_and_export_vehicle_params_from_fc(
             source_param_values={},
             existing_fc_params=[],
-            commit_derived_changes=False,
         )
 
         # THEN: It should still detect the change vs Disk
@@ -193,7 +191,7 @@ class TestUserConfirmationWorkflow:
 
         # AND: Verify we did NOT call update again with commit=True
         assert len(mock_fs.update_and_export_vehicle_params_from_fc.call_args_list) == 1
-        assert mock_fs.update_and_export_vehicle_params_from_fc.call_args[1]["commit_derived_changes"] is False
+        mock_fs.save_vehicle_params_to_files.assert_not_called()
 
         # AND: Verify REVERT: read_params_from_files must be called
         mock_fs.read_params_from_files.assert_called_once()
@@ -216,7 +214,7 @@ class TestUserConfirmationWorkflow:
         mock_fs = MagicMock()
         mock_controller = MagicMock()
         mock_project_manager = MagicMock()
-        mock_fs.update_and_export_vehicle_params_from_fc.side_effect = [["08_batt1.param"], []]
+        mock_fs.update_and_export_vehicle_params_from_fc.return_value = ["08_batt1.param"]
 
         # WHEN: User responds YES
         mock_dialog.return_value = True
@@ -225,12 +223,9 @@ class TestUserConfirmationWorkflow:
         # THEN: Verify dialog was shown
         mock_dialog.assert_called_once()
 
-        # AND: Verify update was called TWICE
-        assert len(mock_fs.update_and_export_vehicle_params_from_fc.call_args_list) == 2
-
-        # AND: Verify second call had commit=True
-        second_call_kwargs = mock_fs.update_and_export_vehicle_params_from_fc.call_args_list[1][1]
-        assert second_call_kwargs["commit_derived_changes"] is True
+        # AND: Verify update was called once and save was called once
+        assert len(mock_fs.update_and_export_vehicle_params_from_fc.call_args_list) == 1
+        mock_fs.save_vehicle_params_to_files.assert_called_once()
 
         # AND: Verify we did NOT revert
         mock_fs.read_params_from_files.assert_not_called()

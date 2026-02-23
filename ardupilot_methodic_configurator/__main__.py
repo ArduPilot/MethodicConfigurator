@@ -521,10 +521,8 @@ def process_component_editor_results(
         pending_changes = local_filesystem.update_and_export_vehicle_params_from_fc(
             source_param_values=source_param_values,
             existing_fc_params=existing_fc_params,
-            commit_derived_changes=False,
         )
     except ValueError as e:
-        # Handle errors from parameter computation
         error_msg = str(e)
         logging_error(error_msg)
         show_error_message(_("Error in derived parameters"), error_msg)
@@ -541,23 +539,15 @@ def process_component_editor_results(
         )
 
         if ask_yesno_message(_("Confirm Derived Changes"), msg):
-            # User confirmed: Save with permission
-            try:
-                local_filesystem.update_and_export_vehicle_params_from_fc(
-                    source_param_values=source_param_values,
-                    existing_fc_params=existing_fc_params,
-                    commit_derived_changes=True,
-                )
-            except ValueError as e:
-                error_msg = str(e)
-                logging_error(error_msg)
-                show_error_message(_("Error saving derived parameters"), error_msg)
-                sys_exit(1)
+            # User confirmed: Save to disk
+            local_filesystem.save_vehicle_params_to_files(list(local_filesystem.file_parameters))
         else:
             # User declined: Revert in-memory changes from disk
             logging_info(_("User declined derived parameter changes. Reverting to disk values."))
             local_filesystem.file_parameters = local_filesystem.read_params_from_files()
-            return
+    else:
+        # No derived changes detected: save everything normally
+        local_filesystem.save_vehicle_params_to_files(list(local_filesystem.file_parameters))
 
 
 def write_parameter_defaults(state: ApplicationState) -> None:

@@ -788,7 +788,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self,
         source_param_values: Union[dict[str, float], None],
         existing_fc_params: list[str],
-        commit_derived_changes: bool = False,
     ) -> list[str]:
         """
         Update parameter values from flight controller data and export to vehicle files.
@@ -830,17 +829,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         """
         eval_variables = self.get_eval_variables()
-        annotate_docs = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
 
         pending_changes: list[str] = []
 
         for param_filename, param_dict in self.file_parameters.items():
-            # 1. Update from Flight Controller Source
+            # Update from Flight Controller Source
             for param_name, param in param_dict.items():
                 if source_param_values and param_name in source_param_values:
                     param.value = source_param_values[param_name]
 
-            # 2. Compute/Update derived parameters (Updates In-Memory Only)
+            # Compute/Update derived parameters (Updates In-Memory Only)
             if self.configuration_steps and param_filename in self.configuration_steps:
                 step_dict = self.configuration_steps[param_filename]
                 error_msg = self.compute_parameters(param_filename, step_dict, "forced", eval_variables)
@@ -857,19 +855,13 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     raise ValueError(msg)
                 self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, existing_fc_params)
 
-            # 3. Safety Check: If we don't have permission, check if we drifted from disk
-            if (
-                not commit_derived_changes
-                and self.vehicle_configuration_file_exists(param_filename)
-                and self._file_has_changed_vs_disk(param_filename, param_dict)
+            # Safety Check: If we don't have permission, check if we drifted from disk
+            if self.vehicle_configuration_file_exists(param_filename) and self._file_has_changed_vs_disk(
+                param_filename, param_dict
             ):
                 pending_changes.append(param_filename)
-                continue  # Skip saving this file
 
-            # 4. Save to Disk (Only if permission granted OR no changes detected)
-            self.export_to_param(param_dict, param_filename, annotate_doc=annotate_docs)
-
-        # Return pending changes (empty list if all files were saved successfully)
+        # Return pending changes (empty list means no derived changes detected)
         return pending_changes
 
     def _file_has_changed_vs_disk(self, filename: str, current_params: ParDict) -> bool:
@@ -894,6 +886,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return True  # New file counts as a change
 
         return False
+
+    def save_vehicle_params_to_files(self, filenames: list[str]) -> None:
+        annotate_docs = bool(ProgramSettings.get_setting("annotate_docs_into_param_files"))
+        for filename in filenames:
+            self.export_to_param(self.file_parameters[filename], filename, annotate_doc=annotate_docs)
 
     def merge_forced_or_derived_parameters(
         self, filename: str, new_parameters: dict[str, ParDict], existing_fc_params: Optional[list[str]]
