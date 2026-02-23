@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-02-22 17:09+0000\n"
+"POT-Creation-Date: 2026-02-23 00:05+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -149,11 +149,11 @@ msgstr "Falha ao criar ficheiros de backup: %s"
 msgid "Unexpected error creating backup files: %s"
 msgstr "Erro inesperado ao criar ficheiros de backup: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:687
+#: ardupilot_methodic_configurator/__main__.py:690
 msgid "Incompatible parameter definition file detected"
 msgstr "Ficheiro de definição de parâmetros incompatível detetado"
 
-#: ardupilot_methodic_configurator/__main__.py:688
+#: ardupilot_methodic_configurator/__main__.py:691
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -510,78 +510,83 @@ msgstr "Erro de valor ao serializar dados para JSON: {}"
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr "Erro inesperado ao guardar dados no ficheiro '{}': {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:47
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:53
 msgid "General AMC workflow"
 msgstr "Fluxo de trabalho geral do AMC"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:50
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:56
 msgid "Component editor window introduction"
 msgstr "Introdução à janela do editor de componentes"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:53
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:59
 msgid "Component editor window data validation"
 msgstr "Validação de dados da janela do editor de componentes"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:56
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:62
 msgid "Parameter file editor and uploader window"
 msgstr "Janela de edição e upload de parâmetros"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:59
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:65
 msgid "Bitmask parameter editor usage window"
 msgstr "Janela de utilização do editor de parâmetros bitmask"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:62
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:68
 msgid "Only changed parameters get upload explanation"
 msgstr "Explicação do envio apenas de parâmetros alterados"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:80
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:117
 msgid "Connection string cannot be empty or whitespace-only"
-msgstr "A cadeia de ligação não pode estar vazia ou conter apenas espaços em branco"
+msgstr ""
+"A cadeia de ligação não pode estar vazia ou conter apenas espaços em branco"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:199
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:237
 msgid "Directory already exists, choose a different one"
 msgstr "Diretório já existe, escolha outro"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:204
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:242
 msgid "Error creating new vehicle directory: %s"
 msgstr "Erro ao criar novo diretório de veículo: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:238
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:276
 msgid ""
 "The user configuration directory '{user_config_directory}' does not exist."
 msgstr ""
 "O diretório de configuração do usuário '{user_config_directory}' não existe."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:241
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:279
 msgid "The path '{user_config_directory}' is not a directory."
 msgstr "O caminho '{user_config_directory}' não é um diretório."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:257
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:295
 msgid ""
 "The site configuration directory '{site_config_directory}' does not exist."
 msgstr ""
 "O diretório de configuração do site '{site_config_directory}' não existe."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:260
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:298
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "O caminho '{site_config_directory}' não é um diretório."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:349
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:478
+msgid "Failed to store vehicle directory to history: %s"
+msgstr "Falha ao guardar o diretório do veículo no histórico: %s"
+
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:488
 msgid "site_directory: %s"
 msgstr "diretório base de destino: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:383
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:525
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr ""
 "Tipo de popup de utilização '%s' não encontrado no dicionário de "
 "configurações"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:393
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:430
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:535
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:572
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "Definição '%s' não encontrada no dicionário de definições"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:411
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:553
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
@@ -589,15 +594,15 @@ msgstr ""
 "Não é possível definir a configuração aninhada '%s': caminho principal '%s' "
 "não encontrado ou não é um dicionário"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:424
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:566
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr "Caminho de definição '%s' não encontrado no dicionário de definições"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:463
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:605
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "Múltiplos diagramas de motores encontrados para a classe %d e tipo %d"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:472
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:614
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "Diagrama de motor não encontrado para a classe %d e tipo %d"
 
@@ -4591,7 +4596,7 @@ msgstr "Número de polos magnéticos do rotor tem de ser par para {paths_str}"
 msgid "Invalid integer value for {paths_str}"
 msgstr "Valor inteiro inválido para {paths_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:279
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:290
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
@@ -4599,7 +4604,7 @@ msgstr ""
 "Nenhum ficheiro de parâmetro intermediário encontrado\n"
 "no diretório de trabalho atual."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:280
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:291
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
@@ -4607,7 +4612,7 @@ msgstr ""
 "Não foram encontrados ficheiros de parâmetros intermediários\n"
 "no diretório especificado --vehicle-dir."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:311
 msgid "MyVehicleName"
 msgstr "MeuNomeVeículo"
 
@@ -4748,8 +4753,8 @@ msgid "Flight Controller Parameters"
 msgstr "Parâmetros do Controlador de Voo"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:513
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:517
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:518
 msgid "New vehicle directory"
 msgstr "Novo diretório de veículo"
 
@@ -4778,24 +4783,24 @@ msgstr ""
 msgid "No parameter files found"
 msgstr "Nenhum ficheiro de parâmetros encontrado"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:492
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
 msgid "Vehicle template directory must not be empty"
 msgstr "O diretório do modelo do veículo não deve estar vazio"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:492
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:497
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
 msgid "Vehicle template directory"
 msgstr "Diretório de template do veículo"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:499
 msgid "Vehicle template directory {template_dir} does not exist"
 msgstr "O diretório do modelo do veículo {template_dir} não existe"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:513
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
 msgid "New vehicle name must not be empty"
 msgstr "O novo nome do veículo não deve estar vazio"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:518
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:519
 msgid "New vehicle name {new_vehicle_name} must not contain invalid characters"
 msgstr ""
 "O novo nome do veículo {new_vehicle_name} não deve conter caracteres "
@@ -4824,7 +4829,7 @@ msgstr ""
 "selecionado: {last_vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:116
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:184
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:186
 msgid ""
 "Selected directory must contain files matching \\d\\d_*\\.param and a "
 "{filename} file"
@@ -4855,20 +4860,20 @@ msgstr ""
 "Nenhum ficheiro de parâmetros intermédios encontrado no diretório "
 "selecionado: {vehicle_dir}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:177
 msgid "Vehicle directory must not be empty"
 msgstr "O diretório do veículo não pode ser vazio"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:177
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:181
 msgid "Vehicle directory"
 msgstr "Diretório do veículo"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:181
 msgid "Vehicle directory {vehicle_dir} does not exist"
 msgstr "O diretório do veículo {vehicle_dir} não existe"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:187
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:189
 msgid "Invalid Vehicle Directory"
 msgstr "Diretório de Veículo Inválido"
 
@@ -6708,7 +6713,7 @@ msgstr ""
 "VehicleProjectCreatorWindow é chamada de outro script"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:248
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:220
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:277
 msgid "No intermediate parameter files found in %s."
 msgstr "Nenhum ficheiro de parâmetro intermediário encontrado em %s."
 
@@ -6750,26 +6755,83 @@ msgid "Re-Open vehicle"
 msgstr "Reabrir veículo"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:138
-msgid "Last used vehicle configuration directory:"
-msgstr "Último diretório de configuração de veículo usado:"
+msgid "Recently opened vehicle directories:"
+msgstr "Diretórios de veículos abertos recentemente:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:140
-msgid "Last used vehicle configuration directory"
-msgstr "Último diretório de configuração de veículo usado"
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:157
+msgid "Select from recently opened vehicle configuration directories"
+msgstr "Seleccionar de entre os diretórios de configuração de veículos abertos recentemente"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:150
-msgid "Open last used vehicle configuration directory"
-msgstr "Abrir o último diretório de configuração de veículo utilizado"
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:165
+msgid "Open selected vehicle configuration directory"
+msgstr "Abrir o diretório de configuração de veículo seleccionado"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:159
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:172
 msgid ""
-"Directly open the last used vehicle configuration directory for configuring "
-"and tuning the vehicle"
-msgstr ""
-"Abrir diretamente o último diretório de configuração de veículo usado para "
-"configurar e ajustar o veículo"
+"Open the selected vehicle configuration directory for configuring and tuning "
+"the vehicle"
+msgstr "Abrir o diretório de configuração de veículo seleccionado para configurar e afinar o veículo"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:180
+msgid "No Directory Selected"
+msgstr "Nenhum diretório seleccionado"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:180
+msgid "Please select a vehicle configuration directory from the list."
+msgstr "Por favor, seleccione um diretório de configuração de veículo da lista."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:188
+msgid "Directory Not Found"
+msgstr "Diretório não encontrado"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:189
+msgid ""
+"The selected directory no longer exists:\n"
+"\n"
+"{}\n"
+"\n"
+"It may have been moved or deleted."
+msgstr "O diretório seleccionado já não existe:\n\n{}\n\nPode ter sido movido ou apagado."
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:197
+msgid "Invalid Directory"
+msgstr "Diretório inválido"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:198
+msgid ""
+"The selected path is not a directory:\n"
+"\n"
+"{}"
+msgstr "O caminho seleccionado não é um diretório:\n\n{}"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:203
+msgid "Permission Denied"
+msgstr "Permissão negada"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:204
+msgid ""
+"You do not have permission to access the selected directory:\n"
+"\n"
+"{}\n"
+"\n"
+"Please check your file system permissions."
+msgstr "Não tem permissão para aceder ao diretório seleccionado:\n\n{}\n\nPor favor, verifique as permissões do seu sistema de ficheiros."
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:212
+msgid "File System Error"
+msgstr "Erro do sistema de ficheiros"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:213
+msgid ""
+"An error occurred while accessing the directory:\n"
+"\n"
+"{}\n"
+"\n"
+"Error: {}"
+msgstr "Ocorreu um erro ao aceder ao diretório:\n\n{}\n\nErro: {}"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:245
 msgid ""
 "This main is for testing and development only. Usually, the "
 "VehicleProjectOpenerWindow is called from another script"
@@ -6777,7 +6839,7 @@ msgstr ""
 "Este main é apenas para teste e desenvolvimento. Normalmente, a "
 "VehicleProjectOpenerWindow é chamada de outro script"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:203
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:260
 msgid ""
 "This main is for testing and development only, usually the "
 "VehicleProjectOpenerWindow is called from another script"
@@ -7538,6 +7600,22 @@ msgstr "Versão ou revisão do hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid "Last used vehicle configuration directory:"
+#~ msgstr "Último diretório de configuração de veículo usado:"
+
+#~ msgid "Last used vehicle configuration directory"
+#~ msgstr "Último diretório de configuração de veículo usado"
+
+#~ msgid "Open last used vehicle configuration directory"
+#~ msgstr "Abrir o último diretório de configuração de veículo utilizado"
+
+#~ msgid ""
+#~ "Directly open the last used vehicle configuration directory for "
+#~ "configuring and tuning the vehicle"
+#~ msgstr ""
+#~ "Abrir diretamente o último diretório de configuração de veículo usado "
+#~ "para configurar e ajustar o veículo"
 
 #~ msgid ""
 #~ "No auto-detected ports responded. Please connect a flight controller and "
