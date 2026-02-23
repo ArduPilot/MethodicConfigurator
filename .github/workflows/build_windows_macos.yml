@@ -215,7 +215,7 @@ jobs:
           set -euo pipefail
           VERSION=$(cd windows && python return_version.py)
           APP_NAME="ArduPilot Methodic Configurator.app"
-          DMG_NAME="ardupilot_methodic_configurator_setup_${VERSION}.dmg"
+          DMG_NAME="ardupilot_methodic_configurator_${VERSION}_macos_setup.dmg"
           STAGING_DIR="macos/dmg-staging"
           OUTPUT_DIR="macos/Output"
 
@@ -283,9 +283,9 @@ jobs:
           $files = Get-ChildItem release-artifacts\*.* | Where-Object { $_.Extension -in '.exe', '.dmg' }
           foreach ($file in $files) {
             if ($file.Extension -eq '.exe') {
-              $newName = $file.Name -replace '_setup_.*\.exe$', '_setup_latest_pre_release.exe'
+              $newName = $file.Name -replace 'ardupilot_methodic_configurator_.*_windows_setup\.exe$', 'ardupilot_methodic_configurator_latest_pre_release_windows_setup.exe'
             } elseif ($file.Extension -eq '.dmg') {
-              $newName = $file.Name -replace '_setup_.*\.dmg$', '_setup_latest_pre_release.dmg'
+              $newName = $file.Name -replace 'ardupilot_methodic_configurator_.*_macos_setup\.dmg$', 'ardupilot_methodic_configurator_latest_pre_release_macos_setup.dmg'
             } else {
               continue
             }
