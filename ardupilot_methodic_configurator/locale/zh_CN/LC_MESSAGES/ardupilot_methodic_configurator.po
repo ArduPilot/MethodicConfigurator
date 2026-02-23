@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-02-22 17:09+0000\n"
+"POT-Creation-Date: 2026-02-23 00:05+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -140,11 +140,11 @@ msgstr "创建备份文件失败: %s"
 msgid "Unexpected error creating backup files: %s"
 msgstr "创建备份文件时出现意外错误: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:687
+#: ardupilot_methodic_configurator/__main__.py:690
 msgid "Incompatible parameter definition file detected"
 msgstr "检测到不兼容的参数定义文件"
 
-#: ardupilot_methodic_configurator/__main__.py:688
+#: ardupilot_methodic_configurator/__main__.py:691
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -478,88 +478,92 @@ msgstr "将数据序列化为JSON时发生值错误: {}"
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr "保存数据到文件'{}'时发生意外错误: {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:47
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:53
 msgid "General AMC workflow"
 msgstr "AMC 总体工作流程"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:50
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:56
 msgid "Component editor window introduction"
 msgstr "组件编辑器窗口简介"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:53
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:59
 msgid "Component editor window data validation"
 msgstr "组件编辑器窗口数据验证"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:56
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:62
 msgid "Parameter file editor and uploader window"
 msgstr "参数文件编辑器和上传器"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:59
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:65
 msgid "Bitmask parameter editor usage window"
 msgstr "位掩码参数编辑器使用窗口"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:62
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:68
 msgid "Only changed parameters get upload explanation"
 msgstr "仅上传已更改参数的说明"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:80
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:117
 msgid "Connection string cannot be empty or whitespace-only"
 msgstr "连接字符串不能为空或仅包含空白字符"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:199
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:237
 msgid "Directory already exists, choose a different one"
 msgstr "目录已存在, 请重新选择"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:204
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:242
 msgid "Error creating new vehicle directory: %s"
 msgstr "创建新的目录时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:238
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:276
 msgid ""
 "The user configuration directory '{user_config_directory}' does not exist."
 msgstr "用户配置目录 '{user_config_directory}' 不存在。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:241
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:279
 msgid "The path '{user_config_directory}' is not a directory."
 msgstr "路径 '{user_config_directory}' 不是一个目录。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:257
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:295
 msgid ""
 "The site configuration directory '{site_config_directory}' does not exist."
 msgstr "站点配置目录 '{site_config_directory}' 不存在。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:260
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:298
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "路径 '{site_config_directory}' 不是一个目录。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:349
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:478
+msgid "Failed to store vehicle directory to history: %s"
+msgstr "存储车辆目录到历史记录失败：%s"
+
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:488
 msgid "site_directory: %s"
 msgstr "站点目录: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:383
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:525
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr "在设置字典中找不到使用弹出窗口类型 '%s'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:393
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:430
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:535
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:572
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "在设置字典中未找到设置 '%s'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:411
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:553
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
 msgstr "无法设置嵌套设置 '%s'：未找到父路径 '%s' 或不是字典"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:424
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:566
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr "在设置字典中未找到设置路径 '%s'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:463
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:605
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "为类别 %d 和类型 %d 找到多个电机图"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:472
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:614
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "未找到类别 %d 和类型 %d 的电机图"
 
@@ -4208,19 +4212,19 @@ msgstr "{paths_str} 的磁转子极数必须为偶数"
 msgid "Invalid integer value for {paths_str}"
 msgstr "{paths_str} 的整数值无效"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:279
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:290
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
 msgstr "在當前工作目錄中未找到中間參數文件。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:280
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:291
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
 msgstr "在 --vehicle-dir 指定的目錄中未找到中間參數文件。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:311
 msgid "MyVehicleName"
 msgstr "载具名称"
 
@@ -4341,8 +4345,8 @@ msgid "Flight Controller Parameters"
 msgstr "飞行控制器参数"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:513
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:517
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:518
 msgid "New vehicle directory"
 msgstr "新载具目录"
 
@@ -4369,24 +4373,24 @@ msgstr "从模板创建载具后未找到中间参数文件"
 msgid "No parameter files found"
 msgstr "未找到参数文件"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:492
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
 msgid "Vehicle template directory must not be empty"
 msgstr "载具模板目录不能为空"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:492
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:497
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
 msgid "Vehicle template directory"
 msgstr "载具模板目录"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:499
 msgid "Vehicle template directory {template_dir} does not exist"
 msgstr "载具模板目录 {template_dir} 不存在"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:513
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
 msgid "New vehicle name must not be empty"
 msgstr "新载具名称不能为空"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:518
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:519
 msgid "New vehicle name {new_vehicle_name} must not contain invalid characters"
 msgstr "新载具名称 {new_vehicle_name} 不能包含无效字符"
 
@@ -4410,7 +4414,7 @@ msgid ""
 msgstr "在所选目录中未找到中间参数文件: {last_vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:116
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:184
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:186
 msgid ""
 "Selected directory must contain files matching \\d\\d_*\\.param and a "
 "{filename} file"
@@ -4437,20 +4441,20 @@ msgid ""
 "{vehicle_dir}"
 msgstr "在所选目录中未找到中间参数文件: {vehicle_dir}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:177
 msgid "Vehicle directory must not be empty"
 msgstr "载具目录不能为空"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:177
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:181
 msgid "Vehicle directory"
 msgstr "载具目录"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:181
 msgid "Vehicle directory {vehicle_dir} does not exist"
 msgstr "载具目录 {vehicle_dir} 不存在"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:187
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:189
 msgid "Invalid Vehicle Directory"
 msgstr "无效的载具目录"
 
@@ -6204,7 +6208,7 @@ msgstr ""
 "此主程序仅用于测试和开发，通常 VehicleProjectCreatorWindow 是从其他脚本调用的"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:248
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:220
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:277
 msgid "No intermediate parameter files found in %s."
 msgstr "在 %s 中未找到模版文件。"
 
@@ -6245,31 +6249,90 @@ msgid "Re-Open vehicle"
 msgstr "重新打开车辆"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:138
-msgid "Last used vehicle configuration directory:"
-msgstr "上次使用的载具配置目录："
+msgid "Recently opened vehicle directories:"
+msgstr "最近打开的车辆目录："
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:140
-msgid "Last used vehicle configuration directory"
-msgstr "上次使用的载具配置目录"
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:157
+msgid "Select from recently opened vehicle configuration directories"
+msgstr "从最近打开的车辆配置目录中选择"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:150
-msgid "Open last used vehicle configuration directory"
-msgstr "打开上次使用的车辆配置目录"
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:165
+msgid "Open selected vehicle configuration directory"
+msgstr "打开所选车辆配置目录"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:159
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:172
 msgid ""
-"Directly open the last used vehicle configuration directory for configuring "
-"and tuning the vehicle"
-msgstr "直接打开上次使用的载具配置目录进行载具配置和调参"
+"Open the selected vehicle configuration directory for configuring and tuning "
+"the vehicle"
+msgstr "打开所选车辆配置目录以配置和调试车辆"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:180
+msgid "No Directory Selected"
+msgstr "未选择目录"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:180
+msgid "Please select a vehicle configuration directory from the list."
+msgstr "请从列表中选择一个车辆配置目录。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:188
+msgid "Directory Not Found"
+msgstr "未找到目录"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:189
+msgid ""
+"The selected directory no longer exists:\n"
+"\n"
+"{}\n"
+"\n"
+"It may have been moved or deleted."
+msgstr "所选目录已不存在：\n\n{}\n\n可能已被移动或删除。"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:197
+msgid "Invalid Directory"
+msgstr "无效目录"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:198
+msgid ""
+"The selected path is not a directory:\n"
+"\n"
+"{}"
+msgstr "所选路径不是一个目录：\n\n{}"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:203
+msgid "Permission Denied"
+msgstr "权限被拒绝"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:204
+msgid ""
+"You do not have permission to access the selected directory:\n"
+"\n"
+"{}\n"
+"\n"
+"Please check your file system permissions."
+msgstr "您没有权限访问所选目录：\n\n{}\n\n请检查您的文件系统权限。"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:212
+msgid "File System Error"
+msgstr "文件系统错误"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:213
+msgid ""
+"An error occurred while accessing the directory:\n"
+"\n"
+"{}\n"
+"\n"
+"Error: {}"
+msgstr "访问目录时发生错误：\n\n{}\n\n错误：{}"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:245
 msgid ""
 "This main is for testing and development only. Usually, the "
 "VehicleProjectOpenerWindow is called from another script"
 msgstr ""
 "此主程序仅用于测试和开发。通常，VehicleProjectOpenerWindow 是从其他脚本调用的"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:203
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:260
 msgid ""
 "This main is for testing and development only, usually the "
 "VehicleProjectOpenerWindow is called from another script"
@@ -6998,6 +7061,20 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid "Last used vehicle configuration directory:"
+#~ msgstr "上次使用的载具配置目录："
+
+#~ msgid "Last used vehicle configuration directory"
+#~ msgstr "上次使用的载具配置目录"
+
+#~ msgid "Open last used vehicle configuration directory"
+#~ msgstr "打开上次使用的车辆配置目录"
+
+#~ msgid ""
+#~ "Directly open the last used vehicle configuration directory for "
+#~ "configuring and tuning the vehicle"
+#~ msgstr "直接打开上次使用的载具配置目录进行载具配置和调参"
 
 #~ msgid ""
 #~ "No auto-detected ports responded. Please connect a flight controller and "
