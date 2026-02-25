@@ -38,7 +38,6 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        if: matrix.os != 'windows-latest'
         uses: step-security/harden-runner@a90bcbc6539c36a85cdfeb73f7e2f433735f215b # v2.15.0
         with:
           egress-policy: audit
