@@ -197,7 +197,7 @@ class TestDesktopIconCreation:
             FreeDesktop._write_desktop_file(file_path, test_content)
 
             # Assert: File was opened and content was written
-            mock_file.assert_called_once_with(file_path, "w", encoding="utf-8")
+            mock_file.assert_called_once_with(file_path, "w", encoding="utf-8", newline="\n")
             mock_file().write.assert_called_once_with(test_content)
 
     def test_user_can_set_desktop_file_permissions(self) -> None:

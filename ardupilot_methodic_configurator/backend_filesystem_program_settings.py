@@ -321,7 +321,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
     def _set_settings_from_dict(settings: dict) -> None:
         settings_path = os_path.join(ProgramSettings._user_config_dir(), "settings.json")
 
-        with open(settings_path, "w", encoding="utf-8") as settings_file:
+        with open(settings_path, "w", encoding="utf-8", newline="\n") as settings_file:
             json_dump(settings, settings_file, indent=4)
 
     @staticmethod

@@ -130,7 +130,7 @@ def create_one_pdef_xml_file(vehicle_type: str, dst_dir: str, git_tag: str) -> N
             2,
             f"<!-- Generated from git tag {git_tag} on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} -->\n",
         )
-        with open("apm.pdef.xml", "w", encoding="utf-8") as f:
+        with open("apm.pdef.xml", "w", encoding="utf-8", newline="\n") as f:
             f.writelines(lines)
         shutil.copy("apm.pdef.xml", full_dst_file)
         print(f"Created {dst_file}")  # noqa: T201

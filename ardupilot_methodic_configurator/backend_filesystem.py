@@ -632,7 +632,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     # Blank the change reason in the template files, strip the comments that start with #
                     with open(source, encoding="utf-8-sig") as file:
                         lines = file.readlines()
-                    with open(dest, "w", encoding="utf-8") as file:
+                    with open(dest, "w", encoding="utf-8", newline="\n") as file:
                         file.writelines(line.split("#")[0].strip() + "\n" for line in lines)
                 elif os_path.isdir(source):
                     shutil_copytree(source, dest)
@@ -696,7 +696,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
     def write_last_uploaded_filename(self, current_file: str) -> None:
         try:
-            with open(os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), "w", encoding="utf-8") as file:
+            with open(
+                os_path.join(self.vehicle_dir, "last_uploaded_filename.txt"), "w", encoding="utf-8", newline="\n"
+            ) as file:
                 file.write(current_file)
         except Exception as e:  # pylint: disable=broad-except
             logging_error(_("Error writing last uploaded filename: %s"), e)

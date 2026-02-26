@@ -99,7 +99,7 @@ StartupNotify=true
     @staticmethod
     def _write_desktop_file(desktop_file_path: str, content: str) -> None:
         """Write the desktop file content to disk."""
-        with open(desktop_file_path, "w", encoding="utf-8") as f:
+        with open(desktop_file_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(content)
 
     @staticmethod

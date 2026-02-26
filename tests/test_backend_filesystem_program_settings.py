@@ -584,7 +584,7 @@ class TestSettingsFileOperations:
             ProgramSettings._set_settings_from_dict(mock_settings)
 
             # Assert: File is opened correctly and data is written
-            mock_file.assert_called_once_with(mock_user_config["settings_file"], "w", encoding="utf-8")
+            mock_file.assert_called_once_with(mock_user_config["settings_file"], "w", encoding="utf-8", newline="\n")
             mock_file().write.assert_called()
 
 
