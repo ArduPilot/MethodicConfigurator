@@ -522,7 +522,7 @@ def update_parameter_documentation_file(  # pylint: disable=too-many-locals, too
         logging.warning("No documentation found for: %s", ", ".join(undocumented_params))
 
     # Write the new file contents to the file
-    with open(param_file, "w", encoding="utf-8", newline="\n") as file:  # Ensure newline character is LF, even on windows
+    with open(param_file, "w", encoding="utf-8", newline="\n") as file:  # Ensure newline character is LF, even on Windows
         file.writelines(new_lines)
 
 

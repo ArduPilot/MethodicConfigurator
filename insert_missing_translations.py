@@ -143,7 +143,7 @@ def insert_translations(lang_code: str, translations_basename: str, output_file_
     # Writing back to a new output file
     output_file = os.path.join("ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", output_file_name)
     logging.debug("Writing updated translations to: %s", output_file)
-    with open(output_file, "w", encoding="utf-8", newline="\n") as f:  # use Linux line endings even on windows
+    with open(output_file, "w", encoding="utf-8", newline="\n") as f:  # use Linux line endings even on Windows
         f.writelines(lines)
     logging.debug("Successfully inserted %d translations for language: %s", len(translations), lang_code)
 

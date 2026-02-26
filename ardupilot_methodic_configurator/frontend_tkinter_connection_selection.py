@@ -154,7 +154,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             _("Flight Controller Connection"),
             _(
                 "Enter the connection string to the flight controller. "
-                "Examples are:\n\nCOM4 (on windows)\n"
+                "Examples are:\n\nCOM4 (on Windows)\n"
                 "/dev/serial/by-id/usb-xxx (on Linux)\n"
                 "tcp:127.0.0.1:5761\n"
                 "udp:127.0.0.1:14551"

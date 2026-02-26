@@ -15,7 +15,7 @@ git clone https://github.com/ArduPilot/MethodicConfigurator.git
 cd MethodicConfigurator
 ```
 
-On windows do:
+On Windows do:
 
 ```cmd
 .\SetupDeveloperPC.bat
@@ -127,7 +127,7 @@ msgstr "Translated String"
 
 Once you have completed your translations, you will need to compile the `.po` file into a binary `.mo` file. This can be done using the command:
 
-On windows:
+On Windows:
 
 ```bash
 python create_mo_files.py
@@ -140,7 +140,7 @@ python3 create_mo_files.py
 ```
 
 Make sure you have `msgfmt` installed, which is part of the *GNU gettext* package.
-On windows use the `.\install_msgfmt.bat` command.
+On Windows use the `.\install_msgfmt.bat` command.
 
 ### 7. Test the New Language
 
