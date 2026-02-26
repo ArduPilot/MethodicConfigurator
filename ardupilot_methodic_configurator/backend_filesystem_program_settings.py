@@ -470,14 +470,6 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         return ProgramSettings._recent_vehicle_history.get_items(settings)
 
     @staticmethod
-    def store_vehicle_dir_to_history_safe(vehicle_dir: str) -> None:
-        """Store vehicle directory to history with error handling (logs errors, doesn't raise)."""
-        try:
-            ProgramSettings.store_recently_used_vehicle_dir(vehicle_dir)
-        except ValueError as e:
-            logging_warning(_("Failed to store vehicle directory to history: %s"), e)
-
-    @staticmethod
     def get_templates_base_dir() -> str:
         package_path = importlib_files("ardupilot_methodic_configurator")
         logging_debug("current script directory1: %s", package_path)

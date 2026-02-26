@@ -290,7 +290,6 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"),
             patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="QuadCopter_Template"),
         ):
             # Act: Create new vehicle project
@@ -472,7 +471,6 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"),
             patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="Custom_Template"),
         ):
             # Act: Create vehicle project with custom settings
@@ -519,7 +517,6 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"),
             patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="FC_Template"),
         ):
             # Act: Create vehicle project with FC connection
@@ -531,16 +528,13 @@ class TestVehicleProjectCreationWorkflow:
             assert result_dir == expected_vehicle_dir
             mock_local_filesystem.create_new_vehicle_dir.assert_called_once_with(expected_vehicle_dir)
 
-    def test_recently_used_directories_are_stored_after_successful_creation(
-        self, project_creator, mock_local_filesystem, default_settings
-    ) -> None:
+    def test_creator_does_not_store_history_itself(self, project_creator, mock_local_filesystem, default_settings) -> None:
         """
-        User's recently used directories are stored after successful project creation.
+        The creator class should not modify the recent-vehicle history; that is the responsibility of the manager.
 
         GIVEN: A user successfully creates a vehicle project
         WHEN: The creation process completes
-        THEN: The template and vehicle directories should be stored as recently used
-        AND: The configuration template name should be available for reference
+        THEN: No calls to history storage APIs should occur inside the creator
         """
         # Arrange: Valid inputs for successful creation
         template_dir = "C:\\valid\\template\\dir"
@@ -553,14 +547,11 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs") as mock_store_template,
-            patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store_vehicle,
         ):
             # Act: Create vehicle project
             project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
 
-            # Assert: Recently used directories were stored
-            mock_store_template.assert_called_once_with(template_dir, new_base_dir)
-            mock_store_vehicle.assert_called_once_with(expected_vehicle_dir)
+            mock_store_template.assert_not_called()
 
 
 class TestNewVehicleProjectSettingsMetadata:

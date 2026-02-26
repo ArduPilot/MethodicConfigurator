@@ -470,11 +470,6 @@ class VehicleProjectCreator:  # pylint: disable=too-few-public-methods
                 _("No parameter files found"), _("No intermediate parameter files found after creating vehicle from template")
             )
 
-        # Store the successfully used directories for future use
-        LocalFilesystem.store_recently_used_template_dirs(template_dir, new_base_dir)
-
-        LocalFilesystem.store_vehicle_dir_to_history_safe(new_vehicle_dir)
-
         return new_vehicle_dir
 
     def _validate_template_directory(self, template_dir: str) -> None:

@@ -262,11 +262,13 @@ The data flow follows the layered architecture pattern with clear separation of 
    - Clean separation between project opening and project creation concerns
 
 6. **Recent Directories History Flow**
-   - On application startup, `ProgramSettings.get_recent_vehicle_dirs()` loads history from settings.json
+   - On application startup, `ProgramSettings.get_recent_vehicle_dirs()` loads history from settings.json; the history is passed through the manager
    - History is passed to VehicleProjectOpenerWindow to populate the combobox widget
    - User selects a directory from the combobox dropdown
    - Frontend calls `project_manager.open_vehicle_directory(selected_dir)`
-   - If successful, `ProgramSettings.store_recently_used_vehicle_dir(selected_dir)` is called
+   - The `VehicleProjectManager` (business logic) stores the path in the recent‑vehicle history
+     using `LocalFilesystem`/`ProgramSettings` abstractions; the frontend never touches
+     the persistence layer directly
    - History is updated: selected directory moved/added to position [0], oldest removed if > 5 entries
    - Updated history is persisted to settings.json
    - History order maintained: most recent [0] to oldest [4]
@@ -327,7 +329,7 @@ The recent vehicle directories are stored in the `settings.json` file in the use
 - Template directory paths are excluded from migration (not user selections)
 - Legacy `vehicle_dir` setting is always removed after migration attempt (prevents repeated migrations)
 - Once migrated, `vehicle_dir` is no longer used or written
-- The `get_recently_used_dirs()` method returns `recent_vehicle_history[0]` as the last opened directory, or defaults if empty
+- The `get_recently_used_dirs()` method (invoked via the manager) returns `recent_vehicle_history[0]` as the last opened directory, or defaults if empty
 
 ### Integration Points
 

@@ -42,6 +42,7 @@ def mock_project_manager() -> MagicMock:
 @pytest.fixture
 def configured_opener_window(mock_project_manager) -> VehicleProjectOpenerWindow:
     """Fixture providing a properly configured VehicleProjectOpenerWindow for behavior testing."""
+    # patch VDS as a named mock so we can retrieve the callback argument later
     with (
         patch("tkinter.Toplevel"),
         patch.object(BaseWindow, "_setup_application_icon"),
@@ -54,7 +55,7 @@ def configured_opener_window(mock_project_manager) -> VehicleProjectOpenerWindow
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Frame"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.tk.StringVar"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.show_tooltip"),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.VehicleDirectorySelectionWidgets") as mock_vds,
         patch("tkinter.Tk") as mock_tk,
     ):
         mock_root = MagicMock()
@@ -67,6 +68,15 @@ def configured_opener_window(mock_project_manager) -> VehicleProjectOpenerWindow
             window.root = mock_root
         if not hasattr(window, "main_frame"):
             window.main_frame = MagicMock()
+
+        # The patched VehicleDirectorySelectionWidgets returns a MagicMock instance
+        # that doesn't automatically wire the callback argument.  Grab the closure
+        # passed during construction and assign it to the instance so that tests
+        # can call it directly and exercise the view->manager path.
+        if mock_vds.call_args:
+            callback = mock_vds.call_args[1].get("on_select_directory_callback")
+            if callback:
+                mock_vds.return_value.on_select_directory_callback = callback
 
         return window
 
@@ -176,6 +186,47 @@ class TestVehicleProjectOpenerWindow:
         # Assert: Project manager opens directory and window closes
         window.project_manager.open_last_vehicle_directory.assert_called_once_with(last_vehicle_dir)
         window.root.destroy.assert_called_once()
+
+    def test_view_does_not_update_history_directly_when_opening_last(self, configured_opener_window) -> None:
+        """
+        The frontend should not store the directory history itself; that belongs to the business logic layer.
+
+        GIVEN: A project opener window with a mock manager
+        WHEN: open_last_vehicle_directory is invoked
+        THEN: The window calls the manager only and does not touch the history API
+        """
+        window = configured_opener_window
+        last_vehicle_dir = "/path/to/last/vehicle"
+
+        # Patch manager methods so we can observe direct calls from the view
+        window.project_manager.open_last_vehicle_directory = MagicMock()
+        window.project_manager.store_recently_used_vehicle_dir = MagicMock()
+
+        # Act
+        window.open_last_vehicle_directory(last_vehicle_dir)
+
+        # Assert: view delegates to manager and does not touch history API directly
+        window.project_manager.open_last_vehicle_directory.assert_called_once_with(last_vehicle_dir)
+        window.project_manager.store_recently_used_vehicle_dir.assert_not_called()
+
+    def test_view_does_not_update_history_directly_when_opening_manual(self, configured_opener_window) -> None:
+        """
+        Do not update history directly from the view when user selects a directory manually.
+
+        When the user picks an arbitrary existing vehicle directory through the selection widgets
+        the window should not update the history; the manager is responsible for that.
+        """
+        window = configured_opener_window
+        test_dir = "/some/user/selected/vehicle"
+
+        window.project_manager.store_recently_used_vehicle_dir = MagicMock()
+
+        # Act: simulate the callback path the selection widgets use on the window
+        window.connection_selection_widgets.on_select_directory_callback(test_dir)
+
+        # Assert: manager is invoked and the view itself never touches history
+        window.project_manager.open_vehicle_directory.assert_called_once_with(test_dir)
+        window.project_manager.store_recently_used_vehicle_dir.assert_not_called()
 
     def test_user_sees_error_when_last_vehicle_directory_fails_to_open(
         self, configured_opener_window, mock_messagebox

@@ -203,15 +203,13 @@ class TestVehicleDirectoryOpening:
         # Arrange: Valid vehicle directory
         vehicle_dir = "C:\\path\\to\\vehicle\\directory"
 
-        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store:
-            # Act: Open vehicle directory
-            result = project_opener.open_vehicle_directory(vehicle_dir)
+        # Act: Open vehicle directory
+        result = project_opener.open_vehicle_directory(vehicle_dir)
 
-            # Assert: Directory opened successfully
-            assert result == vehicle_dir
-            assert mock_local_filesystem.vehicle_dir == vehicle_dir
-            mock_local_filesystem.re_init.assert_called_once_with(vehicle_dir, mock_local_filesystem.vehicle_type)
-            mock_store.assert_called_once_with(vehicle_dir)
+        # Assert: Directory opened successfully and filesystem initialized
+        assert result == vehicle_dir
+        assert mock_local_filesystem.vehicle_dir == vehicle_dir
+        mock_local_filesystem.re_init.assert_called_once_with(vehicle_dir, mock_local_filesystem.vehicle_type)
 
     def test_user_cannot_open_directory_without_required_files(self, project_opener, mock_local_filesystem) -> None:
         """
@@ -264,13 +262,12 @@ class TestVehicleDirectoryOpening:
         vehicle_dir = "C:\\path\\to\\vehicle_templates\\ArduCopter\\template"
         mock_local_filesystem.allow_editing_template_files = True
 
-        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
-            # Act: Open template directory
-            result = project_opener.open_vehicle_directory(vehicle_dir)
+        # Act: Open template directory
+        result = project_opener.open_vehicle_directory(vehicle_dir)
 
-            # Assert: Directory opened successfully
-            assert result == vehicle_dir
-            assert mock_local_filesystem.vehicle_dir == vehicle_dir
+        # Assert: Directory opened successfully
+        assert result == vehicle_dir
+        assert mock_local_filesystem.vehicle_dir == vehicle_dir
 
     def test_user_sees_error_when_filesystem_initialization_fails_for_directory(
         self, project_opener, mock_local_filesystem
@@ -312,24 +309,6 @@ class TestVehicleDirectoryOpening:
         assert "No parameter files found" in exc_info.value.title
         assert vehicle_dir in exc_info.value.message
         assert "No intermediate parameter files found" in exc_info.value.message
-
-    def test_recently_used_directory_is_stored_after_successful_opening(self, project_opener, mock_local_filesystem) -> None:
-        """
-        User's recently used directory is stored after successful directory opening.
-
-        GIVEN: A user successfully opens a vehicle directory
-        WHEN: The opening process completes successfully
-        THEN: The directory should be stored as recently used for future access
-        """
-        # Arrange: Valid vehicle directory
-        vehicle_dir = "C:\\path\\to\\vehicle\\directory"
-
-        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store:
-            # Act: Open vehicle directory
-            project_opener.open_vehicle_directory(vehicle_dir)
-
-            # Assert: Directory stored as recently used
-            mock_store.assert_called_once_with(vehicle_dir)
 
 
 class TestVehicleDirectoryValidation:
@@ -428,14 +407,13 @@ class TestVehicleProjectOpenerIntegration:
             "C:\\configs\\racing_drone",
         ]
 
-        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
-            for vehicle_dir in directories:
-                # Act: Open each directory
-                result = project_opener.open_vehicle_directory(vehicle_dir)
+        for vehicle_dir in directories:
+            # Act: Open each directory
+            result = project_opener.open_vehicle_directory(vehicle_dir)
 
-                # Assert: Each directory opens successfully
-                assert result == vehicle_dir
-                assert mock_local_filesystem.vehicle_dir == vehicle_dir
+            # Assert: Each directory opens successfully
+            assert result == vehicle_dir
+            assert mock_local_filesystem.vehicle_dir == vehicle_dir
 
     def test_user_workflow_from_last_directory_to_new_directory(self, project_opener, mock_local_filesystem) -> None:
         """
@@ -456,14 +434,12 @@ class TestVehicleProjectOpenerIntegration:
         # Reset mock to track new calls
         mock_local_filesystem.re_init.reset_mock()
 
-        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe") as mock_store:
-            # Act: Open new directory
-            result2 = project_opener.open_vehicle_directory(new_dir)
+        # Act: Open new directory
+        result2 = project_opener.open_vehicle_directory(new_dir)
 
-            # Assert: New directory opened and stored
-            assert result2 == new_dir
-            assert mock_local_filesystem.vehicle_dir == new_dir
-            mock_store.assert_called_once_with(new_dir)
+        # Assert: New directory opened (history handled higher up)
+        assert result2 == new_dir
+        assert mock_local_filesystem.vehicle_dir == new_dir
 
     def test_error_recovery_workflow_after_failed_directory_opening(self, project_opener, mock_local_filesystem) -> None:
         """
@@ -486,12 +462,11 @@ class TestVehicleProjectOpenerIntegration:
         # Second attempt should succeed
         mock_local_filesystem.vehicle_configuration_files_exist.return_value = True
 
-        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
-            result = project_opener.open_vehicle_directory(valid_dir)
+        result = project_opener.open_vehicle_directory(valid_dir)
 
-            # Assert: Valid directory opened successfully
-            assert result == valid_dir
-            assert mock_local_filesystem.vehicle_dir == valid_dir
+        # Assert: Valid directory opened successfully
+        assert result == valid_dir
+        assert mock_local_filesystem.vehicle_dir == valid_dir
 
     def test_filesystem_state_consistency_across_multiple_operations(self, project_opener, mock_local_filesystem) -> None:
         """
@@ -508,19 +483,18 @@ class TestVehicleProjectOpenerIntegration:
             "C:\\vehicles\\project3",
         ]
 
-        with patch.object(LocalFilesystem, "store_vehicle_dir_to_history_safe"):
-            for i, vehicle_dir in enumerate(directories):
-                # Act: Open directory
-                result = project_opener.open_vehicle_directory(vehicle_dir)
+        for i, vehicle_dir in enumerate(directories):
+            # Act: Open directory
+            result = project_opener.open_vehicle_directory(vehicle_dir)
 
-                # Assert: Filesystem state is correct for current directory
-                assert result == vehicle_dir
-                assert mock_local_filesystem.vehicle_dir == vehicle_dir
+            # Assert: Filesystem state is correct for current directory
+            assert result == vehicle_dir
+            assert mock_local_filesystem.vehicle_dir == vehicle_dir
 
-                # Verify re_init was called with correct parameters
-                expected_calls = i + 1
-                assert mock_local_filesystem.re_init.call_count == expected_calls
+            # Verify re_init was called with correct parameters
+            expected_calls = i + 1
+            assert mock_local_filesystem.re_init.call_count == expected_calls
 
-                # Check the most recent call was with correct parameters
-                last_call = mock_local_filesystem.re_init.call_args_list[-1]
-                assert last_call[0] == (vehicle_dir, mock_local_filesystem.vehicle_type)
+            # Check the most recent call was with correct parameters
+            last_call = mock_local_filesystem.re_init.call_args_list[-1]
+            assert last_call[0] == (vehicle_dir, mock_local_filesystem.vehicle_type)

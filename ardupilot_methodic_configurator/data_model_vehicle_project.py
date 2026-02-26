@@ -150,6 +150,9 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         if new_path:
             self._settings = settings
             self.configuration_template = self.get_directory_name_from_path(template_dir)
+            # History updates belong in the manager/facade layer so they are
+            # performed consistently for both project creation and opening.
+            self.store_recently_used_template_dirs(template_dir, new_base_dir)
         return new_path
 
     # Vehicle project opening operations
@@ -167,7 +170,10 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectOpenError: If opening fails for any reason
 
         """
-        return self._opener.open_vehicle_directory(vehicle_dir)
+        result = self._opener.open_vehicle_directory(vehicle_dir)
+        # update history whenever a directory is opened successfully
+        self.store_recently_used_vehicle_dir(result)
+        return result
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str) -> str:
         """
@@ -183,7 +189,10 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectOpenError: If opening fails for any reason
 
         """
-        return self._opener.open_last_vehicle_directory(last_vehicle_dir)
+        result = self._opener.open_last_vehicle_directory(last_vehicle_dir)
+        # update history whenever a directory is opened successfully
+        self.store_recently_used_vehicle_dir(result)
+        return result
 
     # Filesystem state management
     def get_vehicle_directory(self) -> str:
