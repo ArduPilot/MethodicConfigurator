@@ -167,7 +167,10 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectOpenError: If opening fails for any reason
 
         """
-        return self._opener.open_vehicle_directory(vehicle_dir)
+        result = self._opener.open_vehicle_directory(vehicle_dir)
+        # update history whenever a directory is opened successfully
+        self.store_recently_used_vehicle_dir(result)
+        return result
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str) -> str:
         """
@@ -183,7 +186,9 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectOpenError: If opening fails for any reason
 
         """
-        return self._opener.open_last_vehicle_directory(last_vehicle_dir)
+        result = self._opener.open_last_vehicle_directory(last_vehicle_dir)
+        self.store_recently_used_vehicle_dir(result)
+        return result
 
     # Filesystem state management
     def get_vehicle_directory(self) -> str:

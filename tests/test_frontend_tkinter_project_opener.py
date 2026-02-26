@@ -177,6 +177,47 @@ class TestVehicleProjectOpenerWindow:
         window.project_manager.open_last_vehicle_directory.assert_called_once_with(last_vehicle_dir)
         window.root.destroy.assert_called_once()
 
+    def test_view_does_not_update_history_directly_when_opening_last(self, configured_opener_window) -> None:
+        """
+        The frontend should not store the directory history itself; that belongs to the business logic layer.
+
+        GIVEN: A project opener window with a mock manager
+        WHEN: open_last_vehicle_directory is invoked
+        THEN: The window calls the manager only and does not touch the history API
+        """
+        window = configured_opener_window
+        last_vehicle_dir = "/path/to/last/vehicle"
+
+        # Patch manager methods so we can observe direct calls from the view
+        window.project_manager.open_last_vehicle_directory = MagicMock()
+        window.project_manager.store_recently_used_vehicle_dir = MagicMock()
+
+        # Act
+        window.open_last_vehicle_directory(last_vehicle_dir)
+
+        # Assert: view delegates to manager and does not touch history API directly
+        window.project_manager.open_last_vehicle_directory.assert_called_once_with(last_vehicle_dir)
+        window.project_manager.store_recently_used_vehicle_dir.assert_not_called()
+
+    def test_view_does_not_update_history_directly_when_opening_manual(self, configured_opener_window) -> None:
+        """
+        Do not update history directly from the view when user selects a directory manually.
+
+        When the user picks an arbitrary existing vehicle directory through the selection widgets
+        the window should not update the history the manager is responsible for that.
+        """
+        window = configured_opener_window
+        test_dir = "/some/user/selected/vehicle"
+
+        window.project_manager.store_recently_used_vehicle_dir = MagicMock()
+
+        # Act: simulate the callback path the selection widgets use on the window
+        window.open_vehicle_directory(test_dir)
+
+        # Assert: manager is called and view code doesn't call store directly
+        window.project_manager.open_vehicle_directory.assert_called_once_with(test_dir)
+        window.project_manager.store_recently_used_vehicle_dir.assert_not_called()
+
     def test_user_sees_error_when_last_vehicle_directory_fails_to_open(
         self, configured_opener_window, mock_messagebox
     ) -> None:
