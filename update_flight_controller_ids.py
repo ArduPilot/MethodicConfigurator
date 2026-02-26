@@ -47,7 +47,7 @@ init_file_path = os.path.join(scripts_path, "__init__.py")
 # Check if the __init__.py file exists
 if not os.path.exists(init_file_path):
     # Create the __init__.py file
-    with open(init_file_path, "w", encoding="utf-8") as init_file:
+    with open(init_file_path, "w", encoding="utf-8", newline="\n") as init_file:
         init_file.write("# This __init__.py was created automatically\n")
     logging.info("Created __init__.py at: %s", init_file_path)
 else:

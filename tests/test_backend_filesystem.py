@@ -530,7 +530,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         expected_path = os_path.join("vehicle_dir", "last_uploaded_filename.txt")
         with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
             lfs.write_last_uploaded_filename(test_filename)
-            mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8")
+            mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8", newline="\n")
             mock_file().write.assert_called_once_with(test_filename)
 
         # Test reading

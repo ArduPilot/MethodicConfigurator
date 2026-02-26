@@ -211,20 +211,20 @@ def main() -> None:
 def output_urls(visited_urls: set[str], broken_urls: set[str], start_time: float) -> None:
     # Write all html URLs to file
     raw_pages = len(visited_urls)
-    with open("gurubase.io_url_list_raw.txt", "w", encoding="utf-8") as f:
+    with open("gurubase.io_url_list_raw.txt", "w", encoding="utf-8", newline="\n") as f:
         f.writelines(f"{url}\n" for url in sorted(visited_urls))  # Output to file
 
     visited_urls -= set(URL_BLACKLIST)
     dedup_urls = remove_duplicates(visited_urls)
 
     # Write de-duplicated URLs to file and terminal
-    with open("gurubase.io_url_list.txt", "w", encoding="utf-8") as f:
+    with open("gurubase.io_url_list.txt", "w", encoding="utf-8", newline="\n") as f:
         for url in sorted(dedup_urls):
             print(url)  # Output to terminal # noqa: T201
             f.write(f"{url}\n")  # Output to file
 
     # Write broken URLs to file
-    with open("gurubase.io_broken_urls_list.txt", "w", encoding="utf-8") as f:
+    with open("gurubase.io_broken_urls_list.txt", "w", encoding="utf-8", newline="\n") as f:
         for url in sorted(broken_urls):
             f.write(f"{url}\n")
 
