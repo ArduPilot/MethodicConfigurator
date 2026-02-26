@@ -305,12 +305,12 @@ To calibrate the `BATT_VOLT_MULT` voltage multiplier parameter, note the reporte
 measure the actual battery voltage with a multimeter.
 `New BATT_VOLT_MULT` = (`old BATT_VOLT_MULT` x `Multimeter reading`) / `Reported voltage`
 
-To set the `BATT_AMP_PERVLT` parameter value, fly a fully charged battery and from the flight log note the consumed mAh.
+To set the `BATT_AMP_PERVLT` parameter value, fly a fully charged battery and from the flight log note the consumed mAh (BAT[0].CurrTot).
 Then re-charge the battery and note the charged mAh (you need to have a battery charger that displays this information).
 Then calculate a new `BATT_AMP_PERVLT` value by:
 `New BATT_AMP_PERVLT` = (`old BATT_AMP_PERVLT` x `charged mAh`) / `Flight logged mAh`
 
-Your vehicle is not ready to fly yet so you might need to come back to this step later and adjust the `BATT_AMP_PERVLT` parameter.
+Your vehicle is not ready to fly yet, so you will need to come back to this step later to perform the `BATT_AMP_PERVLT` calibration.
 
 ## 6.6 Configure the redundant (secondary) battery monitor (optional)
 
