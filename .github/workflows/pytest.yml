@@ -83,7 +83,7 @@ jobs:
             echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, no custom paths needed"
           fi
 
-      - name: Install system dependencies for GUI testing on windows
+      - name: Install system dependencies for GUI testing on Windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |

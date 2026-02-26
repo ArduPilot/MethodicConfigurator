@@ -666,7 +666,7 @@ class TestVehicleComponents:
 
         # Verify file was opened correctly
         expected_path = os.path.join("/templates", "user_vehicle_components_template.json")
-        mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8")
+        mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8", newline="\n")
 
         # Verify JSON was dumped with is_user_modified flag removed
         expected_save = {"Component1": [{"name": "Test Template", "data": {"param": "value"}}]}

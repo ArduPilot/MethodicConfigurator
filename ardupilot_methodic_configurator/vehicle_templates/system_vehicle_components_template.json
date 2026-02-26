@@ -143,6 +143,22 @@
                 },
                 "Notes": ""
             }
+        },
+        {
+            "name": "FrSky Taranis Q X7 OpenTx",
+            "data": {
+                "Product": {
+                    "Manufacturer": "FrSky",
+                    "Model": "Taranis Q X7",
+                    "Version": "EU LBT",
+                    "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/"
+                },
+                "Firmware": {
+                    "Type": "OpenTx",
+                    "Version": "2.3.15-otx"
+                },
+                "Notes": ""
+            }
         }
     ],
     "RC Transmitter": [
@@ -286,6 +302,22 @@
                 "Firmware": {
                     "Type": "Android",
                     "Version": "7.1.2"
+                },
+                "Notes": ""
+            }
+        },
+        {
+            "name": "RFDesign RFD-TXMOD",
+            "data": {
+                "Product": {
+                    "Manufacturer": "RFDesign",
+                    "Model": "RFD-TXMOD",
+                    "Version": "2.0",
+                    "URL": "https://rfdesign.com.au/communications/"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
                 },
                 "Notes": ""
             }
@@ -531,6 +563,26 @@
                 },
                 "Notes": ""
             }
+        },
+        {
+            "name": "RFDesign RFD868x",
+            "data": {
+                "Product": {
+                    "Manufacturer": "RFDesign",
+                    "Model": "RFD868x",
+                    "Version": "EU",
+                    "URL": "https://rfdesign.com.au/modems/#RFD868x"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "RCin/SBUS",
+                    "Protocol": "SBUS"
+                },
+                "Notes": ""
+            }
         }
     ],
     "Telemetry": [
@@ -662,6 +714,26 @@
                     "Model": "Herelink Airunit and controller",
                     "Version": "",
                     "URL": "https://docs.cubepilot.org/user-guides/herelink/herelink-overview"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC Connection": {
+                    "Type": "SERIAL1",
+                    "Protocol": "MAVLink2"
+                },
+                "Notes": ""
+            }
+        },
+        {
+            "name": "RFDesign RFD868x",
+            "data": {
+                "Product": {
+                    "Manufacturer": "RFDesign",
+                    "Model": "RFD868x",
+                    "Version": "EU",
+                    "URL": "https://rfdesign.com.au/modems/#RFD868x"
                 },
                 "Firmware": {
                     "Type": "",
@@ -895,7 +967,7 @@
                     "Type": "Main Out",
                     "Protocol": "Normal"
                 },
-                "Notes": "18-65V, Fixed throttle pulse width: 1050-1950µs"
+                "Notes": "18-65V, Fixed throttle pulse width: 1050-1950\u00b5s"
             }
         },
         {
@@ -915,7 +987,7 @@
                     "Type": "Main Out",
                     "Protocol": "Normal"
                 },
-                "Notes": "max 61V, Fixed throttle pulse width: 1050-1950µs"
+                "Notes": "max 61V, Fixed throttle pulse width: 1050-1950\u00b5s"
             }
         },
         {
@@ -1274,6 +1346,21 @@
                 },
                 "Notes": "22N24P"
             }
+        },
+        {
+            "name": "T-Motor AIR 2213",
+            "data": {
+                "Product": {
+                    "Manufacturer": "T-Motor",
+                    "Model": "AIR 2213",
+                    "Version": "KV920",
+                    "URL": "https://store.tmotor.com/de/product/air-gear-350-combo-set.html"
+                },
+                "Specifications": {
+                    "Poles": 14
+                },
+                "Notes": ""
+            }
         }
     ],
     "Propellers": [
@@ -1425,6 +1512,21 @@
                     "Diameter_inches": 15.0
                 },
                 "Notes": "15x5.2inch"
+            }
+        },
+        {
+            "name": "T-Motor T9545",
+            "data": {
+                "Product": {
+                    "Manufacturer": "T-Motor",
+                    "Model": "T9545",
+                    "Version": "",
+                    "URL": "https://store.tmotor.com/de/product/air-gear-350-combo-set.html"
+                },
+                "Specifications": {
+                    "Diameter_inches": 9.5
+                },
+                "Notes": ""
             }
         }
     ],

@@ -321,7 +321,7 @@ This speeds up the development process.
 ### System testing
 
 Here the integrated application was tested against the system requirements defined above.
-The tests were conducted on windows and Linux machines using multiple different flight controllers and firmware versions.
+The tests were conducted on Windows and Linux machines using multiple different flight controllers and firmware versions.
 The software is automatically build and distributed using the github CD pipeline.
 
 ### Acceptance testing

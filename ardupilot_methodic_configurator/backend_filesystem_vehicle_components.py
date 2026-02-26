@@ -249,7 +249,7 @@ class VehicleComponents:
         normalized_filepath = filepath.replace("\\", "/")
 
         try:
-            with open(filepath, "w", encoding="utf-8") as file:
+            with open(filepath, "w", encoding="utf-8", newline="\n") as file:  # use Linux line endings even on Windows
                 json_dump(templates_to_save, file, indent=4)
             return False, normalized_filepath  # Success, return the filepath
         except FileNotFoundError:
