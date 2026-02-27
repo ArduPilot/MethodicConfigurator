@@ -803,7 +803,6 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         search_var: tk.StringVar = tk.StringVar()
         search_entry: ttk.Entry = ttk.Entry(window.main_frame, textvariable=search_var)
         search_entry.pack(fill="x", padx=10)
-        search_entry.focus()
         show_tooltip(
             search_entry,
             _(
@@ -980,6 +979,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         refresh_list()
         self._center_and_focus_window(add_parameter_window.root)
+
+        # Ensure focus ends up on the search_entry, not just the window
+        add_parameter_window.root.after(0, search_entry.focus_set)
 
     def _center_and_focus_window(self, window: Union[tk.Toplevel, tk.Tk]) -> None:
         BaseWindow.center_window(window, self._get_parent_toplevel())
