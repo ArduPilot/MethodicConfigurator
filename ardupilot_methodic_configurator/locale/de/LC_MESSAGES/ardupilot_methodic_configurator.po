@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-02-23 00:05+0000\n"
+"POT-Creation-Date: 2026-02-27 14:40+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -243,56 +243,56 @@ msgstr "Fehler beim Entfernen erstellter Dateien: {_e}"
 msgid "Error removing created files:"
 msgstr "Fehler beim Entfernen erstellter Dateien:"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:702
+#: ardupilot_methodic_configurator/backend_filesystem.py:704
 msgid "Error writing last uploaded filename: %s"
 msgstr "Fehler beim Schreiben des zuletzt hochgeladenen Dateinamens: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:709
+#: ardupilot_methodic_configurator/backend_filesystem.py:711
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "letzter_hochgeladener_dateiname.txt nicht gefunden: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:711
+#: ardupilot_methodic_configurator/backend_filesystem.py:713
 msgid "Error reading last uploaded filename: %s"
 msgstr "Fehler beim Lesen des zuletzt hochgeladenen Dateinamens: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:727
+#: ardupilot_methodic_configurator/backend_filesystem.py:729
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 "Der Startdateiindex %s liegt außerhalb des Bereichs. Beginnen mit Datei %s "
 "stattdessen."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:735
+#: ardupilot_methodic_configurator/backend_filesystem.py:737
 msgid "Starting with the first file."
 msgstr "Beginne mit der ersten Datei."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:738
+#: ardupilot_methodic_configurator/backend_filesystem.py:740
 msgid "Starting with the first non-tcal file."
 msgstr "Beginne mit der ersten Nicht-TCAL-Datei."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:742
+#: ardupilot_methodic_configurator/backend_filesystem.py:744
 msgid "Last uploaded file was %s."
 msgstr "Die letzte hochgeladene Datei war %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:744
+#: ardupilot_methodic_configurator/backend_filesystem.py:746
 msgid "No last uploaded file found. %s."
 msgstr "Keine letzte hochgeladene Datei gefunden. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:749
+#: ardupilot_methodic_configurator/backend_filesystem.py:751
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "Letzte hochgeladene Datei nicht in der Liste der Dateien gefunden. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:758
+#: ardupilot_methodic_configurator/backend_filesystem.py:760
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr ""
 "Die zuletzt hochgeladene Datei ist die letzte Datei in der Liste. Starte vom "
 "Anfang."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:938
+#: ardupilot_methodic_configurator/backend_filesystem.py:940
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "Der Typ des Fahrzeugs. Standard ist ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:944
+#: ardupilot_methodic_configurator/backend_filesystem.py:946
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -300,7 +300,7 @@ msgstr ""
 "Verzeichnis mit fahrzeugspezifischen Zwischenparameterdateien. Standard ist "
 "das aktuelle Arbeitsverzeichnis"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:952
+#: ardupilot_methodic_configurator/backend_filesystem.py:954
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -312,7 +312,7 @@ msgstr ""
 "Sie in den Flugcontroller geschrieben haben. Wenn die Datei nicht existiert, "
 "wird mit der ersten Datei begonnen."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:961
+#: ardupilot_methodic_configurator/backend_filesystem.py:963
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -320,7 +320,7 @@ msgstr ""
 "Erlaubt das direkte Öffnen und Bearbeiten von Vorlagendateien. Nur für "
 "Softwareentwickler, die wissen, was sie tun. Standard ist %(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:970
+#: ardupilot_methodic_configurator/backend_filesystem.py:972
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -3674,12 +3674,12 @@ msgid "Update file with values from FC?"
 msgstr "Update-Datei mit Werten vom FC?"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:264
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:269
 msgid "Yes"
 msgstr "Ja"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:267
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:272
 msgid "No"
 msgstr "Nein"
 
@@ -4935,40 +4935,40 @@ msgstr ""
 msgid "No param_file combobox element selected"
 msgstr "Kein param_file Kombobox-Element ausgewählt"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:56
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:57
 msgid "Error while checking debugpy connection: %s"
 msgstr "Fehler beim Überprüfen der debugpy-Verbindung: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:147
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:148
 msgid "Could not load application icon: %s"
 msgstr "Anwendungssymbol konnte nicht geladen werden: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:420
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:424
 msgid "Image filepath cannot be empty"
 msgstr "Bilddateipfad darf nicht leer sein"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:424
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:428
 msgid "Image height must be positive"
 msgstr "Bildhöhe muss positiv sein"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:429
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:433
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:372
 msgid "Image file not found: %s"
 msgstr "Bilddatei nicht gefunden: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:435
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:439
 msgid "Failed to load image from %s"
 msgstr "Fehler beim Laden des Bildes von %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:441
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:445
 msgid "Image has zero height"
 msgstr "Bild hat Höhe Null"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:444
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:448
 msgid "Image has zero width"
 msgstr "Bild hat Breite null"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:487
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:491
 msgid "Error loading image from %s: %s"
 msgstr "Fehler beim Laden des Bildes von %s: %s"
 
@@ -5327,18 +5327,11 @@ msgstr "Baudrate-Auswahlfeld geändert zu: {_selected_baudrate}"
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
 "\n"
-"COM4 (on windows)\n"
+"COM4 (on Windows)\n"
 "/dev/serial/by-id/usb-xxx (on Linux)\n"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
-msgstr ""
-"Geben Sie die Verbindungszeichenfolge zum Flugcontroller ein. Beispiele "
-"sind:\n"
-"\n"
-"COM4 (unter Windows)\n"
-"/dev/serial/by-id/usb-xxx (unter Linux)\n"
-"tcp:127.0.0.1:5761\n"
-"udp:127.0.0.1:14551"
+msgstr "Geben Sie den Verbindungsstring zum Flugcontroller ein. Beispiele sind:\n\nCOM4 (unter Windows)\n/dev/serial/by-id/usb-xxx (unter Linux)\ntcp:127.0.0.1:5761\nudp:127.0.0.1:14551"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:165
 msgid "Will add new connection: {selected_connection} if not duplicated"
@@ -6791,7 +6784,9 @@ msgstr "Ausgewähltes Fahrzeugkonfigurationsverzeichnis öffnen"
 msgid ""
 "Open the selected vehicle configuration directory for configuring and tuning "
 "the vehicle"
-msgstr "Das ausgewählte Fahrzeugkonfigurationsverzeichnis zum Konfigurieren und Abstimmen des Fahrzeugs öffnen"
+msgstr ""
+"Das ausgewählte Fahrzeugkonfigurationsverzeichnis zum Konfigurieren und "
+"Abstimmen des Fahrzeugs öffnen"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:180
 msgid "No Directory Selected"
@@ -6799,7 +6794,8 @@ msgstr "Kein Verzeichnis ausgewählt"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:180
 msgid "Please select a vehicle configuration directory from the list."
-msgstr "Bitte wählen Sie ein Fahrzeugkonfigurationsverzeichnis aus der Liste aus."
+msgstr ""
+"Bitte wählen Sie ein Fahrzeugkonfigurationsverzeichnis aus der Liste aus."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:188
 msgid "Directory Not Found"
@@ -6812,7 +6808,12 @@ msgid ""
 "{}\n"
 "\n"
 "It may have been moved or deleted."
-msgstr "Das ausgewählte Verzeichnis existiert nicht mehr:\n\n{}\n\nEs wurde möglicherweise verschoben oder gelöscht."
+msgstr ""
+"Das ausgewählte Verzeichnis existiert nicht mehr:\n"
+"\n"
+"{}\n"
+"\n"
+"Es wurde möglicherweise verschoben oder gelöscht."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:197
 msgid "Invalid Directory"
@@ -6823,7 +6824,10 @@ msgid ""
 "The selected path is not a directory:\n"
 "\n"
 "{}"
-msgstr "Der ausgewählte Pfad ist kein Verzeichnis:\n\n{}"
+msgstr ""
+"Der ausgewählte Pfad ist kein Verzeichnis:\n"
+"\n"
+"{}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:203
 msgid "Permission Denied"
@@ -6836,7 +6840,12 @@ msgid ""
 "{}\n"
 "\n"
 "Please check your file system permissions."
-msgstr "Sie haben keine Berechtigung, auf das ausgewählte Verzeichnis zuzugreifen:\n\n{}\n\nBitte überprüfen Sie Ihre Dateisystemberechtigungen."
+msgstr ""
+"Sie haben keine Berechtigung, auf das ausgewählte Verzeichnis zuzugreifen:\n"
+"\n"
+"{}\n"
+"\n"
+"Bitte überprüfen Sie Ihre Dateisystemberechtigungen."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:212
 msgid "File System Error"
@@ -6849,7 +6858,12 @@ msgid ""
 "{}\n"
 "\n"
 "Error: {}"
-msgstr "Beim Zugriff auf das Verzeichnis ist ein Fehler aufgetreten:\n\n{}\n\nFehler: {}"
+msgstr ""
+"Beim Zugriff auf das Verzeichnis ist ein Fehler aufgetreten:\n"
+"\n"
+"{}\n"
+"\n"
+"Fehler: {}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:245
 msgid ""
@@ -7021,11 +7035,11 @@ msgstr ""
 "Konfigurationsprozess zu vereinfachen. Die ausgewählte Vorlage dient als "
 "Ausgangspunkt für eine detailliertere Parameterkonfiguration."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:74
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:79
 msgid "Show this usage popup again"
 msgstr "Dieses Nutzungspopup erneut anzeigen"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:173
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:178
 msgid "I understand this"
 msgstr "Ich verstehe das"
 
@@ -7626,6 +7640,22 @@ msgstr "Version oder Revision der Hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Weblink zur Produktseite oder Dokumentation"
+
+#~ msgid ""
+#~ "Enter the connection string to the flight controller. Examples are:\n"
+#~ "\n"
+#~ "COM4 (on windows)\n"
+#~ "/dev/serial/by-id/usb-xxx (on Linux)\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551"
+#~ msgstr ""
+#~ "Geben Sie die Verbindungszeichenfolge zum Flugcontroller ein. Beispiele "
+#~ "sind:\n"
+#~ "\n"
+#~ "COM4 (unter Windows)\n"
+#~ "/dev/serial/by-id/usb-xxx (unter Linux)\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551"
 
 #~ msgid "Last used vehicle configuration directory:"
 #~ msgstr "Zuletzt verwendetes Fahrzeugkonfigurationsverzeichnis:"
