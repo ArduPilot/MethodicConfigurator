@@ -26,6 +26,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 
 # pylint: disable=redefined-outer-name
 
+_IS_MACOS_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window._is_macos"
+
 
 @pytest.fixture
 def popup_window(tk_root) -> BaseWindow:
@@ -145,6 +147,7 @@ class TestPopupWindowBase:
         """
         # Arrange: Mock window methods
         with (
+            patch(_IS_MACOS_PATH, return_value=False),
             patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
@@ -173,6 +176,10 @@ class TestUsagePopupWindow:
         with (
             patch("tkinter.BooleanVar") as mock_bool_var,
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "focus_force"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -220,6 +227,10 @@ class TestUsagePopupWindow:
         with (
             patch("tkinter.BooleanVar"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "focus_force"),
         ):
             UsagePopupWindow.display(
                 parent=tk_root,
@@ -253,9 +264,13 @@ class TestUsagePopupWindow:
         """
         # Mock grab_set and other methods
         with (
+            patch(_IS_MACOS_PATH, return_value=False),
             patch.object(popup_window.root, "grab_set") as mock_grab_set,
             patch.object(popup_window.root, "withdraw"),
             patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "focus_force"),
             patch("tkinter.BooleanVar"),
         ):
             UsagePopupWindow.display(
@@ -268,14 +283,7 @@ class TestUsagePopupWindow:
             )
 
             # Assert: Popup becomes modal to focus user attention
-            is_macos = popup_window.root.tk.call("tk", "windowingsystem") == "aqua"
-
-            if not is_macos:
-                # On Windows/Linux, it should become modal
-                mock_grab_set.assert_called_once()
-            else:
-                # On macOS, it should skip the grab to prevent UI freeze
-                mock_grab_set.assert_not_called()
+            mock_grab_set.assert_called_once()
 
     def test_closing_popup_returns_focus_to_parent_window(self, tk_root, popup_window) -> None:
         """
@@ -287,6 +295,7 @@ class TestUsagePopupWindow:
         """
         # Mock window methods
         with (
+            patch(_IS_MACOS_PATH, return_value=False),
             patch.object(popup_window.root, "grab_release") as mock_grab_release,
             patch.object(popup_window.root, "destroy") as mock_destroy,
             patch.object(tk_root, "focus_set") as mock_focus,
@@ -322,6 +331,10 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "focus_force"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -369,6 +382,10 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window"),
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "focus_force"),
         ):
             mock_var_instance = MagicMock()
             mock_bool_var.return_value = mock_var_instance
@@ -406,6 +423,10 @@ class TestConfirmationPopupWindow:
             patch.object(tk_root, "wait_window") as mock_wait,
             patch.object(PopupWindow, "close"),
             patch.object(popup_window.root, "grab_set"),
+            patch.object(popup_window.root, "deiconify"),
+            patch.object(popup_window.root, "lift"),
+            patch.object(popup_window.root, "update"),
+            patch.object(popup_window.root, "focus_force"),
         ):
             # Simulate window closing without button click
             mock_wait.return_value = None
@@ -452,10 +473,10 @@ def test_finalize_setup_popupwindow_handles_destroyed_tk() -> None:
 
     # deiconify was attempted
     fake.root.deiconify.assert_called_once()
-    # attributes/grab_set/protocol should not be called because deiconify failed
+    assert not fake.root.attributes.called
+    fake.root.deiconify.assert_called_once()
     assert not fake.root.attributes.called
     assert not fake.root.grab_set.called
-    fake.root.protocol.assert_called_once()
 
 
 if __name__ == "__main__":

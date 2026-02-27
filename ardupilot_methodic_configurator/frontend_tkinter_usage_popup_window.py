@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import tkinter as tk
+from sys import platform as sys_platform
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
@@ -22,6 +23,11 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText
+
+
+def _is_macos() -> bool:
+    """Return True if the current platform is macOS."""
+    return sys_platform == "darwin"
 
 
 class PopupWindow:
@@ -84,11 +90,8 @@ class PopupWindow:
         close_callback: Callable[[], None],
     ) -> None:
         """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
-        # Detect macOS by windowing system rather than sys.platform
-        is_macos = popup_window.root.tk.call("tk", "windowingsystem") == "aqua"
-
         # Only set transient on non-macOS
-        if parent and not is_macos:
+        if parent and not _is_macos():
             popup_window.root.transient(parent)
 
         # Resize window height to ensure all widgets are fully visible
@@ -105,8 +108,6 @@ class PopupWindow:
         # For parent-less, center on screen
 
         try:
-            # Bind close handler immediately so it is set even if later calls fail
-            popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
             # Show the window now that it's positioned. Calls may fail if the
             # main application has been destroyed (for example during shutdown)
             # — guard against tk.TclError so the caller doesn't crash the app.
@@ -117,28 +118,34 @@ class PopupWindow:
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus
-            if not is_macos:
-                popup_window.root.wait_visibility()
+            if not _is_macos():
                 popup_window.root.grab_set()  # Make the popup modal
+
+            popup_window.root.protocol("WM_DELETE_WINDOW", close_callback)
         except tk.TclError:
-            # Application has been destroyed or the underlying
-            # Tk root is no longer available, there's nothing more to do.
+            # Application / interpreter has been destroyed or the underlying
+            # Tk root is no longer available; there's nothing more to do.
             pass
 
     @staticmethod
     def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
         """Close the popup window and re-enable the parent window."""
-        with contextlib.suppress(tk.TclError):
-            popup_window.root.grab_release()
+        if not _is_macos():
+            with contextlib.suppress(tk.TclError):
+                popup_window.root.grab_release()
 
         # Destroy the window safely
-        with contextlib.suppress(tk.TclError):
+        try:  # noqa: SIM105
             popup_window.root.destroy()
+        except tk.TclError:
+            pass
 
         if parent:
-            with contextlib.suppress(tk.TclError):
+            try:
                 parent.focus_set()
                 parent.lift()
+            except tk.TclError:
+                pass
 
 
 class UsagePopupWindow(PopupWindow):
