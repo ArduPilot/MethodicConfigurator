@@ -691,7 +691,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 if self.ftp_settings.debug > 0:
                     logging.info("FTP: burst continue at %u %u", more.offset, self.fh.tell())
                 self.__send(more)
-        elif op.opcode == OP_Nack:
+            return MAVFTPReturn("BurstReadFile", ERR_None)
+        if op.opcode == OP_Nack:
             ecode = op.payload[0]
             if ecode in {ERR_EndOfFile, 0}:
                 if not self.reached_eof and op.offset > self.fh.tell():
@@ -707,12 +708,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 if self.__check_read_finished():
                     return MAVFTPReturn("BurstReadFile", ERR_None)
                 self.__check_read_send()
-            elif self.ftp_settings.debug > 0:
-                logging.info("FTP: burst Nack (ecode:%u): %s", ecode, op)
-                return MAVFTPReturn("BurstReadFile", ERR_Fail)
             if self.ftp_settings.debug > 0:
-                logging.error("FTP: burst nack: %s", op)
-                return MAVFTPReturn("BurstReadFile", ERR_Fail)
+                logging.info("FTP: burst Nack (ecode:%u): %s", ecode, op)
         else:
             logging.warning("FTP: burst error: %s", op)
         return MAVFTPReturn("BurstReadFile", ERR_Fail)
