@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-02-23 00:05+0000\n"
+"POT-Creation-Date: 2026-02-27 14:40+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -229,58 +229,58 @@ msgstr "删除创建的文件时出错: {_e}"
 msgid "Error removing created files:"
 msgstr "删除创建的文件时出错:"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:702
+#: ardupilot_methodic_configurator/backend_filesystem.py:704
 msgid "Error writing last uploaded filename: %s"
 msgstr "写入上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:709
+#: ardupilot_methodic_configurator/backend_filesystem.py:711
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "未找到 last_uploaded_filename.txt: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:711
+#: ardupilot_methodic_configurator/backend_filesystem.py:713
 msgid "Error reading last uploaded filename: %s"
 msgstr "读取上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:727
+#: ardupilot_methodic_configurator/backend_filesystem.py:729
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr "起始文件索引 %s 超出范围。改为从文件 %s 开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:735
+#: ardupilot_methodic_configurator/backend_filesystem.py:737
 msgid "Starting with the first file."
 msgstr "从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:738
+#: ardupilot_methodic_configurator/backend_filesystem.py:740
 msgid "Starting with the first non-tcal file."
 msgstr "从第一个非温度校准文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:742
+#: ardupilot_methodic_configurator/backend_filesystem.py:744
 msgid "Last uploaded file was %s."
 msgstr "最后上传的文件是 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:744
+#: ardupilot_methodic_configurator/backend_filesystem.py:746
 msgid "No last uploaded file found. %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:749
+#: ardupilot_methodic_configurator/backend_filesystem.py:751
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:758
+#: ardupilot_methodic_configurator/backend_filesystem.py:760
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr "最后上传的文件是列表中的最后一个文件。从头开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:938
+#: ardupilot_methodic_configurator/backend_filesystem.py:940
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "飞行器类型。默认为ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:944
+#: ardupilot_methodic_configurator/backend_filesystem.py:946
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
 msgstr "包含飞行器特定中间参数文件的目录。默认为当前工作目录"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:952
+#: ardupilot_methodic_configurator/backend_filesystem.py:954
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -290,7 +290,7 @@ msgstr ""
 "直接从第n个中间参数文件开始（跳过之前的文件）。默认从上次写入飞控的文件之后开"
 "始。如果文件不存在，将从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:961
+#: ardupilot_methodic_configurator/backend_filesystem.py:963
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -298,7 +298,7 @@ msgstr ""
 "允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认"
 "为%(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:970
+#: ardupilot_methodic_configurator/backend_filesystem.py:972
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -3335,12 +3335,12 @@ msgid "Update file with values from FC?"
 msgstr "将飞控的值更新到文件中吗？"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:264
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:269
 msgid "Yes"
 msgstr "是"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:267
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:272
 msgid "No"
 msgstr "否"
 
@@ -4512,40 +4512,40 @@ msgstr "参数文件 combobox 选择的字符串 '%s' 不在列表 %s 中"
 msgid "No param_file combobox element selected"
 msgstr "没有选中参数文件中的 combobox 元素"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:56
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:57
 msgid "Error while checking debugpy connection: %s"
 msgstr "检查debugpy连接时出错：%s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:147
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:148
 msgid "Could not load application icon: %s"
 msgstr "无法加载应用程序图标: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:420
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:424
 msgid "Image filepath cannot be empty"
 msgstr "图像文件路径不能为空"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:424
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:428
 msgid "Image height must be positive"
 msgstr "图像高度必须为正值"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:429
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:433
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:372
 msgid "Image file not found: %s"
 msgstr "找不到图像文件: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:435
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:439
 msgid "Failed to load image from %s"
 msgstr "无法从 %s 加载图像"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:441
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:445
 msgid "Image has zero height"
 msgstr "图像高度为零"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:444
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:448
 msgid "Image has zero width"
 msgstr "图像宽度为零"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:487
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:491
 msgid "Error loading image from %s: %s"
 msgstr "从 %s 加载图像时出错: %s"
 
@@ -4884,22 +4884,11 @@ msgstr "波特率下拉框已更改为：{_selected_baudrate}"
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
 "\n"
-"COM4 (on windows)\n"
+"COM4 (on Windows)\n"
 "/dev/serial/by-id/usb-xxx (on Linux)\n"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
-msgstr ""
-"輸入飛行控制器的連接字符串。示例如下：\n"
-"\n"
-"COM4（在 Windows 上）\n"
-"/dev/serial/by-id/usb-xxx（在 Linux 上）\n"
-"tcp:127.0.0.1:5761\n"
-"udp:127.0.0.1:14551输入飞行控制器的连接字符串。示例有：\n"
-"\n"
-"COM4 (在 Windows 上)\n"
-"/dev/serial/by-id/usb-xxx (在 Linux 上)\n"
-"tcp:127.0.0.1:5761\n"
-"udp:127.0.0.1:14551"
+msgstr "请输入飞行控制器的连接字符串。示例：\n\nCOM4（在 Windows 上）\n/dev/serial/by-id/usb-xxx（在 Linux 上）\ntcp:127.0.0.1:5761\nudp:127.0.0.1:14551"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:165
 msgid "Will add new connection: {selected_connection} if not duplicated"
@@ -6286,7 +6275,12 @@ msgid ""
 "{}\n"
 "\n"
 "It may have been moved or deleted."
-msgstr "所选目录已不存在：\n\n{}\n\n可能已被移动或删除。"
+msgstr ""
+"所选目录已不存在：\n"
+"\n"
+"{}\n"
+"\n"
+"可能已被移动或删除。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:197
 msgid "Invalid Directory"
@@ -6297,7 +6291,10 @@ msgid ""
 "The selected path is not a directory:\n"
 "\n"
 "{}"
-msgstr "所选路径不是一个目录：\n\n{}"
+msgstr ""
+"所选路径不是一个目录：\n"
+"\n"
+"{}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:203
 msgid "Permission Denied"
@@ -6310,7 +6307,12 @@ msgid ""
 "{}\n"
 "\n"
 "Please check your file system permissions."
-msgstr "您没有权限访问所选目录：\n\n{}\n\n请检查您的文件系统权限。"
+msgstr ""
+"您没有权限访问所选目录：\n"
+"\n"
+"{}\n"
+"\n"
+"请检查您的文件系统权限。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:212
 msgid "File System Error"
@@ -6323,7 +6325,12 @@ msgid ""
 "{}\n"
 "\n"
 "Error: {}"
-msgstr "访问目录时发生错误：\n\n{}\n\n错误：{}"
+msgstr ""
+"访问目录时发生错误：\n"
+"\n"
+"{}\n"
+"\n"
+"错误：{}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:245
 msgid ""
@@ -6479,11 +6486,11 @@ msgstr ""
 "择一个与您的飞行器组件设置最相近的模板，以简化配置过程。所选模板将作为更详细"
 "参数配置的起点。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:74
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:79
 msgid "Show this usage popup again"
 msgstr "再次顯示此使用彈出窗口"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:173
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:178
 msgid "I understand this"
 msgstr "我明白了"
 
@@ -7061,6 +7068,26 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid ""
+#~ "Enter the connection string to the flight controller. Examples are:\n"
+#~ "\n"
+#~ "COM4 (on windows)\n"
+#~ "/dev/serial/by-id/usb-xxx (on Linux)\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551"
+#~ msgstr ""
+#~ "輸入飛行控制器的連接字符串。示例如下：\n"
+#~ "\n"
+#~ "COM4（在 Windows 上）\n"
+#~ "/dev/serial/by-id/usb-xxx（在 Linux 上）\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551输入飞行控制器的连接字符串。示例有：\n"
+#~ "\n"
+#~ "COM4 (在 Windows 上)\n"
+#~ "/dev/serial/by-id/usb-xxx (在 Linux 上)\n"
+#~ "tcp:127.0.0.1:5761\n"
+#~ "udp:127.0.0.1:14551"
 
 #~ msgid "Last used vehicle configuration directory:"
 #~ msgstr "上次使用的载具配置目录："

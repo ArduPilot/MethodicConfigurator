@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-02-23 00:05+0000\n"
+"POT-Creation-Date: 2026-02-27 14:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -193,63 +193,63 @@ msgstr ""
 msgid "Error removing created files:"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:702
+#: ardupilot_methodic_configurator/backend_filesystem.py:704
 msgid "Error writing last uploaded filename: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:709
+#: ardupilot_methodic_configurator/backend_filesystem.py:711
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:711
+#: ardupilot_methodic_configurator/backend_filesystem.py:713
 msgid "Error reading last uploaded filename: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:727
+#: ardupilot_methodic_configurator/backend_filesystem.py:729
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:735
+#: ardupilot_methodic_configurator/backend_filesystem.py:737
 msgid "Starting with the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:738
+#: ardupilot_methodic_configurator/backend_filesystem.py:740
 msgid "Starting with the first non-tcal file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:742
+#: ardupilot_methodic_configurator/backend_filesystem.py:744
 msgid "Last uploaded file was %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:744
+#: ardupilot_methodic_configurator/backend_filesystem.py:746
 msgid "No last uploaded file found. %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:749
+#: ardupilot_methodic_configurator/backend_filesystem.py:751
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:758
+#: ardupilot_methodic_configurator/backend_filesystem.py:760
 msgid "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:938
+#: ardupilot_methodic_configurator/backend_filesystem.py:940
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:944
+#: ardupilot_methodic_configurator/backend_filesystem.py:946
 msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:952
+#: ardupilot_methodic_configurator/backend_filesystem.py:954
 msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:961
+#: ardupilot_methodic_configurator/backend_filesystem.py:963
 msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:970
+#: ardupilot_methodic_configurator/backend_filesystem.py:972
 msgid "Save the vehicle component to the system templates. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
@@ -2936,12 +2936,12 @@ msgid "Update file with values from FC?"
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:264
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:269
 msgid "Yes"
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:339
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:267
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:272
 msgid "No"
 msgstr ""
 
@@ -3996,40 +3996,40 @@ msgstr ""
 msgid "No param_file combobox element selected"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:56
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:57
 msgid "Error while checking debugpy connection: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:147
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:148
 msgid "Could not load application icon: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:420
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:424
 msgid "Image filepath cannot be empty"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:424
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:428
 msgid "Image height must be positive"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:429
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:433
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:372
 msgid "Image file not found: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:435
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:439
 msgid "Failed to load image from %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:441
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:445
 msgid "Image has zero height"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:444
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:448
 msgid "Image has zero width"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:487
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:491
 msgid "Error loading image from %s: %s"
 msgstr ""
 
@@ -4369,7 +4369,7 @@ msgstr ""
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
 "\n"
-"COM4 (on windows)\n"
+"COM4 (on Windows)\n"
 "/dev/serial/by-id/usb-xxx (on Linux)\n"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
@@ -5844,11 +5844,11 @@ msgstr ""
 msgid "ArduPilot Template Overview - A component of the ArduPilot Methodic Configurator suite. This tool presents available vehicle templates in a user-friendly interface, allowing you to browse, compare, and select the most appropriate template for your vehicle configuration. Select a template that most closely resembles your vehicle's component setup to streamline the configuration process. The selected template will serve as a starting point for more detailed parameter configuration."
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:74
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:79
 msgid "Show this usage popup again"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:173
+#: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:178
 msgid "I understand this"
 msgstr ""
 
