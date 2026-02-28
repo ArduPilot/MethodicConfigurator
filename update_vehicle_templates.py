@@ -110,12 +110,12 @@ def process_template_directory(template_dir: Path) -> None:
         existing_fc_params = list(local_fs.param_default_dict.keys()) if local_fs.param_default_dict else []
 
         # Test parameter derivation (passing None means only forced/derived params are computed)
-        error = local_fs.update_and_export_vehicle_params_from_fc(
-            source_param_values=None, existing_fc_params=existing_fc_params
-        )
-        if error:
+        try:
+            local_fs.update_and_export_vehicle_params_from_fc(source_param_values=None, existing_fc_params=existing_fc_params)
+            local_fs.save_vehicle_params_to_files(list(local_fs.file_parameters))
+        except ValueError as e:
             logging.error("Error processing %s:", template_dir)
-            logging.error(error)
+            logging.error(str(e))
 
     except Exception as e:  # pylint: disable=broad-exception-caught
         logging.error("Failed to process %s:", template_dir)

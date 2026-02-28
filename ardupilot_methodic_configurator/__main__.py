@@ -51,7 +51,10 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connectio
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
-from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message
+from ardupilot_methodic_configurator.frontend_tkinter_show import (
+    ask_yesno_message,
+    show_error_message,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
@@ -513,15 +516,38 @@ def process_component_editor_results(
     elif local_filesystem.param_default_dict:
         existing_fc_params = list(local_filesystem.param_default_dict.keys())
 
-    # Update and export vehicle parameters
-    error_message = local_filesystem.update_and_export_vehicle_params_from_fc(
-        source_param_values=source_param_values, existing_fc_params=existing_fc_params
-    )
-
-    if error_message:
-        logging_error(error_message)
-        show_error_message(_("Error in derived parameters"), error_message)
+    # Update and export vehicle parameters (Safety ON: commit_derived_changes=False)
+    try:
+        pending_changes = local_filesystem.update_and_export_vehicle_params_from_fc(
+            source_param_values=source_param_values,
+            existing_fc_params=existing_fc_params,
+        )
+    except ValueError as e:
+        error_msg = str(e)
+        logging_error(error_msg)
+        show_error_message(_("Error in derived parameters"), error_msg)
         sys_exit(1)
+        return  # to make the tests work, even though sys_exit is mocked in the tests # pylint: disable=unreachable
+
+    # Check if there are pending changes that need user confirmation
+    if pending_changes:
+        msg = (
+            _("To ensure configuration consistency, the following parameter files require updates based on your changes:\n\n")
+            + f"{', '.join(pending_changes)}\n\n"
+            + _("The system has recalculated these derived values for safety.\n")
+            + _("Do you want to save these updates to disk now?")
+        )
+
+        if ask_yesno_message(_("Confirm Derived Changes"), msg):
+            # User confirmed: Save to disk
+            local_filesystem.save_vehicle_params_to_files(list(local_filesystem.file_parameters))
+        else:
+            # User declined: Revert in-memory changes from disk
+            logging_info(_("User declined derived parameter changes. Reverting to disk values."))
+            local_filesystem.file_parameters = local_filesystem.read_params_from_files()
+    else:
+        # No derived changes detected: save everything normally
+        local_filesystem.save_vehicle_params_to_files(list(local_filesystem.file_parameters))
 
 
 def write_parameter_defaults(state: ApplicationState) -> None:
