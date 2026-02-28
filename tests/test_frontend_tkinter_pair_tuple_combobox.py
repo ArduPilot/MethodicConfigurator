@@ -926,6 +926,44 @@ class TestPairTupleComboboxMissingCoverage:
                 # Then: Should return early (None) and not proceed with style modifications
                 mock_style.lookup.assert_called_once()
 
+    def test_get_entries_tuple(self) -> None:
+        """
+        Test get_entries_tuple returns the current list of key-value tuples.
+
+        GIVEN: A PairTupleCombobox with populated key-value pairs
+        WHEN: get_entries_tuple is called
+        THEN: It should return the correct list of tuples matching list_keys and list_shows
+        """
+        # Given: Create combobox with test data
+        combobox = PairTupleCombobox(self.root, self.test_data, "key1", "test_combo")
+
+        # When: Call get_entries_tuple
+        result = combobox.get_entries_tuple()
+
+        # Then: Result should match the original test_data
+        assert result == self.test_data
+        assert isinstance(result, list)
+        assert all(isinstance(item, tuple) for item in result)
+        assert all(len(item) == 2 for item in result)
+
+    def test_get_entries_tuple_empty(self) -> None:
+        """
+        Test get_entries_tuple with empty combobox.
+
+        GIVEN: A PairTupleCombobox with no items
+        WHEN: get_entries_tuple is called
+        THEN: It should return an empty list
+        """
+        # Given: Create combobox with no data
+        combobox = PairTupleCombobox(self.root, [], None, "test_combo")
+
+        # When: Call get_entries_tuple
+        result = combobox.get_entries_tuple()
+
+        # Then: Result should be an empty list
+        assert result == []
+        assert isinstance(result, list)
+
 
 if __name__ == "__main__":
     unittest.main()

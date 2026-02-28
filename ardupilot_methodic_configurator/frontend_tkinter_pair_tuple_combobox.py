@@ -172,6 +172,10 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         except IndexError:
             return None
 
+    def get_entries_tuple(self) -> list[tuple[str, str]]:
+        """Return the current list of key-value tuples."""
+        return list(zip(self.list_keys, self.list_shows))
+
     # SPDX-SnippetEnd
 
     def _on_key_up(self, _event: tk.Event) -> str:

@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
@@ -59,6 +60,8 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             else None
         )
         self.connection_progress_window: ProgressWindow
+        self._refresh_timer_id: Union[None, str] = None
+        self._is_refreshing = False
 
         # Create a new frame for the flight controller connection selection label and combobox
         self.container_frame = ttk.Frame(parent_frame)
@@ -113,6 +116,71 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             self.baudrate_combobox,
             _("Select the baudrate for the connection\nMost flight controllers use 115200"),
         )
+
+        # Start periodic port refresh
+        self.start_periodic_refresh()
+
+    def start_periodic_refresh(self) -> None:
+        """Start periodic refresh of available ports every 3 seconds."""
+        if self._refresh_timer_id is None:
+            self._refresh_ports()
+
+    def _refresh_ports(self) -> None:
+        """Refresh the list of available ports and update the combobox."""
+        # Prevent re-entrant calls
+        if self._is_refreshing:
+            logging_debug(_("Port refresh already in progress, skipping"))
+            return
+
+        self._is_refreshing = True
+        try:
+            logging_debug(_("Starting periodic port refresh"))
+            # Get the currently selected port (if any)
+            current_selection = self.conn_selection_combobox.get_selected_key()
+
+            # Discover available connections (without progress callback for background refresh)
+            self.flight_controller.discover_connections(progress_callback=None)
+
+            # Get the updated connection tuples
+            new_connection_tuples = self.flight_controller.get_connection_tuples()
+
+            # Only update the combobox if the list has changed
+            current_tuples = self.conn_selection_combobox.get_entries_tuple()
+            if new_connection_tuples != current_tuples:
+                logging_debug(_("Port list changed, updating UI"))
+                # Preserve the current selection if the port still exists
+                if current_selection in [t[0] for t in new_connection_tuples]:
+                    self.conn_selection_combobox.set_entries_tuple(new_connection_tuples, current_selection)
+                else:
+                    # Port no longer available, update list without changing selection
+                    self.conn_selection_combobox.set_entries_tuple(new_connection_tuples, None)
+            else:
+                logging_debug(_("Port list unchanged"))
+
+        except Exception:  # pylint: disable=broad-exception-caught
+            # Log error but don't disrupt the UI
+            error_msg = _("Error refreshing ports")
+            logging_debug(error_msg)
+        finally:
+            self._is_refreshing = False
+
+            # Schedule next refresh only if not connected and window still exists
+            if self._refresh_timer_id is not None or self.flight_controller.master is None:
+                try:
+                    # Check if parent window still exists before scheduling
+                    if self.parent.root.winfo_exists():
+                        self._refresh_timer_id = self.parent.root.after(3000, self._refresh_ports)
+                        logging_debug(_("Scheduled next port refresh in 3 seconds"))
+                except tk.TclError:
+                    # Window was destroyed, stop refreshing
+                    self.stop_periodic_refresh()
+
+    def stop_periodic_refresh(self) -> None:
+        """Stop the periodic port refresh."""
+        if self._refresh_timer_id is not None:
+            with contextlib.suppress(tk.TclError, AttributeError):
+                self.parent.root.after_cancel(self._refresh_timer_id)
+            self._refresh_timer_id = None
 
     def on_select_connection_combobox_change(self, _event: tk.Event) -> None:
         selected_connection = self.conn_selection_combobox.get_selected_key()
@@ -207,6 +275,8 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             show_no_connection_error(error_message)
             return True
         self.connection_progress_window.destroy()
+        # Stop periodic refresh when connection is established
+        self.stop_periodic_refresh()
         # Store the current connection as the previous selection
         if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device"):
             self.previous_selection = self.flight_controller.comport.device
@@ -327,6 +397,9 @@ class ConnectionSelectionWindow(BaseWindow):
         self.root.protocol("WM_DELETE_WINDOW", self.close_and_quit)
 
     def close_and_quit(self) -> None:
+        # Stop periodic refresh when window is closing
+        if hasattr(self, "connection_selection_widgets"):
+            self.connection_selection_widgets.stop_periodic_refresh()
         sys_exit(0)
 
     def fc_autoconnect(self) -> None:
@@ -335,6 +408,9 @@ class ConnectionSelectionWindow(BaseWindow):
     def skip_fc_connection(self, flight_controller: FlightController) -> None:
         logging_warning(_("Will proceed without FC connection. FC parameters will not be downloaded nor uploaded"))
         logging_warning(_("Only the intermediate '.param' files on the PC disk will be edited"))
+        # Stop periodic refresh when skipping connection
+        if hasattr(self, "connection_selection_widgets"):
+            self.connection_selection_widgets.stop_periodic_refresh()
         flight_controller.disconnect()
         self.root.destroy()
 
