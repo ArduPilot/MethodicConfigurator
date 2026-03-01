@@ -143,6 +143,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self._baudrate = baudrate
         self._network_ports = list(network_ports) if network_ports is not None else self.DEFAULT_NETWORK_PORTS[:]
         self._connection_tuples: list[tuple[str, str]] = []
+        self._logged_connection_tuples: Optional[list[tuple[str, str]]] = None  # None = never logged
         self._serial_port_discovery: SerialPortDiscovery = serial_port_discovery or SystemSerialPortDiscovery()
         self._mavlink_connection_factory: MavlinkConnectionFactory = (
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
@@ -174,11 +175,29 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         # list of tuples with the first element being the port name and the second element being the port description
         self._connection_tuples = [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
-        logging_info(_("Available connection ports are:"))
-        for port in self._connection_tuples:
-            logging_info("%s - %s", port[0], port[1])
+        self._log_connection_changes()
         # now that it is logged, add the 'Add another' tuple
         self._connection_tuples += [(_("Add another"), _("Add another"))]
+
+    def _log_connection_changes(self) -> None:
+        """Log port list on first discovery; log only added/removed ports on subsequent discoveries."""
+        current = self._connection_tuples
+        previous = self._logged_connection_tuples
+
+        if previous is None:
+            # First discovery - log everything
+            logging_info(_("Available connection ports are:"))
+            for port in current:
+                logging_info("%s - %s", port[0], port[1])
+        else:
+            current_set = set(current)
+            previous_set = set(previous)
+            for port in sorted(current_set - previous_set):
+                logging_info(_("Connection port added: %s - %s"), port[0], port[1])
+            for port in sorted(previous_set - current_set):
+                logging_info(_("Connection port removed: %s - %s"), port[0], port[1])
+
+        self._logged_connection_tuples = list(current)
 
     def disconnect(self) -> None:
         """Close the connection to the flight controller."""
