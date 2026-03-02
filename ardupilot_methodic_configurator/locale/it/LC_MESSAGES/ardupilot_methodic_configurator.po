@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2026-02-27 14:40+0000\n"
+"POT-Creation-Date: 2026-03-02 00:06+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -571,25 +571,21 @@ msgstr ""
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "Il percorso '{site_config_directory}' non è una directory."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:478
-msgid "Failed to store vehicle directory to history: %s"
-msgstr "Impossibile memorizzare la directory del veicolo nella cronologia: %s"
-
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:488
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:480
 msgid "site_directory: %s"
 msgstr "directory_sito: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:525
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:517
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr ""
 "Tipo di popup di utilizzo '%s' non trovato nel dizionario delle impostazioni"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:535
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:572
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:527
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:564
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "Impostazione '%s' non trovata nel dizionario delle impostazioni"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:553
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:545
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
@@ -597,16 +593,16 @@ msgstr ""
 "Impossibile impostare l'impostazione nidificata '%s': percorso genitore '%s' "
 "non trovato o non è un dizionario"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:566
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:558
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr ""
 "Percorso impostazione '%s' non trovato nel dizionario delle impostazioni"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:605
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:597
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "Trovati più diagrammi motore per la classe %d e tipo %d"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:614
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:606
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "Diagramma motore non trovato per la classe %d e tipo %d"
 
@@ -829,73 +825,81 @@ msgstr ""
 msgid "Battery status not available from telemetry"
 msgstr "Stato della batteria non disponibile dalla telemetria"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:177
-msgid "Available connection ports are:"
-msgstr "Le porte di connessione disponibili sono:"
-
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:181
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:180
 msgid "Add another"
 msgstr "Aggiungi altro"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:206
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:189
+msgid "Available connection ports are:"
+msgstr "Le porte di connessione disponibili sono:"
+
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:196
+msgid "Connection port added: %s - %s"
+msgstr "Porta di connessione aggiunta: %s - %s"
+
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:198
+msgid "Connection port removed: %s - %s"
+msgstr "Porta di connessione rimossa: %s - %s"
+
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:225
 msgid "Added connection %s"
 msgstr "Aggiunta connessione %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:208
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:227
 msgid "Did not add duplicated connection %s"
 msgstr "Non è stata aggiunta la connessione duplicata %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:210
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:229
 msgid "Did not add empty connection"
 msgstr "Non è stata aggiunta la connessione vuota"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:303
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:322
 msgid "Auto-detected device %s"
 msgstr "Dispositivo rilevato automaticamente %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:309
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:328
 msgid "Resolved soft link %s to %s"
 msgstr "Collegamento simbolico risolto da %s a %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:329
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:348
 msgid "Trying network port %s"
 msgstr "Tentativo porta di rete %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:343
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:362
 msgid "No auto-detected ports responded."
 msgstr "Nessuna delle porte rilevate automaticamente ha risposto."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:413
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:432
 msgid "Detected vehicle %u:%u (autopilot=%u, type=%u)"
 msgstr "Veicolo rilevato %u:%u (autopilot=%u, type=%u)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:429
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:448
 msgid "No MAVLink heartbeat received, connection failed."
 msgstr "Nessun heartbeat MAVLink ricevuto, connessione fallita."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:434
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:453
 msgid "Connection established with systemID %s, componentID %s."
 msgstr "Connessione stabilita con systemID %s, componentID %s."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:438
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:457
 msgid "Autopilot type {self.info.autopilot}"
 msgstr "Tipo di autopilota {self.info.autopilot}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:441
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:460
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
 "Tipo di veicolo: {self.info.mav_type} con firmware {self.info.vehicle_type}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:444
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:463
 msgid "Unsupported autopilot type {self.info.autopilot}"
 msgstr "Tipo di autopilota non supportato {self.info.autopilot}"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:447
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:466
 msgid "No supported autopilots found"
 msgstr "Nessun autopilota supportato trovato"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:563
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:582
 msgid ""
 "Permission denied accessing the serial port. This is common on Linux "
 "systems.\n"
@@ -912,12 +916,12 @@ msgstr ""
 "Dopo di che, disconnettiti e riconnettiti affinché le modifiche abbiano "
 "effetto."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:598
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:617
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr ""
 "Incompatibilità versione ChibiOS: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:664
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:683
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -927,29 +931,29 @@ msgstr ""
 "Sono supportate solo versioni di ArduPilot più recenti di 4.3.8.\n"
 "Assicurarsi che il parametro SERIAL0_PROTOCOL sia impostato su 2"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:682
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:701
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr ""
 "Mancata corrispondenza tipo firmware FC: %s (BANNER) != %s "
 "(AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:792
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:811
 msgid "Will connect to %s"
 msgstr "Si connetterà a %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:794
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:813
 msgid "Will connect to %s @ %u baud"
 msgstr "Connessione a %s @ %u baud"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:804
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:823
 msgid "Waiting for MAVLink heartbeats..."
 msgstr "In attesa di heartbeat MAVLink..."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:822
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:841
 msgid "Connection failed: %s"
 msgstr "Connessione fallita: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:823
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:842
 msgid "Failed to connect after %d attempts."
 msgstr "Impossibile connettersi dopo %d tentativi."
 
@@ -4640,7 +4644,7 @@ msgstr "Il numero di poli rotorici magnetici deve essere pari per {paths_str}"
 msgid "Invalid integer value for {paths_str}"
 msgstr "Valore intero non valido per {paths_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:290
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:299
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
@@ -4648,7 +4652,7 @@ msgstr ""
 "Nessun file di parametri intermedio trovato\n"
 "nella directory di lavoro corrente."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:291
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
@@ -4656,7 +4660,7 @@ msgstr ""
 "Nessun file di parametri intermedio trovato\n"
 "nella directory specificata in --vehicle-dir."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:311
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:320
 msgid "MyVehicleName"
 msgstr "MioNomeVeicolo"
 
@@ -4791,7 +4795,7 @@ msgstr ""
 "volo disponibile"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:311
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:154
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:200
 msgid "Flight Controller Connection"
 msgstr "Connessione Controller di Volo"
 
@@ -4800,8 +4804,8 @@ msgid "Flight Controller Parameters"
 msgstr "Parametri del controllore di volo"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:518
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:509
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:513
 msgid "New vehicle directory"
 msgstr "Nuova directory veicolo"
 
@@ -4830,24 +4834,24 @@ msgstr ""
 msgid "No parameter files found"
 msgstr "Nessun file di parametri trovato"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:488
 msgid "Vehicle template directory must not be empty"
 msgstr "La directory del modello del veicolo non deve essere vuota"
 
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:488
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
 msgid "Vehicle template directory"
 msgstr "Directory modello veicolo"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:499
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:494
 msgid "Vehicle template directory {template_dir} does not exist"
 msgstr "La directory del modello del veicolo {template_dir} non esiste"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:509
 msgid "New vehicle name must not be empty"
 msgstr "Il nome del nuovo veicolo non deve essere vuoto"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:519
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
 msgid "New vehicle name {new_vehicle_name} must not contain invalid characters"
 msgstr ""
 "Il nome del nuovo veicolo {new_vehicle_name} non deve contenere caratteri "
@@ -4876,7 +4880,7 @@ msgstr ""
 "{last_vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:116
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:186
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:183
 msgid ""
 "Selected directory must contain files matching \\d\\d_*\\.param and a "
 "{filename} file"
@@ -4907,20 +4911,20 @@ msgstr ""
 "Nessun file di parametri intermedio trovato nella directory selezionata: "
 "{vehicle_dir}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:177
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:174
 msgid "Vehicle directory must not be empty"
 msgstr "La directory del veicolo non deve essere vuota"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:177
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:181
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:174
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:178
 msgid "Vehicle directory"
 msgstr "Directory del veicolo"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:181
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:178
 msgid "Vehicle directory {vehicle_dir} does not exist"
 msgstr "La directory del veicolo {vehicle_dir} non esiste"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:189
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:186
 msgid "Invalid Vehicle Directory"
 msgstr "Directory del Veicolo Non Valida"
 
@@ -5328,15 +5332,15 @@ msgstr "Modello Applicato"
 msgid "{} has been applied to {}"
 msgstr "{} è stato applicato a {}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:67
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:70
 msgid "flight controller connection:"
 msgstr "connessione al controller di volo:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:75
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:78
 msgid "Port:"
 msgstr "Porta:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:94
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:97
 msgid ""
 "Select the flight controller connection\n"
 "You can add a custom connection to the existing ones"
@@ -5344,11 +5348,11 @@ msgstr ""
 "Seleziona la connessione del controllore di volo\n"
 "Puoi aggiungere una connessione personalizzata a quelle esistenti"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:98
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:101
 msgid "Baudrate:"
 msgstr "Baud rate:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:114
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:117
 msgid ""
 "Select the baudrate for the connection\n"
 "Most flight controllers use 115200"
@@ -5356,15 +5360,15 @@ msgstr ""
 "Seleziona il baud rate per la connessione\n"
 "La maggior parte dei controllori di volo usa 115200"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:119
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:165
 msgid "Connection combobox changed to: {selected_connection}"
 msgstr "Combobox connessione cambiata a: {selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:137
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:183
 msgid "Baudrate combobox changed to: {_selected_baudrate}"
 msgstr "Combobox baud rate cambiato a: {_selected_baudrate}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:155
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:201
 msgid ""
 "Enter the connection string to the flight controller. Examples are:\n"
 "\n"
@@ -5372,14 +5376,20 @@ msgid ""
 "/dev/serial/by-id/usb-xxx (on Linux)\n"
 "tcp:127.0.0.1:5761\n"
 "udp:127.0.0.1:14551"
-msgstr "Inserisci la stringa di connessione al controller di volo. Gli esempi sono:\n\nCOM4 (su Windows)\n/dev/serial/by-id/usb-xxx (su Linux)\ntcp:127.0.0.1:5761\nudp:127.0.0.1:14551"
+msgstr ""
+"Inserisci la stringa di connessione al controller di volo. Gli esempi sono:\n"
+"\n"
+"COM4 (su Windows)\n"
+"/dev/serial/by-id/usb-xxx (su Linux)\n"
+"tcp:127.0.0.1:5761\n"
+"udp:127.0.0.1:14551"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:165
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:211
 msgid "Will add new connection: {selected_connection} if not duplicated"
 msgstr ""
 "Verrà aggiunta una nuova connessione: {selected_connection} se non duplicata"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:169
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:215
 msgid ""
 "Updated connection tuples: {connection_tuples} with selected connection: "
 "{selected_connection}"
@@ -5387,23 +5397,23 @@ msgstr ""
 "Tuple di connessione aggiornate: {connection_tuples} con connessione "
 "selezionata: {selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:174
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:220
 msgid "Add connection canceled or string empty {selected_connection}"
 msgstr "Aggiunta connessione annullata o stringa vuota {selected_connection}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:181
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:227
 msgid "Connecting with the FC"
 msgstr "Connessione con il FC"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:181
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:227
 msgid "Connection step {} of {}"
 msgstr "Passo di connessione {} di {}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:189
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:235
 msgid "Unsupported baudrate selected: {current_baudrate}"
 msgstr "Baud rate non supportato selezionato: {current_baudrate}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:194
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:240
 msgid ""
 "Invalid baudrate selected: {selected_baudrate}, reverting to default: {self."
 "default_baudrate}"
@@ -5411,24 +5421,24 @@ msgstr ""
 "Baud rate non valido selezionato: {selected_baudrate}, ripristino al "
 "predefinito: {self.default_baudrate}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:197
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:243
 msgid "Invalid Baudrate"
 msgstr "Baud Rate Non Valido"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:236
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:284
 msgid "AMC {version} - Flight controller connection"
 msgstr "AMC {version} - Connessione controllore di volo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:242
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:290
 msgid "No ArduPilot flight controller was auto-detected detected yet."
 msgstr ""
 "Nessun controller di volo ArduPilot è stato ancora rilevato automaticamente."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:256
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:304
 msgid "Auto connection"
 msgstr "Connessione automatica"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:263
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:311
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5438,19 +5448,19 @@ msgstr ""
 "attendi 7 secondi per l'avvio completo e\n"
 "premi il pulsante Auto-connessione qui sotto per connetterti"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:270
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:318
 msgid "Auto-connect"
 msgstr "Auto-connessione"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:272
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:320
 msgid "Auto-connect to a 'Mavlink'-talking serial device"
 msgstr "Connessione automatica a un dispositivo seriale che parla 'Mavlink'"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:275
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:323
 msgid "Manual connection"
 msgstr "Connessione manuale"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:283
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:331
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5461,15 +5471,15 @@ msgstr ""
 "seleziona manualmente la connessione del controllore di volo o aggiungine "
 "una nuova"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:302
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:350
 msgid "No connection"
 msgstr "Nessuna connessione"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:314
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:362
 msgid "Skip FC connection, just edit the .param files on disk"
 msgstr "Salta la connessione FC, modifica solo i file .param su disco"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:320
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:368
 msgid ""
 "No parameter values will be fetched from the FC, default parameter values "
 "from disk will be used\n"
@@ -5481,7 +5491,7 @@ msgstr ""
 "al loro posto (se il file '00_default.param' è presente) e modifica solo i "
 "file '.param' intermedi su disco"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:336
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:387
 msgid ""
 "Will proceed without FC connection. FC parameters will not be downloaded nor "
 "uploaded"
@@ -5489,11 +5499,11 @@ msgstr ""
 "Procederà senza connessione FC. I parametri FC non saranno né scaricati né "
 "caricati"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:337
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:388
 msgid "Only the intermediate '.param' files on the PC disk will be edited"
 msgstr "Verranno modificati solo i file '.param' intermedi sul disco del PC"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:353
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:407
 msgid ""
 "This main is for testing and development only. Usually, the "
 "ConnectionSelectionWidgets is called from another script"
@@ -5501,7 +5511,7 @@ msgstr ""
 "Questo main è solo per test e sviluppo. Solitamente, "
 "ConnectionSelectionWidgets viene chiamato da un altro script"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:369
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:423
 msgid ""
 "This main is for testing and development only, usually the "
 "ConnectionSelectionWindow is called from another script"
@@ -5926,7 +5936,7 @@ msgstr "Nessun elemento combobox %s selezionato"
 msgid "%s combobox selected string '%s' not found in keys %s"
 msgstr "Stringa selezionata '%s' della combobox %s non trovata nelle chiavi %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:362
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:366
 msgid ""
 "A GUI for testing the PairTupleCombobox. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
@@ -5935,7 +5945,7 @@ msgstr ""
 "direttamente, ma attraverso lo script principale del configuratore metodico "
 "ArduPilot."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:376
+#: ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:380
 msgid ""
 "This main is for testing and development only, usually the PairTupleCombobox "
 "is called from another script"
@@ -6580,7 +6590,7 @@ msgstr "Sei sicuro di voler eliminare il parametro {param_name}?"
 msgid "Name filter:"
 msgstr "Filtro nome:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:809
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:808
 msgid ""
 "Type part of a parameter name to filter the list.\n"
 "Press Enter to add all filtered parameters,\n"
@@ -6590,11 +6600,11 @@ msgstr ""
 "Premere Invio per aggiungere tutti i parametri filtrati,\n"
 "o solo quelli selezionati se ce ne sono."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:816
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:815
 msgid "(Use Ctrl/Shift for multiple selection)"
 msgstr "(Usa Ctrl/Maiusc per selezione multipla)"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:830
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:829
 msgid ""
 "Double-click to add single parameter\n"
 "Ctrl+click to select multiple one-by-one\n"
@@ -6610,24 +6620,24 @@ msgstr ""
 "Ctrl+D: Deseleziona tutto\n"
 "Invio: Aggiungi selezionati"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:840
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:916
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:839
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:915
 msgid "No parameter selected"
 msgstr "Nessun parametro selezionato"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:905
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:904
 msgid "Add parameter(s)"
 msgstr "Aggiungi parametro/i"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:918
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:917
 msgid "Add selected parameter"
 msgstr "Aggiungi parametro selezionato"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:920
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:919
 msgid "Add %d selected parameters"
 msgstr "Aggiungi %d parametri selezionati"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:934
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:933
 msgid ""
 "Adding many parameters at once can make it difficult to track changes and "
 "may impact GUI performance.\n"
@@ -6638,15 +6648,15 @@ msgstr ""
 "dell'interfaccia.\n"
 "Sei sicuro di voler aggiungere tutti i %d parametri?"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:938
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:937
 msgid "Confirm bulk addition"
 msgstr "Conferma aggiunta in blocco"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1003
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1005
 msgid "Invalid parameter name."
 msgstr "Nome parametro non valido."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1006
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1008
 msgid "Operation not possible"
 msgstr "Operazione non possibile"
 
@@ -7673,6 +7683,10 @@ msgstr "Versione o revisione dell'hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Collegamento web alla pagina del prodotto o documentazione"
+
+#~ msgid "Failed to store vehicle directory to history: %s"
+#~ msgstr ""
+#~ "Impossibile memorizzare la directory del veicolo nella cronologia: %s"
 
 #~ msgid ""
 #~ "Enter the connection string to the flight controller. Examples are:\n"
