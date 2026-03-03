@@ -111,9 +111,7 @@ def process_template_directory(template_dir: Path) -> None:
 
         # Test parameter derivation (passing None means only forced/derived params are computed)
         try:
-            pending = local_fs.update_and_export_vehicle_params_from_fc(
-                source_param_values=None, existing_fc_params=existing_fc_params
-            )
+            pending = local_fs.update_and_export_vehicle_params_from_fc(existing_fc_params=existing_fc_params)
             local_fs.apply_pending_changes(pending)
             local_fs.save_vehicle_params_to_files(list(local_fs.file_parameters))
         except ValueError as e:
