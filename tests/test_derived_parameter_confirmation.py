@@ -85,7 +85,6 @@ class TestParameterSafetyChecks:
 
         # WHEN: Call update without permission (commit_derived_changes=False)
         pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            source_param_values={},
             existing_fc_params=[],
         )
 
@@ -115,7 +114,6 @@ class TestParameterSafetyChecks:
 
         # WHEN: Call update to detect changes, then save with permission
         pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            source_param_values={},
             existing_fc_params=[],
         )
 
@@ -156,7 +154,6 @@ class TestParameterSafetyChecks:
 
         # WHEN
         pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            source_param_values={},
             existing_fc_params=[],
         )
 
@@ -192,7 +189,6 @@ class TestParameterSafetyChecks:
 
         # WHEN: Call update
         pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            source_param_values={},
             existing_fc_params=[],
         )
 
@@ -226,13 +222,12 @@ class TestUserConfirmationWorkflow:
         # GIVEN: Backend returns pending changes
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_project_manager = MagicMock()
         mock_fs.update_and_export_vehicle_params_from_fc.return_value = {"08_batt1.param": MagicMock()}
 
         # WHEN: User responds NO
         mock_dialog.return_value = False
 
-        process_component_editor_results(mock_controller, mock_fs, mock_project_manager)
+        process_component_editor_results(mock_controller, mock_fs)
 
         # THEN: A confirmation dialog was shown
         mock_dialog.assert_called_once()
@@ -262,12 +257,11 @@ class TestUserConfirmationWorkflow:
         # GIVEN: Backend returns pending changes
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_project_manager = MagicMock()
         mock_fs.update_and_export_vehicle_params_from_fc.return_value = {"08_batt1.param": MagicMock()}
 
         # WHEN: User responds YES
         mock_dialog.return_value = True
-        process_component_editor_results(mock_controller, mock_fs, mock_project_manager)
+        process_component_editor_results(mock_controller, mock_fs)
 
         # THEN: A confirmation dialog was shown
         mock_dialog.assert_called_once()
@@ -297,11 +291,10 @@ class TestUserConfirmationWorkflow:
 
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_project_manager = MagicMock()
         # Empty dict == no changes
         mock_fs.update_and_export_vehicle_params_from_fc.return_value = {}
 
-        process_component_editor_results(mock_controller, mock_fs, mock_project_manager)
+        process_component_editor_results(mock_controller, mock_fs)
 
         # THEN: No confirmation dialog was shown
         mock_dialog.assert_not_called()
@@ -330,10 +323,9 @@ class TestUserConfirmationWorkflow:
 
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_project_manager = MagicMock()
         mock_fs.update_and_export_vehicle_params_from_fc.side_effect = ValueError("Compute error in 08_batt1.param")
 
-        process_component_editor_results(mock_controller, mock_fs, mock_project_manager)
+        process_component_editor_results(mock_controller, mock_fs)
 
         # THEN: An error dialog was shown with the error message
         mock_error_dialog.assert_called_once()
@@ -362,14 +354,13 @@ class TestUserConfirmationWorkflow:
 
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_project_manager = MagicMock()
         mock_fs.update_and_export_vehicle_params_from_fc.return_value = {
             "08_batt1.param": MagicMock(),
             "12_motor.param": MagicMock(),
         }
         mock_dialog.return_value = True
 
-        process_component_editor_results(mock_controller, mock_fs, mock_project_manager)
+        process_component_editor_results(mock_controller, mock_fs)
 
         # THEN: The dialog message mentions both filenames
         dialog_message = str(mock_dialog.call_args)

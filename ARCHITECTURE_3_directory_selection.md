@@ -181,11 +181,16 @@ This architecture ensures:
 - **File**: `data_model_vehicle_project_creator.py`
 - **Purpose**: Handle creation of new vehicle projects from templates
 - **Responsibilities**:
-  - Template copying and customization
+  - Template copying and customization (with optional transformations in a single pass)
   - Project directory initialization
+  - Optional one-time import of FC parameter values when `use_fc_params=True`
   - Configuration file setup
   - Project metadata creation
 - **Access**: Through VehicleProjectManager factory methods
+
+When `use_fc_params=True` and FC parameters are available, `LocalFilesystem.copy_template_files_to_new_vehicle_dir()`
+applies both `blank_change_reason` and FC value substitution in a single `ParDict`-based parse-modify-write
+pass per `.param` file, before `re_init` loads the directory.
 
 #### Project Opening Services
 
@@ -238,6 +243,10 @@ The data flow follows the layered architecture pattern with clear separation of 
 
 3. **New Project Creation Flow**
    - VehicleProjectCreatorWindow instantiated with project_manager reference
+   - User optionally enables `use_fc_params`
+   - VehicleProjectCreator creates the directory from template
+   - During the copy step, FC source values and/or blank-change-reason are applied in a single
+     `ParDict`-based pass so that `re_init` reads fully-initialized files with no further writes
    - Frontend presents template selection and project configuration options
    - User selects template through TemplateOverviewWindow integration
    - Frontend delegates to `project_manager.create_new_vehicle_from_template()`
