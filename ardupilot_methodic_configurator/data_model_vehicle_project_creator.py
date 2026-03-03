@@ -442,12 +442,14 @@ class VehicleProjectCreator:  # pylint: disable=too-few-public-methods
         if error_msg:
             raise VehicleProjectCreationError(_("New vehicle directory"), error_msg)
 
-        # Copy template files to the new directory
+        # Copy template files to the new directory, applying all file-level transformations in one pass
         error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(
             template_dir,
             new_vehicle_dir,
             blank_change_reason=settings.blank_change_reason,
             copy_vehicle_image=settings.copy_vehicle_image,
+            use_fc_params=settings.use_fc_params,
+            fc_parameters=fc_parameters,
         )
         if error_msg:
             raise VehicleProjectCreationError(_("Copying template files"), error_msg)

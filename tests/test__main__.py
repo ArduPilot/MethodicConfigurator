@@ -1234,7 +1234,7 @@ class TestComponentEditorHelperFunctions:
 
         GIVEN: Component editor completed with FC parameter usage enabled
         WHEN: Results are processed
-        THEN: FC parameters should be used as source for vehicle parameter update
+        THEN: FC parameter names should be used as existing-parameter reference
         """
         # Arrange: Mock components with FC parameter usage
         mock_fc = MagicMock()
@@ -1245,18 +1245,15 @@ class TestComponentEditorHelperFunctions:
         mock_vehicle_dir_window = MagicMock()
         mock_vehicle_dir_window.configuration_template = "template1"
 
-        # Mock BooleanVar object with get() method
-        mock_use_fc_bool_var = MagicMock()
-        mock_use_fc_bool_var.get.return_value = True
-        mock_vehicle_dir_window.use_fc_params = mock_use_fc_bool_var
+        mock_vehicle_dir_window.use_fc_params = True
 
         # Act: Process results
-        process_component_editor_results(mock_fc, mock_filesystem, mock_vehicle_dir_window)
+        process_component_editor_results(mock_fc, mock_filesystem)
 
-        # Assert: FC parameters used as source
+        # Assert: FC parameter names used as existing-parameter reference
         mock_filesystem.update_and_export_vehicle_params_from_fc.assert_called_once()
         call_args = mock_filesystem.update_and_export_vehicle_params_from_fc.call_args
-        assert call_args.kwargs["source_param_values"] == mock_fc.fc_parameters
+        assert call_args.kwargs["existing_fc_params"] == ["PARAM1", "PARAM2"]
 
         # Assert: No disk write - in-memory model already matches disk when pending list is empty
         mock_filesystem.save_vehicle_params_to_files.assert_not_called()
@@ -1281,7 +1278,7 @@ class TestComponentEditorHelperFunctions:
             patch("ardupilot_methodic_configurator.__main__.sys_exit") as mock_exit,
         ):
             # Act & Assert: Error handling
-            process_component_editor_results(mock_fc, mock_filesystem, None)
+            process_component_editor_results(mock_fc, mock_filesystem)
 
             mock_logging.assert_called_once_with("Parameter error occurred")
             mock_show_error.assert_called_once()

@@ -554,7 +554,6 @@ def component_editor(state: ApplicationState) -> None:
 def process_component_editor_results(
     flight_controller: FlightController,
     local_filesystem: LocalFilesystem,
-    vehicle_project_manager: Union[None, VehicleProjectManager],
 ) -> None:
     """
     Process the results after component editor completion.
@@ -562,17 +561,11 @@ def process_component_editor_results(
     Args:
         flight_controller: Flight controller instance
         local_filesystem: Local filesystem instance
-        vehicle_project_manager: Vehicle directory selection window if any
 
     Raises:
         SystemExit: If there's an error in derived parameters
 
     """
-    # Determine parameter source
-    source_param_values: Union[dict[str, float], None] = None
-    if vehicle_project_manager is not None and vehicle_project_manager.use_fc_params:
-        source_param_values = flight_controller.fc_parameters
-
     # Get existing FC parameters for reference
     existing_fc_params: list[str] = []
     if flight_controller.fc_parameters:
@@ -583,7 +576,6 @@ def process_component_editor_results(
     # Update and export vehicle parameters
     try:
         pending_changes = local_filesystem.update_and_export_vehicle_params_from_fc(
-            source_param_values=source_param_values,
             existing_fc_params=existing_fc_params,
         )
     except ValueError as e:
@@ -793,7 +785,7 @@ def main() -> None:
     component_editor(state)
 
     # Process results after component editor GUI closes
-    process_component_editor_results(state.flight_controller, state.local_filesystem, state.vehicle_project_manager)
+    process_component_editor_results(state.flight_controller, state.local_filesystem)
 
     # Write parameter default values to file if they have been modified
     if state.param_default_values_dirty:

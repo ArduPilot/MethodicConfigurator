@@ -307,6 +307,8 @@ class TestVehicleProjectCreationWorkflow:
                 expected_vehicle_dir,
                 blank_change_reason=default_settings.blank_change_reason,
                 copy_vehicle_image=default_settings.copy_vehicle_image,
+                use_fc_params=default_settings.use_fc_params,
+                fc_parameters=None,
             )
 
             # Verify filesystem initialization
@@ -487,6 +489,8 @@ class TestVehicleProjectCreationWorkflow:
                 expected_vehicle_dir,
                 blank_change_reason=True,
                 copy_vehicle_image=True,
+                use_fc_params=False,
+                fc_parameters=None,
             )
 
             # Verify filesystem initialization used custom settings
@@ -527,6 +531,15 @@ class TestVehicleProjectCreationWorkflow:
             # Assert: Project created successfully with FC settings
             assert result_dir == expected_vehicle_dir
             mock_local_filesystem.create_new_vehicle_dir.assert_called_once_with(expected_vehicle_dir)
+            # FC parameter values are now applied during the copy step, not after re_init
+            mock_local_filesystem.copy_template_files_to_new_vehicle_dir.assert_called_once_with(
+                template_dir,
+                expected_vehicle_dir,
+                blank_change_reason=fc_dependent_settings.blank_change_reason,
+                copy_vehicle_image=fc_dependent_settings.copy_vehicle_image,
+                use_fc_params=True,
+                fc_parameters=fc_parameters,
+            )
 
     def test_creator_does_not_store_history_itself(self, project_creator, mock_local_filesystem, default_settings) -> None:
         """
