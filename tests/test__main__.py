@@ -28,10 +28,12 @@ from ardupilot_methodic_configurator.__main__ import (
     create_and_configure_component_editor,
     create_argument_parser,
     display_first_use_documentation,
+    get_preferred_vehicle_dir,
     initialize_flight_controller_and_filesystem,
     open_firmware_documentation,
     parameter_editor_and_uploader,
     process_component_editor_results,
+    resolve_writable_vehicle_dir_for_initial_download,
     should_open_firmware_documentation,
     vehicle_directory_selection,
     write_parameter_defaults,
@@ -657,9 +659,13 @@ class TestFlightControllerConnectionLogic:
 
         with (
             patch("ardupilot_methodic_configurator.__main__.FlightController") as mock_fc_class,
+            patch("ardupilot_methodic_configurator.__main__.FlightControllerConnectionProgress") as mock_progress_class,
             patch("ardupilot_methodic_configurator.__main__.ConnectionSelectionWindow"),
             patch("ardupilot_methodic_configurator.__main__.logging_info") as mock_log,
         ):
+            mock_progress = MagicMock()
+            mock_progress_class.return_value.__enter__.return_value = mock_progress
+
             mock_fc = MagicMock()
             mock_fc.connect.return_value = ""  # No error
             mock_fc.info.vehicle_type = "ArduCopter"  # Different from explicit
@@ -693,9 +699,13 @@ class TestFlightControllerConnectionLogic:
 
         with (
             patch("ardupilot_methodic_configurator.__main__.FlightController") as mock_fc_class,
+            patch("ardupilot_methodic_configurator.__main__.FlightControllerConnectionProgress") as mock_progress_class,
             patch("ardupilot_methodic_configurator.__main__.ConnectionSelectionWindow"),
             patch("ardupilot_methodic_configurator.__main__.logging_debug") as mock_log,
         ):
+            mock_progress = MagicMock()
+            mock_progress_class.return_value.__enter__.return_value = mock_progress
+
             mock_fc = MagicMock()
             mock_fc.connect.return_value = ""
             mock_fc.info.vehicle_type = "ArduCopter"
@@ -708,6 +718,56 @@ class TestFlightControllerConnectionLogic:
             assert vehicle_type == "ArduCopter"
             mock_log.assert_called_once()
             assert "auto-detected" in mock_log.call_args[0][0]
+
+
+class TestVehicleDirectoryResolution:
+    """Test selection of writable vehicle directory for initial parameter download."""
+
+    def test_prefers_args_vehicle_dir_when_available(self) -> None:
+        """Given args with vehicle_dir, preferred directory should come from args."""
+        mock_args = MagicMock()
+        mock_args.vehicle_dir = "C:/tmp/vehicle"
+
+        result = get_preferred_vehicle_dir(mock_args)
+
+        assert result == Path("C:/tmp/vehicle")
+
+    def test_falls_back_to_cwd_when_vehicle_dir_missing(self) -> None:
+        """Given args without vehicle_dir, preferred directory should be current working directory."""
+        mock_args = MagicMock(spec=[])
+
+        with patch("ardupilot_methodic_configurator.__main__.Path.cwd", return_value=Path("C:/cwd")):
+            result = get_preferred_vehicle_dir(mock_args)
+
+        assert result == Path("C:/cwd")
+
+    def test_returns_preferred_when_writable(self) -> None:
+        """Given writable preferred dir, resolver should return it unchanged."""
+        preferred_dir = Path("C:/preferred")
+
+        with patch("ardupilot_methodic_configurator.__main__._is_directory_writable", return_value=True):
+            result = resolve_writable_vehicle_dir_for_initial_download(preferred_dir)
+
+        assert result == preferred_dir
+
+    def test_falls_back_to_default_when_not_writable(self) -> None:
+        """Given non-writable preferred dir, resolver should switch to ProgramSettings default directory."""
+        preferred_dir = Path("C:/preferred")
+        fallback_dir = MagicMock(spec=Path)
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__._is_directory_writable", return_value=False),
+            patch(
+                "ardupilot_methodic_configurator.__main__.ProgramSettings.get_vehicles_default_dir",
+                return_value=fallback_dir,
+            ),
+            patch("ardupilot_methodic_configurator.__main__.logging_warning") as mock_warning,
+        ):
+            result = resolve_writable_vehicle_dir_for_initial_download(preferred_dir)
+
+        assert result is fallback_dir
+        fallback_dir.mkdir.assert_called_once_with(parents=True, exist_ok=True)
+        mock_warning.assert_called_once()
 
 
 class TestParameterBackupWorkflow:
