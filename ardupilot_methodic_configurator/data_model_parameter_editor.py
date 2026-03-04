@@ -714,8 +714,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     # SID_AXIS only requires a possible reset when changing from 0 to a non-zero value
                     elif param_name.endswith(("_TYPE", "_EN", "_ENABLE")) or (
                         param_name == "SID_AXIS"
-                        and self._flight_controller.fc_parameters.get("SID_AXIS", 0) == 0
-                        and float(param.value) != 0
+                        and float(self._flight_controller.fc_parameters.get("SID_AXIS", 0.0)) == 0.0
+                        and float(param.value) != 0.0
                     ):
                         success, error_msg = self._flight_controller.set_param(param_name, float(param.value))
                         if not success:
