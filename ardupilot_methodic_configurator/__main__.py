@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import os
+import tempfile
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -187,7 +188,17 @@ def display_first_use_documentation() -> None:
     webbrowser_open_url(url=url, new=0, autoraise=True)
 
 
-def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
+def connect_to_fc(args: argparse.Namespace) -> tuple[FlightController, str]:
+    """
+    Connect to the flight controller and return any connection error string.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Tuple of (flight_controller, error_str)
+
+    """
     # Create UI components with automatic cleanup via context manager
     with FlightControllerConnectionProgress() as connection_progress:
         # Update progress for FC initialization start
@@ -208,14 +219,21 @@ def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[Flight
 
         connection_progress.update_connect_progress_bar(100, 100)
 
-    if error_str:
-        if args.device and _("No serial ports found") not in error_str:
-            logging_error(error_str)
-        conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str, default_baudrate=args.baudrate)
-        # Set up startup notification for the connection selection window
-        FreeDesktop.setup_startup_notification(conn_sel_window.root)  # type: ignore[arg-type]
-        conn_sel_window.root.mainloop()
+    return flight_controller, error_str
 
+
+def resolve_vehicle_type(args: argparse.Namespace, flight_controller: FlightController) -> str:
+    """
+    Resolve the effective vehicle type from CLI override or FC auto-detection.
+
+    Args:
+        args: Parsed command-line arguments
+        flight_controller: Connected flight controller instance
+
+    Returns:
+        Vehicle type string (possibly empty when unknown)
+
+    """
     vehicle_type = ""  # default to empty string, downstream code will handle unknown vehicle type
     if hasattr(args, "vehicle_type") and args.vehicle_type:
         vehicle_type = args.vehicle_type
@@ -224,7 +242,79 @@ def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[Flight
         vehicle_type = flight_controller.info.vehicle_type
         logging_debug(_("Vehicle type not set explicitly, auto-detected %s."), vehicle_type)
 
+    return vehicle_type
+
+
+def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[FlightController, str]:
+    """
+    Connect to the FC, handle connection error UI, and resolve vehicle type.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Tuple of (flight_controller, vehicle_type)
+
+    """
+    flight_controller, error_str = connect_to_fc(args)
+
+    if error_str:
+        if args.device and _("No serial ports found") not in error_str:
+            logging_error(error_str)
+        conn_sel_window = ConnectionSelectionWindow(flight_controller, error_str, default_baudrate=args.baudrate)
+        # Set up startup notification for the connection selection window
+        FreeDesktop.setup_startup_notification(conn_sel_window.root)  # type: ignore[arg-type]
+        conn_sel_window.root.mainloop()
+
+    vehicle_type = resolve_vehicle_type(args, flight_controller)
     return flight_controller, vehicle_type
+
+
+def get_preferred_vehicle_dir(args: argparse.Namespace) -> Path:
+    """Return the preferred vehicle directory from args or current working directory."""
+    vehicle_dir = getattr(args, "vehicle_dir", None)
+    return Path(vehicle_dir) if vehicle_dir else Path.cwd()
+
+
+def _is_directory_writable(path: Path) -> bool:
+    """
+    Check whether a directory is writable by attempting a small write operation.
+
+    On some platforms (notably Windows with UAC), os.access() may report writable
+    even when actual file creation fails for normal users.
+    """
+    if not os.access(path, os.W_OK):
+        return False
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        fd, tmp_path = tempfile.mkstemp(dir=path)
+        try:
+            os.write(fd, b"test")
+            return True
+        finally:
+            os.close(fd)
+            Path(tmp_path).unlink(missing_ok=True)
+    except OSError:
+        return False
+
+
+def resolve_writable_vehicle_dir_for_initial_download(preferred_dir: Path) -> Path:
+    """
+    Return a writable vehicle directory for initial FC parameter download.
+
+    Falls back to ProgramSettings default vehicles directory when preferred_dir is
+    not writable, and logs the fallback.
+    """
+    if _is_directory_writable(preferred_dir):
+        return preferred_dir
+
+    fallback_dir = ProgramSettings.get_vehicles_default_dir()
+    fallback_dir.mkdir(parents=True, exist_ok=True)
+    logging_warning(
+        _("Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."),
+        {"old_dir": preferred_dir, "new_dir": fallback_dir},
+    )
+    return fallback_dir
 
 
 def initialize_flight_controller(state: ApplicationState) -> None:
@@ -243,33 +333,7 @@ def initialize_flight_controller(state: ApplicationState) -> None:
 
     # Get default parameter values from flight controller
     if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
-        vehicle_dir = Path(state.args.vehicle_dir) if hasattr(state.args, "vehicle_dir") else Path.cwd()
-
-        # Check if vehicle_dir is writable; if not, use a writable user directory.
-        # On some platforms (notably Windows with UAC) os.access() may report
-        # writable even when actual file creation fails for normal users, so
-        # we also perform a small write test.
-        def _is_writable(path: Path) -> bool:
-            if not os.access(path, os.W_OK):
-                return False
-            try:
-                path.mkdir(parents=True, exist_ok=True)
-                test_file = path / ".write_test.tmp"
-                with open(test_file, "w", encoding="utf-8") as tmp:
-                    tmp.write("test")
-                test_file.unlink(missing_ok=True)
-                return True
-            except OSError:
-                return False
-
-        if not _is_writable(vehicle_dir):
-            original_vehicle_dir = vehicle_dir
-            vehicle_dir = ProgramSettings.get_vehicles_default_dir()
-            vehicle_dir.mkdir(parents=True, exist_ok=True)
-            logging_warning(
-                _("Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."),
-                {"old_dir": original_vehicle_dir, "new_dir": vehicle_dir},
-            )
+        vehicle_dir = resolve_writable_vehicle_dir_for_initial_download(get_preferred_vehicle_dir(state.args))
         logging_debug(
             _("Using Vehicle directory %(new_dir)s for initial parameter download."),
             {"new_dir": vehicle_dir},
