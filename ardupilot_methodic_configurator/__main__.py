@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import os
+import tempfile
 from logging import basicConfig as logging_basicConfig
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -286,11 +287,13 @@ def _is_directory_writable(path: Path) -> bool:
         return False
     try:
         path.mkdir(parents=True, exist_ok=True)
-        test_file = path / ".write_test.tmp"
-        with open(test_file, "w", encoding="utf-8") as tmp:
-            tmp.write("test")
-        test_file.unlink(missing_ok=True)
-        return True
+        fd, tmp_path = tempfile.mkstemp(dir=path)
+        try:
+            os.write(fd, b"test")
+            return True
+        finally:
+            os.close(fd)
+            Path(tmp_path).unlink(missing_ok=True)
     except OSError:
         return False
 
