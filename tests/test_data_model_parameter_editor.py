@@ -602,6 +602,7 @@ class TestParameterUploadWorkflows:
         # Assert: Errors handled via callback
         assert reset_required is False  # No successful uploads
         assert len(uploaded_params) == 0  # No parameters were uploaded
+        mock_ask_confirmation.assert_not_called()
         mock_show_error.assert_called_once()
         error_call_args = mock_show_error.call_args[0]
         assert "Failed to set parameter" in error_call_args[1]  # Second argument is the error message
@@ -631,6 +632,7 @@ class TestParameterUploadWorkflows:
         # Assert: Possible reset triggered and parameter uploaded
         assert reset_happened is True
         assert "SID_AXIS" in uploaded_params
+        mock_ask_confirmation.assert_called_once()
         mock_show_error.assert_not_called()
 
     def test_user_uploads_sid_axis_from_nonzero_to_different_nonzero_skips_reset(self, parameter_editor) -> None:
@@ -659,6 +661,7 @@ class TestParameterUploadWorkflows:
         # to the normal upload path (not handled by this workflow)
         assert reset_happened is False
         assert "SID_AXIS" not in uploaded_params
+        mock_ask_confirmation.assert_not_called()
         mock_show_error.assert_not_called()
 
     def test_user_uploads_sid_axis_from_nonzero_to_zero_skips_reset(self, parameter_editor) -> None:
@@ -686,6 +689,7 @@ class TestParameterUploadWorkflows:
         # Assert: No reset triggered
         assert reset_happened is False
         assert "SID_AXIS" not in uploaded_params
+        mock_ask_confirmation.assert_not_called()
         mock_show_error.assert_not_called()
 
     def test_user_uploads_sid_axis_absent_from_fc_to_nonzero_triggers_possible_reset(self, parameter_editor) -> None:
@@ -713,6 +717,7 @@ class TestParameterUploadWorkflows:
         # Assert: Possible reset triggered and parameter uploaded
         assert reset_happened is True
         assert "SID_AXIS" in uploaded_params
+        mock_ask_confirmation.assert_called_once()
         mock_show_error.assert_not_called()
 
 
