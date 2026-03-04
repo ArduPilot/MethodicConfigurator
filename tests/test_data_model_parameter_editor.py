@@ -606,6 +606,115 @@ class TestParameterUploadWorkflows:
         error_call_args = mock_show_error.call_args[0]
         assert "Failed to set parameter" in error_call_args[1]  # Second argument is the error message
 
+    def test_user_uploads_sid_axis_from_zero_to_nonzero_triggers_possible_reset(self, parameter_editor) -> None:
+        """
+        Uploading SID_AXIS from 0 to a non-zero value triggers a possible reset confirmation.
+
+        GIVEN: SID_AXIS is currently 0 on the flight controller
+        WHEN: The user uploads SID_AXIS with a new non-zero value
+        THEN: A possible reset should be triggered (parameter added to reset_unsure_params)
+        """
+        # Arrange: SID_AXIS currently 0 on FC, new value is non-zero
+        selected_params = {"SID_AXIS": Par(1.0, "Sys ID axis")}
+        parameter_editor._flight_controller.fc_parameters = {"SID_AXIS": 0}
+        parameter_editor._local_filesystem.doc_dict = {"SID_AXIS": {"RebootRequired": False}}
+        parameter_editor._reset_and_reconnect_flight_controller = MagicMock(return_value=None)
+
+        mock_ask_confirmation = MagicMock(return_value=True)
+        mock_show_error = MagicMock()
+
+        # Act
+        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+            selected_params, mock_ask_confirmation, mock_show_error
+        )
+
+        # Assert: Possible reset triggered and parameter uploaded
+        assert reset_happened is True
+        assert "SID_AXIS" in uploaded_params
+        mock_show_error.assert_not_called()
+
+    def test_user_uploads_sid_axis_from_nonzero_to_different_nonzero_skips_reset(self, parameter_editor) -> None:
+        """
+        Uploading SID_AXIS from one non-zero value to another does not trigger a reset.
+
+        GIVEN: SID_AXIS is currently non-zero on the flight controller
+        WHEN: The user uploads SID_AXIS with a different non-zero value
+        THEN: No possible reset should be triggered
+        """
+        # Arrange: SID_AXIS currently 1 on FC, new value is 2
+        selected_params = {"SID_AXIS": Par(2.0, "Sys ID axis")}
+        parameter_editor._flight_controller.fc_parameters = {"SID_AXIS": 1.0}
+        parameter_editor._local_filesystem.doc_dict = {"SID_AXIS": {"RebootRequired": False}}
+        parameter_editor._reset_and_reconnect_flight_controller = MagicMock(return_value=None)
+
+        mock_ask_confirmation = MagicMock(return_value=False)
+        mock_show_error = MagicMock()
+
+        # Act
+        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+            selected_params, mock_ask_confirmation, mock_show_error
+        )
+
+        # Assert: No reset triggered; SID_AXIS is NOT in uploaded_params because it fell through
+        # to the normal upload path (not handled by this workflow)
+        assert reset_happened is False
+        assert "SID_AXIS" not in uploaded_params
+        mock_show_error.assert_not_called()
+
+    def test_user_uploads_sid_axis_from_nonzero_to_zero_skips_reset(self, parameter_editor) -> None:
+        """
+        Uploading SID_AXIS from a non-zero value to 0 does not trigger a reset.
+
+        GIVEN: SID_AXIS is currently non-zero on the flight controller
+        WHEN: The user uploads SID_AXIS with value 0
+        THEN: No possible reset should be triggered
+        """
+        # Arrange: SID_AXIS currently 1 on FC, new value is 0
+        selected_params = {"SID_AXIS": Par(0.0, "Sys ID axis")}
+        parameter_editor._flight_controller.fc_parameters = {"SID_AXIS": 1.0}
+        parameter_editor._local_filesystem.doc_dict = {"SID_AXIS": {"RebootRequired": False}}
+        parameter_editor._reset_and_reconnect_flight_controller = MagicMock(return_value=None)
+
+        mock_ask_confirmation = MagicMock(return_value=False)
+        mock_show_error = MagicMock()
+
+        # Act
+        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+            selected_params, mock_ask_confirmation, mock_show_error
+        )
+
+        # Assert: No reset triggered
+        assert reset_happened is False
+        assert "SID_AXIS" not in uploaded_params
+        mock_show_error.assert_not_called()
+
+    def test_user_uploads_sid_axis_absent_from_fc_to_nonzero_triggers_possible_reset(self, parameter_editor) -> None:
+        """
+        Uploading SID_AXIS to a non-zero value when it is absent from FC (treated as 0) triggers a possible reset.
+
+        GIVEN: SID_AXIS is not present in the flight controller parameter cache
+        WHEN: The user uploads SID_AXIS with a non-zero value
+        THEN: A possible reset should be triggered (absent value defaults to 0)
+        """
+        # Arrange: SID_AXIS not in FC params (defaults to 0), new value is non-zero
+        selected_params = {"SID_AXIS": Par(3.0, "Sys ID axis")}
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._local_filesystem.doc_dict = {"SID_AXIS": {"RebootRequired": False}}
+        parameter_editor._reset_and_reconnect_flight_controller = MagicMock(return_value=None)
+
+        mock_ask_confirmation = MagicMock(return_value=True)
+        mock_show_error = MagicMock()
+
+        # Act
+        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+            selected_params, mock_ask_confirmation, mock_show_error
+        )
+
+        # Assert: Possible reset triggered and parameter uploaded
+        assert reset_happened is True
+        assert "SID_AXIS" in uploaded_params
+        mock_show_error.assert_not_called()
+
 
 class TestFileDownloadUrlWorkflows:
     """Test file download URL workflow business logic methods with callback injection."""

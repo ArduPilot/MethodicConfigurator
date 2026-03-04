@@ -711,7 +711,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                             logging_info(_("Parameter %s changed to %f, reset required"), param_name, param.value)
                         reset_required = True
                     # Check if any of the selected parameters have a _TYPE, _EN, or _ENABLE suffix
-                    elif param_name.endswith(("_TYPE", "_EN", "_ENABLE", "SID_AXIS")):
+                    # SID_AXIS only requires a possible reset when changing from 0 to a non-zero value
+                    elif param_name.endswith(("_TYPE", "_EN", "_ENABLE")) or (
+                        param_name == "SID_AXIS"
+                        and self._flight_controller.fc_parameters.get("SID_AXIS", 0) == 0
+                        and float(param.value) != 0
+                    ):
                         success, error_msg = self._flight_controller.set_param(param_name, float(param.value))
                         if not success:
                             logging_error(_("Failed to set parameter %s: %s"), param_name, error_msg)
