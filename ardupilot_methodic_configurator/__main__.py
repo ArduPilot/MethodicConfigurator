@@ -271,7 +271,8 @@ def connect_to_fc_and_set_vehicle_type(args: argparse.Namespace) -> tuple[Flight
 
 def get_preferred_vehicle_dir(args: argparse.Namespace) -> Path:
     """Return the preferred vehicle directory from args or current working directory."""
-    return Path(args.vehicle_dir) if hasattr(args, "vehicle_dir") else Path.cwd()
+    vehicle_dir = getattr(args, "vehicle_dir", None)
+    return Path(vehicle_dir) if vehicle_dir else Path.cwd()
 
 
 def _is_directory_writable(path: Path) -> bool:
