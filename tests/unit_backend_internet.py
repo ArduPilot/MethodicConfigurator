@@ -14,6 +14,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -23,6 +25,12 @@ from requests import Timeout as requests_Timeout
 
 from ardupilot_methodic_configurator.backend_internet import (
     _get_verify_param,
+    _install_app_from_mount,
+    _mount_dmg,
+    _unmount_dmg,
+    _validate_download_file,
+    _validate_github_url,
+    download_and_install_on_macos,
     download_and_install_on_windows,
     download_and_install_pip_release,
     download_file_from_url,
@@ -30,7 +38,7 @@ from ardupilot_methodic_configurator.backend_internet import (
     verify_and_open_url,
 )
 
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument, too-many-lines, redefined-outer-name
 
 
 def test_download_file_from_url_empty_params() -> None:
@@ -224,6 +232,324 @@ def test_download_and_install_pip_release_with_uv(mock_check_call, mock_which) -
     call_args = mock_check_call.call_args[0][0]
     assert call_args[0] == "/usr/bin/uv"
     assert call_args[1] == "pip"
+
+
+# ---------------------------------------------------------------------------
+# Tests for shared validation helpers
+# ---------------------------------------------------------------------------
+
+
+GITHUB_DOWNLOAD_URL = "https://github.com/ArduPilot/MethodicConfigurator/releases/download/v1/app.dmg"
+DMG_FILE_NAME = "app.dmg"
+
+
+class TestValidateGithubUrl:
+    """Tests for the _validate_github_url helper."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://github.com/ArduPilot/MethodicConfigurator/releases/download/v1/file.exe",
+            "https://github.com/ArduPilot/MethodicConfigurator/releases/download/v2/app.dmg",
+            "HTTPS://github.com/ArduPilot/MethodicConfigurator/releases/download/v0.1/whl.whl",
+            "  https://github.com/ArduPilot/MethodicConfigurator/releases/download/v1/x.exe  ",
+        ],
+    )
+    def test_accepts_valid_github_https_urls(self, url: str) -> None:
+        assert _validate_github_url(url)
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://example.com/installer.exe",  # wrong domain
+            "http://github.com/ArduPilot/MethodicConfigurator/releases/download/v1/x.exe",  # HTTP, not HTTPS
+            "https://evil.com/github.com/ArduPilot/MethodicConfigurator/releases/download/v1/x.exe",  # github.com in path
+            "ftp://github.com/ArduPilot/MethodicConfigurator/releases/download/v1/x.exe",  # wrong scheme
+            "https://github.com/user/repo/releases/download/v0.1/whl.whl",  # wrong owner/repo
+            "https://github.com/ArduPilot/MethodicConfigurator/",  # no releases/download prefix
+            "",  # empty
+        ],
+    )
+    def test_rejects_invalid_urls(self, url: str) -> None:
+        assert not _validate_github_url(url)
+
+    def test_logs_error_for_rejected_url(self, caplog) -> None:
+        _validate_github_url("https://evil.com/bad.exe")
+        assert "https://evil.com/bad.exe" in caplog.text  # the rejected URL must appear verbatim in the log
+
+
+class TestValidateDownloadFile:
+    """Tests for the _validate_download_file helper."""
+
+    @pytest.mark.parametrize("size", [1024, 2048, 10_000])
+    def test_accepts_files_at_or_above_minimum_size(self, tmp_path, size: int) -> None:
+        f = tmp_path / "test.bin"
+        f.write_bytes(b"X" * size)
+        assert _validate_download_file(str(f))
+
+    @pytest.mark.parametrize("size", [0, 512, 1023])
+    def test_rejects_files_below_minimum_size(self, tmp_path, size: int, caplog) -> None:
+        f = tmp_path / "tiny.bin"
+        f.write_bytes(b"X" * size)
+        assert not _validate_download_file(str(f))
+        assert "small" in caplog.text.lower() or "bytes" in caplog.text.lower()
+
+    def test_accepts_file_with_correct_magic_bytes(self, tmp_path) -> None:
+        f = tmp_path / "test.exe"
+        f.write_bytes(b"MZ" + b"X" * 2048)
+        assert _validate_download_file(str(f), magic_bytes=b"MZ")
+
+    def test_rejects_file_with_wrong_magic_bytes(self, tmp_path, caplog) -> None:
+        f = tmp_path / "bad.exe"
+        f.write_bytes(b"PK" + b"X" * 2048)  # ZIP signature instead of PE
+        assert not _validate_download_file(str(f), magic_bytes=b"MZ", magic_error_msg="Not a PE file")
+        assert "Not a PE file" in caplog.text
+
+    def test_uses_default_error_message_when_none_given(self, tmp_path, caplog) -> None:
+        f = tmp_path / "bad.bin"
+        f.write_bytes(b"?!" + b"X" * 2048)
+        assert not _validate_download_file(str(f), magic_bytes=b"MZ")
+        assert caplog.text  # some error was logged
+
+    def test_rejects_nonexistent_file(self, caplog) -> None:
+        assert not _validate_download_file("/nonexistent/path/file.dmg")
+        assert caplog.text  # error was logged
+
+    def test_cleans_up_too_small_file(self, tmp_path) -> None:
+        f = tmp_path / "tiny.bin"
+        f.write_bytes(b"X" * 512)
+        _validate_download_file(str(f))
+        assert not f.exists()
+
+    def test_cleans_up_wrong_magic_bytes_file(self, tmp_path) -> None:
+        f = tmp_path / "bad.exe"
+        f.write_bytes(b"PK" + b"X" * 2048)
+        _validate_download_file(str(f), magic_bytes=b"MZ")
+        assert not f.exists()
+
+
+# ---------------------------------------------------------------------------
+# Tests for macOS DMG installation helpers
+# ---------------------------------------------------------------------------
+
+
+class TestMountDmg:
+    """Tests for the _mount_dmg helper."""
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.run")
+    def test_returns_mount_point_on_success(self, mock_run) -> None:
+        mock_run.return_value.stdout = "/dev/disk2s1\t\tHFS+\t/Volumes/MyApp\n"
+        assert _mount_dmg("/fake/app.dmg") == "/Volumes/MyApp"
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.run")
+    def test_passes_correct_hdiutil_arguments(self, mock_run) -> None:
+        mock_run.return_value.stdout = "/dev/disk2\t\t\t/Volumes/App\n"
+        _mount_dmg("/fake/app.dmg")
+        call_args = mock_run.call_args[0][0]
+        assert call_args[0] == "hdiutil"
+        assert call_args[1] == "attach"
+        assert "/fake/app.dmg" in call_args
+        assert "-nobrowse" in call_args
+        assert "-noautoopen" in call_args
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.run")
+    def test_returns_none_when_no_volumes_path(self, mock_run, caplog) -> None:
+        mock_run.return_value.stdout = "/dev/disk2s1\t\tHFS+\t/mnt/other\n"
+        assert _mount_dmg("/fake/app.dmg") is None
+        assert "hdiutil" in caplog.text.lower() or "mount" in caplog.text.lower()
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.run")
+    def test_returns_none_on_empty_stdout(self, mock_run) -> None:
+        mock_run.return_value.stdout = ""
+        assert _mount_dmg("/fake/app.dmg") is None
+
+    @patch(
+        "ardupilot_methodic_configurator.backend_internet.subprocess.run",
+        side_effect=__import__("subprocess").CalledProcessError(1, "hdiutil"),
+    )
+    def test_returns_none_and_logs_on_subprocess_error(self, mock_run, caplog) -> None:
+        assert _mount_dmg("/fake/app.dmg") is None
+        assert caplog.text  # error was logged
+
+    @patch(
+        "ardupilot_methodic_configurator.backend_internet.subprocess.run",
+        side_effect=OSError("hdiutil not found"),
+    )
+    def test_returns_none_and_logs_on_os_error(self, mock_run, caplog) -> None:
+        assert _mount_dmg("/fake/app.dmg") is None
+        assert caplog.text  # error was logged
+
+
+class TestUnmountDmg:
+    """Tests for the _unmount_dmg helper."""
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.run")
+    def test_calls_hdiutil_detach_with_force(self, mock_run) -> None:
+        mock_run.return_value = Mock()
+        _unmount_dmg("/Volumes/MyApp")
+        mock_run.assert_called_once()
+        args = mock_run.call_args[0][0]
+        assert args[0] == "hdiutil"
+        assert args[1] == "detach"
+        assert "/Volumes/MyApp" in args
+        assert "-force" in args
+
+    @patch(
+        "ardupilot_methodic_configurator.backend_internet.subprocess.run",
+        side_effect=OSError("detach failed"),
+    )
+    def test_suppresses_os_error(self, mock_run) -> None:
+        _unmount_dmg("/Volumes/MyApp")  # must not raise
+
+    @patch(
+        "ardupilot_methodic_configurator.backend_internet.subprocess.run",
+        side_effect=__import__("subprocess").CalledProcessError(1, "hdiutil"),
+    )
+    def test_suppresses_called_process_error(self, mock_run) -> None:
+        _unmount_dmg("/Volumes/MyApp")  # must not raise
+
+
+class TestInstallAppFromMount:
+    """Tests for the _install_app_from_mount helper."""
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.check_call")
+    @patch("ardupilot_methodic_configurator.backend_internet.os.listdir")
+    def test_installs_first_app_bundle_using_ditto(self, mock_listdir, mock_check_call, tmp_path) -> None:
+        """Given a mount point with a .app bundle, it copies it to /Applications via ditto."""
+        mock_listdir.return_value = ["MyApp.app", "README.txt"]
+        mock_check_call.return_value = 0
+        assert _install_app_from_mount(str(tmp_path))
+        call_args = mock_check_call.call_args[0][0]
+        assert call_args[0] == "ditto"
+        # source must be the .app inside the mount point
+        assert "MyApp.app" in call_args[1]
+        # destination must be /Applications/MyApp.app
+        dest = call_args[2]
+        assert "Applications" in dest
+        assert "MyApp.app" in dest
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.check_call")
+    @patch("ardupilot_methodic_configurator.backend_internet.os.listdir")
+    def test_invokes_progress_callbacks_before_and_after(self, mock_listdir, mock_check_call, tmp_path) -> None:
+        """Progress callback must be called at the start and on completion."""
+        mock_listdir.return_value = ["MyApp.app"]
+        mock_check_call.return_value = 0
+        progress = Mock()
+        _install_app_from_mount(str(tmp_path), progress_callback=progress)
+        assert progress.call_count == 2
+        first_call_progress = progress.call_args_list[0][0][0]
+        last_call_progress = progress.call_args_list[-1][0][0]
+        assert first_call_progress == 60.0  # "Installing..." message at 60% of second phase
+        assert last_call_progress == 80.0  # "App installed" message at 80% of second phase
+
+    @patch("ardupilot_methodic_configurator.backend_internet.subprocess.check_call")
+    @patch("ardupilot_methodic_configurator.backend_internet.os.listdir")
+    def test_picks_first_app_when_multiple_present(self, mock_listdir, mock_check_call, tmp_path) -> None:
+        mock_listdir.return_value = ["FirstApp.app", "SecondApp.app"]
+        mock_check_call.return_value = 0
+        _install_app_from_mount(str(tmp_path))
+        dest = mock_check_call.call_args[0][0][2]
+        assert "FirstApp.app" in dest
+
+    @patch("ardupilot_methodic_configurator.backend_internet.os.listdir")
+    def test_returns_false_when_no_app_bundle_found(self, mock_listdir, caplog) -> None:
+        mock_listdir.return_value = ["README.txt", "License.txt"]
+        assert not _install_app_from_mount("/Volumes/MyApp")
+        assert caplog.text  # error was logged
+
+    @patch(
+        "ardupilot_methodic_configurator.backend_internet.subprocess.check_call",
+        side_effect=__import__("subprocess").CalledProcessError(1, "ditto"),
+    )
+    @patch("ardupilot_methodic_configurator.backend_internet.os.listdir")
+    def test_returns_false_and_logs_on_ditto_failure(self, mock_listdir, mock_check_call, caplog) -> None:
+        mock_listdir.return_value = ["MyApp.app"]
+        assert not _install_app_from_mount("/Volumes/MyApp")
+        assert caplog.text  # error was logged
+
+    @patch(
+        "ardupilot_methodic_configurator.backend_internet.os.listdir",
+        side_effect=OSError("permission denied"),
+    )
+    def test_returns_false_on_os_error(self, mock_listdir, caplog) -> None:
+        assert not _install_app_from_mount("/Volumes/MyApp")
+        assert caplog.text  # error was logged
+
+
+@pytest.fixture
+def macos_happy_path() -> Generator[dict[str, Any], None, None]:
+    """
+    Fixture that patches all backend helpers so download_and_install_on_macos succeeds end-to-end.
+
+    Tests override individual patches by using the returned dict of mocks.
+    """
+    with (
+        patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", return_value=True) as dl,
+        patch("ardupilot_methodic_configurator.backend_internet._verify_installer_integrity", return_value=True) as sha,
+        patch("ardupilot_methodic_configurator.backend_internet._validate_download_file", return_value=True) as vf,
+        patch("ardupilot_methodic_configurator.backend_internet._mount_dmg", return_value="/Volumes/App") as mount,
+        patch("ardupilot_methodic_configurator.backend_internet._install_app_from_mount", return_value=True) as install,
+        patch("ardupilot_methodic_configurator.backend_internet._unmount_dmg") as unmount,
+    ):
+        yield {"download": dl, "sha256": sha, "validate": vf, "mount": mount, "install": install, "unmount": unmount}
+
+
+class TestDownloadAndInstallOnMacos:
+    """Tests for the download_and_install_on_macos function."""
+
+    def test_rejects_non_github_url(self) -> None:
+        assert not download_and_install_on_macos("https://evil.com/app.dmg", DMG_FILE_NAME)
+
+    @patch("ardupilot_methodic_configurator.backend_internet.download_file_from_url", return_value=False)
+    def test_returns_false_when_download_fails(self, mock_dl) -> None:
+        assert not download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME)
+
+    def test_full_success_flow(self, macos_happy_path) -> None:
+        """Given all steps succeed, returns True and reports 100% completion."""
+        progress = Mock()
+        assert download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME, progress_callback=progress)
+        # Progress must be called with 100% at the end
+        final_call = progress.call_args_list[-1]
+        assert final_call[0][0] == 100.0
+
+    def test_unmount_is_always_called_even_when_install_fails(self, macos_happy_path) -> None:
+        """_unmount_dmg must be called in the finally block regardless of install outcome."""
+        macos_happy_path["install"].return_value = False
+        download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME)
+        macos_happy_path["unmount"].assert_called_once_with("/Volumes/App")
+
+    def test_unmount_is_called_with_correct_mount_point(self, macos_happy_path) -> None:
+        macos_happy_path["mount"].return_value = "/Volumes/SpecificApp"
+        download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME)
+        macos_happy_path["unmount"].assert_called_once_with("/Volumes/SpecificApp")
+
+    def test_returns_false_when_install_fails(self, macos_happy_path) -> None:
+        macos_happy_path["install"].return_value = False
+        assert not download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME)
+
+    def test_returns_false_and_skips_install_when_mount_fails(self, macos_happy_path) -> None:
+        macos_happy_path["mount"].return_value = None
+        assert not download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME)
+        macos_happy_path["install"].assert_not_called()
+
+    def test_returns_false_when_file_validation_fails(self, macos_happy_path) -> None:
+        macos_happy_path["validate"].return_value = False
+        assert not download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME)
+        # Validation failed before mount — mount should not be attempted
+        macos_happy_path["mount"].assert_not_called()
+
+    def test_returns_false_when_sha256_mismatch(self, macos_happy_path) -> None:
+        macos_happy_path["sha256"].return_value = False
+        assert not download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME, expected_sha256="deadbeef")
+        # SHA256 failed before file validation — validate should not be attempted
+        macos_happy_path["validate"].assert_not_called()
+
+    def test_passes_expected_sha256_to_integrity_check(self, macos_happy_path) -> None:
+        sha = "abc123def456" * 4  # 48-char fake hash
+        download_and_install_on_macos(GITHUB_DOWNLOAD_URL, DMG_FILE_NAME, expected_sha256=sha)
+        macos_happy_path["sha256"].assert_called_once()
+        # Second positional arg is expected_sha256
+        assert sha in macos_happy_path["sha256"].call_args[0]
 
 
 class TestDownloadFile:

@@ -25,7 +25,7 @@ from logging import info as logging_info
 from logging import shutdown as logging_shutdown
 from logging import warning as logging_warning
 from typing import Any, Callable, Optional, Union
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from webbrowser import open as webbrowser_open
 
 import certifi
@@ -333,13 +333,22 @@ def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str
     return None
 
 
-def _validate_windows_installer_url(url: str) -> bool:
-    """Validate that URL is from a trusted GitHub source."""
-    # This whitelist is intentionally restrictive for security reasons
-    if url.startswith("https://github.com/"):
-        return True
-    logging_error(_("Windows installer URL must be from github.com: %s"), url)
-    return False
+def _validate_github_url(url: str) -> bool:
+    """Validate that URL is from the trusted GitHub releases download path."""
+    # Parse and normalise before checking — guards against leading/trailing whitespace,
+    # scheme case differences, and github.com appearing only in the path.
+    parsed = urlparse(url.strip())
+    if parsed.scheme.lower() != "https":
+        logging_error(_("Installer URL must use HTTPS: %s"), url)
+        return False
+    if parsed.hostname != "github.com":
+        logging_error(_("Installer URL must be from github.com: %s"), url)
+        return False
+    expected_prefix = "/ArduPilot/MethodicConfigurator/releases/download/"
+    if not parsed.path.startswith(expected_prefix):
+        logging_error(_("Installer URL must point to an ArduPilot/MethodicConfigurator release asset: %s"), url)
+        return False
+    return True
 
 
 def _verify_installer_integrity(path: str, expected_sha256: Optional[str]) -> bool:
@@ -357,24 +366,25 @@ def _verify_installer_integrity(path: str, expected_sha256: Optional[str]) -> bo
     return True
 
 
-def _validate_windows_installer_file(path: str) -> bool:
-    """Validate installer file size, PE signature, and set secure permissions."""
+def _validate_download_file(path: str, magic_bytes: Optional[bytes] = None, magic_error_msg: str = "") -> bool:
+    """Validate downloaded file size, optional magic bytes signature, and set secure permissions."""
     try:
         st = os.stat(path)
         if st.st_size < 1024:
-            logging_error(_("Downloaded installer too small: %d bytes"), st.st_size)
+            logging_error(_("Downloaded file too small: %d bytes"), st.st_size)
             with contextlib.suppress(OSError, FileNotFoundError):
                 os.remove(path)
             return False
 
-        with open(path, "rb") as _fh:
-            sig = _fh.read(2)
-        # see ARCHITECTURE_1_software_update.md for rationale of this simplified test
-        if sig != PE_MAGIC_BYTES:
-            logging_error(_("Downloaded installer does not appear to be a Windows executable"))
-            with contextlib.suppress(OSError, FileNotFoundError):
-                os.remove(path)
-            return False
+        if magic_bytes is not None:
+            with open(path, "rb") as _fh:
+                sig = _fh.read(len(magic_bytes))
+            # see ARCHITECTURE_1_software_update.md for rationale of this simplified test
+            if sig != magic_bytes:
+                logging_error("%s", magic_error_msg or _("Downloaded file has unexpected format"))
+                with contextlib.suppress(OSError, FileNotFoundError):
+                    os.remove(path)
+                return False
 
         # Try to restrict permissions where supported
         with contextlib.suppress(PermissionError, OSError, NotImplementedError):
@@ -382,7 +392,7 @@ def _validate_windows_installer_file(path: str) -> bool:
 
         return True
     except OSError as e:
-        logging_error(_("Failed to validate downloaded installer: %s"), e)
+        logging_error(_("Failed to validate downloaded file: %s"), e)
         with contextlib.suppress(OSError, FileNotFoundError):
             os.remove(path)
         return False
@@ -454,7 +464,7 @@ def download_and_install_on_windows(
 
     """
     # Validate URL is from trusted GitHub source
-    if not _validate_windows_installer_url(download_url):
+    if not _validate_github_url(download_url):
         return False
 
     logging_info(_("Downloading and installing new version for Windows..."))
@@ -478,7 +488,11 @@ def download_and_install_on_windows(
                 return False
 
             # Validate file size, PE signature, and set secure permissions
-            if not _validate_windows_installer_file(temp_path):
+            if not _validate_download_file(
+                temp_path,
+                magic_bytes=PE_MAGIC_BYTES,
+                magic_error_msg=str(_("Downloaded installer does not appear to be a Windows executable")),
+            ):
                 return False
 
             if progress_callback:
@@ -492,6 +506,155 @@ def download_and_install_on_windows(
 
     except subprocess.SubprocessError as e:
         logging_error(_("Installation failed: {}").format(e))
+    except OSError as e:
+        logging_error(_("File operation failed: {}").format(e))
+    return False
+
+
+def _mount_dmg(dmg_path: str) -> Optional[str]:
+    """Mount a DMG file using hdiutil and return the mount point path."""
+    try:
+        result = subprocess.run(  # noqa: S603
+            ["hdiutil", "attach", dmg_path, "-nobrowse", "-noautoopen"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        # hdiutil output lines are tab-separated: <device>\t[fstype]\t<mountpoint>
+        # The number of tab-separated fields varies; scan all parts for a /Volumes/ path.
+        for line in result.stdout.strip().splitlines():
+            parts = [p.strip() for p in line.split("\t")]
+            for part in parts:
+                if part.startswith("/Volumes/"):
+                    return part
+        logging_error(_("Could not parse mount point from hdiutil output: %s"), result.stdout)
+    except subprocess.CalledProcessError as e:
+        logging_error(_("Failed to mount DMG: %s"), e)
+    except OSError as e:
+        logging_error(_("Failed to run hdiutil: %s"), e)
+    return None
+
+
+def _install_app_from_mount(mount_point: str, progress_callback: Optional[Callable[[float, str], None]] = None) -> bool:
+    """Copy .app bundle from DMG mount point to /Applications using ditto."""
+    try:
+        apps = [os.path.join(mount_point, f) for f in os.listdir(mount_point) if f.endswith(".app")]
+        if not apps:
+            logging_error(_("No .app bundle found in DMG at %s"), mount_point)
+            return False
+
+        app_path = apps[0]
+        app_name = os.path.basename(app_path)
+        dest = os.path.join("/Applications", app_name)
+
+        if progress_callback:
+            progress_callback(60.0, _("Installing {}...").format(app_name))
+
+        # Use ditto to preserve metadata, resource forks, and extended attributes
+        subprocess.check_call(["ditto", app_path, dest])  # noqa: S603, S607
+
+        if progress_callback:
+            progress_callback(80.0, _("App installed"))
+
+        return True
+    except subprocess.CalledProcessError as e:
+        logging_error(_("Failed to install app from DMG: %s"), e)
+    except OSError as e:
+        logging_error(_("Error during app installation: %s"), e)
+    return False
+
+
+def _unmount_dmg(mount_point: str) -> None:
+    """Unmount a DMG volume using hdiutil detach."""
+    with contextlib.suppress(subprocess.CalledProcessError, OSError):
+        subprocess.run(  # noqa: S603
+            ["hdiutil", "detach", mount_point, "-force"],  # noqa: S607
+            capture_output=True,
+            check=False,
+        )
+
+
+def _mount_and_install_dmg(
+    temp_path: str,
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+) -> bool:
+    """Mount the DMG at temp_path, install the .app to /Applications, then unmount."""
+    if progress_callback:
+        progress_callback(40.0, _("Mounting DMG..."))
+
+    mount_point = _mount_dmg(temp_path)
+    if not mount_point:
+        return False
+
+    try:
+        result = _install_app_from_mount(mount_point, progress_callback)
+    finally:
+        _unmount_dmg(mount_point)
+
+    if result:
+        if progress_callback:
+            progress_callback(100.0, _("Installation complete. Please restart the application."))
+        logging_info(_("macOS DMG installation complete. Please restart the application."))
+    return result
+
+
+def download_and_install_on_macos(
+    download_url: str,
+    file_name: str,
+    progress_callback: Optional[Callable[[float, str], None]] = None,
+    expected_sha256: Optional[str] = None,
+) -> bool:
+    """
+    Download and install a new version of the application on macOS via DMG.
+
+    This function orchestrates the complete update process: URL validation, download,
+    integrity check, DMG mount, app copy, and unmount.
+
+    Args:
+        download_url: The URL from which to download the DMG installer
+        file_name: The name to save the downloaded file as
+        progress_callback: Optional callback function to report progress
+                          Takes two arguments: progress (0.0-100.0) and status message
+        expected_sha256: Optional SHA256 hex digest expected for the downloaded DMG. If provided,
+            the downloaded file will be verified and the install will be aborted on mismatch.
+
+    Returns:
+        bool: True if installation completed successfully, False otherwise
+
+    """
+    if not _validate_github_url(download_url):
+        return False
+
+    logging_info(_("Downloading and installing new version for macOS..."))
+
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = os.path.join(temp_dir, file_name)
+
+            # Download with progress updates
+            if not download_file_from_url(
+                download_url,
+                temp_path,
+                timeout=60,  # Increased timeout for large files
+                progress_callback=progress_callback,
+            ):
+                logging_error(_("Failed to download DMG from %s"), download_url)
+                return False
+
+            # Verify SHA256 checksum if provided
+            if progress_callback:
+                progress_callback(0.0, _("Verifying checksum..."))
+            if not _verify_installer_integrity(temp_path, expected_sha256):
+                return False
+
+            # Validate file size and set secure permissions (no magic bytes check for DMG)
+            if progress_callback:
+                progress_callback(20.0, _("Validating file..."))
+            if not _validate_download_file(temp_path):
+                return False
+
+            return _mount_and_install_dmg(temp_path, progress_callback)
+
     except OSError as e:
         logging_error(_("File operation failed: {}").format(e))
     return False
