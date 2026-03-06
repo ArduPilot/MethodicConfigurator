@@ -19,6 +19,8 @@ from requests import RequestException as requests_RequestException
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_software_updates import (
     UpdateManager,
+    _find_asset,
+    _install_from_asset,
     check_for_software_updates,
     format_version_info,
 )
@@ -224,6 +226,174 @@ def test_update_manager_newer_version(update_manager) -> None:  # pylint: disabl
         mock_dialog.show.assert_called_once()
 
 
+class TestFindAsset:
+    """Tests for the _find_asset helper."""
+
+    def test_returns_first_matching_extension(self) -> None:
+        assets = [
+            {"name": "source.tar.gz"},
+            {"name": "setup.exe"},
+            {"name": "other.exe"},
+        ]
+        assert _find_asset(assets, ".exe") == {"name": "setup.exe"}
+
+    def test_returns_none_when_no_match_and_no_fallback(self) -> None:
+        assets = [{"name": "source.tar.gz"}, {"name": "linux.deb"}]
+        assert _find_asset(assets, ".exe") is None
+
+    def test_returns_first_asset_when_fallback_enabled_and_no_match(self) -> None:
+        assets = [{"name": "source.tar.gz"}, {"name": "linux.deb"}]
+        assert _find_asset(assets, ".exe", allow_fallback=True) == {"name": "source.tar.gz"}
+
+    def test_returns_none_on_empty_list_even_with_fallback(self) -> None:
+        assert _find_asset([], ".exe", allow_fallback=True) is None
+
+    def test_matching_is_case_insensitive(self) -> None:
+        assets = [{"name": "Setup.EXE"}]
+        assert _find_asset(assets, ".exe") == {"name": "Setup.EXE"}
+
+    def test_asset_without_name_key_is_skipped(self) -> None:
+        assets = [{}, {"name": "app.dmg"}]
+        assert _find_asset(assets, ".dmg") == {"name": "app.dmg"}
+
+
+class TestInstallFromAsset:
+    """Tests for the _install_from_asset helper."""
+
+    def test_calls_install_fn_with_correct_kwargs(self) -> None:
+        asset = {"browser_download_url": "https://github.com/ArduPilot/r/v1/app.exe", "name": "app.exe"}
+        latest_release = {"assets": [asset]}
+        install_fn = Mock(return_value=True)
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+            return_value="deadbeef",
+        ):
+            result = _install_from_asset(asset, latest_release, install_fn, progress_callback=None)
+
+        assert result is True
+        install_fn.assert_called_once_with(
+            download_url="https://github.com/ArduPilot/r/v1/app.exe",
+            file_name="app.exe",
+            progress_callback=None,
+            expected_sha256="deadbeef",
+        )
+
+    def test_returns_false_when_install_fn_fails(self) -> None:
+        asset = {"browser_download_url": "https://github.com/ArduPilot/r/v1/app.exe", "name": "app.exe"}
+        install_fn = Mock(return_value=False)
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+            return_value=None,
+        ):
+            assert _install_from_asset(asset, {}, install_fn, None) is False
+
+    def test_passes_progress_callback_through(self) -> None:
+        asset = {"browser_download_url": "https://github.com/ArduPilot/r/v1/app.exe", "name": "app.exe"}
+        install_fn = Mock(return_value=True)
+        cb = Mock()
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+            return_value=None,
+        ):
+            _install_from_asset(asset, {}, install_fn, cb)
+
+        assert install_fn.call_args.kwargs["progress_callback"] is cb
+
+
+class TestInstallWindows:
+    """Tests for UpdateManager._install_windows."""
+
+    def test_returns_false_and_logs_when_no_assets(self, caplog) -> None:
+        um = UpdateManager()
+        assert um._install_windows({"assets": []}, None) is False
+        assert caplog.text
+
+    def test_prefers_exe_over_other_assets(self) -> None:
+        um = UpdateManager()
+        latest_release = {
+            "assets": [
+                {"name": "source.tar.gz", "browser_download_url": "https://github.com/ArduPilot/r/v1/source.tar.gz"},
+                {"name": "setup.exe", "browser_download_url": "https://github.com/ArduPilot/r/v1/setup.exe"},
+            ]
+        }
+        with (
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows",
+                return_value=True,
+            ) as mock_install,
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+                return_value=None,
+            ),
+        ):
+            assert um._install_windows(latest_release, None) is True
+            assert mock_install.call_args.kwargs["download_url"].endswith("setup.exe")
+
+    def test_falls_back_to_first_asset_when_no_exe(self) -> None:
+        um = UpdateManager()
+        latest_release = {
+            "assets": [{"name": "source.tar.gz", "browser_download_url": "https://github.com/ArduPilot/r/v1/source.tar.gz"}]
+        }
+        with (
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_windows",
+                return_value=True,
+            ) as mock_install,
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+                return_value=None,
+            ),
+        ):
+            assert um._install_windows(latest_release, None) is True
+            assert mock_install.call_args.kwargs["file_name"] == "source.tar.gz"
+
+
+class TestInstallMacos:
+    """Tests for UpdateManager._install_macos."""
+
+    def test_uses_dmg_when_available(self) -> None:
+        um = UpdateManager()
+        latest_release = {"assets": [{"name": "app.dmg", "browser_download_url": "https://github.com/ArduPilot/r/v1/app.dmg"}]}
+        with (
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_macos",
+                return_value=True,
+            ) as mock_install,
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+                return_value=None,
+            ),
+        ):
+            assert um._install_macos(latest_release, None) is True
+            mock_install.assert_called_once()
+
+    def test_falls_back_to_pip_when_no_dmg(self) -> None:
+        um = UpdateManager()
+        with (
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
+                return_value=0,
+            ) as mock_pip,
+            patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
+        ):
+            assert um._install_macos({"assets": []}, None) is True
+            mock_pip.assert_called_once()
+
+    def test_returns_false_when_pip_fallback_fails(self) -> None:
+        um = UpdateManager()
+        with (
+            patch(
+                "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release",
+                return_value=1,
+            ),
+            patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
+        ):
+            assert um._install_macos({}, None) is False
+
+
 def test_update_manager_perform_download_windows_success(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
     """Test successful download on Windows."""
     update_manager.dialog = mock_dialog
@@ -349,15 +519,100 @@ def test_update_manager_perform_download_linux_failure(update_manager, mock_dial
 
 
 def test_update_manager_perform_download_mac(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
-    """Test download on macOS."""
+    """Test download on macOS with no DMG asset falls back to pip."""
     update_manager.dialog = mock_dialog
     latest_release = {}
 
     with (
         patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Darwin"),
         patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_pip_release", return_value=0),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_info"),
     ):
         assert update_manager._perform_download(latest_release) is True
+
+
+def test_update_manager_perform_download_mac_with_dmg(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+    """Test download on macOS uses DMG when a .dmg asset is available."""
+    update_manager.dialog = mock_dialog
+    dmg_url = "https://github.com/ArduPilot/MethodicConfigurator/releases/download/v2/app.dmg"
+    dmg_name = "app.dmg"
+    expected_sha = "abc123"
+    latest_release = {
+        "assets": [
+            {
+                "browser_download_url": dmg_url,
+                "name": dmg_name,
+            }
+        ]
+    }
+
+    with (
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Darwin"),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_macos", return_value=True
+        ) as mock_dmg_install,
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+            return_value=expected_sha,
+        ),
+    ):
+        assert update_manager._perform_download(latest_release) is True
+        mock_dmg_install.assert_called_once_with(
+            download_url=dmg_url,
+            file_name=dmg_name,
+            progress_callback=mock_dialog.update_progress,
+            expected_sha256=expected_sha,
+        )
+
+
+def test_update_manager_perform_download_mac_dmg_failure(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+    """Test download on macOS returns False when DMG installation fails."""
+    update_manager.dialog = mock_dialog
+    latest_release = {
+        "assets": [
+            {
+                "browser_download_url": "https://github.com/ArduPilot/MethodicConfigurator/releases/download/v2/app.dmg",
+                "name": "app.dmg",
+            }
+        ]
+    }
+
+    with (
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Darwin"),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_macos", return_value=False),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+            return_value=None,
+        ),
+    ):
+        assert update_manager._perform_download(latest_release) is False
+
+
+def test_update_manager_perform_download_mac_exception(update_manager, mock_dialog) -> None:  # pylint: disable=redefined-outer-name
+    """Test download on macOS handles exceptions gracefully."""
+    update_manager.dialog = mock_dialog
+    latest_release = {
+        "assets": [
+            {
+                "browser_download_url": "https://github.com/ArduPilot/MethodicConfigurator/releases/download/v2/app.dmg",
+                "name": "app.dmg",
+            }
+        ]
+    }
+
+    with (
+        patch("ardupilot_methodic_configurator.data_model_software_updates.platform.system", return_value="Darwin"),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.download_and_install_on_macos",
+            side_effect=RuntimeError("Unexpected error"),
+        ),
+        patch(
+            "ardupilot_methodic_configurator.data_model_software_updates.get_expected_sha256_from_release",
+            return_value=None,
+        ),
+        patch("ardupilot_methodic_configurator.data_model_software_updates.logging_error"),
+    ):
+        assert update_manager._perform_download(latest_release) is False
 
 
 def test_check_for_software_updates_value_error() -> None:

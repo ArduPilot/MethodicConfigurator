@@ -31,7 +31,8 @@ This ensures users always have access to the latest features, bug fixes, and sec
 
 4. **Installation Process**
    - ✅ Windows: Creates batch file to run installer after app exit with integrity validation
-   - ✅ Linux/macOS: Uses pip to install updated package (supports wheel assets from releases)
+   - ✅ macOS: Downloads `.dmg`, mounts it with `hdiutil`, copies `.app` to `/Applications` with `ditto`, then unmounts
+   - ✅ Linux: Uses pip/uv to install updated package from PyPI
    - ✅ File integrity validation (size, magic bytes, SHA256 when available)
    - ✅ Automatic cleanup of invalid/corrupted downloads
 
@@ -114,8 +115,11 @@ Legend:
   - `get_release_info()`: GitHub API communication with rate limit handling
   - `get_expected_sha256_from_release()`: SHA256 checksum retrieval from release assets
   - `download_file_from_url()`: File download with retry, resume, and progress tracking
-  - `download_and_install_on_windows()`: Windows installer with integrity validation
-  - `download_and_install_pip_release()`: Linux/macOS pip installation
+  - `_validate_github_url()`: Shared URL whitelist validation (GitHub HTTPS only)
+  - `_validate_download_file()`: Shared file size, optional magic bytes, and permission validation
+  - `download_and_install_on_windows()`: Windows `.exe` installer with PE header and integrity validation
+  - `download_and_install_on_macos()`: macOS `.dmg` installer — mount, copy `.app`, unmount
+  - `download_and_install_pip_release()`: Linux pip/uv installation from PyPI
 
 - **Actual Dependencies**:
   - `requests` with SSL verification and proxy support ✅
@@ -151,7 +155,8 @@ Legend:
 
 5. **Download and Installation Phase**
    - **Windows**: Downloads .exe installer with SHA256 verification, validates PE header, creates batch file
-   - **Linux/macOS**: Attempts wheel asset from GitHub first (with SHA256), falls back to pip
+   - **macOS**: Downloads `.dmg` with SHA256 verification, mounts with `hdiutil`, copies `.app` bundle to `/Applications` using `ditto`, then unmounts
+   - **Linux**: Installs via pip/uv from PyPI
    - ✅ Progress callback provides real-time feedback during download
    - ✅ SHA256 integrity validation of downloaded files (when checksums available)
    - ✅ File format validation (PE headers for .exe, ZIP headers for .whl)
@@ -159,7 +164,8 @@ Legend:
 
 6. **Application Exit for Update**
    - Windows: Main application exits (`os._exit(0)`) to allow installer to run
-   - Linux/macOS: Application continues after pip installation completes
+   - macOS: Application continues after DMG installation completes; user must restart manually
+   - Linux: Application continues after pip installation completes
    - Update process returns True to signal main application to exit
 
 ### Integration Points
@@ -168,7 +174,8 @@ Legend:
 - ✅ **Logging System**: Uses standard Python logging for all update activities and errors
 - ✅ **File System**:
   - Windows: Uses `tempfile.TemporaryDirectory()` for secure temporary file handling
-  - Both platforms: Manages installer/package downloads and cleanup
+  - macOS: Uses `tempfile.TemporaryDirectory()`; mounts/unmounts DMG via `hdiutil`; copies `.app` via `ditto`
+  - Linux: Manages pip/uv package installation
 - ✅ **Internet Backend**: Uses `backend_internet.py` for GitHub API communication and file downloads
 - ✅ **Frontend Components**: Uses `BaseWindow` and `ScrollFrame` for consistent UI behavior
 
@@ -187,7 +194,7 @@ Legend:
 - ✅ **Retry Logic**: Automatic retry with exponential backoff and jitter (3 attempts by default)
 - ✅ **Download Corruption**: SHA256 validation, file size checks, and magic byte verification
 - ✅ **Resume Capability**: Partial downloads can be resumed using HTTP Range headers
-- ✅ **Installation Failures**: Exception handling with logging for Windows and pip installation failures
+- ✅ **Installation Failures**: Exception handling with logging for Windows, macOS DMG, and pip installation failures
 - ✅ **Permission Errors**: Catches specific exceptions (`OSError`, `PermissionError`, `NotImplementedError`)
 - ✅ **User Feedback**: Clear error messages logged at appropriate levels (error/debug)
 - ✅ **Resource Cleanup**: Automatic cleanup of invalid/corrupted downloads with error logging
@@ -202,7 +209,7 @@ Legend:
 - ✅ **Mock Testing**: Extensive mocking of network operations and external dependencies
 - ✅ **Error Path Testing**: Tests for various error conditions and exception handling
 - ✅ **UI Testing**: Frontend dialog tests with proper setup and teardown
-- ✅ **Platform Testing**: Tests for Windows, Linux, and macOS specific code paths
+- ✅ **Platform Testing**: Tests for Windows, Linux, and macOS specific code paths including DMG mounting/installation helpers
 - ✅ **Version Handling**: Tests for prerelease versions, malformed tags, and edge cases
 - ⚠️ **Security Testing**: File validation tests (size, magic bytes) but no malicious payload testing
 - ✅ **Real Network Testing**: Integration tests with actual GitHub API calls (marked with `@pytest.mark.integration`)
@@ -245,7 +252,7 @@ tests/unit_frontend_tkinter_software_update.py   # UI dialog tests ✅
 
 - `requests` with timeout, SSL verification, and proxy support
 - `hashlib` for SHA256 computation
-- `subprocess` for Windows installer and pip operations
+- `subprocess` for Windows batch file execution, macOS `hdiutil`/`ditto`, and pip operations
 - `tempfile` for secure temporary file handling
 - `contextlib` for exception suppression
 - `random` for retry backoff jitter
@@ -268,3 +275,16 @@ tests/unit_frontend_tkinter_software_update.py   # UI dialog tests ✅
    - **Rationale**: Full PE validation would require additional dependencies (e.g., `pefile` library)
    - **Mitigation**: SHA256 checksum verification provides primary integrity protection
    - **Risk Assessment**: Low - checksums and GitHub HTTPS provide adequate security for typical use cases
+
+2. **DMG Validation (macOS)**
+   - **Current Implementation**: Validates file size and sets permissions only; no DMG magic bytes check
+   - **Limitation**: Does not inspect the DMG binary header or quarantine flags
+   - **Rationale**: macOS Gatekeeper and SHA256 checksums provide primary integrity protection
+   - **Mitigation**: SHA256 checksum verification and GitHub HTTPS downloads
+   - **Risk Assessment**: Low - equivalent protection level to the Windows implementation
+
+3. **macOS Restart**
+   - **Current Implementation**: User must manually restart the application after macOS DMG installation
+   - **Limitation**: Unlike Windows (which auto-restarts via batch file), macOS does not auto-relaunch
+   - **Rationale**: Relaunching from within a newly-installed `.app` requires additional complexity
+   - **Risk Assessment**: Minor usability gap; user is informed via progress message

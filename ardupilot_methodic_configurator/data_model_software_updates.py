@@ -18,7 +18,7 @@ from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from packaging import version
 from requests import RequestException as requests_RequestException
@@ -27,6 +27,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator import __version__ as current_version
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_internet import (
+    download_and_install_on_macos,
     download_and_install_on_windows,
     download_and_install_pip_release,
     get_expected_sha256_from_release,
@@ -56,56 +57,79 @@ def format_version_info(_current_version: str, _latest_release: str, changes: st
     ).format(**locals())
 
 
+def _find_asset(assets: list[dict[str, Any]], extension: str, allow_fallback: bool = False) -> Optional[dict[str, Any]]:
+    """Return the first asset whose name ends with *extension*, falling back to the first asset when requested."""
+    preferred = [a for a in assets if a.get("name", "").lower().endswith(extension)]
+    if preferred:
+        return preferred[0]
+    if allow_fallback and assets:
+        return assets[0]
+    return None
+
+
+def _install_from_asset(
+    asset: dict[str, Any],
+    latest_release: dict[str, Any],
+    install_fn: Callable[..., bool],
+    progress_callback: Optional[Callable[[float, str], None]],
+) -> bool:
+    """Fetch SHA256 for *asset* and invoke the platform-specific *install_fn*."""
+    expected_sha256 = get_expected_sha256_from_release(latest_release, asset["name"])
+    return install_fn(
+        download_url=asset["browser_download_url"],
+        file_name=asset["name"],
+        progress_callback=progress_callback,
+        expected_sha256=expected_sha256,
+    )
+
+
 class UpdateManager:
     """Manages the software update process including user interaction and installation."""
 
     def __init__(self) -> None:
         self.dialog: Optional[UpdateDialog] = None
 
+    def _install_windows(
+        self,
+        latest_release: dict[str, Any],
+        progress_callback: Optional[Callable[[float, str], None]],
+    ) -> bool:
+        """Select the best Windows asset (.exe preferred) and install it."""
+        asset = _find_asset(latest_release.get("assets", []), ".exe", allow_fallback=True)
+        if asset is None:
+            logging_error(_("No suitable assets found for Windows installation"))
+            return False
+        return _install_from_asset(asset, latest_release, download_and_install_on_windows, progress_callback)
+
+    def _install_macos(
+        self,
+        latest_release: dict[str, Any],
+        progress_callback: Optional[Callable[[float, str], None]],
+    ) -> bool:
+        """Select the best macOS asset (.dmg preferred) and install it, falling back to pip."""
+        asset = _find_asset(latest_release.get("assets", []), ".dmg")
+        if asset is None:
+            logging_info(_("No DMG asset found for macOS, falling back to pip installation"))
+            return download_and_install_pip_release(progress_callback=progress_callback) == 0
+        return _install_from_asset(asset, latest_release, download_and_install_on_macos, progress_callback)
+
     def _perform_download(self, latest_release: dict[str, Any]) -> bool:
-        result = False
-        if platform.system() == "Windows":
-            try:
-                # Look for .exe files first
-                exe_assets = [
-                    asset for asset in latest_release.get("assets", []) if asset.get("name", "").lower().endswith(".exe")
-                ]
-
-                asset = None
-                if exe_assets:
-                    asset = exe_assets[0]  # Use the first .exe file
-                elif latest_release.get("assets"):
-                    asset = latest_release["assets"][0]  # Fallback to first asset
-
-                if asset is not None:
-                    expected_sha256 = get_expected_sha256_from_release(latest_release, asset["name"])
-                    result = download_and_install_on_windows(
-                        download_url=asset["browser_download_url"],
-                        file_name=asset["name"],
-                        progress_callback=self.dialog.update_progress if self.dialog else None,
-                        expected_sha256=expected_sha256,
-                    )
-                else:
-                    logging_error(_("No suitable assets found for Windows installation"))
-                    result = False
-            except (KeyError, IndexError) as e:
-                logging_error(_("Error accessing release assets: %s"), e)
-                result = False
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                logging_error(_("Error during Windows download: %s"), e)
-                result = False
-        else:
-            # For Linux/macOS, install from PyPI using pip
-            try:
-                result = (
-                    download_and_install_pip_release(progress_callback=self.dialog.update_progress if self.dialog else None)
-                    == 0
-                )
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                logging_error(_("Error during pip installation: %s"), e)
-                result = False
-
-        return result
+        progress_callback = self.dialog.update_progress if self.dialog else None
+        handlers: dict[str, Callable[[], bool]] = {
+            "Windows": lambda: self._install_windows(latest_release, progress_callback),
+            "Darwin": lambda: self._install_macos(latest_release, progress_callback),
+        }
+        handler = handlers.get(
+            platform.system(),
+            lambda: download_and_install_pip_release(progress_callback=progress_callback) == 0,
+        )
+        try:
+            return handler()
+        except (KeyError, IndexError) as e:
+            logging_error(_("Error accessing release assets: %s"), e)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_error(_("Error during installation: %s"), e)
+        return False
 
     def check_and_update(self, latest_release: dict[str, Any], current_version_str: str) -> bool:
         try:
