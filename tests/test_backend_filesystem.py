@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import tempfile
 import unittest
 from argparse import ArgumentParser
 from os import path as os_path
@@ -19,7 +20,7 @@ from unittest.mock import MagicMock, mock_open, patch
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
-# pylint: disable=too-many-lines, too-many-arguments, too-many-positional-arguments
+# pylint: disable=too-many-lines, too-many-arguments, too-many-positional-arguments, protected-access
 
 
 class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public-methods
@@ -641,33 +642,42 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
-        fc_parameters = {"PARAM1": 1.0, "PARAM2": 2.0}
+        # Test with empty file_parameters - returns empty dict
+        result = lfs.update_and_export_vehicle_params_from_fc([])
+        assert not result  # Empty dict means no pending changes
 
-        # Test with empty file_parameters
-        result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
-        assert result == ""
-
-        # Test with file_parameters and configuration_steps
-        param1_mock = MagicMock()
-        param1_mock.value = 0.0
-        param2_mock = MagicMock()
-        param2_mock.value = 0.0
+        # Test with file_parameters and configuration steps:
+        # Phase 1 must NOT mutate self.file_parameters
+        param1 = Par(0.0, None)
+        param2 = Par(0.0, None)
 
         # Create a ParDict instead of a regular dict
-        param_dict = ParDict({"PARAM1": param1_mock, "PARAM2": param2_mock})
+        param_dict = ParDict({"PARAM1": param1, "PARAM2": param2})
         lfs.file_parameters = {"test.param": param_dict}
         lfs.configuration_steps = {"test.param": {"forced": {}, "derived": {}}}
 
+        lfs.derived_parameters = {"test.param": {"PARAM1": Par(1.0, None), "PARAM2": Par(2.0, None)}}
+        lfs.compute_parameters = MagicMock(return_value="")
+        result = lfs.update_and_export_vehicle_params_from_fc([])
+        # Derived values (1.0, 2.0) differ from loaded values (0.0, 0.0) so pending is non-empty
+        assert result  # Non-empty dict means pending changes detected
+        assert "test.param" in result
+        # Original Par objects in file_parameters must be untouched
+        assert param1.value == 0.0  # NOT mutated by Phase 1
+        assert param2.value == 0.0  # NOT mutated by Phase 1
+
+        # apply_pending_changes updates file_parameters
+        computed = ParDict({"PARAM1": Par(1.0, None), "PARAM2": Par(2.0, None)})
+        lfs.apply_pending_changes({"test.param": computed})
+        assert lfs.file_parameters["test.param"] is computed
+
+        # save_vehicle_params_to_files writes the current file_parameters to disk
         with (
-            patch.object(param_dict, "export_to_param") as mock_export,
+            patch.object(computed, "export_to_param") as mock_export,
             patch("ardupilot_methodic_configurator.backend_filesystem.ParDict._format_params") as mock_format,
         ):
             mock_format.return_value = "formatted_params"
-
-            result = lfs.update_and_export_vehicle_params_from_fc(fc_parameters, {})
-            assert result == ""
-            assert param1_mock.value == 1.0
-            assert param2_mock.value == 2.0
+            lfs.save_vehicle_params_to_files(list(lfs.file_parameters))
             mock_export.assert_called_once_with(os_path.join("vehicle_dir", "test.param"))
 
     def test_write_param_default_values_to_file(self) -> None:
@@ -973,6 +983,109 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert remote_path == "/fs/microsd/APM/file.bin"
 
 
+class TestTransformParamDict:
+    """Unit tests for LocalFilesystem._transform_param_dict (pure in-memory, no filesystem)."""
+
+    def test_blank_change_reason_strips_all_comments(self) -> None:
+        """
+        Blank-change-reason strips every comment from the parameter dict.
+
+        GIVEN: A ParDict where every parameter has a comment
+        WHEN: _transform_param_dict is called with blank_change_reason=True
+        THEN: All comments should be None in the result
+        """
+        params = ParDict({"PARAM1": Par(1.0, "keep me not"), "PARAM2": Par(2.0, "and me too")})
+        LocalFilesystem._transform_param_dict(params, blank_change_reason=True, use_fc_params=False, fc_parameters=None)
+        assert params["PARAM1"].comment is None
+        assert params["PARAM2"].comment is None
+        assert params["PARAM1"].value == 1.0
+        assert params["PARAM2"].value == 2.0
+
+    def test_blank_change_reason_false_preserves_comments(self) -> None:
+        """
+        When blank_change_reason is False comments are left untouched.
+
+        GIVEN: A ParDict where parameters have comments
+        WHEN: _transform_param_dict is called with blank_change_reason=False
+        THEN: Comments should remain unchanged
+        """
+        params = ParDict({"PARAM1": Par(1.0, "keep me")})
+        LocalFilesystem._transform_param_dict(params, blank_change_reason=False, use_fc_params=False, fc_parameters=None)
+        assert params["PARAM1"].comment == "keep me"
+
+    def test_use_fc_params_substitutes_differing_values(self) -> None:
+        """
+        FC values that differ beyond tolerance replace template values.
+
+        GIVEN: A ParDict with PARAM1=1.0
+        WHEN: _transform_param_dict is called with use_fc_params=True and fc_parameters={PARAM1: 42.0}
+        THEN: PARAM1 value should be 42.0
+        """
+        params = ParDict({"PARAM1": Par(1.0, "original")})
+        LocalFilesystem._transform_param_dict(
+            params, blank_change_reason=False, use_fc_params=True, fc_parameters={"PARAM1": 42.0}
+        )
+        assert params["PARAM1"].value == 42.0
+        assert params["PARAM1"].comment == "original"  # comment preserved
+
+    def test_use_fc_params_preserves_within_tolerance_values(self) -> None:
+        """
+        FC values within tolerance do not replace template values.
+
+        GIVEN: A ParDict with PARAM1=2.0
+        WHEN: _transform_param_dict is called with an FC value of 2.000001 (within tolerance)
+        THEN: PARAM1 value should remain 2.0
+        """
+        params = ParDict({"PARAM1": Par(2.0)})
+        LocalFilesystem._transform_param_dict(
+            params, blank_change_reason=False, use_fc_params=True, fc_parameters={"PARAM1": 2.000001}
+        )
+        assert params["PARAM1"].value == 2.0
+
+    def test_use_fc_params_does_not_add_params_absent_from_template(self) -> None:
+        """
+        FC parameters not present in the template are not added.
+
+        GIVEN: A ParDict with only PARAM1
+        WHEN: fc_parameters also contains EXTRA_PARAM not in the dict
+        THEN: EXTRA_PARAM should not appear in the result
+        """
+        params = ParDict({"PARAM1": Par(1.0)})
+        LocalFilesystem._transform_param_dict(
+            params, blank_change_reason=False, use_fc_params=True, fc_parameters={"PARAM1": 5.0, "EXTRA_PARAM": 99.0}
+        )
+        assert "EXTRA_PARAM" not in params
+        assert params["PARAM1"].value == 5.0
+
+    def test_use_fc_params_true_with_none_fc_parameters_leaves_dict_unchanged(self) -> None:
+        """
+        use_fc_params=True with fc_parameters=None leaves the dict unchanged.
+
+        GIVEN: use_fc_params is True but fc_parameters is None
+        WHEN: _transform_param_dict is called
+        THEN: No values or comments should be modified
+        """
+        params = ParDict({"PARAM1": Par(1.0, "comment")})
+        LocalFilesystem._transform_param_dict(params, blank_change_reason=False, use_fc_params=True, fc_parameters=None)
+        assert params["PARAM1"].value == 1.0
+        assert params["PARAM1"].comment == "comment"
+
+    def test_both_transformations_applied_together(self) -> None:
+        """
+        blank_change_reason and use_fc_params can be applied together in one call.
+
+        GIVEN: A ParDict with PARAM1=1.0 and a comment
+        WHEN: _transform_param_dict is called with both blank_change_reason=True and use_fc_params=True
+        THEN: The value should be replaced by the FC value AND the comment should be stripped
+        """
+        params = ParDict({"PARAM1": Par(1.0, "drop this")})
+        LocalFilesystem._transform_param_dict(
+            params, blank_change_reason=True, use_fc_params=True, fc_parameters={"PARAM1": 7.0}
+        )
+        assert params["PARAM1"].value == 7.0
+        assert params["PARAM1"].comment is None
+
+
 class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
     """Copy Template Files To New Vehicle Directory testclass."""
 
@@ -982,10 +1095,19 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
     @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copytree")
     @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
-    def test_copy_template_files_to_new_vehicle_dir(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def test_user_can_copy_mixed_files_and_dirs_without_transformation(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self, mock_isdir, mock_copy2, mock_copytree, mock_join, mock_listdir, mock_exists
     ) -> None:
-        """Test copying template files with various file types and conditions."""
+        """
+        Files, subdirectories and hidden files are all copied correctly when no transformation is requested.
+
+        GIVEN: A template directory with a .param file, a text file, two subdirectories and a hidden file
+        WHEN: copy_template_files_to_new_vehicle_dir is called with blank_change_reason=False and use_fc_params=False
+        THEN: The .param and text files should be copied with shutil_copy2
+         AND: The subdirectories should be copied with shutil_copytree
+         AND: The hidden file should be copied
+         AND: No error string should be returned
+        """
         mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
         mock_listdir.return_value = ["01_file1.param", "file2.txt", "dir1", ".hidden_file", "dir2"]
         mock_join.side_effect = lambda *args: "/".join(args)
@@ -994,13 +1116,11 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
-        lfs.copy_template_files_to_new_vehicle_dir(
+        result = lfs.copy_template_files_to_new_vehicle_dir(
             "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
         )
 
-        # Verify all files and directories were processed
-        assert mock_listdir.call_count >= 1
-        assert mock_join.call_count >= 10
+        assert result == ""
 
         # Verify directory copies
         mock_copytree.assert_any_call("template_dir/dir1", "new_vehicle_dir/dir1")
@@ -1011,70 +1131,215 @@ class TestCopyTemplateFilesToNewVehicleDir(unittest.TestCase):
         mock_copy2.assert_any_call("template_dir/file2.txt", "new_vehicle_dir/file2.txt")
         mock_copy2.assert_any_call("template_dir/.hidden_file", "new_vehicle_dir/.hidden_file")
 
-        # Verify existence checks
-        mock_exists.assert_any_call("template_dir")
-        mock_exists.assert_any_call("new_vehicle_dir")
+    def test_user_sees_error_when_template_dir_does_not_exist(self) -> None:
+        """
+        An error string is returned when the template directory does not exist.
 
-    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
-    @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")
-    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join")
-    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copytree")
-    @patch("ardupilot_methodic_configurator.backend_filesystem.shutil_copy2")
-    @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.isdir")
-    @patch("builtins.open", new_callable=mock_open, read_data="PARAM1,1.0 # test comment\nPARAM2,2.0 # another comment\n")
-    def test_copy_template_files_with_blank_change_reason(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self, mock_open_file, mock_isdir, mock_copy2, mock_copytree, mock_join, mock_listdir, mock_exists
-    ) -> None:
-        """Test that blank_change_reason parameter correctly strips comments from parameter files."""
-        mock_exists.side_effect = lambda path: path in ["template_dir", "new_vehicle_dir"]
-        mock_listdir.return_value = ["01_file1.param", "file2.txt", "dir1"]
-        mock_join.side_effect = lambda *args: "/".join(args)
-        mock_isdir.side_effect = lambda path: path.endswith("dir1")
-
+        GIVEN: A template directory path that does not exist on the filesystem
+        WHEN: copy_template_files_to_new_vehicle_dir is called
+        THEN: A non-empty error string should be returned describing the problem
+        """
         lfs = LocalFilesystem(
-            "vehicle_dir",
-            "vehicle_type",
-            "4.5.0",
-            allow_editing_template_files=False,
-            save_component_to_system_templates=False,
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
-
-        # Test with blank_change_reason=True
-        lfs.copy_template_files_to_new_vehicle_dir(
-            "template_dir", "new_vehicle_dir", blank_change_reason=True, copy_vehicle_image=False
+        result = lfs.copy_template_files_to_new_vehicle_dir(
+            "/nonexistent/template", "/some/dest", blank_change_reason=False, copy_vehicle_image=False
         )
+        assert result != ""
+        assert "nonexistent" in result or "exist" in result.lower()
 
-        # Verify file handling when blank_change_reason=True
-        # First check if writelines was called at all
-        assert mock_open_file().writelines.called, "writelines should have been called for .param files"
+    def test_user_sees_error_when_new_vehicle_dir_does_not_exist(self) -> None:
+        """
+        An error string is returned when the destination directory does not exist.
 
-        # Get the arguments passed to writelines
-        writelines_calls = mock_open_file().writelines.call_args_list
-        assert len(writelines_calls) > 0, "Expected at least one writelines call"
+        GIVEN: A valid template directory but a destination path that does not exist
+        WHEN: copy_template_files_to_new_vehicle_dir is called
+        THEN: A non-empty error string should be returned describing the problem
+        """
+        with tempfile.TemporaryDirectory() as template_dir:
+            lfs = LocalFilesystem(
+                "vehicle_dir",
+                "vehicle_type",
+                None,
+                allow_editing_template_files=False,
+                save_component_to_system_templates=False,
+            )
+            result = lfs.copy_template_files_to_new_vehicle_dir(
+                template_dir, "/nonexistent/dest", blank_change_reason=False, copy_vehicle_image=False
+            )
+        assert result != ""
+        assert "nonexistent" in result or "exist" in result.lower()
 
-        # Convert the generator to list to check content
-        lines_written = list(writelines_calls[0][0][0])  # Convert generator to list
-        assert "PARAM1,1.0\n" in lines_written, f"Expected 'PARAM1,1.0\\n' in {lines_written}"
-        assert "PARAM2,2.0\n" in lines_written, f"Expected 'PARAM2,2.0\\n' in {lines_written}"
+    def test_skip_files_and_non_numbered_param_files_are_excluded(self) -> None:
+        """
+        Known skip-list files and non-numbered .param files are never copied.
 
-        # Verify directory was copied with copytree
-        mock_copytree.assert_called_with("template_dir/dir1", "new_vehicle_dir/dir1")
+        GIVEN: A template directory containing apm.pdef.xml, last_uploaded_filename.txt,
+               tempcal_acc.png, tempcal_gyro.png and a non-numbered param file (foo.param)
+        WHEN: copy_template_files_to_new_vehicle_dir is called
+        THEN: None of those files should appear in the destination directory
+        """
+        with tempfile.TemporaryDirectory() as template_dir, tempfile.TemporaryDirectory() as new_vehicle_dir:
+            skip_items = ["apm.pdef.xml", "last_uploaded_filename.txt", "tempcal_acc.png", "tempcal_gyro.png", "foo.param"]
+            for name in skip_items:
+                with open(os_path.join(template_dir, name), "w", encoding="utf-8") as f:
+                    f.write("content")
+            # Add one file that should be copied to verify the function ran
+            with open(os_path.join(template_dir, "01_setup.param"), "w", encoding="utf-8") as f:
+                f.write("PARAM1,1.0\n")
 
-        # Verify non-param file was copied with copy2
-        mock_copy2.assert_any_call("template_dir/file2.txt", "new_vehicle_dir/file2.txt")
+            lfs = LocalFilesystem(
+                "vehicle_dir",
+                "vehicle_type",
+                None,
+                allow_editing_template_files=False,
+                save_component_to_system_templates=False,
+            )
+            result = lfs.copy_template_files_to_new_vehicle_dir(
+                template_dir, new_vehicle_dir, blank_change_reason=False, copy_vehicle_image=False
+            )
 
-        # Reset mocks for second test
-        mock_open_file.reset_mock()
-        mock_copy2.reset_mock()
-        mock_copytree.reset_mock()
+            assert result == ""
+            for name in skip_items:
+                assert not os_path.exists(os_path.join(new_vehicle_dir, name)), f"{name} should have been skipped"
+            # The numbered param file must be present
+            assert os_path.exists(os_path.join(new_vehicle_dir, "01_setup.param"))
 
-        # Test with blank_change_reason=False
-        lfs.copy_template_files_to_new_vehicle_dir(
-            "template_dir", "new_vehicle_dir", blank_change_reason=False, copy_vehicle_image=False
-        )
+    def test_copy_template_files_with_blank_change_reason(self) -> None:
+        """
+        Parameter file comments are stripped when blank_change_reason is True.
 
-        # Verify param file was copied normally
-        mock_copy2.assert_any_call("template_dir/01_file1.param", "new_vehicle_dir/01_file1.param")
+        GIVEN: A template .param file with comments on each line and a plain text file
+        WHEN: copy_template_files_to_new_vehicle_dir is called with blank_change_reason=True
+        THEN: The output .param file should contain parameters with correct values but no comments
+         AND: The plain text file should be copied verbatim
+        """
+        with tempfile.TemporaryDirectory() as template_dir, tempfile.TemporaryDirectory() as new_vehicle_dir:
+            # Create test param file with comments in the template
+            param_file = os_path.join(template_dir, "01_file1.param")
+            with open(param_file, "w", encoding="utf-8") as f:
+                f.write("PARAM1,1.0 # test comment\nPARAM2,2.0 # another comment\n")
+
+            # Create a non-param text file
+            txt_file = os_path.join(template_dir, "file2.txt")
+            with open(txt_file, "w", encoding="utf-8") as f:
+                f.write("some content")
+
+            lfs = LocalFilesystem(
+                "vehicle_dir",
+                "vehicle_type",
+                "4.5.0",
+                allow_editing_template_files=False,
+                save_component_to_system_templates=False,
+            )
+
+            result = lfs.copy_template_files_to_new_vehicle_dir(
+                template_dir, new_vehicle_dir, blank_change_reason=True, copy_vehicle_image=False
+            )
+            assert result == ""
+
+            # Output param file must exist and contain correct values but no comments
+            output_param = os_path.join(new_vehicle_dir, "01_file1.param")
+            assert os_path.exists(output_param)
+            with open(output_param, encoding="utf-8") as f:
+                content = f.read()
+            assert "# test comment" not in content, f"Comment should be stripped, got: {content!r}"
+            assert "# another comment" not in content, f"Comment should be stripped, got: {content!r}"
+            assert "PARAM1,1" in content, f"Expected PARAM1 value 1, got: {content!r}"
+            assert "PARAM2,2" in content, f"Expected PARAM2 value 2, got: {content!r}"
+
+            # Non-param file must be copied verbatim
+            output_txt = os_path.join(new_vehicle_dir, "file2.txt")
+            assert os_path.exists(output_txt)
+            with open(output_txt, encoding="utf-8") as f:
+                assert f.read() == "some content"
+
+    def test_copy_template_files_with_use_fc_params(
+        self,
+    ) -> None:
+        """
+        FC parameter values replace differing template values; within-tolerance and absent params are unchanged.
+
+        GIVEN: A template .param file with PARAM1=1.0 (comment) and PARAM2=2.0 (no comment)
+        WHEN: copy_template_files_to_new_vehicle_dir is called with use_fc_params=True
+          AND fc_parameters contains PARAM1=42.0 (different), PARAM2=2.000001 (within tolerance)
+          AND fc_parameters also contains EXTRA_PARAM=99.0 (not in template)
+        THEN: PARAM1 value should be 42 in output
+         AND: PARAM1 comment should be preserved (blank_change_reason is False)
+         AND: PARAM2 value should remain 2 (within tolerance)
+         AND: EXTRA_PARAM should not appear in the output file
+        """
+        with tempfile.TemporaryDirectory() as template_dir, tempfile.TemporaryDirectory() as new_vehicle_dir:
+            param_file = os_path.join(template_dir, "01_file1.param")
+            with open(param_file, "w", encoding="utf-8") as f:
+                f.write("PARAM1,1.0 # original comment\nPARAM2,2.0\n")
+
+            lfs = LocalFilesystem(
+                "vehicle_dir",
+                "vehicle_type",
+                "4.5.0",
+                allow_editing_template_files=False,
+                save_component_to_system_templates=False,
+            )
+
+            fc_parameters = {"PARAM1": 42.0, "PARAM2": 2.000001, "EXTRA_PARAM": 99.0}
+            result = lfs.copy_template_files_to_new_vehicle_dir(
+                template_dir,
+                new_vehicle_dir,
+                blank_change_reason=False,
+                copy_vehicle_image=False,
+                use_fc_params=True,
+                fc_parameters=fc_parameters,
+            )
+            assert result == ""
+
+            output_param = os_path.join(new_vehicle_dir, "01_file1.param")
+            with open(output_param, encoding="utf-8") as f:
+                content = f.read()
+
+            assert "PARAM1,42" in content, f"Expected PARAM1 to be 42, got: {content!r}"
+            assert "original comment" in content, f"Expected comment to be preserved, got: {content!r}"
+            assert "PARAM2,2" in content, f"Expected PARAM2 to be present, got: {content!r}"
+            # PARAM2 is within tolerance so it must not have jumped to 2.000001
+            assert "PARAM2,2.000001" not in content, f"PARAM2 should stay at 2, got: {content!r}"
+            assert "EXTRA_PARAM" not in content, f"EXTRA_PARAM should not be added, got: {content!r}"
+
+    def test_copy_template_files_with_both_blank_reason_and_fc_params(self) -> None:
+        """
+        Both blank_change_reason and use_fc_params transformations are applied in a single pass.
+
+        GIVEN: A template .param file with PARAM1=1.0 and a comment
+        WHEN: copy_template_files_to_new_vehicle_dir is called with both blank_change_reason=True
+          AND use_fc_params=True with fc_parameters containing PARAM1=7.0
+        THEN: PARAM1 value should be 7 in output
+         AND: The comment should be absent from the output
+        """
+        with tempfile.TemporaryDirectory() as template_dir, tempfile.TemporaryDirectory() as new_vehicle_dir:
+            param_file = os_path.join(template_dir, "01_file1.param")
+            with open(param_file, "w", encoding="utf-8") as f:
+                f.write("PARAM1,1.0 # drop this comment\n")
+
+            lfs = LocalFilesystem(
+                "vehicle_dir",
+                "vehicle_type",
+                None,
+                allow_editing_template_files=False,
+                save_component_to_system_templates=False,
+            )
+            result = lfs.copy_template_files_to_new_vehicle_dir(
+                template_dir,
+                new_vehicle_dir,
+                blank_change_reason=True,
+                copy_vehicle_image=False,
+                use_fc_params=True,
+                fc_parameters={"PARAM1": 7.0},
+            )
+            assert result == ""
+
+            with open(os_path.join(new_vehicle_dir, "01_file1.param"), encoding="utf-8") as f:
+                content = f.read()
+            assert "PARAM1,7" in content, f"Expected PARAM1=7, got: {content!r}"
+            assert "drop this comment" not in content, f"Comment should be stripped, got: {content!r}"
 
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_path.exists")
     @patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir")

@@ -424,6 +424,46 @@ class ParDict(dict[str, Par]):
             )
         }
 
+    def deep_copy(self) -> "ParDict":
+        """
+        Create a deep copy of this ParDict.
+
+        Each :class:`Par` entry is duplicated so that mutations to the copy
+        do not affect the original.
+
+        Returns:
+            A new ParDict with independent Par objects.
+
+        """
+        return ParDict({name: Par(par.value, par.comment) for name, par in self.items()})
+
+    def differs_from(self, other: "ParDict") -> bool:
+        """
+        Check whether this ParDict differs from *other* in keys, values, or comments.
+
+        Values are compared with :func:`is_within_tolerance`; ``None`` and ``""``
+        comments are treated as equivalent.
+
+        Args:
+            other: The baseline ParDict to compare against.
+
+        Returns:
+            True if any parameter was added, removed, changed in value,
+            or changed in comment.
+
+        """
+        if set(self.keys()) != set(other.keys()):
+            return True  # Parameter added or removed
+
+        for name, param in self.items():
+            orig = other[name]
+            if not is_within_tolerance(param.value, orig.value):
+                return True
+            if (param.comment or "") != (orig.comment or ""):
+                return True
+
+        return False
+
     @classmethod
     def from_file(cls, param_file: str) -> "ParDict":
         """

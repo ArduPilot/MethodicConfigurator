@@ -198,6 +198,38 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
 - **Directory Selection**: Works within selected vehicle directory
 - **Documentation System**: Integrates with online and cached documentation
 
+### Derived Parameter Confirmation Workflow
+
+After the Component Editor closes and before the Parameter Editor opens,
+`process_component_editor_results()` recalculates forced/derived parameters and asks the
+user to confirm any differences before they are applied.
+
+**Phase 1 - Pure computation** (`update_and_export_vehicle_params_from_fc`):
+For each file, deep-copies the loaded `ParDict`, computes forced/derived
+parameters, and compares the result against the unmodified in-memory original.  Returns a
+`dict[str, ParDict]` of files that differ.  `self.file_parameters` is never mutated.
+
+**Phase 2 - User confirmation** (`process_component_editor_results` in `__main__.py`):
+**Yes** -> `apply_pending_changes(pending)` updates the in-memory model; disk writes happen
+later in the Parameter Editor.  **No** -> nothing to undo.  Empty dict -> no dialog shown.
+
+### Separation from Project-Creation FC Import
+
+The optional "use FC parameters" behavior during **new project creation** is intentionally
+separate from the derived-parameter confirmation workflow above.
+
+- **One-time project creation import** (`VehicleProjectCreator.create_new_vehicle_from_template`):
+   when `use_fc_params=True`, source FC values are substituted directly during the template copy
+   step inside `LocalFilesystem.copy_template_files_to_new_vehicle_dir()`.  Each `.param` file is
+   parsed into a `ParDict`, both `blank_change_reason` and FC value substitution are applied in
+   memory, and the result is written to the destination in a single pass — before `re_init` loads
+   the directory.
+- **Regular editor flow** (`process_component_editor_results`):
+   only computes forced/derived changes and asks for confirmation before mutating in-memory data.
+
+This separation keeps project initialization deterministic while preventing silent derived-parameter
+file writes in the normal editing flow.
+
 ### Parameter Management System
 
 #### Parameter Types
@@ -283,7 +315,7 @@ frontend_tkinter_parameter_editor.py                    # Main parameter editor
 frontend_tkinter_parameter_editor_documentation_frame.py # Documentation display
 frontend_tkinter_parameter_editor_table.py              # Parameter table editor
 frontend_tkinter_stage_progress.py                      # Progress tracking
-backend_filesystem_configuration_steps.py              # Step management
+backend_filesystem_configuration_steps.py               # Step management
 backend_filesystem.py                                   # Parameter file operations
 ```
 
