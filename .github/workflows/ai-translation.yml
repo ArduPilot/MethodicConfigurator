@@ -453,6 +453,22 @@ jobs:
           python merge_pot_file.py
           echo "✅ POT extracted and merged into .po files"
 
+      - name: Configure git for commits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit .pot and .po string merges
+        run: |
+          git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
+          git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
+          if git diff --staged --quiet; then
+            echo "ℹ️ No .pot or .po changes to commit"
+          else
+            git commit -m "chore(translations): merge new un-translated string(s) to existing .po files"
+            echo "✅ Committed .pot and .po file changes"
+          fi
+
       - name: Download all translated files
         if: needs.extract_strings.outputs.translations-to-process == 'true'
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
@@ -546,9 +562,8 @@ jobs:
           fi
           echo "✅ .mo files compiled successfully"
 
-      - name: Stage all changes
+      - name: Stage AI translations and compiled .mo files
         run: |
-          git add $PYGETTEXT_LOCALEDIR/$PYGETTEXT_DOMAIN.pot
           git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
           git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.mo
 
@@ -599,7 +614,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: merge-i18n-po-strings
           title: "Merge new un-translated string(s) to existing .po files with AI translations"
-          commit-message: "chore(translations): merge new un-translated string(s) to existing .po files with AI translations"
+          commit-message: "chore(translations): apply AI translations and compile .mo files"
           body: |
             Update .pot file with new un-translated string(s) from the source code
             Merge .pot file strings into existing .po files
