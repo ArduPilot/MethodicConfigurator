@@ -18,7 +18,7 @@ import pytest
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor, ParameterValueUpdateStatus
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR, PLUGIN_MOTOR_TEST
 
 # pylint: disable=redefined-outer-name, too-many-lines, protected-access
 
@@ -3359,3 +3359,364 @@ class TestDerivedParameterApplication:
 
         result = parameter_editor.create_plugin_data_model(None)
         assert result is None
+
+
+class TestEditorStateInitialization:
+    """Test behaviors related to the flight controller state and plugin initialization."""
+
+    def test_system_returns_safe_defaults_when_fc_info_is_missing(self, parameter_editor) -> None:
+        """
+        System returns safe defaults when Flight Controller info is missing.
+
+        GIVEN: A parameter editor with no active Flight Controller info
+        WHEN: The vehicle type or mavftp support properties are accessed
+        THEN: It should return an empty string for vehicle type
+        AND: It should return False for mavftp support
+        """
+        # Arrange: Clear the FC info
+        parameter_editor._flight_controller.info = None
+
+        # Act: Access properties
+        vehicle_type = parameter_editor.connected_vehicle_type
+        mavftp_support = parameter_editor.is_mavftp_supported
+
+        # Assert: Safe defaults are returned
+        assert vehicle_type == ""
+        assert mavftp_support is False
+
+    def test_system_rejects_plugin_creation_when_fc_disconnected(self, parameter_editor) -> None:
+        """
+        System refuses to create plugin data models when FC is missing or plugin is unknown.
+
+        GIVEN: A disconnected Flight Controller
+        WHEN: The system attempts to create a plugin data model
+        THEN: It should return None for all plugin requests
+        """
+        # Arrange: Simulate disconnected FC
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
+
+        # Act: Requesting plugin models
+        motor_plugin = parameter_editor.create_plugin_data_model(PLUGIN_MOTOR_TEST)
+        battery_plugin = parameter_editor.create_plugin_data_model(PLUGIN_BATTERY_MONITOR)
+        unknown_plugin = parameter_editor.create_plugin_data_model("UNKNOWN")
+
+        # Assert: None is returned
+        assert motor_plugin is None
+        assert battery_plugin is None
+        assert unknown_plugin is None
+
+    def test_system_handles_missing_or_invalid_fc_parameters_gracefully(self, parameter_editor) -> None:
+        """
+        System skips updates safely when FC parameters are missing or cause type errors.
+
+        GIVEN: A parameter editor syncing values from the FC
+        WHEN: The FC provides a missing parameter or invalid data type
+        THEN: The update should fail gracefully and return False
+        """
+        # Arrange: Setup empty step parameters and a mock parameter that throws an error
+        parameter_editor.current_step_parameters = {}
+        mock_param = MagicMock()
+        mock_param.set_new_value.side_effect = TypeError("bad type")
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error"):
+            result_missing = parameter_editor._update_parameters_from_fc_values({"MISSING": 1.0})
+            assert result_missing is False
+
+        parameter_editor.current_step_parameters = {"P1": mock_param}
+        result_type_error = parameter_editor._update_parameters_from_fc_values({"P1": None})
+        assert result_type_error is False
+
+
+class TestWorkflowEdgeCases:
+    """Test user interactions related to file reading, writing, and navigation."""
+
+    def test_system_reraises_fatal_errors_during_imu_calibration(self, parameter_editor) -> None:
+        """
+        System ensures fatal errors like SystemExit are not swallowed during workflows.
+
+        GIVEN: A user initiating an IMU temperature calibration
+        WHEN: A fatal SystemExit occurs during file reading
+        THEN: The UI error callback should be triggered
+        AND: The SystemExit should be re-raised to halt execution
+        """
+        # Arrange: Force a SystemExit during param reading
+        parameter_editor._local_filesystem.tempcal_imu_result_param_tuple.return_value = ("a", "b")
+        parameter_editor._local_filesystem.read_params_from_files.side_effect = SystemExit("fatal")
+        mock_show_err = MagicMock()
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.IMUfit"), pytest.raises(SystemExit):
+            parameter_editor.handle_imu_temperature_calibration_workflow(
+                "a", MagicMock(return_value=True), MagicMock(), MagicMock(), mock_show_err
+            )
+
+        mock_show_err.assert_called_once()
+
+    @pytest.mark.parametrize(("choice", "copy_return", "expected"), [(True, True, True), (False, True, False)])
+    def test_user_can_copy_fc_values_based_on_dialog_choice(self, parameter_editor, choice, copy_return, expected) -> None:
+        """
+        User can successfully execute or cancel copying values from the FC.
+
+        GIVEN: A scenario where FC values need to be copied
+        WHEN: The user confirms or declines the action dialog
+        THEN: The system should update the parameters and return the corresponding boolean result
+        """
+        # Arrange: Setup copy conditions
+        with (
+            patch.object(parameter_editor, "_should_copy_fc_values_to_file", return_value=(True, {"P": 1}, "t")),
+            patch.object(parameter_editor, "_update_parameters_from_fc_values", return_value=copy_return),
+        ):
+            mock_ask = MagicMock(return_value=choice)
+
+            # Act: Trigger the copy workflow
+            result = parameter_editor.handle_copy_fc_values_workflow("a", mock_ask, MagicMock())
+
+            # Assert: Result matches user choice
+            assert result is expected
+
+    def test_system_aborts_copy_workflow_when_no_values_need_copying(self, parameter_editor) -> None:
+        """
+        System aborts the FC copy workflow silently if no parameters require it.
+
+        GIVEN: A user triggering the copy workflow
+        WHEN: The system determines no values need to be copied
+        THEN: It should abort and return False without prompting the user
+        """
+        # Arrange: Mock copy checker to return False
+        with patch.object(parameter_editor, "_should_copy_fc_values_to_file", return_value=(False, None, None)):
+            mock_ask = MagicMock()
+
+            # Act: Trigger workflow
+            result = parameter_editor.handle_copy_fc_values_workflow("a", mock_ask, MagicMock())
+
+            # Assert: Returns false and user is never asked
+            assert result is False
+            mock_ask.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("unsaved", "annotate", "expected"), [(True, False, True), (False, False, False), (False, True, True)]
+    )
+    def test_system_exports_changes_when_user_confirms_or_annotation_required(
+        self, parameter_editor, unsaved, annotate, expected
+    ) -> None:
+        """
+        System correctly exports files based on unsaved states and annotation flags.
+
+        GIVEN: Varying combinations of unsaved changes and annotation requirements
+        WHEN: The write changes workflow is triggered
+        THEN: The file should be exported if changes exist or annotations are forced
+        """
+        # Arrange: Mock the save states
+        with (
+            patch.object(parameter_editor, "_has_unsaved_changes", return_value=unsaved),
+            patch.object(parameter_editor, "_export_current_file"),
+        ):
+            mock_confirm = MagicMock(return_value=True)
+
+            # Act: Trigger write
+            result = parameter_editor.handle_write_changes_workflow(
+                annotate_params_into_files=annotate, ask_user_confirmation=mock_confirm
+            )
+
+            # Assert: Export logic follows expectations
+            assert result is expected
+
+    def test_system_delegates_error_and_info_messages_to_ui_callbacks(self, parameter_editor) -> None:
+        """
+        System correctly routes backend messages to frontend UI callbacks during file changes.
+
+        GIVEN: A file change that generates internal errors and info messages
+        WHEN: The repopulate step executes
+        THEN: The provided show_error and show_info callbacks should be triggered with the messages
+        """
+        # Arrange: Setup basic file context
+        parameter_editor.current_file = "old"
+        parameter_editor._local_filesystem.jump_possible.return_value = {}
+        parameter_editor._local_filesystem.get_download_url_and_local_filename.return_value = (None, None)
+        mock_err = MagicMock()
+        mock_info = MagicMock()
+
+        # Act: Change file and mock repopulation to generate messages
+        with patch.object(
+            parameter_editor,
+            "_repopulate_configuration_step_parameters",
+            return_value=([("ErrTitle", "ErrMsg")], [("InfoTitle", "InfoMsg")]),
+        ):
+            parameter_editor.handle_param_file_change_workflow(
+                selected_file="new",
+                forced=False,
+                gui_complexity="normal",
+                auto_open_documentation=False,
+                handle_imu_temp_cal=MagicMock(),
+                handle_copy_fc_values=MagicMock(return_value=False),
+                handle_upload_file=MagicMock(),
+                ask_confirmation=MagicMock(return_value=False),
+                show_error=mock_err,
+                show_info=mock_info,
+            )
+
+        # Assert: Callbacks were triggered properly
+        mock_err.assert_called_once_with("ErrTitle", "ErrMsg")
+        mock_info.assert_called_once_with("InfoTitle", "InfoMsg")
+
+    @pytest.mark.parametrize(
+        ("jump_choice", "gui", "expected"), [(True, "normal", "dest"), (False, "normal", "src"), (None, "simple", "dest")]
+    )
+    def test_user_can_jump_between_files_based_on_gui_complexity(self, parameter_editor, jump_choice, gui, expected) -> None:
+        """
+        System navigates user to a new file automatically or via prompt based on GUI settings.
+
+        GIVEN: A file that contains a valid jump destination
+        WHEN: The jump workflow is triggered under different GUI complexities
+        THEN: It should auto-jump for simple GUI or ask the user for normal GUI
+        """
+        # Arrange: Setup a valid jump destination
+        parameter_editor._local_filesystem.jump_possible.return_value = {"dest": "Jump?"}
+        mock_ask = MagicMock(return_value=jump_choice)
+
+        # Act: Handle the jump
+        result = parameter_editor._handle_file_jump_workflow("src", gui, mock_ask)
+
+        # Assert: User ended up at the correct destination
+        assert result == expected
+
+    def test_system_determines_correct_file_download_requirement(self, parameter_editor) -> None:
+        """
+        System accurately identifies when a file requires downloading.
+
+        GIVEN: A file with or without a valid download URL
+        WHEN: The download check workflow runs
+        THEN: It should bypass the download if no URL exists or the file is already downloaded
+        """
+        # Arrange: No URL available
+        parameter_editor._local_filesystem.get_download_url_and_local_filename.return_value = (None, None)
+
+        # Act Bypassed safely
+        result_no_url = parameter_editor._should_download_file_from_url_workflow("01.param", MagicMock(), MagicMock())
+        assert result_no_url is True
+
+        parameter_editor._local_filesystem.get_download_url_and_local_filename.return_value = ("url", "f.param")
+        parameter_editor._local_filesystem.vehicle_configuration_file_exists.return_value = True
+
+        result_exists = parameter_editor._should_download_file_from_url_workflow("01.param", MagicMock(), MagicMock())
+        assert result_exists is True
+
+
+class TestParameterUploadNavigation:
+    """Test user interactions when uploading parameters to the Flight Controller."""
+
+    def test_user_can_upload_parameters_and_handle_validation_retries(self, parameter_editor) -> None:
+        """
+        User can upload parameters and is prompted to retry if validation fails.
+
+        GIVEN: A user uploading a list of parameters to the FC
+        WHEN: Validation passes or fails after the upload
+        THEN: The workflow should complete normally on success
+        AND: Trigger a retry prompt if validation flags mismatches
+        """
+        # Arrange: Setup baseline FC parameters
+        parameter_editor._flight_controller.fc_parameters = {"P1": 1.0}
+        parameter_editor._at_least_one_changed = False
+        parameter_editor._should_export_fc_params_diff = False
+
+        with patch.multiple(
+            parameter_editor,
+            upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, {})),
+            _upload_parameters_to_fc=MagicMock(return_value=1),
+            download_flight_controller_parameters=MagicMock(),
+            _write_current_file=MagicMock(),
+            _export_fc_params_missing_or_different=MagicMock(),
+        ):
+            with patch.object(parameter_editor, "_validate_uploaded_parameters", return_value=[]):
+                parameter_editor.upload_selected_params_workflow(
+                    {"P1": Par(1.0)},
+                    ask_confirmation=MagicMock(return_value=True),
+                    ask_retry_cancel=MagicMock(),
+                    show_error=MagicMock(),
+                )
+
+            with patch.object(parameter_editor, "_validate_uploaded_parameters", return_value=["P1"]):
+                mock_retry = MagicMock(return_value=False)
+                parameter_editor.upload_selected_params_workflow(
+                    {"P1": Par(1.0)},
+                    ask_confirmation=MagicMock(return_value=True),
+                    ask_retry_cancel=mock_retry,
+                    show_error=MagicMock(),
+                )
+                mock_retry.assert_called_once()
+
+    @pytest.mark.parametrize(("fc_val", "up_val", "expected"), [(1.0, 1.0, False), (2.0, 1.0, True), (None, 1.0, True)])
+    def test_system_accurately_validates_uploaded_parameters_against_fc(
+        self, parameter_editor, fc_val, up_val, expected
+    ) -> None:
+        """
+        System identifies mismatches between uploaded values and actual FC values.
+
+        GIVEN: An uploaded parameter with a specific value
+        WHEN: Compared against the live Flight Controller value
+        THEN: It should be flagged as mismatched if values differ or are missing entirely
+        """
+        # Arrange: Set the active FC value
+        parameter_editor._flight_controller.fc_parameters = {"P1": fc_val} if fc_val is not None else {}
+
+        # Act: Validate
+        result = parameter_editor._validate_uploaded_parameters({"P1": Par(up_val)})
+
+        # Assert: Mismatch status matches expectation
+        is_mismatched = "P1" in result
+        assert is_mismatched is expected
+
+    def test_system_reports_upload_progress_and_handles_failures(self, parameter_editor) -> None:
+        """
+        System reports parameter upload progress to UI and catches failures.
+
+        GIVEN: Multiple parameters being uploaded
+        WHEN: The system iterates through the upload loop
+        THEN: Progress callbacks should trigger for each parameter
+        AND: Failures should immediately halt and trigger the error UI
+        """
+        # Arrange: Empty FC and mocked UI callbacks
+        parameter_editor._flight_controller.fc_parameters = {}
+        mock_prog = MagicMock()
+        mock_err = MagicMock()
+
+        # Act: Upload successful params
+        with patch.object(parameter_editor, "_update_tuning_report"):
+            parameter_editor._upload_parameters_to_fc({"P1": Par(1.0), "P2": Par(2.0)}, MagicMock(), mock_prog)
+
+        # Assert: Progress updated twice
+        assert mock_prog.call_count == 2
+
+        # Arrange: Force a failure on the next upload
+        parameter_editor._flight_controller.set_param.return_value = (False, "comm err")
+
+        with patch.object(parameter_editor, "_update_tuning_report"):
+            uploaded_count = parameter_editor._upload_parameters_to_fc(
+                {"P1": Par(1.0)}, show_error=mock_err, progress_callback=None
+            )
+
+        assert uploaded_count == 0
+        mock_err.assert_called_once()
+
+    def test_system_excludes_failed_reboot_parameters_from_success_list(self, parameter_editor) -> None:
+        """
+        System ensures parameters requiring a reboot aren't counted if their upload fails.
+
+        GIVEN: A parameter flagged as RebootRequired in the documentation
+        WHEN: The upload fails during the reboot workflow
+        THEN: A reset should not be triggered
+        AND: The parameter should not appear in the uploaded list
+        """
+        # Arrange: Setup reboot param and force failure
+        parameter_editor._flight_controller.fc_parameters = {}
+        parameter_editor._local_filesystem.doc_dict = {"FMT": {"RebootRequired": True}}
+        parameter_editor._flight_controller.set_param.return_value = (False, "err")
+
+        # Act: Execute reset workflow
+        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+            {"FMT": Par(1.0)}, MagicMock(), MagicMock()
+        )
+
+        # Assert: No reset and not uploaded
+        assert reset_required is False
+        assert "FMT" not in uploaded_params
