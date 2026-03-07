@@ -1106,17 +1106,17 @@ msgstr "无效的发布数据：{}"
 
 #: ardupilot_methodic_configurator/backend_internet.py:342
 msgid "Installer URL must use HTTPS: %s"
-msgstr ""
+msgstr "安装程序 URL 必须使用 HTTPS: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:345
 msgid "Installer URL must be from github.com: %s"
-msgstr ""
+msgstr "安装程序 URL 必须来自 github.com: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:349
 msgid ""
 "Installer URL must point to an ArduPilot/MethodicConfigurator release asset: "
 "%s"
-msgstr ""
+msgstr "安装程序 URL 必须指向 ArduPilot/MethodicConfigurator 的发布资产: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:357
 msgid "could not get expected SHA256 checksum from github.com"
@@ -1128,15 +1128,15 @@ msgstr "下载的安装程序SHA256不匹配: 预期 %s 得到 %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:374
 msgid "Downloaded file too small: %d bytes"
-msgstr ""
+msgstr "下载文件过小: %d 字节"
 
 #: ardupilot_methodic_configurator/backend_internet.py:384
 msgid "Downloaded file has unexpected format"
-msgstr ""
+msgstr "下载文件格式异常"
 
 #: ardupilot_methodic_configurator/backend_internet.py:395
 msgid "Failed to validate downloaded file: %s"
-msgstr ""
+msgstr "验证下载文件失败: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:428
 msgid "Installation ready. Application will restart now."
@@ -1170,63 +1170,63 @@ msgstr "文件操作失败：{}"
 
 #: ardupilot_methodic_configurator/backend_internet.py:530
 msgid "Could not parse mount point from hdiutil output: %s"
-msgstr ""
+msgstr "无法从 hdiutil 输出解析挂载点: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:532
 msgid "Failed to mount DMG: %s"
-msgstr ""
+msgstr "挂载 DMG 失败: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:534
 msgid "Failed to run hdiutil: %s"
-msgstr ""
+msgstr "运行 hdiutil 失败: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:543
 msgid "No .app bundle found in DMG at %s"
-msgstr ""
+msgstr "未在 %s 的 DMG 中找到 .app 包"
 
 #: ardupilot_methodic_configurator/backend_internet.py:551
 msgid "Installing {}..."
-msgstr ""
+msgstr "正在安装 {}..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:557
 msgid "App installed"
-msgstr ""
+msgstr "应用已安装"
 
 #: ardupilot_methodic_configurator/backend_internet.py:561
 msgid "Failed to install app from DMG: %s"
-msgstr ""
+msgstr "从 DMG 安装应用失败: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:563
 msgid "Error during app installation: %s"
-msgstr ""
+msgstr "应用安装过程中出错: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:583
 msgid "Mounting DMG..."
-msgstr ""
+msgstr "正在挂载 DMG..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:596
 msgid "Installation complete. Please restart the application."
-msgstr ""
+msgstr "安装完成。请重新启动应用程序。"
 
 #: ardupilot_methodic_configurator/backend_internet.py:597
 msgid "macOS DMG installation complete. Please restart the application."
-msgstr ""
+msgstr "macOS DMG 安装完成。请重新启动应用程序。"
 
 #: ardupilot_methodic_configurator/backend_internet.py:628
 msgid "Downloading and installing new version for macOS..."
-msgstr ""
+msgstr "正在下载并安装 macOS 新版本..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:641
 msgid "Failed to download DMG from %s"
-msgstr ""
+msgstr "无法从 %s 下载 DMG"
 
 #: ardupilot_methodic_configurator/backend_internet.py:646
 msgid "Verifying checksum..."
-msgstr ""
+msgstr "正在验证校验和..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:652
 msgid "Validating file..."
-msgstr ""
+msgstr "正在验证文件..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:672
 msgid "Updating via uv for Linux and macOS..."
@@ -3960,7 +3960,7 @@ msgstr "未找到适用于Windows安装的合适资源"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:112
 msgid "No DMG asset found for macOS, falling back to pip installation"
-msgstr ""
+msgstr "未找到 macOS 的 DMG 资产，将回退至 pip 安装"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:129
 msgid "Error accessing release assets: %s"
@@ -3968,7 +3968,7 @@ msgstr "访问发布资源时出错：%s"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:131
 msgid "Error during installation: %s"
-msgstr ""
+msgstr "安装过程中出错: %s"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:141
 msgid "Already running latest version."

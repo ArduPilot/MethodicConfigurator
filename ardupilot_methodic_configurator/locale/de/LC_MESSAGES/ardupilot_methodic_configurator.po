@@ -1167,17 +1167,17 @@ msgstr "Ungültige Release-Daten: {}"
 
 #: ardupilot_methodic_configurator/backend_internet.py:342
 msgid "Installer URL must use HTTPS: %s"
-msgstr ""
+msgstr "Installer-URL muss HTTPS verwenden: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:345
 msgid "Installer URL must be from github.com: %s"
-msgstr ""
+msgstr "Installer-URL muss von github.com stammen: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:349
 msgid ""
 "Installer URL must point to an ArduPilot/MethodicConfigurator release asset: "
 "%s"
-msgstr ""
+msgstr "Installer-URL muss auf ein ArduPilot/MethodicConfigurator Release Asset verweisen: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:357
 msgid "could not get expected SHA256 checksum from github.com"
@@ -1192,15 +1192,15 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_internet.py:374
 msgid "Downloaded file too small: %d bytes"
-msgstr ""
+msgstr "Heruntergeladene Datei zu klein: %d Bytes"
 
 #: ardupilot_methodic_configurator/backend_internet.py:384
 msgid "Downloaded file has unexpected format"
-msgstr ""
+msgstr "Heruntergeladene Datei hat unerwartetes Format"
 
 #: ardupilot_methodic_configurator/backend_internet.py:395
 msgid "Failed to validate downloaded file: %s"
-msgstr ""
+msgstr "Validierung der heruntergeladenen Datei fehlgeschlagen: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:428
 msgid "Installation ready. Application will restart now."
@@ -1234,63 +1234,63 @@ msgstr "Dateioperation fehlgeschlagen: {}"
 
 #: ardupilot_methodic_configurator/backend_internet.py:530
 msgid "Could not parse mount point from hdiutil output: %s"
-msgstr ""
+msgstr "Mount-Punkt konnte aus hdiutil-Ausgabe nicht gelesen werden: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:532
 msgid "Failed to mount DMG: %s"
-msgstr ""
+msgstr "DMG konnte nicht eingebunden werden: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:534
 msgid "Failed to run hdiutil: %s"
-msgstr ""
+msgstr "hdiutil konnte nicht ausgeführt werden: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:543
 msgid "No .app bundle found in DMG at %s"
-msgstr ""
+msgstr "Kein .app-Bundle im DMG unter %s gefunden"
 
 #: ardupilot_methodic_configurator/backend_internet.py:551
 msgid "Installing {}..."
-msgstr ""
+msgstr "Installiere {}..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:557
 msgid "App installed"
-msgstr ""
+msgstr "App installiert"
 
 #: ardupilot_methodic_configurator/backend_internet.py:561
 msgid "Failed to install app from DMG: %s"
-msgstr ""
+msgstr "App konnte nicht aus DMG installiert werden: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:563
 msgid "Error during app installation: %s"
-msgstr ""
+msgstr "Fehler bei der App-Installation: %s"
 
 #: ardupilot_methodic_configurator/backend_internet.py:583
 msgid "Mounting DMG..."
-msgstr ""
+msgstr "DMG wird eingebunden..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:596
 msgid "Installation complete. Please restart the application."
-msgstr ""
+msgstr "Installation abgeschlossen. Bitte starten Sie die Anwendung neu."
 
 #: ardupilot_methodic_configurator/backend_internet.py:597
 msgid "macOS DMG installation complete. Please restart the application."
-msgstr ""
+msgstr "macOS DMG-Installation abgeschlossen. Bitte starten Sie die Anwendung neu."
 
 #: ardupilot_methodic_configurator/backend_internet.py:628
 msgid "Downloading and installing new version for macOS..."
-msgstr ""
+msgstr "Neue Version für macOS wird heruntergeladen und installiert..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:641
 msgid "Failed to download DMG from %s"
-msgstr ""
+msgstr "DMG konnte nicht von %s heruntergeladen werden"
 
 #: ardupilot_methodic_configurator/backend_internet.py:646
 msgid "Verifying checksum..."
-msgstr ""
+msgstr "Prüfe Prüfsumme..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:652
 msgid "Validating file..."
-msgstr ""
+msgstr "Validiere Datei..."
 
 #: ardupilot_methodic_configurator/backend_internet.py:672
 msgid "Updating via uv for Linux and macOS..."
@@ -4330,7 +4330,7 @@ msgstr "Keine geeigneten Assets für die Windows-Installation gefunden"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:112
 msgid "No DMG asset found for macOS, falling back to pip installation"
-msgstr ""
+msgstr "Kein DMG-Asset für macOS gefunden, Installation wird auf pip zurückgesetzt"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:129
 msgid "Error accessing release assets: %s"
@@ -4338,7 +4338,7 @@ msgstr "Fehler beim Zugriff auf Release-Assets: %s"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:131
 msgid "Error during installation: %s"
-msgstr ""
+msgstr "Fehler während der Installation: %s"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:141
 msgid "Already running latest version."
