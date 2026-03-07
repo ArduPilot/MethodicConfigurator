@@ -343,6 +343,7 @@ jobs:
     needs: pytest  # This will ensure this job runs after 'pytest'
     permissions:
       contents: read
+      checks: write
       pull-requests: write
 
     steps:
