@@ -153,6 +153,8 @@ jobs:
         id: pytest
         continue-on-error: false
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
             export LIBGL_ALWAYS_SOFTWARE=1

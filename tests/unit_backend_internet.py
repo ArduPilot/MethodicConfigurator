@@ -883,8 +883,10 @@ def test_get_release_info_key_error(mock_get) -> None:
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
 @patch("ardupilot_methodic_configurator.backend_internet._get_verify_param")
-def test_get_release_info_correct_url_formation(mock_verify, mock_get) -> None:
+@patch("ardupilot_methodic_configurator.backend_internet._get_github_api_headers")
+def test_get_release_info_correct_url_formation(mock_headers, mock_verify, mock_get) -> None:
     """Test correct URL formation with different input formats."""
+    mock_headers.return_value = {}
     mock_verify.return_value = "/path/to/certs.pem"
     mock_response = Mock()
     mock_response.json.return_value = {"prerelease": False}
@@ -893,14 +895,20 @@ def test_get_release_info_correct_url_formation(mock_verify, mock_get) -> None:
     # Test with leading slash
     get_release_info("/latest", should_be_pre_release=False)
     mock_get.assert_called_with(
-        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30, verify="/path/to/certs.pem"
+        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest",
+        timeout=30,
+        verify="/path/to/certs.pem",
+        headers={},
     )
     mock_get.reset_mock()
 
     # Test without leading slash
     get_release_info("latest", should_be_pre_release=False)
     mock_get.assert_called_with(
-        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=30, verify="/path/to/certs.pem"
+        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest",
+        timeout=30,
+        verify="/path/to/certs.pem",
+        headers={},
     )
     mock_get.reset_mock()
 
@@ -910,13 +918,16 @@ def test_get_release_info_correct_url_formation(mock_verify, mock_get) -> None:
         "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/tags/v1.0.0",
         timeout=30,
         verify="/path/to/certs.pem",
+        headers={},
     )
 
 
 @patch("ardupilot_methodic_configurator.backend_internet.requests_get")
 @patch("ardupilot_methodic_configurator.backend_internet._get_verify_param")
-def test_get_release_info_custom_timeout(mock_verify, mock_get) -> None:
+@patch("ardupilot_methodic_configurator.backend_internet._get_github_api_headers")
+def test_get_release_info_custom_timeout(mock_headers, mock_verify, mock_get) -> None:
     """Test custom timeout parameter."""
+    mock_headers.return_value = {}
     mock_verify.return_value = "/path/to/certs.pem"
     mock_response = Mock()
     mock_response.json.return_value = {"prerelease": False}
@@ -924,7 +935,10 @@ def test_get_release_info_custom_timeout(mock_verify, mock_get) -> None:
 
     get_release_info("latest", should_be_pre_release=False, timeout=60)
     mock_get.assert_called_with(
-        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest", timeout=60, verify="/path/to/certs.pem"
+        "https://api.github.com/repos/ArduPilot/MethodicConfigurator/releases/latest",
+        timeout=60,
+        verify="/path/to/certs.pem",
+        headers={},
     )
 
 
