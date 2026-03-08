@@ -127,6 +127,19 @@ def _get_verify_param() -> Union[str, bool]:
     return certifi_path
 
 
+def _get_github_api_headers() -> dict[str, str]:
+    """
+    Return Authorization header for GitHub API requests if GITHUB_TOKEN is set.
+
+    When GITHUB_TOKEN is present (e.g. in GitHub Actions), requests are
+    authenticated and the rate limit rises from 60 to 5 000 requests/hour.
+    """
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        return {"Authorization": f"Bearer {token}"}
+    return {}
+
+
 def _attempt_download_once(  # pylint: disable=too-many-arguments, too-many-positional-arguments
     url: str,
     local_filename: str,
@@ -258,7 +271,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
 
     try:
         url = urljoin(GITHUB_API_URL_RELEASES, name.lstrip("/"))
-        response = requests_get(url, timeout=timeout, verify=_get_verify_param())
+        response = requests_get(url, timeout=timeout, verify=_get_verify_param(), headers=_get_github_api_headers())
         response.raise_for_status()
 
         release_info = response.json()
