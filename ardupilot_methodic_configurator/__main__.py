@@ -53,8 +53,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info impo
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import (
-    ask_yesno_message,
     show_error_message,
+    show_warning_message,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
@@ -567,16 +567,15 @@ def process_component_editor_results(
 
     """
     # Get existing FC parameters for reference
-    existing_fc_params: list[str] = []
+    fc_param_names: list[str] = []
     if flight_controller.fc_parameters:
-        existing_fc_params = list(flight_controller.fc_parameters.keys())
+        fc_param_names = list(flight_controller.fc_parameters.keys())
     elif local_filesystem.param_default_dict:
-        existing_fc_params = list(local_filesystem.param_default_dict.keys())
+        fc_param_names = list(local_filesystem.param_default_dict.keys())
 
-    # Update and export vehicle parameters
     try:
-        pending_changes = local_filesystem.update_and_export_vehicle_params_from_fc(
-            existing_fc_params=existing_fc_params,
+        component_dependent_param_changes = local_filesystem.calculate_derived_and_forced_param_changes(
+            fc_param_names=fc_param_names,
         )
     except ValueError as e:
         error_msg = str(e)
@@ -585,24 +584,27 @@ def process_component_editor_results(
         sys_exit(1)
         return  # to make the tests work, even though sys_exit is mocked in the tests # pylint: disable=unreachable
 
-    # Check if there are pending changes that need user confirmation
-    if pending_changes:
+    if component_dependent_param_changes:
+        simple_gui: bool = ProgramSettings.get_setting("gui_complexity") == "simple"
         msg = (
             _("The component or connection changes you just did will have repercussions on the following parameter files:\n\n")
-            + f"{', '.join(pending_changes)}\n\n"
+            + f"{', '.join(component_dependent_param_changes)}\n\n"
             + _("Please review the changes, and upload the updated parameter files to the flight controller.\n")
-            + _("Do you want to apply these updates to the configuration?")
+            + (
+                _("If you already uploaded said parameters to the FC, switch to the normal GUI complexity mode\n")
+                if simple_gui
+                else ""
+            )
+            + (_("in order to be able to jump to those specific parameter files") if simple_gui else "")
         )
 
-        if ask_yesno_message(_("Confirm derived changes"), msg):
-            # User confirmed: apply computed values to the in-memory data model.
-            # self.file_parameters was not mutated by Phase 1, so this is the first write.
-            # Actual disk writes happen later, file by file, as the user steps
-            # through each configuration step in the Parameter Editor.
-            local_filesystem.apply_pending_changes(pending_changes)
-            logging_info(_("User accepted derived parameter changes. Values updated in memory."))
-        # else: User declined - self.file_parameters was never mutated, nothing to undo.
-    # When pending_changes is empty the computed state already matches disk - nothing to do.
+        show_warning_message(_("Component derived param changes"), msg)
+        # component_dependent_param_changes will later be re-computed in the data_model_configuration_step.py
+        # _create_domain_model_parameters() method.
+        # That seems redundant but we need to compute it here in order to know whether to show the warning message
+        # and which files are affected by the component changes.
+        # But it is not really redundant as derived parameters can depend on FC parameter values and those
+        # can change in every step, making it impossible to pre-compute them here.
 
 
 def write_parameter_defaults(state: ApplicationState) -> None:

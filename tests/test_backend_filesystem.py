@@ -638,12 +638,12 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert "PARAM2" in calibration
         assert "PARAM3" in other
 
-    def test_update_and_export_vehicle_params_from_fc(self) -> None:
+    def test_calculate_derived_and_forced_param_changes(self) -> None:
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
         # Test with empty file_parameters - returns empty dict
-        result = lfs.update_and_export_vehicle_params_from_fc([])
+        result = lfs.calculate_derived_and_forced_param_changes([])
         assert not result  # Empty dict means no pending changes
 
         # Test with file_parameters and configuration steps:
@@ -658,7 +658,7 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
         lfs.derived_parameters = {"test.param": {"PARAM1": Par(1.0, None), "PARAM2": Par(2.0, None)}}
         lfs.compute_parameters = MagicMock(return_value="")
-        result = lfs.update_and_export_vehicle_params_from_fc([])
+        result = lfs.calculate_derived_and_forced_param_changes([])
         # Derived values (1.0, 2.0) differ from loaded values (0.0, 0.0) so pending is non-empty
         assert result  # Non-empty dict means pending changes detected
         assert "test.param" in result
@@ -666,9 +666,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         assert param1.value == 0.0  # NOT mutated by Phase 1
         assert param2.value == 0.0  # NOT mutated by Phase 1
 
-        # apply_pending_changes updates file_parameters
+        # apply_computed_changes updates file_parameters
         computed = ParDict({"PARAM1": Par(1.0, None), "PARAM2": Par(2.0, None)})
-        lfs.apply_pending_changes({"test.param": computed})
+        lfs.apply_computed_changes({"test.param": computed})
         assert lfs.file_parameters["test.param"] is computed
 
         # save_vehicle_params_to_files writes the current file_parameters to disk

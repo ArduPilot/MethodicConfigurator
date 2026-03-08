@@ -823,9 +823,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             variables["doc_dict"] = self.doc_dict
         return variables
 
-    def update_and_export_vehicle_params_from_fc(
+    def calculate_derived_and_forced_param_changes(
         self,
-        existing_fc_params: list[str],
+        fc_param_names: list[str],
     ) -> dict[str, ParDict]:
         """
         Compute updated parameter values without mutating the in-memory data model.
@@ -838,12 +838,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         5. Returns only copies that differ - ``self.file_parameters`` is never mutated.
 
         To apply accepted changes to the data model call
-        :meth:`apply_pending_changes` with the returned dict. To persist them to
+        :meth:`apply_computed_changes` with the returned dict. To persist them to
         disk call :meth:`save_vehicle_params_to_files` afterwards.
 
         Args:
-            existing_fc_params: List of parameter names that exist in the FC.  If empty or
-                                None all parameters are assumed to exist.
+            fc_param_names: List of parameter names that exist in the FC.
+                            If empty or None all parameters are assumed to exist.
 
         Returns:
             dict[str, ParDict]: Mapping of filenames to their fully-computed ``ParDict``
@@ -855,12 +855,12 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             ValueError: If there is an error computing forced or derived parameters.
 
         Example:
-            pending = fs.update_and_export_vehicle_params_from_fc(
-                existing_fc_params=["PARAM1"],
+            computed_changes = fs.calculate_derived_and_forced_param_changes(
+                fc_param_names=["PARAM1"],
             )
-            if pending:
+            if computed_changes:
                 if user_confirms:
-                    fs.apply_pending_changes(pending)
+                    fs.apply_computed_changes(computed_changes)
                     fs.save_vehicle_params_to_files(list(fs.file_parameters))
                 # else: nothing - self.file_parameters was never mutated
             else:
@@ -872,7 +872,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         # the eval variables do not contain fc_parameter values
         # and that is intentional, the fc_parameters are not to be used in here
 
-        pending: dict[str, ParDict] = {}
+        computed_changes: dict[str, ParDict] = {}
 
         for param_filename, param_dict in self.file_parameters.items():
             # Build a working copy - Phase 1 must never mutate self.file_parameters
@@ -885,9 +885,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if error_msg:
                     msg = f"Error computing forced parameters for {param_filename}: {error_msg}"
                     raise ValueError(msg)
-                self.merge_forced_or_derived_parameters(
-                    param_filename, self.forced_parameters, existing_fc_params, target=working
-                )
+                self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, fc_param_names, target=working)
 
                 error_msg = self.compute_parameters(
                     param_filename, step_dict, "derived", eval_variables, ignore_fc_derived_param_warnings=True
@@ -896,14 +894,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     msg = f"Error computing derived parameters for {param_filename}: {error_msg}"
                     raise ValueError(msg)
                 self.merge_forced_or_derived_parameters(
-                    param_filename, self.derived_parameters, existing_fc_params, target=working
+                    param_filename, self.derived_parameters, fc_param_names, target=working
                 )
 
-            # Include in pending if the working copy differs from the loaded in-memory state
+            # Include in computed_changes if the working copy differs from the loaded in-memory state
             if working.differs_from(param_dict):
-                pending[param_filename] = working
+                computed_changes[param_filename] = working
 
-        return pending
+        return computed_changes
 
     def save_vehicle_params_to_files(self, filenames: list[str]) -> None:
         """
@@ -917,26 +915,22 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         for filename in filenames:
             self.export_to_param(self.file_parameters[filename], filename, annotate_doc=annotate_docs)
 
-    def apply_pending_changes(self, pending: dict[str, ParDict]) -> None:
+    def apply_computed_changes(self, computed_changes: dict[str, ParDict]) -> None:
         """
         Apply pre-computed parameter changes to the in-memory data model.
 
-        Call this after the user confirms they want to accept the derived-parameter
-        changes returned by :meth:`update_and_export_vehicle_params_from_fc`.  Each
-        entry in *pending* replaces the corresponding entry in :attr:`file_parameters`.
-
         Args:
-            pending: Mapping of filenames to their fully-computed ``ParDict`` as
-                     returned by :meth:`update_and_export_vehicle_params_from_fc`.
+            computed_changes: Mapping of filenames to their fully-computed ``ParDict`` as
+                     returned by :meth:`calculate_derived_and_forced_param_changes`.
 
         """
-        self.file_parameters.update(pending)
+        self.file_parameters.update(computed_changes)
 
     def merge_forced_or_derived_parameters(
         self,
         filename: str,
         new_parameters: dict[str, ParDict],
-        existing_fc_params: Optional[list[str]],
+        fc_param_names: Optional[list[str]],
         target: Optional[ParDict] = None,
     ) -> bool:
         """
@@ -945,11 +939,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Args:
             filename: The name of the parameter file.
             new_parameters: Dictionary of new parameters to potentially merge.
-            existing_fc_params: Optional list of flight controller parameter names.
+            fc_param_names: Optional list of flight controller parameter names.
             target: ParDict to merge into.  When *None* (default), merges into
                     ``self.file_parameters[filename]`` (legacy behaviour used by the
                     parameter-editor upload path).  Pass the working copy from
-                    :meth:`update_and_export_vehicle_params_from_fc` to keep that
+                    :meth:`calculate_derived_and_forced_param_changes` to keep that
                     method's computation non-mutating.
 
         """
@@ -962,7 +956,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         at_least_one_param_changed = False
         for param_name, param in new_parameters[filename].items():
-            if existing_fc_params is None or not existing_fc_params or param_name in existing_fc_params:
+            if fc_param_names is None or not fc_param_names or param_name in fc_param_names:
                 if param_name in dest:
                     if not is_within_tolerance(dest[param_name].value, param.value):
                         at_least_one_param_changed = True

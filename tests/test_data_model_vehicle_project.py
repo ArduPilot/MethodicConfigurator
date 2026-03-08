@@ -26,7 +26,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 )
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-lines
 
 
 class TestVehicleProjectManagerInitialization:

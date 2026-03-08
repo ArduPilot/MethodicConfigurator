@@ -225,12 +225,12 @@ def perform_component_inference(
     local_filesystem.load_vehicle_components_json_data(new_vehicle_dir)
 
     # Regenerate parameter files from the inferred component data
-    existing_fc_params = list(fc_parameters.keys())
+    fc_param_names = list(fc_parameters.keys())
     try:
-        pending = local_filesystem.update_and_export_vehicle_params_from_fc(existing_fc_params=existing_fc_params)
+        pending = local_filesystem.calculate_derived_and_forced_param_changes(fc_param_names=fc_param_names)
     except ValueError as e:
         return False, f"Failed to update and export parameters: {e}"
-    local_filesystem.apply_pending_changes(pending)
+    local_filesystem.apply_computed_changes(pending)
     local_filesystem.save_vehicle_params_to_files(list(local_filesystem.file_parameters))
 
     return True, ""
@@ -672,7 +672,7 @@ class TestTemplateImportWithComponentInference:
                 )
 
                 # Perform component inference if requested
-                # Note: perform_component_inference already calls update_and_export_vehicle_params_from_fc
+                # Note: perform_component_inference already calls calculate_derived_and_forced_param_changes
                 # so FC parameter values are properly merged into the generated parameter files
                 if settings.infer_comp_specs_and_conn_from_fc_params and flight_controller.fc_parameters:
                     success, error_msg = perform_component_inference(
