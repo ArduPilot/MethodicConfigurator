@@ -161,53 +161,61 @@ class TestDirectoryAndPathOperations:
             assert vehicle_dir == "/vehicle"
             mock_get_dirs.assert_called_once()
 
-    def test_creation_updates_recent_history(self) -> None:
-        """Creating a new vehicle via the manager must automatically update the template."""
+    def test_creation_stores_template_and_base_dirs_in_history(self) -> None:
+        """
+        Manager stores the template and base directories in history after creation.
+
+        GIVEN: A user creates a new vehicle from a template
+        WHEN: Creation succeeds
+        THEN: The template directory and base directory are stored in recently-used history
+        """
         mock_filesystem = MagicMock(spec=LocalFilesystem)
         manager = VehicleProjectManager(mock_filesystem)
 
         with (
             patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create,
+            patch.object(manager._opener, "open_vehicle_directory") as mock_open,
             patch.object(LocalFilesystem, "store_recently_used_template_dirs") as mock_store_template,
+            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
         ):
             mock_create.return_value = "/new/vehicle/path"
-            settings = MagicMock(spec=NewVehicleProjectSettings)
-
-            # Act
-            result = manager.create_new_vehicle_from_template("/templates/ArduCopter", "/vehicles", "Name", settings)
-
-            # Assert history updated
-            assert result == "/new/vehicle/path"
-            mock_store_template.assert_called_once_with("/templates/ArduCopter", "/vehicles")
-
-    def test_creation_does_not_store_vehicle_dir_in_history(self) -> None:
-        """
-        Creating a vehicle must NOT store the vehicle directory in recent-vehicle history directly.
-
-        The vehicle dir is persisted to history by the subsequent open_vehicle_directory call in
-        __main__, so the manager must not write it a second time during creation (which would
-        result in duplicate entries and wrong history order).
-
-        GIVEN: A project manager performing vehicle creation
-        WHEN: create_new_vehicle_from_template succeeds
-        THEN: store_recently_used_vehicle_dir must not be called
-        """
-        mock_filesystem = MagicMock(spec=LocalFilesystem)
-        manager = VehicleProjectManager(mock_filesystem)
-
-        with (
-            patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create,
-            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(manager, "store_recently_used_vehicle_dir") as mock_store_vehicle,
-        ):
-            mock_create.return_value = "/new/vehicle/path"
+            mock_open.return_value = "/new/vehicle/path"
             settings = MagicMock(spec=NewVehicleProjectSettings)
 
             # Act
             manager.create_new_vehicle_from_template("/templates/ArduCopter", "/vehicles", "Name", settings)
 
-            # Assert: vehicle dir history must not be written during creation
-            mock_store_vehicle.assert_not_called()
+            # Assert: only the template/base history is the concern of this test
+            mock_store_template.assert_called_once_with("/templates/ArduCopter", "/vehicles")
+
+    def test_creation_opens_new_directory_and_updates_vehicle_history(self) -> None:
+        """
+        Manager opens the newly created directory and records it in vehicle history.
+
+        GIVEN: A user creates a new vehicle from a template
+        WHEN: Creation succeeds
+        THEN: open_vehicle_directory is called with the new path
+        AND: The new path is stored exactly once in recent-vehicle history
+        """
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        manager = VehicleProjectManager(mock_filesystem)
+
+        with (
+            patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create,
+            patch.object(manager._opener, "open_vehicle_directory") as mock_open,
+            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
+            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store_vehicle,
+        ):
+            mock_create.return_value = "/new/vehicle/path"
+            mock_open.return_value = "/new/vehicle/path"
+            settings = MagicMock(spec=NewVehicleProjectSettings)
+
+            # Act
+            manager.create_new_vehicle_from_template("/templates/ArduCopter", "/vehicles", "Name", settings)
+
+            # Assert: the new directory is opened and the vehicle dir stored exactly once
+            mock_open.assert_called_once_with("/new/vehicle/path")
+            mock_store_vehicle.assert_called_once_with("/new/vehicle/path")
 
     def test_user_can_get_current_working_directory(self) -> None:
         """
@@ -315,24 +323,32 @@ class TestVehicleProjectCreation:
         mock_flight_controller.master = MagicMock()  # FC is connected
         manager = VehicleProjectManager(mock_filesystem, mock_flight_controller)
 
-        # Mock the creator
-        with patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create:
+        # Mock the creator and opener
+        with (
+            patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create,
+            patch.object(manager._opener, "open_vehicle_directory") as mock_open,
+            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
+            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
+        ):
             mock_create.return_value = "/new/vehicle/path"
+            mock_open.return_value = "/new/vehicle/path"
 
             mock_settings = MagicMock(spec=NewVehicleProjectSettings)
 
             # Act: Create new vehicle from template
             result = manager.create_new_vehicle_from_template("/template/path", "/base/path", "NewVehicle", mock_settings)
 
-            # Assert: Vehicle created successfully and state updated
+            # Assert: correct path returned and manager state updated
             assert result == "/new/vehicle/path"
             assert manager._settings is mock_settings
-            assert manager.configuration_template == "path"  # Directory name from template path
-            mock_create.assert_called_once()
-            # Check that the call includes the fc_connected flag
-            call_args = mock_create.call_args
-            assert call_args[0][:4] == ("/template/path", "/base/path", "NewVehicle", mock_settings)
-            assert call_args[0][4] is True  # fc_connected flag
+            assert manager.configuration_template == "path"  # last component of template path
+
+            # Assert: creator called with fc_connected=True (FC master is set) and opener called afterwards
+            fc_connected = True  # FC master is set in the fixture above
+            mock_create.assert_called_once_with(
+                "/template/path", "/base/path", "NewVehicle", mock_settings, fc_connected, mock_flight_controller.fc_parameters
+            )
+            mock_open.assert_called_once_with("/new/vehicle/path")
 
     def test_user_sees_error_when_vehicle_creation_fails(self) -> None:
         """
@@ -355,6 +371,32 @@ class TestVehicleProjectCreation:
             # Act & Assert: Creation should raise error
             with pytest.raises(VehicleProjectCreationError, match="Creation failed"):
                 manager.create_new_vehicle_from_template("/template/path", "/base/path", "NewVehicle", mock_settings)
+
+    def test_opener_not_called_when_creation_fails(self) -> None:
+        """
+        Opener must not be invoked when the creator raises an error.
+
+        GIVEN: A project manager whose creator raises a VehicleProjectCreationError
+        WHEN: User attempts to create a vehicle from a template
+        THEN: The opener is never called
+        AND: The VehicleProjectCreationError propagates to the caller
+        """
+        # Arrange: Mock filesystem
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        manager = VehicleProjectManager(mock_filesystem)
+
+        with (
+            patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create,
+            patch.object(manager._opener, "open_vehicle_directory") as mock_open,
+        ):
+            mock_create.side_effect = VehicleProjectCreationError("Creation Error", "Creation failed")
+            mock_settings = MagicMock(spec=NewVehicleProjectSettings)
+
+            # Act & Assert: error propagates and opener is never touched
+            with pytest.raises(VehicleProjectCreationError):
+                manager.create_new_vehicle_from_template("/template/path", "/base/path", "NewVehicle", mock_settings)
+
+            mock_open.assert_not_called()
 
 
 class TestVehicleProjectOpening:
@@ -925,27 +967,38 @@ class TestIntegrationScenarios:
 
         with (
             patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create,
+            patch.object(manager._opener, "open_vehicle_directory") as mock_open,
             patch.object(LocalFilesystem, "store_recently_used_template_dirs") as mock_store_template,
             patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store_vehicle,
         ):
             mock_create.return_value = "/new/vehicle/MyVehicle"
+            mock_open.return_value = "/new/vehicle/MyVehicle"
             mock_settings = MagicMock(spec=NewVehicleProjectSettings)
 
-            # Act: Complete workflow - manager should take care of history updates
+            # Act: Complete workflow - manager orchestrates creation, opening, and history
             vehicle_path = manager.create_new_vehicle_from_template(
                 "/templates/ArduCopter", "/vehicles", "MyVehicle", mock_settings
             )
 
-            # Assert: Complete workflow executed and history recorded
+            # Assert: all layers of the workflow were triggered in the correct order
             assert vehicle_path == "/new/vehicle/MyVehicle"
             assert manager._settings is mock_settings
             assert manager.configuration_template == "ArduCopter"
-            mock_create.assert_called_once()
+            # step 1: creator receives all necessary arguments
+            fc_connected = True  # FC master is set in the fixture above
+            mock_create.assert_called_once_with(
+                "/templates/ArduCopter",
+                "/vehicles",
+                "MyVehicle",
+                mock_settings,
+                fc_connected,
+                mock_flight_controller.fc_parameters,
+            )
+            # step 2: opener receives the path returned by the creator
+            mock_open.assert_called_once_with("/new/vehicle/MyVehicle")
+            # step 3: both history records are written
             mock_store_template.assert_called_once_with("/templates/ArduCopter", "/vehicles")
-            # the manager does not store the vehicle directory here; the
-            # __main__ path opens the new project which causes the history write
-            # later, so the mock should not be invoked as part of creation.
-            mock_store_vehicle.assert_not_called()
+            mock_store_vehicle.assert_called_once_with("/new/vehicle/MyVehicle")
 
     def test_user_can_complete_vehicle_opening_workflow(self) -> None:
         """
