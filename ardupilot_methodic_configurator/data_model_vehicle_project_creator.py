@@ -454,24 +454,6 @@ class VehicleProjectCreator:  # pylint: disable=too-few-public-methods
         if error_msg:
             raise VehicleProjectCreationError(_("Copying template files"), error_msg)
 
-        # Update the local_filesystem with the new vehicle configuration directory
-        self.local_filesystem.vehicle_dir = new_vehicle_dir
-
-        # Initialize the filesystem with the new directory
-        try:
-            self.local_filesystem.re_init(new_vehicle_dir, self.local_filesystem.vehicle_type, settings.blank_component_data)
-        except SystemExit as exp:
-            raise VehicleProjectCreationError(
-                _("Fatal error reading parameter files"), _("Fatal error reading parameter files: {exp}").format(exp=exp)
-            ) from exp
-
-        # Check if files were successfully created and loaded
-        files = list(self.local_filesystem.file_parameters.keys())
-        if not files:
-            raise VehicleProjectCreationError(
-                _("No parameter files found"), _("No intermediate parameter files found after creating vehicle from template")
-            )
-
         return new_vehicle_dir
 
     def _validate_template_directory(self, template_dir: str) -> None:

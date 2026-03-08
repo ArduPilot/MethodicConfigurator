@@ -153,6 +153,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             # History updates belong in the manager/facade layer so they are
             # performed consistently for both project creation and opening.
             self.store_recently_used_template_dirs(template_dir, new_base_dir)
+            self.open_vehicle_directory(new_path)
         return new_path
 
     # Vehicle project opening operations

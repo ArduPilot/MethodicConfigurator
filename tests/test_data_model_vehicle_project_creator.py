@@ -289,18 +289,14 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
-            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="QuadCopter_Template"),
         ):
             # Act: Create new vehicle project
             result_dir = project_creator.create_new_vehicle_from_template(
                 template_dir, new_base_dir, new_vehicle_name, default_settings
             )
 
-            # Assert: Vehicle project created successfully
+            # Assert: the creator creates the directory and copies template files
             assert result_dir == expected_vehicle_dir
-
-            # Verify filesystem operations were called correctly
             mock_local_filesystem.create_new_vehicle_dir.assert_called_once_with(expected_vehicle_dir)
             mock_local_filesystem.copy_template_files_to_new_vehicle_dir.assert_called_once_with(
                 template_dir,
@@ -310,14 +306,9 @@ class TestVehicleProjectCreationWorkflow:
                 use_fc_params=default_settings.use_fc_params,
                 fc_parameters=None,
             )
-
-            # Verify filesystem initialization
-            mock_local_filesystem.re_init.assert_called_once_with(
-                expected_vehicle_dir, mock_local_filesystem.vehicle_type, default_settings.blank_component_data
-            )
-
-            # Verify vehicle_dir was updated
-            assert mock_local_filesystem.vehicle_dir == expected_vehicle_dir
+            # Assert: the creator does NOT set vehicle_dir or call re_init —
+            # those responsibilities belong to VehicleProjectOpener
+            mock_local_filesystem.re_init.assert_not_called()
 
     def test_user_sees_error_when_vehicle_directory_creation_fails(
         self, project_creator, mock_local_filesystem, default_settings
@@ -385,70 +376,6 @@ class TestVehicleProjectCreationWorkflow:
             assert "Copying template files" in exc_info.value.title
             assert copying_error in exc_info.value.message
 
-    def test_user_sees_error_when_filesystem_initialization_fails(
-        self, project_creator, mock_local_filesystem, default_settings
-    ) -> None:
-        """
-        User receives specific error when filesystem initialization fails.
-
-        GIVEN: A user attempts to create a vehicle project
-        WHEN: The filesystem initialization raises SystemExit
-        THEN: They should receive a specific error about parameter file reading
-        """
-        # Arrange: Valid inputs but filesystem initialization failure
-        template_dir = "/valid/template/dir"
-        new_base_dir = "/valid/base/dir"
-        new_vehicle_name = "MyQuadcopter"
-        expected_vehicle_dir = "/valid/base/dir/MyQuadcopter"
-
-        mock_local_filesystem.re_init.side_effect = SystemExit("Critical parameter file error")
-
-        with (
-            patch.object(LocalFilesystem, "directory_exists", return_value=True),
-            patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
-            patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
-        ):
-            # Act & Assert: Should raise error about parameter file reading
-            with pytest.raises(VehicleProjectCreationError) as exc_info:
-                project_creator.create_new_vehicle_from_template(
-                    template_dir, new_base_dir, new_vehicle_name, default_settings
-                )
-
-            assert "Fatal error reading parameter files" in exc_info.value.title
-            assert "Critical parameter file error" in exc_info.value.message
-
-    def test_user_sees_error_when_no_parameter_files_found_after_creation(
-        self, project_creator, mock_local_filesystem, default_settings
-    ) -> None:
-        """
-        User receives specific error when no parameter files are found after creation.
-
-        GIVEN: A user attempts to create a vehicle project
-        WHEN: No parameter files are found after successful creation
-        THEN: They should receive a specific error about missing parameter files
-        """
-        # Arrange: Valid inputs but no parameter files after creation
-        template_dir = "/valid/template/dir"
-        new_base_dir = "/valid/base/dir"
-        new_vehicle_name = "MyQuadcopter"
-        expected_vehicle_dir = "/valid/base/dir/MyQuadcopter"
-
-        mock_local_filesystem.file_parameters = {}  # No parameter files
-
-        with (
-            patch.object(LocalFilesystem, "directory_exists", return_value=True),
-            patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
-            patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
-        ):
-            # Act & Assert: Should raise error about missing parameter files
-            with pytest.raises(VehicleProjectCreationError) as exc_info:
-                project_creator.create_new_vehicle_from_template(
-                    template_dir, new_base_dir, new_vehicle_name, default_settings
-                )
-
-            assert "No parameter files found" in exc_info.value.title
-            assert "No intermediate parameter files found" in exc_info.value.message
-
     def test_user_can_create_project_with_custom_settings(self, project_creator, mock_local_filesystem) -> None:
         """
         User can create vehicle project with custom settings for different options.
@@ -472,8 +399,6 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
-            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="Custom_Template"),
         ):
             # Act: Create vehicle project with custom settings
             result_dir = project_creator.create_new_vehicle_from_template(
@@ -492,11 +417,6 @@ class TestVehicleProjectCreationWorkflow:
                 use_fc_params=False,
                 fc_parameters=None,
             )
-
-            # Verify filesystem initialization used custom settings
-            mock_local_filesystem.re_init.assert_called_once()
-            call_args = mock_local_filesystem.re_init.call_args
-            assert call_args[0] == (expected_vehicle_dir, mock_local_filesystem.vehicle_type, True)
 
     def test_user_can_create_project_with_fc_connection(
         self, project_creator, mock_local_filesystem, fc_dependent_settings
@@ -520,18 +440,15 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "directory_exists", return_value=True),
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
-            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
-            patch.object(LocalFilesystem, "get_directory_name_from_full_path", return_value="FC_Template"),
         ):
             # Act: Create vehicle project with FC connection
             result_dir = project_creator.create_new_vehicle_from_template(
                 template_dir, new_base_dir, new_vehicle_name, fc_dependent_settings, fc_connected, fc_parameters
             )
 
-            # Assert: Project created successfully with FC settings
+            # Assert: project created and FC parameters forwarded to the copy step
             assert result_dir == expected_vehicle_dir
             mock_local_filesystem.create_new_vehicle_dir.assert_called_once_with(expected_vehicle_dir)
-            # FC parameter values are now applied during the copy step, not after re_init
             mock_local_filesystem.copy_template_files_to_new_vehicle_dir.assert_called_once_with(
                 template_dir,
                 expected_vehicle_dir,
@@ -540,14 +457,19 @@ class TestVehicleProjectCreationWorkflow:
                 use_fc_params=True,
                 fc_parameters=fc_parameters,
             )
+            # The creator never calls re_init; that is the opener's job
+            mock_local_filesystem.re_init.assert_not_called()
 
     def test_creator_does_not_store_history_itself(self, project_creator, mock_local_filesystem, default_settings) -> None:
         """
-        The creator class should not modify the recent-vehicle history; that is the responsibility of the manager.
+        VehicleProjectCreator must not touch any history-storage APIs.
+
+        History management is a facade-layer responsibility (VehicleProjectManager).
+        The creator's single job is to build the directory and copy the files.
 
         GIVEN: A user successfully creates a vehicle project
         WHEN: The creation process completes
-        THEN: No calls to history storage APIs should occur inside the creator
+        THEN: Neither store_recently_used_template_dirs nor store_recently_used_vehicle_dir is called
         """
         # Arrange: Valid inputs for successful creation
         template_dir = "C:\\valid\\template\\dir"
@@ -560,11 +482,13 @@ class TestVehicleProjectCreationWorkflow:
             patch.object(LocalFilesystem, "valid_directory_name", return_value=True),
             patch.object(LocalFilesystem, "new_vehicle_dir", return_value=expected_vehicle_dir),
             patch.object(LocalFilesystem, "store_recently_used_template_dirs") as mock_store_template,
+            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir") as mock_store_vehicle,
         ):
             # Act: Create vehicle project
             project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
 
             mock_store_template.assert_not_called()
+            mock_store_vehicle.assert_not_called()
 
 
 class TestNewVehicleProjectSettingsMetadata:
