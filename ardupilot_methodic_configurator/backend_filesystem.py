@@ -635,7 +635,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     continue
                 source = os_path.join(template_dir, item)
                 dest = os_path.join(new_vehicle_dir, item)
-                if item.endswith(".param") and (blank_change_reason or (use_fc_params and fc_parameters)):
+                if (
+                    item.endswith(".param")
+                    and (blank_change_reason or (use_fc_params and fc_parameters))
+                    and item != "00_default.param"
+                ):
                     # Parse source into memory, apply transformations, write the result to dest in one pass
                     params = ParDict.load_param_file_into_dict(source)
                     LocalFilesystem._transform_param_dict(params, blank_change_reason, use_fc_params, fc_parameters)
