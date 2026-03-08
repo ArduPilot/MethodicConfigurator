@@ -107,12 +107,12 @@ def process_template_directory(template_dir: Path) -> None:
 
         local_fs.save_vehicle_components_json_data(local_fs.vehicle_components_fs.data, str(template_dir))
 
-        existing_fc_params = list(local_fs.param_default_dict.keys()) if local_fs.param_default_dict else []
+        fc_param_names = list(local_fs.param_default_dict.keys()) if local_fs.param_default_dict else []
 
         # Test parameter derivation (passing None means only forced/derived params are computed)
         try:
-            pending = local_fs.update_and_export_vehicle_params_from_fc(existing_fc_params=existing_fc_params)
-            local_fs.apply_pending_changes(pending)
+            computed_changes = local_fs.calculate_derived_and_forced_param_changes(fc_param_names=fc_param_names)
+            local_fs.apply_computed_changes(computed_changes)
             local_fs.save_vehicle_params_to_files(list(local_fs.file_parameters))
         except ValueError as e:
             logging.error("Error processing %s:", template_dir)

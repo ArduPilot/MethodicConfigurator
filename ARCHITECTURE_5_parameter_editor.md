@@ -198,20 +198,24 @@ This systematic approach ensures methodical, traceable, and safe vehicle configu
 - **Directory Selection**: Works within selected vehicle directory
 - **Documentation System**: Integrates with online and cached documentation
 
-### Derived Parameter Confirmation Workflow
+### Derived Parameter Awareness Workflow
 
 After the Component Editor closes and before the Parameter Editor opens,
-`process_component_editor_results()` recalculates forced/derived parameters and asks the
-user to confirm any differences before they are applied.
+`process_component_editor_results()` recalculates forced/derived parameters and notifies
+the user which parameter files will be affected, so they know which steps to revisit.
 
-**Phase 1 - Pure computation** (`update_and_export_vehicle_params_from_fc`):
+**Phase 1 - Pure computation** (`calculate_derived_and_forced_param_changes`):
 For each file, deep-copies the loaded `ParDict`, computes forced/derived
 parameters, and compares the result against the unmodified in-memory original.  Returns a
 `dict[str, ParDict]` of files that differ.  `self.file_parameters` is never mutated.
 
-**Phase 2 - User confirmation** (`process_component_editor_results` in `__main__.py`):
-**Yes** -> `apply_pending_changes(pending)` updates the in-memory model; disk writes happen
-later in the Parameter Editor.  **No** -> nothing to undo.  Empty dict -> no dialog shown.
+**Phase 2 - User notification** (`process_component_editor_results` in `__main__.py`):
+If any files differ, a **warning message** listing the affected filenames is shown so
+the user knows which Parameter Editor steps to pay attention to.  No data is applied or
+written at this point.  The actual forced/derived values are re-computed step-by-step inside
+the Parameter Editor as each file is visited, because derived parameters can depend on
+FC parameter values that may change in every step, making it impossible to pre-compute them
+here.  Empty dict -> no warning shown.
 
 ### Separation from Project-Creation FC Import
 

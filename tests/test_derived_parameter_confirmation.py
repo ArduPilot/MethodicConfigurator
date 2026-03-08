@@ -84,8 +84,8 @@ class TestParameterSafetyChecks:
         fs = filesystem_with_derived_logic
 
         # WHEN: Call update without permission (commit_derived_changes=False)
-        pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            existing_fc_params=[],
+        pending_changes = fs.calculate_derived_and_forced_param_changes(
+            fc_param_names=[],
         )
 
         # THEN: The changed file is reported as pending
@@ -113,12 +113,12 @@ class TestParameterSafetyChecks:
         fs = filesystem_with_derived_logic
 
         # WHEN: Call update to detect changes, then save with permission
-        pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            existing_fc_params=[],
+        pending_changes = fs.calculate_derived_and_forced_param_changes(
+            fc_param_names=[],
         )
 
         # Changes detected - simulate user saying Yes: apply then save
-        fs.apply_pending_changes(pending_changes)
+        fs.apply_computed_changes(pending_changes)
 
         # THEN: The in-memory model reflects the derived value
         assert fs.file_parameters["08_batt1.param"]["BATT_ARM_VOLT"].value == 11.75
@@ -153,8 +153,8 @@ class TestParameterSafetyChecks:
         fs.compute_parameters = MagicMock(return_value="")
 
         # WHEN
-        pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            existing_fc_params=[],
+        pending_changes = fs.calculate_derived_and_forced_param_changes(
+            fc_param_names=[],
         )
 
         # THEN: Comment change alone triggers the pending flag
@@ -188,8 +188,8 @@ class TestParameterSafetyChecks:
         # Derived computation still produces 11.75 (the fixture default)
 
         # WHEN: Call update
-        pending_changes = fs.update_and_export_vehicle_params_from_fc(
-            existing_fc_params=[],
+        pending_changes = fs.calculate_derived_and_forced_param_changes(
+            fc_param_names=[],
         )
 
         # THEN: Derived value (11.75) differs from loaded value (15.7) → detected
@@ -200,20 +200,20 @@ class TestParameterSafetyChecks:
         assert fs.file_parameters["08_batt1.param"]["BATT_ARM_VOLT"].value == 15.7
 
 
-class TestUserConfirmationWorkflow:
-    """Tests the user interaction workflow for confirming changes."""
+class TestUserNotificationWorkflow:
+    """Tests the user notification workflow after the component editor closes."""
 
-    @patch("ardupilot_methodic_configurator.__main__.ask_yesno_message")
-    def test_user_declining_changes_leaves_memory_unchanged(self, mock_dialog) -> None:
+    @patch("ardupilot_methodic_configurator.__main__.show_warning_message")
+    def test_pending_changes_shows_warning_but_does_not_apply_changes(self, mock_warning) -> None:
         """
-        User declining changes leaves memory unchanged.
+        Pending changes trigger a warning message; nothing is applied to memory.
 
         GIVEN: The backend detects pending changes
-        WHEN: The user clicks 'No' on the confirmation dialog
-        THEN: The in-memory model is not mutated (Phase 1 never touched it)
+        WHEN: process_component_editor_results is called
+        THEN: A warning message listing the affected files is shown
+        AND: The in-memory model is NOT mutated (apply_computed_changes is not called)
         AND: No disk write occurs
         """
-        # Import the function to test
         # pylint: disable=import-outside-toplevel
         from ardupilot_methodic_configurator.__main__ import (  # noqa: PLC0415
             process_component_editor_results,
@@ -222,67 +222,29 @@ class TestUserConfirmationWorkflow:
         # GIVEN: Backend returns pending changes
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_fs.update_and_export_vehicle_params_from_fc.return_value = {"08_batt1.param": MagicMock()}
-
-        # WHEN: User responds NO
-        mock_dialog.return_value = False
+        mock_fs.calculate_derived_and_forced_param_changes.return_value = {"08_batt1.param": MagicMock()}
 
         process_component_editor_results(mock_controller, mock_fs)
 
-        # THEN: A confirmation dialog was shown
-        mock_dialog.assert_called_once()
+        # THEN: A warning dialog was shown
+        mock_warning.assert_called_once()
 
-        # AND: The in-memory model was NOT updated (user said No)
-        mock_fs.apply_pending_changes.assert_not_called()
+        # AND: The in-memory model was NOT updated (the Parameter Editor re-computes per step)
+        mock_fs.apply_computed_changes.assert_not_called()
 
         # AND: No disk write occurred
         mock_fs.save_vehicle_params_to_files.assert_not_called()
 
-    @patch("ardupilot_methodic_configurator.__main__.ask_yesno_message")
-    def test_user_accepts_changes_keeps_memory_updated(self, mock_dialog) -> None:
+    @patch("ardupilot_methodic_configurator.__main__.show_warning_message")
+    def test_no_pending_changes_does_not_show_warning(self, mock_warning) -> None:
         """
-        User accepts changes: derived values stay in memory; no disk write here.
+        No pending changes: no warning shown and nothing written to disk.
 
-        GIVEN: The backend detects pending changes
-        WHEN: The user clicks 'Yes' on the confirmation dialog
-        THEN: The derived values remain in the in-memory data model
-        AND: No disk write occurs at this stage (the parameter editor handles that per step)
-        AND: No revert of in-memory values occurs
-        """
-        # pylint: disable=import-outside-toplevel
-        from ardupilot_methodic_configurator.__main__ import (  # noqa: PLC0415
-            process_component_editor_results,
-        )
-
-        # GIVEN: Backend returns pending changes
-        mock_fs = MagicMock()
-        mock_controller = MagicMock()
-        mock_fs.update_and_export_vehicle_params_from_fc.return_value = {"08_batt1.param": MagicMock()}
-
-        # WHEN: User responds YES
-        mock_dialog.return_value = True
-        process_component_editor_results(mock_controller, mock_fs)
-
-        # THEN: A confirmation dialog was shown
-        mock_dialog.assert_called_once()
-
-        # AND: The pending changes were applied to the in-memory data model
-        pending = mock_fs.update_and_export_vehicle_params_from_fc.return_value
-        mock_fs.apply_pending_changes.assert_called_once_with(pending)
-
-        # AND: No disk write at this stage - the parameter editor handles that per step
-        mock_fs.save_vehicle_params_to_files.assert_not_called()
-
-    @patch("ardupilot_methodic_configurator.__main__.ask_yesno_message")
-    def test_no_pending_changes_does_not_write_to_disk(self, mock_dialog) -> None:
-        """
-        No pending changes: no disk write and no dialog shown.
-
-        GIVEN: The backend detects no differences between memory and disk
+        GIVEN: The backend detects no differences between memory and the computed state
         WHEN: process_component_editor_results is called
-        THEN: No confirmation dialog is shown
-        AND: No disk write occurs (in-memory model already matches disk)
-        AND: No revert occurs
+        THEN: No warning dialog is shown
+        AND: The in-memory model is not touched
+        AND: No disk write occurs
         """
         # pylint: disable=import-outside-toplevel
         from ardupilot_methodic_configurator.__main__ import (  # noqa: PLC0415
@@ -292,15 +254,15 @@ class TestUserConfirmationWorkflow:
         mock_fs = MagicMock()
         mock_controller = MagicMock()
         # Empty dict == no changes
-        mock_fs.update_and_export_vehicle_params_from_fc.return_value = {}
+        mock_fs.calculate_derived_and_forced_param_changes.return_value = {}
 
         process_component_editor_results(mock_controller, mock_fs)
 
-        # THEN: No confirmation dialog was shown
-        mock_dialog.assert_not_called()
+        # THEN: No warning dialog was shown
+        mock_warning.assert_not_called()
 
         # AND: The in-memory model was not touched
-        mock_fs.apply_pending_changes.assert_not_called()
+        mock_fs.apply_computed_changes.assert_not_called()
 
         # AND: No disk write occurred
         mock_fs.save_vehicle_params_to_files.assert_not_called()
@@ -323,7 +285,7 @@ class TestUserConfirmationWorkflow:
 
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_fs.update_and_export_vehicle_params_from_fc.side_effect = ValueError("Compute error in 08_batt1.param")
+        mock_fs.calculate_derived_and_forced_param_changes.side_effect = ValueError("Compute error in 08_batt1.param")
 
         process_component_editor_results(mock_controller, mock_fs)
 
@@ -336,16 +298,17 @@ class TestUserConfirmationWorkflow:
         mock_exit.assert_called_once_with(1)
 
         # AND: No changes were applied to the in-memory model
-        mock_fs.apply_pending_changes.assert_not_called()
+        mock_fs.apply_computed_changes.assert_not_called()
 
-    @patch("ardupilot_methodic_configurator.__main__.ask_yesno_message")
-    def test_multiple_files_pending_lists_all_in_dialog(self, mock_dialog) -> None:
+    @patch("ardupilot_methodic_configurator.__main__.show_warning_message")
+    def test_multiple_files_pending_lists_all_in_warning(self, mock_warning) -> None:
         """
-        Multiple pending files are all listed in the confirmation dialog.
+        Multiple pending files are all listed in the warning message.
 
         GIVEN: The backend detects changes in two parameter files
-        WHEN: The confirmation dialog is shown
-        THEN: Both filenames appear in the dialog message
+        WHEN: process_component_editor_results is called
+        THEN: Both filenames appear in the warning message
+        AND: Nothing is applied to memory (the Parameter Editor re-computes per step)
         """
         # pylint: disable=import-outside-toplevel
         from ardupilot_methodic_configurator.__main__ import (  # noqa: PLC0415
@@ -354,21 +317,20 @@ class TestUserConfirmationWorkflow:
 
         mock_fs = MagicMock()
         mock_controller = MagicMock()
-        mock_fs.update_and_export_vehicle_params_from_fc.return_value = {
+        mock_fs.calculate_derived_and_forced_param_changes.return_value = {
             "08_batt1.param": MagicMock(),
             "12_motor.param": MagicMock(),
         }
-        mock_dialog.return_value = True
 
         process_component_editor_results(mock_controller, mock_fs)
 
-        # THEN: The dialog message mentions both filenames
-        dialog_message = str(mock_dialog.call_args)
-        assert "08_batt1.param" in dialog_message
-        assert "12_motor.param" in dialog_message
+        # THEN: The warning message mentions both filenames
+        warning_message = str(mock_warning.call_args)
+        assert "08_batt1.param" in warning_message
+        assert "12_motor.param" in warning_message
 
-        # AND: The pending changes for both files were applied (user said Yes)
-        mock_fs.apply_pending_changes.assert_called_once()
+        # AND: Nothing was applied — the Parameter Editor re-computes changes per step
+        mock_fs.apply_computed_changes.assert_not_called()
 
 
 class TestParameterChangeDetection:
