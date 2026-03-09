@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-03-07 15:57+0000\n"
+"POT-Creation-Date: 2026-03-09 06:23+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -16,13 +16,13 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: ardupilot_methodic_configurator/__main__.py:103
+#: ardupilot_methodic_configurator/__main__.py:106
 msgid ""
 "Plugin '%(plugin_name)s' is configured but not registered. Available "
 "plugins: %(available)s"
 msgstr "插件 '%(plugin_name)s' 已配置但未注册。可用插件: %(available)s"
 
-#: ardupilot_methodic_configurator/__main__.py:130
+#: ardupilot_methodic_configurator/__main__.py:133
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -47,40 +47,39 @@ msgstr ""
 "会将选定的参数上传到飞控。当按下“跳过”时，它会跳到下一个模版。这个过程会对每"
 "个模版重复进行。"
 
-#: ardupilot_methodic_configurator/__main__.py:177
+#: ardupilot_methodic_configurator/__main__.py:180
 msgid "Will now exit the old software version."
 msgstr "即将退出旧版软件。"
 
-#: ardupilot_methodic_configurator/__main__.py:240
+#: ardupilot_methodic_configurator/__main__.py:243
 msgid "Vehicle type explicitly set to %s."
 msgstr "载具类型明确设置为 %s。"
 
-#: ardupilot_methodic_configurator/__main__.py:243
+#: ardupilot_methodic_configurator/__main__.py:246
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr "未明确设置载具类型，自动检测到 %s。"
 
-#: ardupilot_methodic_configurator/__main__.py:262
+#: ardupilot_methodic_configurator/__main__.py:265
 msgid "No serial ports found"
 msgstr "未找到串行端口"
 
-#: ardupilot_methodic_configurator/__main__.py:314
+#: ardupilot_methodic_configurator/__main__.py:317
 msgid ""
 "Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."
 msgstr "车辆目录 %(old_dir)s 不可写。改用 %(new_dir)s。"
 
-#: ardupilot_methodic_configurator/__main__.py:338
+#: ardupilot_methodic_configurator/__main__.py:341
 msgid "Using Vehicle directory %(new_dir)s for initial parameter download."
 msgstr "使用车辆目录 %(new_dir)s 进行初始参数下载。"
 
-#: ardupilot_methodic_configurator/__main__.py:366
+#: ardupilot_methodic_configurator/__main__.py:369
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:237
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:463
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
 msgid "Fatal error reading parameter files"
 msgstr "读取参数文件时发生致命错误"
 
-#: ardupilot_methodic_configurator/__main__.py:403
+#: ardupilot_methodic_configurator/__main__.py:406
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
@@ -88,11 +87,11 @@ msgstr ""
 "由于没有连接飞控且命令行上未设置明确的车辆类型，将展示所有车辆类型的所有车辆"
 "模板"
 
-#: ardupilot_methodic_configurator/__main__.py:417
+#: ardupilot_methodic_configurator/__main__.py:420
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "将参数重置为默认值失败: %(error)s"
 
-#: ardupilot_methodic_configurator/__main__.py:485
+#: ardupilot_methodic_configurator/__main__.py:488
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:129
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:132
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:134
@@ -105,46 +104,73 @@ msgstr "将参数重置为默认值失败: %(error)s"
 msgid "Unknown"
 msgstr "未知"
 
-#: ardupilot_methodic_configurator/__main__.py:587
+#: ardupilot_methodic_configurator/__main__.py:583
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:98
 msgid "Error in derived parameters"
 msgstr "派生参数中的错误"
 
-#: ardupilot_methodic_configurator/__main__.py:628
+#: ardupilot_methodic_configurator/__main__.py:590
+msgid ""
+"The component or connection changes you just did will have repercussions on "
+"the following parameter files:\n"
+"\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:592
+msgid ""
+"Please review the changes, and upload the updated parameter files to the "
+"flight controller.\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:594
+msgid ""
+"If you already uploaded said parameters to the FC, switch to the normal GUI "
+"complexity mode\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:598
+msgid "in order to be able to jump to those specific parameter files"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:601
+msgid "Component derived param changes"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:647
 msgid "Created backup file autobackup_%02d.param"
 msgstr "已创建备份文件 autobackup_%02d.param"
 
-#: ardupilot_methodic_configurator/__main__.py:630
+#: ardupilot_methodic_configurator/__main__.py:649
 msgid "Permission denied when creating backup files: %s"
 msgstr "创建备份文件时权限被拒绝: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:631
+#: ardupilot_methodic_configurator/__main__.py:650
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
 msgstr "请检查文件权限并确保您对车辆目录有写入权限"
 
-#: ardupilot_methodic_configurator/__main__.py:634
+#: ardupilot_methodic_configurator/__main__.py:653
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "磁盘空间不足，无法创建备份文件: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:635
+#: ardupilot_methodic_configurator/__main__.py:654
 msgid "Please free up disk space and try again"
 msgstr "请释放磁盘空间并重试"
 
-#: ardupilot_methodic_configurator/__main__.py:637
+#: ardupilot_methodic_configurator/__main__.py:656
 msgid "Failed to create backup files: %s"
 msgstr "创建备份文件失败: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:639
+#: ardupilot_methodic_configurator/__main__.py:658
 msgid "Unexpected error creating backup files: %s"
 msgstr "创建备份文件时出现意外错误: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:754
+#: ardupilot_methodic_configurator/__main__.py:773
 msgid "Incompatible parameter definition file detected"
 msgstr "检测到不兼容的参数定义文件"
 
-#: ardupilot_methodic_configurator/__main__.py:755
+#: ardupilot_methodic_configurator/__main__.py:774
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -169,118 +195,118 @@ msgstr "有效范围: {_lo}, {_up}"
 msgid "Value must be a number."
 msgstr "值必須是數字。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:112
+#: ardupilot_methodic_configurator/backend_filesystem.py:113
 msgid "Could not detect vehicle type. Defaulting to %s."
 msgstr "无法检测载具类型，默认设置为 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:171
+#: ardupilot_methodic_configurator/backend_filesystem.py:172
 msgid "File %s already exists. Will not rename file %s to %s."
 msgstr "文件 %s 已經存在。將不會將文件 %s 重命名為 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:300
+#: ardupilot_methodic_configurator/backend_filesystem.py:301
 msgid "Could not convert values to int or float for %s"
 msgstr "无法将值转换为 %s 的整数或浮点数"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:302
+#: ardupilot_methodic_configurator/backend_filesystem.py:303
 msgid "Parameter %s has invalid metadata. Please file a bug at %s"
 msgstr "参数 %s 具有无效的元数据。请在 %s 提交错误报告"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:357
+#: ardupilot_methodic_configurator/backend_filesystem.py:358
 msgid "Error: %s is not a directory."
 msgstr "错误: %s 不是一个有效目录。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:580
+#: ardupilot_methodic_configurator/backend_filesystem.py:581
 msgid "Intermediate parameter files and summary files zipped to %s"
 msgstr "模版文件和摘要文件已压缩到 %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:603
+#: ardupilot_methodic_configurator/backend_filesystem.py:610
 msgid "Template directory does not exist: {template_dir}"
 msgstr "模板目录不存在：{template_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:609
+#: ardupilot_methodic_configurator/backend_filesystem.py:616
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "新飞行器目录不存在：{new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:642
+#: ardupilot_methodic_configurator/backend_filesystem.py:652
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr "将模板文件复制到新车辆目录时出错：{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:651
+#: ardupilot_methodic_configurator/backend_filesystem.py:688
 msgid "New vehicle directory does not exist: {vehicle_dir}"
 msgstr "新载具目录不存在: {vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:669
+#: ardupilot_methodic_configurator/backend_filesystem.py:706
 msgid "Error removing %s"
 msgstr "删除 %s 时出错"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:676
+#: ardupilot_methodic_configurator/backend_filesystem.py:713
 msgid "Error removing directory %s"
 msgstr "删除目录 %s 时出错"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:681
+#: ardupilot_methodic_configurator/backend_filesystem.py:718
 msgid "Error removing created files: {error_list}"
 msgstr "删除创建的文件时出错: {error_list}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:684
+#: ardupilot_methodic_configurator/backend_filesystem.py:721
 msgid "Error removing created files: {_e}"
 msgstr "删除创建的文件时出错: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:685
+#: ardupilot_methodic_configurator/backend_filesystem.py:722
 msgid "Error removing created files:"
 msgstr "删除创建的文件时出错:"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:704
+#: ardupilot_methodic_configurator/backend_filesystem.py:741
 msgid "Error writing last uploaded filename: %s"
 msgstr "写入上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:711
+#: ardupilot_methodic_configurator/backend_filesystem.py:748
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "未找到 last_uploaded_filename.txt: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:713
+#: ardupilot_methodic_configurator/backend_filesystem.py:750
 msgid "Error reading last uploaded filename: %s"
 msgstr "读取上传的最后一个文件的文件名时发生错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:729
+#: ardupilot_methodic_configurator/backend_filesystem.py:766
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr "起始文件索引 %s 超出范围。改为从文件 %s 开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:737
+#: ardupilot_methodic_configurator/backend_filesystem.py:774
 msgid "Starting with the first file."
 msgstr "从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:740
+#: ardupilot_methodic_configurator/backend_filesystem.py:777
 msgid "Starting with the first non-tcal file."
 msgstr "从第一个非温度校准文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:744
+#: ardupilot_methodic_configurator/backend_filesystem.py:781
 msgid "Last uploaded file was %s."
 msgstr "最后上传的文件是 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:746
+#: ardupilot_methodic_configurator/backend_filesystem.py:783
 msgid "No last uploaded file found. %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:751
+#: ardupilot_methodic_configurator/backend_filesystem.py:788
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:760
+#: ardupilot_methodic_configurator/backend_filesystem.py:797
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr "最后上传的文件是列表中的最后一个文件。从头开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:940
+#: ardupilot_methodic_configurator/backend_filesystem.py:1045
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "飞行器类型。默认为ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:946
+#: ardupilot_methodic_configurator/backend_filesystem.py:1051
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
 msgstr "包含飞行器特定中间参数文件的目录。默认为当前工作目录"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:954
+#: ardupilot_methodic_configurator/backend_filesystem.py:1059
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -290,7 +316,7 @@ msgstr ""
 "直接从第n个中间参数文件开始（跳过之前的文件）。默认从上次写入飞控的文件之后开"
 "始。如果文件不存在，将从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:963
+#: ardupilot_methodic_configurator/backend_filesystem.py:1068
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -298,7 +324,7 @@ msgstr ""
 "允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认"
 "为%(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:972
+#: ardupilot_methodic_configurator/backend_filesystem.py:1077
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -1054,217 +1080,217 @@ msgstr "等待参数 %s 超时"
 msgid "Downloading ... {:.1f}%"
 msgstr "下载中...{:.1f}%"
 
-#: ardupilot_methodic_configurator/backend_internet.py:172
-#: ardupilot_methodic_configurator/backend_internet.py:712
+#: ardupilot_methodic_configurator/backend_internet.py:185
+#: ardupilot_methodic_configurator/backend_internet.py:725
 msgid "Download complete"
 msgstr "下载完成"
 
-#: ardupilot_methodic_configurator/backend_internet.py:193
+#: ardupilot_methodic_configurator/backend_internet.py:206
 msgid "URL or local filename not provided."
 msgstr "没有提供URL链接或本地文件名。"
 
-#: ardupilot_methodic_configurator/backend_internet.py:205
+#: ardupilot_methodic_configurator/backend_internet.py:218
 msgid "Download timed out (attempt %d)"
 msgstr "下载超时 (尝试 %d)"
 
-#: ardupilot_methodic_configurator/backend_internet.py:207
+#: ardupilot_methodic_configurator/backend_internet.py:220
 msgid "Network error during download (attempt %d): %s"
 msgstr "下载过程中网络错误 (尝试 %d): %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:210
+#: ardupilot_methodic_configurator/backend_internet.py:223
 msgid "File system error during download (attempt %d): %s"
 msgstr "下载过程中文件系统错误 (尝试 %d): %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:213
+#: ardupilot_methodic_configurator/backend_internet.py:226
 msgid "Invalid data received from %s: %s"
 msgstr "从%s接收到无效数据：%s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:233
+#: ardupilot_methodic_configurator/backend_internet.py:246
 msgid "Download failed after %d attempts, cleaning up partial file"
 msgstr "经过 %d 次尝试后下载失败，正在清理部分文件"
 
-#: ardupilot_methodic_configurator/backend_internet.py:267
+#: ardupilot_methodic_configurator/backend_internet.py:280
 msgid "The latest continuous delivery build must be a pre-release"
 msgstr "最新的持续交付版本必须是预发布版本"
 
-#: ardupilot_methodic_configurator/backend_internet.py:269
+#: ardupilot_methodic_configurator/backend_internet.py:282
 msgid "The latest stable release must not be a pre-release"
 msgstr "最新的稳定版本不能是预发布版本"
 
-#: ardupilot_methodic_configurator/backend_internet.py:275
-#: ardupilot_methodic_configurator/backend_internet.py:283
+#: ardupilot_methodic_configurator/backend_internet.py:288
+#: ardupilot_methodic_configurator/backend_internet.py:296
 msgid "Failed to fetch release info: {}"
 msgstr "获取发布信息失败：{}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:280
+#: ardupilot_methodic_configurator/backend_internet.py:293
 msgid "Rate limit exceeded. Please try again after: %s (UTC)"
 msgstr "已超出速率限制。请在%s（UTC）之后重试"
 
-#: ardupilot_methodic_configurator/backend_internet.py:286
+#: ardupilot_methodic_configurator/backend_internet.py:299
 msgid "Invalid release data: {}"
 msgstr "无效的发布数据：{}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:342
+#: ardupilot_methodic_configurator/backend_internet.py:355
 msgid "Installer URL must use HTTPS: %s"
 msgstr "安装程序 URL 必须使用 HTTPS: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:345
+#: ardupilot_methodic_configurator/backend_internet.py:358
 msgid "Installer URL must be from github.com: %s"
 msgstr "安装程序 URL 必须来自 github.com: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:349
+#: ardupilot_methodic_configurator/backend_internet.py:362
 msgid ""
 "Installer URL must point to an ArduPilot/MethodicConfigurator release asset: "
 "%s"
 msgstr "安装程序 URL 必须指向 ArduPilot/MethodicConfigurator 的发布资产: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:357
+#: ardupilot_methodic_configurator/backend_internet.py:370
 msgid "could not get expected SHA256 checksum from github.com"
 msgstr "无法从github.com获取预期的SHA256校验和"
 
-#: ardupilot_methodic_configurator/backend_internet.py:362
+#: ardupilot_methodic_configurator/backend_internet.py:375
 msgid "SHA256 mismatch for downloaded installer: expected %s got %s"
 msgstr "下载的安装程序SHA256不匹配: 预期 %s 得到 %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:374
+#: ardupilot_methodic_configurator/backend_internet.py:387
 msgid "Downloaded file too small: %d bytes"
 msgstr "下载文件过小: %d 字节"
 
-#: ardupilot_methodic_configurator/backend_internet.py:384
+#: ardupilot_methodic_configurator/backend_internet.py:397
 msgid "Downloaded file has unexpected format"
 msgstr "下载文件格式异常"
 
-#: ardupilot_methodic_configurator/backend_internet.py:395
+#: ardupilot_methodic_configurator/backend_internet.py:408
 msgid "Failed to validate downloaded file: %s"
 msgstr "验证下载文件失败: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:428
+#: ardupilot_methodic_configurator/backend_internet.py:441
 msgid "Installation ready. Application will restart now."
 msgstr "安装准备就绪。应用程序将立即重启。"
 
-#: ardupilot_methodic_configurator/backend_internet.py:470
+#: ardupilot_methodic_configurator/backend_internet.py:483
 msgid "Downloading and installing new version for Windows..."
 msgstr "正在下载并安装Windows新版本..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:483
+#: ardupilot_methodic_configurator/backend_internet.py:496
 msgid "Failed to download installer from %s"
 msgstr "无法从 %s 下载安装程序"
 
-#: ardupilot_methodic_configurator/backend_internet.py:494
+#: ardupilot_methodic_configurator/backend_internet.py:507
 msgid "Downloaded installer does not appear to be a Windows executable"
 msgstr "下载的安装程序似乎不是Windows可执行文件"
 
-#: ardupilot_methodic_configurator/backend_internet.py:499
-#: ardupilot_methodic_configurator/backend_internet.py:666
+#: ardupilot_methodic_configurator/backend_internet.py:512
+#: ardupilot_methodic_configurator/backend_internet.py:679
 msgid "Starting installation..."
 msgstr "开始安装..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:508
+#: ardupilot_methodic_configurator/backend_internet.py:521
 msgid "Installation failed: {}"
 msgstr "安装失败：{}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:510
-#: ardupilot_methodic_configurator/backend_internet.py:659
+#: ardupilot_methodic_configurator/backend_internet.py:523
+#: ardupilot_methodic_configurator/backend_internet.py:672
 msgid "File operation failed: {}"
 msgstr "文件操作失败：{}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:530
+#: ardupilot_methodic_configurator/backend_internet.py:543
 msgid "Could not parse mount point from hdiutil output: %s"
 msgstr "无法从 hdiutil 输出解析挂载点: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:532
+#: ardupilot_methodic_configurator/backend_internet.py:545
 msgid "Failed to mount DMG: %s"
 msgstr "挂载 DMG 失败: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:534
+#: ardupilot_methodic_configurator/backend_internet.py:547
 msgid "Failed to run hdiutil: %s"
 msgstr "运行 hdiutil 失败: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:543
+#: ardupilot_methodic_configurator/backend_internet.py:556
 msgid "No .app bundle found in DMG at %s"
 msgstr "未在 %s 的 DMG 中找到 .app 包"
 
-#: ardupilot_methodic_configurator/backend_internet.py:551
+#: ardupilot_methodic_configurator/backend_internet.py:564
 msgid "Installing {}..."
 msgstr "正在安装 {}..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:557
+#: ardupilot_methodic_configurator/backend_internet.py:570
 msgid "App installed"
 msgstr "应用已安装"
 
-#: ardupilot_methodic_configurator/backend_internet.py:561
+#: ardupilot_methodic_configurator/backend_internet.py:574
 msgid "Failed to install app from DMG: %s"
 msgstr "从 DMG 安装应用失败: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:563
+#: ardupilot_methodic_configurator/backend_internet.py:576
 msgid "Error during app installation: %s"
 msgstr "应用安装过程中出错: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:583
+#: ardupilot_methodic_configurator/backend_internet.py:596
 msgid "Mounting DMG..."
 msgstr "正在挂载 DMG..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:596
+#: ardupilot_methodic_configurator/backend_internet.py:609
 msgid "Installation complete. Please restart the application."
 msgstr "安装完成。请重新启动应用程序。"
 
-#: ardupilot_methodic_configurator/backend_internet.py:597
+#: ardupilot_methodic_configurator/backend_internet.py:610
 msgid "macOS DMG installation complete. Please restart the application."
 msgstr "macOS DMG 安装完成。请重新启动应用程序。"
 
-#: ardupilot_methodic_configurator/backend_internet.py:628
+#: ardupilot_methodic_configurator/backend_internet.py:641
 msgid "Downloading and installing new version for macOS..."
 msgstr "正在下载并安装 macOS 新版本..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:641
+#: ardupilot_methodic_configurator/backend_internet.py:654
 msgid "Failed to download DMG from %s"
 msgstr "无法从 %s 下载 DMG"
 
-#: ardupilot_methodic_configurator/backend_internet.py:646
+#: ardupilot_methodic_configurator/backend_internet.py:659
 msgid "Verifying checksum..."
 msgstr "正在验证校验和..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:652
+#: ardupilot_methodic_configurator/backend_internet.py:665
 msgid "Validating file..."
 msgstr "正在验证文件..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:672
+#: ardupilot_methodic_configurator/backend_internet.py:685
 msgid "Updating via uv for Linux and macOS..."
 msgstr "通过uv更新Linux和macOS..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:685
+#: ardupilot_methodic_configurator/backend_internet.py:698
 msgid "Updating via pip for Linux and macOS..."
 msgstr "正在通过pip更新Linux和macOS版本..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:702
+#: ardupilot_methodic_configurator/backend_internet.py:715
 msgid "Installation command failed: {}"
 msgstr "安装命令失败: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:706
+#: ardupilot_methodic_configurator/backend_internet.py:719
 msgid "uv not found at expected path: {}"
 msgstr "在预期路径未找到uv: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:708
+#: ardupilot_methodic_configurator/backend_internet.py:721
 msgid "pip module not available. Please install pip or uv: {}"
 msgstr "pip模块不可用。请安装pip或uv: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:738
+#: ardupilot_methodic_configurator/backend_internet.py:751
 msgid "URL not provided."
 msgstr "未提供 URL。"
 
-#: ardupilot_methodic_configurator/backend_internet.py:741
+#: ardupilot_methodic_configurator/backend_internet.py:754
 msgid "Verifying URL: %s"
 msgstr "正在验证 URL：%s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:758
+#: ardupilot_methodic_configurator/backend_internet.py:771
 msgid "Failed to access URL: %s. Error: %s"
 msgstr "访问 URL 失败：%s。错误：%s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:763
+#: ardupilot_methodic_configurator/backend_internet.py:776
 msgid "Opening URL in browser: %s"
 msgstr "正在浏览器中打开 URL：%s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:766
+#: ardupilot_methodic_configurator/backend_internet.py:779
 msgid "Failed to open URL in browser: %s"
 msgstr "在浏览器中打开 URL 失败：%s"
 
@@ -4291,19 +4317,19 @@ msgstr "{paths_str} 的磁转子极数必须为偶数"
 msgid "Invalid integer value for {paths_str}"
 msgstr "{paths_str} 的整数值无效"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:299
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
 msgstr "在當前工作目錄中未找到中間參數文件。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:301
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
 msgstr "在 --vehicle-dir 指定的目錄中未找到中間參數文件。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:320
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:321
 msgid "MyVehicleName"
 msgstr "载具名称"
 
@@ -4424,52 +4450,33 @@ msgid "Flight Controller Parameters"
 msgstr "飞行控制器参数"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:509
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:513
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:497
 msgid "New vehicle directory"
 msgstr "新载具目录"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:453
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:455
 msgid "Copying template files"
 msgstr "复制模板文件"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:463
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
-msgid "Fatal error reading parameter files: {exp}"
-msgstr "读取参数文件时发生致命错误: {exp}"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:470
-msgid ""
-"No intermediate parameter files found after creating vehicle from template"
-msgstr "从模板创建载具后未找到中间参数文件"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:470
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:82
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:91
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:145
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:154
-msgid "No parameter files found"
-msgstr "未找到参数文件"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:488
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:472
 msgid "Vehicle template directory must not be empty"
 msgstr "载具模板目录不能为空"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:488
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:472
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:477
 msgid "Vehicle template directory"
 msgstr "载具模板目录"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:494
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:478
 msgid "Vehicle template directory {template_dir} does not exist"
 msgstr "载具模板目录 {template_dir} 不存在"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:509
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
 msgid "New vehicle name must not be empty"
 msgstr "新载具名称不能为空"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
 msgid "New vehicle name {new_vehicle_name} must not contain invalid characters"
 msgstr "新载具名称 {new_vehicle_name} 不能包含无效字符"
 
@@ -4484,6 +4491,18 @@ msgid ""
 msgstr ""
 "未找到最後打開的車輛配置目錄。\n"
 "請手動選擇一個目錄。"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
+msgid "Fatal error reading parameter files: {exp}"
+msgstr "读取参数文件时发生致命错误: {exp}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:82
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:91
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:145
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:154
+msgid "No parameter files found"
+msgstr "未找到参数文件"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:92
@@ -6431,7 +6450,7 @@ msgid ""
 msgstr ""
 "此主程序仅用于测试和开发，通常 VehicleProjectOpenerWindow 是从其他脚本调用的"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:393
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:406
 msgid ""
 "No intermediate parameter files found in the selected '{_dirname}' vehicle "
 "directory.\n"
@@ -6449,11 +6468,11 @@ msgstr ""
 "\n"
 "确保进入目录（双击）而不仅仅是选择它。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:398
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:411
 msgid "No Parameter Files Found"
 msgstr "没找到参数文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:402
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:415
 msgid ""
 "{_error_string}\n"
 "\n"
@@ -6466,7 +6485,7 @@ msgstr ""
 "请将飞控连接到电脑，\n"
 "并等待至少 7 秒钟后再重试。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:403
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:416
 msgid "No Connection to the Flight Controller"
 msgstr "没有连接到飞控"
 
@@ -7153,6 +7172,10 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid ""
+#~ "No intermediate parameter files found after creating vehicle from template"
+#~ msgstr "从模板创建载具后未找到中间参数文件"
 
 #~ msgid "Windows installer URL must be from github.com: %s"
 #~ msgstr "Windows安装程序URL必须来自github.com: %s"

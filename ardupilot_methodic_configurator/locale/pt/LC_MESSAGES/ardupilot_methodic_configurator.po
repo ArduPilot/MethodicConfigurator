@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-03-07 15:57+0000\n"
+"POT-Creation-Date: 2026-03-09 06:23+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: ardupilot_methodic_configurator/__main__.py:103
+#: ardupilot_methodic_configurator/__main__.py:106
 msgid ""
 "Plugin '%(plugin_name)s' is configured but not registered. Available "
 "plugins: %(available)s"
@@ -24,7 +24,7 @@ msgstr ""
 "Plugin '%(plugin_name)s' está configurado mas não registado. Plugins "
 "disponíveis: %(available)s"
 
-#: ardupilot_methodic_configurator/__main__.py:130
+#: ardupilot_methodic_configurator/__main__.py:133
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -49,44 +49,43 @@ msgstr ""
 "pressionado, ele salta para o próximo ficheiro de parâmetros intermediário. "
 "O processo é repetido para cada ficheiro de parâmetros intermediários."
 
-#: ardupilot_methodic_configurator/__main__.py:177
+#: ardupilot_methodic_configurator/__main__.py:180
 msgid "Will now exit the old software version."
 msgstr "Irá agora sair da versão antiga do software."
 
-#: ardupilot_methodic_configurator/__main__.py:240
+#: ardupilot_methodic_configurator/__main__.py:243
 msgid "Vehicle type explicitly set to %s."
 msgstr "Tipo de veículo explicitamente definido como %s."
 
-#: ardupilot_methodic_configurator/__main__.py:243
+#: ardupilot_methodic_configurator/__main__.py:246
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr "Tipo de veículo não definido explicitamente, auto-detectado %s."
 
-#: ardupilot_methodic_configurator/__main__.py:262
+#: ardupilot_methodic_configurator/__main__.py:265
 msgid "No serial ports found"
 msgstr "Nenhuma porta serial encontrada"
 
-#: ardupilot_methodic_configurator/__main__.py:314
+#: ardupilot_methodic_configurator/__main__.py:317
 msgid ""
 "Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."
 msgstr ""
 "O diretório de veículo %(old_dir)s não é gravável. A usar %(new_dir)s em vez "
 "disso."
 
-#: ardupilot_methodic_configurator/__main__.py:338
+#: ardupilot_methodic_configurator/__main__.py:341
 msgid "Using Vehicle directory %(new_dir)s for initial parameter download."
 msgstr ""
 "A usar o diretório de veículo %(new_dir)s para o download inicial de "
 "parâmetros."
 
-#: ardupilot_methodic_configurator/__main__.py:366
+#: ardupilot_methodic_configurator/__main__.py:369
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:237
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:463
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
 msgid "Fatal error reading parameter files"
 msgstr "Erro fatal lendo ficheiros de parâmetros"
 
-#: ardupilot_methodic_configurator/__main__.py:403
+#: ardupilot_methodic_configurator/__main__.py:406
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
@@ -95,11 +94,11 @@ msgstr ""
 "pois não há FC conectado e nenhum tipo de veículo explícito definido na "
 "linha de comando"
 
-#: ardupilot_methodic_configurator/__main__.py:417
+#: ardupilot_methodic_configurator/__main__.py:420
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "Falha ao repor parâmetros para valores predefinidos: %(error)s"
 
-#: ardupilot_methodic_configurator/__main__.py:485
+#: ardupilot_methodic_configurator/__main__.py:488
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:129
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:132
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:134
@@ -112,20 +111,47 @@ msgstr "Falha ao repor parâmetros para valores predefinidos: %(error)s"
 msgid "Unknown"
 msgstr "Desconhecido"
 
-#: ardupilot_methodic_configurator/__main__.py:587
+#: ardupilot_methodic_configurator/__main__.py:583
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:98
 msgid "Error in derived parameters"
 msgstr "Erro nos parâmetros derivados"
 
-#: ardupilot_methodic_configurator/__main__.py:628
+#: ardupilot_methodic_configurator/__main__.py:590
+msgid ""
+"The component or connection changes you just did will have repercussions on "
+"the following parameter files:\n"
+"\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:592
+msgid ""
+"Please review the changes, and upload the updated parameter files to the "
+"flight controller.\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:594
+msgid ""
+"If you already uploaded said parameters to the FC, switch to the normal GUI "
+"complexity mode\n"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:598
+msgid "in order to be able to jump to those specific parameter files"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:601
+msgid "Component derived param changes"
+msgstr ""
+
+#: ardupilot_methodic_configurator/__main__.py:647
 msgid "Created backup file autobackup_%02d.param"
 msgstr "Ficheiro de backup autobackup_%02d.param criado"
 
-#: ardupilot_methodic_configurator/__main__.py:630
+#: ardupilot_methodic_configurator/__main__.py:649
 msgid "Permission denied when creating backup files: %s"
 msgstr "Permissão negada ao criar ficheiros de backup: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:631
+#: ardupilot_methodic_configurator/__main__.py:650
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
@@ -133,27 +159,27 @@ msgstr ""
 "Por favor, verifique as permissões do ficheiro e certifique-se de que tem "
 "acesso de escrita ao diretório do veículo"
 
-#: ardupilot_methodic_configurator/__main__.py:634
+#: ardupilot_methodic_configurator/__main__.py:653
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "Espaço em disco insuficiente para criar ficheiros de backup: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:635
+#: ardupilot_methodic_configurator/__main__.py:654
 msgid "Please free up disk space and try again"
 msgstr "Por favor, libere espaço em disco e tente novamente"
 
-#: ardupilot_methodic_configurator/__main__.py:637
+#: ardupilot_methodic_configurator/__main__.py:656
 msgid "Failed to create backup files: %s"
 msgstr "Falha ao criar ficheiros de backup: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:639
+#: ardupilot_methodic_configurator/__main__.py:658
 msgid "Unexpected error creating backup files: %s"
 msgstr "Erro inesperado ao criar ficheiros de backup: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:754
+#: ardupilot_methodic_configurator/__main__.py:773
 msgid "Incompatible parameter definition file detected"
 msgstr "Ficheiro de definição de parâmetros incompatível detetado"
 
-#: ardupilot_methodic_configurator/__main__.py:755
+#: ardupilot_methodic_configurator/__main__.py:774
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -179,119 +205,119 @@ msgstr "faixa válida: {_lo}, {_up}"
 msgid "Value must be a number."
 msgstr "O valor tem de ser um número."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:112
+#: ardupilot_methodic_configurator/backend_filesystem.py:113
 msgid "Could not detect vehicle type. Defaulting to %s."
 msgstr "Não foi possível detectar o tipo de veículo. Usando %s como padrão."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:171
+#: ardupilot_methodic_configurator/backend_filesystem.py:172
 msgid "File %s already exists. Will not rename file %s to %s."
 msgstr "Ficheiro % já existe. Não vai mudar o nome do ficheiro %s para %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:300
+#: ardupilot_methodic_configurator/backend_filesystem.py:301
 msgid "Could not convert values to int or float for %s"
 msgstr "Não foi possível converter valores para int ou float para %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:302
+#: ardupilot_methodic_configurator/backend_filesystem.py:303
 msgid "Parameter %s has invalid metadata. Please file a bug at %s"
 msgstr ""
 "O parâmetro %s tem metadados inválidos. Por favor, reporte um erro em %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:357
+#: ardupilot_methodic_configurator/backend_filesystem.py:358
 msgid "Error: %s is not a directory."
 msgstr "Erro: %s não é um diretório."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:580
+#: ardupilot_methodic_configurator/backend_filesystem.py:581
 msgid "Intermediate parameter files and summary files zipped to %s"
 msgstr ""
 "Ficheiros de parâmetros intermediários e ficheiros de resumo compactados em "
 "%s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:603
+#: ardupilot_methodic_configurator/backend_filesystem.py:610
 msgid "Template directory does not exist: {template_dir}"
 msgstr "O diretório do modelo não existe: {template_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:609
+#: ardupilot_methodic_configurator/backend_filesystem.py:616
 msgid "New vehicle directory does not exist: {new_vehicle_dir}"
 msgstr "O diretório do novo veículo não existe: {new_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:642
+#: ardupilot_methodic_configurator/backend_filesystem.py:652
 msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr "Erro ao criar novo diretório de veículo: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:651
+#: ardupilot_methodic_configurator/backend_filesystem.py:688
 msgid "New vehicle directory does not exist: {vehicle_dir}"
 msgstr "O novo diretório do veículo não existe: {vehicle_dir}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:669
+#: ardupilot_methodic_configurator/backend_filesystem.py:706
 msgid "Error removing %s"
 msgstr "Erro ao remover %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:676
+#: ardupilot_methodic_configurator/backend_filesystem.py:713
 msgid "Error removing directory %s"
 msgstr "Erro ao remover o diretório %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:681
+#: ardupilot_methodic_configurator/backend_filesystem.py:718
 msgid "Error removing created files: {error_list}"
 msgstr "Erro ao remover arquivos criados: {error_list}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:684
+#: ardupilot_methodic_configurator/backend_filesystem.py:721
 msgid "Error removing created files: {_e}"
 msgstr "Erro ao remover arquivos criados: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:685
+#: ardupilot_methodic_configurator/backend_filesystem.py:722
 msgid "Error removing created files:"
 msgstr "Erro ao remover arquivos criados:"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:704
+#: ardupilot_methodic_configurator/backend_filesystem.py:741
 msgid "Error writing last uploaded filename: %s"
 msgstr "Erro ao escrever o nome do último ficheiro enviado: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:711
+#: ardupilot_methodic_configurator/backend_filesystem.py:748
 msgid "last_uploaded_filename.txt not found: %s"
 msgstr "last_uploaded_filename.txt não encontrado: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:713
+#: ardupilot_methodic_configurator/backend_filesystem.py:750
 msgid "Error reading last uploaded filename: %s"
 msgstr "Erro ao ler o nome do último ficheiro enviado: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:729
+#: ardupilot_methodic_configurator/backend_filesystem.py:766
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr ""
 "Índice do ficheiro inicial %s está fora de alcance. Começando com o ficheiro "
 "%s em vez disso."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:737
+#: ardupilot_methodic_configurator/backend_filesystem.py:774
 msgid "Starting with the first file."
 msgstr "Começando com o primeiro ficheiro."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:740
+#: ardupilot_methodic_configurator/backend_filesystem.py:777
 msgid "Starting with the first non-tcal file."
 msgstr "Começando com o primeiro ficheiro não-tcal."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:744
+#: ardupilot_methodic_configurator/backend_filesystem.py:781
 msgid "Last uploaded file was %s."
 msgstr "Último ficheiro enviado foi %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:746
+#: ardupilot_methodic_configurator/backend_filesystem.py:783
 msgid "No last uploaded file found. %s."
 msgstr "Nenhum ficheiro enviado encontrado. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:751
+#: ardupilot_methodic_configurator/backend_filesystem.py:788
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "Último ficheiro enviado não encontrado na lista de ficheiros. %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:760
+#: ardupilot_methodic_configurator/backend_filesystem.py:797
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr ""
 "O último ficheiro carregado é o último ficheiro na lista. A iniciar do "
 "início."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:940
+#: ardupilot_methodic_configurator/backend_filesystem.py:1045
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "O tipo do veículo. Por defeito é ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:946
+#: ardupilot_methodic_configurator/backend_filesystem.py:1051
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -299,7 +325,7 @@ msgstr ""
 "Diretório que contém os ficheiros de parâmetros intermédios específicos do "
 "veículo. Por defeito é o diretório de trabalho atual"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:954
+#: ardupilot_methodic_configurator/backend_filesystem.py:1059
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -311,7 +337,7 @@ msgstr ""
 "escreveu no controlador de voo. Se o ficheiro não existir, começará no "
 "primeiro ficheiro."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:963
+#: ardupilot_methodic_configurator/backend_filesystem.py:1068
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -319,7 +345,7 @@ msgstr ""
 "Permite abrir e editar ficheiros modelo diretamente. Apenas para "
 "programadores que saibam o que estão a fazer. Por defeito é %(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:972
+#: ardupilot_methodic_configurator/backend_filesystem.py:1077
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -1119,220 +1145,225 @@ msgstr "Tempo limite à espera do parâmetro %s"
 msgid "Downloading ... {:.1f}%"
 msgstr "A transferir ... {:.1f}%"
 
-#: ardupilot_methodic_configurator/backend_internet.py:172
-#: ardupilot_methodic_configurator/backend_internet.py:712
+#: ardupilot_methodic_configurator/backend_internet.py:185
+#: ardupilot_methodic_configurator/backend_internet.py:725
 msgid "Download complete"
 msgstr "Transferência concluída"
 
-#: ardupilot_methodic_configurator/backend_internet.py:193
+#: ardupilot_methodic_configurator/backend_internet.py:206
 msgid "URL or local filename not provided."
 msgstr "URL ou nome de ficheiro local não fornecido."
 
-#: ardupilot_methodic_configurator/backend_internet.py:205
+#: ardupilot_methodic_configurator/backend_internet.py:218
 msgid "Download timed out (attempt %d)"
 msgstr "Transferência expirou (tentativa %d)"
 
-#: ardupilot_methodic_configurator/backend_internet.py:207
+#: ardupilot_methodic_configurator/backend_internet.py:220
 msgid "Network error during download (attempt %d): %s"
 msgstr "Erro de rede durante a transferência (tentativa %d): %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:210
+#: ardupilot_methodic_configurator/backend_internet.py:223
 msgid "File system error during download (attempt %d): %s"
 msgstr ""
 "Erro do sistema de ficheiros durante a transferência (tentativa %d): %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:213
+#: ardupilot_methodic_configurator/backend_internet.py:226
 msgid "Invalid data received from %s: %s"
 msgstr "Dados inválidos recebidos de %s: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:233
+#: ardupilot_methodic_configurator/backend_internet.py:246
 msgid "Download failed after %d attempts, cleaning up partial file"
 msgstr "Transferência falhou após %d tentativas, a limpar ficheiro parcial"
 
-#: ardupilot_methodic_configurator/backend_internet.py:267
+#: ardupilot_methodic_configurator/backend_internet.py:280
 msgid "The latest continuous delivery build must be a pre-release"
 msgstr "A última compilação de entrega contínua deve ser uma pré-versão"
 
-#: ardupilot_methodic_configurator/backend_internet.py:269
+#: ardupilot_methodic_configurator/backend_internet.py:282
 msgid "The latest stable release must not be a pre-release"
 msgstr "A última versão estável não deve ser uma pré-versão"
 
-#: ardupilot_methodic_configurator/backend_internet.py:275
-#: ardupilot_methodic_configurator/backend_internet.py:283
+#: ardupilot_methodic_configurator/backend_internet.py:288
+#: ardupilot_methodic_configurator/backend_internet.py:296
 msgid "Failed to fetch release info: {}"
 msgstr "Falha ao obter informação da versão: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:280
+#: ardupilot_methodic_configurator/backend_internet.py:293
 msgid "Rate limit exceeded. Please try again after: %s (UTC)"
 msgstr "Limite de pedidos excedido. Tente novamente após: %s (UTC)"
 
-#: ardupilot_methodic_configurator/backend_internet.py:286
+#: ardupilot_methodic_configurator/backend_internet.py:299
 msgid "Invalid release data: {}"
 msgstr "Dados de versão inválidos: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:342
+#: ardupilot_methodic_configurator/backend_internet.py:355
 msgid "Installer URL must use HTTPS: %s"
 msgstr "O URL do instalador deve usar HTTPS: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:345
+#: ardupilot_methodic_configurator/backend_internet.py:358
 msgid "Installer URL must be from github.com: %s"
 msgstr "O URL do instalador deve ser de github.com: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:349
+#: ardupilot_methodic_configurator/backend_internet.py:362
 msgid ""
 "Installer URL must point to an ArduPilot/MethodicConfigurator release asset: "
 "%s"
-msgstr "O URL do instalador deve apontar para um recurso de lançamento ArduPilot/MethodicConfigurator: %s"
+msgstr ""
+"O URL do instalador deve apontar para um recurso de lançamento ArduPilot/"
+"MethodicConfigurator: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:357
+#: ardupilot_methodic_configurator/backend_internet.py:370
 msgid "could not get expected SHA256 checksum from github.com"
 msgstr "não foi possível obter o checksum SHA256 esperado de github.com"
 
-#: ardupilot_methodic_configurator/backend_internet.py:362
+#: ardupilot_methodic_configurator/backend_internet.py:375
 msgid "SHA256 mismatch for downloaded installer: expected %s got %s"
 msgstr ""
 "Incompatibilidade de SHA256 para o instalador transferido: esperado %s "
 "obtido %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:374
+#: ardupilot_methodic_configurator/backend_internet.py:387
 msgid "Downloaded file too small: %d bytes"
 msgstr "Ficheiro descarregado demasiado pequeno: %d bytes"
 
-#: ardupilot_methodic_configurator/backend_internet.py:384
+#: ardupilot_methodic_configurator/backend_internet.py:397
 msgid "Downloaded file has unexpected format"
 msgstr "Ficheiro descarregado tem formato inesperado"
 
-#: ardupilot_methodic_configurator/backend_internet.py:395
+#: ardupilot_methodic_configurator/backend_internet.py:408
 msgid "Failed to validate downloaded file: %s"
 msgstr "Falha ao validar ficheiro descarregado: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:428
+#: ardupilot_methodic_configurator/backend_internet.py:441
 msgid "Installation ready. Application will restart now."
 msgstr "Instalação pronta. A aplicação irá reiniciar agora."
 
-#: ardupilot_methodic_configurator/backend_internet.py:470
+#: ardupilot_methodic_configurator/backend_internet.py:483
 msgid "Downloading and installing new version for Windows..."
 msgstr "A transferir e instalar nova versão para Windows..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:483
+#: ardupilot_methodic_configurator/backend_internet.py:496
 msgid "Failed to download installer from %s"
 msgstr "Falha ao transferir o instalador de %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:494
+#: ardupilot_methodic_configurator/backend_internet.py:507
 msgid "Downloaded installer does not appear to be a Windows executable"
 msgstr "O instalador transferido não parece ser um executável Windows"
 
-#: ardupilot_methodic_configurator/backend_internet.py:499
-#: ardupilot_methodic_configurator/backend_internet.py:666
+#: ardupilot_methodic_configurator/backend_internet.py:512
+#: ardupilot_methodic_configurator/backend_internet.py:679
 msgid "Starting installation..."
 msgstr "A iniciar instalação..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:508
+#: ardupilot_methodic_configurator/backend_internet.py:521
 msgid "Installation failed: {}"
 msgstr "Falha na instalação: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:510
-#: ardupilot_methodic_configurator/backend_internet.py:659
+#: ardupilot_methodic_configurator/backend_internet.py:523
+#: ardupilot_methodic_configurator/backend_internet.py:672
 msgid "File operation failed: {}"
 msgstr "Falha na operação de ficheiro: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:530
+#: ardupilot_methodic_configurator/backend_internet.py:543
 msgid "Could not parse mount point from hdiutil output: %s"
-msgstr "Não foi possível analisar o ponto de montagem a partir da saída do hdiutil: %s"
+msgstr ""
+"Não foi possível analisar o ponto de montagem a partir da saída do hdiutil: "
+"%s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:532
+#: ardupilot_methodic_configurator/backend_internet.py:545
 msgid "Failed to mount DMG: %s"
 msgstr "Falha ao montar DMG: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:534
+#: ardupilot_methodic_configurator/backend_internet.py:547
 msgid "Failed to run hdiutil: %s"
 msgstr "Falha ao executar hdiutil: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:543
+#: ardupilot_methodic_configurator/backend_internet.py:556
 msgid "No .app bundle found in DMG at %s"
 msgstr "Não foi encontrado nenhum bundle .app no DMG em %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:551
+#: ardupilot_methodic_configurator/backend_internet.py:564
 msgid "Installing {}..."
 msgstr "A instalar {}..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:557
+#: ardupilot_methodic_configurator/backend_internet.py:570
 msgid "App installed"
 msgstr "Aplicação instalada"
 
-#: ardupilot_methodic_configurator/backend_internet.py:561
+#: ardupilot_methodic_configurator/backend_internet.py:574
 msgid "Failed to install app from DMG: %s"
 msgstr "Falha ao instalar aplicação a partir do DMG: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:563
+#: ardupilot_methodic_configurator/backend_internet.py:576
 msgid "Error during app installation: %s"
 msgstr "Erro durante a instalação da aplicação: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:583
+#: ardupilot_methodic_configurator/backend_internet.py:596
 msgid "Mounting DMG..."
 msgstr "A montar DMG..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:596
+#: ardupilot_methodic_configurator/backend_internet.py:609
 msgid "Installation complete. Please restart the application."
 msgstr "Instalação concluída. Por favor reinicie a aplicação."
 
-#: ardupilot_methodic_configurator/backend_internet.py:597
+#: ardupilot_methodic_configurator/backend_internet.py:610
 msgid "macOS DMG installation complete. Please restart the application."
-msgstr "Instalação de DMG para macOS concluída. Por favor reinicie a aplicação."
+msgstr ""
+"Instalação de DMG para macOS concluída. Por favor reinicie a aplicação."
 
-#: ardupilot_methodic_configurator/backend_internet.py:628
+#: ardupilot_methodic_configurator/backend_internet.py:641
 msgid "Downloading and installing new version for macOS..."
 msgstr "A descarregar e instalar nova versão para macOS..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:641
+#: ardupilot_methodic_configurator/backend_internet.py:654
 msgid "Failed to download DMG from %s"
 msgstr "Falha ao descarregar DMG de %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:646
+#: ardupilot_methodic_configurator/backend_internet.py:659
 msgid "Verifying checksum..."
 msgstr "A verificar soma de verificação..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:652
+#: ardupilot_methodic_configurator/backend_internet.py:665
 msgid "Validating file..."
 msgstr "A validar ficheiro..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:672
+#: ardupilot_methodic_configurator/backend_internet.py:685
 msgid "Updating via uv for Linux and macOS..."
 msgstr "A atualizar via uv para Linux e macOS..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:685
+#: ardupilot_methodic_configurator/backend_internet.py:698
 msgid "Updating via pip for Linux and macOS..."
 msgstr "A atualizar via pip para Linux e macOS..."
 
-#: ardupilot_methodic_configurator/backend_internet.py:702
+#: ardupilot_methodic_configurator/backend_internet.py:715
 msgid "Installation command failed: {}"
 msgstr "Comando de instalação falhou: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:706
+#: ardupilot_methodic_configurator/backend_internet.py:719
 msgid "uv not found at expected path: {}"
 msgstr "uv não encontrado no caminho esperado: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:708
+#: ardupilot_methodic_configurator/backend_internet.py:721
 msgid "pip module not available. Please install pip or uv: {}"
 msgstr "módulo pip não disponível. Por favor instale pip ou uv: {}"
 
-#: ardupilot_methodic_configurator/backend_internet.py:738
+#: ardupilot_methodic_configurator/backend_internet.py:751
 msgid "URL not provided."
 msgstr "URL não fornecido."
 
-#: ardupilot_methodic_configurator/backend_internet.py:741
+#: ardupilot_methodic_configurator/backend_internet.py:754
 msgid "Verifying URL: %s"
 msgstr "A verificar URL: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:758
+#: ardupilot_methodic_configurator/backend_internet.py:771
 msgid "Failed to access URL: %s. Error: %s"
 msgstr "Falha ao aceder ao URL: %s. Erro: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:763
+#: ardupilot_methodic_configurator/backend_internet.py:776
 msgid "Opening URL in browser: %s"
 msgstr "A abrir URL no navegador: %s"
 
-#: ardupilot_methodic_configurator/backend_internet.py:766
+#: ardupilot_methodic_configurator/backend_internet.py:779
 msgid "Failed to open URL in browser: %s"
 msgstr "Falha ao abrir URL no navegador: %s"
 
@@ -4328,7 +4359,8 @@ msgstr "Não foram encontrados recursos adequados para a instalação do Windows
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:112
 msgid "No DMG asset found for macOS, falling back to pip installation"
-msgstr "Nenhum recurso DMG encontrado para macOS, a recorrer à instalação via pip"
+msgstr ""
+"Nenhum recurso DMG encontrado para macOS, a recorrer à instalação via pip"
 
 #: ardupilot_methodic_configurator/data_model_software_updates.py:129
 msgid "Error accessing release assets: %s"
@@ -4675,7 +4707,7 @@ msgstr "Número de polos magnéticos do rotor tem de ser par para {paths_str}"
 msgid "Invalid integer value for {paths_str}"
 msgstr "Valor inteiro inválido para {paths_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:299
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
@@ -4683,7 +4715,7 @@ msgstr ""
 "Nenhum ficheiro de parâmetro intermediário encontrado\n"
 "no diretório de trabalho atual."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:301
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
@@ -4691,7 +4723,7 @@ msgstr ""
 "Não foram encontrados ficheiros de parâmetros intermediários\n"
 "no diretório especificado --vehicle-dir."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:320
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:321
 msgid "MyVehicleName"
 msgstr "MeuNomeVeículo"
 
@@ -4832,54 +4864,33 @@ msgid "Flight Controller Parameters"
 msgstr "Parâmetros do Controlador de Voo"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:509
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:513
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:497
 msgid "New vehicle directory"
 msgstr "Novo diretório de veículo"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:453
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:455
 msgid "Copying template files"
 msgstr "Copiando ficheiros de template"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:463
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
-msgid "Fatal error reading parameter files: {exp}"
-msgstr "Erro fatal ao ler ficheiros de parâmetros: {exp}"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:470
-msgid ""
-"No intermediate parameter files found after creating vehicle from template"
-msgstr ""
-"Nenhum ficheiro de parâmetros intermédios encontrado após criar veículo a "
-"partir do modelo"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:470
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:82
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:91
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:145
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:154
-msgid "No parameter files found"
-msgstr "Nenhum ficheiro de parâmetros encontrado"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:488
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:472
 msgid "Vehicle template directory must not be empty"
 msgstr "O diretório do modelo do veículo não deve estar vazio"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:488
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:472
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:477
 msgid "Vehicle template directory"
 msgstr "Diretório de template do veículo"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:494
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:478
 msgid "Vehicle template directory {template_dir} does not exist"
 msgstr "O diretório do modelo do veículo {template_dir} não existe"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:509
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
 msgid "New vehicle name must not be empty"
 msgstr "O novo nome do veículo não deve estar vazio"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:514
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
 msgid "New vehicle name {new_vehicle_name} must not contain invalid characters"
 msgstr ""
 "O novo nome do veículo {new_vehicle_name} não deve conter caracteres "
@@ -4897,6 +4908,18 @@ msgstr ""
 "Nenhum diretório de configuração de veículo aberto anteriormente foi "
 "encontrado.\n"
 "Por favor, selecione um diretório manualmente."
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
+msgid "Fatal error reading parameter files: {exp}"
+msgstr "Erro fatal ao ler ficheiros de parâmetros: {exp}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:82
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:91
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:145
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:154
+msgid "No parameter files found"
+msgstr "Nenhum ficheiro de parâmetros encontrado"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
 #: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:92
@@ -6949,7 +6972,7 @@ msgstr ""
 "Este main é apenas para teste e desenvolvimento, normalmente a "
 "VehicleProjectOpenerWindow é chamada de outro script"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:393
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:406
 msgid ""
 "No intermediate parameter files found in the selected '{_dirname}' vehicle "
 "directory.\n"
@@ -6966,11 +6989,11 @@ msgstr ""
 "Certifique-se de entrar no diretório (clique duas vezes) e não o selecione "
 "apenas."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:398
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:411
 msgid "No Parameter Files Found"
 msgstr "Nenhum Arquivo de Parâmetros Encontrado"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:402
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:415
 msgid ""
 "{_error_string}\n"
 "\n"
@@ -6982,7 +7005,7 @@ msgstr ""
 "Por favor ligue um controlador de voo ao PC,\n"
 "espere pelo menos 7 segundos e tente de novo."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_show.py:403
+#: ardupilot_methodic_configurator/frontend_tkinter_show.py:416
 msgid "No Connection to the Flight Controller"
 msgstr "Nenhuma Conexão com o Controlador de Voo"
 
@@ -7702,6 +7725,12 @@ msgstr "Versão ou revisão do hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid ""
+#~ "No intermediate parameter files found after creating vehicle from template"
+#~ msgstr ""
+#~ "Nenhum ficheiro de parâmetros intermédios encontrado após criar veículo a "
+#~ "partir do modelo"
 
 #~ msgid "Windows installer URL must be from github.com: %s"
 #~ msgstr "O URL do instalador Windows deve ser de github.com: %s"
