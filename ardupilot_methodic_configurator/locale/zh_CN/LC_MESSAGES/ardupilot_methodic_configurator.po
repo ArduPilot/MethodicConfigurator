@@ -114,27 +114,27 @@ msgid ""
 "The component or connection changes you just did will have repercussions on "
 "the following parameter files:\n"
 "\n"
-msgstr ""
+msgstr "您刚才进行的组件或连接更改将影响以下参数文件：\n\n"
 
 #: ardupilot_methodic_configurator/__main__.py:592
 msgid ""
 "Please review the changes, and upload the updated parameter files to the "
 "flight controller.\n"
-msgstr ""
+msgstr "请检查这些更改，并将更新后的参数文件上传到飞行控制器。\n"
 
 #: ardupilot_methodic_configurator/__main__.py:594
 msgid ""
 "If you already uploaded said parameters to the FC, switch to the normal GUI "
 "complexity mode\n"
-msgstr ""
+msgstr "如果您已经将这些参数上传到飞行控制器，请切换到普通GUI复杂度模式\n"
 
 #: ardupilot_methodic_configurator/__main__.py:598
 msgid "in order to be able to jump to those specific parameter files"
-msgstr ""
+msgstr "以便能够跳转到那些特定的参数文件"
 
 #: ardupilot_methodic_configurator/__main__.py:601
 msgid "Component derived param changes"
-msgstr ""
+msgstr "由组件导出的参数更改"
 
 #: ardupilot_methodic_configurator/__main__.py:647
 msgid "Created backup file autobackup_%02d.param"
