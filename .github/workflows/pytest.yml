@@ -101,42 +101,37 @@ jobs:
             uv pip install --editable ".[dev]"
           fi
 
+      - name: Compute SITL cache key
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          YEAR=$(date +%Y)
+          MONTH=$(date +%m)
+          QUARTER=$(( (MONTH-1)/3 + 1 ))
+          echo "SITL_CACHE_KEY=sitl-cache-ubuntu-${YEAR}-Q${QUARTER}" >> $GITHUB_ENV
+
       - name: Cache SITL files
         if: matrix.os == 'ubuntu-latest'
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          path: sitl-cache/
-          key: sitl-cache-${{ github.run_id }}
+          path: sitl/
+          key: ${{ env.SITL_CACHE_KEY }}
           restore-keys: |
-            sitl-cache-
+            sitl-cache-ubuntu-
 
       - name: Download ArduCopter SITL (if available)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          # Create cache key based on current quarter (YYYY-Q)
-          CURRENT_YEAR=$(date +%Y)
-          CURRENT_MONTH=$(date +%m)
-          QUARTER=$(( (CURRENT_MONTH-1)/3 + 1 ))
-          CACHE_KEY="${CURRENT_YEAR}-Q${QUARTER}"
-
-          echo "Cache key: ${CACHE_KEY}"
-
-          # Check if we have cached SITL files for this quarter
-          if [ -d "sitl-cache/${CACHE_KEY}" ] && [ -f "sitl-cache/${CACHE_KEY}/arducopter" ]; then
-            echo "Using cached SITL files from ${CACHE_KEY}"
-            mkdir -p sitl/
-            cp sitl-cache/${CACHE_KEY}/* sitl/
+          # Skip download if the cache was restored (exact or partial hit)
+          if [ -f "sitl/arducopter" ]; then
+            echo "Using cached SITL binary"
           else
-            echo "Downloading fresh SITL files for ${CACHE_KEY}"
-            mkdir -p sitl/ sitl-cache/${CACHE_KEY}/
+            echo "Downloading fresh SITL files"
+            mkdir -p sitl/
 
             # Download latest ArduCopter SITL from official firmware server
             curl -L -o sitl/arducopter https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/arducopter
             curl -L -o sitl/firmware-version.txt https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/firmware-version.txt
             curl -L -o sitl/git-version.txt https://firmware.ardupilot.org/Copter/latest/SITL_x86_64_linux_gnu/git-version.txt
-
-            # Cache the downloaded files
-            cp sitl/* sitl-cache/${CACHE_KEY}/
           fi
 
           # Make executable and verify
