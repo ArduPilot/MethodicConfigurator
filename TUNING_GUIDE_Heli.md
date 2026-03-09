@@ -124,7 +124,7 @@ The table below summarizes the software used in this guide. Download and install
 # 3. Input vehicle components and component connections into ArduPilot Methodic Configurator
 
 The ArduPilot Methodic Configurator needs to know which components you used/plan to use and how you connected/plan to connect them to the flight controller (autopilot).
-It uses this information to automatically pre-select configuration settings relevant to your specific vehicle.
+It uses this information to automatically preselect configuration settings relevant to your specific vehicle.
 
 So, [start the ArduPilot Methodic Configurator and select a vehicle that resembles yours](USECASES.md#use-the-ardupilot-methodic-configurator-software-for-the-first-time) and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*:
 

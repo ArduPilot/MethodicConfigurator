@@ -140,7 +140,7 @@ To methodically build, configure and tune ArduPilot vehicles follow this sequenc
 
 ### 1.3 Input vehicle components and component connections into ArduPilot Methodic Configurator
 
-The software needs this information to automatically pre-select configuration settings relevant to your specific vehicle
+The software needs this information to automatically preselect configuration settings relevant to your specific vehicle
 
 - [Start the ArduPilot Methodic Configurator and select a vehicle that resembles yours](https://ardupilot.github.io/MethodicConfigurator/USECASES.html#use-the-ardupilot-methodic-configurator-software-for-the-first-time)
   and input vehicle components and component connections information into the ArduPilot Methodic Configurator *component editor window*
