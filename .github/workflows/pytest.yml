@@ -203,29 +203,26 @@ jobs:
 
       - name: Upload coverage xml report
         # Use always() to always run this step to publish test results when there are test failures
-        if: matrix.os == 'ubuntu-latest' && always()
+        if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-            name: coverage-${{ matrix.python-version }}-xml
+            name: coverage-${{ matrix.os }}-${{ matrix.python-version }}-xml
             path: tests/*.xml
             retention-days: 1
 
       - name: Upload coverage report
         # Use always() to always run this step to publish test results when there are test failures
-        if: matrix.os == 'ubuntu-latest' && always()
+        if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-            name: coverage-${{ matrix.python-version }}
+            name: coverage-${{ matrix.os }}-${{ matrix.python-version }}
             path: .coverage
             include-hidden-files: true
             retention-days: 1
 
       - name: Upload coverage to Coveralls (parallel)
         # https://docs.coveralls.io/parallel-builds
-        if: >
-          github.repository == 'ArduPilot/MethodicConfigurator' &&
-          github.event_name == 'push' &&
-          github.ref == 'refs/heads/master'
+        if: always() && github.repository == 'ArduPilot/MethodicConfigurator'
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -234,11 +231,7 @@ jobs:
           files: tests/coverage.xml
 
   upload_coverage_to_coveralls:
-    if: >
-      github.repository == 'ArduPilot/MethodicConfigurator' &&
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/master' &&
-      (success() || failure())
+    if: always() && github.repository == 'ArduPilot/MethodicConfigurator'
     runs-on: ubuntu-latest
     needs: pytest
 
@@ -330,7 +323,7 @@ jobs:
         if: needs.pytest.result != 'skipped'
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
-          name: coverage-3.9
+          name: coverage-ubuntu-latest-3.9
 
       # https://docs.astral.sh/uv/guides/integration/github/
       - name: Install uv and set the Python version
@@ -374,7 +367,7 @@ jobs:
       - name: Download coverage xml report
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
-          name: coverage-3.9-xml
+          name: coverage-ubuntu-latest-3.9-xml
 
       - name: Get Cover
         uses: orgoro/coverage@3f13a558c5af7376496aa4848bf0224aead366ac # v3.2
