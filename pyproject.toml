@@ -135,6 +135,9 @@ chat = "https://discord.com/invite/ArduPilot"
 download = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 changelog = "https://github.com/ArduPilot/MethodicConfigurator/releases"
 
+[tool.uv]
+required-version = ">=0.10.9"
+
 [tool.setuptools]
 # Rely on discovery for just the top-level package and specify data via package-data
 include-package-data = false
