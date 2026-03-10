@@ -91,15 +91,20 @@ jobs:
           python --version
           python -c "import tkinter; print('Tcl version:', tkinter.TclVersion, 'Tk version:', tkinter.TkVersion)"
 
-      - name: Install dependencies and application
-        # without --editable, the coverage report is not generated correctly
+      - name: Install dependencies (without project)
+        # Installs all deps from uv.lock into the venv - this layer is cached by setup-uv
         shell: bash
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-            uv pip install --editable ".[dev,ci_headless_tests]"
+            uv sync --no-install-project --extra dev --extra ci_headless_tests
           else
-            uv pip install --editable ".[dev]"
+            uv sync --no-install-project --extra dev
           fi
+
+      - name: Install project in editable mode
+        # Installs only the project itself (no deps) - always runs, but is fast
+        # without --editable, the coverage report is not generated correctly
+        run: uv pip install --editable "." --no-deps
 
       - name: Compute SITL cache key
         if: matrix.os == 'ubuntu-latest'
