@@ -171,12 +171,29 @@ jobs:
           fi
 
       - name: Fix coverage paths
-        if: matrix.os == 'ubuntu-latest'
+        shell: python
         run: |
-          sed -i 's|<package name="." |<package name="ardupilot_methodic_configurator" |' tests/coverage.xml
-          sed -i 's|<source>.*</source>|<source>.</source>|' tests/coverage.xml
-          sed -i 's|filename="|filename="ardupilot_methodic_configurator/|g' tests/coverage.xml
-        shell: bash
+          import re, pathlib
+          p = pathlib.Path("tests/coverage.xml")
+          content = p.read_text(encoding="utf-8")
+          # Normalise package name
+          content = content.replace('<package name="." ', '<package name="ardupilot_methodic_configurator" ')
+          # Normalise source element
+          content = re.sub(r"<source>.*?</source>", "<source>.</source>", content, flags=re.DOTALL)
+          # Normalise filenames: strip any OS-specific absolute/relative prefix
+          # before the package directory so all legs emit the same relative path
+          # (e.g. ardupilot_methodic_configurator/foo.py).
+          # If the marker is absent the filename is left unchanged.
+          marker = "ardupilot_methodic_configurator/"
+          def fix_filename(m):
+              raw = m.group(1).replace("\\", "/")
+              # Find the LAST occurrence so repeated markers are collapsed too
+              idx = raw.rfind(marker)
+              if idx != -1:
+                  raw = raw[idx:]
+              return f'filename="{raw}"'
+          content = re.sub(r'filename="([^"]+)"', fix_filename, content)
+          p.write_text(content, encoding="utf-8")
 
       - name: Display test results as GitHub job summary
         run: cat tests/results-${{ matrix.python-version }}.md >> $GITHUB_STEP_SUMMARY
