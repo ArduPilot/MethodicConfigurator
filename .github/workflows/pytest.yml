@@ -52,6 +52,16 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
 
+      - name: Cache apt packages (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: /var/cache/apt/archives
+          key: apt-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('.github/workflows/pytest.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-py${{ matrix.python-version }}-
+            apt-${{ runner.os }}-
+
       - name: Install system dependencies for GUI testing on linux
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -67,9 +77,18 @@ jobs:
           fi
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
 
+      - name: Cache Homebrew packages (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: brew-${{ runner.os }}-python-tk-${{ hashFiles('.github/workflows/pytest.yml') }}
+          restore-keys: |
+            brew-${{ runner.os }}-python-tk-
+
       - name: Install system dependencies for GUI testing on macOS
         if: matrix.os == 'macos-latest'
-        run: brew install python-tk
+        run: brew list python-tk &>/dev/null || brew install python-tk
 
       - name: Ensure Tcl/Tk search paths
         if: matrix.os == 'ubuntu-latest'
