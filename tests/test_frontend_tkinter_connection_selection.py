@@ -991,6 +991,9 @@ class TestPeriodicPortRefresh(unittest.TestCase):
                 "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgressWindow"
             ) as mock_progress_window,
             patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.show_no_connection_error"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection"
+            ) as mock_store_connection,
         ):
             mock_progress_window.return_value.destroy = MagicMock()
 
@@ -1000,6 +1003,8 @@ class TestPeriodicPortRefresh(unittest.TestCase):
             # Assert: Refresh should be stopped and timer cleared
             assert result is False  # Connection successful
             assert self.widget._refresh_timer_id is None
+            # Assert: The connection was persisted without filesystem side-effects in the test
+            mock_store_connection.assert_called_once_with("COM1")
 
     def test_periodic_refresh_stops_on_window_close(self) -> None:
         """
