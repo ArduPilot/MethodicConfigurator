@@ -470,6 +470,90 @@ class TestFlightControllerConnectionCustomStrings:
         count = sum(1 for t in tuples if t[0] == "/dev/ttyUSB0")
         assert count == 1
 
+    def test_preserved_connection_survives_port_rediscovery(self) -> None:
+        """
+        Caller-supplied preserved connection persists across auto-discovery refreshes.
+
+        GIVEN: User has previously used a custom connection (e.g. a TCP address stored in history)
+        WHEN: discover_connections() is called again (periodic 3s refresh) and returns different ports
+            AND the caller supplies the history list as preserved_connections
+        THEN: The preserved connection should still be present in the combobox
+        AND: Auto-discovered ports that disappeared should be gone
+        AND: Newly auto-discovered ports should appear
+        """
+        # Given: Connection manager with a mocked serial port discovery
+        mock_discovery = Mock()
+        mock_port = Mock()
+        mock_port.device = "COM3"
+        mock_port.description = "USB Serial"
+
+        # First discovery: COM3 is present
+        mock_discovery.get_available_ports.return_value = [mock_port]
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=mock_discovery,
+            network_ports=[],
+        )
+        connection.discover_connections()
+
+        # When: Port list changes (COM3 disappears, COM4 appears) but caller preserves the TCP address
+        mock_port2 = Mock()
+        mock_port2.device = "COM4"
+        mock_port2.description = "Another USB Serial"
+        mock_discovery.get_available_ports.return_value = [mock_port2]
+        connection.discover_connections(preserved_connections=["tcp:127.0.0.1:5760"])
+
+        # Then: Preserved TCP connection is present
+        tuples = connection.get_connection_tuples()
+        assert any(t[0] == "tcp:127.0.0.1:5760" for t in tuples)
+        # COM3 is gone (no longer auto-discovered, not in preserved list)
+        assert not any(t[0] == "COM3" for t in tuples)
+        # COM4 is present (auto-discovered)
+        assert any(t[0] == "COM4" for t in tuples)
+
+    def test_without_preserved_connections_non_discovered_ports_disappear(self) -> None:
+        """
+        Without preserved_connections, ports that are no longer auto-discovered are removed.
+
+        GIVEN: Many USB devices are connected and auto-discovered
+        WHEN: discover_connections() is called again without preserved_connections
+            AND one port is no longer detected
+        THEN: The missing port is removed from the combobox
+        AND: The backend has no hidden state keeping old connections alive
+        """
+        # Given: Connection manager with multiple auto-discovered ports
+        mock_discovery = Mock()
+        ports = []
+        for i in range(5):
+            p = Mock()
+            p.device = f"COM{i + 1}"
+            p.description = f"USB Device {i + 1}"
+            ports.append(p)
+        mock_discovery.get_available_ports.return_value = ports
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=mock_discovery,
+            network_ports=[],
+        )
+
+        # When: Initial discovery
+        connection.discover_connections()
+        tuples = connection.get_connection_tuples()
+        for i in range(5):
+            assert any(t[0] == f"COM{i + 1}" for t in tuples)
+
+        # When: Re-discovery with fewer ports and no preserved list
+        mock_discovery.get_available_ports.return_value = ports[:2]  # Only COM1, COM2 remain
+        connection.discover_connections()
+
+        # Then: Only auto-discovered ports are present - COM3..COM5 are gone
+        tuples = connection.get_connection_tuples()
+        assert any(t[0] == "COM1" for t in tuples)
+        assert any(t[0] == "COM2" for t in tuples)
+        for i in range(2, 5):
+            assert not any(t[0] == f"COM{i + 1}" for t in tuples)
+
 
 class TestFlightControllerConnectionInfo:
     """Test flight controller information gathering."""

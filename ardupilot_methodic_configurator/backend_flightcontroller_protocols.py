@@ -94,7 +94,11 @@ class FlightControllerConnectionProtocol(Protocol):
         """Get the default baud rate for serial connections."""
         ...  # pylint: disable=unnecessary-ellipsis
 
-    def discover_connections(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> None: ...
+    def discover_connections(
+        self,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
+        preserved_connections: Optional[list[str]] = None,
+    ) -> None: ...
 
     def disconnect(self) -> None: ...
 

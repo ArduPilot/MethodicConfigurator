@@ -134,7 +134,10 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         try:
             # Scan for new ports and get current data
             current_selection = self.conn_selection_combobox.get_selected_key()
-            self.flight_controller.discover_connections(progress_callback=None)
+            self.flight_controller.discover_connections(
+                progress_callback=None,
+                preserved_connections=ProgramSettings.get_connection_history(),
+            )
             new_connection_tuples = self.flight_controller.get_connection_tuples()
 
             # update the UI
@@ -257,7 +260,12 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         self.stop_periodic_refresh()
         # Store the current connection as the previous selection
         if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device"):
-            self.previous_selection = self.flight_controller.comport.device
+            device: str = self.flight_controller.comport.device
+            self.previous_selection = device
+            # Persist the connection so it is available next time the program opens
+            # and so it survives periodic auto-discovery refreshes during the current session.
+            ProgramSettings.store_connection(device)
+            self.flight_controller.add_connection(device)
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
         if self.download_params_on_connect and hasattr(self.parent, "download_flight_controller_parameters"):
