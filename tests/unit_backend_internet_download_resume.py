@@ -64,6 +64,7 @@ def test_download_resume_with_existing_file(tmp_path, monkeypatch) -> None:
     def _get(*_args: object, **_kwargs: object) -> DummyResponse:
         # Ensure the caller set a Range header when resuming
         headers_arg = _kwargs.get("headers", {})
+        assert isinstance(headers_arg, dict)
         assert "Range" in headers_arg
         return DummyResponse([remaining], headers, 206)
 

@@ -122,9 +122,9 @@ class FlightControllerCommands:
 
         try:
             # Send the command
-            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_system,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_component,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
                 command,
                 0,  # confirmation
                 param1,
@@ -139,7 +139,7 @@ class FlightControllerCommands:
             # Wait for acknowledgment
             start_time = time_time()
             while time_time() - start_time < timeout:
-                msg = self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                     type="COMMAND_ACK", blocking=False
                 )
                 if msg and msg.command == command:
@@ -305,9 +305,9 @@ class FlightControllerCommands:
 
         for i in range(nr_of_motors):
             # MAV_CMD_DO_MOTOR_TEST command for all motors
-            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_system,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_component,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
                 mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST,
                 0,  # confirmation
                 param1=i + 1,  # motor number (1-based)
@@ -482,7 +482,7 @@ class FlightControllerCommands:
 
         try:
             # Try to get real telemetry data
-            battery_status = self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+            battery_status = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                 type="BATTERY_STATUS", blocking=False, timeout=self.BATTERY_STATUS_TIMEOUT
             )
             if battery_status:

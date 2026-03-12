@@ -33,7 +33,6 @@ from ardupilot_methodic_configurator.data_model_flightcontroller_info import Fli
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 # Type alias for MAVLink connection to avoid type checker issues
-# pymavlink.mavutil.mavlink_connection is actually a function that returns various connection types
 # We define MavlinkConnection as a protocol-like type to represent any MAVLink connection object
 if TYPE_CHECKING:
     # During type checking, import the actual mavutil module for better type hints
@@ -43,12 +42,13 @@ if TYPE_CHECKING:
     # Use a union of known connection types for better type safety
     # Note: mavutil.mavlink_connection() returns different types based on the connection string
     MavlinkConnection = Union[
-        mavutil.mavserial,
-        mavutil.mavudp,
-        mavutil.mavtcp,
-        mavutil.mavtcpin,
-        mavutil.mavmcast,
-        object,  # Fallback for other connection types
+        mavutil.mavserial,  # a serial mavlink port
+        mavutil.mavudp,  # a UDP mavlink socket
+        mavutil.mavtcp,  # a TCP mavlink socket
+        mavutil.mavtcpin,  # a TCP input mavlink socket
+        mavutil.mavmcast,  # a UDP multicast mavlink socket
+        mavutil.mavwebsocket,  # Mavlink WebSocket server, single client only
+        mavutil.mavwebsocket_client,  # client using WebSocket over TCP with WS and WSS support
     ]
 else:
     # At runtime, we don't need the actual types

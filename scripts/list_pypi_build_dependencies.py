@@ -14,7 +14,7 @@ import sys
 # This library is part of python 3.11+
 # so this line fails when pylint runs with python 3.9,
 # but that can be ignored, because pypi is packaged with python 3.13
-import tomllib  # pylint: disable=import-error, useless-suppression
+import tomllib  # pylint: disable=import-error, useless-suppression # ty: ignore[unresolved-import]
 
 with open("pyproject.toml", "rb") as f:
     data = tomllib.load(f)

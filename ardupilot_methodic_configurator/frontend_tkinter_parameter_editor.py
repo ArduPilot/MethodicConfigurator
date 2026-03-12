@@ -62,6 +62,7 @@ from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+    from ardupilot_methodic_configurator.plugin_protocol import PluginView
 
 # pylint: disable=too-many-lines
 
@@ -242,7 +243,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.gui_complexity = str(ProgramSettings.get_setting("gui_complexity"))
         self.parameter_area_container: ttk.Frame
         self.current_plugin: dict | None = None
-        self.current_plugin_view: object | None = None  # Plugin view instance (implements PluginView protocol)
+        self.current_plugin_view: PluginView | None = None
         self.parameter_area_paned: tk.PanedWindow | None = None
         self.parameter_container: ttk.Frame
         self._tempcal_imu_progress_window: ProgressWindow | None = None
@@ -553,7 +554,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Clean up existing plugin view
         if self.current_plugin_view is not None:
             try:
-                self.current_plugin_view.destroy()  # type: ignore[attr-defined]
+                self.current_plugin_view.destroy()
             except (AttributeError, tk.TclError) as e:
                 logging_warning(_("Error destroying plugin view: %s"), e)
             finally:
@@ -629,7 +630,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     logging_warning(_("Error deactivating plugin: %s"), e)
 
             try:
-                self.current_plugin_view.destroy()  # type: ignore[attr-defined]
+                self.current_plugin_view.destroy()
             except (AttributeError, tk.TclError) as e:
                 logging_warning(_("Error destroying plugin view: %s"), e)
             finally:
@@ -786,8 +787,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 ttk.Label(parent_frame, text=msg, foreground="red").pack()
                 return
 
+            plugin_view = cast("PluginView", plugin_view)
+
             # Pack the plugin view
-            plugin_view.pack(fill="both", expand=True)  # type: ignore[attr-defined]
+            plugin_view.pack(fill="both", expand=True)
 
             # Call activation hook if available
             if hasattr(plugin_view, "on_activate"):
@@ -797,7 +800,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     logging_warning(_("Error activating plugin: %s"), e)
                     # Failed to activate - clean up and abort
                     with contextlib.suppress(AttributeError, tk.TclError):
-                        plugin_view.destroy()  # type: ignore[attr-defined]
+                        plugin_view.destroy()
                     return
 
             # Only store reference after successful activation

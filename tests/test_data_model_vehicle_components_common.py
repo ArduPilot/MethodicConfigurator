@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import copy
-from typing import Any, Optional, TypeVar, cast
+from typing import Any, Optional, TypeVar
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
@@ -215,9 +215,10 @@ class ComponentDataModelFixtures:
         component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
         schema = ComponentDataModelFixtures.create_schema()
         model = model_class(data, component_datatypes, schema)
-        if hasattr(model, "post_init"):
-            model.post_init({})
-        return cast("T", model)
+        post_init = getattr(model, "post_init", None)
+        if callable(post_init):
+            post_init({})
+        return model
 
     @staticmethod
     def create_basic_model(model_class: type[T], data: Optional[dict[str, Any]] = None) -> T:
@@ -226,9 +227,10 @@ class ComponentDataModelFixtures:
         component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
         schema = ComponentDataModelFixtures.create_schema()
         model = model_class(data, component_datatypes, schema)
-        if hasattr(model, "post_init"):
-            model.post_init({})
-        return cast("T", model)
+        post_init = getattr(model, "post_init", None)
+        if callable(post_init):
+            post_init({})
+        return model
 
     @staticmethod
     def create_realistic_model(model_class: type[T]) -> T:
@@ -237,9 +239,10 @@ class ComponentDataModelFixtures:
         component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
         schema = ComponentDataModelFixtures.create_schema()
         model = model_class(data, component_datatypes, schema)
-        if hasattr(model, "post_init"):
-            model.post_init({})
-        return cast("T", model)
+        post_init = getattr(model, "post_init", None)
+        if callable(post_init):
+            post_init({})
+        return model
 
 
 class CommonAssertions:

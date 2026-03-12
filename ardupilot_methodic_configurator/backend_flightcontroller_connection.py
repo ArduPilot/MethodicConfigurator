@@ -203,7 +203,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         """Close the connection to the flight controller."""
         if self.master is not None:
             with contextlib.suppress(Exception):
-                self.master.close()  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                self.master.close()  # pyright: ignore[reportAttributeAccessIssue]
             self.master = None
         self.info.reset()
 
@@ -368,7 +368,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         timeout: int = 5,
         retries: int = 3,
         progress_callback: Union[None, Callable[[int, int], None]] = None,
-    ) -> mavutil.mavlink_connection:  # pyright: ignore[reportGeneralTypeIssues]
+    ) -> Union["MavlinkConnection", None]:
         """
         Factory method for creating MAVLink connections.
 
@@ -410,7 +410,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         while time_time() - start_time < timeout:
             try:
                 m = (
-                    self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+                    self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                         type="HEARTBEAT", blocking=False
                     )
                     if self.master
@@ -483,7 +483,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         # Request AUTOPILOT_VERSION message
         self._request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
         m = (
-            self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+            self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                 type="AUTOPILOT_VERSION", blocking=True, timeout=timeout
             )
             if self.master
@@ -498,9 +498,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         if self.master is not None:
             # Note: Don't wait for ACK here as banner requests are fire-and-forget
             # and we handle the response via STATUS_TEXT messages
-            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_system,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_component,  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
                 mavutil.mavlink.MAV_CMD_DO_SEND_BANNER,
                 0,
                 0,
@@ -523,7 +523,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         start_time = time_time()
         banner_msgs: list[str] = []
         while self.master:
-            msg = self.master.recv_match(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+            msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                 type="STATUSTEXT", blocking=False
             )
             if msg:
@@ -551,7 +551,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             system_id = int(self.info.system_id) if self.info.system_id else 0
             component_id = int(self.info.component_id) if self.info.component_id else 0
 
-            self.master.mav.command_long_send(  # type: ignore[union-attr] # pyright: ignore[reportAttributeAccessIssue]
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
                 system_id,
                 component_id,
                 mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE,
@@ -870,7 +870,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
     def set_master_for_testing(
         self,
-        master: Optional[mavutil.mavlink_connection],  # pyright: ignore[reportGeneralTypeIssues]
+        master: Optional["MavlinkConnection"],
     ) -> None:
         """
         Set the MAVLink connection for testing purposes.

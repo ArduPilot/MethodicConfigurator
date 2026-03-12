@@ -15,7 +15,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from tkinter import ttk
-from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pyautogui
@@ -93,7 +92,7 @@ class TestParameterEditorWindow:
             # Find the about window
             about_windows = [child for child in root.winfo_children() if isinstance(child, tk.Toplevel)]
             assert len(about_windows) == 1
-            about_window = cast("tk.Toplevel", about_windows[0])
+            about_window = about_windows[0]
 
             # Force the window to render and become visible on screen
             about_window.deiconify()
@@ -151,7 +150,7 @@ class TestParameterEditorWindow:
 
             # There should be exactly one about window
             assert len(about_windows) == 1
-            about_window = cast("tk.Toplevel", about_windows[0])
+            about_window = about_windows[0]
 
             # Check window properties
             assert about_window.title() == "About"

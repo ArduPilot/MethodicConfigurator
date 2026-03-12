@@ -142,7 +142,7 @@ def create_codebase_pie_chart(sizes: list[int], categories: list[str], colors: l
     # Extract components from pie chart result
     wedges = pie_result[0]
     texts = pie_result[1] if len(pie_result) > 1 else []
-    autotexts = pie_result[2] if len(pie_result) > 2 else []
+    autotexts = pie_result[2] if len(pie_result) > 2 else []  # ty: ignore[index-out-of-bounds]
 
     # Customize the appearance
     plt.setp(autotexts, size=9, weight="bold", color="white")

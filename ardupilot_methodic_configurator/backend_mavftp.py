@@ -217,6 +217,49 @@ class MAVFTPSettings:
             return
         raise AttributeError
 
+    def command(self, args: list[str]) -> None:
+        """
+        Parse and apply 'set NAME VALUE' style arguments to update a setting.
+
+        args is expected to be [NAME, VALUE].
+        """
+        if len(args) != 2:
+            logging.error("Usage: ftp set <SETTING_NAME> <VALUE>")
+            return
+
+        name, value_str = args
+
+        if name not in self._vars:
+            logging.error("Unknown FTP setting '%s'", name)
+            return
+
+        setting = self._vars[name]
+        s_type = setting.type
+
+        # Only numeric (int/float) setting types are supported here, as documented.
+        if s_type not in (int, float):
+            logging.error(
+                "FTP setting '%s' has unsupported type '%s' for CLI update (only int and float are supported)",
+                name,
+                getattr(s_type, "__name__", str(s_type)),
+            )
+            return
+
+        try:
+            # Convert string to the appropriate type (int or float)
+            converted = s_type(value_str)
+        except (ValueError, TypeError):
+            logging.error(
+                "Invalid value '%s' for FTP setting '%s' (expected %s)",
+                value_str,
+                name,
+                getattr(s_type, "__name__", str(s_type)),
+            )
+            return
+
+        setting.value = converted
+        logging.info("FTP setting '%s' set to %s", name, converted)
+
 
 class MAVFTPReturn:
     """The result of a MAVFTP operation."""
@@ -589,7 +632,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
     def __check_read_finished(self) -> bool:
         """Check if download has completed."""
         # logging.debug("FTP: check_read_finished: %s %s", self.reached_eof, self.read_gaps)
-        if self.reached_eof and len(self.read_gaps) == 0:
+        if self.reached_eof and len(self.read_gaps) == 0 and self.fh is not None and self.op_start is not None:
             ofs = self.fh.tell()
             dt = time.time() - self.op_start
             rate = (ofs / dt) / 1024.0
@@ -674,7 +717,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 if op.size > 0 and op.size < self.burst_size:
                     # a burst complete with non-zero size and less than burst packet size
                     # means EOF
-                    if not self.reached_eof and self.ftp_settings.debug > 0:
+                    if not self.reached_eof and self.ftp_settings.debug > 0 and self.op_start is not None:
                         logging.info(
                             "FTP: EOF at %u with %u gaps t=%.2f",
                             self.fh.tell(),
@@ -700,7 +743,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                     if self.ftp_settings.debug > 0:
                         logging.error("FTP: burst lost EOF %u %u", self.fh.tell(), op.offset)
                     return MAVFTPReturn("BurstReadFile", ERR_Fail)
-                if not self.reached_eof and self.ftp_settings.debug > 0:
+                if not self.reached_eof and self.ftp_settings.debug > 0 and self.op_start is not None:
                     logging.info(
                         "FTP: EOF at %u with %u gaps t=%.2f", self.fh.tell(), len(self.read_gaps), time.time() - self.op_start
                     )
@@ -809,7 +852,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         if self.put_callback is not None:
             self.put_callback(flen)
             self.put_callback = None
-        else:
+        elif self.op_start is not None:
             dt = time.time() - self.op_start
             rate = (flen / dt) / 1024.0
             logging.info("Put %u bytes to %s file in %.2fs %.1fkByte/s", flen, self.filename, dt, rate)
@@ -829,7 +872,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
     def __send_more_writes(self) -> None:
         """Send some more writes."""
-        if len(self.write_list) == 0:
+        if len(self.write_list) == 0 or self.write_list is None:
             # all done
             self.__put_finished(self.write_file_size)
             self.__terminate_session()
@@ -962,7 +1005,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         if op.opcode == OP_Ack and op.size == 4:
             (crc,) = struct.unpack("<I", op.payload)
             now = time.time()
-            logging.info("crc: %s 0x%08x in %.1fs", self.filename, crc, now - self.op_start)
+            if self.op_start is not None:
+                logging.info("crc: %s 0x%08x in %.1fs", self.filename, crc, now - self.op_start)
         return self.__decode_ftp_ack_and_nack(op)
 
     def cmd_cancel(self) -> MAVFTPReturn:
@@ -972,7 +1016,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
     def cmd_status(self) -> MAVFTPReturn:
         """Show status."""
-        if self.fh is None:
+        if self.fh is None or self.op_start is None:
             logging.info("No transfer in progress")
         else:
             ofs = self.fh.tell()

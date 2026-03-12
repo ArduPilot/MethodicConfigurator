@@ -131,7 +131,7 @@ def editor_with_mocked_root() -> ComponentEditorWindowBase:
     """Create a mock ComponentEditorWindowBase for testing."""
     # Create the class without initialization
     with patch.object(ComponentEditorWindowBase, "__init__", return_value=None):
-        editor = ComponentEditorWindowBase()  # pylint: disable=no-value-for-parameter
+        editor = ComponentEditorWindowBase()  # pylint: disable=no-value-for-parameter # ty: ignore[missing-argument]
 
         # Set up common mocks and helper methods
         setup_common_editor_mocks(editor)

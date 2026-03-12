@@ -55,7 +55,7 @@ else:
 sys.path.append(scripts_path)
 
 try:
-    import chibios_hwdef  # pyright: ignore[reportMissingImports]
+    import chibios_hwdef  # pyright: ignore[reportMissingImports] # ty: ignore[unresolved-import]
 
     logging.info("Module imported successfully.")
 except ImportError as e:

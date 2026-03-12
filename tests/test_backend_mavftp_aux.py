@@ -185,6 +185,7 @@ class TestParamData(unittest.TestCase):
         """Test adding default parameters."""
         param_data = ParamData()
         param_data.add_default(b"TEST_PARAM", 2.0, float)
+        assert param_data.defaults is not None  # this keeps ty happy
         assert len(param_data.defaults) == 1
         assert param_data.defaults[0] == (b"TEST_PARAM", 2.0, float)
 
@@ -196,6 +197,8 @@ class TestParamData(unittest.TestCase):
         param_data.add_default(b"PARAM1", 1.5, float)
         param_data.add_default(b"PARAM2", 3, int)
 
+        assert param_data.params is not None  # this keeps ty happy
+        assert param_data.defaults is not None  # this keeps ty happy
         assert len(param_data.params) == 2
         assert len(param_data.defaults) == 2
         assert param_data.params[0] == (b"PARAM1", 1.0, float)

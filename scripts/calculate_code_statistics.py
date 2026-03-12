@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Union
 
 try:
-    from pycloc import CLOC
+    from pycloc import CLOC  # ty: ignore[unresolved-import]
 except ImportError as e:
     print(f"Error: {e}")
     print("Please install required dependencies:")

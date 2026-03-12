@@ -1,0 +1,8 @@
+[rules]
+invalid-argument-type = "ignore"
+unresolved-attribute = "ignore"
+invalid-assignment = "ignore"
+unused-type-ignore-comment = "ignore"
+possibly-missing-attribute = "ignore"
+too-many-positional-arguments = "ignore"
+invalid-return-type = "ignore"
