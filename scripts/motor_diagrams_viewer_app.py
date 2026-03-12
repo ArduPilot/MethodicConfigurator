@@ -26,9 +26,9 @@ from typing import Optional
 
 from batch_convert_motor_diagrams import crop_whitespace
 from PIL import Image
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
+from selenium import webdriver  # ty: ignore[unresolved-import]
+from selenium.webdriver.firefox.options import Options  # ty: ignore[unresolved-import]
+from selenium.webdriver.firefox.service import Service  # ty: ignore[unresolved-import]
 
 DEFAULT_IMAGE_WIDTH: int = 200
 DEFAULT_IMAGE_HEIGHT: int = 200

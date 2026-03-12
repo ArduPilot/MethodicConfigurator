@@ -15,14 +15,15 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from typing import TYPE_CHECKING, Callable, ClassVar, Optional, Union
 
-from pymavlink import mavutil
-
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp_safe
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FlightControllerConnectionProtocol
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
+        FlightControllerConnectionProtocol,
+        MavlinkConnection,
+    )
 
 # Conditionally import MAVFTP if available
 try:
@@ -66,7 +67,7 @@ class FlightControllerFiles:
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager
 
     @property
-    def master(self) -> Optional[mavutil.mavlink_connection]:  # pyright: ignore[reportGeneralTypeIssues]
+    def master(self) -> Optional["MavlinkConnection"]:
         """Get master connection."""
         return self._connection_manager.master
 

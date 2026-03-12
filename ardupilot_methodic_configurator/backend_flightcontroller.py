@@ -289,8 +289,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             logging_warning(_("Cannot reset flight controller: not connected"))
             return ""
         # Issue a reset
-        # Type ignore needed because MavlinkConnection is a Union including object fallback
-        self.master.reboot_autopilot()  # type: ignore[union-attr]
+        self.master.reboot_autopilot()
         logging_info(_("Reset command sent to ArduPilot."))
         time_sleep(0.3)  # Short delay for command to be sent
 

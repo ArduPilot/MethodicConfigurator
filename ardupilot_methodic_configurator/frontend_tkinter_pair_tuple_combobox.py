@@ -247,7 +247,8 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         combo_values = combo.cget("values")
         if len(combo_values) == 0:
             return
-        longest_value = max(combo_values, key=len)
+        string_values = [str(value) for value in combo_values]
+        longest_value = str(max(string_values, key=len))
         font = tkfont.nametofont("TkDefaultFont")
         width = font.measure(longest_value + "0000") - event.width
         if width < 0:

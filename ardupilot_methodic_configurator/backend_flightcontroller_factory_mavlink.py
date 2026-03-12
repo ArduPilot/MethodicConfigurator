@@ -8,9 +8,12 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Optional, Protocol
+from typing import TYPE_CHECKING, Optional, Protocol
 
 from pymavlink import mavutil
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
 
 
 class MavlinkConnectionFactory(Protocol):  # pylint: disable=too-few-public-methods
@@ -23,7 +26,7 @@ class MavlinkConnectionFactory(Protocol):  # pylint: disable=too-few-public-meth
         timeout: float = 5.0,
         retries: int = 3,
         progress_callback: Optional[object] = None,
-    ) -> Optional[mavutil.mavlink_connection]:  # pyright: ignore[reportGeneralTypeIssues]
+    ) -> Optional["MavlinkConnection"]:
         """Create a MAVLink connection."""
         ...  # pylint: disable=unnecessary-ellipsis
 
@@ -38,10 +41,10 @@ class SystemMavlinkConnectionFactory:  # pylint: disable=too-few-public-methods
         timeout: float = 5.0,
         retries: int = 3,
         progress_callback: Optional[object] = None,
-    ) -> Optional[mavutil.mavlink_connection]:  # pyright: ignore[reportGeneralTypeIssues]
+    ) -> Optional["MavlinkConnection"]:
         """Create connection using actual PyMAVLink library."""
         try:
-            return mavutil.mavlink_connection(
+            return mavutil.mavlink_connection(  # pyright: ignore[reportReturnType]
                 device=device,
                 baud=baudrate,
                 timeout=timeout,

@@ -29,7 +29,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     FC_CONNECTION_TYPE_PATHS,
     get_connection_type_tuples_with_labels,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase
+from ardupilot_methodic_configurator.frontend_tkinter_component_editor_base import ComponentEditorWindowBase, EntryWidget
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
 # from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
@@ -173,8 +173,10 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return err_msg
 
     def add_entry_or_combobox(
-        self, value: Union[str, float], entry_frame: ttk.Frame, path: ComponentPath, is_optional: bool = False
-    ) -> Union[ttk.Entry, PairTupleCombobox]:
+        self, value: Union[str, float], entry_frame: ttk.Frame, _path: ComponentPath, is_optional: bool = False
+    ) -> EntryWidget:
+        path = _path  # _path is used in the signature to not violate the Liskov Substitution Principle according to ty
+
         # Get combobox values from data model
         combobox_values = self.data_model.get_combobox_values_for_path(path)
 

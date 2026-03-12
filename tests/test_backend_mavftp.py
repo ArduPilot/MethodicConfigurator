@@ -229,7 +229,8 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             ret = self.mav_ftp._MAVFTP__decode_ftp_ack_and_nack(case["op"])  # pylint: disable=protected-access
             ret.display_message()
             log_output = self.log_stream.getvalue().strip()
-            assert case["expected_message"] in log_output, (
+            expected_message = str(case["expected_message"])
+            assert expected_message in log_output, (
                 f"Test {case['name']}: Expected {case['expected_message']} but got {log_output}"
             )
             self.log_stream.seek(0)

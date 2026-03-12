@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Union
 from unittest.mock import MagicMock, call, patch
@@ -23,7 +24,7 @@ from ardupilot_methodic_configurator.data_model_flightcontroller_info import Fli
 
 
 @contextmanager
-def mock_mavlink_enums(self, enums_dict=None) -> None:
+def mock_mavlink_enums(self, enums_dict=None) -> Generator[None, None, None]:
     """Context manager for mocking mavutil.mavlink.enums."""
     if enums_dict is None:
         enums_dict = self.mocked_mavutil_enums()

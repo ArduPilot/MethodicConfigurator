@@ -32,7 +32,7 @@ def component_editor_window() -> ComponentEditorWindow:
     """Create a real ComponentEditorWindow with only user interaction methods mocked."""
     # Create the class without initialization to avoid GUI creation
     with patch.object(ComponentEditorWindow, "__init__", return_value=None):
-        editor = ComponentEditorWindow()  # pylint: disable=no-value-for-parameter
+        editor = ComponentEditorWindow()  # pylint: disable=no-value-for-parameter # ty: ignore[missing-argument]
 
         # Set up basic attributes to avoid GUI creation (following setup_common_editor_mocks pattern)
         # pylint: disable=duplicate-code

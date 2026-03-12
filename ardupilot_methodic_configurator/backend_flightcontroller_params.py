@@ -18,8 +18,6 @@ from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
-from pymavlink import mavutil
-
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
@@ -28,7 +26,10 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict, validat
 
 # Type hint for connection manager to avoid circular imports
 if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import FlightControllerConnectionProtocol
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
+        FlightControllerConnectionProtocol,
+        MavlinkConnection,
+    )
 
 
 class FlightControllerParams:
@@ -70,7 +71,7 @@ class FlightControllerParams:
         self.fc_parameters: dict[str, float] = fc_parameters if fc_parameters is not None else {}
 
     @property
-    def master(self) -> Optional[mavutil.mavlink_connection]:  # pyright: ignore[reportGeneralTypeIssues]
+    def master(self) -> Optional["MavlinkConnection"]:
         """Get master connection."""
         return self._connection_manager.master
 
