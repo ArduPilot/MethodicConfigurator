@@ -636,11 +636,11 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:111
 msgid "Error reading system component templates from file '%s': %s"
-msgstr ""
+msgstr "ファイル '%s' からシステムコンポーネントテンプレートの読み取り時にエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:113
 msgid "Unexpected error reading system component templates from file '%s': %s"
-msgstr ""
+msgstr "ファイル '%s' からシステムコンポーネントテンプレートの読み取り中に予期しないエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:131
 msgid "User component templates file '%s' not found."
@@ -653,11 +653,11 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:135
 msgid "Error reading user component templates from file '%s': %s"
-msgstr ""
+msgstr "ファイル '%s' からユーザーコンポーネントテンプレートの読み取り時にエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:137
 msgid "Unexpected error reading user component templates from file '%s': %s"
-msgstr ""
+msgstr "ファイル '%s' からユーザーコンポーネントテンプレートの読み取り中に予期しないエラーが発生しました: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:253
 msgid "Failed to create templates directory '{}': {}"
