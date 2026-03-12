@@ -1049,6 +1049,60 @@ class TestVehicleComponents:
         assert saved_templates["NewComponent"][0]["name"] == "New Template"
         assert saved_templates["NewComponent"][0]["data"]["param"] == "new_value"
 
+    @patch.object(VehicleComponents, "_load_system_templates")
+    @patch.object(VehicleComponents, "_load_user_templates")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    def test_save_component_templates_preserves_existing_user_components(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        mock_get_base_dir,
+        mock_makedirs,  # pylint: disable=unused-argument
+        mock_json_dump,
+        mock_file,  # pylint: disable=unused-argument
+        mock_load_user,
+        mock_load_system,
+    ) -> None:
+        """
+        Save Component Templates Preserves Existing User Components.
+
+        GIVEN: A user templates file that already contains templates for "Battery"
+        WHEN: User saves a new template for "ESC" only
+        THEN: The resulting file should contain both the new "ESC" template and
+              the pre-existing "Battery" templates from the user file
+        """
+        mock_get_base_dir.return_value = "/templates"
+        mock_load_system.return_value = {}
+
+        # Simulate pre-existing user templates for Battery
+        existing_user_templates = {"Battery": [{"name": "6S 5000mAh LiPo", "data": {"Capacity mAh": 5000, "Cells": 6}}]}
+        mock_load_user.return_value = existing_user_templates
+
+        # Save a new ESC template (Battery is NOT included in this call)
+        templates_to_save = {"ESC": [{"name": "BLHeli32 60A", "data": {"protocol": "DSHOT600"}, "is_user_modified": True}]}
+
+        result, msg = self.vehicle_components.save_component_templates(templates_to_save)
+
+        # Verify success
+        assert not result  # False means success
+        assert msg == "/templates/user_vehicle_components_template.json"
+
+        # Verify the data written to disk contains both components
+        mock_json_dump.assert_called_once()
+        written_data = mock_json_dump.call_args[0][0]
+
+        # Pre-existing Battery templates must be preserved
+        assert "Battery" in written_data, "Pre-existing Battery templates were lost after saving ESC template"
+        assert written_data["Battery"] == existing_user_templates["Battery"]
+
+        # New ESC template must also be present
+        assert "ESC" in written_data, "Newly saved ESC template is missing"
+        assert len(written_data["ESC"]) == 1
+        assert written_data["ESC"][0]["name"] == "BLHeli32 60A"
+        # is_user_modified flag must be stripped before writing
+        assert "is_user_modified" not in written_data["ESC"][0]
+
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
     def test_load_schema_invalid_json(self, mock_fs_class) -> None:
         """
