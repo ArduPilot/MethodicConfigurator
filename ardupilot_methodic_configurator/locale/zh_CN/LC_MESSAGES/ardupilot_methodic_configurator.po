@@ -601,11 +601,11 @@ msgstr "从文件 '%s' 解码 JSON 系统组件模板时出错。"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:111
 msgid "Error reading system component templates from file '%s': %s"
-msgstr ""
+msgstr "从文件 '%s' 读取系统组件模板时出错：%s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:113
 msgid "Unexpected error reading system component templates from file '%s': %s"
-msgstr ""
+msgstr "从文件 '%s' 读取系统组件模板时发生意外错误：%s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:131
 msgid "User component templates file '%s' not found."
@@ -617,11 +617,11 @@ msgstr "从文件 '%s' 解码 JSON 用户组件模板时出错。"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:135
 msgid "Error reading user component templates from file '%s': %s"
-msgstr ""
+msgstr "从文件 '%s' 读取用户组件模板时出错：%s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:137
 msgid "Unexpected error reading user component templates from file '%s': %s"
-msgstr ""
+msgstr "从文件 '%s' 读取用户组件模板时发生意外错误：%s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:253
 msgid "Failed to create templates directory '{}': {}"
