@@ -149,7 +149,11 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
         )
 
-    def discover_connections(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
+    def discover_connections(
+        self,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
+        preserved_connections: Optional[list[str]] = None,
+    ) -> None:
         """
         Discover all available connections (serial and network ports).
 
@@ -158,6 +162,10 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         Args:
             progress_callback: Optional callback for progress updates. Signature: callback(current, total)
+            preserved_connections: Optional list of connection strings (e.g. from persistent history)
+                that should always appear in the available connections list even when not auto-discovered.
+                The caller (frontend) is responsible for supplying these so the backend stays
+                free of any dependency on the settings/filesystem layer.
 
         """
         if progress_callback:
@@ -175,6 +183,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         # list of tuples with the first element being the port name and the second element being the port description
         self._connection_tuples = [(port.device, port.description) for port in comports] + [(port, port) for port in netports]
+        # Merge caller-supplied preserved connections (e.g. persistent history) that are not auto-discovered
+        if preserved_connections:
+            auto_discovered = {t[0] for t in self._connection_tuples}
+            for conn in preserved_connections:
+                if conn not in auto_discovered:
+                    self._connection_tuples.append((conn, conn))
         self._log_connection_changes()
         # now that it is logged, add the 'Add another' tuple
         self._connection_tuples += [(_("Add another"), _("Add another"))]

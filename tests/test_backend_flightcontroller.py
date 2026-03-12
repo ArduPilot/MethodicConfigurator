@@ -966,4 +966,6 @@ class TestFlightControllerProgressCallbacks:
         fc.discover_connections(progress_callback=track_progress)
 
         # Assert: Connection manager received progress callback
-        mock_conn_mgr.discover_connections.assert_called_once_with(progress_callback=track_progress)
+        mock_conn_mgr.discover_connections.assert_called_once_with(
+            progress_callback=track_progress, preserved_connections=None
+        )

@@ -318,9 +318,15 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Reconnect to the flight controller
         return self.create_connection_with_retry(connection_progress_callback, baudrate=self.baudrate)
 
-    def discover_connections(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
+    def discover_connections(
+        self,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
+        preserved_connections: Optional[list[str]] = None,
+    ) -> None:
         """Discover available connections - delegates to connection manager."""
-        self._connection_manager.discover_connections(progress_callback=progress_callback)
+        self._connection_manager.discover_connections(
+            progress_callback=progress_callback, preserved_connections=preserved_connections
+        )
 
     def disconnect(self) -> None:
         """Close the connection to the flight controller - delegates to connection manager."""

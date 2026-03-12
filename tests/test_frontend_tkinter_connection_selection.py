@@ -934,6 +934,10 @@ class TestPeriodicPortRefresh(unittest.TestCase):
             patch("tkinter.ttk.Combobox"),
             patch("tkinter.StringVar", return_value=mock_baudrate_var),
             patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.show_tooltip"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.get_connection_history",
+                return_value=[],
+            ),
         ):
             self.widget = ConnectionSelectionWidgets(
                 self.mock_parent,
@@ -957,7 +961,9 @@ class TestPeriodicPortRefresh(unittest.TestCase):
         """
         # The widget is already initialized in setUp
         # Verify observable behavior: port scan actually ran
-        self.mock_flight_controller.discover_connections.assert_called_once_with(progress_callback=None)
+        self.mock_flight_controller.discover_connections.assert_called_once_with(
+            progress_callback=None, preserved_connections=[]
+        )
         # Verify the recurring timer was scheduled via the tkinter event loop
         self.mock_parent.root.after.assert_called_with(3000, self.widget._refresh_ports)
         assert self.widget._is_refreshing is False
