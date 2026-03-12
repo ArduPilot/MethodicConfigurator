@@ -88,15 +88,16 @@ class VehicleComponents:
 
         return merged_templates
 
-    def _load_system_templates(self) -> dict[str, list[dict]]:
+    def _load_system_templates(self, filepath: str = "") -> dict[str, list[dict]]:
         """
         Load system component templates.
 
         :return: The system component templates as a dictionary
         """
-        templates_filename = "system_vehicle_components_template.json"
-        templates_dir = ProgramSettings.get_templates_base_dir()
-        filepath = os_path.join(templates_dir, templates_filename)
+        if not filepath:
+            templates_filename = "system_vehicle_components_template.json"
+            templates_dir = ProgramSettings.get_templates_base_dir()
+            filepath = os_path.join(templates_dir, templates_filename)
 
         templates = {}
         try:
@@ -106,6 +107,10 @@ class VehicleComponents:
             logging_debug(_("System component templates file '%s' not found."), filepath)
         except JSONDecodeError:
             logging_error(_("Error decoding JSON system component templates from file '%s'."), filepath)
+        except OSError as e:
+            logging_error(_("Error reading system component templates from file '%s': %s"), filepath, e)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_error(_("Unexpected error reading system component templates from file '%s': %s"), filepath, e)
         return templates
 
     def _load_user_templates(self) -> dict[str, list[dict]]:
@@ -126,6 +131,10 @@ class VehicleComponents:
             logging_debug(_("User component templates file '%s' not found."), filepath)
         except JSONDecodeError:
             logging_error(_("Error decoding JSON user component templates from file '%s'."), filepath)
+        except OSError as e:
+            logging_error(_("Error reading user component templates from file '%s': %s"), filepath, e)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_error(_("Unexpected error reading user component templates from file '%s': %s"), filepath, e)
         return templates
 
     def save_component_templates(self, templates: dict) -> tuple[bool, str]:  # pylint: disable=too-many-branches
@@ -138,7 +147,8 @@ class VehicleComponents:
         :param templates: The templates to save
         :return: A tuple of (error_occurred, message), where message is the filepath on success or error message on failure
         """
-        # Load system templates to compare against
+        # Load system templates to compare against, system templates are read-only and come with the software,
+        # so we need to load them to determine which templates are user-modified
         system_templates = self._load_system_templates()
 
         # Determine which templates need to be saved to user file
@@ -213,19 +223,21 @@ class VehicleComponents:
 
     def save_component_templates_to_file(self, templates_to_save: dict[str, list[dict[str, Any]]]) -> tuple[bool, str]:
         templates_dir = ProgramSettings.get_templates_base_dir()
+        existing_templates = {}
+        filepath = ""
         if self.save_component_to_system_templates:
-            # Save to system templates file.
+            # Save to "developer" system templates file, only for AMC developers with a local git repository
+            # copy of the software who want to add new templates to the system templates file in their local git
+            # repository and create a GitHub pull request with the newly added component templates.
             # System templates are part of the software installation and get updated when the program
             # is updated and deleted when the program is un-installed.
             templates_filename = "system_vehicle_components_template.json"
             # Check if local system template file exists, use local dir if so.
-            # This allows developers to directly add templates to their local git repository
-            # system template file and create a github pull-request with the newly added component templates
             try:
                 local_dir = importlib_files("ardupilot_methodic_configurator") / "vehicle_templates"
-                local_filepath = local_dir / templates_filename
-                if os_path.exists(str(local_filepath)):
-                    templates_dir = str(local_dir)
+                filepath = str(local_dir / templates_filename)
+                if os_path.exists(filepath):
+                    existing_templates = self._load_system_templates(filepath)
             except (OSError, ValueError) as e:
                 logging_debug("Failed to check local template file: %s", e)
                 # Fall back to default templates_dir
@@ -234,23 +246,26 @@ class VehicleComponents:
             # This file will not get deleted when the program is updated or un-installed.
             templates_filename = "user_vehicle_components_template.json"
 
-        # Create the directory if it doesn't exist
-        try:
-            os_makedirs(templates_dir, exist_ok=True)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            msg = _("Failed to create templates directory '{}': {}").format(templates_dir, str(e))
-            logging_error(msg)
-            return True, msg
+            # Create the directory if it doesn't exist
+            try:
+                os_makedirs(templates_dir, exist_ok=True)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                msg = _("Failed to create templates directory '{}': {}").format(templates_dir, str(e))
+                logging_error(msg)
+                return True, msg
 
-        # Now create the file path and write to it
-        # Use a consistent forward-slash path representation for return value so
-        # tests comparing literal strings work across platforms.
-        filepath = os_path.join(templates_dir, templates_filename)
+            # Now create the file path and write to it
+            # Use a consistent forward-slash path representation for return value so
+            # tests comparing literal strings work across platforms.
+            filepath = os_path.join(templates_dir, templates_filename)
+            existing_templates = self._load_user_templates()
+
         normalized_filepath = filepath.replace("\\", "/")
+        templates = {**existing_templates, **templates_to_save} if existing_templates else templates_to_save
 
         try:
             with open(filepath, "w", encoding="utf-8", newline="\n") as file:  # use Linux line endings even on Windows
-                json_dump(templates_to_save, file, indent=4)
+                json_dump(templates, file, indent=4)
             return False, normalized_filepath  # Success, return the filepath
         except FileNotFoundError:
             msg = _("File not found when writing to '{}': {}").format(normalized_filepath, _("Path not found"))
