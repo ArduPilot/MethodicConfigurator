@@ -77,8 +77,10 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Create a label for port
         port_label = ttk.Label(selection_frame, text=_("Port:"))
         port_label.pack(side=tk.LEFT, padx=(0, 5))
-        # Load saved connection history from ProgramSettings
-        for conn in ProgramSettings.get_connection_history():
+        # Load saved connection history from ProgramSettings and cache it to avoid
+        # repeated disk reads on every periodic port-refresh cycle.
+        self._connection_history_cache: list[str] = ProgramSettings.get_connection_history()
+        for conn in self._connection_history_cache:
             self.flight_controller.add_connection(conn)
 
         # Create a read-only combobox for flight controller connection selection
@@ -136,7 +138,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             current_selection = self.conn_selection_combobox.get_selected_key()
             self.flight_controller.discover_connections(
                 progress_callback=None,
-                preserved_connections=ProgramSettings.get_connection_history(),
+                preserved_connections=self._connection_history_cache,
             )
             new_connection_tuples = self.flight_controller.get_connection_tuples()
 
@@ -211,6 +213,10 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         )
         if selected_connection:
             ProgramSettings.store_connection(selected_connection)
+            # Update cache in-memory (most-recent-first, deduplicated) to avoid a disk re-read.
+            self._connection_history_cache = [selected_connection] + [
+                c for c in self._connection_history_cache if c != selected_connection
+            ]
             error_msg = _("Will add new connection: {selected_connection} if not duplicated")
             logging_debug(error_msg.format(**locals()))
             self.flight_controller.add_connection(selected_connection)
@@ -261,11 +267,20 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Store the current connection as the previous selection
         if self.flight_controller.comport and hasattr(self.flight_controller.comport, "device"):
             device: str = self.flight_controller.comport.device
-            self.previous_selection = device
+            # Prefer the user-selected connection string when available to avoid persisting
+            # a possibly resolved and unstable device path (e.g. /dev/ttyACM0 instead of
+            # the original /dev/serial/by-id/* symlink).  For auto-connect (empty
+            # selected_connection), fall back to the detected device path.
+            connection_identifier: str = selected_connection or device
+            self.previous_selection = connection_identifier
             # Persist the connection so it is available next time the program opens
             # and so it survives periodic auto-discovery refreshes during the current session.
-            ProgramSettings.store_connection(device)
-            self.flight_controller.add_connection(device)
+            ProgramSettings.store_connection(connection_identifier)
+            # Update cache in-memory (most-recent-first, deduplicated) to avoid a disk re-read.
+            self._connection_history_cache = [connection_identifier] + [
+                c for c in self._connection_history_cache if c != connection_identifier
+            ]
+            self.flight_controller.add_connection(connection_identifier)
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
         if self.download_params_on_connect and hasattr(self.parent, "download_flight_controller_parameters"):
