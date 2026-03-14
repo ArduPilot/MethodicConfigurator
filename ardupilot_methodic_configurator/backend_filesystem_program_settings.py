@@ -648,7 +648,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         return ProgramSettings._connection_history.get_items(settings)
 
     @staticmethod
-    def store_connection(connection_string: str) -> None:
+    def store_connection(connection_string: str) -> Optional[str]:
         """
         Save a new connection string to history.
 
@@ -660,14 +660,16 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         Args:
             connection_string: The connection string to store (max 200 characters).
 
-        Raises:
-            ValueError: If connection string is invalid (logged as warning, not raised)
+        Returns:
+            The normalized connection string that was stored, or None if invalid.
 
         """
         try:
             settings = ProgramSettings._get_settings_as_dict()
             settings = ProgramSettings._connection_history.store_item(connection_string, settings)
             ProgramSettings._set_settings_from_dict(settings)
+            return ProgramSettings._connection_history.normalizer(connection_string)
         except ValueError as e:
             # Log validation errors but don't raise (backward compatible behavior)
             logging_warning("Failed to store connection string to history: %s", e)
+            return None
