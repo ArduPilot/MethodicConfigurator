@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib
+from collections.abc import Sequence
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -152,7 +153,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     def discover_connections(
         self,
         progress_callback: Optional[Callable[[int, int], None]] = None,
-        preserved_connections: Optional[list[str]] = None,
+        preserved_connections: Optional[Sequence[str]] = None,
     ) -> None:
         """
         Discover all available connections (serial and network ports).
@@ -162,7 +163,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         Args:
             progress_callback: Optional callback for progress updates. Signature: callback(current, total)
-            preserved_connections: Optional list of connection strings (e.g. from persistent history)
+            preserved_connections: Optional sequence of connection strings (e.g. from persistent history)
                 that should always appear in the available connections list even when not auto-discovered.
                 The caller (frontend) is responsible for supplying these so the backend stays
                 free of any dependency on the settings/filesystem layer.
@@ -187,8 +188,13 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         if preserved_connections:
             auto_discovered = {t[0] for t in self._connection_tuples}
             for conn in preserved_connections:
+                # Skip falsy/empty connection identifiers
+                if not conn:
+                    continue
                 if conn not in auto_discovered:
                     self._connection_tuples.append((conn, conn))
+                    # Track newly added preserved connections to avoid duplicates
+                    auto_discovered.add(conn)
         self._log_connection_changes()
         # now that it is logged, add the 'Add another' tuple
         self._connection_tuples += [(_("Add another"), _("Add another"))]

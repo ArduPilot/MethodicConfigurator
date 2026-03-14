@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from argparse import ArgumentParser
+from collections.abc import Sequence
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
@@ -321,7 +322,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
     def discover_connections(
         self,
         progress_callback: Optional[Callable[[int, int], None]] = None,
-        preserved_connections: Optional[list[str]] = None,
+        preserved_connections: Optional[Sequence[str]] = None,
     ) -> None:
         """Discover available connections - delegates to connection manager."""
         self._connection_manager.discover_connections(
