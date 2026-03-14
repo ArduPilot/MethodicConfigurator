@@ -24,6 +24,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, Protocol, Union
 
@@ -97,7 +98,7 @@ class FlightControllerConnectionProtocol(Protocol):
     def discover_connections(
         self,
         progress_callback: Optional[Callable[[int, int], None]] = None,
-        preserved_connections: Optional[list[str]] = None,
+        preserved_connections: Optional[Sequence[str]] = None,
     ) -> None: ...
 
     def disconnect(self) -> None: ...

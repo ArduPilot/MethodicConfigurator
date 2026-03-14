@@ -122,6 +122,14 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Start periodic port refresh
         self.start_periodic_refresh()
 
+    def _persist_and_cache_connection(self, connection_string: str) -> None:
+        """Persist a connection string to settings and update the in-memory history cache."""
+        ProgramSettings.store_connection(connection_string)
+        # Update cache in-memory (most-recent-first, deduplicated) to avoid a disk re-read.
+        self._connection_history_cache = [connection_string] + [
+            c for c in self._connection_history_cache if c != connection_string
+        ]
+
     def start_periodic_refresh(self) -> None:
         """Start periodic refresh of available ports every 3 seconds."""
         if self._refresh_timer_id is None:
@@ -212,11 +220,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             ),
         )
         if selected_connection:
-            ProgramSettings.store_connection(selected_connection)
-            # Update cache in-memory (most-recent-first, deduplicated) to avoid a disk re-read.
-            self._connection_history_cache = [selected_connection] + [
-                c for c in self._connection_history_cache if c != selected_connection
-            ]
+            self._persist_and_cache_connection(selected_connection)
             error_msg = _("Will add new connection: {selected_connection} if not duplicated")
             logging_debug(error_msg.format(**locals()))
             self.flight_controller.add_connection(selected_connection)
@@ -275,11 +279,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             self.previous_selection = connection_identifier
             # Persist the connection so it is available next time the program opens
             # and so it survives periodic auto-discovery refreshes during the current session.
-            ProgramSettings.store_connection(connection_identifier)
-            # Update cache in-memory (most-recent-first, deduplicated) to avoid a disk re-read.
-            self._connection_history_cache = [connection_identifier] + [
-                c for c in self._connection_history_cache if c != connection_identifier
-            ]
+            self._persist_and_cache_connection(connection_identifier)
             self.flight_controller.add_connection(connection_identifier)
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
