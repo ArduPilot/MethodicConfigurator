@@ -187,7 +187,10 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         # Merge caller-supplied preserved connections (e.g. persistent history) that are not auto-discovered
         if preserved_connections:
             auto_discovered = {t[0] for t in self._connection_tuples}
-            for conn in preserved_connections:
+            # Guard: str is itself a Sequence[str], so iterating it would yield individual characters.
+            # Treat a bare string as a single preserved connection rather than a char sequence.
+            preserved_iter = (preserved_connections,) if isinstance(preserved_connections, str) else preserved_connections
+            for conn in preserved_iter:
                 # Skip falsy/empty connection identifiers
                 if not conn:
                     continue
