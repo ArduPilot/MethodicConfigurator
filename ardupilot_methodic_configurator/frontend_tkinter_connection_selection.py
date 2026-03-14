@@ -124,11 +124,12 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
 
     def _persist_and_cache_connection(self, connection_string: str) -> None:
         """Persist a connection string to settings and update the in-memory history cache."""
-        ProgramSettings.store_connection(connection_string)
-        # Update cache in-memory (most-recent-first, deduplicated) to avoid a disk re-read.
-        self._connection_history_cache = [connection_string] + [
-            c for c in self._connection_history_cache if c != connection_string
-        ]
+        normalized = ProgramSettings.store_connection(connection_string)
+        if normalized is None:
+            return
+        # Update cache in-memory (most-recent-first, deduplicated) using the normalized value
+        # to avoid a disk re-read and to keep the cache consistent with what was persisted.
+        self._connection_history_cache = [normalized] + [c for c in self._connection_history_cache if c != normalized]
 
     def start_periodic_refresh(self) -> None:
         """Start periodic refresh of available ports every 3 seconds."""
