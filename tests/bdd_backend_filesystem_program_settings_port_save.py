@@ -306,3 +306,128 @@ class TestConnectionHistoryManagement:
             # Assert: Only strings returned (THEN)
             assert result == ["COM1", "COM2", "COM3", "COM5"]
             assert all(isinstance(item, str) for item in result)
+
+
+class TestConnectionHistoryReturnValues:
+    """Test return values of store_connection and get_connection_history."""
+
+    def test_store_connection_returns_normalized_string_on_success(self, mock_settings_file: dict[str, Any]) -> None:
+        """
+        store_connection returns the normalized (stripped) string it actually stored.
+
+        GIVEN: A user saves a connection string that has leading/trailing whitespace
+        WHEN: store_connection is called with the padded string
+        THEN: The return value should be the normalized (stripped) string
+        AND: Callers can use the return value as a stable cache key
+        """
+        # Arrange: Empty history (GIVEN)
+        mock_settings_file["connection_history"] = []
+
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict", return_value=mock_settings_file),
+            patch.object(ProgramSettings, "_set_settings_from_dict"),
+        ):
+            # Act: Store connection with surrounding whitespace (WHEN)
+            result = ProgramSettings.store_connection("  COM3  ")
+
+        # Assert: Normalized value returned (THEN)
+        assert result == "COM3"
+
+    def test_store_connection_returns_unmodified_string_when_no_whitespace(self, mock_settings_file: dict[str, Any]) -> None:
+        """
+        store_connection returns the string unchanged when it needs no normalization.
+
+        GIVEN: A user saves a clean connection string with no extra whitespace
+        WHEN: store_connection is called
+        THEN: The return value should match the input exactly
+        """
+        # Arrange: Empty history (GIVEN)
+        mock_settings_file["connection_history"] = []
+
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict", return_value=mock_settings_file),
+            patch.object(ProgramSettings, "_set_settings_from_dict"),
+        ):
+            # Act: Store clean connection string (WHEN)
+            result = ProgramSettings.store_connection("tcp:127.0.0.1:5760")
+
+        # Assert: Input returned unchanged (THEN)
+        assert result == "tcp:127.0.0.1:5760"
+
+    def test_store_connection_returns_none_for_whitespace_only_input(self, mock_settings_file: dict[str, Any]) -> None:
+        """
+        store_connection returns None when the input is rejected as invalid.
+
+        GIVEN: A user accidentally enters only whitespace as a connection string
+        WHEN: store_connection is called with a whitespace-only string
+        THEN: None should be returned to signal the input was rejected
+        AND: Callers can distinguish a failed store from a successful one
+        """
+        # Arrange: (GIVEN - no special setup needed)
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict", return_value=mock_settings_file),
+            patch.object(ProgramSettings, "_set_settings_from_dict"),
+        ):
+            # Act: Store whitespace-only string (WHEN)
+            result = ProgramSettings.store_connection("   ")
+
+        # Assert: None returned (THEN)
+        assert result is None
+
+    def test_store_connection_returns_none_for_excessively_long_input(self, mock_settings_file: dict[str, Any]) -> None:
+        """
+        store_connection returns None for inputs that exceed the maximum length.
+
+        GIVEN: A user (or malicious input) sends an extremely long connection string
+        WHEN: store_connection is called with a 201-character string
+        THEN: None should be returned signalling rejection
+        """
+        # Arrange: (GIVEN)
+        with (
+            patch.object(ProgramSettings, "_get_settings_as_dict", return_value=mock_settings_file),
+            patch.object(ProgramSettings, "_set_settings_from_dict"),
+        ):
+            # Act: Store excessively long string (WHEN)
+            result = ProgramSettings.store_connection("x" * 201)
+
+        # Assert: None returned (THEN)
+        assert result is None
+
+    def test_get_connection_history_returns_all_valid_connections_in_order(self, mock_settings_file: dict[str, Any]) -> None:
+        """
+        get_connection_history returns the stored connections in most-recent-first order.
+
+        GIVEN: The settings file contains a valid connection history
+        WHEN: get_connection_history is called
+        THEN: All valid connections should be returned in the exact stored order
+        AND: The order should reflect most-recently-used first
+        """
+        # Arrange: Ordered history (GIVEN)
+        mock_settings_file["connection_history"] = ["COM1", "tcp:127.0.0.1:5760", "udp:0.0.0.0:14550"]
+
+        with patch.object(ProgramSettings, "_get_settings_as_dict", return_value=mock_settings_file):
+            # Act: Retrieve history (WHEN)
+            result = ProgramSettings.get_connection_history()
+
+        # Assert: All entries returned in order (THEN)
+        assert result == ["COM1", "tcp:127.0.0.1:5760", "udp:0.0.0.0:14550"]
+
+    def test_get_connection_history_returns_empty_list_when_no_history_stored(
+        self, mock_settings_file: dict[str, Any]
+    ) -> None:
+        """
+        get_connection_history returns an empty list when no history is present.
+
+        GIVEN: The application is started for the first time with no stored connections
+        WHEN: get_connection_history is called
+        THEN: An empty list should be returned (no exceptions raised)
+        """
+        # Arrange: Empty history (GIVEN)
+        mock_settings_file["connection_history"] = []
+
+        with patch.object(ProgramSettings, "_get_settings_as_dict", return_value=mock_settings_file):
+            # Act: Retrieve history (WHEN)
+            result = ProgramSettings.get_connection_history()
+
+        # Assert: Empty list returned (THEN)
+        assert result == []
