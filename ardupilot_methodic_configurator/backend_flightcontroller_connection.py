@@ -192,7 +192,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             preserved_iter = (preserved_connections,) if isinstance(preserved_connections, str) else preserved_connections
             for conn in preserved_iter:
                 # Skip falsy/empty connection identifiers
-                if not conn:
+                if not conn or conn == _("Add another"):
                     continue
                 if conn not in auto_discovered:
                     self._connection_tuples.append((conn, conn))

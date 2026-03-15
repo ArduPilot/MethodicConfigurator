@@ -283,7 +283,10 @@ class TestConnectionSelectionWidgets(unittest.TestCase):
         # Patch the reconnect method and ProgramSettings
         with (
             patch.object(self.widget, "reconnect") as mock_reconnect,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection",
+                return_value="tcp:127.0.0.1:5761",
+            ),
         ):
             # Call the method
             result = self.widget.add_connection()
@@ -992,7 +995,8 @@ class TestPeriodicPortRefresh(unittest.TestCase):
             ) as mock_progress_window,
             patch("ardupilot_methodic_configurator.frontend_tkinter_connection_selection.show_no_connection_error"),
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection"
+                "ardupilot_methodic_configurator.frontend_tkinter_connection_selection.ProgramSettings.store_connection",
+                return_value="COM1",
             ) as mock_store_connection,
         ):
             mock_progress_window.return_value.destroy = MagicMock()

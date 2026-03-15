@@ -122,14 +122,21 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Start periodic port refresh
         self.start_periodic_refresh()
 
-    def _persist_and_cache_connection(self, connection_string: str) -> None:
-        """Persist a connection string to settings and update the in-memory history cache."""
+    def _persist_and_cache_connection(self, connection_string: str) -> str:
+        """
+        Persist a connection string to settings and update the in-memory history cache.
+
+        Returns the normalized connection string that was stored, or the original if
+        normalization failed (e.g. the string was invalid and rejected by the store).
+        Callers should use the returned value so they stay in sync with what is cached.
+        """
         normalized = ProgramSettings.store_connection(connection_string)
         if normalized is None:
-            return
+            return connection_string
         # Update cache in-memory (most-recent-first, deduplicated) using the normalized value
         # to avoid a disk re-read and to keep the cache consistent with what was persisted.
         self._connection_history_cache = [normalized] + [c for c in self._connection_history_cache if c != normalized]
+        return normalized
 
     def start_periodic_refresh(self) -> None:
         """Start periodic refresh of available ports every 3 seconds."""
@@ -221,7 +228,7 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             ),
         )
         if selected_connection:
-            self._persist_and_cache_connection(selected_connection)
+            selected_connection = self._persist_and_cache_connection(selected_connection)
             error_msg = _("Will add new connection: {selected_connection} if not duplicated")
             logging_debug(error_msg.format(**locals()))
             self.flight_controller.add_connection(selected_connection)
@@ -277,10 +284,12 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
             # the original /dev/serial/by-id/* symlink).  For auto-connect (empty
             # selected_connection), fall back to the detected device path.
             connection_identifier: str = selected_connection or device
-            self.previous_selection = connection_identifier
             # Persist the connection so it is available next time the program opens
             # and so it survives periodic auto-discovery refreshes during the current session.
-            self._persist_and_cache_connection(connection_identifier)
+            # Use the normalized return value so previous_selection and the flight controller
+            # registry stay in sync with the cached/stored key (e.g. whitespace stripped).
+            connection_identifier = self._persist_and_cache_connection(connection_identifier)
+            self.previous_selection = connection_identifier
             self.flight_controller.add_connection(connection_identifier)
         if self.destroy_parent_on_connect:
             self.parent.root.destroy()
