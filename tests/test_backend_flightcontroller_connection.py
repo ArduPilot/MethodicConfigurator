@@ -554,6 +554,138 @@ class TestFlightControllerConnectionCustomStrings:
         for i in range(2, 5):
             assert not any(t[0] == f"COM{i + 1}" for t in tuples)
 
+    def test_preserved_connection_already_auto_discovered_is_not_duplicated(self) -> None:
+        """
+        A preserved connection that is also auto-discovered appears exactly once.
+
+        GIVEN: A connection (e.g. COM3) is both physically present on the bus
+            AND present in the caller-supplied preserved history
+        WHEN: discover_connections is called with that connection in preserved_connections
+        THEN: The connection should appear exactly once in the result list
+        AND: No duplicate tuple should be present
+        """
+        # Given: COM3 is auto-discovered AND in preserved history
+        mock_discovery = Mock()
+        mock_port = Mock()
+        mock_port.device = "COM3"
+        mock_port.description = "USB Serial"
+        mock_discovery.get_available_ports.return_value = [mock_port]
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=mock_discovery,
+            network_ports=[],
+        )
+
+        # When: Discover with COM3 also in preserved list
+        connection.discover_connections(preserved_connections=["COM3"])
+
+        # Then: COM3 appears only once (de-duplicated)
+        tuples = connection.get_connection_tuples()
+        com3_count = sum(1 for t in tuples if t[0] == "COM3")
+        assert com3_count == 1
+
+    def test_preserved_connections_accepts_tuple_sequence_input(self) -> None:
+        """
+        Preserved connections can be any Sequence[str], not just a list.
+
+        GIVEN: Calling code passes preserved history as a tuple (immutable sequence)
+        WHEN: discover_connections is called with a tuple preserved_connections argument
+        THEN: All connections in the tuple should be merged correctly
+        AND: No TypeError should be raised from iterating a tuple
+        """
+        # Given: No auto-discovered ports
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=Mock(get_available_ports=Mock(return_value=[])),
+            network_ports=[],
+        )
+
+        # When: Pass preserved connections as a tuple (not a list)
+        connection.discover_connections(preserved_connections=("tcp:127.0.0.1:5760", "COM1"))
+
+        # Then: Both connections present in the result
+        tuples = connection.get_connection_tuples()
+        assert any(t[0] == "tcp:127.0.0.1:5760" for t in tuples)
+        assert any(t[0] == "COM1" for t in tuples)
+
+    def test_empty_string_in_preserved_connections_is_silently_skipped(self) -> None:
+        """
+        Empty strings in preserved_connections are ignored and not added to the list.
+
+        GIVEN: The caller-supplied history contains empty string entries
+            (e.g. from corrupted or partially-initialised settings)
+        WHEN: discover_connections is called with those entries
+        THEN: The empty strings should not appear in the connection list
+        AND: Valid connections in the list should still be present
+        """
+        # Given: No auto-discovered ports
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=Mock(get_available_ports=Mock(return_value=[])),
+            network_ports=[],
+        )
+
+        # When: Preserved list contains empty strings mixed with a valid entry
+        connection.discover_connections(preserved_connections=["", "COM1", ""])
+
+        # Then: Empty strings absent; valid entry present
+        tuples = connection.get_connection_tuples()
+        assert not any(t[0] == "" for t in tuples)
+        assert any(t[0] == "COM1" for t in tuples)
+
+    def test_add_another_sentinel_in_preserved_connections_is_not_duplicated(self) -> None:
+        """
+        The 'Add another' sentinel value in preserved_connections is filtered out.
+
+        GIVEN: The caller accidentally includes the 'Add another' UI sentinel in history
+        WHEN: discover_connections merges preserved_connections
+        THEN: 'Add another' should appear exactly once (appended by discover_connections itself)
+        AND: There should be no extra 'Add another' entry from the preserved list
+        """
+        # Given: No auto-discovered ports; preserved list already contains the sentinel
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=Mock(get_available_ports=Mock(return_value=[])),
+            network_ports=[],
+        )
+
+        # When: Discover with 'Add another' and a valid entry in preserved list
+        connection.discover_connections(preserved_connections=["Add another", "COM1"])
+
+        # Then: Exactly one 'Add another' entry exists (the one appended at the end)
+        tuples = connection.get_connection_tuples()
+        add_another_count = sum(1 for t in tuples if t[0] == "Add another")
+        assert add_another_count == 1
+        # The last entry should be the sentinel (standard placement)
+        assert tuples[-1][0] == "Add another"
+        # COM1 is still present
+        assert any(t[0] == "COM1" for t in tuples)
+
+    def test_duplicate_entries_within_preserved_connections_are_deduplicated(self) -> None:
+        """
+        Duplicate connection strings within preserved_connections appear only once.
+
+        GIVEN: The caller supplies a preserved history that contains the same connection
+            multiple times (e.g. from a history list with duplicates)
+        WHEN: discover_connections processes the list
+        THEN: Each unique connection should appear exactly once in the result
+        """
+        # Given: No auto-discovered ports
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=Mock(get_available_ports=Mock(return_value=[])),
+            network_ports=[],
+        )
+
+        # When: Preserved list has three copies of the same entry
+        connection.discover_connections(preserved_connections=["COM1", "COM1", "COM1"])
+
+        # Then: COM1 appears exactly once
+        tuples = connection.get_connection_tuples()
+        com1_count = sum(1 for t in tuples if t[0] == "COM1")
+        assert com1_count == 1
+
 
 class TestFlightControllerConnectionInfo:
     """Test flight controller information gathering."""
