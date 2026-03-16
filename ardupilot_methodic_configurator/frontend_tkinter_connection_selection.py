@@ -80,8 +80,9 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         # Load saved connection history from ProgramSettings and cache it to avoid
         # repeated disk reads on every periodic port-refresh cycle.
         self._connection_history_cache: list[str] = ProgramSettings.get_connection_history()
-        for conn in self._connection_history_cache:
-            self.flight_controller.add_connection(conn)
+        # Perform an initial connection discovery using the cached history so the
+        # combobox starts from the same source-of-truth list that refresh uses.
+        self.flight_controller.discover_connections(preserved_connections=self._connection_history_cache)
 
         # Create a read-only combobox for flight controller connection selection
         self.conn_selection_combobox = PairTupleCombobox(

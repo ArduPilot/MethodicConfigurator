@@ -483,9 +483,9 @@ class TestFlightControllerConnectionCustomStrings:
         GIVEN: User has previously used a custom connection (e.g. a TCP address stored in history)
         WHEN: discover_connections() is called again (periodic 3s refresh) and returns different ports
             AND the caller supplies the history list as preserved_connections
-        THEN: The preserved connection should still be present in the combobox
-        AND: Auto-discovered ports that disappeared should be gone
-        AND: Newly auto-discovered ports should appear
+        THEN: The preserved connection should still be present in the available connections list/tuples
+        AND: Auto-discovered ports that disappeared should be gone from the available connections list/tuples
+        AND: Newly auto-discovered ports should appear in the available connections list/tuples
         """
         # Given: Connection manager with a mocked serial port discovery
         mock_discovery = Mock()

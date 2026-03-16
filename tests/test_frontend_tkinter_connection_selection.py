@@ -804,8 +804,8 @@ class TestPeriodicPortRefresh:
         AND: root.after should have been called to schedule the next recurring refresh
         AND: The widget should not be in a refreshing state after initialization completes
         """
-        periodic_widget._mock_fc.discover_connections.assert_called_once_with(  # type: ignore[attr-defined]
-            progress_callback=None, preserved_connections=[]
+        periodic_widget._mock_fc.discover_connections.assert_any_call(  # type: ignore[attr-defined]
+            preserved_connections=[]
         )
         mock_parent.root.after.assert_called_with(3000, periodic_widget._refresh_ports)
         assert periodic_widget._is_refreshing is False
@@ -1004,12 +1004,12 @@ class TestConnectionHistoryCacheInitialization:
 
     def test_stored_connections_are_registered_with_flight_controller_on_init(self) -> None:
         """
-        Each connection in the loaded history is registered with the flight controller.
+        History connections are passed to discover_connections on init.
 
         GIVEN: ProgramSettings holds two previously used connections
         WHEN: ConnectionSelectionWidgets is initialized
-        THEN: flight_controller.add_connection should have been called once per stored entry
-        AND: Each call should use the exact stored connection string
+        THEN: flight_controller.discover_connections should have been called with preserved_connections
+        AND: The preserved_connections should contain each stored entry
         """
         history = ["COM1", "tcp:127.0.0.1:5761"]
         mock_parent = MagicMock()
@@ -1036,9 +1036,8 @@ class TestConnectionHistoryCacheInitialization:
                 download_params_on_connect=False,
             )
 
-        calls = [call[0][0] for call in mock_fc.add_connection.call_args_list]
-        assert "COM1" in calls
-        assert "tcp:127.0.0.1:5761" in calls
+        mock_fc.discover_connections.assert_any_call(preserved_connections=history)
+        mock_fc.add_connection.assert_not_called()
 
     def test_history_cache_is_empty_when_settings_has_no_stored_connections(self) -> None:
         """
@@ -1162,7 +1161,7 @@ class TestPersistAndCacheConnectionBehavior:
         self, persist_widget: tuple[ConnectionSelectionWidgets, MagicMock, MagicMock]
     ) -> None:
         """
-        _persist_and_cache_connection removes the old occurrence of a re-used connection.
+        _persist_and_cache_connection removes the old occurrence of a reused connection.
 
         GIVEN: The cache already contains "COM3" at position 2
         WHEN: "COM3" is persisted again (user reconnects to a previous device)
