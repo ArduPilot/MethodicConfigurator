@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 import unittest
 from json import JSONDecodeError
 from unittest.mock import mock_open, patch
@@ -17,6 +18,7 @@ from unittest.mock import mock_open, patch
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 
 # ruff: noqa: SIM117
+# pylint: disable=protected-access
 
 
 class TestConfigurationSteps(unittest.TestCase):
@@ -412,20 +414,18 @@ def test_compute_parameters_with_parameter_lookup() -> None:
     assert config_steps.forced_parameters["test_file"]["PARAM2"].value == 20
 
 
-def test_escape_characters_in_parameters(caplog) -> None:
+def test_escape_characters_in_parameters() -> None:
     """Test handling of escape characters in parameter strings."""
     config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
     file_info = {"forced_parameters": {"PARAM1": {"New Value": "'value with \\'quotes\\''", "Change Reason": "Test escapes"}}}
     variables = {"doc_dict": {"PARAM1": {"values": {10: "value"}}}}
 
-    # The method might return error string instead of logging
     result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
 
-    # Check if either the result contains the error or it was logged
-    if "could not be computed" not in result:
-        # Use the caplog fixture directly without with statement
-        config_steps.compute_parameters("test_file", file_info, "forced", variables)
-        assert "could not be computed" in caplog.text
+    # The evaluated string "value with 'quotes'" is not in the doc_dict values dict,
+    # so since StopIteration is now caught in _resolve_string_result the error message
+    # describes the lookup failure rather than the generic "could not be computed" phrase.
+    assert result != ""  # An error was reported (not silent success)
 
 
 def test_documentation_url_when_not_provided() -> None:
@@ -521,6 +521,194 @@ def test_safe_log_function_in_expression() -> None:
 
     assert result == ""
     assert abs(config_steps.forced_parameters["test_file"]["MOT_THST_EXPO"].value - 0.6) < 0.01
+
+
+# ---------------------------------------------------------------------------
+# Tests for _condition_passes
+# ---------------------------------------------------------------------------
+
+
+def test_condition_passes_no_if_key() -> None:
+    """Test _condition_passes returns True when no 'if' key is present."""
+    result = ConfigurationSteps._condition_passes({}, {})
+    assert result is True
+
+
+def test_condition_passes_true_condition() -> None:
+    """Test _condition_passes returns True when condition evaluates to True."""
+    result = ConfigurationSteps._condition_passes({"if": "1 == 1"}, {})
+    assert result is True
+
+
+def test_condition_passes_false_condition() -> None:
+    """Test _condition_passes returns False when condition evaluates to False."""
+    result = ConfigurationSteps._condition_passes({"if": "1 == 2"}, {})
+    assert result is False
+
+
+def test_condition_passes_syntax_error_logs_warning(caplog) -> None:
+    """Test _condition_passes logs a warning and returns False on SyntaxError."""
+    with caplog.at_level(logging.WARNING):
+        result = ConfigurationSteps._condition_passes({"if": "this is not valid python !!!"}, {})
+    assert result is False
+    assert caplog.records, "Expected a warning to be logged for a syntax error in the condition"
+    assert any("syntax error" in r.message.lower() for r in caplog.records)
+
+
+def test_condition_passes_name_error_fc_parameters_silent() -> None:
+    """Test _condition_passes returns False silently (no warning) when fc_parameters not in variables."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    with unittest.mock.patch(
+        "ardupilot_methodic_configurator.backend_filesystem_configuration_steps.logging_warning"
+    ) as mock_warn:
+        result = config_steps._condition_passes({"if": "'PARAM' in fc_parameters"}, {})
+    assert result is False
+    mock_warn.assert_not_called()
+
+
+def test_condition_passes_with_variables() -> None:
+    """Test _condition_passes correctly evaluates a condition using provided variables."""
+    result = ConfigurationSteps._condition_passes({"if": "x > 0"}, {"x": 5})
+    assert result is True
+    result = ConfigurationSteps._condition_passes({"if": "x > 0"}, {"x": -1})
+    assert result is False
+
+
+# ---------------------------------------------------------------------------
+# Tests for compute_deletions
+# ---------------------------------------------------------------------------
+
+
+def test_compute_deletions_no_delete_parameters() -> None:
+    """Test compute_deletions returns empty set when no delete_parameters in file_info."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    result = config_steps.compute_deletions("test_file", {}, {"doc_dict": {}})
+    assert result == set()
+
+
+def test_compute_deletions_empty_variables_logs_warning(caplog) -> None:
+    """Test compute_deletions warns and returns empty set when delete_parameters present but variables empty."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"delete_parameters": {"PARAM1": {}}}
+    with caplog.at_level(logging.WARNING):
+        result = config_steps.compute_deletions("test_file", file_info, {})
+    assert result == set()
+    assert any("test_file" in r.message for r in caplog.records)
+
+
+def test_compute_deletions_unconditional() -> None:
+    """Test compute_deletions deletes parameters unconditionally when no 'if' key."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"delete_parameters": {"PARAM1": {}, "PARAM2": {}}}
+    result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
+    assert result == {"PARAM1", "PARAM2"}
+
+
+def test_compute_deletions_with_true_condition() -> None:
+    """Test compute_deletions includes parameter when condition evaluates to True."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"delete_parameters": {"PARAM1": {"if": "True"}}}
+    result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
+    assert "PARAM1" in result
+
+
+def test_compute_deletions_with_false_condition() -> None:
+    """Test compute_deletions excludes parameter when condition evaluates to False."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"delete_parameters": {"PARAM1": {"if": "False"}}}
+    result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
+    assert "PARAM1" not in result
+
+
+def test_compute_deletions_fc_not_connected_skips_silently() -> None:
+    """Test compute_deletions silently skips deletion when fc_parameters not in variables."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"delete_parameters": {"PARAM1": {"if": "fc_parameters and ('PARAM1' not in fc_parameters)"}}}
+    # No fc_parameters in variables — NameError is expected and should be silent
+    result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
+    assert "PARAM1" not in result
+
+
+def test_compute_deletions_syntax_error_logs_warning(caplog) -> None:
+    """Test compute_deletions logs a warning and skips parameter on condition SyntaxError."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"delete_parameters": {"PARAM1": {"if": "this is not valid python !!!"}}}
+    with caplog.at_level(logging.WARNING):
+        result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
+    assert "PARAM1" not in result
+    assert any("syntax error" in r.message.lower() for r in caplog.records)
+
+
+def test_compute_deletions_with_fc_parameters_condition() -> None:
+    """Test compute_deletions correctly evaluates an fc_parameters-based condition."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {
+        "delete_parameters": {"INS_TCAL2_ENABLE": {"if": "fc_parameters and ('INS_TCAL2_ENABLE' not in fc_parameters)"}}
+    }
+    # FC connected but parameter not present → should be deleted
+    result = config_steps.compute_deletions("test_file", file_info, {"fc_parameters": {"OTHER": 1.0}})
+    assert "INS_TCAL2_ENABLE" in result
+    # FC connected and parameter present → should NOT be deleted
+    result2 = config_steps.compute_deletions("test_file", file_info, {"fc_parameters": {"INS_TCAL2_ENABLE": 2.0}})
+    assert "INS_TCAL2_ENABLE" not in result2
+
+
+# ---------------------------------------------------------------------------
+# Tests for add-from-FC shorthand in compute_parameters
+# ---------------------------------------------------------------------------
+
+
+def test_add_from_fc_shorthand_populates_derived_parameter() -> None:
+    """Test add-from-FC shorthand: derived entry with only 'if' gets its value from FC."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"derived_parameters": {"INS_TCAL2_ENABLE": {"if": "'INS_TCAL2_ENABLE' in fc_parameters"}}}
+    variables = {"doc_dict": {}, "fc_parameters": {"INS_TCAL2_ENABLE": 2.0}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+
+    assert result == ""
+    assert "test_file" in config_steps.derived_parameters
+    assert config_steps.derived_parameters["test_file"]["INS_TCAL2_ENABLE"].value == 2.0
+    assert config_steps.derived_parameters["test_file"]["INS_TCAL2_ENABLE"].comment == ""
+
+
+def test_add_from_fc_shorthand_skipped_when_fc_disconnected() -> None:
+    """Test add-from-FC shorthand is silently skipped when FC variables not available."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"derived_parameters": {"INS_TCAL2_ENABLE": {"if": "'INS_TCAL2_ENABLE' in fc_parameters"}}}
+    variables = {"doc_dict": {}}  # no fc_parameters
+
+    result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+
+    assert result == ""
+    assert "test_file" not in config_steps.derived_parameters
+
+
+def test_add_from_fc_shorthand_skipped_when_param_absent_from_fc() -> None:
+    """Test add-from-FC shorthand skips parameter when condition passes but param not in fc_params dict."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    # Condition references a different checking method — always True but param not in FC
+    file_info = {"derived_parameters": {"INS_TCAL2_ENABLE": {"if": "True"}}}
+    variables = {"doc_dict": {}, "fc_parameters": {"OTHER_PARAM": 1.0}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+
+    assert result == ""
+    assert "INS_TCAL2_ENABLE" not in config_steps.derived_parameters.get("test_file", {})
+
+
+def test_add_from_fc_shorthand_forced_logs_warning(caplog) -> None:
+    """Test that a forced parameter entry without 'New Value' logs a warning and is skipped."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"forced_parameters": {"PARAM1": {"if": "True"}}}
+    variables = {"doc_dict": {}, "fc_parameters": {"PARAM1": 5.0}}
+
+    with caplog.at_level(logging.WARNING):
+        result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    assert result == ""  # Not a fatal error, just a warning
+    assert "PARAM1" not in config_steps.forced_parameters.get("test_file", {})
+    assert any("add-from-FC shorthand is only valid for derived parameters" in r.message for r in caplog.records)
 
 
 if __name__ == "__main__":

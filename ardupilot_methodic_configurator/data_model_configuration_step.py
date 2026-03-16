@@ -101,7 +101,12 @@ class ConfigurationStepProcessor:
             elif selected_file in self.local_filesystem.derived_parameters:
                 # Filter derived parameters that exist in FC (if fc_parameters provided)
                 fc_param_names = set(fc_parameters.keys()) if fc_parameters else set()
+                # Only include params that are already in the file; add-from-FC shorthand entries
+                # (parameters not yet in file_parameters) are handled separately in the UI layer.
+                existing_param_names = set(self.local_filesystem.file_parameters.get(selected_file, ParDict()).keys())
                 for param_name, param in self.local_filesystem.derived_parameters[selected_file].items():
+                    if param_name not in existing_param_names:
+                        continue  # add-from-FC shorthand: not yet in file, handled by add-from-FC block
                     # Only include if no FC filter OR parameter exists in FC
                     if not fc_param_names or param_name in fc_param_names:
                         derived_params_to_apply[param_name] = param
