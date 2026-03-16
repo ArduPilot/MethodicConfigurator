@@ -110,6 +110,19 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
             self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
 
     def on_leave(self, _event: tk.Event) -> None:  # unbind wheel events when the cursor leaves the control
+        # On Windows, tkinter fires <Leave> on the parent when the cursor moves to a child widget.
+        # Check if the cursor is still within the canvas area before unbinding. (fixes #460)
+        try:
+            mouse_x, mouse_y = self.winfo_pointerxy()
+            canvas_left = self.canvas.winfo_rootx()
+            canvas_top = self.canvas.winfo_rooty()
+            canvas_right = canvas_left + self.canvas.winfo_width()
+            canvas_bottom = canvas_top + self.canvas.winfo_height()
+            if canvas_left <= mouse_x <= canvas_right and canvas_top <= mouse_y <= canvas_bottom:
+                return  # Cursor is still within the scroll area, do not unbind
+        except (tk.TclError, ValueError, TypeError, AttributeError):
+            pass  # Widget may have been destroyed, proceed with unbinding
+
         if platform_system() == "Linux":
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")

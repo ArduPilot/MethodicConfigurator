@@ -167,7 +167,54 @@ class TestScrollFrameUserExperience:
             scrollable_frame.on_enter(None)
             scrollable_frame.canvas.bind_all.assert_called_with("<MouseWheel>", scrollable_frame.on_mouse_wheel)
 
+            # Simulate cursor leaving the scroll area entirely (outside canvas bounds)
+            scrollable_frame.winfo_pointerxy = MagicMock(return_value=(1000, 1000))
+            scrollable_frame.canvas.winfo_rootx.return_value = 0
+            scrollable_frame.canvas.winfo_rooty.return_value = 0
+            scrollable_frame.canvas.winfo_width.return_value = 500
+            scrollable_frame.canvas.winfo_height.return_value = 500
+
             # Leave the area
+            scrollable_frame.on_leave(None)
+            scrollable_frame.canvas.unbind_all.assert_called_with("<MouseWheel>")
+
+    def test_user_can_scroll_over_child_widgets_on_windows(self, scrollable_frame) -> None:
+        """
+        User can scroll over labels and text fields inside the scroll area on Windows.
+
+        GIVEN: A ScrollFrame containing child widgets (labels, entries) on Windows
+        WHEN: The cursor moves from the view_port to a child widget (triggering a <Leave> event)
+        THEN: Mouse wheel scrolling should remain active because the cursor is still within the scroll area
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_scroll_frame.platform_system", return_value="Windows"):
+            # Enter the area
+            scrollable_frame.on_enter(None)
+            scrollable_frame.canvas.bind_all.assert_called_with("<MouseWheel>", scrollable_frame.on_mouse_wheel)
+
+            # Simulate cursor moving to a child widget (still within canvas bounds)
+            scrollable_frame.winfo_pointerxy = MagicMock(return_value=(250, 250))
+            scrollable_frame.canvas.winfo_rootx.return_value = 0
+            scrollable_frame.canvas.winfo_rooty.return_value = 0
+            scrollable_frame.canvas.winfo_width.return_value = 500
+            scrollable_frame.canvas.winfo_height.return_value = 500
+
+            # <Leave> fires on view_port but cursor is still in the scroll area
+            scrollable_frame.on_leave(None)
+            scrollable_frame.canvas.unbind_all.assert_not_called()
+
+    def test_scroll_unbinds_gracefully_when_widget_is_destroyed(self, scrollable_frame) -> None:
+        """
+        Scroll events are unbound gracefully when the widget has been destroyed.
+
+        GIVEN: A ScrollFrame whose underlying widget has been destroyed
+        WHEN: A <Leave> event occurs
+        THEN: The scroll events should be unbound without raising errors
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_scroll_frame.platform_system", return_value="Windows"):
+            # Simulate widget destruction by raising an error on pointer query
+            scrollable_frame.winfo_pointerxy = MagicMock(side_effect=AttributeError("widget destroyed"))
+
+            # Should not raise, and should proceed with unbinding
             scrollable_frame.on_leave(None)
             scrollable_frame.canvas.unbind_all.assert_called_with("<MouseWheel>")
 
@@ -187,6 +234,13 @@ class TestScrollFrameUserExperience:
 
             # Reset mock
             scrollable_frame.canvas.bind_all.reset_mock()
+
+            # Simulate cursor leaving the scroll area entirely (outside canvas bounds)
+            scrollable_frame.winfo_pointerxy = MagicMock(return_value=(1000, 1000))
+            scrollable_frame.canvas.winfo_rootx.return_value = 0
+            scrollable_frame.canvas.winfo_rooty.return_value = 0
+            scrollable_frame.canvas.winfo_width.return_value = 500
+            scrollable_frame.canvas.winfo_height.return_value = 500
 
             # Leave the area
             scrollable_frame.on_leave(None)
