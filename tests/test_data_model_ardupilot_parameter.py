@@ -10,17 +10,20 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import math
 from typing import Any
 
 import pytest
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
+    BitmaskHelper,
+    ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 
-# pylint: disable=redefined-outer-name, protected-access
+# pylint: disable=redefined-outer-name, protected-access, too-many-lines
 
 
 @pytest.fixture
@@ -496,6 +499,507 @@ def test_set_forced_or_derived_value(param_fixture) -> None:
     # Act & Assert: System attempting to use method on regular parameter fails
     with pytest.raises(ValueError, match="This method is only for forced or derived parameters"):
         regular_param.set_forced_or_derived_value(123.0)
+
+
+def test_fc_value_equals_default_value_for_bitmask_parameter(param_fixture) -> None:
+    """
+    fc_value_equals_default_value uses exact comparison for bitmask parameters.
+
+    GIVEN: A bitmask parameter where fc_value exactly equals default_value
+    WHEN: fc_value_equals_default_value is called
+    THEN: True should be returned (exact equality, not tolerance)
+    """
+    # Arrange: bitmask param where fc == default (exact match)
+    bitmask_metadata = param_fixture["metadata"].copy()
+    bitmask_metadata.pop("values", None)  # Remove multiple-choice to make pure bitmask
+
+    param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(3.0, ""),
+        bitmask_metadata,
+        Par(3.0, ""),  # default = 3
+        3.0,  # fc_value = 3
+    )
+    assert param.fc_value_equals_default_value
+
+    # Now with a different fc_value
+    param_different = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(3.0, ""),
+        bitmask_metadata,
+        Par(3.0, ""),  # default = 3
+        5.0,  # fc_value = 5 — different
+    )
+    assert not param_different.fc_value_equals_default_value
+
+
+def test_set_new_value_multiple_choice_unchanged_raises() -> None:
+    """
+    set_new_value raises ParameterUnchangedError when multiple-choice value does not change.
+
+    GIVEN: A multiple-choice parameter with current value 10.0
+    WHEN: set_new_value is called with the same value ("10.0")
+    THEN: ParameterUnchangedError should be raised
+    """
+    # Arrange: multiple-choice parameter (no Bitmask key, has values dict)
+    mc_metadata = {
+        "values": {"0": "Zero", "10": "Ten", "20": "Twenty"},
+        "ReadOnly": False,
+        "Calibration": False,
+    }
+    param = ArduPilotParameter("MC_PARAM", Par(10.0, ""), mc_metadata)
+
+    # Act & Assert: Same value raises ParameterUnchangedError
+    with pytest.raises(ParameterUnchangedError):
+        param.set_new_value("10.0")
+
+
+def test_set_new_value_bitmask_unchanged_raises() -> None:
+    """
+    set_new_value raises ParameterUnchangedError when bitmask value does not change.
+
+    GIVEN: A bitmask parameter with current value 3
+    WHEN: set_new_value is called with the same integer value "3"
+    THEN: ParameterUnchangedError should be raised
+    """
+    bitmask_metadata = {
+        "Bitmask": {0: "Option 1", 1: "Option 2"},
+        "ReadOnly": False,
+        "Calibration": False,
+    }
+    param = ArduPilotParameter("BM_PARAM", Par(3.0, ""), bitmask_metadata)
+
+    with pytest.raises(ParameterUnchangedError):
+        param.set_new_value("3")
+
+
+def test_set_new_value_bitmask_ignores_unknown_bits_when_flag_set() -> None:
+    """
+    set_new_value accepts bitmask value with unknown bits when ignore_out_of_range=True.
+
+    GIVEN: A bitmask parameter where bit 7 (value 128) is not in the bitmask dict
+    WHEN: set_new_value("128", ignore_out_of_range=True) is called
+    THEN: No ParameterOutOfRangeError should be raised
+    AND: The new value should be updated to 128.0
+    """
+    bitmask_metadata = {
+        "Bitmask": {0: "Option 1", 1: "Option 2"},
+        "ReadOnly": False,
+        "Calibration": False,
+    }
+    param = ArduPilotParameter("BM_PARAM", Par(0.0, ""), bitmask_metadata)
+
+    # Without flag: should raise
+    with pytest.raises(ParameterOutOfRangeError):
+        param.set_new_value("128", ignore_out_of_range=False)
+
+    # Reset
+    param = ArduPilotParameter("BM_PARAM", Par(0.0, ""), bitmask_metadata)
+
+    # With flag: should succeed
+    result = param.set_new_value("128", ignore_out_of_range=True)
+    assert result == 128.0
+
+
+def test_set_new_value_numeric_above_limit_raises() -> None:
+    """
+    set_new_value raises ParameterOutOfRangeError when numeric value exceeds max.
+
+    GIVEN: A parameter with max_value = 20.0 and current value = 10.0
+    WHEN: set_new_value is called with "25.0" and ignore_out_of_range=False
+    THEN: ParameterOutOfRangeError should be raised
+    """
+    numeric_metadata = {
+        "min": 0.0,
+        "max": 20.0,
+        "ReadOnly": False,
+        "Calibration": False,
+    }
+    param = ArduPilotParameter("NUM_PARAM", Par(10.0, ""), numeric_metadata)
+
+    with pytest.raises(ParameterOutOfRangeError):
+        param.set_new_value("25.0")
+
+
+def test_set_forced_or_derived_value_readonly_raises() -> None:
+    """
+    set_forced_or_derived_value raises ValueError for readonly parameters.
+
+    GIVEN: A readonly forced parameter
+    WHEN: set_forced_or_derived_value is called
+    THEN: ValueError should be raised mentioning readonly
+    """
+    readonly_metadata = {
+        "ReadOnly": True,
+        "Calibration": False,
+    }
+    # Build a forced readonly parameter
+    param = ArduPilotParameter(
+        "RO_PARAM",
+        Par(1.0, ""),
+        readonly_metadata,
+        Par(1.0, ""),
+        1.0,
+        forced_par=Par(1.0, ""),
+    )
+
+    with pytest.raises(ValueError, match="Readonly"):
+        param.set_forced_or_derived_value(2.0)
+
+
+def test_set_forced_or_derived_change_reason_readonly_raises() -> None:
+    """
+    set_forced_or_derived_change_reason raises ValueError for readonly parameters.
+
+    GIVEN: A readonly derived parameter
+    WHEN: set_forced_or_derived_change_reason is called
+    THEN: ValueError should be raised mentioning readonly
+    """
+    readonly_metadata = {
+        "ReadOnly": True,
+        "Calibration": False,
+    }
+    param = ArduPilotParameter(
+        "RO_PARAM",
+        Par(1.0, ""),
+        readonly_metadata,
+        Par(1.0, ""),
+        1.0,
+        derived_par=Par(1.0, ""),
+    )
+
+    with pytest.raises(ValueError, match="Readonly"):
+        param.set_forced_or_derived_change_reason("new reason")
+
+
+def test_bitmask_helper_get_checked_keys() -> None:
+    """
+    BitmaskHelper.get_checked_keys converts a decimal value to bit-position set.
+
+    GIVEN: A bitmask dictionary {0: 'A', 1: 'B', 2: 'C'} and a value of 5 (bits 0 and 2 set)
+    WHEN: get_checked_keys is called
+    THEN: {0, 2} should be returned
+    """
+    bitmask_dict = {0: "A", 1: "B", 2: "C"}
+
+    result = BitmaskHelper.get_checked_keys(5, bitmask_dict)
+
+    assert result == {0, 2}
+
+
+def test_bitmask_helper_get_checked_keys_with_string_keys() -> None:
+    """
+    BitmaskHelper.get_checked_keys works when dict keys are strings.
+
+    GIVEN: A bitmask dictionary with string keys {"0": "A", "1": "B"} and value 2
+    WHEN: get_checked_keys is called
+    THEN: {1} should be returned (bit 1 is set)
+    """
+    bitmask_dict = {"0": "A", "1": "B", "2": "C"}  # type: ignore[arg-type]
+
+    result = BitmaskHelper.get_checked_keys(2, bitmask_dict)
+
+    assert result == {1}
+
+
+def test_set_change_reason_for_forced_parameter_returns_false(param_fixture) -> None:
+    """
+    set_change_reason returns False and makes no change for forced parameters.
+
+    GIVEN: A forced parameter
+    WHEN: set_change_reason is called
+    THEN: False should be returned and the change_reason should remain unchanged
+    """
+    original_reason = param_fixture["forced_param"].change_reason
+    result = param_fixture["forced_param"].set_change_reason("new reason")
+    assert result is False
+    assert param_fixture["forced_param"].change_reason == original_reason
+
+
+def test_set_change_reason_same_value_returns_false(param_fixture) -> None:
+    """
+    set_change_reason returns False when the same value is set.
+
+    GIVEN: A parameter whose change_reason is "Test comment"
+    WHEN: set_change_reason is called with the same value
+    THEN: False should be returned without modifying the reason
+    """
+    # First set to a new value so we know the current reason
+    param_fixture["full_param"].set_change_reason("unique comment")
+
+    result = param_fixture["full_param"].set_change_reason("unique comment")
+    assert result is False
+
+
+def test_tooltip_fc_value_returns_sorted_tooltip_when_key_present(param_fixture) -> None:
+    """
+    tooltip_fc_value returns doc_tooltip_sorted_numerically when that key is present.
+
+    GIVEN: A parameter with 'doc_tooltip_sorted_numerically' in its metadata
+    WHEN: tooltip_fc_value is accessed
+    THEN: The sorted tooltip value should be returned instead of the standard tooltip
+    """
+    metadata_with_sorted = param_fixture["metadata"].copy()
+    metadata_with_sorted["doc_tooltip_sorted_numerically"] = "Sorted tooltip text"
+    param = ArduPilotParameter(param_fixture["param_name"], param_fixture["par_obj"], metadata_with_sorted)
+
+    assert param.tooltip_fc_value == "Sorted tooltip text"
+
+
+def test_tooltip_change_reason_includes_param_name_and_value(param_fixture) -> None:
+    """
+    tooltip_change_reason returns a formatted string with parameter name and value.
+
+    GIVEN: A parameter with name 'TEST_PARAM' and value 10.0
+    WHEN: tooltip_change_reason is accessed
+    THEN: The returned string should contain the parameter name and value
+    """
+    assert param_fixture["full_param"].name in param_fixture["full_param"].tooltip_change_reason
+
+
+def test_is_invalid_number_returns_error_for_nan(param_fixture) -> None:
+    """
+    is_invalid_number returns an error message when the value is NaN.
+
+    GIVEN: A parameter
+    WHEN: is_invalid_number is called with float('nan')
+    THEN: A non-empty error message should be returned
+    """
+    result = param_fixture["full_param"].is_invalid_number(math.nan)
+    assert result != ""
+    assert "finite" in result.lower() or "number" in result.lower()
+
+
+def test_is_invalid_number_returns_empty_for_valid_number(param_fixture) -> None:
+    """
+    is_invalid_number returns empty string for valid finite numbers.
+
+    GIVEN: A parameter
+    WHEN: is_invalid_number is called with a normal finite number
+    THEN: An empty string should be returned
+    """
+    result = param_fixture["full_param"].is_invalid_number(5.0)
+    assert result == ""
+
+
+def test_is_below_limit_returns_error_when_value_below_min(param_fixture) -> None:
+    """
+    is_below_limit returns error message when value is below minimum.
+
+    GIVEN: A parameter with min_value = 0.0
+    WHEN: is_below_limit is called with -1.0
+    THEN: A non-empty error message should be returned
+    """
+    result = param_fixture["full_param"].is_below_limit(-1.0)
+    assert result != ""
+
+
+def test_has_unknown_bits_set_returns_empty_for_known_bits(param_fixture) -> None:
+    """
+    has_unknown_bits_set returns empty string when all bits are known.
+
+    GIVEN: A bitmask parameter with bits 0-2 defined
+    WHEN: has_unknown_bits_set is called with value 7 (bits 0,1,2 all set)
+    THEN: Empty string should be returned (no unknown bits)
+    """
+    # _new_value = 7 (0b111), all bits 0,1,2 are known
+    param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(7.0, ""),
+        param_fixture["metadata"],  # has Bitmask with 0,1,2
+    )
+    result = param.has_unknown_bits_set()
+    assert result == ""
+
+
+def test_fc_value_is_above_limit_with_non_none_fc_value(param_fixture) -> None:
+    """
+    fc_value_is_above_limit checks the fc_value against the max limit.
+
+    GIVEN: A parameter with max_value=20 and fc_value=25 (above max)
+    WHEN: fc_value_is_above_limit is called
+    THEN: A non-empty error message should be returned
+    """
+    param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(10.0, ""),
+        param_fixture["metadata"],  # max = 20
+        param_fixture["default_par"],
+        25.0,  # fc_value = 25, above max 20
+    )
+    result = param.fc_value_is_above_limit()
+    assert result != ""
+
+
+def test_fc_value_is_below_limit_with_non_none_fc_value(param_fixture) -> None:
+    """
+    fc_value_is_below_limit checks the fc_value against the min limit.
+
+    GIVEN: A parameter with min_value=0 and fc_value=-5 (below min)
+    WHEN: fc_value_is_below_limit is called
+    THEN: A non-empty error message should be returned
+    """
+    param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(10.0, ""),
+        param_fixture["metadata"],  # min = 0
+        param_fixture["default_par"],
+        -5.0,  # fc_value = -5, below min 0
+    )
+    result = param.fc_value_is_below_limit()
+    assert result != ""
+
+
+def test_fc_value_has_unknown_bits_set_with_non_none_fc_value(param_fixture) -> None:
+    """
+    fc_value_has_unknown_bits_set checks if fc_value has bits outside the bitmask.
+
+    GIVEN: A bitmask parameter with fc_value containing unknown bits
+    WHEN: fc_value_has_unknown_bits_set is called
+    THEN: A non-empty error message should be returned
+    """
+    param = ArduPilotParameter(
+        param_fixture["param_name"],
+        Par(3.0, ""),
+        param_fixture["metadata"],  # Bitmask: {0,1,2}
+        param_fixture["default_par"],
+        128.0,  # fc_value = 128 (bit 7), not in bitmask
+    )
+    result = param.fc_value_has_unknown_bits_set()
+    assert result != ""
+
+
+def test_set_new_value_raises_type_error_for_non_string() -> None:
+    """
+    set_new_value raises TypeError when value is not a string.
+
+    GIVEN: A regular parameter
+    WHEN: set_new_value is called with an integer instead of a string
+    THEN: TypeError should be raised
+    """
+    param = ArduPilotParameter("TEST", Par(1.0, ""))
+    with pytest.raises(TypeError, match="string"):
+        param.set_new_value(42)  # type: ignore[arg-type]
+
+
+def test_set_new_value_raises_value_error_for_empty_string() -> None:
+    """
+    set_new_value raises ValueError when value is an empty string.
+
+    GIVEN: A regular parameter
+    WHEN: set_new_value is called with an empty string ""
+    THEN: ValueError should be raised
+    """
+    param = ArduPilotParameter("TEST", Par(1.0, ""))
+    with pytest.raises(ValueError, match="Empty"):
+        param.set_new_value("")
+
+
+def test_set_new_value_raises_value_error_for_invalid_bitmask_string() -> None:
+    """
+    set_new_value raises ValueError when bitmask parameter gets non-integer string.
+
+    GIVEN: A bitmask parameter
+    WHEN: set_new_value is called with a non-integer string like "abc"
+    THEN: ValueError should be raised (can't parse as int)
+    """
+    bitmask_metadata = {
+        "Bitmask": {0: "A", 1: "B"},
+        "ReadOnly": False,
+        "Calibration": False,
+    }
+    param = ArduPilotParameter("BM_PARAM", Par(0.0, ""), bitmask_metadata)
+    with pytest.raises(ValueError, match="integer"):
+        param.set_new_value("not_a_number")
+
+
+def test_set_new_value_raises_value_error_for_invalid_float_string() -> None:
+    """
+    set_new_value raises ValueError when numeric parameter gets non-numeric string.
+
+    GIVEN: A regular numeric parameter (not bitmask, not multiple-choice)
+    WHEN: set_new_value is called with a non-numeric string like "abc"
+    THEN: ValueError should be raised
+    """
+    param = ArduPilotParameter("TEST", Par(1.0, ""))
+    with pytest.raises(ValueError, match="number"):
+        param.set_new_value("abc")
+
+
+def test_set_new_value_raises_value_error_for_nan_float_string() -> None:
+    """
+    set_new_value raises ValueError when numeric parameter gets NaN string.
+
+    GIVEN: A regular numeric parameter
+    WHEN: set_new_value is called with "nan"
+    THEN: ValueError should be raised about finite number
+    """
+    param = ArduPilotParameter("TEST", Par(1.0, ""))
+    with pytest.raises(ValueError, match="finite"):
+        param.set_new_value("nan")
+
+
+def test_set_new_value_raises_out_of_range_for_below_min() -> None:
+    """
+    set_new_value raises ParameterOutOfRangeError when value is below minimum.
+
+    GIVEN: A parameter with min_value = 0.0
+    WHEN: set_new_value is called with "-1.0"
+    THEN: ParameterOutOfRangeError should be raised
+    """
+    numeric_metadata = {
+        "min": 0.0,
+        "max": 20.0,
+        "ReadOnly": False,
+        "Calibration": False,
+    }
+    param = ArduPilotParameter("NUM_PARAM", Par(10.0, ""), numeric_metadata)
+
+    with pytest.raises(ParameterOutOfRangeError):
+        param.set_new_value("-1.0")
+
+
+def test_copy_new_value_to_file_resets_dirty_state(param_fixture) -> None:
+    """
+    copy_new_value_to_file saves the current state, making the parameter not dirty.
+
+    GIVEN: A parameter that is dirty (value changed)
+    WHEN: copy_new_value_to_file is called
+    THEN: is_dirty should return False afterwards
+    """
+    # Change value to make it dirty
+    param_fixture["full_param"].set_new_value("18.0")
+    assert param_fixture["full_param"].is_dirty
+
+    # Copy to file
+    param_fixture["full_param"].copy_new_value_to_file()
+
+    # Should no longer be dirty
+    assert not param_fixture["full_param"].is_dirty
+
+
+def test_bitmask_helper_get_value_from_keys() -> None:
+    """
+    BitmaskHelper.get_value_from_keys converts a set of bit positions to a decimal string.
+
+    GIVEN: Checked keys {0, 2} (bits 0 and 2 set)
+    WHEN: get_value_from_keys is called
+    THEN: "5" should be returned (1<<0 + 1<<2 = 1 + 4 = 5)
+    """
+    result = BitmaskHelper.get_value_from_keys({0, 2})
+    assert result == "5"
+
+
+def test_bitmask_helper_get_value_from_empty_keys() -> None:
+    """
+    BitmaskHelper.get_value_from_keys returns "0" for empty set.
+
+    GIVEN: An empty set of checked keys
+    WHEN: get_value_from_keys is called
+    THEN: "0" should be returned
+    """
+    result = BitmaskHelper.get_value_from_keys(set())
+    assert result == "0"
 
 
 def test_set_forced_or_derived_change_reason(param_fixture) -> None:

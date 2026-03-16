@@ -13,6 +13,10 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from __future__ import annotations
+
+from time import time as real_time
+from typing import NoReturn
 from unittest.mock import Mock, patch
 
 import pytest
@@ -22,10 +26,12 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
     SUPPORTED_BAUDRATES,
+    FakeSerialForTests,
     FlightControllerConnection,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import (
     FakeMavlinkConnectionFactory,
+    MavlinkConnectionFactory,
     SystemMavlinkConnectionFactory,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial import (
@@ -1046,6 +1052,706 @@ class TestConnectionErrorHandling:
         assert conn.progress_callback is None
 
 
+class TestFakeSerialForTests:
+    """Test the FakeSerialForTests helper class used in unit tests."""
+
+    def test_read_returns_empty_string(self) -> None:
+        """
+        FakeSerialForTests.read always returns an empty string.
+
+        GIVEN: A FakeSerialForTests instance
+        WHEN: read(n) is called for any length
+        THEN: An empty string should be returned
+        """
+        fake = FakeSerialForTests("/dev/ttyUSB0")
+        assert fake.read(0) == ""
+        assert fake.read(1) == ""
+        assert fake.read(1024) == ""
+
+    def test_write_always_raises_exception(self) -> None:
+        """
+        FakeSerialForTests.write always raises an Exception to simulate write failure.
+
+        GIVEN: A FakeSerialForTests instance
+        WHEN: write() is called with any buffer
+        THEN: An Exception should be raised
+        """
+        fake = FakeSerialForTests("/dev/ttyUSB0")
+        with pytest.raises(Exception, match="write always fails"):
+            fake.write(b"data")
+
+    def test_in_waiting_returns_zero(self) -> None:
+        """
+        FakeSerialForTests.inWaiting always returns zero bytes available.
+
+        GIVEN: A FakeSerialForTests instance
+        WHEN: inWaiting() is called
+        THEN: Zero should be returned (no bytes in buffer)
+        """
+        fake = FakeSerialForTests("/dev/ttyUSB0")
+        assert fake.inWaiting() == 0
+
+    def test_close_does_not_raise(self) -> None:
+        """
+        FakeSerialForTests.close completes without raising.
+
+        GIVEN: A FakeSerialForTests instance
+        WHEN: close() is called
+        THEN: No exception should be raised
+        """
+        fake = FakeSerialForTests("/dev/ttyUSB0")
+        fake.close()  # Must not raise
+
+    def test_device_attribute_is_stored(self) -> None:
+        """
+        FakeSerialForTests stores the device string passed at construction.
+
+        GIVEN: A device string passed to the constructor
+        WHEN: The device attribute is accessed
+        THEN: The same string should be returned
+        """
+        fake = FakeSerialForTests("COM3")
+        assert fake.device == "COM3"
+
+
+class TestFlightControllerConnectionLinuxSoftlink:
+    """Test Linux-specific soft link resolution in connect()."""
+
+    def test_connect_resolves_soft_link_on_posix(self) -> None:
+        """
+        On Linux (posix), connect() resolves soft links before attempting connection.
+
+        GIVEN: An auto-detected serial port that is a soft link on Linux
+        WHEN: connect() is called with an empty device string
+        THEN: os.readlink() should be called to resolve the link
+        AND: The resolved path should be used for the connection
+        """
+        mock_port = Mock()
+        mock_port.device = "/dev/serial/by-id/usb-link"
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
+                "posix",
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_readlink",
+                return_value="../../ttyACM0",
+            ) as mock_readlink,
+            patch.object(connection, "_auto_detect_serial", return_value=[mock_port]),
+            patch.object(connection, "_register_and_try_connect", return_value="") as mock_connect,
+        ):
+            result = connection.connect(device="")
+
+        mock_readlink.assert_called_once()
+        mock_connect.assert_called_once()
+        assert result == ""
+
+    def test_connect_handles_ose_rror_when_not_soft_link(self) -> None:
+        """
+        connect() continues normally when os.readlink() raises OSError (not a soft link).
+
+        GIVEN: An auto-detected serial port that is NOT a soft link on Linux
+        WHEN: connect() is called with empty device string
+        THEN: OSError from os.readlink() should be silently caught
+        AND: Connection should proceed with the original device path
+        """
+        mock_port = Mock()
+        mock_port.device = "/dev/ttyACM0"
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
+                "posix",
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_readlink",
+                side_effect=OSError("not a link"),
+            ),
+            patch.object(connection, "_auto_detect_serial", return_value=[mock_port]),
+            patch.object(connection, "_register_and_try_connect", return_value="") as mock_connect,
+        ):
+            result = connection.connect(device="")
+
+        # Soft link failure silently ignored, connection still attempted
+        mock_connect.assert_called_once()
+        assert result == ""
+
+
+class TestFlightControllerConnectionVehicleDetection:
+    """Test vehicle detection methods including edge cases."""
+
+    def test_detect_vehicles_handles_type_error_from_pymavlink(self) -> None:
+        """
+        _detect_vehicles_from_heartbeats continues polling after pymavlink TypeError.
+
+        GIVEN: A connection where pymavlink occasionally raises TypeError
+        WHEN: _detect_vehicles_from_heartbeats is called
+        THEN: TypeError should be caught and polling should continue
+        AND: Successfully returned heartbeats should still be collected
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_master = Mock()
+
+        call_count = 0
+
+        def recv_match_side_effect(**_kwargs) -> None:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                err_msg = "pymavlink internal error"
+                raise TypeError(err_msg)
+
+        mock_master.recv_match = recv_match_side_effect
+        connection.master = mock_master
+
+        start = real_time()
+        # Use a very short timeout so the test runs quickly
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time",
+            side_effect=[start, start + 0.0, start + 0.01, start + 999],
+        ):
+            result = connection._detect_vehicles_from_heartbeats(timeout=1)
+
+        assert isinstance(result, dict)
+
+    def test_select_supported_autopilot_returns_empty_string_on_success(self) -> None:
+        """
+        _select_supported_autopilot returns empty string when a supported autopilot is found.
+
+        GIVEN: A dictionary with one ArduPilot (MAV_AUTOPILOT_ARDUPILOTMEGA) heartbeat
+        WHEN: _select_supported_autopilot is called with that dictionary
+        THEN: An empty string should be returned to indicate success
+        AND: The info object should be populated with sysid / compid / type
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        # Build a fake heartbeat message where autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA
+        mock_heartbeat = Mock()
+        mock_heartbeat.autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+        mock_heartbeat.type = mavutil.mavlink.MAV_TYPE_QUADROTOR
+
+        detected_vehicles = {(1, 1): mock_heartbeat}
+
+        result = connection._select_supported_autopilot(detected_vehicles)
+
+        assert result == ""
+        assert connection.info.is_supported
+
+    def test_select_supported_autopilot_returns_error_when_none_supported(self) -> None:
+        """
+        _select_supported_autopilot returns an error when no autopilot is supported.
+
+        GIVEN: A dictionary with only unsupported autopilot heartbeat(s)
+        WHEN: _select_supported_autopilot is called
+        THEN: A non-empty error string should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        mock_heartbeat = Mock()
+        mock_heartbeat.autopilot = mavutil.mavlink.MAV_AUTOPILOT_GENERIC  # not ArduPilot
+
+        detected_vehicles = {(1, 1): mock_heartbeat}
+
+        result = connection._select_supported_autopilot(detected_vehicles)
+
+        assert result != ""
+
+    def test_select_supported_autopilot_returns_error_when_empty(self) -> None:
+        """
+        _select_supported_autopilot returns error for empty detected_vehicles dict.
+
+        GIVEN: No heartbeats were detected
+        WHEN: _select_supported_autopilot is called with an empty dict
+        THEN: An error message should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        result = connection._select_supported_autopilot({})
+        assert result != ""
+
+
+class TestFlightControllerConnectionBannerMethods:
+    """Test banner and version request methods."""
+
+    def test_request_banner_calls_command_long_send_when_master_is_set(self) -> None:
+        """
+        _request_banner sends a MAVLink command when master is not None.
+
+        GIVEN: A connection with a mock master object
+        WHEN: _request_banner() is called
+        THEN: master.mav.command_long_send() should be called once
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_master = Mock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        connection.master = mock_master
+
+        connection._request_banner()
+
+        mock_master.mav.command_long_send.assert_called_once()
+
+    def test_request_banner_does_nothing_when_master_is_none(self) -> None:
+        """
+        _request_banner silently does nothing when master is None.
+
+        GIVEN: A connection without a master (not connected)
+        WHEN: _request_banner() is called
+        THEN: No exception should be raised
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        assert connection.master is None
+        connection._request_banner()  # Must not raise
+
+    def test_receive_banner_text_collects_statustext_messages(self) -> None:
+        """
+        _receive_banner_text collects STATUS_TEXT messages until timeout.
+
+        GIVEN: A connection with a mock master that returns STATUS_TEXT messages
+        WHEN: _receive_banner_text() is called
+        THEN: All returned STATUS_TEXT text values should be collected in a list
+        AND: The list should be returned after timeout
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_master = Mock()
+
+        msg1 = Mock()
+        msg1.text = "ArduCopter V4.5.0"
+        msg2 = Mock()
+        msg2.text = "ChibiOS: abc1234"
+
+        call_count = 0
+
+        def recv_match_side_effect(**_kwargs) -> Mock | None:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return msg1
+            if call_count == 2:
+                return msg2
+            return None
+
+        mock_master.recv_match = recv_match_side_effect
+        connection.master = mock_master
+
+        start = real_time()
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time",
+                side_effect=[start, start, start, start + 9999],
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep"),
+        ):
+            banner_msgs = connection._receive_banner_text()
+
+        assert "ArduCopter V4.5.0" in banner_msgs
+        assert "ChibiOS: abc1234" in banner_msgs
+
+    def test_receive_banner_text_returns_empty_list_without_master(self) -> None:
+        """
+        _receive_banner_text returns an empty list when master is None.
+
+        GIVEN: A connection without a master
+        WHEN: _receive_banner_text() is called
+        THEN: An empty list should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        assert connection.master is None
+        result = connection._receive_banner_text()
+        assert not result
+
+    def test_request_message_calls_command_long_send_when_master_is_set(self) -> None:
+        """
+        _request_message sends a MAVLink command for the given message IDs.
+
+        GIVEN: A connection with a mock master
+        WHEN: _request_message() is called with a message ID
+        THEN: master.mav.command_long_send() should be called once with that ID
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_master = Mock()
+        connection.master = mock_master
+        connection.info.set_system_id_and_component_id("1", "1")
+
+        connection._request_message(mavutil.mavlink.MAVLINK_MSG_ID_AUTOPILOT_VERSION)
+
+        mock_master.mav.command_long_send.assert_called_once()
+
+    def test_request_message_does_nothing_when_master_is_none(self) -> None:
+        """
+        _request_message silently does nothing when master is None.
+
+        GIVEN: A connection without a master
+        WHEN: _request_message() is called
+        THEN: No exception should be raised
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        assert connection.master is None
+        connection._request_message(253)  # Must not raise
+
+
+class TestFlightControllerConnectionErrorGuidance:
+    """Test _get_connection_error_guidance messages."""
+
+    def test_permission_error_on_linux_dev_path_returns_guidance(self) -> None:
+        """
+        PermissionError on a Linux /dev/ path returns helpful guidance text.
+
+        GIVEN: A PermissionError on a path containing /dev/
+        WHEN: _get_connection_error_guidance is called on Linux (os_name=posix)
+        THEN: A non-empty guidance string about dialout group should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
+            "posix",
+        ):
+            guidance = connection._get_connection_error_guidance(
+                PermissionError("Permission denied"),
+                "/dev/ttyACM0",
+            )
+
+        assert "dialout" in guidance
+        assert len(guidance) > 0
+
+    def test_permission_error_on_windows_returns_empty_guidance(self) -> None:
+        """
+        PermissionError on Windows does not return Linux-specific guidance.
+
+        GIVEN: A PermissionError on Windows (os_name != posix)
+        WHEN: _get_connection_error_guidance is called
+        THEN: An empty string should be returned (no guidance)
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
+            "nt",
+        ):
+            guidance = connection._get_connection_error_guidance(
+                PermissionError("Permission denied"),
+                "COM3",
+            )
+
+        assert guidance == ""
+
+    def test_non_permission_error_returns_empty_guidance(self) -> None:
+        """
+        Non-PermissionError exceptions return empty guidance.
+
+        GIVEN: A generic ConnectionError (not PermissionError)
+        WHEN: _get_connection_error_guidance is called
+        THEN: Empty string should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        guidance = connection._get_connection_error_guidance(
+            ConnectionError("Connection refused"),
+            "/dev/ttyACM0",
+        )
+        assert guidance == ""
+
+
+class TestFlightControllerConnectionBannerParsing:
+    """Test banner and firmware version parsing methods."""
+
+    def test_extract_chibios_version_finds_version_in_banner(self) -> None:
+        """
+        _extract_chibios_version_from_banner extracts version string when present.
+
+        GIVEN: Banner messages containing a 'ChibiOS:' line
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: The version string should be returned
+        AND: The index of the ChibiOS line should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        banner_msgs = ["ArduCopter V4.5.0", "ChibiOS: abc1234567", "ArduCopter"]
+
+        os_ver, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        assert os_ver == "abc1234567"
+        assert index == 1
+
+    def test_extract_chibios_version_logs_warning_on_mismatch(self) -> None:
+        """
+        _extract_chibios_version_from_banner logs a warning when banner version does not match AUTOPILOT_VERSION.
+
+        GIVEN: Banner with ChibiOS version that differs from info.os_custom_version
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: A warning should be logged about the mismatch
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        # Simulate that AUTOPILOT_VERSION gave a different hash
+        connection.info.os_custom_version = "zzz9999999"
+        banner_msgs = ["ChibiOS: abc1234567"]
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.logging_warning") as mock_warn:
+            os_ver, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        assert os_ver == "abc1234567"
+        assert index == 0
+        mock_warn.assert_called_once()
+
+    def test_extract_chibios_version_returns_none_index_when_absent(self) -> None:
+        """
+        _extract_chibios_version_from_banner returns (empty, None) when ChibiOS not in banner.
+
+        GIVEN: Banner messages that do not contain 'ChibiOS:'
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: Empty string and None index should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        banner_msgs = ["ArduCopter V4.5.0", "Some other message"]
+
+        os_ver, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        assert os_ver == ""
+        assert index is None
+
+    def test_extract_firmware_type_from_message_after_chibios(self) -> None:
+        """
+        _extract_firmware_type_from_banner extracts type from message after ChibiOS line.
+
+        GIVEN: Banner messages where ChibiOS is at index 0 and firmware type at index 1
+        WHEN: _extract_firmware_type_from_banner is called with os_custom_version_index=0
+        THEN: The firmware type (first word of the next message) should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        banner_msgs = ["ChibiOS: abc1234", "ArduCopter V4.5.0 (dev)"]
+
+        firmware_type = connection._extract_firmware_type_from_banner(banner_msgs, os_custom_version_index=0)
+
+        assert firmware_type == "ArduCopter"
+
+    def test_extract_firmware_type_falls_back_to_first_message(self) -> None:
+        """
+        _extract_firmware_type_from_banner falls back to first message when no ChibiOS index.
+
+        GIVEN: Banner messages without a ChibiOS line (SITL scenario)
+        WHEN: _extract_firmware_type_from_banner is called with os_custom_version_index=None
+        THEN: The firmware type should be extracted from the first message
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        banner_msgs = ["ArduPlane V4.5.0"]
+
+        firmware_type = connection._extract_firmware_type_from_banner(banner_msgs, os_custom_version_index=None)
+
+        assert firmware_type == "ArduPlane"
+
+    def test_extract_firmware_type_returns_empty_for_empty_banner(self) -> None:
+        """
+        _extract_firmware_type_from_banner returns empty string when banner is empty.
+
+        GIVEN: An empty banner messages list
+        WHEN: _extract_firmware_type_from_banner is called
+        THEN: An empty string should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        firmware_type = connection._extract_firmware_type_from_banner([], os_custom_version_index=None)
+        assert firmware_type == ""
+
+
+class TestFlightControllerConnectionProcessAutopilotVersion:
+    """Test _process_autopilot_version covering edge cases."""
+
+    def test_process_autopilot_version_returns_error_when_m_is_none(self) -> None:
+        """
+        _process_autopilot_version returns error message when AUTOPILOT_VERSION not received.
+
+        GIVEN: No AUTOPILOT_VERSION message was received (m=None)
+        WHEN: _process_autopilot_version is called
+        THEN: A non-empty error string should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        result = connection._process_autopilot_version(None, [])
+        assert result != ""
+        assert "AUTOPILOT_VERSION" in result or "4.3.8" in result
+
+    def test_process_autopilot_version_firmware_mismatch_uses_banner_value(self) -> None:
+        """
+        _process_autopilot_version uses banner firmware type when it differs from AUTOPILOT_VERSION.
+
+        GIVEN: An AUTOPILOT_VERSION message and a banner with a different firmware type
+        WHEN: _process_autopilot_version is called
+        THEN: firmware_type should be overridden with the banner value
+        AND: A debug log should be emitted about the mismatch
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        # Create a mock AUTOPILOT_VERSION message with board_version that maps to something
+        mock_m = Mock()
+        mock_m.capabilities = 0
+        mock_m.flight_sw_version = 0x04050000
+        mock_m.vendor_id = 0
+        mock_m.product_id = 0
+        mock_m.board_version = 0
+        mock_m.flight_custom_version = [0] * 8
+        mock_m.os_custom_version = [0] * 8
+
+        # After _populate_flight_controller_info, firmware_type will be set by set_board_version
+        # We need banner to have a different firmware type
+        banner_msgs = ["ChibiOS: abc1234", "ArduPlane V4.5.0 (dev)"]
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.logging_debug") as mock_debug:
+            result = connection._process_autopilot_version(mock_m, banner_msgs)
+
+        assert result == ""
+        # firmware_type should be overridden with 'ArduPlane' from the banner
+        assert connection.info.firmware_type == "ArduPlane"
+        # Should have logged a debug message about the mismatch
+        mock_debug.assert_called()
+
+    def test_process_autopilot_version_returns_empty_without_mismatch(self) -> None:
+        """
+        _process_autopilot_version returns empty string when successfully processed.
+
+        GIVEN: A valid AUTOPILOT_VERSION message with no banner firmware mismatch
+        WHEN: _process_autopilot_version is called
+        THEN: An empty string should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        mock_m = Mock()
+        mock_m.capabilities = 0
+        mock_m.flight_sw_version = 0x04050000
+        mock_m.vendor_id = 0
+        mock_m.product_id = 0
+        mock_m.board_version = 0
+        mock_m.flight_custom_version = [0] * 8
+        mock_m.os_custom_version = [0] * 8
+
+        # Empty banner — no firmware type to compare
+        result = connection._process_autopilot_version(mock_m, [])
+
+        assert result == ""
+
+
+class TestFlightControllerConnectionRetry:
+    """Test create_connection_with_retry edge cases."""
+
+    def test_create_connection_udp_device_logs_without_baudrate(self) -> None:
+        """
+        create_connection_with_retry logs UDP/TCP info without baud rate.
+
+        GIVEN: comport device starts with 'udp'
+        WHEN: create_connection_with_retry is called
+        THEN: logging_info should be called without mentioning baud rate
+        AND: connection should proceed normally
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        connection.comport = mavutil.SerialPort(device="udp:127.0.0.1:14550", description="UDP")
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.logging_info") as mock_info,
+            patch.object(connection, "_detect_vehicles_from_heartbeats", return_value={}),
+            patch.object(connection, "_select_supported_autopilot", return_value="no heartbeat"),
+        ):
+            result = connection.create_connection_with_retry(progress_callback=None, retries=1, timeout=1)
+
+        # Should have logged the UDP connection info (without baudrate)
+        info_calls = [str(c) for c in mock_info.call_args_list]
+        assert any("udp:127.0.0.1:14550" in c for c in info_calls)
+        assert result != ""  # error from no heartbeat
+
+    def test_create_connection_with_retry_raises_connection_error_when_master_is_none(self) -> None:
+        """
+        create_connection_with_retry raises ConnectionError when factory returns None.
+
+        GIVEN: The MAVLink factory returns None (connection failed to create)
+        WHEN: create_connection_with_retry is called with log_errors=False
+        THEN: The returned string should contain the device name
+        """
+
+        class NullFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
+            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
+            ) -> None:  # type: ignore[override]
+                return None
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=NullFactory(),
+        )
+        connection.comport = mavutil.SerialPort(device="COM99", description="Test")
+
+        result = connection.create_connection_with_retry(progress_callback=None, retries=1, timeout=1, log_errors=False)
+
+        assert "COM99" in result
+
+    def test_create_connection_with_retry_logs_errors_when_log_errors_is_true(self) -> None:
+        """
+        create_connection_with_retry logs warning and error messages when log_errors=True.
+
+        GIVEN: A connection that raises ConnectionError and log_errors=True
+        WHEN: create_connection_with_retry is called
+        THEN: logging_warning and logging_error should each be called once
+        """
+
+        class NullFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
+            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
+            ) -> None:  # type: ignore[override]
+                return None
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=NullFactory(),
+        )
+        connection.comport = mavutil.SerialPort(device="COM99", description="Test")
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.logging_warning") as mock_warn,
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.logging_error") as mock_err,
+        ):
+            connection.create_connection_with_retry(progress_callback=None, retries=1, timeout=1, log_errors=True)
+
+        mock_warn.assert_called_once()
+        mock_err.assert_called_once()
+
+    def test_create_connection_appends_guidance_on_permission_error_linux(self) -> None:
+        """
+        create_connection_with_retry appends guidance text on PermissionError.
+
+        GIVEN: A Linux system where a PermissionError occurs on /dev/ path
+        WHEN: create_connection_with_retry is called
+        THEN: Returned error message should include the guidance text
+        """
+
+        class PermErrorFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
+            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
+            ) -> NoReturn:
+                err_msg = "Permission denied"
+                raise PermissionError(err_msg)
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=PermErrorFactory(),
+        )
+        connection.comport = mavutil.SerialPort(device="/dev/ttyACM0", description="Test")
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
+            "posix",
+        ):
+            result = connection.create_connection_with_retry(progress_callback=None, retries=1, timeout=1, log_errors=False)
+
+        assert "dialout" in result
+
+
 class TestConnectionStateManagement:
     """Test connection state management and lifecycle."""
 
@@ -1476,6 +2182,313 @@ class TestFlightControllerConnectionProgressCallbacks:
             # Check each value is >= previous (allowing duplicates)
             for i in range(1, len(values)):
                 assert values[i] >= values[i - 1], f"Progress decreased: {values[i - 1]} -> {values[i]}"
+
+
+class TestFlightControllerConnectionSetMaster:
+    """Tests for set_master_for_testing method edge cases."""
+
+    def test_set_master_for_testing_none_clears_comport(self) -> None:
+        """
+        set_master_for_testing(None) clears comport.
+
+        GIVEN: A connection with a comport set
+        WHEN: set_master_for_testing is called with None
+        THEN: comport should also be set to None
+        """
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "FC")
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        # Manually set comport before calling the tested method
+        mock_comport = Mock()
+        mock_comport.device = "/dev/ttyUSB0"
+        connection.comport = mock_comport
+
+        connection.set_master_for_testing(None)
+
+        assert connection.comport is None
+        assert connection.master is None
+
+    def test_set_master_for_testing_with_object_keeps_comport(self) -> None:
+        """
+        set_master_for_testing with a real master does not clear comport.
+
+        GIVEN: A connection with a comport set
+        WHEN: set_master_for_testing is called with a mock master
+        THEN: comport should remain unchanged
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        mock_comport = Mock()
+        mock_comport.device = "/dev/ttyUSB0"
+        connection.comport = mock_comport
+
+        mock_master = Mock()
+        connection.set_master_for_testing(mock_master)
+
+        assert connection.master is mock_master
+        # comport was NOT cleared
+        assert connection.comport is mock_comport
+
+
+class TestFlightControllerConnectionRegisterAndTryConnect:  # pylint: disable=too-few-public-methods
+    """Tests for _register_and_try_connect when device already exists in tuples."""
+
+    def test_device_already_in_connection_tuples_skips_insert(self) -> None:
+        """
+        _register_and_try_connect skips insert when device already in _connection_tuples.
+
+        GIVEN: A connection with '/dev/ttyUSB0' already in _connection_tuples
+        WHEN: _register_and_try_connect is called with the same device
+        THEN: The tuple list should not gain a duplicate entry
+        AND: create_connection_with_retry should still be called
+        """
+        fake_serial = FakeSerialPortDiscovery()
+        fake_serial.add_port("/dev/ttyUSB0", "FC")
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=fake_serial,
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        # Pre-populate the connection_tuples with the same device
+        connection._connection_tuples = [("/dev/ttyUSB0", "FC"), ("", "Disconnect")]
+
+        initial_len = len(connection._connection_tuples)
+
+        mock_comport = Mock()
+        mock_comport.device = "/dev/ttyUSB0"
+
+        with patch.object(connection, "create_connection_with_retry", return_value="") as mock_retry:
+            connection._register_and_try_connect(
+                comport=mock_comport,
+                progress_callback=None,
+                baudrate=115200,
+                log_errors=False,
+            )
+
+        # The list should not have grown
+        assert len(connection._connection_tuples) == initial_len
+        # create_connection_with_retry should still be called
+        mock_retry.assert_called_once()
+
+
+class TestFlightControllerConnectionAutoDetectWithMavlink:
+    """Tests for _auto_detect_serial when connection tuples have 'mavlink' description."""
+
+    def test_single_mavlink_port_returns_directly(self) -> None:
+        """
+        _auto_detect_serial returns single mavlink port without calling auto_detect_serial.
+
+        GIVEN: A connection with exactly one entry having 'mavlink' in description
+        WHEN: _auto_detect_serial is called
+        THEN: That single port should be returned directly (not via mavutil.auto_detect_serial)
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        # Pre-populate with a single mavlink-described port
+        connection._connection_tuples = [
+            ("udp:127.0.0.1:14550", "MAVLink UDP"),
+            ("", "Disconnect"),
+        ]
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial"
+        ) as mock_auto_detect:
+            result = connection._auto_detect_serial()
+
+        # auto_detect_serial should NOT have been called
+        mock_auto_detect.assert_not_called()
+        assert result is not None
+        assert len(result) == 1
+        assert result[0].device == "udp:127.0.0.1:14550"
+
+    def test_multiple_mavlink_ports_falls_through_to_autodetect(self) -> None:
+        """
+        _auto_detect_serial falls through to mavutil.auto_detect_serial when >1 mavlink port.
+
+        GIVEN: A connection with 2+ entries having 'mavlink' in description
+        WHEN: _auto_detect_serial is called
+        THEN: mavutil.auto_detect_serial should be called for hardware detection
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        connection._connection_tuples = [
+            ("udp:127.0.0.1:14550", "MAVLink UDP"),
+            ("tcp:192.168.1.1:5760", "MAVLink TCP"),
+            ("", "Disconnect"),
+        ]
+
+        mock_ports = [Mock()]
+        mock_ports[0].device = "/dev/ttyUSB0"
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+            return_value=mock_ports,
+        ) as mock_auto_detect:
+            result = connection._auto_detect_serial()
+
+        mock_auto_detect.assert_called_once()
+        assert result == mock_ports
+
+
+class TestFlightControllerConnectionChibiOSVersionMatch:
+    """Tests for _extract_chibios_version_from_banner when versions match."""
+
+    def test_matching_chibi_os_version_no_warning_logged(self) -> None:
+        """
+        _extract_chibios_version_from_banner does not log warning when versions match.
+
+        GIVEN: A banner with 'ChibiOS: abcdef1' and info.os_custom_version = 'abcdef1'
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: No warning is logged, and os_custom_version is extracted
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        connection.info.os_custom_version = "abcdef1234567"
+
+        banner_msgs = ["ChibiOS: abcdef1234567", "ArduCopter V4.5.0"]
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.logging_warning") as mock_warn:
+            version, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        mock_warn.assert_not_called()
+        assert version == "abcdef1234567"
+        assert index == 0
+
+    def test_mismatched_chibios_version_logs_warning(self) -> None:
+        """
+        _extract_chibios_version_from_banner logs a warning when versions differ.
+
+        GIVEN: A banner with 'ChibiOS: abc123' but info.os_custom_version = 'xyz789'
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: A warning should be logged about the version mismatch
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        connection.info.os_custom_version = "xyz789aaaaaaa"
+
+        banner_msgs = ["ChibiOS: abc123aaaaaaa"]
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.logging_warning") as mock_warn:
+            version, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        mock_warn.assert_called_once()
+        assert version == "abc123aaaaaaa"
+        assert index == 0
+
+
+class TestFlightControllerConnectionFirmwareTypeExtraction:
+    """Tests for _extract_firmware_type_from_banner edge cases."""
+
+    def test_message_after_chibi_os_with_few_words_falls_to_fallback(self) -> None:
+        """
+        _extract_firmware_type_from_banner uses fallback when post-ChibiOS message has <3 words.
+
+        GIVEN: Banner where after ChibiOS there is a message with fewer than 3 words
+        AND: First banner message has 1+ good word
+        WHEN: _extract_firmware_type_from_banner is called
+        THEN: firmware_type should be extracted from first banner message (fallback)
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        # index=0, so index+1=1; message at index 1 has only 1 word (< 3)
+        banner_msgs = ["ChibiOS: abc123", "ShortMsg"]
+        os_custom_version_index = 0
+
+        result = connection._extract_firmware_type_from_banner(banner_msgs, os_custom_version_index)
+
+        # Fallback would use banner_msgs[0] = "ChibiOS: abc123", first word = "ChibiOS:"
+        # But since os_custom_version_index is NOT None, the elif fallback is not taken
+        # (only elif when index IS None)
+        # With index=0 but post-ChibiOS message too short, firmware_type stays ""
+        assert result == ""
+
+    def test_no_chibi_os_uses_first_banner_message(self) -> None:
+        """
+        _extract_firmware_type_from_banner uses first banner message when no ChibiOS found.
+
+        GIVEN: Banner without ChibiOS (os_custom_version_index is None)
+        AND: First banner message has multiple words
+        WHEN: _extract_firmware_type_from_banner is called
+        THEN: First word of first message should be used as firmware_type
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        banner_msgs = ["ArduCopter V4.5.0 extra-data"]
+
+        result = connection._extract_firmware_type_from_banner(banner_msgs, None)
+
+        assert result == "ArduCopter"
+
+    def test_empty_first_word_in_fallback_returns_empty(self) -> None:
+        """
+        _extract_firmware_type_from_banner returns empty when first word is whitespace.
+
+        GIVEN: Banner without ChibiOS, first message is all whitespace
+        WHEN: _extract_firmware_type_from_banner is called
+        THEN: Empty firmware_type should be returned
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        banner_msgs = ["   "]  # Only whitespace
+
+        result = connection._extract_firmware_type_from_banner(banner_msgs, None)
+
+        assert result == ""
+
+
+class TestFlightControllerConnectionRetrieveAutopilotVersion:  # pylint: disable=too-few-public-methods
+    """Tests for _retrieve_autopilot_version_and_banner."""
+
+    def test_retrieve_autopilot_version_calls_sub_methods(self) -> None:
+        """
+        _retrieve_autopilot_version_and_banner calls banner request methods and processes the result.
+
+        GIVEN: A connection with a mock master
+        WHEN: _retrieve_autopilot_version_and_banner is called
+        THEN: _request_banner, _receive_banner_text, _request_message, and _process_autopilot_version
+              should all be called
+        """
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=FakeMavlinkConnectionFactory(),
+        )
+        mock_master = Mock()
+        connection.master = mock_master
+
+        with (
+            patch.object(connection, "_request_banner") as mock_req_banner,
+            patch.object(connection, "_receive_banner_text", return_value=["ArduCopter V4.5.0"]) as mock_recv,
+            patch.object(connection, "_request_message") as mock_req_msg,
+            patch.object(connection, "_process_autopilot_version", return_value="") as mock_process,
+        ):
+            mock_master.recv_match.return_value = Mock()
+            result = connection._retrieve_autopilot_version_and_banner(timeout=5)
+
+        mock_req_banner.assert_called_once()
+        mock_recv.assert_called_once()
+        mock_req_msg.assert_called_once()
+        mock_process.assert_called_once()
+        assert result == ""
 
 
 if __name__ == "__main__":

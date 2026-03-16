@@ -1267,3 +1267,264 @@ class TestPersistAndCacheConnectionBehavior:
         mock_fc.add_connection.assert_called_with(normalized)
         mock_combobox.set_entries_tuple.assert_called_with(updated_tuples, normalized)
         mock_reconnect.assert_called_with(normalized)
+
+
+# ---------------------------------------------------------------------------
+# TestRefreshPortsErrorHandling
+# ---------------------------------------------------------------------------
+
+
+class TestRefreshPortsErrorHandling:
+    """
+    BDD tests for error handling inside _refresh_ports.
+
+    These tests cover exception branches that only trigger under OS-level errors
+    or when the tkinter root widget is already destroyed.
+    """
+
+    def test_refresh_ports_catches_os_error_and_marks_not_refreshing(
+        self, periodic_widget: ConnectionSelectionWidgets
+    ) -> None:
+        """
+        _refresh_ports catches OSError from port discovery and resets _is_refreshing.
+
+        GIVEN: Port discovery raises an OSError (e.g., device unplugged mid-scan)
+        WHEN: _refresh_ports is triggered
+        THEN: _is_refreshing should be False after the call
+        AND: The combobox should NOT have been updated
+        """
+        mock_combobox = MagicMock()
+        periodic_widget.conn_selection_combobox = mock_combobox
+        mock_combobox.get_selected_key.return_value = "COM1"
+
+        periodic_widget._mock_fc.discover_connections.side_effect = OSError("disk I/O error")  # type: ignore[attr-defined]
+
+        periodic_widget._refresh_ports()
+
+        assert not periodic_widget._is_refreshing
+        mock_combobox.set_entries_tuple.assert_not_called()
+
+    def test_refresh_ports_stops_timer_when_tcl_error_on_reschedule(self, periodic_widget: ConnectionSelectionWidgets) -> None:
+        """
+        _refresh_ports calls stop_periodic_refresh when winfo_exists raises TclError.
+
+        GIVEN: The parent root widget has already been destroyed (TclError)
+        WHEN: _refresh_ports tries to reschedule itself via root.after()
+        THEN: stop_periodic_refresh should be called
+        AND: No unhandled exception should propagate
+        """
+        mock_combobox = MagicMock()
+        periodic_widget.conn_selection_combobox = mock_combobox
+        mock_combobox.get_selected_key.return_value = "COM1"
+        mock_combobox.get_entries_tuple.return_value = []
+        periodic_widget._mock_fc.get_connection_tuples.return_value = []  # type: ignore[attr-defined]
+
+        # winfo_exists raises TclError when root is already destroyed
+        periodic_widget.parent.root.winfo_exists.side_effect = tk.TclError("application has been destroyed")
+
+        with patch.object(periodic_widget, "stop_periodic_refresh") as mock_stop:
+            periodic_widget._refresh_ports()
+
+        mock_stop.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# TestReconnectBaudrateValidation
+# ---------------------------------------------------------------------------
+
+
+class TestReconnectBaudrateValidation:
+    """
+    BDD tests for baudrate validation inside reconnect().
+
+    Covers the warning path (unsupported-but-valid baudrate) and the error path
+    (baudrate below 1200 which raises ValueError and reverts to the default).
+    """
+
+    def test_reconnect_logs_warning_for_unsupported_baudrate(self, periodic_widget: ConnectionSelectionWidgets) -> None:
+        """
+        reconnect() logs a warning when baudrate is valid int but not in SUPPORTED_BAUDRATES.
+
+        GIVEN: User has set an unusual baudrate (e.g. 99999) not in SUPPORTED_BAUDRATES
+        WHEN: reconnect() is called
+        THEN: logging_warning should be called once about the unsupported baudrate
+        AND: Connection should still be attempted (no crash)
+        """
+        periodic_widget.baudrate_var = MagicMock()
+        periodic_widget.baudrate_var.get.return_value = "99999"
+        periodic_widget.default_baudrate = 115200
+        periodic_widget.connection_progress_window = None  # prevent attribute errors
+
+        # 99999 is not in SUPPORTED_BAUDRATES but >= 1200 so no ValueError
+        assert "99999" not in SUPPORTED_BAUDRATES
+
+        with (
+            patch(f"{_MOD}.logging_warning") as mock_warn,
+            patch(f"{_MOD}.ProgressWindow"),
+            patch.object(periodic_widget._mock_fc, "connect", return_value="") as mock_connect,  # type: ignore[attr-defined]
+            patch(f"{_MOD}.messagebox"),
+        ):
+            periodic_widget.reconnect("COM1")
+
+        # Warning should have been emitted for unsupported baudrate
+        assert mock_warn.call_count >= 1
+        unsupported_warn_found = any("99999" in str(c) or "nsupported" in str(c) for c in mock_warn.call_args_list)
+        assert unsupported_warn_found
+        mock_connect.assert_called_once()
+
+    def test_reconnect_reverts_to_default_baudrate_when_below_1200(self, periodic_widget: ConnectionSelectionWidgets) -> None:
+        """
+        reconnect() reverts to the default baudrate when selected baudrate is < 1200.
+
+        GIVEN: User has mistakenly set baudrate to 100 (below minimum 1200)
+        WHEN: reconnect() is called
+        THEN: baudrate_var should be reset to the default baudrate "115200"
+        AND: An error messagebox should be shown
+        AND: Connection should be attempted with the reverted default baudrate
+        """
+        periodic_widget.baudrate_var = MagicMock()
+        periodic_widget.baudrate_var.get.return_value = "100"  # below 1200
+        periodic_widget.default_baudrate = 115200
+
+        with (
+            patch(f"{_MOD}.ProgressWindow"),
+            patch(f"{_MOD}.messagebox") as mock_msgbox,
+            patch.object(periodic_widget._mock_fc, "connect", return_value="") as mock_connect,  # type: ignore[attr-defined]
+            patch(f"{_MOD}.logging_error"),
+        ):
+            periodic_widget.reconnect("COM1")
+
+        # baudrate_var should be reset to the default
+        periodic_widget.baudrate_var.set.assert_called_with(str(115200))
+        mock_msgbox.showerror.assert_called_once()
+        mock_connect.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# TestConnectionSelectionWindowColonBranch
+# ---------------------------------------------------------------------------
+
+
+class TestConnectionSelectionWindowColonBranch:
+    """
+    BDD tests for ConnectionSelectionWindow.__init__ introduction text formatting.
+
+    Tests the branch where connection_result_string contains a ':' character,
+    which should be split to separate the label text onto multiple lines.
+    """
+
+    def test_init_replaces_colon_with_newline_in_introduction_text(self, mock_fc: MagicMock) -> None:
+        r"""
+        Introduction text replaces ':' with ':\\n' when comport is set.
+
+        GIVEN: The flight controller already has a comport and connection_result_string
+            contains a colon (e.g. an error like "Error: details")
+        WHEN: ConnectionSelectionWindow is initialized
+        THEN: The introduction label text should have ':\\n' in place of ':'
+        AND: The raw colon should not appear on the same line as the following text
+        """
+
+        def _mock_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
+            self.root = MagicMock()
+            self.main_frame = MagicMock()
+
+        mock_comport = MagicMock()
+        mock_comport.device = "COM1"
+        mock_fc.comport = mock_comport
+
+        captured_labels: list[str] = []
+
+        def capture_label(*args, **kwargs) -> MagicMock:
+            text = kwargs.get("text", "")
+            if not text and args:
+                # positional: Label(parent, text=...) — skip positional parent arg
+                pass
+            captured_labels.append(text)
+            return MagicMock()
+
+        connection_result = "Connection failed: timeout"
+
+        with (
+            patch("tkinter.Tk"),
+            patch("tkinter.Toplevel"),
+            patch("tkinter.PhotoImage"),
+            patch.object(tk.Tk, "iconphoto"),
+            patch.object(tk.Toplevel, "iconphoto"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.ProgramSettings.application_icon_filepath",
+                return_value="mock_icon.png",
+            ),
+            patch("tkinter.ttk.Frame"),
+            patch("tkinter.ttk.Label", side_effect=capture_label),
+            patch("tkinter.ttk.LabelFrame"),
+            patch("tkinter.ttk.Button"),
+            patch("tkinter.ttk.Style"),
+            patch(f"{_MOD}.ConnectionSelectionWidgets"),
+            patch(f"{_MOD}.show_tooltip"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.__init__",
+                _mock_basewindow_init,
+            ),
+        ):
+            _ = ConnectionSelectionWindow(mock_fc, connection_result)
+
+        # The introduction text should contain newline after colon
+        assert any(":\n" in label for label in captured_labels), (
+            f"No label with colon-newline found. Labels: {captured_labels}"
+        )
+
+    def test_init_uses_plain_text_when_comport_set_and_no_colon(self, mock_fc: MagicMock) -> None:
+        """
+        Introduction text uses connection_result_string as-is when comport is set and no colon.
+
+        GIVEN: An active comport and a connection_result_string without ':' character
+        WHEN: ConnectionSelectionWindow is initialized
+        THEN: The introduction label text should match the result string exactly (no replacement)
+        AND: No newline should be inserted into the text
+        """
+
+        def _mock_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
+            self.root = MagicMock()
+            self.main_frame = MagicMock()
+
+        mock_comport = MagicMock()
+        mock_comport.device = "COM1"
+        mock_fc.comport = mock_comport  # Not None, so goes to elif/else
+
+        captured_labels: list[str] = []
+
+        def capture_label(*_args, **kwargs) -> MagicMock:
+            text = kwargs.get("text", "")
+            captured_labels.append(text)
+            return MagicMock()
+
+        connection_result = "Connection successful"  # No colon → else branch
+
+        with (
+            patch("tkinter.Tk"),
+            patch("tkinter.Toplevel"),
+            patch("tkinter.PhotoImage"),
+            patch.object(tk.Tk, "iconphoto"),
+            patch.object(tk.Toplevel, "iconphoto"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.ProgramSettings.application_icon_filepath",
+                return_value="mock_icon.png",
+            ),
+            patch("tkinter.ttk.Frame"),
+            patch("tkinter.ttk.Label", side_effect=capture_label),
+            patch("tkinter.ttk.LabelFrame"),
+            patch("tkinter.ttk.Button"),
+            patch("tkinter.ttk.Style"),
+            patch(f"{_MOD}.ConnectionSelectionWidgets"),
+            patch(f"{_MOD}.show_tooltip"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.__init__",
+                _mock_basewindow_init,
+            ),
+        ):
+            _ = ConnectionSelectionWindow(mock_fc, connection_result)
+
+        # The introduction text should use the exact result string without newline
+        assert any(label == "Connection successful" for label in captured_labels), (
+            f"Plain text label not found. Labels: {captured_labels}"
+        )
