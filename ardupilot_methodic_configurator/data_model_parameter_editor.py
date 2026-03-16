@@ -1661,7 +1661,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     # frontend_tkinter_parameter_editor_table.py API start
 
-    def _repopulate_configuration_step_parameters(
+    def _repopulate_configuration_step_parameters(  # pylint: disable=too-many-locals, too-many-branches
         self,
     ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
         """
@@ -1730,6 +1730,30 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 # Remove old parameter from domain model
                 if old_name in self.current_step_parameters:
                     del self.current_step_parameters[old_name]
+
+        # Process delete_parameters and add-from-FC derived entries from configuration steps
+        step_info = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        if step_info:
+            variables = self._config_step_processor.variables.copy()
+            variables["fc_parameters"] = self.fc_parameters
+
+            # Apply add-from-FC: derived entries whose condition passed are already stored in derived_parameters;
+            # add any that are not yet in current_step_parameters
+            fc_parameters = self.fc_parameters
+            for param_name, param in self._local_filesystem.derived_parameters.get(self.current_file, ParDict()).items():
+                if param_name not in self.current_step_parameters and param_name in fc_parameters:
+                    self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                        param_name, param, self.current_file, fc_parameters
+                    )
+                    self._added_parameters.add(param_name)
+
+            # Apply deletions - remove parameters from domain model and track them.
+            # Note: compute_deletions is also called in calculate_derived_and_forced_param_changes to
+            # update the pre-computed filesystem working copy; this separate call updates the live UI domain model.
+            for param_name in self._local_filesystem.compute_deletions(self.current_file, step_info, variables):
+                if param_name in self.current_step_parameters:
+                    self._deleted_parameters.add(param_name)
+                    del self.current_step_parameters[param_name]
 
         return ui_errors, ui_infos
 
