@@ -62,18 +62,26 @@ class ProgressWindow:
         if not self.only_show_when_update_progress_called:
             self.progress_window.deiconify()  # needs to be done before centering, but it does flicker :(
 
-        # Center the progress window on screen or on parent
-        # Use screen centering if parent is a minimal temp root (like in FlightControllerConnectionProgress)
-        if isinstance(self.parent, tk.Tk) and self.parent.winfo_width() <= 1:
-            BaseWindow.center_window_on_screen(self.progress_window)
-        else:
-            BaseWindow.center_window(self.progress_window, self.parent)
+        self._center_progress_window()
 
         if not self.only_show_when_update_progress_called:
             # Show the window now that it's properly positioned
             self.progress_window.lift()
             self._shown = True
             self.progress_bar.update()
+
+    def _center_progress_window(self) -> None:
+        """
+        Center the progress window on screen or relative to its parent.
+
+        Uses screen centering when the parent is not viewable (e.g., a withdrawn temp root
+        in FlightControllerConnectionProgress). On Windows, withdrawn windows can report
+        winfo_width() > 1, so winfo_viewable() is checked as well.
+        """
+        if isinstance(self.parent, tk.Tk) and (self.parent.winfo_width() <= 1 or not self.parent.winfo_viewable()):
+            BaseWindow.center_window_on_screen(self.progress_window)
+        else:
+            BaseWindow.center_window(self.progress_window, self.parent)
 
     def update_progress_bar_300_pct(self, percent: int) -> None:
         self.message = _("Please be patient, {:.1f}% of {}% complete")
@@ -99,12 +107,7 @@ class ProgressWindow:
 
             if self.only_show_when_update_progress_called and not self._shown:
                 self.progress_window.deiconify()
-                # Re-center the window when it's first shown
-                # Use screen centering if parent is a minimal temp root
-                if isinstance(self.parent, tk.Tk) and self.parent.winfo_width() <= 1:
-                    BaseWindow.center_window_on_screen(self.progress_window)
-                else:
-                    BaseWindow.center_window(self.progress_window, self.parent)
+                self._center_progress_window()
                 self.progress_window.lift()
                 self._shown = True
             elif not self.only_show_when_update_progress_called:

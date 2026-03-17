@@ -28,6 +28,7 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
             )
         )
         self.root.geometry("700x600")
+        BaseWindow.center_window_on_screen(self.root)
         self.download_callback = download_callback
         self.root.protocol("WM_DELETE_WINDOW", self.on_cancel)
 
