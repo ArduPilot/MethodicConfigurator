@@ -331,8 +331,14 @@ class BaseWindow:
         window.update_idletasks()
 
         # Get the window dimensions
-        window_width = window.winfo_reqwidth()
-        window_height = window.winfo_reqheight()
+        # Use winfo_width/height (actual rendered size) like center_window() does.
+        # Fall back to winfo_reqwidth/height for windows not yet mapped (returns 1).
+        window_width = window.winfo_width()
+        window_height = window.winfo_height()
+        if window_width <= 1:
+            window_width = window.winfo_reqwidth()
+        if window_height <= 1:
+            window_height = window.winfo_reqheight()
 
         # Get pointer position to determine which monitor it's on
         pointer_x = window.winfo_pointerx()

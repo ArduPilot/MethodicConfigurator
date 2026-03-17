@@ -251,3 +251,37 @@ class TestProgressWindowUserExperience:
 
         # Should be lifted again
         progress_window.progress_window.lift.assert_called_once()
+
+    def test_user_sees_fc_init_progress_centered_on_screen_when_parent_is_withdrawn(self, tk_root) -> None:
+        """
+        User sees FC init progress window centered on screen when parent is withdrawn.
+
+        GIVEN: A progress window created with a withdrawn parent (like FC connection progress)
+        WHEN: The window is first shown via update_progress_bar
+        THEN: Screen centering is used instead of parent-relative centering
+        """
+        tk_root.withdraw()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window_on_screen"
+            ) as mock_center_screen,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"
+            ) as mock_center_parent,
+        ):
+            window = ProgressWindow(
+                tk_root,
+                title="FC Init",
+                message="Init: {}/{}",
+                only_show_when_update_progress_called=True,
+            )
+
+            window.update_progress_bar(10, 100)
+
+            # Screen centering should be used, not parent-relative
+            assert mock_center_screen.call_count >= 1
+            mock_center_parent.assert_not_called()
+
+            with contextlib.suppress(Exception):
+                window.destroy()
