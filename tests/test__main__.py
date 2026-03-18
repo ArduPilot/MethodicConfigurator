@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -29,16 +30,21 @@ from ardupilot_methodic_configurator.__main__ import (
     create_argument_parser,
     display_first_use_documentation,
     get_preferred_vehicle_dir,
+    initialize_filesystem,
     initialize_flight_controller_and_filesystem,
+    main,
     open_firmware_documentation,
     parameter_editor_and_uploader,
     process_component_editor_results,
+    register_plugins,
     resolve_writable_vehicle_dir_for_initial_download,
     should_open_firmware_documentation,
+    validate_plugin_registry,
     vehicle_directory_selection,
     write_parameter_defaults,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 
 # pylint: disable=too-many-lines,redefined-outer-name,too-few-public-methods
@@ -1403,3 +1409,600 @@ class TestComponentEditorIntegration:
 
             # Assert: Documentation opened
             mock_open_doc.assert_called_once_with("CubeOrange")
+
+
+class TestRegisterPluginsInternals:
+    """Feature: Plugin registration executes both plugin registrations."""
+
+    def test_both_plugin_register_functions_are_called(self) -> None:
+        """
+        register_plugins calls motor_test and battery_monitor registration.
+
+        GIVEN: Both plugin register functions are available
+        WHEN: register_plugins is called
+        THEN: register_motor_test_plugin and register_battery_monitor_plugin are executed
+        """
+        # Arrange
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.register_motor_test_plugin") as mock_motor,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.register_battery_monitor_plugin"
+            ) as mock_battery,
+        ):
+            register_plugins()
+
+            # Assert
+            mock_motor.assert_called_once()
+            mock_battery.assert_called_once()
+
+
+class TestValidatePluginRegistry:
+    """Feature: All configured plugins must be registered before startup."""
+
+    def test_no_error_logged_when_every_plugin_is_registered(self) -> None:
+        """
+        Every configured plugin is successfully registered.
+
+        GIVEN: A filesystem with a known, registered plugin ('motor_test')
+        WHEN: validate_plugin_registry is called
+        THEN: No errors are logged
+        """
+        # Arrange
+        mock_fs = MagicMock()
+        mock_fs.configuration_steps = {"step1.param": {"plugin": {"name": "motor_test"}}}
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.plugin_factory") as mock_factory,
+            patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err,
+        ):
+            mock_factory.is_registered.return_value = True
+
+            # Act
+            validate_plugin_registry(mock_fs)
+
+            # Assert
+            mock_err.assert_not_called()
+
+    def test_error_logged_for_unregistered_plugin(self) -> None:
+        """
+        A configured plugin is missing from the registry.
+
+        GIVEN: A filesystem referencing an unregistered plugin
+        WHEN: validate_plugin_registry is called
+        THEN: An error is logged identifying the missing plugin
+        """
+        # Arrange
+        mock_fs = MagicMock()
+        mock_fs.configuration_steps = {"step1.param": {"plugin": {"name": "unknown_plugin"}}}
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.plugin_factory") as mock_factory,
+            patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err,
+        ):
+            mock_factory.is_registered.return_value = False
+
+            # Act
+            validate_plugin_registry(mock_fs)
+
+            # Assert
+            mock_err.assert_called_once()
+            args, kwargs = mock_err.call_args
+            # Ensure that the logged error message identifies the missing plugin
+            combined = " ".join([str(a) for a in args] + [str(v) for v in kwargs.values()])
+            assert "unknown_plugin" in combined
+
+
+class TestConnectionAndFilesystemBranches:
+    """Feature: Connection errors, writable-dir fallback and filesystem fatal errors."""
+
+    def test_first_use_documentation_opens_correct_url(self) -> None:
+        """
+        display_first_use_documentation opens the USECASES first-time URL.
+
+        GIVEN: The application is running for the first time
+        WHEN: display_first_use_documentation is called
+        THEN: webbrowser_open_url is called with the USECASES.html URL and autoraise=True
+        """
+        with patch("ardupilot_methodic_configurator.__main__.webbrowser_open_url") as mock_open:
+            # Act
+            display_first_use_documentation()
+
+            # Assert
+            mock_open.assert_called_once()
+            url_arg: str = mock_open.call_args[1].get("url") or mock_open.call_args[0][0]
+            assert "USECASES.html" in url_arg
+            assert "first-time" in url_arg
+            assert mock_open.call_args[1].get("autoraise") is True
+
+    def test_connection_selection_window_shown_when_fc_returns_error(self) -> None:
+        """
+        ConnectionSelectionWindow is shown when the flight controller returns an error.
+
+        GIVEN: connect_to_fc returns a non-empty error string and a device path is set
+        WHEN: connect_to_fc_and_set_vehicle_type is called
+        THEN: ConnectionSelectionWindow is constructed and root.mainloop is called
+        """
+        # Arrange
+        mock_fc = MagicMock()
+        mock_fc.info.vehicle_type = None
+        mock_csw = MagicMock()
+        mock_csw.root = MagicMock()
+        args = argparse.Namespace(device="/dev/ttyUSB0", baudrate=115200, reboot_time=5)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.connect_to_fc",
+                return_value=(mock_fc, "Timeout connecting"),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.ConnectionSelectionWindow",
+                return_value=mock_csw,
+            ) as mock_cls,
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.setup_startup_notification"),
+            patch("ardupilot_methodic_configurator.__main__.resolve_vehicle_type"),
+            patch("ardupilot_methodic_configurator.__main__.logging_error"),
+        ):
+            # Act
+            connect_to_fc_and_set_vehicle_type(args)
+
+        # Assert
+        mock_cls.assert_called_once()
+        mock_csw.root.mainloop.assert_called_once()
+
+    def test_logging_error_called_when_device_set_and_error_is_not_no_ports(self) -> None:
+        """
+        logging_error is called when a device is specified and connection fails with real error.
+
+        GIVEN: args.device is set and the error string is not 'No serial ports found'
+        WHEN: connect_to_fc_and_set_vehicle_type is called
+        THEN: logging_error is called once
+        """
+        # Arrange
+        mock_fc = MagicMock()
+        mock_fc.info.vehicle_type = None
+        mock_csw = MagicMock()
+        mock_csw.root = MagicMock()
+        args = argparse.Namespace(device="/dev/ttyUSB0", baudrate=115200, reboot_time=5)
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.connect_to_fc",
+                return_value=(mock_fc, "Timeout connecting"),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.ConnectionSelectionWindow",
+                return_value=mock_csw,
+            ),
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.setup_startup_notification"),
+            patch("ardupilot_methodic_configurator.__main__.resolve_vehicle_type"),
+            patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err,
+        ):
+            # Act
+            connect_to_fc_and_set_vehicle_type(args)
+
+        # Assert
+        mock_err.assert_called_once()
+
+    def test_fallback_dir_returned_when_preferred_dir_not_writable(self) -> None:
+        """
+        resolve_writable_vehicle_dir_for_initial_download returns fallback dir when preferred is unwritable.
+
+        GIVEN: _is_directory_writable returns False for the preferred directory
+        AND: ProgramSettings.get_vehicles_default_dir returns a valid fallback path
+        WHEN: resolve_writable_vehicle_dir_for_initial_download is called
+        THEN: The fallback directory is returned and logging_warning is called once
+        """
+        with tempfile.TemporaryDirectory() as fallback_tmp:
+            fallback = Path(fallback_tmp)
+            preferred = Path("/not/writable")
+
+            with (
+                patch(
+                    "ardupilot_methodic_configurator.__main__._is_directory_writable",
+                    return_value=False,
+                ),
+                patch(
+                    "ardupilot_methodic_configurator.__main__.ProgramSettings.get_vehicles_default_dir",
+                    return_value=fallback,
+                ),
+                patch("ardupilot_methodic_configurator.__main__.logging_warning") as mock_warn,
+            ):
+                # Act
+                result = resolve_writable_vehicle_dir_for_initial_download(preferred)
+
+            # Assert
+            assert result == fallback
+            mock_warn.assert_called_once()
+            args, kwargs = mock_warn.call_args
+            if kwargs:
+                warn_kwargs: dict = kwargs
+            elif len(args) > 1 and isinstance(args[1], dict):
+                warn_kwargs = args[1]
+            else:
+                pytest.fail("logging_warning was not called with expected keyword or dict positional arguments")
+            assert warn_kwargs["old_dir"] == preferred
+            assert warn_kwargs["new_dir"] == fallback
+
+    def test_initialize_filesystem_shows_error_and_re_raises_on_system_exit(self) -> None:
+        """
+        initialize_filesystem shows an error message then re-raises SystemExit.
+
+        GIVEN: LocalFilesystem constructor raises SystemExit
+        WHEN: initialize_filesystem is called
+        THEN: show_error_message is called with a title containing 'fatal'
+        AND: SystemExit propagates to the caller
+        """
+        # Arrange
+        state = ApplicationState(
+            argparse.Namespace(
+                vehicle_dir=None,
+                allow_editing_template_files=False,
+                save_component_to_system_templates=False,
+            )
+        )
+        state.flight_controller = MagicMock()
+        state.param_default_values = {}
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.LocalFilesystem",
+                side_effect=SystemExit("bad files"),
+            ),
+            patch("ardupilot_methodic_configurator.__main__.show_error_message") as mock_err,
+        ):
+            # Act + Assert
+            with pytest.raises(SystemExit):
+                initialize_filesystem(state)
+            mock_err.assert_called_once()
+            assert "fatal" in mock_err.call_args[0][0].lower()
+
+    def test_vehicle_directory_selection_resets_fc_when_flag_is_set(self) -> None:
+        """
+        vehicle_directory_selection resets FC parameters when the user requests it.
+
+        GIVEN: vehicle_project_manager.reset_fc_parameters_to_their_defaults is True
+        AND: reset_all_parameters_to_default returns success
+        WHEN: vehicle_directory_selection is called
+        THEN: flight_controller.reset_and_reconnect is called once
+        """
+        # Arrange
+        state = ApplicationState(argparse.Namespace(vehicle_dir="/some/dir", device=None))
+        state.flight_controller = MagicMock()
+        state.flight_controller.reset_all_parameters_to_default.return_value = (True, "")
+        state.flight_controller.fc_parameters = {MagicMock(): MagicMock()}
+        state.flight_controller.master = None
+        state.local_filesystem = MagicMock()
+        state.vehicle_type = MagicMock()
+        state.param_default_values = {}
+
+        mock_vpm = MagicMock()
+        mock_vpm.reset_fc_parameters_to_their_defaults = True
+        mock_vpm.infer_comp_specs_and_conn_from_fc_params = False
+        mock_window = MagicMock()
+        mock_window.root = MagicMock()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.VehicleProjectManager",
+                return_value=mock_vpm,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow",
+                return_value=mock_window,
+            ),
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.setup_startup_notification"),
+            patch("ardupilot_methodic_configurator.__main__.backup_fc_parameters"),
+            patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow") as mock_fciw,
+        ):
+            mock_fciw.return_value.get_param_default_values.return_value = {}
+
+            # Act
+            vehicle_directory_selection(state)
+
+        # Assert
+        state.flight_controller.reset_and_reconnect.assert_called_once()
+
+    def test_vehicle_directory_selection_logs_error_when_fc_reset_fails(self) -> None:
+        """
+        vehicle_directory_selection logs an error when the FC reset operation fails.
+
+        GIVEN: reset_all_parameters_to_default returns (False, 'Reset failed')
+        WHEN: vehicle_directory_selection is called
+        THEN: logging_error is called at least once
+        """
+        # Arrange
+        state = ApplicationState(argparse.Namespace(vehicle_dir="/some/dir", device=None))
+        state.flight_controller = MagicMock()
+        state.flight_controller.reset_all_parameters_to_default.return_value = (False, "Reset failed")
+        state.flight_controller.fc_parameters = {}
+        state.flight_controller.master = None
+        state.local_filesystem = MagicMock()
+        state.vehicle_type = MagicMock()
+        state.param_default_values = {}
+
+        mock_vpm = MagicMock()
+        mock_vpm.reset_fc_parameters_to_their_defaults = True
+        mock_vpm.infer_comp_specs_and_conn_from_fc_params = False
+        mock_window = MagicMock()
+        mock_window.root = MagicMock()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.VehicleProjectManager",
+                return_value=mock_vpm,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.VehicleProjectOpenerWindow",
+                return_value=mock_window,
+            ),
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.setup_startup_notification"),
+            patch("ardupilot_methodic_configurator.__main__.backup_fc_parameters"),
+            patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow") as mock_fciw,
+            patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_log_err,
+        ):
+            mock_fciw.return_value.get_param_default_values.return_value = {}
+
+            # Act
+            vehicle_directory_selection(state)
+
+        # Assert
+        mock_log_err.assert_called()
+
+
+class TestEditorBackupAndMainOrchestration:
+    """Feature: Component editor branches, backup error handling, GPS upgrade and main() flow."""
+
+    def test_component_editor_skip_schedules_window_destruction(self) -> None:
+        """
+        component_editor schedules immediate window destruction when skip flag is set.
+
+        GIVEN: skip_component_editor=True and blank_component_data=False
+        WHEN: component_editor is called
+        THEN: root.after(10, root.destroy) is called and root.mainloop runs
+        """
+        # Arrange
+        state = ApplicationState(argparse.Namespace(skip_component_editor=True, vehicle_dir=None))
+        state.flight_controller = MagicMock()
+        state.local_filesystem = MagicMock()
+        mock_vpm = MagicMock()
+        mock_vpm.blank_component_data = False
+        state.vehicle_project_manager = mock_vpm
+        mock_cew = MagicMock()
+        mock_cew.root = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.__main__.create_and_configure_component_editor",
+            return_value=mock_cew,
+        ):
+            # Act
+            component_editor(state)
+
+        # Assert
+        mock_cew.root.after.assert_called_once_with(10, mock_cew.root.destroy)
+        mock_cew.root.mainloop.assert_called_once()
+
+    def test_component_editor_opens_firmware_doc_when_auto_open_enabled(self) -> None:
+        """
+        component_editor opens firmware documentation when auto-open is enabled.
+
+        GIVEN: skip_component_editor=False and should_open_firmware_documentation returns True
+        WHEN: component_editor is called
+        THEN: open_firmware_documentation is called with the firmware type
+        """
+        # Arrange
+        state = ApplicationState(argparse.Namespace(skip_component_editor=False, vehicle_dir=None))
+        state.flight_controller = MagicMock()
+        state.local_filesystem = MagicMock()
+        state.vehicle_project_manager = None
+        mock_cew = MagicMock()
+        mock_cew.root = MagicMock()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.create_and_configure_component_editor",
+                return_value=mock_cew,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.should_open_firmware_documentation",
+                return_value=True,
+            ),
+            patch("ardupilot_methodic_configurator.__main__.open_firmware_documentation") as mock_open_doc,
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.setup_startup_notification"),
+        ):
+            # Act
+            component_editor(state)
+
+        # Assert
+        mock_open_doc.assert_called_once_with(state.flight_controller.info.firmware_type)
+
+    def test_simple_gui_warning_contains_jump_hint(self) -> None:
+        """
+        process_component_editor_results includes simple-GUI jump hint in warning body.
+
+        GIVEN: calculate_derived returns a non-empty list and gui_complexity == 'simple'
+        WHEN: process_component_editor_results is called
+        THEN: show_warning_message body contains simple-GUI guidance text
+        """
+        # Arrange
+        fc = MagicMock()
+        fc.fc_parameters = {MagicMock(): MagicMock()}
+        fs = MagicMock()
+        fs.calculate_derived_and_forced_param_changes.return_value = ["param_file.param"]
+        fs.param_default_dict = {}
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.show_warning_message") as mock_warn,
+            patch(
+                "ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting",
+                return_value="simple",
+            ),
+        ):
+            # Act
+            process_component_editor_results(fc, fs)
+
+            # Assert
+            mock_warn.assert_called_once()
+            args, kwargs = mock_warn.call_args
+            if "body" in kwargs:
+                body: str = kwargs["body"]
+            elif len(args) > 1:
+                body = args[1]
+            else:
+                pytest.fail("show_warning_message was not called with a body argument")
+
+            body_lower = body.lower()
+            assert ("jump" in body_lower and "advanced" in body_lower) or (
+                "switch" in body_lower and "gui" in body_lower and "complexity" in body_lower
+            )
+
+    def test_backup_logs_error_when_disk_is_full(self) -> None:
+        """
+        backup_fc_parameters logs an error and does not raise when disk is full.
+
+        GIVEN: backup_fc_parameters_to_file raises OSError('No space left on device')
+        WHEN: backup_fc_parameters is called
+        THEN: logging_error is called and no exception propagates
+        """
+        # Arrange
+        state = ApplicationState(argparse.Namespace())
+        state.flight_controller = MagicMock()
+        state.flight_controller.fc_parameters = {MagicMock(): MagicMock()}
+        state.local_filesystem = MagicMock()
+        state.local_filesystem.find_lowest_available_backup_number.return_value = 1
+        state.local_filesystem.backup_fc_parameters_to_file.side_effect = OSError("No space left on device")
+
+        with patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err:
+            # Act
+            backup_fc_parameters(state)
+
+            # Assert
+            mock_err.assert_called()
+            messages: str = " ".join(str(c) for c in mock_err.call_args_list)
+            assert "space" in messages.lower() or "disk" in messages.lower()
+
+    def test_backup_logs_error_for_unexpected_exception(self) -> None:
+        """
+        backup_fc_parameters logs an error and does not raise on unexpected exceptions.
+
+        GIVEN: backup_fc_parameters_to_file raises RuntimeError
+        WHEN: backup_fc_parameters is called
+        THEN: logging_error is called and no exception propagates
+        """
+        # Arrange
+        state = ApplicationState(argparse.Namespace())
+        state.flight_controller = MagicMock()
+        state.flight_controller.fc_parameters = {MagicMock(): MagicMock()}
+        state.local_filesystem = MagicMock()
+        state.local_filesystem.find_lowest_available_backup_number.return_value = 1
+        state.local_filesystem.backup_fc_parameters_to_file.side_effect = RuntimeError("weird")
+
+        with patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err:
+            # Act
+            backup_fc_parameters(state)
+
+            # Assert
+            mock_err.assert_called()
+
+    def test_gps_params_renamed_for_46_firmware(self) -> None:
+        """
+        parameter_editor_and_uploader renames legacy GPS params for 4.6 firmware.
+
+        GIVEN: fc firmware starts with '4.6.' and file_parameters contains 'GPS_TYPE'
+        WHEN: parameter_editor_and_uploader is called
+        THEN: 'GPS_TYPE' is replaced by 'GPS1_TYPE' in file_parameters
+        """
+        # Arrange
+        state = ApplicationState(argparse.Namespace(n=0, export_fc_params_missing_or_different=False))
+        state.flight_controller = MagicMock()
+        state.flight_controller.info.flight_sw_version = "4.6.0"
+        state.flight_controller.fc_parameters = {
+            "GPS_TYPE": MagicMock(),
+            "INS_TCAL1_ENABLE": MagicMock(),
+        }
+        mock_fs = MagicMock()
+        mock_fs.file_parameters = {"01.param": ParDict({"GPS_TYPE": MagicMock()})}
+        mock_fs.get_start_file.return_value = "01.param"
+        state.local_filesystem = mock_fs
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting",
+                return_value="normal",
+            ),
+            patch("ardupilot_methodic_configurator.__main__.ParameterEditor"),
+            patch("ardupilot_methodic_configurator.__main__.ParameterEditorWindow"),
+        ):
+            # Act
+            parameter_editor_and_uploader(state)
+
+        # Assert
+        updated = mock_fs.file_parameters["01.param"]
+        assert "GPS1_TYPE" in updated
+        assert "GPS_TYPE" not in updated
+
+    def test_main_disconnect_and_exit_0_on_normal_completion(self) -> None:
+        """
+        main() calls flight_controller.disconnect and sys_exit(0) on normal completion.
+
+        GIVEN: All sub-steps succeed without error
+        WHEN: main is called
+        THEN: flight_controller.disconnect is called once and sys_exit(0) is the final call
+        """
+        # Arrange
+        fc_mock = MagicMock()
+        fc_mock.fc_parameters = {MagicMock(): MagicMock()}
+
+        def _init_fs(state: object) -> None:
+            state.flight_controller = fc_mock  # type: ignore[union-attr]
+            state.local_filesystem = MagicMock()  # type: ignore[union-attr]
+            state.local_filesystem.file_parameters = {"01.param": {}}
+            state.local_filesystem.doc_dict = {}
+            state.local_filesystem.vehicle_dir = "/fake"
+            state.param_default_values_dirty = False  # type: ignore[union-attr]
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.create_argument_parser") as mock_parser,
+            patch("ardupilot_methodic_configurator.__main__.register_plugins"),
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.create_desktop_icon_if_needed"),
+            patch("ardupilot_methodic_configurator.__main__.setup_logging"),
+            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.migrate_settings_to_latest_version"),
+            patch("ardupilot_methodic_configurator.__main__.check_updates", return_value=False),
+            patch(
+                "ardupilot_methodic_configurator.__main__.PopupWindow.should_display",
+                return_value=False,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting",
+                side_effect=lambda key: False if key != "gui_complexity" else "normal",
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.initialize_flight_controller_and_filesystem",
+                side_effect=_init_fs,
+            ),
+            patch("ardupilot_methodic_configurator.__main__.component_editor"),
+            patch("ardupilot_methodic_configurator.__main__.process_component_editor_results"),
+            patch("ardupilot_methodic_configurator.__main__.backup_fc_parameters"),
+            patch("ardupilot_methodic_configurator.__main__.parameter_editor_and_uploader"),
+            patch("ardupilot_methodic_configurator.__main__.sys_exit") as mock_exit,
+        ):
+            mock_parser.return_value.parse_args.return_value = argparse.Namespace(
+                loglevel="INFO",
+                skip_check_for_updates=False,
+                vehicle_dir=None,
+                vehicle_type=None,
+                device=None,
+                reboot_time=5,
+                baudrate=115200,
+                n=0,
+                skip_component_editor=False,
+                allow_editing_template_files=False,
+                save_component_to_system_templates=False,
+                export_fc_params_missing_or_different=False,
+            )
+
+            # Act
+            main()
+
+        # Assert: disconnect
+        fc_mock.disconnect.assert_called_once()
+        mock_exit.assert_called_with(0)
