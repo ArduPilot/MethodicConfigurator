@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import re
+from math import isfinite as math_isfinite
 from os import path as os_path
 from os import popen as os_popen
 from sys import exc_info as sys_exc_info
@@ -197,9 +198,16 @@ class ParDict(dict[str, Par]):
             raise SystemExit(msg)
         try:
             fvalue = float(value)
+            if not math_isfinite(fvalue):
+                msg = _(
+                    "Non-finite parameter value {value!r} (parsed as {fvalue}) for {parameter_name} in {param_file} line {i}"
+                ).format(value=value, fvalue=fvalue, parameter_name=parameter_name, param_file=param_file, i=i)
+                raise SystemExit(msg)
             parameter_dict[parameter_name] = Par(fvalue, comment)
         except ValueError as exc:
-            msg = _("Invalid parameter value {value} in {param_file} line {i}").format(value=value, param_file=param_file, i=i)
+            msg = _("Invalid parameter value {value!r} in {param_file} line {i}").format(
+                value=value, param_file=param_file, i=i
+            )
             raise SystemExit(msg) from exc
         except OSError as exc:
             _exc_type, exc_value, exc_traceback = sys_exc_info()
