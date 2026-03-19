@@ -1469,12 +1469,14 @@ class TestParameterDictionaryEdgeCases:
             with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
                 f.write(invalid_content)
                 f.flush()
+                file_path = f.name
 
+            try:
                 # Act & Assert: Invalid names rejected
                 with pytest.raises(SystemExit):
-                    ParDict.load_param_file_into_dict(f.name)
-
-            os.unlink(f.name)
+                    ParDict.load_param_file_into_dict(file_path)
+            finally:
+                os.unlink(file_path)
 
     def test_parameter_validation_rejects_invalid_values(self) -> None:
         """
@@ -1490,12 +1492,14 @@ class TestParameterDictionaryEdgeCases:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
             f.write(invalid_content)
             f.flush()
+            file_path = f.name
 
+        try:
             # Act & Assert: Invalid values rejected
-            with pytest.raises(SystemExit, match="Invalid parameter value"):
-                ParDict.load_param_file_into_dict(f.name)
-
-        os.unlink(f.name)
+            with pytest.raises(SystemExit, match=_("Invalid parameter value {value!r}").format(value="not_a_number")):
+                ParDict.load_param_file_into_dict(file_path)
+        finally:
+            os.unlink(file_path)
 
     def test_parameter_validation_rejects_non_finite_values(self) -> None:
         """
@@ -1516,7 +1520,7 @@ class TestParameterDictionaryEdgeCases:
                 file_path = f.name
 
             try:
-                with pytest.raises(SystemExit, match=_("Non-finite parameter value {value}").format(value=bad_value)):
+                with pytest.raises(SystemExit, match=_("Non-finite parameter value {value!r}").format(value=bad_value)):
                     ParDict.load_param_file_into_dict(file_path)
             finally:
                 os.unlink(file_path)
