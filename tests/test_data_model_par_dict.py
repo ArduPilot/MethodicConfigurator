@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import ardupilot_methodic_configurator.data_model_par_dict as par_dict_module
+from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance, validate_param_name
 
 # pylint: disable=redefined-outer-name, too-many-lines
@@ -1495,3 +1496,27 @@ class TestParameterDictionaryEdgeCases:
                 ParDict.load_param_file_into_dict(f.name)
 
         os.unlink(f.name)
+
+    def test_parameter_validation_rejects_non_finite_values(self) -> None:
+        """
+        Parameter validation rejects infinite and NaN values.
+
+        GIVEN: A user has a parameter file containing non-finite values (inf, -inf, nan)
+        WHEN: They try to load the parameter file
+        THEN: A SystemExit should be raised indicating the value is non-finite
+        """
+        non_finite_values = ["inf", "-inf", "nan", "infinity", "-infinity"]
+
+        for bad_value in non_finite_values:
+            content = f"VALID_PARAM,{bad_value}"
+
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".param", delete=False) as f:
+                f.write(content)
+                f.flush()
+                file_path = f.name
+
+            try:
+                with pytest.raises(SystemExit, match=_("Non-finite parameter value {value}").format(value=bad_value)):
+                    ParDict.load_param_file_into_dict(file_path)
+            finally:
+                os.unlink(file_path)
