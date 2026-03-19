@@ -129,6 +129,14 @@ def template_window(mock_vehicle_provider, mock_program_provider) -> TemplateOve
         )
         # Mock essential UI components that tests actually interact with
         window.root = MagicMock()
+        window.root.winfo_width.return_value = 1
+        window.root.winfo_height.return_value = 1
+        window.root.winfo_reqwidth.return_value = 1200
+        window.root.winfo_reqheight.return_value = 600
+        window.root.winfo_pointerx.return_value = 0
+        window.root.winfo_pointery.return_value = 0
+        window.root.winfo_screenwidth.return_value = 1920
+        window.root.winfo_screenheight.return_value = 1080
         window.tree = MagicMock()
         return window
 
@@ -278,10 +286,11 @@ class TestAccessibilityAndUsability:
             template_window._configure_window()
 
             # Assert: Window size is scaled appropriately
-            mock_geometry.assert_called_once()
-            geometry_call = mock_geometry.call_args[0][0]
+            # geometry() is called twice: once for size, once for position by center_window_on_screen
+            assert mock_geometry.called
+            geometry_calls = [c[0][0] for c in mock_geometry.call_args_list]
             # Should be 2400x1200 (1200x600 * 2.0 scaling)
-            assert "2400x1200" in geometry_call
+            assert any("2400x1200" in call for call in geometry_calls)
 
     def test_keyboard_navigation_works_for_accessibility(self, template_window) -> None:
         """

@@ -999,6 +999,16 @@ class TestUIInitializationWorkflows:
         editor.template_manager = MagicMock()
         editor.complexity_var = MagicMock()
 
+        # Set winfo return values so center_window_on_screen works without TypeError
+        editor.root.winfo_width.return_value = 1
+        editor.root.winfo_height.return_value = 1
+        editor.root.winfo_reqwidth.return_value = WINDOW_WIDTH_PIX
+        editor.root.winfo_reqheight.return_value = 600
+        editor.root.winfo_pointerx.return_value = 0
+        editor.root.winfo_pointery.return_value = 0
+        editor.root.winfo_screenwidth.return_value = 1920
+        editor.root.winfo_screenheight.return_value = 1080
+
         return editor
 
     def test_user_sees_proper_window_setup_with_title_and_geometry(
@@ -1016,7 +1026,7 @@ class TestUIInitializationWorkflows:
 
         # Assert: Window should be configured properly
         editor_for_ui_tests.root.title.assert_called_once()
-        editor_for_ui_tests.root.geometry.assert_called_once_with(f"{WINDOW_WIDTH_PIX}x600")
+        editor_for_ui_tests.root.geometry.assert_any_call(f"{WINDOW_WIDTH_PIX}x600")
         editor_for_ui_tests.root.protocol.assert_called_once_with("WM_DELETE_WINDOW", editor_for_ui_tests.on_closing)
 
     @patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.ttk.Style")

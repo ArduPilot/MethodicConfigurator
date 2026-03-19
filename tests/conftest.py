@@ -135,6 +135,7 @@ def mock_tkinter_context() -> Callable[[Optional[MockConfiguration]], tuple[cont
 
         if config.patch_tkinter:
             patches.extend([patch("tkinter.Tk"), patch("tkinter.Toplevel")])
+            patches.append(patch.object(BaseWindow, "center_window_on_screen"))
 
         if config.patch_icon_setup:
             patches.append(patch.object(BaseWindow, "_setup_application_icon"))
