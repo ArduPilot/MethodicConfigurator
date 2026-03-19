@@ -29,6 +29,22 @@ from ardupilot_methodic_configurator.frontend_tkinter_connection_selection impor
 
 _MOD = "ardupilot_methodic_configurator.frontend_tkinter_connection_selection"
 
+
+def _mock_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
+    """Module-level BaseWindow.__init__ replacement used across connection-selection tests."""
+    self.root = MagicMock()
+    self.main_frame = MagicMock()
+    self.dpi_scaling_factor = 1.0
+    self.root.winfo_width.return_value = 1
+    self.root.winfo_height.return_value = 1
+    self.root.winfo_reqwidth.return_value = 520
+    self.root.winfo_reqheight.return_value = 462
+    self.root.winfo_pointerx.return_value = 0
+    self.root.winfo_pointery.return_value = 0
+    self.root.winfo_screenwidth.return_value = 1920
+    self.root.winfo_screenheight.return_value = 1080
+
+
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
@@ -99,10 +115,6 @@ def connection_window(mock_fc: MagicMock):  # noqa: ANN201  # yields; complex re
     Yields (window, mock_widgets).
     """
     mock_widgets = MagicMock()
-
-    def _mock_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001, pylint: disable=unused-argument
-        self.root = MagicMock()
-        self.main_frame = MagicMock()
 
     with (
         patch("tkinter.Tk"),
@@ -1422,11 +1434,6 @@ class TestConnectionSelectionWindowColonBranch:
         THEN: The introduction label text should have ':\\n' in place of ':'
         AND: The raw colon should not appear on the same line as the following text
         """
-
-        def _mock_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
-            self.root = MagicMock()
-            self.main_frame = MagicMock()
-
         mock_comport = MagicMock()
         mock_comport.device = "COM1"
         mock_fc.comport = mock_comport
@@ -1481,11 +1488,6 @@ class TestConnectionSelectionWindowColonBranch:
         THEN: The introduction label text should match the result string exactly (no replacement)
         AND: No newline should be inserted into the text
         """
-
-        def _mock_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
-            self.root = MagicMock()
-            self.main_frame = MagicMock()
-
         mock_comport = MagicMock()
         mock_comport.device = "COM1"
         mock_fc.comport = mock_comport  # Not None, so goes to elif/else

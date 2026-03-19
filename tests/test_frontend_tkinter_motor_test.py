@@ -744,6 +744,7 @@ class TestMotorTestWindow:
             self.main_frame = MagicMock()
             self.put_image_in_label = MagicMock()
             self.calculate_scaled_image_size = lambda value: value
+            self.dpi_scaling_factor = 1.0
 
         mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.BaseWindow.__init__", fake_base_init)
         view_mock = MagicMock()
@@ -779,6 +780,7 @@ class TestMotorTestWindow:
             self.main_frame = MagicMock()
             self.put_image_in_label = MagicMock()
             self.calculate_scaled_image_size = lambda value: value
+            self.dpi_scaling_factor = 1.0
 
         mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.BaseWindow.__init__", fake_base_init)
         view_mock = MagicMock()

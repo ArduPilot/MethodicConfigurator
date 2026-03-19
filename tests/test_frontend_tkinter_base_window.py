@@ -1488,6 +1488,8 @@ class TestCenterWindowOnScreenBehavior:
 
             # Mock window with 300x200 dimensions
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 300
             mock_window.winfo_reqheight.return_value = 200
             mock_window.winfo_pointerx.return_value = 960  # Center of monitor
@@ -1527,6 +1529,8 @@ class TestCenterWindowOnScreenBehavior:
 
             # Mock 400x300 window with pointer on second monitor
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 400
             mock_window.winfo_reqheight.return_value = 300
             mock_window.winfo_pointerx.return_value = 2880  # Middle of second monitor (1920 + 960)
@@ -1560,6 +1564,8 @@ class TestCenterWindowOnScreenBehavior:
 
             # Mock 200x150 window with pointer outside bounds
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 200
             mock_window.winfo_reqheight.return_value = 150
             mock_window.winfo_pointerx.return_value = 5000  # Way outside
@@ -1592,6 +1598,8 @@ class TestCenterWindowOnScreenBehavior:
             mock_monitors.return_value = [monitor]
 
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 500
             mock_window.winfo_reqheight.return_value = 400
             mock_window.winfo_pointerx.return_value = 512  # Center of monitor
@@ -1626,6 +1634,8 @@ class TestCenterWindowOnScreenBehavior:
 
             # Mock 300x200 window with pointer on this offset monitor
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 300
             mock_window.winfo_reqheight.return_value = 200
             mock_window.winfo_pointerx.return_value = 1060  # On the offset monitor
@@ -1654,6 +1664,8 @@ class TestCenterWindowOnScreenBehavior:
 
             # Mock window with fallback screen dimensions
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 200
             mock_window.winfo_reqheight.return_value = 150
             mock_window.winfo_screenwidth.return_value = 1920
@@ -1682,6 +1694,8 @@ class TestCenterWindowOnScreenBehavior:
 
             # Mock window with fallback screen dimensions
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 300
             mock_window.winfo_reqheight.return_value = 200
             mock_window.winfo_screenwidth.return_value = 1920
@@ -1713,6 +1727,8 @@ class TestCenterWindowOnScreenBehavior:
             mock_monitors.return_value = [monitor]
 
             mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 1
+            mock_window.winfo_height.return_value = 1
             mock_window.winfo_reqwidth.return_value = 400
             mock_window.winfo_reqheight.return_value = 300
             mock_window.winfo_pointerx.return_value = 960

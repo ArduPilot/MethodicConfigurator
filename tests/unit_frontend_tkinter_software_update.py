@@ -45,6 +45,11 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
         self.root.update = MagicMock()
         self.root.after = MagicMock()
 
+        # Patch center_window_on_screen to prevent extra root.update() calls
+        self.center_window_patch = patch.object(BaseWindow, "center_window_on_screen")
+        self.center_window_patch.start()
+        self.addCleanup(self.center_window_patch.stop)
+
         # Patch BaseWindow to use our controlled root window
         self.original_init = BaseWindow.__init__
 
@@ -52,6 +57,7 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             # Set instance attributes without calling the real __init__
             instance.root = self.root
             instance.main_frame = MagicMock()
+            instance.dpi_scaling_factor = 1.0
 
         BaseWindow.__init__ = mock_init
 
@@ -129,7 +135,7 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
 
         # Window configuration
         self.root.title.assert_called_once()
-        self.root.geometry.assert_called_with("700x600")
+        self.root.geometry.assert_any_call("700x600")
 
         dialog.frame.grid_rowconfigure.assert_called_with(0, weight=1)  # pylint: disable=no-member
 
