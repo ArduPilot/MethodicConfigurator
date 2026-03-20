@@ -23,7 +23,7 @@ from typing import Union
 from urllib.parse import urljoin, urlparse
 
 import requests
-from bs4 import BeautifulSoup, Tag  # ty: ignore[unresolved-import]
+from bs4 import BeautifulSoup, Tag
 
 # Define the URL where to start crawling
 URL = "https://ardupilot.org/ardupilot/"
