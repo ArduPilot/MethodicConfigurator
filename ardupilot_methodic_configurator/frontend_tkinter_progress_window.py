@@ -136,5 +136,8 @@ class ProgressWindow:
             logging_error(msg.format(**locals()))
 
     def destroy(self) -> None:
-        if self.progress_window.winfo_exists():
-            self.progress_window.destroy()
+        try:
+            if self.progress_window.winfo_exists():
+                self.progress_window.destroy()
+        except tk.TclError:
+            pass
