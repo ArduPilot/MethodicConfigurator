@@ -254,7 +254,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
         )
         self.root.geometry(self.calculate_scaled_geometry(990, 630))  # Set the window width and height
-        BaseWindow.center_window_on_screen(self.root)
+        self.center_window_on_screen(self.root)
 
         # Bind the close_connection_and_quit function to the window close event
         self.root.protocol("WM_DELETE_WINDOW", self.close_connection_and_quit)

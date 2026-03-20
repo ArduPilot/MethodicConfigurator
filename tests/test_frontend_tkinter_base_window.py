@@ -1757,6 +1757,42 @@ class TestCenterWindowOnScreenBehavior:
             winfo_idx = call_order.index("winfo_reqwidth")
             assert update_idx < winfo_idx, "update_idletasks should be called before dimension queries"
 
+    def test_uses_rendered_size_when_window_is_mapped(self) -> None:
+        """
+        Uses actual rendered window size (winfo_width/height) when window is already mapped.
+
+        GIVEN: A window that is already mapped and reports actual rendered dimensions via winfo_width/height
+        WHEN: Centering the window on screen
+        THEN: The rendered size should be used (not winfo_reqwidth/height) for correct centering
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            # Arrange: Single 1920x1080 monitor at origin
+            monitor = MagicMock()
+            monitor.x = 0
+            monitor.y = 0
+            monitor.width = 1920
+            monitor.height = 1080
+            mock_monitors.return_value = [monitor]
+
+            # Mock window: winfo_width/height return actual rendered size (> 1),
+            # winfo_reqwidth/height return different (content-based) values
+            mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 450   # actual rendered width
+            mock_window.winfo_height.return_value = 350  # actual rendered height
+            mock_window.winfo_reqwidth.return_value = 300   # content size (should NOT be used)
+            mock_window.winfo_reqheight.return_value = 200  # content size (should NOT be used)
+            mock_window.winfo_pointerx.return_value = 960
+            mock_window.winfo_pointery.return_value = 540
+
+            # Act: Center window on screen
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Assert: Rendered sizes (450x350) are used, not content sizes (300x200)
+            # Center calculation using rendered size: x = (1920 - 450) / 2 = 735
+            #                                         y = (1080 - 350) / 2 = 365
+            mock_window.geometry.assert_called_once_with("+735+365")
+            mock_window.update.assert_called_once()
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

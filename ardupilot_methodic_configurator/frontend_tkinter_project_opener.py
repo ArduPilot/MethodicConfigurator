@@ -56,7 +56,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
         )
 
         self.root.geometry(self.calculate_scaled_geometry(600, 450))  # Set the window size
-        BaseWindow.center_window_on_screen(self.root)
+        self.center_window_on_screen(self.root)
 
         # Explain why we are here
         introduction_text = self.project_manager.get_introduction_message()

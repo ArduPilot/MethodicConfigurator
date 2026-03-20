@@ -114,7 +114,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
         # Scale window geometry for HiDPI displays
         self.root.geometry(self.calculate_scaled_geometry(1200, 600))
-        BaseWindow.center_window_on_screen(self.root)
+        self.center_window_on_screen(self.root)
 
     def _initialize_ui_components(self) -> None:
         """Initialize UI components with proper scaling."""
