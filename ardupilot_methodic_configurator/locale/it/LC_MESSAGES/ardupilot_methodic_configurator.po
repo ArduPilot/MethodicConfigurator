@@ -3756,11 +3756,11 @@ msgstr "Parametro duplicato {parameter_name} in {param_file} riga {i}"
 msgid ""
 "Non-finite parameter value {value!r} (parsed as {fvalue}) for "
 "{parameter_name} in {param_file} line {i}"
-msgstr ""
+msgstr "Valore del parametro non finito {value!r} (interpretato come {fvalue}) per {parameter_name} nel file {param_file} riga {i}"
 
 #: ardupilot_methodic_configurator/data_model_par_dict.py:208
 msgid "Invalid parameter value {value!r} in {param_file} line {i}"
-msgstr ""
+msgstr "Valore del parametro non valido {value!r} nel file {param_file} riga {i}"
 
 #: ardupilot_methodic_configurator/data_model_par_dict.py:217
 msgid "Caused by line {i} of file {param_file}: {original_line}"
