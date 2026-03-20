@@ -48,6 +48,14 @@ jobs:
       run: |
         uv pip install .[dev,scripts,pypi_dist]
 
+    - name: Install ty dependency
+      run: |
+        uv pip install ty
+
+    - name: Analyze the code with ty
+      run: |
+        ty check
+
     - name: Analyze the code with pylint
       run: |
         pylint $(git ls-files '**/*.py')

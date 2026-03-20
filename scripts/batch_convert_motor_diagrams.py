@@ -27,10 +27,10 @@ from pathlib import Path
 from typing import Union
 
 from PIL import Image
-from selenium import webdriver  # ty: ignore[unresolved-import]
-from selenium.webdriver.firefox.options import Options as FirefoxOptions  # ty: ignore[unresolved-import]
-from selenium.webdriver.firefox.service import Service as FirefoxService  # ty: ignore[unresolved-import]
-from webdriver_manager.firefox import GeckoDriverManager  # ty: ignore[unresolved-import]
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.firefox import GeckoDriverManager
 
 DEFAULT_RESIZE_WIDTH: int = 200
 DEFAULT_RESIZE_HEIGHT: int = 200
