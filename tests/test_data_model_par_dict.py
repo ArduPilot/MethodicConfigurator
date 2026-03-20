@@ -569,8 +569,8 @@ class TestParameterFileExporting:
                 content = f.read()
 
             # MAVProxy format uses fixed-width columns
-            assert "ACRO_YAW_P       4.500000  # Yaw P gain" in content
-            assert "GPS_TYPE         1.000000" in content
+            assert "ACRO_YAW_P       4.5000000000  # Yaw P gain" in content
+            assert "GPS_TYPE         1.0000000000" in content
         finally:
             os.unlink(output_file)
 
@@ -949,7 +949,7 @@ class TestParameterUtilities:
 
         # Assert: Correct MAVProxy format (space-separated, fixed width)
         yaw_line = next((line for line in formatted if "ACRO_YAW_P" in line), "")
-        assert yaw_line == "ACRO_YAW_P       4.500000  # Yaw P gain"
+        assert yaw_line == "ACRO_YAW_P       4.5000000000  # Yaw P gain"
 
     def test_user_receives_error_for_unsupported_format(self, parameter_dict) -> None:
         """
@@ -964,6 +964,36 @@ class TestParameterUtilities:
         # Act & Assert: User gets error for unsupported format
         with pytest.raises(ParamFileError, match="Unsupported file format"):
             parameter_dict._format_params("invalid_format")  # pylint: disable=protected-access
+
+    def test_user_preserves_small_parameter_values_on_export(self) -> None:
+        """
+        User preserves parameter values smaller than 1e-6 during export.
+
+        GIVEN: A user has parameters with very small but nonzero values
+        WHEN: They export and reimport using MissionPlanner or MAVProxy format
+        THEN: The values should survive the round-trip without silent data loss
+        """
+        # Arrange: Parameters with values that would be truncated by .6f formatting
+        small_value_params = ParDict(
+            {
+                "TINY_VAL": Par(0.0000001, "Very small value"),
+                "MICRO_VAL": Par(0.0000005, "Another small value"),
+                "BOUNDARY_VAL": Par(0.000001, "Boundary value"),
+                "NORMAL_VAL": Par(1.5, "Normal value"),
+            }
+        )
+
+        for file_format in ("missionplanner", "mavproxy"):
+            formatted = small_value_params._format_params(file_format)  # pylint: disable=protected-access
+
+            # Extract the numeric value strings from the formatted output
+            for line in formatted:
+                if "TINY_VAL" in line:
+                    assert "0.0000001" in line, f"Value 1e-7 lost in {file_format} format: {line}"
+                if "MICRO_VAL" in line:
+                    assert "0.0000005" in line, f"Value 5e-7 lost in {file_format} format: {line}"
+                if "BOUNDARY_VAL" in line:
+                    assert "0.000001" in line, f"Value 1e-6 lost in {file_format} format: {line}"
 
     def test_user_can_annotate_parameters_with_comments(self, parameter_dict) -> None:
         """
