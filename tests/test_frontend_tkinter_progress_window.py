@@ -309,11 +309,20 @@ class TestProgressWindowUserExperience:
                 only_show_when_update_progress_called=True,
             )
 
+            # Ignore any centering that may have happened during __init__
+            mock_center_screen.reset_mock()
+            mock_center_parent.reset_mock()
+
+            # First time the window is actually shown via update_progress_bar
             window.update_progress_bar(10, 100)
 
-            # Screen centering should be used, not parent-relative
-            assert mock_center_screen.call_count >= 1
+            # Screen centering should be used exactly once, not parent-relative, when showing via update_progress_bar
+            mock_center_screen.assert_called_once()
             mock_center_parent.assert_not_called()
+
+            # The created progress window should be the one being centered
+            args, _ = mock_center_screen.call_args
+            assert window.progress_window in args
 
             with contextlib.suppress(Exception):
                 window.destroy()

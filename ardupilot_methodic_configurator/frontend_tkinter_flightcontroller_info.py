@@ -76,7 +76,7 @@ class FlightControllerInfoWindow(BaseWindow):
         super().__init__()
         self.root.title(_("AMC {version} - Flight Controller Info").format(version=__version__))  # Set the window title
         self.root.geometry(self.calculate_scaled_geometry(500, 420))  # Adjust the window size as needed
-        BaseWindow.center_window_on_screen(self.root)
+        self.center_window_on_screen(self.root)
 
         self.presenter = FlightControllerInfoPresenter(flight_controller, vehicle_dir)
 
