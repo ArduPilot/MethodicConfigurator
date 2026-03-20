@@ -20,6 +20,8 @@ permissions:
 
 jobs:
   update-templates:
+    # Do not run in forks; it only clutters fork repositories with unused branches.
+    if: ${{ !github.event.repository.fork }}
     runs-on: windows-latest
     permissions:
       contents: write       # for creating branches and commits

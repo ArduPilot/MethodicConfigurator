@@ -14,6 +14,8 @@ permissions:
 
 jobs:
   update-stats:
+    # Do not run in forks; it only clutters fork repositories with unused branches.
+    if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-latest
     permissions:
       contents: write       # for creating branches and commits
