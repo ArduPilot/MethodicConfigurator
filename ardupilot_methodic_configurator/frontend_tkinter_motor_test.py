@@ -752,9 +752,7 @@ class MotorTestWindow(BaseWindow):
         super().__init__()
         self.model = model  # Store model reference for tests
         self.root.title(_("ArduPilot Motor Test"))
-        width = self.calculate_scaled_image_size(400)
-        height = self.calculate_scaled_image_size(610)
-        self.root.geometry(str(width) + "x" + str(height))
+        self.root.geometry(self.calculate_scaled_geometry(400, 610))
 
         self.view = MotorTestView(self.main_frame, model, self)
 

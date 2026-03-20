@@ -107,6 +107,8 @@ def vehicle_window(mock_vehicle_provider, mock_program_provider, vehicle_filteri
         )
         window.root = MagicMock()
         window.tree = MagicMock()
+        window.dpi_scaling_factor = 1.0
+        window.default_font_size = 9
         return window
 
 
@@ -138,6 +140,8 @@ def template_window(mock_vehicle_provider, mock_program_provider) -> TemplateOve
         window.root.winfo_screenwidth.return_value = 1920
         window.root.winfo_screenheight.return_value = 1080
         window.tree = MagicMock()
+        window.dpi_scaling_factor = 1.0
+        window.default_font_size = 9
         return window
 
 
@@ -450,7 +454,7 @@ class TestTreeviewConfiguration:
 
             # Assert: Style configuration provides good UX
             mock_style.layout.assert_called_once()
-            mock_style.configure.assert_called_once()
+            assert mock_style.configure.call_count == 2
 
     def test_treeview_columns_resize_for_content_readability(self, template_window) -> None:
         """
@@ -721,7 +725,7 @@ class TestTreeviewConfigurationDetails:
 
             # Assert: Style methods were called with scaling
             mock_style.layout.assert_called_once()
-            mock_style.configure.assert_called_once()
+            assert mock_style.configure.call_count == 2
 
     def test_treeview_columns_setup_creates_proper_headings(self, template_window) -> None:
         """

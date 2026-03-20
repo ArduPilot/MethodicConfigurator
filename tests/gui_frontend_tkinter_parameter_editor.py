@@ -21,7 +21,7 @@ import pyautogui
 import pytest
 
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
-from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import show_about_window
+from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorUiServices,
     ParameterEditorWindow,
@@ -87,7 +87,7 @@ class TestParameterEditorWindow:
             mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_about_popup_window.webbrowser_open_url")
 
             # Act: Open the about window
-            show_about_window(root, "1.0.0")  # type: ignore[arg-type]
+            AboutWindow(root, "1.0.0")
 
             # Find the about window
             about_windows = [child for child in root.winfo_children() if isinstance(child, tk.Toplevel)]
@@ -135,7 +135,10 @@ class TestParameterEditorWindow:
     def test_show_about_window(self, mocker) -> None:  # pylint: disable=too-many-locals
         """Test that the about window can be created."""
         # Create a mock root window
-        root = tk.Tk()
+        try:
+            root = tk.Tk()
+        except tk.TclError:
+            pytest.skip("Tkinter not available in test environment")
         root.withdraw()  # Hide the root window
 
         try:
@@ -143,7 +146,7 @@ class TestParameterEditorWindow:
             mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_about_popup_window.webbrowser_open_url")
 
             # Call the function
-            show_about_window(root, "1.0.0")  # type: ignore[arg-type]
+            AboutWindow(root, "1.0.0")
 
             # Find the about window (it should be a Toplevel child of root)
             about_windows = [child for child in root.winfo_children() if isinstance(child, tk.Toplevel)]
@@ -154,9 +157,11 @@ class TestParameterEditorWindow:
 
             # Check window properties
             assert about_window.title() == "About"
-            # Check that geometry contains the expected size (position may vary)
-            geometry = about_window.geometry()
-            assert "650x340" in geometry
+            # Check that geometry has positive dimensions (exact size depends on DPI scaling)
+            win_width = about_window.winfo_width()
+            win_height = about_window.winfo_height()
+            assert win_width >= 650, f"Window width {win_width} should be at least 650px (unscaled)"
+            assert win_height >= 340, f"Window height {win_height} should be at least 340px (unscaled)"
 
             # Check that the window contains the expected content
             # Find all labels in the window (using ttk.Label)

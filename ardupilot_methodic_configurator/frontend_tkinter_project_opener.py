@@ -55,7 +55,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
             + _(" - Select vehicle configuration directory")
         )
 
-        self.root.geometry("600x450")  # Set the window size
+        self.root.geometry(self.calculate_scaled_geometry(600, 450))  # Set the window size
         BaseWindow.center_window_on_screen(self.root)
 
         # Explain why we are here

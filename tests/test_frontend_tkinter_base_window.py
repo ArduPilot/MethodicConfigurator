@@ -54,6 +54,11 @@ def dpi_test_window(mock_tkinter_context) -> Callable[[float, float], tuple[Base
         for patch_obj in patches:
             stack.enter_context(patch_obj)
 
+        # Suppress the Win32 path so only the Tk-based mocks control the result.
+        # Without this, GetDpiForSystem() returns the real system DPI on Windows
+        # and overrides the mock_dpi, causing failures at any DPI != 96.
+        stack.enter_context(patch.object(BaseWindow, "_get_win32_system_dpi", return_value=0))
+
         mock_tk = stack.enter_context(patch("tkinter.Tk"))
         mock_root = MagicMock()
         mock_root.winfo_fpixels.return_value = mock_dpi
@@ -238,6 +243,7 @@ class TestDisplayScalingBehavior:
             with (
                 patch.object(BaseWindow, "_setup_application_icon"),
                 patch.object(BaseWindow, "_setup_theme_and_styling"),
+                patch.object(BaseWindow, "_get_win32_system_dpi", return_value=0),
             ):
                 window = BaseWindow()
                 scaling_factor = window._get_dpi_scaling_factor()
@@ -393,6 +399,7 @@ class TestErrorResilienceBehavior:
                 stack.enter_context(patch_obj)
 
             # Mock DPI detection failure
+            stack.enter_context(patch.object(BaseWindow, "_get_win32_system_dpi", return_value=0))
             mock_tk = stack.enter_context(patch("tkinter.Tk"))
             mock_root = MagicMock()
             mock_root.winfo_fpixels.side_effect = tk.TclError("Display error")
@@ -1082,6 +1089,9 @@ class TestDpiScalingEdgeCases:
             mock_root.winfo_fpixels.return_value = 96.0  # Normal DPI
             mock_root.tk.call.return_value = -1.0  # Negative scaling
             mock_tk.return_value = mock_root
+
+            # Suppress Win32 path so the Tk mock values are used
+            stack.enter_context(patch.object(BaseWindow, "_get_win32_system_dpi", return_value=0))
 
             # When: Create window with negative tk scaling
             window = BaseWindow()

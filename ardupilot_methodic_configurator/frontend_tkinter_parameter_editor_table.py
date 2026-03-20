@@ -902,7 +902,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         """Handle parameter addition."""
         add_parameter_window = BaseWindow(self._get_parent_root())
         add_parameter_window.root.title(_("Add parameter(s)"))
-        add_parameter_window.root.geometry("250x400")
+        add_parameter_window.root.geometry(add_parameter_window.calculate_scaled_geometry(250, 400))
         add_parameter_window.root.transient(self._get_parent_toplevel())
 
         all_params = self.parameter_editor.get_possible_add_param_names()

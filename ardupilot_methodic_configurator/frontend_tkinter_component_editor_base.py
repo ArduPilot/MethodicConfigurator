@@ -152,16 +152,18 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + self.version + _(" - Vehicle Component Editor")
         )
-        self.root.geometry(f"{WINDOW_WIDTH_PIX}x600")
+        self.root.geometry(self.calculate_scaled_geometry(WINDOW_WIDTH_PIX, 600))
         BaseWindow.center_window_on_screen(self.root)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def _setup_styles(self) -> None:
         """Configure the styles for UI elements."""
         style = ttk.Style()
+        # Tk renders point-based fonts at the correct DPI size automatically;
+        # do not apply calculate_scaled_font_size here as it would double-scale on HiDPI.
         style.configure(
             "bigger.TLabel",
-            font=("TkDefaultFont", self.calculate_scaled_font_size(self.default_font_size)),
+            font=("TkDefaultFont", self.default_font_size),
         )
         style.configure("comb_input_invalid.TCombobox", fieldbackground="red")
         style.configure("comb_input_valid.TCombobox", fieldbackground="white")
@@ -642,6 +644,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             instance.template_manager = MagicMock()
             instance.complexity_var = MagicMock()
             instance.default_font_size = 9 if platform_system() == "Windows" else -12
+            instance.dpi_scaling_factor = 1.0
 
             return instance
 

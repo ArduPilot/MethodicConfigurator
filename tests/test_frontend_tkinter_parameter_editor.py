@@ -21,6 +21,7 @@ from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorUiServices,
     ParameterEditorWindow,
@@ -301,6 +302,9 @@ class TestParameterFileSelection:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgramSettings.get_setting",
                 side_effect=lambda key: "normal" if key == "gui_complexity" else False,
             ),
+            # Suppress Win32 DPI so _DummyTkRoot.winfo_fpixels(96) drives scaling=1.0
+            # at any real system DPI setting.
+            patch.object(BaseWindow, "_get_win32_system_dpi", return_value=0),
         ):
             window = ParameterEditorWindow(parameter_editor)
 

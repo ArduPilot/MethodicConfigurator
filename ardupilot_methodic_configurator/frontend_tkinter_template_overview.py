@@ -113,9 +113,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         self.root.title(title.format(version=__version__))
 
         # Scale window geometry for HiDPI displays
-        scaled_width = int(1200 * self.dpi_scaling_factor)
-        scaled_height = int(600 * self.dpi_scaling_factor)
-        self.root.geometry(f"{scaled_width}x{scaled_height}")
+        self.root.geometry(self.calculate_scaled_geometry(1200, 600))
         BaseWindow.center_window_on_screen(self.root)
 
     def _initialize_ui_components(self) -> None:
@@ -125,9 +123,10 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
         # Initialize instruction label
         instruction_text = self._get_instruction_text()
+        # Tk renders point-based fonts at the correct size for the current DPI automatically;
+        # do not apply calculate_scaled_font_size here as it would double-scale.
         font_family, font_size = get_widget_font_family_and_size(self.main_frame)
-        scaled_font_size = self.calculate_scaled_font_size(font_size)
-        self.instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=(font_family, scaled_font_size))
+        self.instruction_label = ttk.Label(self.top_frame, text=instruction_text, font=(font_family, font_size))
 
         # Initialize image label
         self.image_label = ttk.Label(self.top_frame)
@@ -218,14 +217,14 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
                 ),
             ],
         )
-        # Scale padding for HiDPI displays
-        scaled_padding = [
-            self.calculate_scaled_padding(2),
-            self.calculate_scaled_padding(2),
-            self.calculate_scaled_padding(2),
-            self.calculate_scaled_padding(18),
-        ]
-        style.configure("Treeview.Heading", padding=scaled_padding, justify="center")
+        # TTK padding values are in Tk's logical coordinate system which already
+        # accounts for DPI on modern platforms; use fixed base values.
+        style.configure("Treeview.Heading", padding=[2, 2, 2, 18], justify="center")
+
+        # Explicitly pin the Treeview row font to TkDefaultFont at the system's
+        # default size.  Without this the alt theme can inherit a larger font from
+        # the Windows system font, making rows look too big.
+        style.configure("Treeview", font=("TkDefaultFont", self.default_font_size))
 
     def _setup_treeview_columns(self) -> None:
         """Setup treeview column headers."""
@@ -249,24 +248,24 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
     def _adjust_treeview_column_widths(self) -> None:
         """Adjusts the column widths of the Treeview to fit the contents of each column."""
+        # Use the actual Treeview style font so measurements match what is rendered.
+        # font.measure() returns widths in Tk's own coordinate system, the same system
+        # tree.column(width=...) uses, so dpi_scaling_factor must NOT be applied here.
+        treeview_font_name = ttk.Style().lookup("Treeview", "font") or "TkDefaultFont"
+        tree_font = tkfont.Font(font=treeview_font_name)
+
         for col in self.tree["columns"]:
             max_width = 0
-            # Create a font object that matches the Treeview's font and scale for HiDPI
-            tree_font = tkfont.Font()
             for subtitle in col.title().split("\n"):
-                scaled_width = int(tree_font.measure(subtitle) * self.dpi_scaling_factor)
-                max_width = max(max_width, scaled_width)
+                max_width = max(max_width, tree_font.measure(subtitle))
 
             # Iterate over all rows and update the max_width if a wider entry is found
             for item in self.tree.get_children():
                 item_text = self.tree.item(item, "values")[self.tree["columns"].index(col)]
-                scaled_text_width = int(tree_font.measure(item_text) * self.dpi_scaling_factor)
-                max_width = max(max_width, scaled_text_width)
+                max_width = max(max_width, tree_font.measure(str(item_text)))
 
             # Update the column's width property to accommodate the largest text width
-            # Scale the padding and multiplication factor for HiDPI
-            scaled_padding = int(10 * self.dpi_scaling_factor)
-            self.tree.column(col, width=int(min(max_width * 0.6 + scaled_padding, 300)))
+            self.tree.column(col, width=int(min(max_width * 0.6 + 10, 300)))
 
     def _bind_events(self) -> None:
         """Bind events to the treeview."""
