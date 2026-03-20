@@ -136,4 +136,5 @@ class ProgressWindow:
             logging_error(msg.format(**locals()))
 
     def destroy(self) -> None:
-        self.progress_window.destroy()
+        if self.progress_window.winfo_exists():
+            self.progress_window.destroy()

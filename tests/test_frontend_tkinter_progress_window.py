@@ -180,6 +180,36 @@ class TestProgressWindowUserExperience:
         # Window should be destroyed
         assert not progress_window.progress_window.winfo_exists()
 
+    def test_user_can_safely_destroy_progress_window_twice(self, progress_window) -> None:
+        """
+        User can safely destroy a progress window that was already destroyed.
+
+        GIVEN: A progress window that has been destroyed (e.g. by reaching 100%)
+        WHEN: destroy() is called again (e.g. by context manager __exit__)
+        THEN: No TclError is raised
+        """
+        # First destroy
+        progress_window.destroy()
+        assert not progress_window.progress_window.winfo_exists()
+
+        # Second destroy should not raise
+        progress_window.destroy()
+
+    def test_user_sees_no_crash_when_progress_completes_then_destroys(self, progress_window) -> None:
+        """
+        User sees no crash when progress reaches 100% and destroy() is called after.
+
+        GIVEN: A progress window that auto-destroys at 100% completion
+        WHEN: destroy() is called again (as happens in FlightControllerConnectionProgress.__exit__)
+        THEN: No TclError is raised
+        """
+        # Complete the task — this auto-destroys the Toplevel
+        progress_window.update_progress_bar(100, 100)
+        assert not progress_window.progress_window.winfo_exists()
+
+        # Calling destroy again should not raise (simulates __exit__ cleanup)
+        progress_window.destroy()
+
     def test_user_sees_progress_window_handle_master_not_tk_instance(self, tk_root) -> None:
         """
         User sees progress window handle non-Tk master gracefully.
