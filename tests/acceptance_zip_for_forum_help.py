@@ -217,6 +217,9 @@ def vehicle_directory_with_files(tmp_path: Path) -> Path:
     # Create 00_default.param (should now be included)
     (vehicle_dir / "00_default.param").write_text("# Default params\nDEFAULT 0\n")
 
+    # Create complete.param (should now be included in AMC > 2.10.1)
+    (vehicle_dir / "complete.param").write_text("# Complete params\nPARAM66 0\nPARAM67 1\n")
+
     return vehicle_dir
 
 
@@ -1121,6 +1124,7 @@ class TestZipVehicleForForumHelpIntegration:  # pylint: disable=too-few-public-m
             assert "tempcal_gyro.png" in file_list
             assert "tempcal_acc.png" in file_list
             assert "tuning_report.csv" in file_list
+            assert "complete.param" in file_list
 
         mock_show_info.assert_called_once()
         _, notification = mock_show_info.call_args[0]
