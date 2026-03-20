@@ -271,9 +271,9 @@ class ParDict(dict[str, Par]):
             sorted_dict = ParDict(dict(sorted(self.items())))
             formatted_params = [
                 (
-                    f"{key:<16} {parameter.value:<8.10f}  # {parameter.comment}"
+                    f"{key:<16} {parameter.value:<14.10f}  # {parameter.comment}"
                     if isinstance(parameter, Par) and parameter.comment
-                    else f"{key:<16} {parameter.value if isinstance(parameter, Par) else parameter:<8.10f}"
+                    else f"{key:<16} {parameter.value if isinstance(parameter, Par) else parameter:<14.10f}"
                 )
                 for key, parameter in sorted_dict.items()
             ]
