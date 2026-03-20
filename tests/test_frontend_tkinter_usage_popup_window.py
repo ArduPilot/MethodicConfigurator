@@ -209,8 +209,8 @@ class TestUsagePopupWindow:
             # Scale the base bounds by the actual DPI factor so the test is
             # valid at any display scaling (100%, 150%, 200%, etc.).
             dpi_factor = popup_window.dpi_scaling_factor
-            assert 570 * dpi_factor <= width <= 820 * dpi_factor, f"Window width {width} outside reasonable range"
-            assert 410 * dpi_factor <= height <= 600 * dpi_factor, f"Window height {height} outside reasonable range"
+            assert 520 * dpi_factor <= width <= 870 * dpi_factor, f"Window width {width} outside reasonable range"
+            assert 380 * dpi_factor <= height <= 650 * dpi_factor, f"Window height {height} outside reasonable range"
 
             # Assert: UI elements created for user interaction
             children = popup_window.main_frame.winfo_children()

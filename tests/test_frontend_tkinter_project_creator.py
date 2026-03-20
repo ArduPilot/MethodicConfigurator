@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import tkinter as tk
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
@@ -21,7 +22,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
 
-# pylint: disable=redefined-outer-name, unused-argument, duplicate-code
+# pylint: disable=redefined-outer-name, unused-argument, duplicate-code, protected-access
 
 # ==================== FIXTURES ====================
 
@@ -437,3 +438,134 @@ class TestVehicleProjectCreatorWindowIntegration:
             # Assert: Window was created with flight controller configuration
             # The NewVehicleProjectSettings.get_all_settings_metadata should be called with fc_connected=True
             assert mock_settings.get_all_settings_metadata.called
+
+
+class TestTemplateSelectionCallback:
+    """Test the template_selection_callback inner function (lines 109-115, new in PR #1394)."""
+
+    @staticmethod
+    def _capture_template_callback(
+        mock_project_manager: MagicMock,
+        real_root: tk.Tk,
+        connected_fc_vehicle_type: str = "ArduCopter",
+    ) -> "VehicleProjectCreatorWindow":
+        """
+        Construct a VehicleProjectCreatorWindow bypassing BaseWindow.__init__.
+
+        Injects a given root, calls create_option1_widgets, and returns the window.
+        Use the ``tk_root`` fixture (real tk.Tk) so that
+        ``isinstance(window.root, tk.Tk)`` evaluates correctly without
+        patching ``tkinter.Tk`` (patching it turns it into a MagicMock which
+        makes ``isinstance`` raise TypeError).
+        """
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_project_creator.DirectorySelectionWidgets"
+            ) as mock_dws_cls,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Label"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.LabelFrame"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Button"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Checkbutton"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.show_tooltip"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.PathEntryWidget"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.NewVehicleProjectSettings"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.tk.BooleanVar"),
+            patch.object(VehicleProjectCreatorWindow, "center_window_on_screen"),
+        ):
+            window = VehicleProjectCreatorWindow.__new__(VehicleProjectCreatorWindow)
+            window.root = real_root
+            window.main_frame = MagicMock()
+            window.dpi_scaling_factor = 1.0
+            window.project_manager = mock_project_manager
+            window.new_project_settings_vars = {}
+            window.new_project_settings_widgets = {}
+
+            window.create_option1_widgets(
+                initial_template_dir="/templates",
+                initial_base_dir="/projects",
+                initial_new_dir="MyVehicle",
+                fc_connected=False,
+                fc_parameters=None,
+                connected_fc_vehicle_type=connected_fc_vehicle_type,
+            )
+
+            # Store the captured callback on the window for use in tests.
+            # DirectorySelectionWidgets is called twice: first for template_dir
+            # (with the template_selection_callback) and second for new_base_dir
+            # (with None). Use call_args_list[0] to get the first call.
+            window._test_callback = mock_dws_cls.call_args_list[0].kwargs.get(  # type: ignore[attr-defined]
+                "on_directory_selected_callback"
+            )
+
+        return window
+
+    def test_template_selection_callback_creates_template_overview_window_for_tk_root(
+        self, mock_project_manager, tk_root
+    ) -> None:
+        """
+        template_selection_callback creates and runs a TemplateOverviewWindow when root is tk.Tk.
+
+        GIVEN: A VehicleProjectCreatorWindow whose root is a real tk.Tk instance
+        WHEN: The template selection button callback is invoked
+        THEN: TemplateOverviewWindow is constructed and run_app() is called
+          AND: The recently-used template dir is returned
+        """
+        expected_template_dir = "/templates/ArduCopter/QuadX"
+        mock_project_manager.get_recently_used_dirs.return_value = (
+            expected_template_dir,
+            "/projects",
+            "/last/vehicle",
+        )
+
+        # Use the real tk_root so isinstance(window.root, tk.Tk) is True
+        window = self._capture_template_callback(
+            mock_project_manager, real_root=tk_root, connected_fc_vehicle_type="ArduCopter"
+        )
+        callback = window._test_callback  # type: ignore[attr-defined]
+        assert callback is not None, "on_directory_selected_callback not passed to DirectorySelectionWidgets"
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.TemplateOverviewWindow") as mock_tow_cls,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.logging_info"),
+        ):
+            mock_tow_instance = MagicMock()
+            mock_tow_cls.return_value = mock_tow_instance
+
+            result = callback(MagicMock())
+
+        mock_tow_cls.assert_called_once()
+        mock_tow_instance.run_app.assert_called_once()
+        assert result == expected_template_dir
+
+    def test_template_selection_callback_skips_window_when_root_is_not_tk(self, mock_project_manager, tk_root) -> None:
+        """
+        template_selection_callback skips TemplateOverviewWindow when root is not tk.Tk.
+
+        GIVEN: A VehicleProjectCreatorWindow whose root is NOT a tk.Tk instance
+        WHEN: The template selection callback is invoked
+        THEN: TemplateOverviewWindow is NOT created
+          AND: The recently-used template dir is still returned
+        """
+        expected_template_dir = "/templates/Plane/FixedWing"
+        mock_project_manager.get_recently_used_dirs.return_value = (
+            expected_template_dir,
+            "/projects",
+            "/last/vehicle",
+        )
+
+        window = self._capture_template_callback(
+            mock_project_manager, real_root=tk_root, connected_fc_vehicle_type="ArduPlane"
+        )
+        # Replace root with a non-Tk object: isinstance(window.root, tk.Tk) → False
+        window.root = MagicMock()
+        callback = window._test_callback  # type: ignore[attr-defined]
+        assert callback is not None
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.TemplateOverviewWindow") as mock_tow_cls,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.logging_info"),
+        ):
+            result = callback(MagicMock())
+
+        mock_tow_cls.assert_not_called()
+        assert result == expected_template_dir

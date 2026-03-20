@@ -326,3 +326,72 @@ class TestProgressWindowUserExperience:
 
             with contextlib.suppress(Exception):
                 window.destroy()
+
+    def test_progress_window_falls_back_to_unit_scaling_on_dpi_detection_failure(self, tk_root) -> None:
+        """
+        Progress window uses 1.0 DPI scaling when winfo_fpixels raises TclError.
+
+        GIVEN: A progress window is created in an environment where DPI detection fails
+        WHEN: winfo_fpixels raises TclError inside the new DPI try/except block
+        THEN: dpi_scaling_factor falls back to 1.0 and the window is created successfully
+        """
+        with (
+            patch.object(tk.Toplevel, "winfo_fpixels", side_effect=tk.TclError("no display")),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window_on_screen"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"),
+        ):
+            # Should not raise — except handler sets dpi_scaling_factor = 1.0
+            window = ProgressWindow(
+                tk_root,
+                title="DPI Test",
+                message="Test: {}/{}",
+                width=300,
+                height=80,
+                only_show_when_update_progress_called=True,
+            )
+
+        # Window was created successfully with fallback scaling
+        assert window is not None
+        assert window.progress_window.winfo_exists()
+
+        with contextlib.suppress(Exception):
+            window.destroy()
+
+    def test_already_shown_lazy_window_skips_deiconify_on_subsequent_updates(self, lazy_progress_window) -> None:
+        """
+        Already-shown lazy window skips deiconify/lift/center on subsequent updates.
+
+        GIVEN: A lazy progress window that has already been shown by an initial update
+        WHEN: update_progress_bar() is called a second time
+        THEN: deiconify() and lift() are NOT called again
+          AND: The progress bar value is still updated correctly (covers 119→123)
+        """
+        # First call shows the window (sets _shown=True)
+        lazy_progress_window.update_progress_bar(10, 100)
+        assert lazy_progress_window._shown  # pylint: disable=protected-access
+
+        # Track calls from the second invocation onward
+        lazy_progress_window.progress_window.deiconify = MagicMock()
+        lazy_progress_window.progress_window.lift = MagicMock()
+
+        # Second call: _shown=True AND only_show_when_update_progress_called=True
+        # → neither if nor elif branch is taken (covers 119→123)
+        lazy_progress_window.update_progress_bar(50, 100)
+
+        lazy_progress_window.progress_window.deiconify.assert_not_called()
+        lazy_progress_window.progress_window.lift.assert_not_called()
+        assert lazy_progress_window.progress_bar["value"] == 50
+
+    def test_update_progress_bar_does_nothing_when_progress_bar_is_none(self, progress_window) -> None:
+        """
+        update_progress_bar skips widget updates when progress_bar is None.
+
+        GIVEN: A progress window whose progress_bar attribute has been set to None
+        WHEN: update_progress_bar() is called
+        THEN: No error is raised and widget state is unchanged (covers 123→exit)
+        """
+        # Force progress_bar to None so the safety-check guard fails (covers 123→exit)
+        progress_window.progress_bar = None
+
+        # Should not raise even though progress_bar is None
+        progress_window.update_progress_bar(50, 100)
