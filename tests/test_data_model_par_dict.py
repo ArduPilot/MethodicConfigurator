@@ -1496,7 +1496,7 @@ class TestParameterDictionaryEdgeCases:
 
         try:
             # Act & Assert: Invalid values rejected
-            with pytest.raises(SystemExit, match=r"'not_a_number'"):
+            with pytest.raises(SystemExit, match=re.escape(repr("not_a_number"))):
                 ParDict.load_param_file_into_dict(file_path)
         finally:
             os.unlink(file_path)

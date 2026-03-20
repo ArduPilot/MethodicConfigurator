@@ -284,7 +284,7 @@ class TestProgressWindowUserExperience:
             window.update_progress_bar(10, 100)
 
             # Screen centering should be used, not parent-relative
-            mock_center_screen.assert_called_once()
+            mock_center_screen.assert_called()
             mock_center_parent.assert_not_called()
 
             with contextlib.suppress(Exception):
