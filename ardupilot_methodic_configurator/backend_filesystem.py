@@ -568,15 +568,18 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 "tempcal_gyro.png",
                 "tempcal_acc.png",
                 "tuning_report.csv",
+                "complete.param",
             ]
             if include_apm_pdef:
                 specific_files.append("apm.pdef.xml")
             for file_name in specific_files:
                 self.add_configuration_file_to_zip(zipf, file_name)
+            zipped_files = zipf.namelist()
 
             # Add conditional files using generator expression filtering
             for filename in (filename for wrote, filename in files_to_zip if wrote):
-                self.add_configuration_file_to_zip(zipf, filename)
+                if filename not in zipped_files:  # avoid duplicating files
+                    self.add_configuration_file_to_zip(zipf, filename)
 
         logging_info(_("Intermediate parameter files and summary files zipped to %s"), zip_file_path)
         return zip_file_path
