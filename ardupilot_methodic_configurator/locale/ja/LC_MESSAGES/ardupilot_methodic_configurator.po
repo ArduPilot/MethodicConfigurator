@@ -3574,11 +3574,11 @@ msgstr "パラメータが重複しています {parameter_name} in {param_file}
 msgid ""
 "Non-finite parameter value {value!r} (parsed as {fvalue}) for "
 "{parameter_name} in {param_file} line {i}"
-msgstr ""
+msgstr "パラメータファイル {param_file} の行 {i} で、{parameter_name} の非有限パラメータ値 {value!r}（{fvalue} として解析）"
 
 #: ardupilot_methodic_configurator/data_model_par_dict.py:208
 msgid "Invalid parameter value {value!r} in {param_file} line {i}"
-msgstr ""
+msgstr "パラメータファイル {param_file} の行 {i} で、無効なパラメータ値 {value!r}"
 
 #: ardupilot_methodic_configurator/data_model_par_dict.py:217
 msgid "Caused by line {i} of file {param_file}: {original_line}"
