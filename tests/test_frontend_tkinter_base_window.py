@@ -1747,6 +1747,38 @@ class TestCenterWindowOnScreenBehavior:
             winfo_idx = call_order.index("winfo_reqwidth")
             assert update_idx < winfo_idx, "update_idletasks should be called before dimension queries"
 
+    def test_uses_rendered_size_when_window_is_mapped(self) -> None:
+        """
+        Uses rendered size instead of requested size for mapped windows.
+
+        GIVEN: A window that has been mapped (winfo_width/height > 1)
+        WHEN: Centering window on screen
+        THEN: Should use winfo_width/height (rendered) instead of winfo_reqwidth/height
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.get_monitors") as mock_monitors:
+            monitor = MagicMock()
+            monitor.x = 0
+            monitor.y = 0
+            monitor.width = 1920
+            monitor.height = 1080
+            mock_monitors.return_value = [monitor]
+
+            # Mock window where rendered size differs from requested size
+            mock_window = MagicMock()
+            mock_window.winfo_width.return_value = 600  # Rendered (actual) size
+            mock_window.winfo_height.return_value = 400
+            mock_window.winfo_reqwidth.return_value = 300  # Requested (content) size — should NOT be used
+            mock_window.winfo_reqheight.return_value = 200
+            mock_window.winfo_pointerx.return_value = 960
+            mock_window.winfo_pointery.return_value = 540
+
+            BaseWindow.center_window_on_screen(mock_window)
+
+            # Should use rendered size (600x400), not requested size (300x200)
+            # x = 0 + (1920 - 600) / 2 = 660
+            # y = 0 + (1080 - 400) / 2 = 340
+            mock_window.geometry.assert_called_once_with("+660+340")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

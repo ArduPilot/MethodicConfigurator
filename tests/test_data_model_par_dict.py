@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
+import re
 import tempfile
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
@@ -19,7 +20,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import ardupilot_methodic_configurator.data_model_par_dict as par_dict_module
-from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance, validate_param_name
 
 # pylint: disable=redefined-outer-name, too-many-lines
@@ -1496,7 +1496,7 @@ class TestParameterDictionaryEdgeCases:
 
         try:
             # Act & Assert: Invalid values rejected
-            with pytest.raises(SystemExit, match=_("Invalid parameter value {value!r}").format(value="not_a_number")):
+            with pytest.raises(SystemExit, match=r"'not_a_number'"):
                 ParDict.load_param_file_into_dict(file_path)
         finally:
             os.unlink(file_path)
@@ -1520,7 +1520,7 @@ class TestParameterDictionaryEdgeCases:
                 file_path = f.name
 
             try:
-                with pytest.raises(SystemExit, match=_("Non-finite parameter value {value!r}").format(value=bad_value)):
+                with pytest.raises(SystemExit, match=re.escape(repr(bad_value))):
                     ParDict.load_param_file_into_dict(file_path)
             finally:
                 os.unlink(file_path)

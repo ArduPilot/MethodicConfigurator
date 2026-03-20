@@ -277,10 +277,14 @@ class TestProgressWindowUserExperience:
                 only_show_when_update_progress_called=True,
             )
 
+            # Reset mocks after __init__ to isolate the update_progress_bar path
+            mock_center_screen.reset_mock()
+            mock_center_parent.reset_mock()
+
             window.update_progress_bar(10, 100)
 
             # Screen centering should be used, not parent-relative
-            assert mock_center_screen.call_count >= 1
+            mock_center_screen.assert_called_once()
             mock_center_parent.assert_not_called()
 
             with contextlib.suppress(Exception):

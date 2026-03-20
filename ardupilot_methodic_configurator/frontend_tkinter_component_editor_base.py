@@ -153,7 +153,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + self.version + _(" - Vehicle Component Editor")
         )
         self.root.geometry(f"{WINDOW_WIDTH_PIX}x600")
-        BaseWindow.center_window_on_screen(self.root)
+        self.center_window_on_screen(self.root)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def _setup_styles(self) -> None:

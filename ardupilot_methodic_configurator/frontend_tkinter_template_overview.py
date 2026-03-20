@@ -116,7 +116,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         scaled_width = int(1200 * self.dpi_scaling_factor)
         scaled_height = int(600 * self.dpi_scaling_factor)
         self.root.geometry(f"{scaled_width}x{scaled_height}")
-        BaseWindow.center_window_on_screen(self.root)
+        self.center_window_on_screen(self.root)
 
     def _initialize_ui_components(self) -> None:
         """Initialize UI components with proper scaling."""

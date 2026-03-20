@@ -136,7 +136,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
         # Set dynamic window size based on number of settings
         window_height = 250 + (len(settings_metadata) * 23)
         self.root.geometry(f"800x{window_height}")  # Set the window size
-        BaseWindow.center_window_on_screen(self.root)
+        self.center_window_on_screen(self.root)
 
         for setting_name, metadata in settings_metadata.items():
             checkbox = ttk.Checkbutton(
