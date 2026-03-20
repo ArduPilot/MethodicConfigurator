@@ -26,9 +26,19 @@ cd "$(dirname "$0")" || exit
 # Install macOS dependencies early if on macOS
 if command -v brew &> /dev/null; then
     echo "Installing macOS dependencies with Homebrew..."
-    brew install uv python-tk@3.9
+
+    if command -v python3 &> /dev/null; then
+        PY_VER=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
+    else
+        echo "Python not found."
+        exit 1
+    fi
+
+    echo "Found Python $PY_VER, installing python-tk..."
+    brew install uv python-tk@"$PY_VER"
+
     echo "Creating Python virtual environment with uv..."
-    uv venv --python 3.9
+    uv venv --python "$PY_VER"
 else
     # Create a local virtual environment if it doesn't exist
     if [ ! -d ".venv" ]; then
