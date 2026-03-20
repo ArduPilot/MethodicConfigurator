@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser
-from platform import system as platform_system
 from tkinter import ttk
 from typing import Union, cast, get_args, get_origin
 from unittest.mock import MagicMock, patch
@@ -1043,16 +1042,15 @@ class TestUIInitializationWorkflows:
         # Arrange: Mock the style instance
         mock_style = MagicMock()
         mock_style_class.return_value = mock_style
-        # Provide a sensible default DPI scaling for tests so style font sizes are predictable
-        # 9pt base with 1.5 scaling -> int(9 * 1.5) == 13, matching test expectations
-        editor_for_ui_tests.dpi_scaling_factor = 1.5
 
         # Act: Setup styles
         editor_for_ui_tests._setup_styles()
 
         # Assert: All necessary styles should be configured
         assert mock_style.configure.call_count >= 7  # At least 7 style configurations
-        expected_font_size = 13 if platform_system() == "Windows" else -18
+        # Tk renders point-based fonts at the correct DPI size automatically;
+        # _setup_styles now uses default_font_size directly (no dpi_scaling_factor multiplier).
+        expected_font_size = editor_for_ui_tests.default_font_size
         mock_style.configure.assert_any_call("bigger.TLabel", font=("TkDefaultFont", expected_font_size))
         mock_style.configure.assert_any_call("comb_input_invalid.TCombobox", fieldbackground="red")
         mock_style.configure.assert_any_call("comb_input_valid.TCombobox", fieldbackground="white")

@@ -35,7 +35,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_parameter_editor import ExperimentChoice, ParameterEditor
-from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import show_about_window
+from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
@@ -253,7 +253,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
         )
-        self.root.geometry("990x630")  # Set the window width and height
+        self.root.geometry(self.calculate_scaled_geometry(990, 630))  # Set the window width and height
         BaseWindow.center_window_on_screen(self.root)
 
         # Bind the close_connection_and_quit function to the window close event
@@ -281,7 +281,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # So we need to dynamically accommodate for that after placing the widgets
         self.root.update_idletasks()
         req_height = self.root.winfo_reqheight()
-        self.root.geometry(f"990x{req_height}")
+        self.root.geometry(f"{round(990 * self.dpi_scaling_factor)}x{req_height}")
 
         # Set up startup notification for the main application window
         FreeDesktop.setup_startup_notification(self.root)  # type: ignore[arg-type]
@@ -353,7 +353,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         image_label = self.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
-        image_label.bind("<Button-1>", lambda event: show_about_window(self.main_frame, version))  # noqa: ARG005
+        image_label.bind("<Button-1>", lambda event: AboutWindow(self.root, version))  # noqa: ARG005
         show_tooltip(image_label, _("User Manual, Support Forum, Report a Bug, Licenses, Source Code"))
 
     def legend_frame(self, config_subframe: ttk.Frame) -> None:  # pylint: disable=too-many-locals

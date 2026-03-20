@@ -43,7 +43,13 @@ class ProgressWindow:
         # Withdraw immediately to prevent flicker while setting up
         self.progress_window.withdraw()
         self.progress_window.title(title)
-        self.progress_window.geometry(f"{width}x{height}")
+        try:
+            dpi = self.progress_window.winfo_fpixels("1i")
+            tk_scaling = float(self.progress_window.tk.call("tk", "scaling"))
+            dpi_scaling_factor = max(dpi / 96.0, tk_scaling)
+        except (tk.TclError, AttributeError):
+            dpi_scaling_factor = 1.0
+        self.progress_window.geometry(f"{round(width * dpi_scaling_factor)}x{round(height * dpi_scaling_factor)}")
 
         main_frame = ttk.Frame(self.progress_window)
         main_frame.pack(expand=True, fill=tk.BOTH)

@@ -342,7 +342,7 @@ class BatteryMonitorWindow(BaseWindow):  # pragma: no cover
         self.root.title(_("AMC Battery Monitor plugin test window"))
         width = 480
         height = 250
-        self.root.geometry(str(width) + "x" + str(height))
+        self.root.geometry(self.calculate_scaled_geometry(width, height))
 
         self.view = BatteryMonitorView(self.main_frame, model, self)
         self.view.pack(fill="both", expand=True)

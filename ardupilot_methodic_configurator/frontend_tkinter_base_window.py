@@ -23,9 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import io
 import os
 import tkinter as tk
-
-# from logging import debug as logging_debug
-# from logging import info as logging_info
+from logging import debug as logging_debug
 from logging import error as logging_error
 from platform import system as platform_system
 from tkinter import messagebox, ttk
@@ -86,12 +84,12 @@ class BaseWindow:
 
     """
 
-    def __init__(self, root_tk: Optional[tk.Tk] = None) -> None:
+    def __init__(self, root_tk: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> None:
         """
         Initialize a new BaseWindow instance.
 
         Args:
-            root_tk (Optional[tk.Tk]): Parent window. If None, creates a new root window.
+            root_tk (Optional[Union[tk.Tk, tk.Toplevel]]): Parent window. If None, creates a new root window.
                                      If provided, creates a Toplevel window as a child.
 
         Note:
@@ -162,11 +160,12 @@ class BaseWindow:
         style = ttk.Style()
         style.theme_use("alt")
 
-        # Create custom styles with DPI-aware font sizes
+        # Create custom styles - use the system font size directly.
+        # Tk renders point-based fonts at the correct DPI size automatically;
+        # applying calculate_scaled_font_size here would double-scale on HiDPI displays.
         self.default_font_size = get_safe_font_size()
         # Warning: on linux the font size might be negative
-        bold_font_size = self.calculate_scaled_font_size(self.default_font_size)
-        style.configure("Bold.TLabel", font=("TkDefaultFont", bold_font_size, "bold"))
+        style.configure("Bold.TLabel", font=("TkDefaultFont", self.default_font_size, "bold"))
 
         # Configure Entry and Combobox styles with explicit foreground colors
         # This prevents white-on-white text issues on Linux with dark themes
@@ -180,39 +179,67 @@ class BaseWindow:
         style.map("default_v.TCombobox", selectbackground=[("readonly", "light blue")])
         style.map("default_v.TCombobox", selectforeground=[("readonly", "black")])
 
+    @staticmethod
+    def _get_win32_system_dpi() -> int:
+        """
+        Query the real system DPI on Windows via Win32 API.
+
+        This bypasses DPI virtualization that affects ``winfo_fpixels`` and
+        ``tk scaling`` when the process is not declared DPI-aware.
+
+        Returns:
+            int: The system DPI (e.g. 96, 144, 192), or 0 if not on Windows or on failure.
+
+        """
+        try:
+            import ctypes  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+            return int(ctypes.windll.user32.GetDpiForSystem())
+        except (AttributeError, OSError):
+            return 0
+
     def _get_dpi_scaling_factor(self) -> float:
         """
         Detect the DPI scaling factor for HiDPI displays.
 
-        This method uses multiple detection approaches to determine the appropriate
-        scaling factor for the current display configuration:
-
-        1. Calculates scaling based on actual DPI vs standard DPI (96)
-        2. Checks Tkinter's internal scaling factor
-        3. Uses the maximum of both methods for robustness
+        On Windows the Tk window is typically DPI-virtualized, meaning that
+        ``winfo_fpixels("1i")`` and ``tk scaling`` both report 96 DPI regardless
+        of the actual system DPI setting.  To work around this the method first
+        tries to read the real DPI from the Win32 API (``GetDpiForSystem``),
+        which is never virtualized.  On other platforms it falls back to the
+        Tkinter-based measurements.
 
         Returns:
-            float: The scaling factor (1.0 for standard DPI, 2.0 for 200% scaling, etc.)
+            float: The scaling factor (1.0 for 100% / 96 DPI, 1.5 for 150%, etc.)
 
         Note:
-            Falls back to 1.0 if DPI detection fails, ensuring the application
-            remains functional even on systems with unusual configurations.
+            Falls back to 1.0 if all detection methods fail.
 
         """
+        standard_dpi = 96.0
+
+        # --- Windows: query Win32 API directly (bypasses DPI virtualization) ---
+        if platform_system() == "Windows":
+            dpi = self._get_win32_system_dpi()
+            if dpi > 0:
+                return max(1.0, dpi / standard_dpi)
+
+        # --- Tk-based fallback (reliable on Linux/macOS) ---
         try:
-            # Get the DPI from Tkinter
-            dpi = self.root.winfo_fpixels("1i")  # pixels per inch
-            # Standard DPI is typically 96, so calculate scaling factor
-            standard_dpi = 96.0
-            scaling_factor = dpi / standard_dpi
+            tk_dpi = self.root.winfo_fpixels("1i")  # pixels per inch
+            scaling_from_dpi = tk_dpi / standard_dpi
 
-            # Also check the tk scaling factor which might be set by the system
+            # tk scaling returns pixels/point (72 points/inch).
+            # Normalize to the 96 DPI baseline: at standard 96 DPI, tk scaling = 96/72 = 1.333.
+            # Multiply by (72/96) converts it to a Windows-style scale factor (1.0 at 100%).
             tk_scaling = float(self.root.tk.call("tk", "scaling"))
+            scaling_from_tk = tk_scaling * 72.0 / standard_dpi
 
-            # Use the maximum of both methods to ensure we catch HiDPI scaling
-            return max(scaling_factor, tk_scaling)
+            # Use the maximum of both normalized methods for robustness.
+            # The 1.0 floor prevents accidentally scaling windows *down* on platforms
+            # that report sub-96 DPI (e.g. macOS, which uses 72 pt/inch as its baseline).
+            return max(1.0, scaling_from_dpi, scaling_from_tk)
         except (tk.TclError, AttributeError):
-            # Fallback to 1.0 if detection fails
             return 1.0
 
     def calculate_scaled_font_size(self, base_size: int) -> int:
@@ -267,6 +294,26 @@ class BaseWindow:
 
         """
         return (self.calculate_scaled_padding(padding1), self.calculate_scaled_padding(padding2))
+
+    def calculate_scaled_geometry(self, width: int, height: int) -> str:
+        """
+        Calculate a DPI-aware geometry string for use with window.geometry().
+
+        Args:
+            width (int): The base window width in pixels
+            height (int): The base window height in pixels
+
+        Returns:
+            str: A geometry string 'WxH' with both dimensions scaled for the current display
+
+        """
+        logging_debug(
+            _("Calculated geometry for width %d and height %d with scaling factor %.2f"),
+            width,
+            height,
+            self.dpi_scaling_factor,
+        )
+        return f"{round(width * self.dpi_scaling_factor)}x{round(height * self.dpi_scaling_factor)}"
 
     @staticmethod
     def center_window(window: Union[tk.Toplevel, tk.Tk], parent: Union[tk.Toplevel, tk.Tk]) -> None:

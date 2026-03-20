@@ -135,7 +135,9 @@ class VehicleProjectCreatorWindow(BaseWindow):
 
         # Set dynamic window size based on number of settings
         window_height = 250 + (len(settings_metadata) * 23)
-        self.root.geometry(f"800x{window_height}")  # Set the window size
+        self.root.geometry(
+            f"{round(800 * self.dpi_scaling_factor)}x{round(window_height * self.dpi_scaling_factor)}"
+        )  # Set the window size
         BaseWindow.center_window_on_screen(self.root)
 
         for setting_name, metadata in settings_metadata.items():
