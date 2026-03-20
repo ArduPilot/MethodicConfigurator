@@ -446,3 +446,128 @@ class TestVehicleProjectOpenerWindowIntegration:
 
         # Assert: Project manager processes the directory selection
         window.project_manager.open_vehicle_directory.assert_called_once_with(test_directory)
+
+
+class TestOpenSelectedRecentVehicleDirectory:
+    """Test all branches of open_selected_recent_vehicle_directory() — new in PR #1394."""
+
+    def test_empty_selection_shows_error_dialog(self, configured_opener_window, mock_messagebox) -> None:
+        """
+        Error dialog is shown when the user has not selected any directory.
+
+        GIVEN: The recent-directories combobox has no selection (empty string)
+        WHEN: The user clicks the open button
+        THEN: A showerror dialog is displayed and the method returns early
+        """
+        window = configured_opener_window
+        window.recent_dir_var = MagicMock()
+        window.recent_dir_var.get.return_value = ""
+
+        window.open_selected_recent_vehicle_directory()
+
+        mock_messagebox.showerror.assert_called_once()
+        # open_last_vehicle_directory must not be called
+        window.project_manager.open_last_vehicle_directory.assert_not_called()
+
+    def test_nonexistent_directory_shows_error_dialog(self, configured_opener_window, mock_messagebox) -> None:
+        """
+        Error dialog is shown when the selected directory no longer exists.
+
+        GIVEN: The combobox holds a path that no longer exists on disk
+        WHEN: The user clicks the open button
+        THEN: A showerror dialog is shown and the method returns early
+        """
+        window = configured_opener_window
+        window.recent_dir_var = MagicMock()
+        window.recent_dir_var.get.return_value = "/ghost/path"
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.os_path.exists", return_value=False):
+            window.open_selected_recent_vehicle_directory()
+
+        mock_messagebox.showerror.assert_called_once()
+        window.project_manager.open_last_vehicle_directory.assert_not_called()
+
+    def test_file_path_not_directory_shows_error_dialog(self, configured_opener_window, mock_messagebox) -> None:
+        """
+        Error dialog is shown when the selected path is a file, not a directory.
+
+        GIVEN: The combobox holds a path that exists but is a regular file
+        WHEN: The user clicks the open button
+        THEN: A showerror dialog is shown and the method returns early
+        """
+        window = configured_opener_window
+        window.recent_dir_var = MagicMock()
+        window.recent_dir_var.get.return_value = "/some/file.param"
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.os_path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.os_path.isdir", return_value=False),
+        ):
+            window.open_selected_recent_vehicle_directory()
+
+        mock_messagebox.showerror.assert_called_once()
+        window.project_manager.open_last_vehicle_directory.assert_not_called()
+
+    def test_permission_error_shows_error_dialog(self, configured_opener_window, mock_messagebox) -> None:
+        """
+        Error dialog is shown when a PermissionError is raised while accessing the path.
+
+        GIVEN: The OS raises PermissionError when checking directory existence
+        WHEN: The user clicks the open button
+        THEN: A showerror dialog is shown and the method returns early
+        """
+        window = configured_opener_window
+        window.recent_dir_var = MagicMock()
+        window.recent_dir_var.get.return_value = "/restricted/path"
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_project_opener.os_path.exists",
+            side_effect=PermissionError("denied"),
+        ):
+            window.open_selected_recent_vehicle_directory()
+
+        mock_messagebox.showerror.assert_called_once()
+        window.project_manager.open_last_vehicle_directory.assert_not_called()
+
+    def test_os_error_shows_error_dialog(self, configured_opener_window, mock_messagebox) -> None:
+        """
+        Error dialog is shown when a generic OSError is raised while accessing the path.
+
+        GIVEN: The OS raises an OSError when checking directory existence
+        WHEN: The user clicks the open button
+        THEN: A showerror dialog is shown and the method returns early
+        """
+        window = configured_opener_window
+        window.recent_dir_var = MagicMock()
+        window.recent_dir_var.get.return_value = "/broken/mount"
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_project_opener.os_path.exists",
+            side_effect=OSError("I/O error"),
+        ):
+            window.open_selected_recent_vehicle_directory()
+
+        mock_messagebox.showerror.assert_called_once()
+        window.project_manager.open_last_vehicle_directory.assert_not_called()
+
+    def test_valid_directory_delegates_to_open_last_vehicle_directory(self, configured_opener_window) -> None:
+        """
+        Happy path: valid directory is passed to open_last_vehicle_directory.
+
+        GIVEN: The combobox holds a path that exists and is a directory
+        WHEN: The user clicks the open button
+        THEN: open_last_vehicle_directory() is called with the selected path
+        """
+        window = configured_opener_window
+        valid_dir = "/valid/vehicle/dir"
+        window.recent_dir_var = MagicMock()
+        window.recent_dir_var.get.return_value = valid_dir
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.os_path.exists", return_value=True),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.os_path.isdir", return_value=True),
+            patch.object(window, "open_last_vehicle_directory") as mock_open,
+        ):
+            window.open_selected_recent_vehicle_directory()
+
+        mock_open.assert_called_once_with(valid_dir)

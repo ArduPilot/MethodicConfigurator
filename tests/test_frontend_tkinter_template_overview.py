@@ -22,7 +22,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_template_overview import (
     TemplateOverviewWindow,
 )
 
-# pylint: disable=protected-access,redefined-outer-name,unused-argument
+# pylint: disable=protected-access,redefined-outer-name,unused-argument,too-many-lines
 
 
 @pytest.fixture
@@ -429,6 +429,39 @@ class TestUIComponentInitialization:
         assert layout_success, "Layout setup should complete without errors"
         assert hasattr(template_window, "top_frame")
         assert hasattr(template_window, "instruction_label")
+
+    def test_instruction_label_uses_system_font_size_without_dpi_scaling(self, template_window) -> None:
+        """
+        _initialize_ui_components uses system font size directly, not a DPI-scaled size.
+
+        GIVEN: A high-DPI display with dpi_scaling_factor=2.0
+        WHEN: _initialize_ui_components() is called
+        THEN: The instruction label receives the raw system font size (9),
+              not the DPI-scaled size (18), because Tk handles font DPI automatically.
+        """
+        # Arrange: high DPI that would double-scale if calculate_scaled_font_size were used
+        template_window.main_frame = MagicMock()
+        template_window.dpi_scaling_factor = 2.0
+
+        with (
+            patch("tkinter.ttk.Frame", return_value=MagicMock()),
+            patch("tkinter.ttk.Label", return_value=MagicMock()) as mock_label,
+            patch("tkinter.ttk.Treeview", return_value=MagicMock()),
+            patch("tkinter.ttk.Scrollbar", return_value=MagicMock()),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.get_widget_font_family_and_size",
+                return_value=("TkDefaultFont", 9),
+            ),
+        ):
+            # Act
+            template_window._initialize_ui_components()
+
+        # Assert: the instruction label was created with the unscaled font size
+        # (Before this PR: calculate_scaled_font_size(9) = 18 at 2x scaling)
+        # (After this PR:  font_size = 9, Tk renders it at the correct DPI size)
+        label_calls_with_font = [c for c in mock_label.call_args_list if c.kwargs.get("font") is not None]
+        assert len(label_calls_with_font) == 1, "Exactly one label should carry a font argument"
+        assert label_calls_with_font[0].kwargs["font"] == ("TkDefaultFont", 9)
 
 
 class TestTreeviewConfiguration:
@@ -861,6 +894,29 @@ class TestImageDisplayBehavior:
             # Assert: Old image was destroyed
             old_image_widget.destroy.assert_called_once()
 
+    def test_display_vehicle_image_skips_non_matching_child_widget(self, template_window) -> None:
+        """
+        _display_vehicle_image() does not destroy a child widget that is not the image_label.
+
+        GIVEN: A top_frame whose only child is a plain MagicMock (not a ttk.Label)
+        WHEN: _display_vehicle_image() is called
+        THEN: The child widget's destroy() is NOT called
+              (covers the False branch of line 346: 346→345)
+        """
+        non_label_widget = MagicMock()  # no spec → isinstance(..., ttk.Label) is False
+        template_window.top_frame = MagicMock()
+        template_window.top_frame.winfo_children.return_value = [non_label_widget]
+        template_window.image_label = MagicMock()
+        template_window.dpi_scaling_factor = 1.0
+
+        with (
+            patch.object(template_window, "get_vehicle_image_filepath", return_value="/path/to/image.jpg"),
+            patch.object(template_window, "put_image_in_label", return_value=MagicMock()),
+        ):
+            template_window._display_vehicle_image("Copter/QuadX")
+
+        non_label_widget.destroy.assert_not_called()
+
     def test_image_display_handles_file_not_found_gracefully(self, template_window) -> None:
         """
         Image display should handle FileNotFoundError gracefully.
@@ -1002,3 +1058,156 @@ class TestVehicleTypeFiltering:
 
             # Assert: vehicle type is passed to configure_treeview
             mock_configure_treeview.assert_called_once_with("Plane")
+
+
+class TestRunAppBehavior:
+    """Test run_app() control-flow branches (lines 182→exit and 187-190, new in PR #1394)."""
+
+    def test_run_app_catches_tcl_error_in_toplevel_loop(self, template_window) -> None:
+        """
+        run_app silently swallows TclError raised during the Toplevel event loop.
+
+        GIVEN: A TemplateOverviewWindow whose root is a tk.Toplevel
+          AND: root.update() raises TclError (e.g. window destroyed mid-loop)
+        WHEN: run_app() is called
+        THEN: The TclError is caught and execution continues without raising
+        """
+        # Make root look like a Toplevel with one child so the while-loop body executes
+        template_window.root = MagicMock(spec=tk.Toplevel)
+        template_window.root.children = {"child1": MagicMock()}  # non-empty → enters loop
+        template_window.root.update.side_effect = tk.TclError("application has been destroyed")
+
+        # Should not raise — the except block has a bare `pass`
+        template_window.run_app()  # must return without exception
+
+    def test_run_app_calls_mainloop_when_root_is_tk(self, template_window) -> None:
+        """
+        run_app calls self.root.mainloop() when the root is a tk.Tk instance.
+
+        GIVEN: A TemplateOverviewWindow whose root is a tk.Tk (main application root)
+        WHEN: run_app() is called
+        THEN: root.mainloop() is invoked exactly once
+        """
+        mock_tk_root = MagicMock(spec=tk.Tk)
+        template_window.root = mock_tk_root
+
+        template_window.run_app()
+
+        mock_tk_root.mainloop.assert_called_once()
+
+    def test_run_app_exits_silently_when_root_is_neither_toplevel_nor_tk(self, template_window) -> None:
+        """
+        run_app() returns immediately when root is neither tk.Toplevel nor tk.Tk.
+
+        GIVEN: A TemplateOverviewWindow whose root is a plain MagicMock (no spec)
+        WHEN: run_app() is called
+        THEN: Neither the event-loop nor mainloop() is entered and no exception is raised
+              (covers the 182→exit branch)
+        """
+        # The fixture supplies window.root = MagicMock() without spec, so both
+        # isinstance(root, tk.Toplevel) and isinstance(root, tk.Tk) are False
+        template_window.run_app()
+
+        template_window.root.mainloop.assert_not_called()
+        template_window.root.update.assert_not_called()
+
+    def test_configure_treeview_calls_all_sub_methods(self, template_window) -> None:
+        """
+        _configure_treeview() delegates to four sub-methods in sequence.
+
+        GIVEN: A TemplateOverviewWindow
+        WHEN: _configure_treeview() is called with a vehicle type
+        THEN: _setup_treeview_style(), _setup_treeview_columns(),
+              _populate_treeview(), and _adjust_treeview_column_widths() are each called
+              exactly once (covers lines 187-190)
+        """
+        with (
+            patch.object(template_window, "_setup_treeview_style") as mock_style,
+            patch.object(template_window, "_setup_treeview_columns") as mock_cols,
+            patch.object(template_window, "_populate_treeview") as mock_populate,
+            patch.object(template_window, "_adjust_treeview_column_widths") as mock_adjust,
+        ):
+            template_window._configure_treeview("ArduCopter")
+
+        mock_style.assert_called_once_with()
+        mock_cols.assert_called_once_with()
+        mock_populate.assert_called_once_with("ArduCopter")
+        mock_adjust.assert_called_once_with()
+
+
+class TestSelectionAndSortEdgeCases:
+    """Test edge-case branches in selection / sort handlers (new in PR #1394)."""
+
+    def test_update_selection_does_nothing_when_tree_has_no_selection(self, template_window) -> None:
+        """
+        _update_selection() exits early when nothing is selected in the treeview.
+
+        GIVEN: A TemplateOverviewWindow with a treeview that has no selected rows
+        WHEN: _update_selection() is called (e.g. after a keypress with no row focused)
+        THEN: store_template_dir() is NOT called
+        """
+        template_window.tree.selection.return_value = []  # empty selection
+
+        with patch.object(template_window, "store_template_dir") as mock_store:
+            template_window._update_selection()
+
+        mock_store.assert_not_called()
+
+    def test_on_row_double_click_does_nothing_when_row_is_empty(self, template_window) -> None:
+        """
+        _on_row_double_click() exits early when identify_row returns an empty string.
+
+        GIVEN: A TemplateOverviewWindow with an active treeview
+        WHEN: The user double-clicks on a blank area (identify_row returns '')
+        THEN: store_template_dir() and close_window() are NOT called
+        """
+        mock_event = MagicMock()
+        mock_event.y = 999
+        template_window.tree.identify_row.return_value = ""  # no row at that y coordinate
+
+        with (
+            patch.object(template_window, "store_template_dir") as mock_store,
+            patch.object(template_window, "close_window") as mock_close,
+        ):
+            template_window._on_row_double_click(mock_event)
+
+        mock_store.assert_not_called()
+        mock_close.assert_not_called()
+
+    def test_sort_by_column_stores_reversed_sort_command(self, template_window) -> None:
+        """
+        _sort_by_column stores a command that reverses the sort direction on the next click.
+
+        GIVEN: A TemplateOverviewWindow with a populated treeview
+        WHEN: _sort_by_column() is called with reverse=False
+        THEN: The heading command is set to a lambda that sorts with reverse=True on next click
+        """
+        # Populate tree with sortable items
+        template_window.tree.get_children.return_value = ["item1", "item2"]
+        template_window.tree.set.side_effect = lambda k, _col: "1.0" if k == "item1" else "2.0"
+        template_window.sort_column = None
+
+        # Capture the command lambda set on the heading
+        heading_command: list = []
+
+        def capture_heading(_col: str, **kwargs: object) -> None:
+            if "command" in kwargs:
+                heading_command.append(kwargs["command"])
+
+        template_window.tree.heading.side_effect = capture_heading
+        template_window.tree.set.side_effect = lambda k, _col2: "1.0" if k == "item1" else "2.0"
+
+        # Act: sort ascending
+        template_window._sort_by_column("firmware", reverse=False)
+
+        # The final heading() call should have stored a reversed-sort lambda
+        assert len(heading_command) >= 1, "heading command was never set"
+        stored_lambda = heading_command[-1]
+
+        # Invoke the stored lambda; it should re-sort with reverse=True
+        with patch.object(template_window, "_sort_by_column") as mock_sort:
+            stored_lambda()
+
+        # Source calls self._sort_by_column(col, not reverse) positionally, so check args tuple
+        assert mock_sort.call_count == 1
+        assert mock_sort.call_args.args == ("firmware", True)

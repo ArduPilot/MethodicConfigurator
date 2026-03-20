@@ -30,6 +30,7 @@ from PIL import Image
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
+    ask_retry_cancel_popup,
     ask_yesno_popup,
     is_debugging,
     show_error_popup,
@@ -318,6 +319,56 @@ class TestImageDisplayBehavior:
             with pytest.raises(FileNotFoundError, match="Image file not found"):
                 mocked_base_window.put_image_in_label(parent_frame, "missing_image.png", fallback_text="Image not available")
 
+    def test_user_sees_fallback_label_when_image_has_zero_height(self, mocked_base_window) -> None:
+        """
+        User sees a fallback label instead of a crash when an image reports zero height.
+
+        GIVEN: A corrupt or degenerate image file whose PIL size is (width, 0)
+        WHEN: put_image_in_label() is called with that file
+        THEN: A fallback label is returned (ValueError caught internally)
+        """
+        mock_image = MagicMock()
+        mock_image.size = (100, 0)  # zero height triggers the ValueError guard
+        mock_image.__enter__ = MagicMock(return_value=mock_image)
+        mock_image.__exit__ = MagicMock(return_value=None)
+
+        with (
+            patch("os.path.isfile", return_value=True),
+            patch("PIL.Image.open", return_value=mock_image),
+            patch("tkinter.ttk.Label") as mock_label,
+        ):
+            parent_frame = MagicMock()
+            result = mocked_base_window.put_image_in_label(parent_frame, "degenerate.png", fallback_text="bad image")
+
+        # Fallback label is returned, not the image label
+        mock_label.assert_called_once()
+        assert result == mock_label.return_value
+
+    def test_user_sees_fallback_label_when_image_has_zero_width(self, mocked_base_window) -> None:
+        """
+        User sees a fallback label instead of a crash when an image reports zero width.
+
+        GIVEN: A corrupt or degenerate image file whose PIL size is (0, height)
+        WHEN: put_image_in_label() is called with that file
+        THEN: A fallback label is returned (ValueError caught internally)
+        """
+        mock_image = MagicMock()
+        mock_image.size = (0, 100)  # zero width triggers the ValueError guard
+        mock_image.__enter__ = MagicMock(return_value=mock_image)
+        mock_image.__exit__ = MagicMock(return_value=None)
+
+        with (
+            patch("os.path.isfile", return_value=True),
+            patch("PIL.Image.open", return_value=mock_image),
+            patch("tkinter.ttk.Label") as mock_label,
+        ):
+            parent_frame = MagicMock()
+            result = mocked_base_window.put_image_in_label(parent_frame, "degenerate.png", fallback_text="bad image")
+
+        # Fallback label is returned, not the image label
+        mock_label.assert_called_once()
+        assert result == mock_label.return_value
+
     @pytest.mark.parametrize(
         ("original_size", "target_height", "expected_width"),
         [
@@ -348,6 +399,34 @@ class TestImageDisplayBehavior:
 
 class TestErrorResilienceBehavior:
     """Test how application handles error conditions gracefully."""
+
+    def test_app_skips_icon_setup_when_debugger_is_active(self) -> None:
+        """
+        Application skips icon setup when a debugger is actively connected.
+
+        GIVEN: A developer has a VS Code debugger attached to the process
+        WHEN: _setup_application_icon() is called
+        THEN: Icon loading is skipped entirely (debugger cannot cope with it)
+        """
+        # Clear PYTEST_CURRENT_TEST so the early test-environment guard doesn't trigger first
+        env_without_pytest = {k: v for k, v in os.environ.items() if k != "PYTEST_CURRENT_TEST"}
+
+        with (
+            patch.dict(os.environ, env_without_pytest, clear=True),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.is_debugging", return_value=True),
+            patch.object(BaseWindow, "_setup_theme_and_styling"),
+            patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0),
+        ):
+            window = BaseWindow.__new__(BaseWindow)
+            window.root = MagicMock()
+            window.main_frame = MagicMock()
+            window.dpi_scaling_factor = 1.0
+
+            # Act: Call _setup_application_icon with debugger active
+            window._setup_application_icon()
+
+            # Assert: icon was never set on the root window
+            window.root.iconphoto.assert_not_called()
 
     def test_user_sees_functional_app_despite_icon_issues(self) -> None:
         """
@@ -472,6 +551,36 @@ class TestWindowManagementBehavior:
         # (The exact position may vary by window manager, but it shouldn't crash)
 
         child.destroy()
+
+    def test_center_window_calls_update_idletasks_on_macos(self) -> None:
+        """
+        center_window calls update_idletasks (not update) on macOS for correct rendering.
+
+        GIVEN: Application is running on macOS (Darwin)
+        WHEN: center_window() positions a child window relative to a parent
+        THEN: update_idletasks() is used instead of update() to avoid macOS-specific issues
+        """
+        mock_window = MagicMock()
+        mock_parent = MagicMock()
+        mock_window.winfo_width.return_value = 1
+        mock_window.winfo_height.return_value = 1
+        mock_window.winfo_reqwidth.return_value = 200
+        mock_window.winfo_reqheight.return_value = 100
+        mock_parent.winfo_x.return_value = 0
+        mock_parent.winfo_y.return_value = 0
+        mock_parent.winfo_width.return_value = 800
+        mock_parent.winfo_height.return_value = 600
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system",
+            return_value="Darwin",
+        ):
+            BaseWindow.center_window(mock_window, mock_parent)
+
+        # On Darwin: update_idletasks() is called (twice: once unconditionally, once in Darwin branch)
+        # The key invariant is that update() is never called on macOS
+        assert mock_window.update_idletasks.call_count == 2
+        mock_window.update.assert_not_called()
 
     def test_user_can_safely_close_windows_without_memory_leaks(self, tk_root) -> None:
         """
@@ -1268,6 +1377,104 @@ class TestImageParameterValidation:
             mock_label.assert_called_once_with(parent_frame)  # Empty label for debugger
 
 
+class TestWin32DpiDetection:
+    """Test Win32 DPI detection added in this PR for Windows HiDPI support."""
+
+    def test_returns_system_dpi_when_win32_api_available(self) -> None:
+        """
+        Returns system DPI when Win32 API is accessible.
+
+        GIVEN: Running on Windows with GetDpiForSystem available via ctypes
+        WHEN: _get_win32_system_dpi() is called
+        THEN: Returns the DPI value reported by the Win32 API
+        """
+        mock_ctypes = MagicMock()
+        mock_ctypes.windll.user32.GetDpiForSystem.return_value = 144
+
+        with patch.dict("sys.modules", {"ctypes": mock_ctypes}):
+            result = BaseWindow._get_win32_system_dpi()
+
+        assert result == 144
+
+    def test_returns_zero_when_windll_raises_attribute_error(self) -> None:
+        """
+        Returns 0 gracefully when ctypes.windll raises AttributeError (non-Windows).
+
+        GIVEN: Running on Linux/macOS where ctypes.windll is unavailable
+        WHEN: _get_win32_system_dpi() is called
+        THEN: Returns 0 without propagating the AttributeError
+        """
+        mock_ctypes = MagicMock()
+        mock_ctypes.windll.user32.GetDpiForSystem.side_effect = AttributeError("windll not available")
+
+        with patch.dict("sys.modules", {"ctypes": mock_ctypes}):
+            result = BaseWindow._get_win32_system_dpi()
+
+        assert result == 0
+
+    def test_returns_zero_when_win32_raises_os_error(self) -> None:
+        """
+        Returns 0 gracefully when Win32 call raises OSError.
+
+        GIVEN: Win32 API call fails with OSError (e.g., access denied)
+        WHEN: _get_win32_system_dpi() is called
+        THEN: Returns 0 without propagating the OSError
+        """
+        mock_ctypes = MagicMock()
+        mock_ctypes.windll.user32.GetDpiForSystem.side_effect = OSError("Access denied")
+
+        with patch.dict("sys.modules", {"ctypes": mock_ctypes}):
+            result = BaseWindow._get_win32_system_dpi()
+
+        assert result == 0
+
+    def test_dpi_scaling_uses_win32_dpi_when_on_windows(self, dpi_test_window) -> None:
+        """
+        _get_dpi_scaling_factor uses Win32 DPI on Windows, bypassing Tk virtualization.
+
+        GIVEN: Running on Windows with 150% display scaling (144 DPI)
+        WHEN: _get_dpi_scaling_factor() is called
+        THEN: Returns 1.5 derived from Win32 API, ignoring the Tk-reported values
+        """
+        # dpi_test_window already patches _get_win32_system_dpi to 0;
+        # the inner patch.object on the instance overrides that for this call.
+        window, stack = dpi_test_window(96.0)
+
+        with (
+            stack,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system",
+                return_value="Windows",
+            ),
+            patch.object(window, "_get_win32_system_dpi", return_value=144),
+        ):
+            result = window._get_dpi_scaling_factor()
+
+        assert result == pytest.approx(1.5)
+
+    def test_dpi_scaling_falls_through_to_tk_when_win32_returns_zero(self, dpi_test_window) -> None:
+        """
+        _get_dpi_scaling_factor falls through to Tk path when Win32 returns 0.
+
+        GIVEN: Running on Windows but Win32 DPI query returns 0 (query failed)
+        WHEN: _get_dpi_scaling_factor() is called
+        THEN: Falls back to Tk-based measurement (192 DPI → 2.0 scaling factor)
+        """
+        window, stack = dpi_test_window(192.0, tk_scaling=2.0)
+
+        with (
+            stack,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.platform_system",
+                return_value="Windows",
+            ),
+            patch.object(window, "_get_win32_system_dpi", return_value=0),
+        ):
+            result = window._get_dpi_scaling_factor()
+
+        assert result == pytest.approx(2.0)
+
+
 class TestScalingCalculationMethods:
     """Test the various DPI scaling calculation methods."""
 
@@ -1404,6 +1611,25 @@ class TestPopupFunctionsBehavior:
             # Then: Should return user's choice
             assert result is True
             mock_yesno.assert_called_once_with("Confirm Action", "Are you sure?")
+
+    def test_user_can_retry_or_cancel_with_retry_cancel_popup(self) -> None:
+        """
+        User can choose to retry or cancel a failed operation.
+
+        GIVEN: An operation has failed and needs user decision to retry or abort
+        WHEN: The retry/cancel popup is triggered
+        THEN: Should return True when user chooses retry, False when user cancels
+        """
+        # Arrange & Act: User sees retry/cancel dialog
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.messagebox.askretrycancel",
+            return_value=True,
+        ) as mock_retry:
+            result = ask_retry_cancel_popup("Retry?", "Operation failed. Retry?")
+
+            # Then: Should return user's choice
+            assert result is True
+            mock_retry.assert_called_once_with("Retry?", "Operation failed. Retry?")
 
 
 class TestWindowLifecycleBehavior:
@@ -1777,9 +2003,9 @@ class TestCenterWindowOnScreenBehavior:
             # Mock window: winfo_width/height return actual rendered size (> 1),
             # winfo_reqwidth/height return different (content-based) values
             mock_window = MagicMock()
-            mock_window.winfo_width.return_value = 450   # actual rendered width
+            mock_window.winfo_width.return_value = 450  # actual rendered width
             mock_window.winfo_height.return_value = 350  # actual rendered height
-            mock_window.winfo_reqwidth.return_value = 300   # content size (should NOT be used)
+            mock_window.winfo_reqwidth.return_value = 300  # content size (should NOT be used)
             mock_window.winfo_reqheight.return_value = 200  # content size (should NOT be used)
             mock_window.winfo_pointerx.return_value = 960
             mock_window.winfo_pointery.return_value = 540
