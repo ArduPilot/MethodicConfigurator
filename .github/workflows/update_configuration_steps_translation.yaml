@@ -23,6 +23,8 @@ permissions:
 
 jobs:
   update-strings:
+    # Do not run in forks; it only clutters fork repositories with unused branches.
+    if: ${{ !github.event.repository.fork }}
     permissions:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs

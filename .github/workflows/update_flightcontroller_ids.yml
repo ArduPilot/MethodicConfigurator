@@ -10,6 +10,8 @@ permissions:
 
 jobs:
   update-ids:
+    # Do not run in forks; it only clutters fork repositories with unused branches.
+    if: ${{ !github.event.repository.fork }}
     permissions:
       contents: write  # for Git to git push
       pull-requests: write  # for creating PRs
