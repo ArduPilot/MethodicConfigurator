@@ -158,6 +158,7 @@ class TestParameterEditorWindow:
             # Check window properties
             assert about_window.title() == "About"
             # Check that geometry has positive dimensions (exact size depends on DPI scaling)
+            about_window.update_idletasks()
             win_width = about_window.winfo_width()
             win_height = about_window.winfo_height()
             assert win_width >= 650, f"Window width {win_width} should be at least 650px (unscaled)"
