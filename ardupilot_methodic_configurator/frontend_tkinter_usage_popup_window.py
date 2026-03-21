@@ -114,7 +114,9 @@ class PopupWindow:
             popup_window.root.deiconify()
             popup_window.root.lift()
             popup_window.root.update()  # Ensure the window is fully rendered before setting focus
-            popup_window.root.focus_force()
+            # Defer focus_force to after the event loop has processed the deiconify/lift,
+            # avoiding a segfault in Python 3.9 on Linux (X11) in headless environments.
+            popup_window.root.after(1, popup_window.root.focus_force)
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus

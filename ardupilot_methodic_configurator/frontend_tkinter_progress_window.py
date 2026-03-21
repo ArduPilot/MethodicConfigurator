@@ -46,7 +46,8 @@ class ProgressWindow:
         try:
             dpi = self.progress_window.winfo_fpixels("1i")
             tk_scaling = float(self.progress_window.tk.call("tk", "scaling"))
-            dpi_scaling_factor = max(dpi / 96.0, tk_scaling)
+            normalized_tk_scaling = tk_scaling * 72.0 / 96.0
+            dpi_scaling_factor = max(1.0, dpi / 96.0, normalized_tk_scaling)
         except (tk.TclError, AttributeError):
             dpi_scaling_factor = 1.0
         self.progress_window.geometry(f"{round(width * dpi_scaling_factor)}x{round(height * dpi_scaling_factor)}")
