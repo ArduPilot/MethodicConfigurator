@@ -185,3 +185,28 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 path = [".dockerignore", "docker-compose.yml", "Dockerfile"]
 SPDX-FileCopyrightText = "2026 ArduPilot methodic configurator developers"
 SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = "credits/simpleeval-LICENCE"
+SPDX-FileCopyrightText = "Copyright (c) 2013 Daniel Fairhead"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/pip-system-certs-LICENSE"
+SPDX-FileCopyrightText = "Copyright (c) alelec"
+SPDX-License-Identifier = "BSD-2-Clause"
+
+[[annotations]]
+path = "credits/argparse_check_range-LICENSE-2.0"
+SPDX-FileCopyrightText = "Dmitriy Kovalev"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "credits/screeninfo-LICENSE.md"
+SPDX-FileCopyrightText = "Copyright (c) 2018 Marcin Kurczewski"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "credits/Inno_Setup-license.txt"
+SPDX-FileCopyrightText = "Copyright (C) 1997-2026 Jordan Russell. Portions Copyright (C) 2000-2026 Martijn Laan."
+SPDX-License-Identifier = "LicenseRef-Inno-Setup"

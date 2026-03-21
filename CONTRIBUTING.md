@@ -139,6 +139,25 @@ python3 -m ardupilot_methodic_configurator
 
 More detailed usage instructions can be found in our [user manual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL)
 
+## Managing Dependencies
+
+When adding a new runtime or development dependency, **all** of the following steps must be completed
+in order to keep the project REUSE-compliant and credits accurate:
+
+1. **`pyproject.toml`** — add the package with a pinned version.
+2. **`credits/CREDITS.md`** — add a row to the "directly uses" or "indirectly uses" table with a
+   link to the project and its license.
+3. **`credits/update_credits_licenses.py`** — add an entry (name + raw license URL) to
+   `direct_dependencies` or `indirect_dependencies`.
+4. **Download the license file** — run `python update_credits_licenses.py` from the `credits/`
+   directory to fetch the license file(s).
+5. **`REUSE.toml`** — add an `[[annotations]]` block for each downloaded license file with the
+   correct `SPDX-FileCopyrightText` and `SPDX-License-Identifier`.
+6. **Verify** — run `reuse lint` and `pre-commit run --all` until all checks pass.
+
+Full details and examples are in
+[`.github/instructions/update_software_dependencies.md`](.github/instructions/update_software_dependencies.md).
+
 ## Submitting patches
 
 Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style for your git commit messages.

@@ -47,12 +47,22 @@ direct_dependencies = [
     {"name": "pyserial", "license_url": "https://raw.githubusercontent.com/pyserial/pyserial/master/LICENSE.txt"},
     {"name": "requests", "license_url": "https://raw.githubusercontent.com/psf/requests/main/LICENSE"},
     {"name": "setuptools", "license_url": "https://raw.githubusercontent.com/pypa/setuptools/main/LICENSE"},
+    {
+        "name": "argparse_check_range",
+        "license_url": "http://www.apache.org/licenses/LICENSE-2.0",
+    },
+    {"name": "certifi", "license_url": "https://raw.githubusercontent.com/certifi/python-certifi/master/LICENSE"},
+    {"name": "screeninfo", "license_url": "https://raw.githubusercontent.com/rr-/screeninfo/master/LICENSE.md"},
+    {"name": "simpleeval", "license_url": "https://raw.githubusercontent.com/danthedeckie/simpleeval/main/LICENCE"},
+    {
+        "name": "pip-system-certs",
+        "license_url": "https://gitlab.com/alelec/pip-system-certs/-/raw/master/LICENSE",
+    },
 ]
 
 
 # List of indirect dependencies and their license URLs
 indirect_dependencies = [
-    {"name": "certifi", "license_url": "https://raw.githubusercontent.com/certifi/python-certifi/master/LICENSE"},
     {
         "name": "charset-normalizer",
         "license_url": "https://raw.githubusercontent.com/Ousret/charset_normalizer/master/LICENSE",
@@ -61,6 +71,7 @@ indirect_dependencies = [
     {"name": "urllib3", "license_url": "https://raw.githubusercontent.com/urllib3/urllib3/main/LICENSE.txt"},
     {"name": "lxml", "license_url": "https://raw.githubusercontent.com/lxml/lxml/master/LICENSE.txt"},
     {"name": "idna", "license_url": "https://raw.githubusercontent.com/kjd/idna/master/LICENSE.md"},
+    {"name": "Inno_Setup", "license_url": "https://jrsoftware.org/files/is/license.txt"},
 ]
 
 
