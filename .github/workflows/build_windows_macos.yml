@@ -627,7 +627,12 @@ jobs:
             # Build contributors section
             $contributorsSection = ""
             if ($contributors.Count -gt 0) {
-              $contributorLinks = ($contributors.Keys | Sort-Object | ForEach-Object { "[@$_](https://github.com/$_)" }) -join ', '
+              $contributorLinks = ($contributors.Keys | Sort-Object | ForEach-Object {
+                $username = $_
+                $escapedDisplayName = $username -replace '\[', '\\[' -replace '\]', '\\]'
+                $encodedUsername = [uri]::EscapeDataString($username)
+                "[@$escapedDisplayName](https://github.com/$encodedUsername)"
+              }) -join ', '
               $contributorsSection = "`n`n### 👥 Contributors`n`n$contributorLinks"
             }
 
