@@ -350,18 +350,10 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _("Name of tool/process that automatically changes these parameters")
     _config_steps_descriptions = _("Name/description of external tool needed")
     _config_steps_descriptions = _("New value for the parameter")
-    _config_steps_descriptions = _(
-        "Optional Python expression; if present, the parameter is only applied when this expression evaluates to true"
-    )
-    _config_steps_descriptions = _(
-        "Optional Python expression; if present, the parameter is only deleted when this expression evaluates to true"
-    )
-    _config_steps_descriptions = _(
-        "Parameters to remove from the configuration file, optionally conditioned on a Python expression"
-    )
-    _config_steps_descriptions = _(
-        "Parameters whose values are derived from vehicle component data or FC state. An entry with only 'if' means: add the parameter from the FC at its current value when the condition is true."
-    )
+    _config_steps_descriptions = _("Optional Python expression; if present, the parameter is only applied when this expression evaluates to true")
+    _config_steps_descriptions = _("Optional Python expression; if present, the parameter is only deleted when this expression evaluates to true")
+    _config_steps_descriptions = _("Parameters to remove from the configuration file, optionally conditioned on a Python expression")
+    _config_steps_descriptions = _("Parameters whose values are derived from vehicle component data or FC state. An entry with only 'if' means: add the parameter from the FC at its current value when the condition is true.")
     _config_steps_descriptions = _("Phases of the configuration process")
     _config_steps_descriptions = _("Previous filenames for this step")
     _config_steps_descriptions = _("Python expression; the parameter is added from the FC only when this evaluates to true")
