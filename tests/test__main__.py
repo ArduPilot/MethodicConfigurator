@@ -1613,6 +1613,7 @@ class TestConnectionAndFilesystemBranches:
             # Assert
             assert result == fallback
             mock_warn.assert_called_once()
+            warn_kwargs = {}
             args, kwargs = mock_warn.call_args
             if kwargs:
                 warn_kwargs: dict = kwargs
@@ -1842,9 +1843,13 @@ class TestEditorBackupAndMainOrchestration:
 
             # Assert
             mock_warn.assert_called_once()
+
+            # 1. Initialize 'body' here so Pylint knows it exists
+            body = ""
+
             args, kwargs = mock_warn.call_args
             if "body" in kwargs:
-                body: str = kwargs["body"]
+                body = kwargs["body"]  # Removed the ': str' type hint to keep it clean
             elif len(args) > 1:
                 body = args[1]
             else:
