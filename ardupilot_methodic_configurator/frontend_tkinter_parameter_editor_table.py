@@ -990,7 +990,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
         if sys_platform != "darwin":
-            window.focus_force()
+            window.focus_set()  # focus_force() crashes on Linux/X11 in python3.9 headless environments
             window.grab_set()
 
     def _confirm_parameter_addition(self, param_name: str) -> bool:
