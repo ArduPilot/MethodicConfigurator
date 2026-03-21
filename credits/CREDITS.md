@@ -42,6 +42,8 @@ It directly uses:
 | [jsonschema](https://python-jsonschema.readthedocs.io/en/stable/) | [MIT License](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING) |
 | [certifi](https://github.com/certifi/python-certifi) | [Mozilla Public License 2.0](https://github.com/certifi/python-certifi/blob/master/LICENSE) |
 | [screeninfo](https://github.com/rr-/screeninfo) | [MIT License](https://github.com/rr-/screeninfo/blob/master/LICENSE.md) |
+| [simpleeval](https://github.com/danthedeckie/simpleeval) | [MIT License](https://github.com/danthedeckie/simpleeval/blob/main/LICENCE) |
+| [pip-system-certs](https://gitlab.com/alelec/pip-system-certs) | [BSD 2-Clause "Simplified" License](https://gitlab.com/alelec/pip-system-certs/-/blob/master/LICENSE?ref_type=heads) |
 
 It indirectly uses:
 
