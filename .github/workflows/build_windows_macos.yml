@@ -479,7 +479,7 @@ jobs:
             try {
               # Get commits since comparison point with error handling
               Write-Host "Fetching commits from $compareFrom to ${{ github.sha }}"
-              $commits = gh api "repos/${{ github.repository }}/compare/$compareFrom...${{ github.sha }}" --jq '.commits[] | {message: .commit.message, sha: .sha, author: .commit.author.name, url: .html_url}' 2>$null
+              $commits = gh api "repos/${{ github.repository }}/compare/$compareFrom...${{ github.sha }}" --jq '.commits[] | {message: .commit.message, sha: .sha, author: .commit.author.name, login: (.author.login // ""), url: .html_url}' 2>$null
 
               if (-not $commits) {
                 Write-Host "No commits found or API call failed, falling back to auto-generated notes"
@@ -507,6 +507,7 @@ jobs:
             }
 
             # Initialize grouped commits using ArrayList for better performance
+            $contributors = @{}
             $grouped = @{
               'feat' = New-Object System.Collections.ArrayList
               'fix' = New-Object System.Collections.ArrayList
@@ -540,6 +541,20 @@ jobs:
 
               $commitUrl = $commit.url
 
+              # Track contributor
+              if ($commit.login -and $commit.login -ne "") {
+                $contributors[$commit.login] = $true
+              }
+
+              # Build author suffix
+              $authorSuffix = if ($commit.login -and $commit.login -ne "") {
+                " by [@$($commit.login)](https://github.com/$($commit.login))"
+              } else {
+                $rawAuthor = if ($commit.author) { [string]$commit.author } else { "Unknown author" }
+                $sanitizedAuthor = $rawAuthor -replace '[<>&"`\[\]\(\)@*_#|]', ''
+                " by $sanitizedAuthor"
+              }
+
               # Sanitize message to prevent markdown injection
               $sanitizedMessage = $message -replace '[<>&"]', '' -replace '\[', '\\[' -replace '\]', '\\]' -replace '`', '\\`'
 
@@ -562,9 +577,9 @@ jobs:
                 $formattedDescription = $scope + $description
 
                 if ($grouped.ContainsKey($type)) {
-                  $null = $grouped[$type].Add("- $formattedDescription ([$shortSha]($commitUrl))")
+                  $null = $grouped[$type].Add("- $formattedDescription ([$shortSha]($commitUrl))$authorSuffix")
                 } else {
-                  $null = $grouped['other'].Add("- $formattedDescription ([$shortSha]($commitUrl))")
+                  $null = $grouped['other'].Add("- $formattedDescription ([$shortSha]($commitUrl))$authorSuffix")
                 }
               } else {
                 # Non-conventional commit
@@ -573,7 +588,7 @@ jobs:
                 } else {
                   $sanitizedMessage
                 }
-                $null = $grouped['other'].Add("- $truncatedMessage ([$shortSha]($commitUrl))")
+                $null = $grouped['other'].Add("- $truncatedMessage ([$shortSha]($commitUrl))$authorSuffix")
               }
             }
 
@@ -609,13 +624,20 @@ jobs:
 
             $changesSummary = if ($sections.Count -gt 0) { $sections -join "`n" } else { "No changes found." }
 
+            # Build contributors section
+            $contributorsSection = ""
+            if ($contributors.Count -gt 0) {
+              $contributorLinks = ($contributors.Keys | Sort-Object | ForEach-Object { "[@$_](https://github.com/$_)" }) -join ', '
+              $contributorsSection = "`n`n### 👥 Contributors`n`n$contributorLinks"
+            }
+
             # Build release notes based on release type
             if ($isPreRelease) {
               $fullNotes = @"
           ${releaseWarning}
 
           ### Changes since last stable release (${compareFrom}):
-          ${changesSummary}
+          ${changesSummary}${contributorsSection}
 
           ---
           **Build Info:**
@@ -629,7 +651,7 @@ jobs:
               $currentVersion = "${{ github.ref }}" -replace "refs/tags/", ""
               $fullNotes = @"
           ### Changes since previous release (${compareFrom}):
-          ${changesSummary}
+          ${changesSummary}${contributorsSection}
 
           ---
           **Release Info:**
