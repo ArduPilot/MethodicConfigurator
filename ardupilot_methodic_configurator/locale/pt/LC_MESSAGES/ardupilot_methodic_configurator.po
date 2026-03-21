@@ -5033,7 +5033,7 @@ msgid ""
 "Copyright © 2024-2026 Amilcar do Carmo Lucas and ArduPilot.org\n"
 "\n"
 "Licensed under the GNU General Public License v3.0"
-msgstr ""
+msgstr "ArduPilot Configurador Metódico Versão: {version}\n\nUma sequência de configuração clara para veículos ArduPilot.\n\nCopyright © 2024-2026 Amilcar do Carmo Lucas e ArduPilot.org\n\nLicenciado sob a Licença Pública Geral GNU v3.0"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_about_popup_window.py:47
 msgid "Display usage popup"
@@ -5079,7 +5079,7 @@ msgstr "Não foi possível carregar o ícone da aplicação: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:311
 msgid "Calculated geometry for width %d and height %d with scaling factor %.2f"
-msgstr ""
+msgstr "Geometria calculada para largura %d e altura %d com fator de escala %.2f"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:477
 msgid "Image filepath cannot be empty"
