@@ -4596,7 +4596,7 @@ msgid ""
 "Copyright © 2024-2026 Amilcar do Carmo Lucas and ArduPilot.org\n"
 "\n"
 "Licensed under the GNU General Public License v3.0"
-msgstr ""
+msgstr "ArduPilot方法配置器版本: {version}\n\n为ArduPilot载具提供清晰的配置流程。\n\n版权所有 © 2024-2026 Amilcar do Carmo Lucas 和 ArduPilot.org\n\n根据GNU通用公共许可证v3.0授权"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_about_popup_window.py:47
 msgid "Display usage popup"
@@ -4640,7 +4640,7 @@ msgstr "无法加载应用程序图标: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:311
 msgid "Calculated geometry for width %d and height %d with scaling factor %.2f"
-msgstr ""
+msgstr "根据宽度 %d、高度 %d 和缩放因子 %.2f 计算的几何形状"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:477
 msgid "Image filepath cannot be empty"
