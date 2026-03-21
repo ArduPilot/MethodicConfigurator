@@ -114,9 +114,11 @@ class PopupWindow:
             popup_window.root.deiconify()
             popup_window.root.lift()
             popup_window.root.update()  # Ensure the window is fully rendered before setting focus
-            # Defer focus_force to after the event loop has processed the deiconify/lift,
-            # avoiding a segfault in Python 3.9 on Linux (X11) in headless environments.
-            popup_window.root.after(1, popup_window.root.focus_force)
+            # Use focus_set() instead of focus_force(): focus_force() calls XSetInputFocus
+            # directly via X11, which causes a segfault in Python 3.9 on Linux in headless
+            # environments. focus_set() only updates Tk's internal focus state, avoiding the crash.
+            # grab_set() below ensures modality regardless.
+            popup_window.root.focus_set()
 
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             # On Windows/Linux, make the popup modal and give it focus

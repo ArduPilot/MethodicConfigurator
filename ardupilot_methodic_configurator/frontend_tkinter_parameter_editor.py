@@ -940,7 +940,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Show dialog at correct position and make it modal
             # On macOS, grab_set() causes UI freeze (issue #1264), so skip it
             if sys_platform != "darwin":
-                dialog.focus_force()
+                dialog.focus_set()  # focus_force() crashes on Linux/X11 in python3.9 headless environments
                 dialog.grab_set()
 
             # Set focus after dialog is shown and modal
