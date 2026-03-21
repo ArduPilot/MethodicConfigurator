@@ -315,8 +315,8 @@ class ConnectionSelectionWindow(BaseWindow):
         default_baudrate: int = 115200,
     ) -> None:
         super().__init__()
-        self.root.title(_("AMC {version} - Flight controller connection").format(version=__version__))  # Set the window title
-        self.root.geometry(self.calculate_scaled_geometry(520, 462))  # Set the window size
+        self.root.title(_("AMC {version} - Flight controller connection").format(version=__version__))
+        self.root.geometry(self.calculate_scaled_geometry(520, 380))
         self.center_window_on_screen(self.root)
         self.default_baudrate = default_baudrate
 
