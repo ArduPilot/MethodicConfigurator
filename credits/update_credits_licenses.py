@@ -11,8 +11,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import logging
+import os
+from pathlib import Path
 
 import requests
+
+os.chdir(Path(__file__).parent)
 
 # List of direct dependencies and their license URLs
 direct_dependencies = [
