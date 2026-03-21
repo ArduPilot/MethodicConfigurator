@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-03-21 15:16+0000\n"
+"POT-Creation-Date: 2026-03-21 16:14+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -112,7 +112,7 @@ msgid "Unknown"
 msgstr "Unbekannt"
 
 #: ardupilot_methodic_configurator/__main__.py:583
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:98
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:99
 msgid "Error in derived parameters"
 msgstr "Fehler in abgeleiteten Parametern"
 
@@ -361,7 +361,7 @@ msgstr ""
 "Speichern Sie die Fahrzeugkomponente in den Systemvorlagen. Nur für "
 "Softwareentwickler, die wissen, was sie tun. Standard ist %(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:85
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
 msgid ""
 "Configuration steps '%s' loaded from %s (overwriting default configuration "
 "steps)."
@@ -369,27 +369,27 @@ msgstr ""
 "Konfigurationsschritte '%s' von %s geladen (Standardkonfigurationsschritte "
 "überschreiben)."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:91
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:93
 msgid "Configuration steps '%s' loaded from %s."
 msgstr "Konfigurationsschritte '%s' von %s geladen."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:97
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
 msgid "Error in file '%s': %s"
 msgstr "Fehler in Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:107
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:109
 msgid "Schema file '%s' not found"
 msgstr "Schema-Datei '%s' nicht gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:109
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:111
 msgid "Configuration steps validation error: %s"
 msgstr "Fehler bei der Validierung der Konfigurationsschritte: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:111
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:113
 msgid "Error in schema file '%s': %s"
 msgstr "Fehler in Schema-Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:119
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:121
 msgid ""
 "No configuration steps documentation and no forced and derived parameters "
 "will be available."
@@ -397,22 +397,22 @@ msgstr ""
 "Keine Dokumentation zu Konfigurationsschritten verfügbar, und keine "
 "erzwungenen und abgeleiteten Parameter sind verfügbar."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:124
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:126
 msgid "No configuration phases documentation will be available."
 msgstr "Keine Dokumentation zu Konfigurationsphasen verfügbar."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:137
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:139
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
 msgstr "Fehler in Datei '%s': '%s' %s-Parameter ist kein Wörterbuch"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:146
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:148
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
 msgstr ""
 "Fehler in Datei '%s': '%s' %s-Parameter '%s' 'Neuer Wert'-Attribut nicht "
 "gefunden."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:154
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:156
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not "
 "found."
@@ -420,7 +420,7 @@ msgstr ""
 "Fehler in Datei '%s': '%s' %s-Parameter '%s' 'Änderungsgrund'-Attribut nicht "
 "gefunden."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:183
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:185
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
@@ -430,7 +430,7 @@ msgstr ""
 "'{parameter_type}'-Parameter '{parameter}' nicht berechnet werden: "
 "'fc_parameters' nicht gefunden, ist ein FC angeschlossen?"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:201
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:203
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' evaluation resulted in math error: {math_error}"
@@ -439,7 +439,7 @@ msgstr ""
 "Auswertung des {parameter_type}-Parameters '{parameter}' einen "
 "mathematischen Fehler: {math_error}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:224
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:226
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
@@ -449,7 +449,7 @@ msgstr ""
 "'{parameter_type}'-Parameter '{parameter}' nicht berechnet werden, keine "
 "Dokumentationsmetadaten verfügbar"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:240
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:242
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
@@ -457,8 +457,8 @@ msgstr ""
 "In der Datei '{self.configuration_steps_filename}': '{filename}' konnte der "
 "'{parameter_type}'-Parameter '{parameter}' nicht berechnet werden: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:264
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:278
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:266
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:280
 msgid ""
 "File '{self.configuration_steps_filename}' not found. No intermediate "
 "parameter configuration steps available"
@@ -466,8 +466,8 @@ msgstr ""
 "Datei '{self.configuration_steps_filename}' nicht gefunden. Keine "
 "verfügbaren Zwischendatei-Konfigurationsschritte"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:270
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:283
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:272
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:285
 msgid ""
 "No documentation available for {selected_file} in the {self."
 "configuration_steps_filename} file"
@@ -3208,11 +3208,11 @@ msgstr "kritisch"
 msgid "Battery monitoring stopped"
 msgstr "Batterieüberwachung gestoppt"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:133
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:134
 msgid "ExpressLRS Configuration Warning"
 msgstr "ExpressLRS-Konfigurationswarnung"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:134
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:135
 msgid ""
 "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
 "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
@@ -3223,23 +3223,23 @@ msgstr ""
 "Bitte ändern Sie FLTMODE_CH auf einen anderen Kanal (z.B. 6, 7, 8, etc.)\n"
 "um Konflikte mit dem erforderlichen RC5-Scharfstellkanal zu vermeiden."
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:178
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:179
 msgid "Removing duplicate parameter %s"
 msgstr "Dupplikatparameter %s entfernen"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:179
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:180
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr "Der Parameter '{old_name}' wurde aufgrund von Duplikation entfernt."
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:180
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:181
 msgid "Parameter Removed"
 msgstr "Parameter entfernt"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:184
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:185
 msgid "Renaming parameter %s to %s"
 msgstr "Parameter %s in %s umbenennen"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:185
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:186
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
 "to obey the flight controller connection defined in the component editor "
@@ -3249,7 +3249,7 @@ msgstr ""
 " um der Verbindung zum Flugcontroller zu entsprechen, die im "
 "Komponentenbearbeitungsfenster definiert ist."
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:189
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:190
 msgid "Parameter Renamed"
 msgstr "Parameter umbenannt"
 
@@ -5031,7 +5031,14 @@ msgid ""
 "Copyright © 2024-2026 Amilcar do Carmo Lucas and ArduPilot.org\n"
 "\n"
 "Licensed under the GNU General Public License v3.0"
-msgstr "ArduPilot Methodischer Konfigurator Version: {version}\n\nEine klare Konfigurationssequenz für ArduPilot-Fahrzeuge.\n\nCopyright © 2024-2026 Amilcar do Carmo Lucas und ArduPilot.org\n\nLizenziert unter der GNU General Public License v3.0"
+msgstr ""
+"ArduPilot Methodischer Konfigurator Version: {version}\n"
+"\n"
+"Eine klare Konfigurationssequenz für ArduPilot-Fahrzeuge.\n"
+"\n"
+"Copyright © 2024-2026 Amilcar do Carmo Lucas und ArduPilot.org\n"
+"\n"
+"Lizenziert unter der GNU General Public License v3.0"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_about_popup_window.py:47
 msgid "Display usage popup"
@@ -5076,7 +5083,8 @@ msgstr "Anwendungssymbol konnte nicht geladen werden: %s"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:311
 msgid "Calculated geometry for width %d and height %d with scaling factor %.2f"
-msgstr "Berechnete Geometrie für Breite %d und Höhe %d mit Skalierungsfaktor %.2f"
+msgstr ""
+"Berechnete Geometrie für Breite %d und Höhe %d mit Skalierungsfaktor %.2f"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:477
 msgid "Image filepath cannot be empty"
