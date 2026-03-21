@@ -99,3 +99,5 @@ These books helped shape this software:
 - [The Clean Coder: A Code of Conduct for Professional Programmers by Robert C. Martin](https://www.oreilly.com/library/view/clean-coder-the/9780132542913/)
 - [The Mythical Man-Month: 2nd Edition by Frederick P. Brooks](https://www.oreilly.com/library/view/mythical-man-month-the/0201835959/)
 - [Clean Agile: Back to Basics by Robert C. Martin](https://www.oreilly.com/library/view/clean-agile-back/9780135782002/)
+- [Tidy First? by Kent Beck](https://www.oreilly.com/library/view/tidy-first/9781098151232/)
+- [Laws of UX by Jon Yablonski](https://www.oreilly.com/library/view/laws-of-ux/9781492055303/)
