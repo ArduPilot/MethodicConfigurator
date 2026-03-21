@@ -463,5 +463,65 @@ def test_validate_parameters_empty_dict() -> None:
     assert True  # If we get here, no exception was raised
 
 
+def test_malicious_expression_import_blocked() -> None:
+    """Test that __import__ expressions are blocked by the safe evaluator."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {
+        "forced_parameters": {
+            "PARAM1": {"New Value": "__import__('os').system('echo pwned')", "Change Reason": "Malicious"},
+        }
+    }
+    variables = {"doc_dict": {"PARAM1": {"values": {}}}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    assert result != ""
+    assert "PARAM1" in result
+    assert "test_file" not in config_steps.forced_parameters
+
+
+def test_malicious_expression_builtins_blocked() -> None:
+    """Test that accessing __builtins__ is blocked by the safe evaluator."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {
+        "forced_parameters": {
+            "PARAM1": {"New Value": "__builtins__.__import__('os').system('id')", "Change Reason": "Malicious"},
+        }
+    }
+    variables = {"doc_dict": {"PARAM1": {"values": {}}}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    assert result != ""
+    assert "PARAM1" in result
+    assert "test_file" not in config_steps.forced_parameters
+
+
+def test_safe_log_function_in_expression() -> None:
+    """Test that log() works as a whitelisted safe function (replacing __import__('math').log())."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {
+        "forced_parameters": {
+            "MOT_THST_EXPO": {
+                "New Value": (
+                    "min(0.8, round(0.15686*log("
+                    "vehicle_components['Propellers']['Specifications']['Diameter_inches'])"
+                    "+0.23693, 2))"
+                ),
+                "Change Reason": "Derived from propeller size",
+            },
+        }
+    }
+    variables = {
+        "doc_dict": {"MOT_THST_EXPO": {"values": {}}},
+        "vehicle_components": {"Propellers": {"Specifications": {"Diameter_inches": 10}}},
+    }
+
+    result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    assert result == ""
+    assert abs(config_steps.forced_parameters["test_file"]["MOT_THST_EXPO"].value - 0.6) < 0.01
+
+
 if __name__ == "__main__":
     unittest.main()

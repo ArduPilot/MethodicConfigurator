@@ -18,6 +18,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_safe_evaluator import safe_evaluate
 
 
 class ConfigurationStepProcessor:
@@ -299,7 +300,7 @@ class ConfigurationStepProcessor:
         """
         if variables:
             # If variables provided, evaluate the new_connection_prefix
-            new_connection_prefix = eval(str(new_connection_prefix), {}, variables)  # noqa: S307 pylint: disable=eval-used
+            new_connection_prefix = str(safe_evaluate(str(new_connection_prefix), variables))
 
         # Generate the rename mapping
         renames = ConfigurationStepProcessor._generate_connection_renames(list(parameters.keys()), new_connection_prefix)

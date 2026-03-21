@@ -20,9 +20,11 @@ from typing import Optional, TypedDict
 # from logging import debug as logging_debug
 from jsonschema import validate as json_validate
 from jsonschema.exceptions import ValidationError
+from simpleeval import InvalidExpression
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_safe_evaluator import safe_evaluate
 
 
 class PhaseData(TypedDict, total=False):
@@ -193,7 +195,7 @@ class ConfigurationSteps:
                     continue
 
                 try:
-                    result = eval(str(parameter_info["New Value"]), {}, variables)  # noqa: S307 pylint: disable=eval-used
+                    result = safe_evaluate(str(parameter_info["New Value"]), variables)
                 except (ZeroDivisionError, ValueError):
                     # Handle math errors like:
                     # - ZeroDivisionError: division by zero or 0.0 raised to negative power
@@ -236,7 +238,7 @@ class ConfigurationSteps:
                     destination[filename] = ParDict()
                 change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
                 destination[filename][parameter] = Par(float(result), change_reason)
-            except (SyntaxError, NameError, KeyError, StopIteration) as _e:
+            except (SyntaxError, NameError, KeyError, StopIteration, InvalidExpression) as _e:
                 error_msg = _(
                     "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
                     "parameter '{parameter}' could not be computed: {_e}"
