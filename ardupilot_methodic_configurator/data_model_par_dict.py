@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import re
-from math import isfinite as math_isfinite
+from math import isfinite
 from os import path as os_path
 from os import popen as os_popen
 from sys import exc_info as sys_exc_info
@@ -198,7 +198,7 @@ class ParDict(dict[str, Par]):
             raise SystemExit(msg)
         try:
             fvalue = float(value)
-            if not math_isfinite(fvalue):
+            if not isfinite(fvalue):
                 msg = _(
                     "Non-finite parameter value {value!r} (parsed as {fvalue}) for {parameter_name} in {param_file} line {i}"
                 ).format(value=value, fvalue=fvalue, parameter_name=parameter_name, param_file=param_file, i=i)
