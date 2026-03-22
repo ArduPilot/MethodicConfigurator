@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import (
     VehicleProjectOpener,
     VehicleProjectOpenError,
@@ -136,7 +137,7 @@ class TestLastVehicleDirectoryOpening:
         """
         # Arrange: Valid directory but filesystem initialization failure
         last_vehicle_dir = "/path/to/last/vehicle"
-        mock_local_filesystem.re_init.side_effect = SystemExit("Critical filesystem error")
+        mock_local_filesystem.re_init.side_effect = ParamFileError("Critical filesystem error")
 
         # Act & Assert: Should raise error about parameter file reading
         with pytest.raises(VehicleProjectOpenError) as exc_info:
@@ -281,7 +282,7 @@ class TestVehicleDirectoryOpening:
         """
         # Arrange: Valid directory but filesystem initialization failure
         vehicle_dir = "/path/to/vehicle/directory"
-        mock_local_filesystem.re_init.side_effect = SystemExit("Critical initialization error")
+        mock_local_filesystem.re_init.side_effect = ParamFileError("Critical initialization error")
 
         # Act & Assert: Should raise error about parameter file reading
         with pytest.raises(VehicleProjectOpenError) as exc_info:

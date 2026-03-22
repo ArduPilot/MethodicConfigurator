@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
 
 
 class VehicleProjectOpenError(Exception):
@@ -71,7 +72,7 @@ class VehicleProjectOpener:
         # Initialize the filesystem with the directory
         try:
             self.local_filesystem.re_init(last_vehicle_dir, self.local_filesystem.vehicle_type)
-        except SystemExit as exp:
+        except ParamFileError as exp:
             raise VehicleProjectOpenError(
                 _("Fatal error reading parameter files"), _("Fatal error reading parameter files: {exp}").format(exp=exp)
             ) from exp
@@ -134,7 +135,7 @@ class VehicleProjectOpener:
         # Initialize the filesystem with the directory
         try:
             self.local_filesystem.re_init(vehicle_dir, self.local_filesystem.vehicle_type)
-        except SystemExit as exp:
+        except ParamFileError as exp:
             raise VehicleProjectOpenError(
                 _("Fatal error reading parameter files"), _("Fatal error reading parameter files: {exp}").format(exp=exp)
             ) from exp

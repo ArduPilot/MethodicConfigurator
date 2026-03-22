@@ -25,6 +25,10 @@ PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 
 
+class ParamFileError(ValueError):
+    """Raised when a .param file contains invalid or malformed data."""
+
+
 def validate_param_name(param_name: str) -> tuple[bool, str]:
     """
     Validate parameter name according to ArduPilot standards.
@@ -159,7 +163,7 @@ class ParDict(dict[str, Par]):
                         msg = _("Missing parameter-value separator: {line} in {param_file} line {i}").format(
                             line=line, param_file=param_file, i=i
                         )
-                        raise SystemExit(msg)
+                        raise ParamFileError(msg)
                     # Strip whitespace from both parameter name and value immediately after splitting
                     parameter = parameter.strip()
                     value = value.strip()
@@ -168,7 +172,7 @@ class ParDict(dict[str, Par]):
             msg = _("Fatal error reading {param_file}, file must be UTF-8 encoded: {exp}").format(
                 param_file=param_file, exp=exp
             )
-            raise SystemExit(msg) from exp
+            raise ParamFileError(msg) from exp
         return parameter_dict
 
     @staticmethod
@@ -185,30 +189,31 @@ class ParDict(dict[str, Par]):
             msg = _("Too long parameter name: {parameter_name} in {param_file} line {i}").format(
                 parameter_name=parameter_name, param_file=param_file, i=i
             )
-            raise SystemExit(msg)
+            raise ParamFileError(msg)
         if not re.match(PARAM_NAME_REGEX, parameter_name):
             msg = _("Invalid characters in parameter name {parameter_name} in {param_file} line {i}").format(
                 parameter_name=parameter_name, param_file=param_file, i=i
             )
-            raise SystemExit(msg)
+            raise ParamFileError(msg)
         if parameter_name in parameter_dict:
             msg = _("Duplicated parameter {parameter_name} in {param_file} line {i}").format(
                 parameter_name=parameter_name, param_file=param_file, i=i
             )
-            raise SystemExit(msg)
+            raise ParamFileError(msg)
         try:
             fvalue = float(value)
-            if not math_isfinite(fvalue):
-                msg = _(
-                    "Non-finite parameter value {value!r} (parsed as {fvalue}) for {parameter_name} in {param_file} line {i}"
-                ).format(value=value, fvalue=fvalue, parameter_name=parameter_name, param_file=param_file, i=i)
-                raise SystemExit(msg)
-            parameter_dict[parameter_name] = Par(fvalue, comment)
         except ValueError as exc:
             msg = _("Invalid parameter value {value!r} in {param_file} line {i}").format(
                 value=value, param_file=param_file, i=i
             )
-            raise SystemExit(msg) from exc
+            raise ParamFileError(msg) from exc
+        if not math_isfinite(fvalue):
+            msg = _(
+                "Non-finite parameter value {value!r} (parsed as {fvalue}) for {parameter_name} in {param_file} line {i}"
+            ).format(value=value, fvalue=fvalue, parameter_name=parameter_name, param_file=param_file, i=i)
+            raise ParamFileError(msg)
+        try:
+            parameter_dict[parameter_name] = Par(fvalue, comment)
         except OSError as exc:
             _exc_type, exc_value, exc_traceback = sys_exc_info()
             if isinstance(exc_traceback, TracebackType):
@@ -217,7 +222,7 @@ class ParDict(dict[str, Par]):
                 msg = _("Caused by line {i} of file {param_file}: {original_line}").format(
                     i=i, param_file=param_file, original_line=original_line
                 )
-                raise SystemExit(msg) from exc
+                raise ParamFileError(msg) from exc
 
     @staticmethod
     def missionplanner_sort(item: str) -> tuple[str, ...]:
@@ -273,7 +278,7 @@ class ParDict(dict[str, Par]):
             ]
         else:
             msg = _("ERROR: Unsupported file format {file_format}").format(file_format=file_format)
-            raise SystemExit(msg)
+            raise ParamFileError(msg)
         return formatted_params
 
     def export_to_param(

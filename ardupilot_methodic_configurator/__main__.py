@@ -40,7 +40,7 @@ from ardupilot_methodic_configurator.backend_filesystem_program_settings import 
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url, webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
@@ -365,7 +365,7 @@ def initialize_filesystem(state: ApplicationState) -> None:
             state.args.allow_editing_template_files,
             state.args.save_component_to_system_templates,
         )
-    except SystemExit as exp:
+    except ParamFileError as exp:
         show_error_message(_("Fatal error reading parameter files"), f"{exp}")
         raise
 

@@ -20,7 +20,13 @@ import pytest
 
 import ardupilot_methodic_configurator.data_model_par_dict as par_dict_module
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance, validate_param_name
+from ardupilot_methodic_configurator.data_model_par_dict import (
+    Par,
+    ParamFileError,
+    ParDict,
+    is_within_tolerance,
+    validate_param_name,
+)
 
 # pylint: disable=redefined-outer-name, too-many-lines
 
@@ -378,7 +384,7 @@ class TestParameterFileLoading:
 
         GIVEN: A user tries to load a file with invalid parameter format
         WHEN: They use load_param_file_into_dict on the invalid file
-        THEN: A SystemExit should be raised with descriptive error message
+        THEN: A ParamFileError should be raised with descriptive error message
         """
         # Arrange: Create temporary file with invalid content
         invalid_content = """INVALID_LINE_WITHOUT_SEPARATOR
@@ -389,7 +395,7 @@ VALID_PARAM,1.0"""
             f.flush()
 
             # Act & Assert: User gets clear error for invalid format
-            with pytest.raises(SystemExit, match="Missing parameter-value separator"):
+            with pytest.raises(ParamFileError, match="Missing parameter-value separator"):
                 ParDict.load_param_file_into_dict(f.name)
 
         os.unlink(f.name)
@@ -400,7 +406,7 @@ VALID_PARAM,1.0"""
 
         GIVEN: A user has a parameter file with duplicate parameter names
         WHEN: They try to load the file
-        THEN: A SystemExit should be raised indicating the duplication
+        THEN: A ParamFileError should be raised indicating the duplication
         """
         # Arrange: Create file with duplicate parameters
         duplicate_content = """ACRO_YAW_P,4.5
@@ -411,7 +417,7 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
             f.flush()
 
             # Act & Assert: User gets error for duplicate parameters
-            with pytest.raises(SystemExit, match="Duplicated parameter"):
+            with pytest.raises(ParamFileError, match="Duplicated parameter"):
                 ParDict.load_param_file_into_dict(f.name)
 
         os.unlink(f.name)
@@ -422,7 +428,7 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
 
         GIVEN: A user tries to load a parameter file saved with legacy encoding
         WHEN: They read it through load_param_file_into_dict
-        THEN: A SystemExit with UTF-8 instructions should be raised
+        THEN: A ParamFileError with UTF-8 instructions should be raised
         """
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".param", delete=False) as f:
             f.write(b"\xff\xfe\xfa")  # Invalid UTF-8 byte sequence
@@ -430,7 +436,7 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
             bad_file = f.name
 
         try:
-            with pytest.raises(SystemExit, match="UTF-8"):
+            with pytest.raises(ParamFileError, match="UTF-8"):
                 ParDict.load_param_file_into_dict(bad_file)
         finally:
             os.unlink(bad_file)
@@ -441,13 +447,13 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
 
         GIVEN: A user loads a valid line but the underlying write fails (e.g., disk full)
         WHEN: _validate_parameter handles the assignment
-        THEN: A SystemExit should include the offending line information
+        THEN: A ParamFileError should include the offending line information
         """
         parameter_dict = ParDict()
         original_line = "ACRO_YAW_P,4.5"
         with (
             patch.object(ParDict, "__setitem__", side_effect=OSError("disk full"), autospec=True),
-            pytest.raises(SystemExit, match="Caused by line 1"),
+            pytest.raises(ParamFileError, match="Caused by line 1"),
         ):
             ParDict._validate_parameter(  # pylint: disable=protected-access
                 "test.param",
@@ -495,7 +501,7 @@ PILOT_SPEED_UP,250.0
 
         GIVEN: A filesystem write fails but sys_exc_info cannot provide traceback details
         WHEN: _validate_parameter handles the failure
-        THEN: The method should suppress the error without raising SystemExit
+        THEN: The method should suppress the error without raising ParamFileError
         """
         parameter_dict = ParDict()
         monkeypatch.setattr(par_dict_module, "sys_exc_info", lambda: (None, None, None))
@@ -951,12 +957,12 @@ class TestParameterUtilities:
 
         GIVEN: A user tries to format parameters with unsupported format
         WHEN: They call _format_params with invalid format
-        THEN: A SystemExit should be raised with error message
+        THEN: A ParamFileError should be raised with error message
         """
         # Arrange: Invalid format string
 
         # Act & Assert: User gets error for unsupported format
-        with pytest.raises(SystemExit, match="Unsupported file format"):
+        with pytest.raises(ParamFileError, match="Unsupported file format"):
             parameter_dict._format_params("invalid_format")  # pylint: disable=protected-access
 
     def test_user_can_annotate_parameters_with_comments(self, parameter_dict) -> None:
@@ -1232,7 +1238,7 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Clear error for missing separator
-                with pytest.raises(SystemExit, match="Missing parameter-value separator"):
+                with pytest.raises(ParamFileError, match="Missing parameter-value separator"):
                     ParDict.load_param_file_into_dict(f.name)
             finally:
                 os.unlink(f.name)
@@ -1256,7 +1262,7 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Error for too long parameter name
-                with pytest.raises(SystemExit, match="Too long parameter name"):
+                with pytest.raises(ParamFileError, match="Too long parameter name"):
                     ParDict.load_param_file_into_dict(f.name)
             finally:
                 os.unlink(f.name)
@@ -1279,7 +1285,7 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Error for invalid characters
-                with pytest.raises(SystemExit, match="Invalid characters in parameter name"):
+                with pytest.raises(ParamFileError, match="Invalid characters in parameter name"):
                     ParDict.load_param_file_into_dict(f.name)
             finally:
                 os.unlink(f.name)
@@ -1302,7 +1308,7 @@ class TestParameterParsingEdgeCases:
 
             try:
                 # Act & Assert: Error for duplicate parameters
-                with pytest.raises(SystemExit, match="Duplicated parameter"):
+                with pytest.raises(ParamFileError, match="Duplicated parameter"):
                     ParDict.load_param_file_into_dict(f.name)
             finally:
                 os.unlink(f.name)
@@ -1473,7 +1479,7 @@ class TestParameterDictionaryEdgeCases:
 
             try:
                 # Act & Assert: Invalid names rejected
-                with pytest.raises(SystemExit):
+                with pytest.raises(ParamFileError):
                     ParDict.load_param_file_into_dict(file_path)
             finally:
                 os.unlink(file_path)
@@ -1496,7 +1502,7 @@ class TestParameterDictionaryEdgeCases:
 
         try:
             # Act & Assert: Invalid values rejected
-            with pytest.raises(SystemExit, match=_("Invalid parameter value {value!r}").format(value="not_a_number")):
+            with pytest.raises(ParamFileError, match=_("Invalid parameter value {value!r}").format(value="not_a_number")):
                 ParDict.load_param_file_into_dict(file_path)
         finally:
             os.unlink(file_path)
@@ -1507,7 +1513,7 @@ class TestParameterDictionaryEdgeCases:
 
         GIVEN: A user has a parameter file containing non-finite values (inf, -inf, nan)
         WHEN: They try to load the parameter file
-        THEN: A SystemExit should be raised indicating the value is non-finite
+        THEN: A ParamFileError should be raised indicating the value is non-finite
         """
         non_finite_values = ["inf", "-inf", "nan", "infinity", "-infinity"]
 
@@ -1520,7 +1526,7 @@ class TestParameterDictionaryEdgeCases:
                 file_path = f.name
 
             try:
-                with pytest.raises(SystemExit, match=_("Non-finite parameter value {value!r}").format(value=bad_value)):
+                with pytest.raises(ParamFileError, match=_("Non-finite parameter value {value!r}").format(value=bad_value)):
                     ParDict.load_param_file_into_dict(file_path)
             finally:
                 os.unlink(file_path)

@@ -38,7 +38,12 @@ from argcomplete.completers import FilesCompleter
 from defusedxml import ElementTree as DET  # noqa: N814, just parsing, no data-structure manipulation
 
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url
-from ardupilot_methodic_configurator.data_model_par_dict import PARAM_NAME_MAX_LEN, PARAM_NAME_REGEX, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import (
+    PARAM_NAME_MAX_LEN,
+    PARAM_NAME_REGEX,
+    ParamFileError,
+    ParDict,
+)
 
 # URL of the XML file
 BASE_URL = "https://autotest.ardupilot.org/Parameters/"
@@ -623,7 +628,7 @@ def main() -> None:
         else:
             logging.warning("No LUA MAGfit XML documentation found, skipping annotation of %s", target)
 
-    except (OSError, SystemExit) as exp:
+    except (OSError, ParamFileError, SystemExit) as exp:
         logging.fatal(exp)
         sys_exit(1)
 

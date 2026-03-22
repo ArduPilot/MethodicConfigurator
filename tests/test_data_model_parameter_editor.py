@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, ParameterOutOfRangeError
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
     OperationNotPossibleError,
@@ -3488,11 +3488,11 @@ class TestWorkflowEdgeCases:
         """
         # Arrange: The file matches the expected calibration output filename so the workflow runs
         parameter_editor._local_filesystem.tempcal_imu_result_param_tuple.return_value = ("a", "b")
-        parameter_editor._local_filesystem.read_params_from_files.side_effect = SystemExit("fatal")
+        parameter_editor._local_filesystem.read_params_from_files.side_effect = ParamFileError("fatal")
         mock_show_err = MagicMock()
 
-        # Act + Assert: SystemExit is re-raised
-        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.IMUfit"), pytest.raises(SystemExit):
+        # Act + Assert: ParamFileError is re-raised
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.IMUfit"), pytest.raises(ParamFileError):
             parameter_editor.handle_imu_temperature_calibration_workflow(
                 "a", MagicMock(return_value=True), MagicMock(return_value="log.bin"), MagicMock(), mock_show_err
             )

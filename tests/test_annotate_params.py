@@ -40,7 +40,7 @@ from ardupilot_methodic_configurator.annotate_params import (
     split_into_lines,
     update_parameter_documentation,
 )
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict
 
 # pylint: disable=protected-access
 
@@ -697,7 +697,7 @@ PARAM_1\t100
             tf.write("PARAM1 invalid_value\n")
             tf.flush()
 
-            with pytest.raises(SystemExit):
+            with pytest.raises(ParamFileError):
                 ParDict.load_param_file_into_dict(tf.name)
 
     def test_format_params_methods(self) -> None:
@@ -716,7 +716,7 @@ PARAM_1\t100
         assert any("# comment1" in line for line in mavproxy_format)
 
         # Test invalid format
-        with pytest.raises(SystemExit):
+        with pytest.raises(ParamFileError):
             param_dict._format_params("invalid_format")
 
 
@@ -854,7 +854,7 @@ class TestAnnotateParamsExceptionHandling(unittest.TestCase):
             tf.write("PARAM1,20.5\n")  # Duplicate parameter
             tf_name = tf.name
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(ParamFileError):
             ParDict.load_param_file_into_dict(tf_name)
         os.unlink(tf_name)
 
