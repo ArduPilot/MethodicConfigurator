@@ -846,7 +846,7 @@ This flight will be used to [calibrate the compass during a realistic operation 
 
 ### 9.1.1 Setup inflight MagFit calibration
 
-You can either manually perform a flight in `ALT_HOLD` or `STABALIZE` flight mode with yaw movements and coordinated turns
+You can either manually perform a flight in `ALT_HOLD` or `STABILIZE` flight mode with yaw movements and coordinated turns
 with throttle changes.
 Or you follow these steps to create an auto mission that performs the required flight patterns:
 
