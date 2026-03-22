@@ -1053,7 +1053,9 @@ class TestPathTraversalPrevention:
             str(tmp_path), "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
         lfs.configuration_steps = {
-            "test.param": {"download_file": {"source_url": "https://example.com/payload", "dest_local": "/tmp/evil"}}  # noqa: S108
+            "test.param": {
+                "download_file": {"source_url": "https://example.com/payload", "dest_local": "/tmp/evil"},  # noqa: S108
+            }
         }
 
         with pytest.raises(ValueError, match="Path escapes vehicle directory"):
