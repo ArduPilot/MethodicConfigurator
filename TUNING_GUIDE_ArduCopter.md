@@ -846,7 +846,9 @@ This flight will be used to [calibrate the compass during a realistic operation 
 
 ### 9.1.1 Setup inflight MagFit calibration
 
-Follow these steps before the flight:
+You can either manually perform a flight in `ALT_HOLD` or `STABALIZE` flight mode with yaw movements and coordinated turns
+with throttle changes.
+Or you follow these steps to create an auto mission that performs the required flight patterns:
 
 1. On ArduPilot versions < 4.6.0 download the `advance-wp.lua` scripts from [ardupilot github repository](https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/advance-wp.lua), follow [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder.
 1. On ArduPilot versions >= 4.6.0 the script is already included.
@@ -859,9 +861,26 @@ Follow these steps before the flight:
 1. Read the documentation links inside the `24_inflight_magnetometer_fit_setup.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
-1. When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
+1. When prompted *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
+1. Connect the FC to mission planner via USB cable
+1. Create a flight plan that uses it, like this one.
+   The figure-8 will be inserted between the points on either side of the `SCRIPT_TIME` command.
+   ![MagFit MissionPlanner mission definition](images/blog/MagFit_MissionPlanner_mission.png)
+   The `SCRIPT_TIME` command can be given two arguments for min speed and altitude delta, respectively, if you want to
+   override `MAGH_MIN_SPEED` and `MAGH_ALT_DELTA`.
+   Zero values (as shown) will let the parameter values remain in use.
+   ![MagFit MissionPlanner mission map](images/blog/MagFit_MissionPlanner_mission_map.jpeg)
+1. Upon execution of the mission, several messages will be displayed via telemetry:
+   ![MagFit MissionPlanner mission messages](images/blog/MagFit_MissionPlanner_mission_messages.png)
+   At this point, the figure-8 has been created, and the script is awaiting the user to set the waypoint beyond the loiter to commence the pattern.
+   Download the mission to confirm obstacle clearance before proceeding, and then use the GCS to set the indicated waypoint to continue (or use the additional helper script `advance-wp.lua` above to use an RC switch for advancing the waypoint).
+   ![MagFit MissionPlanner mission map figure8](images/blog/MagFit_MissionPlanner_mission_map_figure8.jpeg)
+1. The figure-8 will then repeat `MAGH_COUNT` times, occasionally climbing and descending by `MAGH_ALT_DELTA` meters and
+   incrementing speed toward `WPNAV_SPEED`.
+   The ~200m long pattern consisting of 24 points depicted here should be more than adequate.
+   @Yuri_Rage has achieved good success with patterns as small as ~50m and only 16 waypoints.
 
-Perform the MagFit figure-eight flight and land
+Perform the MagFit figure-eight flight in AUTO mode and land.
 
 ### 9.1.2 Calculate inflight MagFit calibration
 
