@@ -39,7 +39,7 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
 from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR, PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
@@ -233,7 +233,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # Reload parameter files after calibration
             self._local_filesystem.file_parameters = self._local_filesystem.read_params_from_files()
             return True
-        except SystemExit as exp:
+        except ParamFileError as exp:
             show_error(_("Fatal error reading parameter files"), f"{exp}")
             raise
 

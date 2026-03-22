@@ -44,7 +44,7 @@ from ardupilot_methodic_configurator.__main__ import (
     write_parameter_defaults,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 
 # pylint: disable=too-many-lines,redefined-outer-name,too-few-public-methods
@@ -423,12 +423,12 @@ class TestFlightControllerConnection:
             patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow"),
             patch(
                 "ardupilot_methodic_configurator.__main__.LocalFilesystem",
-                side_effect=SystemExit("Configuration error"),
+                side_effect=ParamFileError("Configuration error"),
             ),
             patch("ardupilot_methodic_configurator.__main__.show_error_message") as mock_error,
         ):
             # Act & Assert: Configuration error should be handled gracefully
-            with pytest.raises(SystemExit):
+            with pytest.raises(ParamFileError):
                 initialize_flight_controller_and_filesystem(application_state)
 
             # Assert: Clear error message displayed
@@ -1647,12 +1647,12 @@ class TestConnectionAndFilesystemBranches:
         with (
             patch(
                 "ardupilot_methodic_configurator.__main__.LocalFilesystem",
-                side_effect=SystemExit("bad files"),
+                side_effect=ParamFileError("bad files"),
             ),
             patch("ardupilot_methodic_configurator.__main__.show_error_message") as mock_err,
         ):
             # Act + Assert
-            with pytest.raises(SystemExit):
+            with pytest.raises(ParamFileError):
                 initialize_filesystem(state)
             mock_err.assert_called_once()
             assert "fatal" in mock_err.call_args[0][0].lower()
