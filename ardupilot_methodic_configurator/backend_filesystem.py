@@ -985,18 +985,27 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         """
         Safely join a base directory with an untrusted path component.
 
-        Validates that the resolved path stays within base_dir to prevent
+        Validates that the resolved path is a proper child of base_dir to prevent
         path traversal attacks via values like '../../.bashrc' from JSON configs.
+        Uses os.path.commonpath for cross-platform robustness (handles case-insensitive
+        filesystems on Windows/macOS).
 
         Raises:
-            ValueError: If the resolved path escapes base_dir.
+            ValueError: If the resolved path escapes base_dir or resolves to base_dir itself.
 
         """
-        resolved = os_path.realpath(os_path.join(base_dir, untrusted_path))
-        if not resolved.startswith(os_path.realpath(base_dir) + os_path.sep) and resolved != os_path.realpath(base_dir):
+        base_real = os_path.normcase(os_path.realpath(base_dir))
+        resolved = os_path.normcase(os_path.realpath(os_path.join(base_dir, untrusted_path)))
+        try:
+            common = os_path.commonpath([base_real, resolved])
+        except ValueError:
+            # On Windows, commonpath raises ValueError for paths on different drives
+            msg = f"Path escapes vehicle directory: {untrusted_path!r}"
+            raise ValueError(msg) from None
+        if common != base_real or resolved == base_real:
             msg = f"Path escapes vehicle directory: {untrusted_path!r}"
             raise ValueError(msg)
-        return resolved
+        return os_path.realpath(os_path.join(base_dir, untrusted_path))
 
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
         if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("download_file"):
