@@ -44,11 +44,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.10'
+          python-version: '3.14'
 
       - name: Generate configuration steps strings
         run: |
           python update_configuration_steps_translation.py
+
+      - name: Format generated file with Ruff
+        uses: astral-sh/ruff-action@4919ec5cf1f49eff0871dbcea0da843445b837e6 # v3.6.1
+        with:
+          version-file: pyproject.toml
+          args: format ardupilot_methodic_configurator/configuration_steps_strings.py
 
       - name: Check for changes
         run: |
