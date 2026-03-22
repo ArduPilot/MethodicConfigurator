@@ -980,12 +980,30 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             self.file_parameters[filename] = param_default_values
             self.param_default_dict.export_to_param(os_path.join(self.vehicle_dir, filename))
 
+    @staticmethod
+    def _safe_path_join(base_dir: str, untrusted_path: str) -> str:
+        """
+        Safely join a base directory with an untrusted path component.
+
+        Validates that the resolved path stays within base_dir to prevent
+        path traversal attacks via values like '../../.bashrc' from JSON configs.
+
+        Raises:
+            ValueError: If the resolved path escapes base_dir.
+
+        """
+        resolved = os_path.realpath(os_path.join(base_dir, untrusted_path))
+        if not resolved.startswith(os_path.realpath(base_dir) + os_path.sep) and resolved != os_path.realpath(base_dir):
+            msg = f"Path escapes vehicle directory: {untrusted_path!r}"
+            raise ValueError(msg)
+        return resolved
+
     def get_download_url_and_local_filename(self, selected_file: str) -> tuple[str, str]:
         if selected_file in self.configuration_steps and self.configuration_steps[selected_file].get("download_file"):
             src = self.configuration_steps[selected_file]["download_file"].get("source_url", "")
             dst = self.configuration_steps[selected_file]["download_file"].get("dest_local", "")
             if self.vehicle_dir and src and dst:
-                return src, os_path.join(self.vehicle_dir, dst)
+                return src, self._safe_path_join(self.vehicle_dir, dst)
         return "", ""
 
     def get_upload_local_and_remote_filenames(self, selected_file: str) -> tuple[str, str]:
@@ -993,7 +1011,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             src = self.configuration_steps[selected_file]["upload_file"].get("source_local", "")
             dst = self.configuration_steps[selected_file]["upload_file"].get("dest_on_fc", "")
             if self.vehicle_dir and src and dst:
-                return os_path.join(self.vehicle_dir, src), dst
+                return self._safe_path_join(self.vehicle_dir, src), dst
         return "", ""
 
     @staticmethod

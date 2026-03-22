@@ -17,6 +17,8 @@ from os import path as os_path
 from subprocess import SubprocessError
 from unittest.mock import MagicMock, mock_open, patch
 
+import pytest
+
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
@@ -981,6 +983,83 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             local_path, remote_path = lfs.get_upload_local_and_remote_filenames("test_file.param")
             assert local_path == "vehicle_dir/local_file.bin"
             assert remote_path == "/fs/microsd/APM/file.bin"
+
+
+class TestPathTraversalPrevention:
+    """Tests that file path operations reject path traversal attempts."""
+
+    def test_download_rejects_path_traversal_via_dest_local(self, tmp_path) -> None:
+        """
+        Path traversal via dest_local is blocked.
+
+        GIVEN: A configuration step with dest_local containing '..' components
+        WHEN: get_download_url_and_local_filename is called
+        THEN: A ValueError is raised to prevent writing outside vehicle_dir
+        """
+        lfs = LocalFilesystem(
+            str(tmp_path), "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.configuration_steps = {
+            "test.param": {"download_file": {"source_url": "https://example.com/payload", "dest_local": "../../.bashrc"}}
+        }
+
+        with pytest.raises(ValueError, match="Path escapes vehicle directory"):
+            lfs.get_download_url_and_local_filename("test.param")
+
+    def test_upload_rejects_path_traversal_via_source_local(self, tmp_path) -> None:
+        """
+        Path traversal via source_local is blocked.
+
+        GIVEN: A configuration step with source_local containing '..' components
+        WHEN: get_upload_local_and_remote_filenames is called
+        THEN: A ValueError is raised to prevent reading outside vehicle_dir
+        """
+        lfs = LocalFilesystem(
+            str(tmp_path), "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.configuration_steps = {
+            "test.param": {"upload_file": {"source_local": "../../../etc/passwd", "dest_on_fc": "/fs/microsd/file"}}
+        }
+
+        with pytest.raises(ValueError, match="Path escapes vehicle directory"):
+            lfs.get_upload_local_and_remote_filenames("test.param")
+
+    def test_download_allows_valid_dest_local(self, tmp_path) -> None:
+        """
+        Valid dest_local paths within vehicle_dir are allowed.
+
+        GIVEN: A configuration step with a safe dest_local filename
+        WHEN: get_download_url_and_local_filename is called
+        THEN: The resolved path is returned without error
+        """
+        lfs = LocalFilesystem(
+            str(tmp_path), "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.configuration_steps = {
+            "test.param": {"download_file": {"source_url": "https://example.com/file.lua", "dest_local": "script.lua"}}
+        }
+
+        url, local_path = lfs.get_download_url_and_local_filename("test.param")
+        assert url == "https://example.com/file.lua"
+        assert local_path == str(tmp_path / "script.lua")
+
+    def test_download_rejects_absolute_path(self, tmp_path) -> None:
+        """
+        Absolute dest_local paths are blocked.
+
+        GIVEN: A configuration step with an absolute dest_local path
+        WHEN: get_download_url_and_local_filename is called
+        THEN: A ValueError is raised
+        """
+        lfs = LocalFilesystem(
+            str(tmp_path), "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.configuration_steps = {
+            "test.param": {"download_file": {"source_url": "https://example.com/payload", "dest_local": "/tmp/evil"}}
+        }
+
+        with pytest.raises(ValueError, match="Path escapes vehicle directory"):
+            lfs.get_download_url_and_local_filename("test.param")
 
 
 class TestTransformParamDict:
