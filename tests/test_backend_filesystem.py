@@ -952,36 +952,34 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
     def test_get_download_url_and_local_filename_with_valid_config(self) -> None:
         """Test get_download_url_and_local_filename with valid configuration."""
-        lfs = LocalFilesystem(
-            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
-        )
-
-        # Set up configuration steps with download file section
-        lfs.configuration_steps = {
-            "test_file.param": {
-                "download_file": {"source_url": "https://example.com/file.bin", "dest_local": "local_file.bin"}
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lfs = LocalFilesystem(
+                tmp_dir, "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+            )
+            lfs.configuration_steps = {
+                "test_file.param": {
+                    "download_file": {"source_url": "https://example.com/file.bin", "dest_local": "local_file.bin"}
+                }
             }
-        }
 
-        with patch("os.path.join", return_value="vehicle_dir/local_file.bin"):
             url, local_path = lfs.get_download_url_and_local_filename("test_file.param")
             assert url == "https://example.com/file.bin"
-            assert local_path == "vehicle_dir/local_file.bin"
+            assert local_path == os_path.realpath(os_path.join(tmp_dir, "local_file.bin"))
 
     def test_get_upload_local_and_remote_filenames_with_valid_config(self) -> None:
         """Test get_upload_local_and_remote_filenames with valid configuration."""
-        lfs = LocalFilesystem(
-            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lfs = LocalFilesystem(
+                tmp_dir, "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+            )
+            lfs.configuration_steps = {
+                "test_file.param": {
+                    "upload_file": {"source_local": "local_file.bin", "dest_on_fc": "/fs/microsd/APM/file.bin"}
+                }
+            }
 
-        # Set up configuration steps with upload file section
-        lfs.configuration_steps = {
-            "test_file.param": {"upload_file": {"source_local": "local_file.bin", "dest_on_fc": "/fs/microsd/APM/file.bin"}}
-        }
-
-        with patch("os.path.join", return_value="vehicle_dir/local_file.bin"):
             local_path, remote_path = lfs.get_upload_local_and_remote_filenames("test_file.param")
-            assert local_path == "vehicle_dir/local_file.bin"
+            assert local_path == os_path.realpath(os_path.join(tmp_dir, "local_file.bin"))
             assert remote_path == "/fs/microsd/APM/file.bin"
 
 
@@ -1056,6 +1054,49 @@ class TestPathTraversalPrevention:
         )
         lfs.configuration_steps = {
             "test.param": {"download_file": {"source_url": "https://example.com/payload", "dest_local": "/tmp/evil"}}
+        }
+
+        with pytest.raises(ValueError, match="Path escapes vehicle directory"):
+            lfs.get_download_url_and_local_filename("test.param")
+
+    def test_download_rejects_dest_local_resolving_to_base_dir(self, tmp_path) -> None:
+        """
+        dest_local='.' resolves to vehicle_dir itself and is rejected.
+
+        GIVEN: A configuration step with dest_local='.' (resolves to base directory)
+        WHEN: get_download_url_and_local_filename is called
+        THEN: A ValueError is raised because a directory path is not a valid file target
+        """
+        lfs = LocalFilesystem(
+            str(tmp_path), "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.configuration_steps = {
+            "test.param": {"download_file": {"source_url": "https://example.com/payload", "dest_local": "."}}
+        }
+
+        with pytest.raises(ValueError, match="Path escapes vehicle directory"):
+            lfs.get_download_url_and_local_filename("test.param")
+
+    def test_download_rejects_symlink_escape(self, tmp_path) -> None:
+        """
+        Symlink pointing outside vehicle_dir is blocked.
+
+        GIVEN: A symlink inside vehicle_dir that points to an external directory
+        WHEN: dest_local references a file through the symlink
+        THEN: A ValueError is raised because the resolved path escapes vehicle_dir
+        """
+        # Create a symlink inside tmp_path pointing to /tmp
+        symlink_path = tmp_path / "escape_link"
+        try:
+            symlink_path.symlink_to("/tmp")
+        except OSError:
+            pytest.skip("Cannot create symlinks in this environment")
+
+        lfs = LocalFilesystem(
+            str(tmp_path), "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.configuration_steps = {
+            "test.param": {"download_file": {"source_url": "https://example.com/payload", "dest_local": "escape_link/evil"}}
         }
 
         with pytest.raises(ValueError, match="Path escapes vehicle directory"):
