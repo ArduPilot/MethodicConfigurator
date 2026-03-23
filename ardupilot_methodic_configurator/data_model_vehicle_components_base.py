@@ -12,11 +12,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from copy import deepcopy
 from logging import error as logging_error
 from logging import warning as logging_warning
+from math import isnan, nan
 from typing import Any, Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
+from ardupilot_methodic_configurator.battery_cell_voltages import (
+    BATTERY_CELL_VOLTAGE_TYPES,
+    BATTERY_DEFAULT_CHEMISTRY,
+    BatteryCell,
+)
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
 # Type aliases to improve code readability
@@ -206,15 +212,36 @@ class ComponentDataModelBase:
         """Save component data to filesystem - centralizes save logic."""
         return filesystem.save_vehicle_components_json_data(self.get_component_data(), filesystem.vehicle_dir)
 
-    def post_init(self, doc_dict: dict) -> None:
+    def post_init(
+        self,
+        doc_dict: dict,
+        fc_parameters: Optional[dict[str, float]] = None,
+        file_parameters: Optional[dict[str, ParDict]] = None,
+    ) -> None:
         """Update the data structure to ensure all required fields are present."""
-        self.update_json_structure()
+        self.update_json_structure(fc_parameters, file_parameters)
 
         self.init_possible_choices(doc_dict)
-        self.init_battery_chemistry()
         self.correct_display_values_in_loaded_data()
 
-    def update_json_structure(self) -> None:
+    def import_fc_or_file_parameter(
+        self, fc_parameters: dict[str, float], file_parameters: dict[str, ParDict], parameter_name: str
+    ) -> float:
+        """Import a parameter from FC or file; returns nan if unavailable."""
+        val = fc_parameters.get(parameter_name)
+        if val is not None:
+            return float(val)
+        for par_dict in file_parameters.values():
+            par = par_dict.get(parameter_name)
+            if par is not None:
+                return float(par.value)
+        return nan
+
+    def update_json_structure(
+        self,
+        fc_parameters: Optional[dict[str, float]] = None,
+        file_parameters: Optional[dict[str, ParDict]] = None,
+    ) -> None:
         """
         Update the data structure to ensure all required fields are present.
 
@@ -227,7 +254,7 @@ class ComponentDataModelBase:
             "Components": {
                 "Battery": {
                     "Specifications": {
-                        "Chemistry": "Lipo",
+                        "Chemistry": BATTERY_DEFAULT_CHEMISTRY,
                         "Capacity mAh": 0,
                     }
                 },
@@ -289,6 +316,55 @@ class ComponentDataModelBase:
         self._data = self._deep_merge_dicts(default_structure, self._data)
         self._data["Components"] = self._reorder_components(self._data.get("Components", {}))
         self._data["Program version"] = __version__
+
+        self.init_battery_chemistry()  # must be done before migrating legacy battery fields to ensure correct chemistry is set
+        self.migrate_legacy_battery_fields(fc_parameters=fc_parameters, file_parameters=file_parameters)
+
+    def migrate_legacy_battery_fields(
+        self,
+        fc_parameters: Optional[dict[str, float]] = None,
+        file_parameters: Optional[dict[str, ParDict]] = None,
+    ) -> None:
+        """
+        Migrate legacy battery voltage fields: add Volt per cell arm and Volt per cell min when missing.
+
+        These fields were added to the schema in v2.11.0 and old files won't have them.
+        Derive sensible defaults from the stored chemistry so parameters compute correctly on first use.
+        """
+        fc_parameters = fc_parameters or {}
+        file_parameters = file_parameters or {}
+
+        battery_specs = self._data.get("Components", {}).get("Battery", {}).get("Specifications", {})
+        if isinstance(battery_specs, dict) and "Volt per cell max" in battery_specs:
+            try:
+                num_cells = int(float(str(battery_specs.get("Number of cells"))))
+            except (ValueError, TypeError):
+                num_cells = 0
+            reorder = False
+            if "Volt per cell arm" not in battery_specs:
+                batt_arm_volt = self.import_fc_or_file_parameter(fc_parameters, file_parameters, "BATT_ARM_VOLT")
+                if not isnan(batt_arm_volt) and num_cells > 0:
+                    battery_specs["Volt per cell arm"] = round(batt_arm_volt / num_cells, 4)
+                else:
+                    battery_specs["Volt per cell arm"] = BatteryCell.recommended_cell_voltage(
+                        self._battery_chemistry, "Volt per cell arm"
+                    )
+                reorder = True
+            if "Volt per cell min" not in battery_specs:
+                mot_batt_volt_min = self.import_fc_or_file_parameter(fc_parameters, file_parameters, "MOT_BAT_VOLT_MIN")
+                if not isnan(mot_batt_volt_min) and num_cells > 0:
+                    battery_specs["Volt per cell min"] = round(mot_batt_volt_min / num_cells, 4)
+                else:
+                    battery_specs["Volt per cell min"] = BatteryCell.recommended_cell_voltage(
+                        self._battery_chemistry, "Volt per cell min"
+                    )
+                reorder = True
+            if reorder:
+                # Reorder keys into canonical field order; preserve any unrecognised extra keys at the end
+                desired_order = ["Chemistry", *BATTERY_CELL_VOLTAGE_TYPES, "Number of cells", "Capacity mAh"]
+                reordered = {k: battery_specs[k] for k in desired_order if k in battery_specs}
+                reordered.update({k: v for k, v in battery_specs.items() if k not in reordered})
+                self._data["Components"]["Battery"]["Specifications"] = reordered
 
     def _deep_merge_dicts(self, default: dict[str, Any], existing: dict[str, Any]) -> dict[str, Any]:
         """
@@ -380,7 +456,10 @@ class ComponentDataModelBase:
         )
         if self._battery_chemistry not in BatteryCell.chemistries():
             logging_error(_("Invalid battery chemistry %s, defaulting to Lipo"), self._battery_chemistry)
-            self._battery_chemistry = "Lipo"
+            self._data.get("Components", {}).get("Battery", {}).get("Specifications", {})["Chemistry"] = (
+                BATTERY_DEFAULT_CHEMISTRY
+            )
+            self._battery_chemistry = BATTERY_DEFAULT_CHEMISTRY
 
     def init_possible_choices(self, doc_dict: dict[str, Any]) -> None:
         """Initialize possible choices for validation rules."""

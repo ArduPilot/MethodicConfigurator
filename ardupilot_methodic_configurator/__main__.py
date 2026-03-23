@@ -448,7 +448,7 @@ def create_and_configure_component_editor(
         Configured ComponentEditorWindow instance
 
     """
-    component_editor_window = ComponentEditorWindow(version, local_filesystem)
+    component_editor_window = ComponentEditorWindow(version, local_filesystem, flight_controller.fc_parameters)
 
     # Infer component specifications from FC parameters if requested
     if (
