@@ -704,8 +704,8 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             ("RC Receiver", "FC Connection", "Protocol"): "CRSF",
             ("GNSS Receiver", "FC Connection", "Type"): "SERIAL3",
             ("GNSS Receiver", "FC Connection", "Protocol"): "uBlox",
-            ("ESC", "FC Connection", "Type"): "Main Out",
-            ("ESC", "FC Connection", "Protocol"): "DShot600",
+            ("ESC", "FC->ESC Connection", "Type"): "Main Out",
+            ("ESC", "FC->ESC Connection", "Protocol"): "DShot600",
         }
 
         is_valid, errors = model.validate_all_data(valid_entries)
@@ -818,7 +818,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         allowed_entries = {
             ("Battery Monitor", "FC Connection", "Type"): "other",
             ("Battery Monitor", "FC Connection", "Protocol"): "ESC",
-            ("ESC", "FC Connection", "Type"): "Main Out",
+            ("ESC", "FC->ESC Connection", "Type"): "Main Out",
         }
 
         is_valid, errors = model.validate_all_data(allowed_entries)
@@ -1311,8 +1311,8 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}})
 
         # Test ESC connection to PWM outputs (not serial or CAN)
-        model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "Main Out")
-        protocol_choices = model._possible_choices.get(("ESC", "FC Connection", "Protocol"), ())
+        model._update_possible_choices_for_path(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        protocol_choices = model._possible_choices.get(("ESC", "FC->ESC Connection", "Protocol"), ())
 
         # Should use motor PWM types for PWM outputs
         assert len(protocol_choices) > 0
@@ -1338,8 +1338,8 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             ("RC Receiver", "FC Connection", "Type", "I2C1", False),  # May not have protocols (not common for RC)
             ("Telemetry", "FC Connection", "Type", "None", True),  # Should have protocols
             ("Telemetry", "FC Connection", "Type", "SERIAL1", True),  # Should have protocols
-            ("ESC", "FC Connection", "Type", "None", True),  # Should have protocols
-            ("ESC", "FC Connection", "Type", "CAN1", True),  # Should have protocols
+            ("ESC", "FC->ESC Connection", "Type", "None", True),  # Should have protocols
+            ("ESC", "FC->ESC Connection", "Type", "CAN1", True),  # Should have protocols
             ("GNSS Receiver", "FC Connection", "Type", "None", True),  # Should have protocols
             ("GNSS Receiver", "FC Connection", "Type", "SERIAL3", True),  # Should have protocols
             ("Battery Monitor", "FC Connection", "Type", "None", True),  # Should have protocols
@@ -1348,7 +1348,10 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
         for component, section, field, value, should_have_protocols in test_cases:
             model._update_possible_choices_for_path((component, section, field), value)
-            protocol_path = (component, "FC Connection", "Protocol")
+            if component == "ESC":
+                protocol_path = (component, "FC->ESC Connection", "Protocol")
+            else:
+                protocol_path = (component, "FC Connection", "Protocol")
             protocol_choices = model._possible_choices.get(protocol_path, ())
 
             if should_have_protocols:

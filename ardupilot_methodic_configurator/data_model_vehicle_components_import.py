@@ -303,8 +303,10 @@ class ComponentDataModelImport(ComponentDataModelBase):
             elif component == "ESC":
                 if esc == 1:
                     # Only set component values for the first ESC
-                    self.set_component_value(("ESC", "FC Connection", "Type"), serial)
-                    self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
+                    self.set_component_value(("ESC", "FC->ESC Connection", "Type"), serial)
+                    self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+                    self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), serial)
+                    self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), protocol)
                 # Count all ESC components
                 esc += 1
 
@@ -323,18 +325,18 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
         # if any element of main_out_functions is in [33, 34, 35, 36] then ESC is connected to main_out
         if any(servo_function in {33, 34, 35, 36} for servo_function in main_out_functions):
-            self.set_component_value(("ESC", "FC Connection", "Type"), "Main Out")
+            self.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
         else:
-            self.set_component_value(("ESC", "FC Connection", "Type"), "AIO")
+            self.set_component_value(("ESC", "FC->ESC Connection", "Type"), "AIO")
 
         if "MOT_PWM_TYPE" in doc and "values" in doc["MOT_PWM_TYPE"]:
             protocol = doc["MOT_PWM_TYPE"]["values"].get(str(mot_pwm_type), "")
             if protocol:
-                self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
+                self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
         # Fallback to MOT_PWM_TYPE_DICT if doc is not available
         elif str(mot_pwm_type) in MOT_PWM_TYPE_DICT:
             protocol = str(MOT_PWM_TYPE_DICT[str(mot_pwm_type)]["protocol"])
-            self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
+            self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
 
     def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:  # pylint: disable=too-many-branches
         """Process battery monitor parameters and update the data model."""

@@ -606,6 +606,36 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         assert "Battery" in realistic_model._data["Components"]
         assert "Specifications" in realistic_model._data["Components"]["Battery"]
 
+    def test_system_migrates_legacy_esc_fc_connection_path(self) -> None:
+        """
+        System migrates legacy ESC FC Connection to FC->ESC Connection when loading old files.
+
+        GIVEN: A model with old ESC path data
+        WHEN: update_json_structure is called
+        THEN: ESC data is moved to the new FC->ESC Connection path and old path removed
+        """
+        initial_data = {
+            "Components": {
+                "ESC": {
+                    "Product": {"Manufacturer": "Test"},
+                    "FC Connection": {"Type": "Main Out", "Protocol": "DShot600"},
+                }
+            },
+            "Format version": 1,
+        }
+
+        vehicle_components = VehicleComponents()
+        schema = VehicleComponentsJsonSchema(vehicle_components.load_schema())
+        component_datatypes = schema.get_all_value_datatypes()
+        model = ComponentDataModelBase(initial_data, component_datatypes, schema)
+
+        model.update_json_structure()
+
+        assert "FC Connection" not in model._data["Components"]["ESC"]
+        assert "FC->ESC Connection" in model._data["Components"]["ESC"]
+        assert model._data["Components"]["ESC"]["FC->ESC Connection"]["Type"] == "Main Out"
+        assert model._data["Components"]["ESC"]["FC->ESC Connection"]["Protocol"] == "DShot600"
+
     def test_system_recreates_missing_flight_controller_specifications(self, realistic_model) -> None:
         """
         System recreates missing Flight Controller Specifications sub-section.
@@ -882,7 +912,7 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
             (("Battery", "Specifications", "Capacity mAh"), 2000),
             (("Frame", "Specifications", "Weight Kg"), 1.5),
             (("Flight Controller", "Product", "Manufacturer"), "TestCorp"),
-            (("ESC", "FC Connection", "Protocol"), "DShot600"),
+            (("ESC", "FC->ESC Connection", "Protocol"), "DShot600"),
             (("Motors", "Specifications", "Poles"), 14),
         ]
 

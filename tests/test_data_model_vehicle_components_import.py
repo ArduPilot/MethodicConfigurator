@@ -229,8 +229,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         result = realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert esc_type == "SERIAL1"
         assert esc_protocol == "ESC Telem"
         assert result is True  # Multiple ESCs
@@ -273,8 +273,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert esc_type == "Main Out"
         assert esc_protocol == "DShot600"
 
@@ -299,10 +299,34 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert esc_type == "AIO"
         assert esc_protocol == "DShot600"
+
+    def test_user_can_import_esc_connection_and_telemetry_from_serial_fc(self, realistic_model) -> None:
+        """
+        Import ESC serial config into FC->ESC Connection and ESC->FC Telemetry.
+
+        GIVEN: Flight controller serial port protocol maps to ESC.
+
+        WHEN: User imports serial port configuration.
+
+        THEN: ESC FC->ESC Connection and ESC->FC Telemetry should be populated.
+        """
+        fc_parameters = {"SERIAL1_PROTOCOL": 38}
+
+        realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+        esc_conn_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_conn_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
+        esc_telemetry_type = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        esc_telemetry_protocol = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol"))
+
+        assert esc_conn_type == "SERIAL1"
+        assert esc_conn_protocol == "FETtecOneWire"
+        assert esc_telemetry_type == "SERIAL1"
+        assert esc_telemetry_protocol == "FETtecOneWire"
 
     def test_user_can_import_battery_monitor_configuration(self, realistic_model) -> None:
         """
@@ -447,7 +471,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
         assert esc_type == "AIO"  # Should default to AIO when no main out functions
 
     def test_system_falls_back_to_mot_pwm_dict_when_doc_empty(self, realistic_model) -> None:
@@ -468,7 +492,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
             realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-            esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+            esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
             assert esc_protocol == "DShot600"
 
     def test_system_handles_esc_protocol_not_found(self, realistic_model) -> None:
@@ -972,8 +996,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type")) == "SERIAL2"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "SERIAL3"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol")) == "CRSF"
-        assert realistic_model.get_component_value(("ESC", "FC Connection", "Type")) == "Main Out"
-        assert realistic_model.get_component_value(("ESC", "FC Connection", "Protocol")) == "DShot600"
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
         assert realistic_model.get_component_value(("Motors", "Specifications", "Poles")) == 14
         assert (
             realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
@@ -1005,8 +1029,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             realistic_model.process_fc_parameters(fc_parameters, doc)
 
         # Should use serial ESC, not PWM ESC
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert esc_type == "SERIAL1"
         assert esc_protocol == "FETtecOneWire"
 
@@ -1186,7 +1210,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
             realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-            esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
+            esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
             assert esc_type == expected_esc_type, f"Failed for servo functions {servo_functions}"
 
     def test_gps1_type_parameter_support(self, realistic_model) -> None:

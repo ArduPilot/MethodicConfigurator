@@ -52,7 +52,7 @@
           "description": "Main power source for the vehicle"
         },
         "ESC": {
-          "$ref": "#/definitions/connectionComponent",
+          "$ref": "#/definitions/escComponent",
           "description": "Electronic Speed Controller for the motors"
         },
         "Motors": {
@@ -239,6 +239,29 @@
             }
           },
           "description": "Component that connects to the flight controller"
+        }
+      ]
+    },
+    "escComponent": {
+      "allOf": [
+        { "$ref": "#/definitions/baseComponent" },
+        {
+          "properties": {
+            "Firmware": {
+              "$ref": "#/definitions/firmware",
+              "description": "ESC firmware information",
+              "x-is-optional": true
+            },
+            "FC->ESC Connection": {
+              "$ref": "#/definitions/fcConnection",
+              "description": "Data path from flight controller to ESC"
+            },
+            "ESC->FC Telemetry": {
+              "$ref": "#/definitions/fcConnection",
+              "description": "Telemetry path from ESC to flight controller (if applicable)"
+            }
+          },
+          "description": "Electronic Speed Controller component with (optional) telemetry"
         }
       ]
     },

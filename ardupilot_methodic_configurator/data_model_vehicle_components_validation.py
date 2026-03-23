@@ -84,7 +84,8 @@ FC_CONNECTION_TYPE_PATHS: list[ComponentPath] = [
     ("RC Receiver", "FC Connection", "Type"),
     ("Telemetry", "FC Connection", "Type"),
     ("Battery Monitor", "FC Connection", "Type"),
-    ("ESC", "FC Connection", "Type"),
+    ("ESC", "FC->ESC Connection", "Type"),
+    ("ESC", "ESC->FC Telemetry", "Type"),
     ("GNSS Receiver", "FC Connection", "Type"),
 ]
 
@@ -237,6 +238,15 @@ RC_PROTOCOLS_DICT: dict[str, dict[str, Union[list[str], str]]] = {
     "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
 }
 
+# ESC->FC telemetry connections
+ESC_TELEMETRY_DICT: dict[str, dict[str, Union[list[str], str]]] = {
+    "0": {"type": ["None"], "protocol": "None"},
+    "1": {"type": PWM_OUT_PORTS, "protocol": "BDShot"},
+    "2": {"type": CAN_PORTS, "protocol": "DroneCAN"},
+    "3": {"type": SERIAL_PORTS, "protocol": "DShot"},
+    "4": {"type": SERIAL_PORTS, "protocol": "FETtec OneWire"},
+}
+
 
 class ComponentDataModelValidation(ComponentDataModelBase):
     """
@@ -338,16 +348,29 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ),
             ("Battery Monitor", "FC Connection", "Type"): get_connection_types(BATT_MONITOR_CONNECTION),
             ("Battery Monitor", "FC Connection", "Protocol"): get_combobox_values("BATT_MONITOR"),
-            ("ESC", "FC Connection", "Type"): (*PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
-            ("ESC", "FC Connection", "Protocol"): self._mot_pwm_types,
+            ("ESC", "FC->ESC Connection", "Type"): (*PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
+            ("ESC", "FC->ESC Connection", "Protocol"): self._mot_pwm_types,
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
             ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
         for component in ["RC Receiver", "Telemetry", "Battery Monitor", "ESC", "GNSS Receiver"]:
-            if component in self._data["Components"]:
+            if component not in self._data.get("Components", {}):
+                continue
+
+            if component == "ESC":
                 self._update_possible_choices_for_path(
-                    (component, "FC Connection", "Type"), self.get_component_value((component, "FC Connection", "Type"))
+                    ("ESC", "FC->ESC Connection", "Type"),
+                    self.get_component_value(("ESC", "FC->ESC Connection", "Type")),
+                )
+                self._update_possible_choices_for_path(
+                    ("ESC", "ESC->FC Telemetry", "Type"),
+                    self.get_component_value(("ESC", "ESC->FC Telemetry", "Type")),
+                )
+            else:
+                self._update_possible_choices_for_path(
+                    (component, "FC Connection", "Type"),
+                    self.get_component_value((component, "FC Connection", "Type")),
                 )
 
     def _update_possible_choices_for_path(  # pylint: disable=too-many-branches

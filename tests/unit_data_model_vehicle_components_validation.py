@@ -100,8 +100,8 @@ class TestValidationInternals:
         model = realistic_model
         model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}})
 
-        model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "CAN1")
-        protocol_choices = model._possible_choices.get(("ESC", "FC Connection", "Protocol"), ())
+        model._update_possible_choices_for_path(("ESC", "FC->ESC Connection", "Type"), "CAN1")
+        protocol_choices = model._possible_choices.get(("ESC", "FC->ESC Connection", "Protocol"), ())
 
         assert protocol_choices == ("DroneCAN",)
 
@@ -110,8 +110,8 @@ class TestValidationInternals:
         model = realistic_model
         model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}})
 
-        model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "Main Out")
-        protocol_choices = model._possible_choices.get(("ESC", "FC Connection", "Protocol"), ())
+        model._update_possible_choices_for_path(("ESC", "FC->ESC Connection", "Type"), "Main Out")
+        protocol_choices = model._possible_choices.get(("ESC", "FC->ESC Connection", "Protocol"), ())
 
         assert len(protocol_choices) > 0
         # pylint: enable=duplicate-code
@@ -244,7 +244,7 @@ class TestDisplayValueCorrectionInternals:
         initial_data = {
             "Components": {
                 "RC Receiver": {"FC Connection": {"Type": "SERIAL2"}},
-                "ESC": {"FC Connection": {"Type": "CAN1"}},
+                "ESC": {"FC->ESC Connection": {"Type": "CAN1"}},
             },
             "Format version": 1,
         }
@@ -258,7 +258,7 @@ class TestDisplayValueCorrectionInternals:
 
         # Assert
         assert model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "SERIAL2"
-        assert model.get_component_value(("ESC", "FC Connection", "Type")) == "CAN1"
+        assert model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "CAN1"
 
     def test_correct_display_values_handles_nested_data(self, validation_model) -> None:
         """Test that correct_display_values_in_loaded_data() handles nested data structures."""

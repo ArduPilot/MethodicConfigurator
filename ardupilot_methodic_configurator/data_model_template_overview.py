@@ -29,7 +29,7 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         self.prop_diameter_inches = components_data.get("Propellers", {}).get("Specifications", {}).get("Diameter_inches", "")
         self.rc_protocol = components_data.get("RC Receiver", {}).get("FC Connection", {}).get("Protocol", "")
         self.telemetry_model = components_data.get("Telemetry", {}).get("Product", {}).get("Model", "")
-        self.esc_protocol = components_data.get("ESC", {}).get("FC Connection", {}).get("Protocol", "")
+        self.esc_protocol = components_data.get("ESC", {}).get("FC->ESC Connection", {}).get("Protocol", "")
         self.gnss_model = components_data.get("GNSS Receiver", {}).get("Product", {}).get("Model", "")
         self.gnss_connection = components_data.get("GNSS Receiver", {}).get("FC Connection", {}).get("Type", "")
 
