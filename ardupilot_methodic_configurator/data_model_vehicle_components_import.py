@@ -9,10 +9,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib
+from dataclasses import dataclass
 
 # from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import warning as logging_warning
+from math import isnan
 from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
@@ -53,6 +55,17 @@ def is_single_bit_set(value: int) -> bool:
 
     """
     return value > 0 and value & (value - 1) == 0
+
+
+@dataclass
+class BatteryVoltageSpecs:
+    """Data class to hold battery voltage specifications for import processing."""
+
+    estimated_cell_count: int
+    limit_min: float
+    limit_max: float
+    detected_chemistry: str
+    fc_parameters: dict[str, float]
 
 
 class ComponentDataModelImport(ComponentDataModelBase):
@@ -371,6 +384,30 @@ class ComponentDataModelImport(ComponentDataModelBase):
         else:
             logging_warning(_("BATT_MONITOR parameter not found in fc_parameters"))
 
+        # Detect battery chemistry from voltage parameters before estimating cell count
+        # Only update if current chemistry is clearly wrong or not set
+        current_chemistry = str(self.get_component_value(("Battery", "Specifications", "Chemistry")))
+        detected_chemistry = self._detect_battery_chemistry_from_voltages(fc_parameters, current_chemistry)
+        if detected_chemistry and detected_chemistry != current_chemistry:
+            self.set_component_value(("Battery", "Specifications", "Chemistry"), detected_chemistry)
+
+        # if chemistry detection fails, use current chemistry if valid, otherwise default to "Lipo"
+        final_chemistry = detected_chemistry or current_chemistry or "Lipo"
+        if final_chemistry not in BatteryCell.chemistries():
+            final_chemistry = "Lipo"
+
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=self._estimate_battery_cell_count(fc_parameters),
+            limit_min=BatteryCell.limit_min_voltage(final_chemistry),
+            limit_max=BatteryCell.limit_max_voltage(final_chemistry),
+            detected_chemistry=final_chemistry,
+            fc_parameters=fc_parameters,
+        )
+        self._import_bat_values_from_fc(specs)
+
+    def _import_bat_values_from_fc(self, specs: BatteryVoltageSpecs) -> None:
+        fc_parameters = specs.fc_parameters
+
         if "BATT_CAPACITY" in fc_parameters:
             try:
                 batt_capacity = int(fc_parameters["BATT_CAPACITY"])
@@ -383,34 +420,30 @@ class ComponentDataModelImport(ComponentDataModelBase):
         else:
             logging_warning(_("BATT_CAPACITY parameter not found in fc_parameters"))
 
-        # Detect battery chemistry from voltage parameters before estimating cell count
-        # Only update if current chemistry is clearly wrong or not set
-        current_chemistry = str(self.get_component_value(("Battery", "Specifications", "Chemistry")))
-        detected_chemistry = self._detect_battery_chemistry_from_voltages(fc_parameters, current_chemistry)
-        if detected_chemistry and detected_chemistry != current_chemistry:
-            self.set_component_value(("Battery", "Specifications", "Chemistry"), detected_chemistry)
+        if specs.estimated_cell_count > 0:
+            self.import_bat_voltage(specs, "MOT_BAT_VOLT_MAX", "max")
+            self.import_bat_voltage(specs, "BATT_ARM_VOLT", "arm")
+            self.import_bat_voltage(specs, "BATT_LOW_VOLT", "low")
+            self.import_bat_voltage(specs, "BATT_CRT_VOLT", "crit")
+            self.import_bat_voltage(specs, "MOT_BAT_VOLT_MIN", "min")
 
-        # Estimate number of cells from voltage parameters
-        self._estimate_battery_cell_count(fc_parameters)
-
-    def _get_volt_per_cell_for_type(self, chemistry: str, voltage_type: str) -> float:
-        """
-        Get voltage per cell for a given chemistry and voltage type.
-
-        Args:
-            chemistry: Battery chemistry type
-            voltage_type: One of "recommended_max", "recommended_low", "recommended_crit"
-
-        Returns:
-            Voltage per cell value
-
-        """
-        if voltage_type == "recommended_max":
-            return BatteryCell.recommended_max_voltage(chemistry)
-        if voltage_type == "recommended_low":
-            return BatteryCell.recommended_low_voltage(chemistry)
-        # voltage_type == "recommended_crit"
-        return BatteryCell.recommended_crit_voltage(chemistry)
+    def import_bat_voltage(self, specs: BatteryVoltageSpecs, param_name: str, voltage_type: str) -> None:
+        if param_name in specs.fc_parameters:
+            try:
+                cell = round(specs.fc_parameters[param_name] / specs.estimated_cell_count, 4)
+                if specs.limit_min <= cell <= specs.limit_max:
+                    self.set_component_value(("Battery", "Specifications", f"Volt per cell {voltage_type}"), cell)
+                else:
+                    logging_warning(
+                        _("Calculated cell %s voltage %.2f V is out of expected range for %s chemistry (%.2f - %.2f V)"),
+                        voltage_type,
+                        cell,
+                        specs.detected_chemistry,
+                        specs.limit_min,
+                        specs.limit_max,
+                    )
+            except (ValueError, TypeError) as e:
+                logging_error(_("Error processing %s parameter: %s"), param_name, str(e))
 
     def _detect_battery_chemistry_from_voltages(
         self, fc_parameters: dict[str, float], current_chemistry: Optional[str] = None
@@ -431,11 +464,17 @@ class ComponentDataModelImport(ComponentDataModelBase):
             or current chemistry is acceptable
 
         """
-        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT
+        # FC param → voltage type mapping, in priority order
+        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT > BATT_ARM_VOLT > MOT_BAT_VOLT_MIN
         voltage_params = [
-            ("MOT_BAT_VOLT_MAX", "recommended_max"),
-            ("BATT_LOW_VOLT", "recommended_low"),
-            ("BATT_CRT_VOLT", "recommended_crit"),
+            ("MOT_BAT_VOLT_MAX", "Volt per cell max"),
+            ("BATT_LOW_VOLT", "Volt per cell low"),
+            ("BATT_CRT_VOLT", "Volt per cell crit"),
+            (
+                "BATT_ARM_VOLT",
+                "Volt per cell arm",
+            ),  # lower priority, less commonly set, but can provide additional clues if available
+            ("MOT_BAT_VOLT_MIN", "Volt per cell min"),  # lowest priority, but can be a last resort for detection
         ]
 
         # Try each voltage parameter in priority order
@@ -445,43 +484,30 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
             try:
                 total_voltage = float(fc_parameters[param_name])
-                if total_voltage <= 0:
-                    continue
-
-                # Check if current chemistry is consistent with this parameter
-                if current_chemistry and current_chemistry in BatteryCell.chemistries():
-                    volt_per_cell = self._get_volt_per_cell_for_type(current_chemistry, voltage_type)
-                    if volt_per_cell > 0:
-                        estimated_cells = total_voltage / volt_per_cell
-                        current_chemistry_score = abs(estimated_cells - round(estimated_cells))
-
-                        # If current chemistry gives acceptable results (<40% error), keep it
-                        # This very conservative threshold prevents changing chemistry unless clearly wrong
-                        if current_chemistry_score < 0.40:
-                            return None  # Keep current chemistry
-
-                # Find best matching chemistry
-                best_chemistry = None
-                best_score = float("inf")
-
-                for chemistry in BatteryCell.chemistries():
-                    volt_per_cell = self._get_volt_per_cell_for_type(chemistry, voltage_type)
-                    if volt_per_cell <= 0:
-                        continue
-
-                    estimated_cells = total_voltage / volt_per_cell
-                    score = abs(estimated_cells - round(estimated_cells))
-
-                    if score < best_score:
-                        best_score = score
-                        best_chemistry = chemistry
-
-                # Only accept if reasonably close to integer (within 3%)
-                if best_chemistry and best_score < 0.03:
-                    return best_chemistry
-
-            except (ValueError, TypeError, ZeroDivisionError):
+            except (ValueError, TypeError):
                 continue
+
+            if total_voltage <= 0:
+                continue
+
+            # Check if current chemistry is consistent with this parameter
+            if current_chemistry and current_chemistry in BatteryCell.chemistries():
+                score = BatteryCell.chemistry_voltage_score(current_chemistry, total_voltage, voltage_type)
+                if isnan(score):
+                    logging_warning(
+                        _("Current chemistry %s does not have valid volt per cell for %s, ignoring current chemistry"),
+                        current_chemistry,
+                        voltage_type,
+                    )
+                    continue
+                # If current chemistry gives acceptable results (<40% error), keep it
+                # This very conservative threshold prevents changing chemistry unless clearly wrong
+                if score < 0.40:
+                    return None  # Keep current chemistry
+
+            result = BatteryCell.best_chemistry_for_voltage(total_voltage, voltage_type)
+            if result is not None:
+                return result
 
         return None
 
@@ -520,19 +546,19 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
         return None
 
-    def _estimate_battery_cell_count(self, fc_parameters: dict[str, float]) -> None:
+    def _estimate_battery_cell_count(self, fc_parameters: dict[str, float]) -> int:
         """
         Estimate battery cell count from voltage parameters.
 
-        Uses MOT_BAT_VOLT_MAX, BATT_LOW_VOLT, or BATT_CRT_VOLT along with
-        current volt-per-cell values to estimate the number of cells.
+        Uses MOT_BAT_VOLT_MAX, BATT_LOW_VOLT, BATT_CRT_VOLT, BATT_ARM_VOLT, or MOT_BAT_VOLT_MIN
+        along with current volt-per-cell values to estimate the number of cells.
 
         Args:
             fc_parameters: Dictionary of flight controller parameters
 
         """
         # Try to estimate cell count from available voltage parameters
-        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT
+        # Priority: MOT_BAT_VOLT_MAX > BATT_LOW_VOLT > BATT_CRT_VOLT > BATT_ARM_VOLT > MOT_BAT_VOLT_MIN
         estimated_cells = None
 
         if "MOT_BAT_VOLT_MAX" in fc_parameters:
@@ -550,10 +576,21 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 "BATT_CRT_VOLT", fc_parameters["BATT_CRT_VOLT"], "Volt per cell crit"
             )
 
+        # lower prio, because less often used
+        if estimated_cells is None and "BATT_ARM_VOLT" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "BATT_ARM_VOLT", fc_parameters["BATT_ARM_VOLT"], "Volt per cell arm"
+            )
+
+        if estimated_cells is None and "MOT_BAT_VOLT_MIN" in fc_parameters:
+            estimated_cells = self._estimate_cells_from_voltage_param(
+                "MOT_BAT_VOLT_MIN", fc_parameters["MOT_BAT_VOLT_MIN"], "Volt per cell min"
+            )
+
         # If no estimation succeeded, all volt per cell values must be invalid
         if estimated_cells is None:
             logging_error(_("All volt per cell values are zero or invalid; cannot estimate battery cell count"))
-            return
+            return 0
 
         # Validate and set the estimated cell count
         cell_path = ("Battery", "Specifications", "Number of cells")
@@ -561,13 +598,14 @@ class ComponentDataModelImport(ComponentDataModelBase):
             _type, (min_cells, max_cells), _doc = ComponentDataModelValidation.VALIDATION_RULES[cell_path]
             if min_cells <= estimated_cells <= max_cells:
                 self.set_component_value(cell_path, estimated_cells)
-            else:
-                logging_error(
-                    _("Estimated battery cell count %s is out of valid range (%d to %d)"),
-                    estimated_cells,
-                    min_cells,
-                    max_cells,
-                )
+                return estimated_cells
+            logging_error(
+                _("Estimated battery cell count %s is out of valid range (%d to %d)"),
+                estimated_cells,
+                min_cells,
+                max_cells,
+            )
+        return 0
 
     def _set_motor_poles_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:
         """Process motor parameters and update the data model."""
