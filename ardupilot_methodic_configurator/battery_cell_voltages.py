@@ -15,57 +15,73 @@ battery_cell_voltages = {
         "absolute_max": 4.2,
         "absolute_min": 2.5,
         "recommended_max": 4.1,
+        "recommended_arm": 3.6,
         "recommended_low": 3.1,
         "recommended_crit": 2.8,
+        "recommended_min": 2.7,
     },
     "LiIonSS": {
         "absolute_max": 4.2,
         "absolute_min": 2.4,
         "recommended_max": 4.2,
+        "recommended_arm": 3.6,
         "recommended_low": 3.0,
         "recommended_crit": 2.7,
+        "recommended_min": 2.6,
     },
     "LiIonSSHV": {
         "absolute_max": 4.45,
         "absolute_min": 2.4,
         "recommended_max": 4.45,
+        "recommended_arm": 3.8,
         "recommended_low": 3.0,
         "recommended_crit": 2.7,
+        "recommended_min": 2.6,
     },
     "Lipo": {
         "absolute_max": 4.2,
         "absolute_min": 3.0,
         "recommended_max": 4.2,
+        "recommended_arm": 3.8,
         "recommended_low": 3.6,
         "recommended_crit": 3.3,
+        "recommended_min": 3.2,
     },
     "LipoHV": {
         "absolute_max": 4.35,
         "absolute_min": 3.0,
         "recommended_max": 4.35,
+        "recommended_arm": 3.9,
         "recommended_low": 3.6,
         "recommended_crit": 3.3,
+        "recommended_min": 3.2,
     },
     "LipoHVSS": {
         "absolute_max": 4.2,
         "absolute_min": 2.9,
         "recommended_max": 4.2,
+        "recommended_arm": 3.8,
         "recommended_low": 3.5,
         "recommended_crit": 3.2,
+        "recommended_min": 3.1,
     },
     "NiCd": {
         "absolute_max": 1.45,
         "absolute_min": 1.0,
         "recommended_max": 1.4,
+        "recommended_arm": 1.28,
         "recommended_low": 1.2,
         "recommended_crit": 1.1,
+        "recommended_min": 1.05,
     },
     "NiMH": {
         "absolute_max": 1.45,
         "absolute_min": 1.0,
         "recommended_max": 1.4,
+        "recommended_arm": 1.28,
         "recommended_low": 1.2,
         "recommended_crit": 1.1,
+        "recommended_min": 1.05,
     },
     # Add more chemistries as needed
 }
@@ -101,16 +117,28 @@ class BatteryCell:
     def recommended_max_voltage(chemistry: str) -> float:
         if chemistry not in battery_cell_voltages:
             return nan
-        return battery_cell_voltages[chemistry].get("recommended_max", 4.2)
+        return battery_cell_voltages[chemistry].get("recommended_max", nan)
+
+    @staticmethod
+    def recommended_arm_voltage(chemistry: str) -> float:
+        if chemistry not in battery_cell_voltages:
+            return nan
+        return battery_cell_voltages[chemistry].get("recommended_arm", nan)
 
     @staticmethod
     def recommended_low_voltage(chemistry: str) -> float:
         if chemistry not in battery_cell_voltages:
             return nan
-        return battery_cell_voltages[chemistry].get("recommended_low", 3.6)
+        return battery_cell_voltages[chemistry].get("recommended_low", nan)
 
     @staticmethod
     def recommended_crit_voltage(chemistry: str) -> float:
         if chemistry not in battery_cell_voltages:
             return nan
-        return battery_cell_voltages[chemistry].get("recommended_crit", 3.3)
+        return battery_cell_voltages[chemistry].get("recommended_crit", nan)
+
+    @staticmethod
+    def recommended_min_voltage(chemistry: str) -> float:
+        if chemistry not in battery_cell_voltages:
+            return nan
+        return battery_cell_voltages[chemistry].get("recommended_min", nan)

@@ -169,17 +169,23 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
         # Check that voltage values are set automatically
         max_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+        arm_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
         low_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell low"))
         crit_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell crit"))
+        min_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell min"))
 
         # Values should exist and be the expected float values (or defaults if not set)
         # The empty model may not have created the battery structure yet, so check if values are numeric
         if isinstance(max_voltage, (int, float)):
             assert max_voltage == BatteryCell.recommended_max_voltage("Lipo")
+        if isinstance(arm_voltage, (int, float)):
+            assert arm_voltage == BatteryCell.recommended_arm_voltage("Lipo")
         if isinstance(low_voltage, (int, float)):
             assert low_voltage == BatteryCell.recommended_low_voltage("Lipo")
         if isinstance(crit_voltage, (int, float)):
             assert crit_voltage == BatteryCell.recommended_crit_voltage("Lipo")
+        if isinstance(min_voltage, (int, float)):
+            assert min_voltage == BatteryCell.recommended_min_voltage("Lipo")
 
     def test_set_component_value_different_chemistries(self, empty_model) -> None:
         """
@@ -197,12 +203,16 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
             # Verify that recommended voltages are set correctly
             max_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+            arm_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
             low_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell low"))
             crit_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell crit"))
+            min_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell min"))
 
             assert max_voltage == BatteryCell.recommended_max_voltage(chemistry)
+            assert arm_voltage == BatteryCell.recommended_arm_voltage(chemistry)
             assert low_voltage == BatteryCell.recommended_low_voltage(chemistry)
             assert crit_voltage == BatteryCell.recommended_crit_voltage(chemistry)
+            assert min_voltage == BatteryCell.recommended_min_voltage(chemistry)
 
     def test_set_component_value_no_side_effects_for_non_chemistry(self, empty_model) -> None:
         """
@@ -541,6 +551,11 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             expected = BatteryCell.recommended_max_voltage(chemistry)
             assert recommended == expected
 
+            # Test arm voltage
+            recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell arm"))
+            expected = BatteryCell.recommended_arm_voltage(chemistry)
+            assert recommended == expected
+
             # Test low voltage
             recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell low"))
             expected = BatteryCell.recommended_low_voltage(chemistry)
@@ -549,6 +564,11 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             # Test crit voltage
             recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell crit"))
             expected = BatteryCell.recommended_crit_voltage(chemistry)
+            assert recommended == expected
+
+            # Test min voltage
+            recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell min"))
+            expected = BatteryCell.recommended_min_voltage(chemistry)
             assert recommended == expected
 
     def test_recommended_cell_voltage_unknown_path(self, realistic_model) -> None:

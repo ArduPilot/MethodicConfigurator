@@ -44,14 +44,26 @@ class TestBatteryCell(unittest.TestCase):  # pylint: disable=missing-class-docst
         assert BatteryCell.recommended_crit_voltage("LiIon") == 2.8
         assert isnan(BatteryCell.recommended_crit_voltage("NonExistentChemistry"))
 
+    def test_recommended_arm_voltage(self) -> None:
+        assert BatteryCell.recommended_arm_voltage("LiIon") == 3.6
+        assert isnan(BatteryCell.recommended_arm_voltage("NonExistentChemistry"))
+
+    def test_recommended_min_voltage(self) -> None:
+        assert BatteryCell.recommended_min_voltage("LiIon") == 2.7
+        assert isnan(BatteryCell.recommended_min_voltage("NonExistentChemistry"))
+
     def test_voltage_monoticity(self) -> None:
         for chemistry in BatteryCell.chemistries():
             with self.subTest(chemistry=chemistry):
                 assert BatteryCell.limit_max_voltage(chemistry) == battery_cell_voltages[chemistry].get("absolute_max")
                 assert BatteryCell.limit_min_voltage(chemistry) == battery_cell_voltages[chemistry].get("absolute_min")
                 assert BatteryCell.limit_max_voltage(chemistry) >= BatteryCell.recommended_max_voltage(chemistry)
-                assert BatteryCell.recommended_max_voltage(chemistry) >= BatteryCell.recommended_low_voltage(chemistry)
+                assert BatteryCell.recommended_max_voltage(chemistry) >= BatteryCell.recommended_arm_voltage(chemistry)
+                assert BatteryCell.recommended_arm_voltage(chemistry) >= BatteryCell.recommended_low_voltage(chemistry)
                 assert BatteryCell.recommended_low_voltage(chemistry) >= BatteryCell.recommended_crit_voltage(chemistry)
+                # This is not required, the user might want to stop PID scaling above the critical voltage
+                # assert BatteryCell.recommended_crit_voltage(chemistry) >= BatteryCell.recommended_min_voltage(chemistry)
+                assert BatteryCell.recommended_min_voltage(chemistry) >= BatteryCell.limit_min_voltage(chemistry)
                 assert BatteryCell.recommended_crit_voltage(chemistry) >= BatteryCell.limit_min_voltage(chemistry)
 
 

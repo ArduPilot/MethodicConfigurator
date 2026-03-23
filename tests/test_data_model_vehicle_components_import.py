@@ -20,7 +20,12 @@ from test_data_model_vehicle_components_common import (
     RealisticDataTestMixin,
 )
 
-from ardupilot_methodic_configurator.data_model_vehicle_components_import import ComponentDataModelImport, is_single_bit_set
+from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
+from ardupilot_methodic_configurator.data_model_vehicle_components_import import (
+    BatteryVoltageSpecs,
+    ComponentDataModelImport,
+    is_single_bit_set,
+)
 
 # pylint: disable=protected-access,too-many-public-methods,too-many-lines
 
@@ -482,7 +487,85 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         """
         System handles KeyError for unknown BATT_MONITOR values.
 
-        GIVEN: BATT_MONITOR value not in BATT_MONITOR_CONNECTION dict
+        GIVEN: BATT_MONITOR value is unrecognized
+        WHEN: importing battery type
+        THEN: error is logged and no exception is raised
+        """
+        fc_parameters = {"BATT_MONITOR": 999}  # Non-existent key
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    def test_import_bat_values_from_fc_uses_battery_voltage_specs(self, basic_model) -> None:
+        """BatteryVoltageSpecs is used and values are written to model."""
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={
+                "BATT_CAPACITY": 4500,
+                "MOT_BAT_VOLT_MAX": 16.8,
+                "BATT_ARM_VOLT": 15.2,
+                "BATT_LOW_VOLT": 14.4,
+                "BATT_CRT_VOLT": 13.2,
+                "MOT_BAT_VOLT_MIN": 12.8,
+            },
+        )
+
+        basic_model._import_bat_values_from_fc(specs)
+
+        assert basic_model.get_component_value(("Battery", "Specifications", "Capacity mAh")) == 4500
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max")) == 4.2
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm")) == 3.8
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell low")) == 3.6
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell crit")) == 3.3
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell min")) == 3.2
+
+    def test_estimate_battery_cell_count_does_not_override_with_min_voltage(self, realistic_model) -> None:
+        """
+        CONFIRM: high-priority source MOT_BAT_VOLT_MAX is not overridden by MOT_BAT_VOLT_MIN.
+
+        GIVEN: existing cell voltage specs for max/min and an FC parameter set with both max and min volts
+        WHEN: estimating battery cell count
+        THEN: count should be based on MOT_BAT_VOLT_MAX priority path
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.2)
+
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 16.8,
+            "MOT_BAT_VOLT_MIN": 14.5,
+        }
+
+        estimated = realistic_model._estimate_battery_cell_count(fc_parameters)
+
+        assert estimated == 4
+
+    def test_estimate_battery_cell_count_does_not_override_with_arm_voltage(self, realistic_model) -> None:
+        """
+        CONFIRM: high-priority source MOT_BAT_VOLT_MAX is not overridden by BATT_ARM_VOLT.
+
+        GIVEN: existing cell voltage specs and an FC parameter set with max and arm volts
+        WHEN: estimating battery cell count
+        THEN: count should be based on MOT_BAT_VOLT_MAX priority path
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 16.8,
+            "BATT_ARM_VOLT": 15.2,
+        }
+
+        estimated = realistic_model._estimate_battery_cell_count(fc_parameters)
+
+        assert estimated == 4
+
+    def test_system_handles_battery_monitor_value_not_in_connection_dict(self, realistic_model) -> None:
+        """
+        GIVEN: BATT_MONITOR value not in BATT_MONITOR_CONNECTION dict.
+
         WHEN: Importing battery configuration
         THEN: Error should be logged
         AND: System should not crash
