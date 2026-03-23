@@ -952,7 +952,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             "33_autotune_pitch_results.param",
             "35_autotune_yaw_results.param",
             "37_autotune_yawd_results.param",
-            "39_autotune_roll_pitch_results.param",
+            "39_autotune_roll_pitch_retune_results.param",
         ]
 
         report_file_path = Path(getattr(self._local_filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
