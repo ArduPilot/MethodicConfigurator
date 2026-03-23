@@ -1001,65 +1001,61 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             get_download_progress_callback: Optional factory function that creates and returns a download progress callback.
 
         """
-        logging_info(
-            _("Uploading %d selected %s parameters to flight controller..."),
-            len(selected_params),
-            self.current_file,
-        )
+        should_retry = True
+        while should_retry:
+            should_retry = False
 
-        # Get progress callbacks from factories if provided
-        progress_callback_for_upload = get_upload_progress_callback() if get_upload_progress_callback else None
-        progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
-        progress_callback_for_connection = get_connection_progress_callback() if get_connection_progress_callback else None
-        progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
-        # Upload parameters that require reset
-        reset_happened, already_uploaded_params = self.upload_parameters_that_require_reset_workflow(
-            selected_params, ask_confirmation, show_error, progress_callback_for_reset, progress_callback_for_connection
-        )
+            logging_info(
+                _("Uploading %d selected %s parameters to flight controller..."),
+                len(selected_params),
+                self.current_file,
+            )
 
-        # If reset happened, fc_parameters cache was cleared during disconnect/reconnect
-        # Re-download parameters now so _upload_parameters_to_fc has valid cache for comparison
-        if reset_happened:
-            self.download_flight_controller_parameters(lambda: progress_callback_for_download)
+            # Get progress callbacks from factories if provided
+            progress_callback_for_upload = get_upload_progress_callback() if get_upload_progress_callback else None
+            progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
+            progress_callback_for_connection = get_connection_progress_callback() if get_connection_progress_callback else None
+            progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
+            # Upload parameters that require reset
+            reset_happened, already_uploaded_params = self.upload_parameters_that_require_reset_workflow(
+                selected_params, ask_confirmation, show_error, progress_callback_for_reset, progress_callback_for_connection
+            )
 
-        # Upload remaining parameters (excluding those already uploaded in reset workflow)
-        remaining_params = {k: v for k, v in selected_params.items() if k not in already_uploaded_params}
-        nr_changed = self._upload_parameters_to_fc(remaining_params, show_error, progress_callback_for_upload)
+            # If reset happened, fc_parameters cache was cleared during disconnect/reconnect
+            # Re-download parameters now so _upload_parameters_to_fc has valid cache for comparison
+            if reset_happened:
+                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)
 
-        # Add count of already uploaded params to total changed count
-        nr_changed += len(already_uploaded_params)
+            # Upload remaining parameters (excluding those already uploaded in reset workflow)
+            remaining_params = {k: v for k, v in selected_params.items() if k not in already_uploaded_params}
+            nr_changed = self._upload_parameters_to_fc(remaining_params, show_error, progress_callback_for_upload)
 
-        if reset_happened or nr_changed > 0:
-            self._at_least_one_changed = True
+            # Add count of already uploaded params to total changed count
+            nr_changed += len(already_uploaded_params)
 
-        if self._at_least_one_changed:
-            # Re-download all parameters to validate
-            # Note: Passing the callback directly, not the factory, since we already got it
-            self.download_flight_controller_parameters(lambda: progress_callback_for_download)
-            param_upload_error = self._validate_uploaded_parameters(selected_params)
+            if reset_happened or nr_changed > 0:
+                self._at_least_one_changed = True
 
-            if param_upload_error:
-                if ask_retry_cancel(
-                    _("Parameter upload error"),
-                    _("Failed to upload the following parameters to the flight controller:\n")
-                    + f"{(', ').join(param_upload_error)}",
-                ):
-                    # Retry the entire workflow - pass the factories again, not the callbacks
-                    self.upload_selected_params_workflow(
-                        selected_params,
-                        ask_confirmation,
-                        ask_retry_cancel,
-                        show_error,
-                        get_upload_progress_callback,
-                        get_reset_progress_callback,
-                        get_download_progress_callback,
+            if self._at_least_one_changed:
+                # Re-download all parameters to validate
+                # Note: Passing the callback directly, not the factory, since we already got it
+                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)
+                param_upload_error = self._validate_uploaded_parameters(selected_params)
+
+                if param_upload_error:
+                    should_retry = ask_retry_cancel(
+                        _("Parameter upload error"),
+                        _("Failed to upload the following parameters to the flight controller:\n")
+                        + f"{(', ').join(param_upload_error)}",
                     )
-                # If not retrying, continue without success message
-            else:
-                logging_info(_("All parameters uploaded to the flight controller successfully"))
+                    if should_retry:
+                        continue
+                    # If not retrying, continue without success message
+                else:
+                    logging_info(_("All parameters uploaded to the flight controller successfully"))
 
-            if self._should_export_fc_params_diff:
-                self._export_fc_params_missing_or_different()
+                if self._should_export_fc_params_diff:
+                    self._export_fc_params_missing_or_different()
 
         self._write_current_file()
         self._at_least_one_changed = False
