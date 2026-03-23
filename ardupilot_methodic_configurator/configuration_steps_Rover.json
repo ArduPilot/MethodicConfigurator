@@ -106,11 +106,11 @@
             },
             "derived_parameters": {
                 "ESC_HW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
-                "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
+                "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC->ESC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
                 "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
                 "SERVO_FTW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
             },
-            "rename_connection": "vehicle_components['ESC']['FC Connection']['Type']",
+            "rename_connection": "vehicle_components['ESC']['FC->ESC Connection']['Type']",
             "old_filenames": []
         },
         "08_batt1.param": {
@@ -129,14 +129,14 @@
                 "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Return and land at home or rally point" }
             },
             "derived_parameters": {
-                "BATT_ARM_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Number of cells']-1)*0.1+(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.3)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Do not allow arming below this voltage" },
-                "BATT_CAPACITY": { "New Value": "(vehicle_components['Battery']['Specifications']['Capacity mAh'])", "Change Reason": "Total battery capacity specified in the component editor" },
-                "BATT_CRT_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" },
-                "BATT_LOW_VOLT": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell low'])*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Low voltage + 0.0) x no. of cells" },
+                "BATT_ARM_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell arm']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Only arm above this voltage, to avoid taking off with insufficient battery capacity" },
+                "BATT_CAPACITY": { "New Value": "vehicle_components['Battery']['Specifications']['Capacity mAh']", "Change Reason": "Total battery capacity specified in the component editor" },
+                "BATT_CRT_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell crit']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Critical failsafe voltage x nr. of cells" },
+                "BATT_LOW_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell low']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Low failsafe voltage x nr. of cells" },
                 "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
                 "BATT_I2C_BUS": { "New Value": "1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 3 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C4' else 0", "Change Reason": "Selected in component editor window" },
-                "MOT_BAT_VOLT_MAX": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell max']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Max voltage + 0.0) x no. of cells" },
-                "MOT_BAT_VOLT_MIN": { "New Value": "(vehicle_components['Battery']['Specifications']['Volt per cell crit']+0.0)*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "(Critical voltage + 0.0) x no. of cells" }
+                "MOT_BAT_VOLT_MAX": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell max']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Scale the PIDs up when battery voltage is below this threshold" },
+                "MOT_BAT_VOLT_MIN": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell min']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Scale the PIDs up when battery voltage is above this threshold" }
             },
             "rename_connection": "vehicle_components['Battery Monitor']['FC Connection']['Type']",
             "old_filenames": [],
@@ -170,7 +170,8 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "derived_parameters": {
-                "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+                "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
+                "GPS1_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
             },
             "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
             "old_filenames": []
@@ -269,7 +270,11 @@
             "external_tool_url": "",
             "mandatory_text": "40% mandatory (60% optional)",
             "auto_changed_by": "",
-            "old_filenames": ["14_motor.param"]
+            "old_filenames": ["14_motor.param"],
+            "plugin": {
+                "name": "motor_test",
+                "placement": "left"
+            }
         },
         "16_pid_adjustment.param": {
             "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",

@@ -106,11 +106,11 @@
             },
             "derived_parameters": {
                 "ESC_HW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
-                "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
+                "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC->ESC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
                 "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
                 "SERVO_FTW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
             },
-            "rename_connection": "vehicle_components['ESC']['FC Connection']['Type']",
+            "rename_connection": "vehicle_components['ESC']['FC->ESC Connection']['Type']",
             "old_filenames": []
         },
         "08_batt1.param": {
