@@ -258,6 +258,10 @@
                   "type": "number",
                   "description": "Maximum voltage per cell when fully charged (e.g., 4.2V for LiPo)"
                 },
+                "Volt per cell arm": {
+                  "type": "number",
+                  "description": "Arm threshold voltage per cell used for allowing arming (e.g., 3.7V)"
+                },
                 "Volt per cell low": {
                   "type": "number",
                   "description": "Low voltage threshold per cell when battery should be changed (e.g., 3.5V)"
@@ -265,6 +269,10 @@
                 "Volt per cell crit": {
                   "type": "number",
                   "description": "Critical voltage per cell below which damage may occur (e.g., 3.3V)"
+                },
+                "Volt per cell min": {
+                  "type": "number",
+                  "description": "Minimum voltage per cell below which PID scaling stops (e.g., 3.3V)"
                 },
                 "Number of cells": {
                   "type": "integer",

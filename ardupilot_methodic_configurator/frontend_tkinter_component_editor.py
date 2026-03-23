@@ -62,8 +62,8 @@ def argument_parser() -> Namespace:
 class ComponentEditorWindow(ComponentEditorWindowBase):
     """Validates the user input and handles user interactions for editing component configurations."""
 
-    def __init__(self, version: str, local_filesystem: LocalFilesystem) -> None:
-        ComponentEditorWindowBase.__init__(self, version, local_filesystem)
+    def __init__(self, version: str, local_filesystem: LocalFilesystem, fc_parameters: dict[str, float]) -> None:
+        ComponentEditorWindowBase.__init__(self, version, local_filesystem, fc_parameters)
         # when only read from file and no FC is connected
         mcu = self.data_model.get_component_value(("Flight Controller", "Specifications", "MCU Series"))
         if mcu and isinstance(mcu, str):
@@ -322,7 +322,7 @@ if __name__ == "__main__":  # pragma: no cover
     filesystem = LocalFilesystem(
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
     )
-    component_editor_window = ComponentEditorWindow(__version__, filesystem)
+    component_editor_window = ComponentEditorWindow(__version__, filesystem, {})
 
     component_editor_window.populate_frames()
     if args.skip_component_editor:

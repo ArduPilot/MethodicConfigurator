@@ -82,10 +82,11 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     class, which provides basic window functionality.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         version: str,
         local_filesystem: LocalFilesystem,
+        fc_parameters: dict[str, float],
         data_model: Optional[ComponentDataModel] = None,
         root_tk: Optional[tk.Tk] = None,
     ) -> None:
@@ -95,6 +96,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         Args:
             version: Application version string
             local_filesystem: Filesystem interface for loading/saving data
+            fc_parameters: Flight controller parameters
             data_model: Optional pre-configured data model (for testing)
             root_tk: Optional parent Tk window (for testing)
 
@@ -116,7 +118,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         # Initialize UI if there's data to work with
         if self._check_data():
             self._initialize_ui()
-            self._finalize_initialization()
+            self._finalize_initialization(fc_parameters)
 
     def _create_data_model(self) -> ComponentDataModel:
         """Create the data model. Extracted for better testability."""
@@ -135,9 +137,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         self._create_save_frame()
         self._check_show_usage_instructions()
 
-    def _finalize_initialization(self) -> None:
+    def _finalize_initialization(self, fc_parameters: dict[str, float]) -> None:
         """Finalize initialization after UI setup. Extracted for better testability."""
-        self.data_model.post_init(self.local_filesystem.doc_dict)
+        self.data_model.post_init(self.local_filesystem.doc_dict, fc_parameters, self.local_filesystem.file_parameters)
 
     def _check_data(self) -> bool:
         """Check if we have data to work with and prepare for UI setup."""
@@ -657,7 +659,7 @@ if __name__ == "__main__":  # pragma: no cover
     filesystem = LocalFilesystem(
         args.vehicle_dir, args.vehicle_type, "", args.allow_editing_template_files, args.save_component_to_system_templates
     )
-    component_editor_window = ComponentEditorWindowBase(__version__, filesystem)
+    component_editor_window = ComponentEditorWindowBase(__version__, filesystem, {})
 
     component_editor_window.populate_frames()
     if args.skip_component_editor:

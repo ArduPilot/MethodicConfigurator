@@ -102,7 +102,7 @@ def process_template_directory(template_dir: Path) -> None:
         schema = VehicleComponentsJsonSchema(local_fs.load_schema())
         datatypes = schema.get_all_value_datatypes()
         data_model = ComponentDataModel(local_fs.vehicle_components_fs.data, datatypes, schema)
-        data_model.update_json_structure()
+        data_model.update_json_structure(fc_parameters={}, file_parameters=local_fs.file_parameters)
         local_fs.vehicle_components_fs.data = data_model.get_component_data()
 
         local_fs.save_vehicle_components_json_data(local_fs.vehicle_components_fs.data, str(template_dir))
