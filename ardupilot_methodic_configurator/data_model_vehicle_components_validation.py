@@ -26,15 +26,18 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import (
 )
 
 # Port definitions
-ANALOG_PORTS = ["Analog"]
-SERIAL_PORTS = ["SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8"]
-CAN_PORTS = ["CAN1", "CAN2"]
-I2C_PORTS = ["I2C1", "I2C2", "I2C3", "I2C4"]
-PWM_IN_PORTS = ["PWM"]
-PWM_OUT_PORTS = ["Main Out", "AIO"]
-RC_PORTS = ["RCin/SBUS"]
-SPI_PORTS = ["SPI"]
-OTHER_PORTS = ["other"]
+ANALOG_PORTS: tuple[str, ...] = ("Analog",)
+SERIAL_PORTS: tuple[str, ...] = ("SERIAL1", "SERIAL2", "SERIAL3", "SERIAL4", "SERIAL5", "SERIAL6", "SERIAL7", "SERIAL8")
+CAN_PORTS: tuple[str, ...] = ("CAN1", "CAN2")
+I2C_PORTS: tuple[str, ...] = ("I2C1", "I2C2", "I2C3", "I2C4")
+PWM_IN_PORTS: tuple[str, ...] = ("PWM",)
+PWM_OUT_PORTS: tuple[str, ...] = ("Main Out", "AIO")
+RC_PORTS: tuple[str, ...] = ("RCin/SBUS",)
+SPI_PORTS: tuple[str, ...] = ("SPI",)
+OTHER_PORTS: tuple[str, ...] = ("other",)
+
+# Servo function constants for ESC detection
+SERVO_FUNCTION_ESC_CONTROL: set[int] = {33, 34, 35, 36, 73, 74}  # Functions that indicate ESC control on AIO
 
 # Bus labels for SERIAL ports - maps SERIAL port names to their common bus labels
 # These labels help users identify ports by their typical usage on flight controllers:
@@ -84,7 +87,8 @@ FC_CONNECTION_TYPE_PATHS: list[ComponentPath] = [
     ("RC Receiver", "FC Connection", "Type"),
     ("Telemetry", "FC Connection", "Type"),
     ("Battery Monitor", "FC Connection", "Type"),
-    ("ESC", "FC Connection", "Type"),
+    ("ESC", "FC->ESC Connection", "Type"),
+    ("ESC", "ESC->FC Telemetry", "Type"),
     ("GNSS Receiver", "FC Connection", "Type"),
 ]
 
@@ -94,7 +98,7 @@ BATTERY_CELL_VOLTAGE_PATHS: list[ComponentPath] = [
 
 # Protocol dictionaries
 SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
-    "-1": {"type": ["None"], "protocol": "None", "component": None},
+    "-1": {"type": ("None",), "protocol": "None", "component": None},
     "1": {"type": SERIAL_PORTS, "protocol": "MAVLink1", "component": "Telemetry"},
     "2": {"type": SERIAL_PORTS, "protocol": "MAVLink2", "component": "Telemetry"},
     "3": {"type": SERIAL_PORTS, "protocol": "Frsky D", "component": None},
@@ -108,7 +112,7 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "13": {"type": SERIAL_PORTS, "protocol": "Beacon", "component": None},
     "14": {"type": SERIAL_PORTS, "protocol": "Volz servo out", "component": None},
     "15": {"type": SERIAL_PORTS, "protocol": "SBus servo out", "component": None},
-    "16": {"type": SERIAL_PORTS, "protocol": "ESC Telemetry", "component": None},
+    "16": {"type": SERIAL_PORTS, "protocol": "ESC Telemetry", "component": "ESC"},
     "17": {"type": SERIAL_PORTS, "protocol": "Devo Telemetry", "component": None},
     "18": {"type": SERIAL_PORTS, "protocol": "OpticalFlow", "component": None},
     "19": {"type": SERIAL_PORTS, "protocol": "RobotisServo", "component": None},
@@ -120,7 +124,7 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "25": {"type": SERIAL_PORTS, "protocol": "LTM", "component": None},
     "26": {"type": SERIAL_PORTS, "protocol": "RunCam", "component": None},
     "27": {"type": SERIAL_PORTS, "protocol": "HottTelem", "component": None},
-    "28": {"type": SERIAL_PORTS, "protocol": "Scripting", "component": None},
+    "28": {"type": SERIAL_PORTS, "protocol": "Scripting", "component": "ESC"},
     "29": {"type": SERIAL_PORTS, "protocol": "Crossfire VTX", "component": None},
     "30": {"type": SERIAL_PORTS, "protocol": "Generator", "component": None},
     "31": {"type": SERIAL_PORTS, "protocol": "Winch", "component": None},
@@ -143,8 +147,11 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "49": {"type": SERIAL_PORTS, "protocol": "i-BUS Telemetry", "component": None},
 }
 
-BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
-    "0": {"type": ["None"], "protocol": "Disabled"},
+# ESC protocol constants
+ESC_TELEMETRY_PROTOCOLS = {"ESC Telemetry", "Scripting"}  # Serial telemetry-only protocols
+
+BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
+    "0": {"type": ("None",), "protocol": "Disabled"},
     "3": {"type": ANALOG_PORTS, "protocol": "Analog Voltage Only"},
     "4": {"type": ANALOG_PORTS, "protocol": "Analog Voltage and Current"},
     "5": {"type": I2C_PORTS, "protocol": "Solo"},
@@ -174,8 +181,8 @@ BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
     "29": {"type": OTHER_PORTS, "protocol": "Scripting"},
 }
 
-GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
-    "0": {"type": ["None"], "protocol": "None"},
+GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
+    "0": {"type": ("None",), "protocol": "None"},
     "1": {"type": SERIAL_PORTS, "protocol": "AUTO"},
     "2": {"type": SERIAL_PORTS, "protocol": "uBlox"},
     "5": {"type": SERIAL_PORTS, "protocol": "NMEA"},
@@ -201,23 +208,56 @@ GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[list[str], str]]] = {
     "26": {"type": SERIAL_PORTS, "protocol": "Septentrio-DualAntenna(SBF)"},
 }
 
-MOT_PWM_TYPE_DICT: dict[str, dict[str, Union[list[str], str, bool]]] = {
-    "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "is_dshot": False},
-    "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "is_dshot": True},
-    "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "is_dshot": True},
-    "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "is_dshot": False},
-    "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "is_dshot": True},
-    "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "is_dshot": True},
-    "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
-    "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
-    "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
-    "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
+MOT_PWM_TYPE_DICT: dict[str, dict[str, dict[str, Union[tuple[str, ...], str, bool]]]] = {
+    "ArduCopter": {
+        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "is_dshot": False},
+        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "is_dshot": True},
+        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "is_dshot": True},
+        "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "is_dshot": False},
+        "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "is_dshot": True},
+        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "is_dshot": True},
+        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
+        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
+        "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
+        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
+    },
+    "Heli": {
+        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "is_dshot": False},
+        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "is_dshot": True},
+        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "is_dshot": True},
+        "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "is_dshot": False},
+        "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "is_dshot": True},
+        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "is_dshot": True},
+        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
+        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
+        "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
+        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
+    },
+    "Rover": {
+        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "is_dshot": False},
+        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "is_dshot": True},
+        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "is_dshot": True},
+        "3": {"type": PWM_OUT_PORTS, "protocol": "BrushedWithRelay", "is_dshot": False},
+        "4": {"type": PWM_OUT_PORTS, "protocol": "BrushedBiPolar", "is_dshot": False},
+        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "is_dshot": True},
+        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "is_dshot": True},
+        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
+        "8": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
+        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
+        "10": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
+    },
 }
+
+
+def get_mot_pwm_type_sub_dict(vehicle_type: str) -> dict[str, dict[str, Union[tuple[str, ...], str, bool]]]:
+    """Return the vehicle-type-specific entry sub-dict from MOT_PWM_TYPE_DICT."""
+    return MOT_PWM_TYPE_DICT.get(vehicle_type, MOT_PWM_TYPE_DICT["ArduCopter"])
+
 
 # RC_PROTOCOLS is a bitmask parameter, so keys are actual bitmask values (2^bit_position)
 # Special case: value 1 = All protocols enabled
 # Bit 1 (value 2) = PPM, Bit 2 (value 4) = IBUS, Bit 3 (value 8) = SBUS, etc.
-RC_PROTOCOLS_DICT: dict[str, dict[str, Union[list[str], str]]] = {
+RC_PROTOCOLS_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "1": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "All"},  # Special case: 1 = All protocols
     "2": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "PPM"},  # Bit 1
     "4": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "IBUS"},  # Bit 2
@@ -235,6 +275,23 @@ RC_PROTOCOLS_DICT: dict[str, dict[str, Union[list[str], str]]] = {
     "16384": {"type": CAN_PORTS, "protocol": "DroneCAN"},  # Bit 14
     "32768": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "Ghost"},  # Bit 15
     "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
+}
+
+# ESC->FC telemetry connections
+ESC_TELEMETRY_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
+    "0": {"type": ("None",), "protocol": "None"},
+    # On DShot: FC->ESC is either Main Out or AIO; and ESC->FC Telemetry is serial
+    # On BDShot: FC->ESC is either Main Out or AIO; and ESC->FC Telemetry is also Main Out or AIO
+    #            but there is an optional backup serial telemetry channel
+    "1": {"type": SERIAL_PORTS, "protocol": "ESC Telemetry"},
+    # On BShot if the optional serial ESC->FC backup telemetry is unused, choose this
+    "2": {"type": PWM_OUT_PORTS, "protocol": "BDShot"},
+    # The same CAN connection is used for both FC->ESC and ESC->FC telemetry
+    "3": {"type": CAN_PORTS, "protocol": "DroneCAN"},
+    # The same serial connection is used for both FC->ESC and ESC->FC telemetry
+    "4": {"type": SERIAL_PORTS, "protocol": "FETtecOneWire"},
+    # On T-Motor/Hobbywing Datalink v2: FC->ESC is either Main Out or AIO; and serial telemetry is received via scripting
+    "5": {"type": SERIAL_PORTS, "protocol": "Scripting"},
 }
 
 
@@ -289,10 +346,11 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 for value in param_dict.values()
             )
 
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
         fallbacks: dict[str, tuple[str, ...]] = {
             "RC_PROTOCOLS": get_all_protocols(RC_PROTOCOLS_DICT),
             "BATT_MONITOR": get_all_protocols(BATT_MONITOR_CONNECTION),
-            "MOT_PWM_TYPE": get_all_protocols(MOT_PWM_TYPE_DICT),
+            "MOT_PWM_TYPE": get_all_protocols(get_mot_pwm_type_sub_dict(fw_type)),
             "GPS_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),
             "GPS1_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),  # GPS_TYPE was renamed to GPS1_TYPE in 4.6
         }
@@ -315,7 +373,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     functools.reduce(
                         operator.iadd,
                         [
-                            type_val if isinstance(type_val, list) else [type_val]
+                            type_val if isinstance(type_val, tuple) else [type_val]
                             for type_val in [value["type"] for value in conn_dict.values()]
                         ],
                         [],
@@ -338,90 +396,118 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ),
             ("Battery Monitor", "FC Connection", "Type"): get_connection_types(BATT_MONITOR_CONNECTION),
             ("Battery Monitor", "FC Connection", "Protocol"): get_combobox_values("BATT_MONITOR"),
-            ("ESC", "FC Connection", "Type"): (*PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
-            ("ESC", "FC Connection", "Protocol"): self._mot_pwm_types,
+            ("ESC", "FC->ESC Connection", "Type"): (*PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
+            ("ESC", "FC->ESC Connection", "Protocol"): self._mot_pwm_types,
+            ("ESC", "ESC->FC Telemetry", "Type"): ("None", *PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
+            ("ESC", "ESC->FC Telemetry", "Protocol"): tuple(
+                dict.fromkeys(str(v["protocol"]) for v in ESC_TELEMETRY_DICT.values())
+            ),
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
             ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
         }
         for component in ["RC Receiver", "Telemetry", "Battery Monitor", "ESC", "GNSS Receiver"]:
-            if component in self._data["Components"]:
+            if component not in self._data.get("Components", {}):
+                continue
+
+            if component == "ESC":
                 self._update_possible_choices_for_path(
-                    (component, "FC Connection", "Type"), self.get_component_value((component, "FC Connection", "Type"))
+                    ("ESC", "FC->ESC Connection", "Type"),
+                    self.get_component_value(("ESC", "FC->ESC Connection", "Type")),
+                )
+                self._update_possible_choices_for_path(
+                    ("ESC", "ESC->FC Telemetry", "Type"),
+                    self.get_component_value(("ESC", "ESC->FC Telemetry", "Type")),
+                )
+            else:
+                self._update_possible_choices_for_path(
+                    (component, "FC Connection", "Type"),
+                    self.get_component_value((component, "FC Connection", "Type")),
                 )
 
     def _update_possible_choices_for_path(  # pylint: disable=too-many-branches
         self, path: ComponentPath, value: Union[ComponentData, ComponentValue, None]
     ) -> None:
         """Update _possible_choices when connection type values that affect protocol choices are changed."""
-        # Only update if this is a connection type change that affects protocol choices
-        if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type" and isinstance(value, str):
-            component_name = path[0]
-            protocol_path: ComponentPath = (component_name, "FC Connection", "Protocol")
+        if len(path) < 3 or path[2] != "Type" or not isinstance(value, str):
+            return
 
-            # Calculate the new possible choices for the corresponding protocol field
-            if component_name == "RC Receiver":
-                # Filter RC protocols based on the selected connection type
-                if value == "None":
-                    new_choices: tuple[str, ...] = ("None",)
-                else:
-                    # For any connection type, find protocols that support it
-                    new_choices = tuple(str(v["protocol"]) for v in RC_PROTOCOLS_DICT.values() if value in v["type"])
-                self._possible_choices[protocol_path] = new_choices
+        component_name = path[0]
+        section = path[1]
 
-            elif component_name == "Telemetry":
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                else:
-                    # For non-None telemetry connections, use the standard telemetry protocols
-                    self._possible_choices[protocol_path] = tuple(
-                        str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "Telemetry"
-                    )
+        if section not in ("FC Connection", "FC->ESC Connection", "ESC->FC Telemetry"):
+            return
 
-            elif component_name == "Battery Monitor":
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                    return
+        protocol_path: ComponentPath = (component_name, section, "Protocol")
 
-                # Find protocols available for the selected connection type
-                batt_available_protocols: list[str] = []
-                for conn_dict in BATT_MONITOR_CONNECTION.values():
-                    conn_type = conn_dict["type"]
-                    if isinstance(conn_type, list) and value in conn_type:
-                        batt_available_protocols.append(str(conn_dict["protocol"]))
+        # Calculate the new possible choices for the corresponding protocol field
+        if component_name == "RC Receiver":
+            # Filter RC protocols based on the selected connection type
+            if value == "None":
+                new_choices: tuple[str, ...] = ("None",)
+            else:
+                # For any connection type, find protocols that support it
+                new_choices = tuple(str(v["protocol"]) for v in RC_PROTOCOLS_DICT.values() if value in v["type"])
+            self._possible_choices[protocol_path] = new_choices
 
-                self._possible_choices[protocol_path] = (
-                    tuple(batt_available_protocols) if batt_available_protocols else ("None",)
+        elif component_name == "Telemetry":
+            if value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+            else:
+                # For non-None telemetry connections, use the standard telemetry protocols
+                self._possible_choices[protocol_path] = tuple(
+                    str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "Telemetry"
                 )
 
-            elif component_name == "ESC":
+        elif component_name == "Battery Monitor":
+            if value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+                return
+
+            # Find protocols available for the selected connection type
+            batt_available_protocols: list[str] = []
+            for conn_dict in BATT_MONITOR_CONNECTION.values():
+                conn_type = conn_dict["type"]
+                if isinstance(conn_type, tuple) and value in conn_type:
+                    batt_available_protocols.append(str(conn_dict["protocol"]))
+
+            self._possible_choices[protocol_path] = tuple(batt_available_protocols) if batt_available_protocols else ("None",)
+
+        elif component_name == "ESC":
+            if section == "ESC->FC Telemetry":
                 if value == "None":
                     self._possible_choices[protocol_path] = ("None",)
-                elif value in CAN_PORTS:
-                    self._possible_choices[protocol_path] = ("DroneCAN",)
-                elif value in SERIAL_PORTS:
-                    self._possible_choices[protocol_path] = tuple(
-                        str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "ESC"
-                    )
                 else:
-                    # For PWM outputs, use motor PWM types
-                    self._possible_choices[protocol_path] = self._mot_pwm_types
-
-            elif component_name == "GNSS Receiver":
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                    return
-
-                # Find protocols available for the selected connection type
-                gnss_available_protocols: list[str] = []
-                for conn_dict in GNSS_RECEIVER_CONNECTION.values():
-                    conn_type = conn_dict["type"]
-                    if isinstance(conn_type, list) and value in conn_type:
-                        gnss_available_protocols.append(str(conn_dict["protocol"]))
-
-                self._possible_choices[protocol_path] = (
-                    tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
+                    self._possible_choices[protocol_path] = tuple(
+                        str(v["protocol"])
+                        for v in ESC_TELEMETRY_DICT.values()
+                        if isinstance(v["type"], tuple) and value in v["type"]
+                    ) or ("None",)
+            elif value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+            elif value in CAN_PORTS:
+                self._possible_choices[protocol_path] = ("DroneCAN",)
+            elif value in SERIAL_PORTS:
+                self._possible_choices[protocol_path] = tuple(
+                    str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "ESC"
                 )
+            else:
+                # For PWM outputs, use motor PWM types
+                self._possible_choices[protocol_path] = self._mot_pwm_types
+
+        elif component_name == "GNSS Receiver":
+            if value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+                return
+
+            # Find protocols available for the selected connection type
+            gnss_available_protocols: list[str] = []
+            for conn_dict in GNSS_RECEIVER_CONNECTION.values():
+                conn_type = conn_dict["type"]
+                if isinstance(conn_type, tuple) and value in conn_type:
+                    gnss_available_protocols.append(str(conn_dict["protocol"]))
+
+            self._possible_choices[protocol_path] = tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
 
     def _validate_tow_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
         """Validate takeoff weight min/max cross-constraints."""
@@ -563,6 +649,26 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ), corrected
         return "", None  # value is within valid interval, return empty string as there is no error
 
+    def _validate_limits_and_voltages(self, path: ComponentPath, value: str, paths_str: str, errors: list[str]) -> None:
+        """Validate entry limits and battery voltages."""
+        if path in self.VALIDATION_RULES:
+            error_msg, corrected_value = self.validate_entry_limits(value, path)
+            if error_msg:
+                errors.append(error_msg.format(value=value, paths_str=paths_str))
+                if corrected_value is not None:
+                    self.set_component_value(path, corrected_value)
+                return
+
+        if path in BATTERY_CELL_VOLTAGE_PATHS:
+            error_msg, corrected_value = self.validate_cell_voltage(value, path)
+            if error_msg:
+                errors.append(error_msg.format(value=value, paths_str=paths_str))
+                if corrected_value is not None:
+                    self.set_component_value(path, corrected_value)
+                return
+
+        self._validate_motor_poles(errors, path, value, paths_str)
+
     def validate_all_data(self, entry_values: dict[ComponentPath, str]) -> tuple[bool, list[str]]:
         """
         Centralize all data validation logic.
@@ -586,14 +692,25 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             # Keep protocol choices in sync with connection type changes in this batch.
             # This ensures dependent fields like Battery Monitor protocol are validated correctly
             # when both Type and Protocol are present in entry_values.
-            if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type" and isinstance(value, str):
+            if len(path) >= 3 and path[2] == "Type" and isinstance(value, str):
                 self._update_possible_choices_for_path(path, value)
 
             # Check for duplicate connections
-            if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type":
+            esc_conn_sections = {"FC->ESC Connection", "ESC->FC Telemetry"}
+            is_fc_conn_type = (
+                len(path) >= 3 and path[2] == "Type" and (path[1] == "FC Connection" or path[1] in esc_conn_sections)
+            )
+            if is_fc_conn_type:
+                # Type assertion: path has at least 3 elements as checked above
+                if len(path) < 3:
+                    continue  # Help type checker understand that path[2] is safe to access
                 if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4", "None"}:
                     # Allow certain combinations
                     if path[0] in {"Telemetry", "RC Receiver"} and fc_serial_connection[value] in {"Telemetry", "RC Receiver"}:
+                        continue
+
+                    # Allow ESC->FC Telemetry to share the same port as FC->ESC Connection (bidirectional serial)
+                    if path[0] == "ESC" and path[1] in esc_conn_sections and fc_serial_connection[value] == "ESC":
                         continue
 
                     error_msg = _("Duplicate FC connection type '{value}' for {paths_str}")
@@ -601,25 +718,8 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     continue
                 fc_serial_connection[value] = path[0]
 
-            if path in self.VALIDATION_RULES:
-                # Validate entry limits
-                error_msg, corrected_value = self.validate_entry_limits(value, path)
-                if error_msg:
-                    errors.append(error_msg.format(value=value, paths_str=paths_str))
-                    if corrected_value is not None:
-                        self.set_component_value(path, corrected_value)
-                    continue
-
-            if path in BATTERY_CELL_VOLTAGE_PATHS:
-                # Validate battery cell voltages
-                error_msg, corrected_value = self.validate_cell_voltage(value, path)
-                if error_msg:
-                    errors.append(error_msg.format(value=value, paths_str=paths_str))
-                    if corrected_value is not None:
-                        self.set_component_value(path, corrected_value)
-                    continue
-
-            self._validate_motor_poles(errors, path, value, paths_str)
+            # Validate limits and voltages
+            self._validate_limits_and_voltages(path, value, paths_str, errors)
 
         return len(errors) == 0, errors
 

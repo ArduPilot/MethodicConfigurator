@@ -27,13 +27,15 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import C
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     BATT_MONITOR_CONNECTION,
     CAN_PORTS,
+    ESC_TELEMETRY_PROTOCOLS,
     GNSS_RECEIVER_CONNECTION,
     I2C_PORTS,
-    MOT_PWM_TYPE_DICT,
     RC_PROTOCOLS_DICT,
     SERIAL_PORTS,
     SERIAL_PROTOCOLS_DICT,
+    SERVO_FUNCTION_ESC_CONTROL,
     ComponentDataModelValidation,
+    get_mot_pwm_type_sub_dict,
 )
 
 
@@ -104,6 +106,16 @@ class ComponentDataModelImport(ComponentDataModelBase):
         logging_error(_("No values found for %s in the metadata"), param_name)
         return fallbacks
 
+    def _is_protocol_rename_exception(self, code_protocol: str, doc_protocol: str) -> bool:
+        """Check if a protocol mismatch is due to a known ArduPilot version rename."""
+        return (
+            (code_protocol == "Septentrio(SBF)" and doc_protocol == "SBF")
+            or (code_protocol == "Trimble(GSOF)" and doc_protocol == "GSOF")
+            or (code_protocol == "MAVLink" and doc_protocol == "MAV")
+            or (code_protocol == "Septentrio-DualAntenna(SBF)" and doc_protocol == "SBF-DualAntenna")
+            or (code_protocol == "Gimbal" and doc_protocol == "SToRM32 Gimbal Serial")
+        )
+
     def _verify_dict_is_uptodate(
         self, doc: dict[str, Any], dict_to_check: dict[str, dict[str, Any]], doc_key: str, doc_dict: str
     ) -> bool:
@@ -137,7 +149,9 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
             if check_key in dict_to_check:
                 code_protocol = dict_to_check[check_key].get("protocol", None)
-                if code_protocol != doc_protocol:
+                if code_protocol is not None and code_protocol != doc_protocol:
+                    if self._is_protocol_rename_exception(code_protocol, doc_protocol):
+                        continue
                     logging_warning(_("Protocol %s does not match %s in %s metadata"), code_protocol, doc_protocol, doc_key)
                     is_valid = False
             else:
@@ -165,7 +179,8 @@ class ComponentDataModelImport(ComponentDataModelBase):
             self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS1_TYPE", "values")
         elif "GPS_TYPE" in doc:
             self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values")
-        self._verify_dict_is_uptodate(doc, MOT_PWM_TYPE_DICT, "MOT_PWM_TYPE", "values")
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        self._verify_dict_is_uptodate(doc, get_mot_pwm_type_sub_dict(fw_type), "MOT_PWM_TYPE", "values")
         self._verify_dict_is_uptodate(doc, RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask")
 
         # Process parameters in sequence
@@ -191,11 +206,11 @@ class ComponentDataModelImport(ComponentDataModelBase):
         if str(gps1_type) in GNSS_RECEIVER_CONNECTION:
             gps1_connection_type = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("type")
             gps1_connection_protocol = GNSS_RECEIVER_CONNECTION[str(gps1_type)].get("protocol")
-            # Normalize gps1_connection_type to a list for consistent handling
+            # Normalize gps1_connection_type to a tuple for consistent handling
             if isinstance(gps1_connection_type, str):
-                gps1_connection_type = [gps1_connection_type]
-            # gps1_connection_type is now a list of possible connection types
-            if gps1_connection_type == ["None"]:
+                gps1_connection_type = (gps1_connection_type,)
+            # gps1_connection_type is now a tuple of possible connection types
+            if gps1_connection_type == ("None",):
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
                 self.set_component_value(("GNSS Receiver", "FC Connection", "Protocol"), "None")
             elif gps1_connection_type and any(conn_type in SERIAL_PORTS for conn_type in gps1_connection_type):
@@ -231,35 +246,50 @@ class ComponentDataModelImport(ComponentDataModelBase):
             logging_error("%s value %u not in GNSS_RECEIVER_CONNECTION", param_name, gps1_type)
             self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "None")
 
-    def _set_serial_type_from_fc_parameters(  # pylint: disable=too-many-branches,too-many-statements # noqa: PLR0915
-        self, fc_parameters: dict
-    ) -> bool:
+    def _set_serial_type_from_fc_parameters(self, fc_parameters: dict) -> bool:
         """Process serial port parameters and update the data model. Returns True if ESC is serial controlled."""
+        self._process_rc_protocols(fc_parameters)
+        return self._process_serial_components(fc_parameters)
+
+    def _process_rc_protocols(self, fc_parameters: dict) -> None:
+        """Process RC_PROTOCOLS parameter and set RC receiver protocol and type."""
         if "RC_PROTOCOLS" in fc_parameters:
             try:
                 rc_protocols_nr = int(fc_parameters["RC_PROTOCOLS"])
             except (ValueError, TypeError):
                 logging_error(_("Invalid non-integer value for RC_PROTOCOLS %s"), fc_parameters["RC_PROTOCOLS"])
                 rc_protocols_nr = 0
-            # RC_PROTOCOLS is a bitmask where each bit represents an enabled protocol
-            # Only set a specific protocol if exactly one bit is set (power of 2)
-            # If multiple bits are set, we can't determine which protocol is actually in use
-            if is_single_bit_set(rc_protocols_nr):
-                # Exactly one bit is set (power of 2) - use the value directly as the key
-                rc_value = str(rc_protocols_nr)
-                if rc_value in RC_PROTOCOLS_DICT:
-                    protocol = RC_PROTOCOLS_DICT[rc_value].get("protocol")
-                    self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
-            elif rc_protocols_nr > 0:
-                # Multiple bits are set - cannot determine which protocol is active
-                logging_error(
-                    _("RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active protocol."), rc_protocols_nr
-                )
 
-        rc = 1
-        telem = 1
-        gnss = 1
+            if rc_protocols_nr > 0:
+                # Set the type to RCin/SBUS if not already set by serial processing
+                current_rc_type = self.get_component_value(("RC Receiver", "FC Connection", "Type"))
+                if current_rc_type is None or current_rc_type == "":
+                    self.set_component_value(("RC Receiver", "FC Connection", "Type"), "RCin/SBUS")
+
+                # RC_PROTOCOLS is a bitmask where each bit represents an enabled protocol
+                # Only set a specific protocol if exactly one bit is set (power of 2)
+                # If multiple bits are set, we can't determine which protocol is actually in use
+                if is_single_bit_set(rc_protocols_nr):
+                    # Exactly one bit is set (power of 2) - use the value directly as the key
+                    rc_value = str(rc_protocols_nr)
+                    if rc_value in RC_PROTOCOLS_DICT:
+                        protocol = RC_PROTOCOLS_DICT[rc_value].get("protocol")
+                        self.set_component_value(("RC Receiver", "FC Connection", "Protocol"), str(protocol))
+                else:
+                    # Multiple bits are set - cannot determine which protocol is active
+                    logging_error(
+                        _("RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active protocol."),
+                        rc_protocols_nr,
+                    )
+
+    def _process_serial_components(self, fc_parameters: dict) -> bool:  # pylint: disable=too-many-branches
+        """Process serial port components and return True if ESC is serial controlled."""
+        rc = telem = gnss = 1
+        # esc counts FC->ESC *control* serial protocols only (FETtecOneWire, Torqeedo, CoDevESC).
+        # Telemetry-only protocols (ESC Telemetry=16, Scripting=28) do NOT count here because
+        # FC->ESC is still PWM/DShot/BDShot in those cases and _set_esc_type_from_fc_parameters must run.
         esc = 1
+        esc_telemetry_set = False  # True once ESC->FC Telemetry is populated from a serial port
         for serial in SERIAL_PORTS:
             if serial + "_PROTOCOL" not in fc_parameters:
                 continue
@@ -301,12 +331,23 @@ class ComponentDataModelImport(ComponentDataModelBase):
                     self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), serial)
                 gnss += 1
             elif component == "ESC":
-                if esc == 1:
-                    # Only set component values for the first ESC
-                    self.set_component_value(("ESC", "FC Connection", "Type"), serial)
-                    self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
-                # Count all ESC components
-                esc += 1
+                if protocol in ESC_TELEMETRY_PROTOCOLS:
+                    # Serial ESC->FC telemetry only (DShot with UART feedback, or Hobbywing Datalink v2).
+                    # FC->ESC connection is still PWM/DShot; _set_esc_type_from_fc_parameters handles it.
+                    # Do NOT increment esc so that function is still called.
+                    if not esc_telemetry_set:
+                        self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), serial)
+                        self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), protocol)
+                        esc_telemetry_set = True
+                else:
+                    # FC->ESC serial control protocol (FETtecOneWire, Torqeedo, CoDevESC):
+                    # the same serial port carries both directions.
+                    if esc == 1:
+                        self.set_component_value(("ESC", "FC->ESC Connection", "Type"), serial)
+                        self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+                        self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), serial)
+                        self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), protocol)
+                    esc += 1
 
         return esc >= 2
 
@@ -319,22 +360,43 @@ class ComponentDataModelImport(ComponentDataModelBase):
             logging_error(_("Invalid non-integer value for MOT_PWM_TYPE %s"), mot_pwm_type)
             mot_pwm_type = 0
 
-        main_out_functions = [fc_parameters.get("SERVO" + str(i) + "_FUNCTION", 0) for i in range(1, 9)]
+        aio_functions = [fc_parameters.get("SERVO" + str(i) + "_FUNCTION", 0) for i in range(9, 15)]
 
-        # if any element of main_out_functions is in [33, 34, 35, 36] then ESC is connected to main_out
-        if any(servo_function in {33, 34, 35, 36} for servo_function in main_out_functions):
-            self.set_component_value(("ESC", "FC Connection", "Type"), "Main Out")
+        # if any element of aio_functions is in SERVO_FUNCTION_ESC_CONTROL then ESC is connected to AIO
+        if any(servo_function in SERVO_FUNCTION_ESC_CONTROL for servo_function in aio_functions):
+            self.set_component_value(("ESC", "FC->ESC Connection", "Type"), "AIO")
         else:
-            self.set_component_value(("ESC", "FC Connection", "Type"), "AIO")
+            self.set_component_value(("ESC", "FC->ESC Connection", "Type"), "Main Out")
 
+        protocol = ""
         if "MOT_PWM_TYPE" in doc and "values" in doc["MOT_PWM_TYPE"]:
             protocol = doc["MOT_PWM_TYPE"]["values"].get(str(mot_pwm_type), "")
             if protocol:
-                self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
+                self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
         # Fallback to MOT_PWM_TYPE_DICT if doc is not available
-        elif str(mot_pwm_type) in MOT_PWM_TYPE_DICT:
-            protocol = str(MOT_PWM_TYPE_DICT[str(mot_pwm_type)]["protocol"])
-            self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
+        else:
+            mot_pwm_sub = get_mot_pwm_type_sub_dict(
+                str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+            )
+            if str(mot_pwm_type) in mot_pwm_sub:
+                protocol = str(mot_pwm_sub[str(mot_pwm_type)]["protocol"])
+                self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+
+        # Set ESC->FC Telemetry: DShot supports BDShot telemetry on the same PWM wire.
+        # However, if _set_serial_type_from_fc_parameters already found a dedicated serial telemetry
+        # port (SERIAL*_PROTOCOL=16 or 28), that takes priority and must not be overwritten.
+        esc_conn_type = self.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        current_telemetry_type = self.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        if protocol and protocol.startswith("DShot"):
+            if current_telemetry_type not in SERIAL_PORTS and current_telemetry_type not in CAN_PORTS:
+                # No dedicated serial/CAN telemetry port detected; fall back to BDShot on the PWM wire
+                self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), esc_conn_type)
+                self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "BDShot")
+        elif not current_telemetry_type or (
+            current_telemetry_type not in SERIAL_PORTS and current_telemetry_type not in CAN_PORTS
+        ):
+            self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "None")
+            self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "None")
 
     def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:  # pylint: disable=too-many-branches
         """Process battery monitor parameters and update the data model."""
@@ -351,7 +413,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 fc_conn_protocol = BATT_MONITOR_CONNECTION[batt_monitor_str].get("protocol", "Disabled")
 
                 # Handle list of possible connection types
-                if isinstance(fc_conn_type, list):
+                if isinstance(fc_conn_type, tuple):
                     # Check if it's I2C ports - need to determine which bus
                     if set(fc_conn_type) <= set(I2C_PORTS):  # subset of I2C ports
                         # Use BATT_I2C_BUS to determine the actual I2C bus
@@ -378,7 +440,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
                         # For other list types, take first element
                         fc_conn_type = fc_conn_type[0]
 
-                if isinstance(fc_conn_protocol, list):
+                if isinstance(fc_conn_protocol, tuple):
                     fc_conn_protocol = fc_conn_protocol[0]
 
                 self.set_component_value(("Battery Monitor", "FC Connection", "Type"), fc_conn_type)
@@ -430,6 +492,12 @@ class ComponentDataModelImport(ComponentDataModelBase):
             self.import_bat_voltage(specs, "BATT_LOW_VOLT", "Volt per cell low")
             self.import_bat_voltage(specs, "BATT_CRT_VOLT", "Volt per cell crit")
             self.import_bat_voltage(specs, "MOT_BAT_VOLT_MIN", "Volt per cell min")
+        else:
+            self.set_component_value(("Battery", "Specifications", "Volt per cell max"), "0")
+            self.set_component_value(("Battery", "Specifications", "Volt per cell arm"), "0")
+            self.set_component_value(("Battery", "Specifications", "Volt per cell low"), "0")
+            self.set_component_value(("Battery", "Specifications", "Volt per cell crit"), "0")
+            self.set_component_value(("Battery", "Specifications", "Volt per cell min"), "0")
 
     def import_bat_voltage(self, specs: BatteryVoltageSpecs, param_name: str, voltage_type: str) -> None:
         if param_name in specs.fc_parameters:
@@ -619,7 +687,10 @@ class ComponentDataModelImport(ComponentDataModelBase):
         poles = 0.0
         if "MOT_PWM_TYPE" in fc_parameters:
             mot_pwm_type_str = str(int(fc_parameters["MOT_PWM_TYPE"]))
-            if mot_pwm_type_str in MOT_PWM_TYPE_DICT and MOT_PWM_TYPE_DICT[mot_pwm_type_str].get("is_dshot", False):
+            mot_pwm_sub = get_mot_pwm_type_sub_dict(
+                str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+            )
+            if mot_pwm_type_str in mot_pwm_sub and mot_pwm_sub[mot_pwm_type_str].get("is_dshot", False):
                 if fc_parameters.get("SERVO_BLH_POLES"):  # DShot ESCs
                     poles = fc_parameters["SERVO_BLH_POLES"]
             elif fc_parameters.get("SERVO_FTW_MASK") and fc_parameters.get("SERVO_FTW_POLES"):

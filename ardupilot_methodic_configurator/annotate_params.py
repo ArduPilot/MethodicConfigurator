@@ -580,6 +580,7 @@ def get_fallback_xml_url(vehicle_type: str, firmware_version: str) -> str:
         "ArduPlane": "Plane-",
         "Rover": "Rover-",
         "ArduSub": "Sub-",
+        "Heli": "Copter-",
     }
     try:
         vehicle_subdir = vehicle_parm_subdir[vehicle_type] + firmware_version[0:3]

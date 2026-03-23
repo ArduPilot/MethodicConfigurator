@@ -278,6 +278,20 @@ class ComponentDataModelBase:
             components = self._data.setdefault("Components", {})
             components["GNSS Receiver"] = components.pop("GNSS receiver")
 
+        # Handle legacy ESC connection path rename (old projects might use FC Connection)
+        esc_component = self._data.get("Components", {}).get("ESC")
+        if isinstance(esc_component, dict) and "FC Connection" in esc_component:
+            esc_connection = esc_component.pop("FC Connection")
+            esc_component.setdefault("FC->ESC Connection", {}).update(esc_connection)
+            self._data["Components"]["ESC"] = esc_component
+
+        # Ensure ESC->FC Telemetry section exists for files saved before it was introduced.
+        # setdefault leaves any existing values untouched; the neutral defaults here are overwritten
+        # by process_fc_parameters() once FC parameters are available.
+        esc_component = self._data.get("Components", {}).get("ESC")
+        if isinstance(esc_component, dict) and "FC->ESC Connection" in esc_component:
+            esc_component.setdefault("ESC->FC Telemetry", {"Type": "None", "Protocol": "None"})
+
         # Handle legacy battery monitor protocol migration for protocols that don't need hardware connections
         # This is a local import to avoid a circular import dependency
         from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (  # pylint: disable=import-outside-toplevel, cyclic-import # noqa: PLC0415

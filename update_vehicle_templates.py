@@ -13,6 +13,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 import json
 import logging
 import os
@@ -103,6 +104,24 @@ def process_template_directory(template_dir: Path) -> None:
         datatypes = schema.get_all_value_datatypes()
         data_model = ComponentDataModel(local_fs.vehicle_components_fs.data, datatypes, schema)
         data_model.update_json_structure(fc_parameters={}, file_parameters=local_fs.file_parameters)
+
+        # Build a flat {param_name: float} dict so process_fc_parameters() can detect ESC protocols,
+        # serial telemetry channels, etc.
+        # Seed from 00_default.param first (read_params_from_files skips it), then let the
+        # numbered step files overwrite — later configuration steps take priority.
+        flat_params: dict[str, float] = {}
+        with contextlib.suppress(ValueError, TypeError):
+            # for param_name, par in local_fs.param_default_dict.items():
+            #    try:
+            #        flat_params[param_name] = float(par.value)
+            #    except (ValueError, TypeError):
+            #        pass
+            for par_dict in local_fs.file_parameters.values():
+                for param_name, par in par_dict.items():
+                    flat_params[param_name] = float(par.value)
+
+        data_model.process_fc_parameters(flat_params, local_fs.doc_dict)
+
         local_fs.vehicle_components_fs.data = data_model.get_component_data()
 
         local_fs.save_vehicle_components_json_data(local_fs.vehicle_components_fs.data, str(template_dir))
