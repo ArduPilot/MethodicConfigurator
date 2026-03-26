@@ -10,6 +10,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import io
+import json as json_mod
 import os.path
 from json.decoder import JSONDecodeError as RealJSONDecodeError
 from unittest.mock import mock_open, patch
@@ -633,12 +635,11 @@ class TestVehicleComponents:
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_basic(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self, mock_get_base_dir, mock_makedirs, mock_json_dump, mock_file, mock_load_user, mock_load_system
+        self, mock_get_base_dir, mock_makedirs, mock_safe_write, mock_load_user, mock_load_system
     ) -> None:
         """
         Save Component Templates Basic.
@@ -652,6 +653,16 @@ class TestVehicleComponents:
         mock_load_system.return_value = {}
         mock_load_user.return_value = {}
 
+        # Capture written data via safe_write callback
+        captured_data = {}
+
+        def capture_safe_write(_filepath, write_func) -> None:
+            fake_file = io.StringIO()
+            write_func(fake_file)
+            captured_data.update(json_mod.loads(fake_file.getvalue()))
+
+        mock_safe_write.side_effect = capture_safe_write
+
         templates = {"Component1": [{"name": "Test Template", "data": {"param": "value"}, "is_user_modified": True}]}
 
         # Call method
@@ -664,29 +675,25 @@ class TestVehicleComponents:
         # Verify directory was created
         mock_makedirs.assert_called_once_with("/templates", exist_ok=True)
 
-        # Verify file was opened correctly
+        # Verify safe_write was called with the correct file path
         expected_path = os.path.join("/templates", "user_vehicle_components_template.json")
-        mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8", newline="\n")
+        mock_safe_write.assert_called_once()
+        assert mock_safe_write.call_args[0][0] == expected_path
 
-        # Verify JSON was dumped with is_user_modified flag removed
+        # Verify JSON was written with is_user_modified flag removed
         expected_save = {"Component1": [{"name": "Test Template", "data": {"param": "value"}}]}
-        mock_json_dump.assert_called_once()
-        args, kwargs = mock_json_dump.call_args
-        assert args[0] == expected_save  # First argument should be the data
-        assert kwargs["indent"] == 4
+        assert captured_data == expected_save
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_only_modified(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
-        mock_json_dump,
-        mock_file,  # pylint: disable=unused-argument
+        mock_safe_write,
         mock_load_user,
         mock_load_system,
     ) -> None:
@@ -717,6 +724,16 @@ class TestVehicleComponents:
         mock_load_system.return_value = system_templates
         mock_load_user.return_value = {}
 
+        # Capture and verify written data
+        captured_data = {}
+
+        def capture_safe_write(_filepath, write_func) -> None:
+            fake_file = io.StringIO()
+            write_func(fake_file)
+            captured_data.update(json_mod.loads(fake_file.getvalue()))
+
+        mock_safe_write.side_effect = capture_safe_write
+
         # Call method
         result, msg = self.vehicle_components.save_component_templates(templates)
 
@@ -726,22 +743,18 @@ class TestVehicleComponents:
 
         # Verify only Template A was saved (with is_user_modified flag removed)
         expected_save = {"Component1": [{"name": "Template A", "data": {"original": "value"}}]}
-        mock_json_dump.assert_called_once()
-        args, _kwargs = mock_json_dump.call_args
-        assert args[0] == expected_save
+        assert captured_data == expected_save
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_different_data(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
-        mock_json_dump,
-        mock_file,  # pylint: disable=unused-argument
+        mock_safe_write,
         mock_load_user,
         mock_load_system,
     ) -> None:
@@ -766,6 +779,16 @@ class TestVehicleComponents:
         mock_load_system.return_value = system_templates
         mock_load_user.return_value = {}
 
+        # Capture and verify written data
+        captured_data = {}
+
+        def capture_safe_write(_filepath, write_func) -> None:
+            fake_file = io.StringIO()
+            write_func(fake_file)
+            captured_data.update(json_mod.loads(fake_file.getvalue()))
+
+        mock_safe_write.side_effect = capture_safe_write
+
         # Call method
         result, msg = self.vehicle_components.save_component_templates(templates)
 
@@ -775,22 +798,18 @@ class TestVehicleComponents:
 
         # Verify Template A was saved with new data
         expected_save = {"Component1": [{"name": "Template A", "data": {"modified": "new_value"}}]}
-        mock_json_dump.assert_called_once()
-        args, _kwargs = mock_json_dump.call_args
-        assert args[0] == expected_save
+        assert captured_data == expected_save
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_not_in_system(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
-        mock_json_dump,
-        mock_file,  # pylint: disable=unused-argument
+        mock_safe_write,
         mock_load_user,
         mock_load_system,
     ) -> None:
@@ -816,6 +835,16 @@ class TestVehicleComponents:
         mock_load_system.return_value = system_templates
         mock_load_user.return_value = {}
 
+        # Capture and verify written data
+        captured_data = {}
+
+        def capture_safe_write(_filepath, write_func) -> None:
+            fake_file = io.StringIO()
+            write_func(fake_file)
+            captured_data.update(json_mod.loads(fake_file.getvalue()))
+
+        mock_safe_write.side_effect = capture_safe_write
+
         # Call method
         result, msg = self.vehicle_components.save_component_templates(templates)
 
@@ -825,9 +854,7 @@ class TestVehicleComponents:
 
         # Verify only the new template was saved
         expected_save = {"Component1": [{"name": "New Template", "data": {"new": "value"}}]}
-        mock_json_dump.assert_called_once()
-        args, _kwargs = mock_json_dump.call_args
-        assert args[0] == expected_save
+        assert captured_data == expected_save
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
@@ -860,12 +887,11 @@ class TestVehicleComponents:
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_directory_creation_error(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
-        self, mock_get_base_dir, mock_makedirs, mock_json_dump, mock_file, mock_load_user, mock_load_system
+        self, mock_get_base_dir, mock_makedirs, mock_safe_write, mock_load_user, mock_load_system
     ) -> None:
         """
         Save Component Templates Directory Creation Error.
@@ -888,21 +914,18 @@ class TestVehicleComponents:
         assert result  # True means error
         assert "Failed to create templates directory" in msg
         assert "Access denied" in msg
-        mock_file.assert_not_called()
-        mock_json_dump.assert_not_called()
+        mock_safe_write.assert_not_called()
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open")
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_file_errors(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
-        mock_json_dump,  # pylint: disable=unused-argument
-        mock_file,
+        mock_safe_write,
         mock_load_user,
         mock_load_system,
     ) -> None:
@@ -918,7 +941,7 @@ class TestVehicleComponents:
         mock_load_user.return_value = {}
 
         # Test permission error
-        mock_file.side_effect = PermissionError()
+        mock_safe_write.side_effect = PermissionError()
 
         templates = {"Component1": [{"name": "Test Template", "data": {"param": "value"}}]}
 
@@ -931,16 +954,14 @@ class TestVehicleComponents:
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_empty_input(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
-        mock_json_dump,
-        mock_file,
+        mock_safe_write,
         mock_load_user,
         mock_load_system,
     ) -> None:
@@ -955,6 +976,20 @@ class TestVehicleComponents:
         mock_load_system.return_value = {}
         mock_load_user.return_value = {}
 
+        # Capture and verify written data
+        captured_data: dict = {}
+        wrote_empty = [False]
+
+        def capture_safe_write(_filepath, write_func) -> None:
+            fake_file = io.StringIO()
+            write_func(fake_file)
+            value = fake_file.getvalue()
+            captured_data.update(json_mod.loads(value))
+            if json_mod.loads(value) == {}:
+                wrote_empty[0] = True
+
+        mock_safe_write.side_effect = capture_safe_write
+
         # Call method with empty dictionary
         result, msg = self.vehicle_components.save_component_templates({})
 
@@ -962,20 +997,18 @@ class TestVehicleComponents:
         assert not result  # False means success
         assert msg == "/templates/user_vehicle_components_template.json"
         # Should save empty dict
-        mock_json_dump.assert_called_once_with({}, mock_file(), indent=4)
+        assert wrote_empty[0], "Expected empty dict to be written"
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_json_error(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
-        mock_json_dump,
-        mock_file,  # pylint: disable=unused-argument
+        mock_safe_write,
         mock_load_user,
         mock_load_system,
     ) -> None:
@@ -989,7 +1022,7 @@ class TestVehicleComponents:
         mock_get_base_dir.return_value = "/templates"
         mock_load_system.return_value = {}
         mock_load_user.return_value = {}
-        mock_json_dump.side_effect = TypeError("Cannot serialize circular reference")
+        mock_safe_write.side_effect = TypeError("Cannot serialize circular reference")
 
         templates = {"Component1": [{"name": "Test Template", "data": {"param": "value"}}]}
 
@@ -1051,16 +1084,14 @@ class TestVehicleComponents:
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_dump")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
     def test_save_component_templates_preserves_existing_user_components(  # type: ignore[misc] # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         mock_get_base_dir,
         mock_makedirs,  # pylint: disable=unused-argument
-        mock_json_dump,
-        mock_file,  # pylint: disable=unused-argument
+        mock_safe_write,
         mock_load_user,
         mock_load_system,
     ) -> None:
@@ -1079,6 +1110,16 @@ class TestVehicleComponents:
         existing_user_templates = {"Battery": [{"name": "6S 5000mAh LiPo", "data": {"Capacity mAh": 5000, "Cells": 6}}]}
         mock_load_user.return_value = existing_user_templates
 
+        # Capture the write_func callback passed to safe_write to verify data
+        captured_data = {}
+
+        def capture_safe_write(_filepath, write_func) -> None:
+            fake_file = io.StringIO()
+            write_func(fake_file)
+            captured_data.update(json_mod.loads(fake_file.getvalue()))
+
+        mock_safe_write.side_effect = capture_safe_write
+
         # Save a new ESC template (Battery is NOT included in this call)
         templates_to_save = {"ESC": [{"name": "BLHeli32 60A", "data": {"protocol": "DSHOT600"}, "is_user_modified": True}]}
 
@@ -1088,20 +1129,19 @@ class TestVehicleComponents:
         assert not result  # False means success
         assert msg == "/templates/user_vehicle_components_template.json"
 
-        # Verify the data written to disk contains both components
-        mock_json_dump.assert_called_once()
-        written_data = mock_json_dump.call_args[0][0]
+        # Verify safe_write was called
+        mock_safe_write.assert_called_once()
 
         # Pre-existing Battery templates must be preserved
-        assert "Battery" in written_data, "Pre-existing Battery templates were lost after saving ESC template"
-        assert written_data["Battery"] == existing_user_templates["Battery"]
+        assert "Battery" in captured_data, "Pre-existing Battery templates were lost after saving ESC template"
+        assert captured_data["Battery"] == existing_user_templates["Battery"]
 
         # New ESC template must also be present
-        assert "ESC" in written_data, "Newly saved ESC template is missing"
-        assert len(written_data["ESC"]) == 1
-        assert written_data["ESC"][0]["name"] == "BLHeli32 60A"
+        assert "ESC" in captured_data, "Newly saved ESC template is missing"
+        assert len(captured_data["ESC"]) == 1
+        assert captured_data["ESC"][0]["name"] == "BLHeli32 60A"
         # is_user_modified flag must be stripped before writing
-        assert "is_user_modified" not in written_data["ESC"][0]
+        assert "is_user_modified" not in captured_data["ESC"][0]
 
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.FilesystemJSONWithSchema")
     def test_load_schema_invalid_json(self, mock_fs_class) -> None:

@@ -16,9 +16,10 @@ from os import path as os_path
 from os import popen as os_popen
 from sys import exc_info as sys_exc_info
 from types import TracebackType
-from typing import Callable, Optional, Union
+from typing import IO, Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
 
 # ArduPilot parameter names start with a capital letter and can have capital letters, numbers and _
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
@@ -294,10 +295,13 @@ class ParDict(dict[str, Par]):
 
         """
         formatted_params = self._format_params(file_format)
-        with open(filename_out, "w", encoding="utf-8", newline="\n") as output_file:  # use Linux line endings even on Windows
+
+        def _write(output_file: IO[str]) -> None:
             if content_header:
                 output_file.write("\n".join(content_header) + "\n")
             output_file.writelines(line + "\n" for line in formatted_params)
+
+        safe_write(filename_out, _write)
 
     @staticmethod
     def print_out(formatted_params: list[str], name: str) -> None:

@@ -34,6 +34,7 @@ from typing import Any, Optional, Union
 from platformdirs import site_config_dir, user_config_dir
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
 from ardupilot_methodic_configurator.data_model_recent_items_history_list import RecentItemsHistoryList
 
 # Platform detection constant to avoid repeated system calls
@@ -320,9 +321,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
     @staticmethod
     def _set_settings_from_dict(settings: dict) -> None:
         settings_path = os_path.join(ProgramSettings._user_config_dir(), "settings.json")
-
-        with open(settings_path, "w", encoding="utf-8", newline="\n") as settings_file:
-            json_dump(settings, settings_file, indent=4)
+        safe_write(settings_path, lambda f: json_dump(settings, f, indent=4))
 
     @staticmethod
     def _is_template_directory(vehicle_dir: str) -> bool:
