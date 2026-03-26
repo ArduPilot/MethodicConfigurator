@@ -432,7 +432,9 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/output/directory/output.json",
             ),
-            patch("builtins.open", mock_open()) as mock_file,
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write",
+            ) as mock_safe_write,
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
                 return_value='{"name": "Test Output", "count": 42}',
@@ -444,7 +446,8 @@ class TestJSONDataSaving:
             # Assert: Data saved successfully
             assert error_occurred is False
             assert error_message == ""
-            mock_file.assert_called_once_with("/output/directory/output.json", "w", encoding="utf-8", newline="\n")
+            mock_safe_write.assert_called_once()
+            assert mock_safe_write.call_args[0][0] == "/output/directory/output.json"
             mock_dumps.assert_called_once_with(valid_data, indent=4)
             # Assert: Internal cache updated immediately (regression test for commit ccc53bb)
             assert json_manager_with_schema.data == valid_data
@@ -501,7 +504,10 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/nonexistent/directory/output.json",
             ),
-            patch("builtins.open", side_effect=FileNotFoundError),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write",
+                side_effect=FileNotFoundError,
+            ),
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_error") as mock_error,
         ):
             # Act: User attempts to save to missing directory
@@ -530,7 +536,10 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/protected/directory/output.json",
             ),
-            patch("builtins.open", side_effect=PermissionError),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write",
+                side_effect=PermissionError,
+            ),
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_error") as mock_error,
         ):
             # Act: User attempts to save without permissions
@@ -559,7 +568,10 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/test/directory/output.json",
             ),
-            patch("builtins.open", side_effect=IsADirectoryError),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write",
+                side_effect=IsADirectoryError,
+            ),
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_error") as mock_error,
         ):
             # Act: User attempts to save to directory path
@@ -589,7 +601,10 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/test/directory/output.json",
             ),
-            patch("builtins.open", side_effect=os_error),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write",
+                side_effect=os_error,
+            ),
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_error") as mock_error,
         ):
             # Act: User encounters OS error
@@ -619,7 +634,6 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/test/directory/output.json",
             ),
-            patch("builtins.open", mock_open()),
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
                 side_effect=TypeError("Object not serializable"),
@@ -652,7 +666,6 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/test/directory/output.json",
             ),
-            patch("builtins.open", mock_open()),
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
                 side_effect=ValueError("Circular reference in data"),
@@ -687,7 +700,10 @@ class TestJSONDataSaving:
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.os_path.join",
                 return_value="/test/directory/output.json",
             ),
-            patch("builtins.open", side_effect=unexpected_error),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write",
+                side_effect=unexpected_error,
+            ),
             patch("ardupilot_methodic_configurator.backend_filesystem_json_with_schema.logging_error") as mock_error,
         ):
             # Act: User encounters unexpected error
@@ -731,10 +747,10 @@ class TestFilesystemJSONWithSchemaIntegration:
             ),
             patch(
                 "builtins.open",
-                side_effect=[
-                    mock_open(read_data=json.dumps(schema_data)).return_value,  # Schema file
-                    mock_open().return_value,  # Data file for saving
-                ],
+                return_value=mock_open(read_data=json.dumps(schema_data)).return_value,  # Schema file
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.safe_write",
             ),
             patch(
                 "ardupilot_methodic_configurator.backend_filesystem_json_with_schema.json_dumps",
