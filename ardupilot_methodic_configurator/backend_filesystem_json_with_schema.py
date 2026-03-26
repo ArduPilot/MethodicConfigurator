@@ -22,6 +22,7 @@ from typing import Any, Union
 from jsonschema import ValidationError, validate, validators
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
 
 
 class FilesystemJSONWithSchema:
@@ -124,11 +125,11 @@ class FilesystemJSONWithSchema:
 
         filepath = os_path.join(data_dir, self.json_filename)
         try:
-            with open(filepath, "w", encoding="utf-8", newline="\n") as file:
-                json_str = json_dumps(data, indent=4)
-                # Strip the last newline to avoid double newlines
-                # This is to ensure compatibility with pre-commit's end-of-file-fixer
-                file.write(json_str.rstrip("\n") + "\n")
+            json_str = json_dumps(data, indent=4)
+            # Strip the last newline to avoid double newlines
+            # This is to ensure compatibility with pre-commit's end-of-file-fixer
+            content = json_str.rstrip("\n") + "\n"
+            safe_write(filepath, lambda f: f.write(content))
         except FileNotFoundError:
             msg = _("Directory '{}' not found").format(data_dir)
             logging_error(msg)

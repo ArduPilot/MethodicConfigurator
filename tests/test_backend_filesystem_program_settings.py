@@ -578,14 +578,16 @@ class TestSettingsFileOperations:
         with (
             patch.object(ProgramSettings, "_user_config_dir", return_value=mock_user_config["config_dir"]),
             patch("os.path.join", return_value=mock_user_config["settings_file"]),
-            patch("builtins.open", mock_open()) as mock_file,
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.safe_write",
+            ) as mock_safe_write,
         ):
             # Act: Save settings to file
             ProgramSettings._set_settings_from_dict(mock_settings)
 
-            # Assert: File is opened correctly and data is written
-            mock_file.assert_called_once_with(mock_user_config["settings_file"], "w", encoding="utf-8", newline="\n")
-            mock_file().write.assert_called()
+            # Assert: safe_write is called with the correct file path
+            mock_safe_write.assert_called_once()
+            assert mock_safe_write.call_args[0][0] == mock_user_config["settings_file"]
 
 
 class TestUsagePopupSettings:

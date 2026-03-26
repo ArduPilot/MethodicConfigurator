@@ -27,6 +27,7 @@ from typing import Any, Union
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import FilesystemJSONWithSchema
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
+from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
 from ardupilot_methodic_configurator.data_model_template_overview import TemplateOverview
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
@@ -264,8 +265,7 @@ class VehicleComponents:
         templates = {**existing_templates, **templates_to_save} if existing_templates else templates_to_save
 
         try:
-            with open(filepath, "w", encoding="utf-8", newline="\n") as file:  # use Linux line endings even on Windows
-                json_dump(templates, file, indent=4)
+            safe_write(filepath, lambda f: json_dump(templates, f, indent=4))
             return False, normalized_filepath  # Success, return the filepath
         except FileNotFoundError:
             msg = _("File not found when writing to '{}': {}").format(normalized_filepath, _("Path not found"))

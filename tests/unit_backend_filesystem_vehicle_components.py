@@ -87,10 +87,12 @@ class TestVehicleComponentsInternals:
         assert error is True
         assert "Failed to create templates directory" in msg
 
-    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_to_file_generic_exception(self, mock_get_base_dir, mock_makedirs, mock_file) -> None:
+    def test_save_component_templates_to_file_generic_exception(  # type: ignore[misc]
+        self, mock_get_base_dir, mock_makedirs, mock_safe_write
+    ) -> None:
         """
         Test internal error handling for unexpected exceptions.
 
@@ -100,7 +102,7 @@ class TestVehicleComponentsInternals:
         """
         mock_get_base_dir.return_value = "/test/templates"
         mock_makedirs.return_value = None
-        mock_file.side_effect = ValueError("Unexpected error")
+        mock_safe_write.side_effect = ValueError("Unexpected error")
 
         templates_to_save = {"Component1": [{"name": "Test", "data": {}}]}
 
@@ -109,10 +111,12 @@ class TestVehicleComponentsInternals:
         assert error is True
         assert "Unexpected error saving templates" in msg
 
-    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_to_file_permission_error(self, mock_get_base_dir, mock_makedirs, mock_file) -> None:
+    def test_save_component_templates_to_file_permission_error(  # type: ignore[misc]
+        self, mock_get_base_dir, mock_makedirs, mock_safe_write
+    ) -> None:
         """
         Test internal error handling for PermissionError.
 
@@ -122,7 +126,7 @@ class TestVehicleComponentsInternals:
         """
         mock_get_base_dir.return_value = "/test/templates"
         mock_makedirs.return_value = None
-        mock_file.side_effect = PermissionError("Access denied")
+        mock_safe_write.side_effect = PermissionError("Access denied")
 
         templates_to_save = {"Component1": [{"name": "Test", "data": {}}]}
 
@@ -131,10 +135,10 @@ class TestVehicleComponentsInternals:
         assert error is True
         assert "Permission denied" in msg
 
-    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_to_file_os_error(self, mock_get_base_dir, mock_makedirs, mock_file) -> None:
+    def test_save_component_templates_to_file_os_error(self, mock_get_base_dir, mock_makedirs, mock_safe_write) -> None:
         """
         Test internal error handling for OSError during file write.
 
@@ -144,7 +148,7 @@ class TestVehicleComponentsInternals:
         """
         mock_get_base_dir.return_value = "/test/templates"
         mock_makedirs.return_value = None
-        mock_file.side_effect = OSError("Disk full")
+        mock_safe_write.side_effect = OSError("Disk full")
 
         templates_to_save = {"Component1": [{"name": "Test", "data": {}}]}
 
