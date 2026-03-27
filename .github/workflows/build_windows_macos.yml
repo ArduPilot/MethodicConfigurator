@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build_windows:
     runs-on: 'windows-latest'
     strategy:
       matrix:
@@ -146,7 +146,7 @@ jobs:
           sha256sum *.exe > checksums.txt
           echo "hashes=$(cat checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
 
-      - name: Upload build artifacts
+      - name: Upload Windows build artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: windows-installer
@@ -239,30 +239,122 @@ jobs:
             -imagekey zlib-level=9 \
             "$OUTPUT_DIR/$DMG_NAME"
 
-      - name: Upload build artifacts
+      - name: Upload macOS build artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: macos-dmg
           path: macos/Output/*.dmg
           retention-days: 7
 
+  build_linux:
+    runs-on: 'ubuntu-22.04'  # Use a consistent Linux environment for building the AppImage
+    strategy:
+      matrix:
+        python-version: ['3.14']
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install system dependencies for tkinter
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            python3-tk \
+            tk-dev \
+            tcl-dev \
+            squashfs-tools
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[linux_dist]
+
+      - name: Verify tkinter is available
+        run: |
+          python - <<'PY'
+          import tkinter
+          print(f"tkinter OK, TkVersion={tkinter.TkVersion}")
+          PY
+
+      - name: Write the git commit hash to file
+        run: |
+          git rev-parse HEAD | tr -d '\n' > git_hash.txt
+
+      - name: Build Linux app with PyInstaller
+        run: |
+          pyinstaller --clean linux/ardupilot_methodic_configurator.spec
+
+      - name: Build AppImage
+        run: |
+          set -euo pipefail
+          VERSION=$(python -c "import ardupilot_methodic_configurator; print(ardupilot_methodic_configurator.__version__)")
+          APP_NAME="ardupilot_methodic_configurator"
+          APPIMAGE_NAME="${APP_NAME}_${VERSION}_linux_setup.AppImage"
+          APPDIR="linux/AppDir"
+          OUTPUT_DIR="linux/Output"
+
+          # Create AppDir structure
+          rm -rf "$APPDIR"
+          mkdir -p "$APPDIR" "$OUTPUT_DIR"
+
+          # Copy PyInstaller output
+          cp -R "dist/${APP_NAME}" "$APPDIR/"
+
+          # Copy desktop file and icon
+          cp "linux/${APP_NAME}.desktop" "$APPDIR/"
+          cp "ardupilot_methodic_configurator/images/ArduPilot_icon.png" "$APPDIR/${APP_NAME}.png"
+
+          # Copy AppRun and make executable
+          cp "linux/AppRun" "$APPDIR/AppRun"
+          chmod +x "$APPDIR/AppRun"
+
+          # Download appimagetool (use --appimage-extract-and-run since FUSE is unavailable in CI)
+          wget -q "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" \
+            -O appimagetool
+          chmod +x appimagetool
+
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run "$APPDIR" "$OUTPUT_DIR/$APPIMAGE_NAME"
+
+      - name: Upload Linux build artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: linux-appimage
+          path: linux/Output/*.AppImage
+          retention-days: 7
+
   # Generate SLSA provenance using the official generic workflow
 #  provenance:
-#    needs: [build]
+#    needs: [build_windows]
 #    permissions:
 #      actions: read    # To read the workflow path
 #      id-token: write  # To sign the provenance
 #      contents: write  # To add assets to a release
 #    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@4876e96b8268fd8b7b8d8574718d06c0d0426d40 # latest commit
 #    with:
-#      base64-subjects: "${{ needs.build.outputs.hashes }}"
+#      base64-subjects: "${{ needs.build_windows.outputs.hashes }}"
 #      upload-assets: ${{ startsWith(github.ref, 'refs/tags/v') }}  # Only upload to releases for v* tags
 #      continue-on-error: false  # Explicit error handling - fail fast for security issues
 
   # Release job that depends on provenance generation
   release:
-    #    needs: [build, provenance]
-    needs: [build, build_macos]
+    #    needs: [build_windows, provenance]
+    needs: [build_windows, build_macos, build_linux]
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     permissions:
@@ -277,7 +369,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Download build artifacts
+      - name: Download Windows build artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: windows-installer
@@ -289,16 +381,24 @@ jobs:
           name: macos-dmg
           path: release-artifacts
 
+      - name: Download Linux build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: linux-appimage
+          path: release-artifacts
+
       - name: Rename installer for pre-release
         if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         shell: pwsh
         run: |
-          $files = Get-ChildItem release-artifacts\*.* | Where-Object { $_.Extension -in '.exe', '.dmg' }
+          $files = Get-ChildItem release-artifacts\*.* | Where-Object { $_.Extension -in '.exe', '.dmg', '.AppImage' }
           foreach ($file in $files) {
             if ($file.Extension -eq '.exe') {
               $newName = $file.Name -replace 'ardupilot_methodic_configurator_.*_windows_setup\.exe$', 'ardupilot_methodic_configurator_latest_pre_release_windows_setup.exe'
             } elseif ($file.Extension -eq '.dmg') {
               $newName = $file.Name -replace 'ardupilot_methodic_configurator_.*_macos_setup\.dmg$', 'ardupilot_methodic_configurator_latest_pre_release_macos_setup.dmg'
+            } elseif ($file.Extension -eq '.AppImage') {
+              $newName = $file.Name -replace 'ardupilot_methodic_configurator_.*_linux_setup\.AppImage$', 'ardupilot_methodic_configurator_latest_pre_release_linux_setup.AppImage'
             } else {
               continue
             }
