@@ -13,6 +13,7 @@ from json import load as json_load
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
+from math import isfinite
 from os import path as os_path
 from typing import Optional, TypedDict
 
@@ -160,7 +161,7 @@ class ConfigurationSteps:
                         parameter,
                     )
 
-    def compute_parameters(  # pylint: disable=too-many-branches, too-many-arguments, too-many-positional-arguments
+    def compute_parameters(  # noqa: PLR0911, PLR0915 # pylint: disable=too-many-branches, too-many-arguments, too-many-positional-arguments, too-many-return-statements, too-many-statements
         self,
         filename: str,
         file_info: dict,
@@ -233,6 +234,19 @@ class ConfigurationSteps:
                             return error_msg
                         logging_warning(error_msg)
                         continue
+
+                if isinstance(result, (int, float)) and not isfinite(result):
+                    error_msg = _(
+                        "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+                        "parameter '{parameter}' evaluation produced a non-finite value: {result}"
+                    )
+                    error_msg = error_msg.format(**locals())
+                    if parameter_type == "forced":
+                        logging_error(error_msg)
+                        return error_msg
+                    if not ignore_fc_derived_param_warnings:
+                        logging_warning(error_msg)
+                    continue
 
                 if filename not in destination:
                     destination[filename] = ParDict()
