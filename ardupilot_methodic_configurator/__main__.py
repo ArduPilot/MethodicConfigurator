@@ -576,6 +576,7 @@ def process_component_editor_results(
     try:
         component_dependent_param_changes = local_filesystem.calculate_derived_and_forced_param_changes(
             fc_param_names=fc_param_names,
+            fc_parameters=flight_controller.fc_parameters or None,  # convert empty dict {} to None to indicate no FC connected
         )
     except ValueError as e:
         error_msg = str(e)
