@@ -559,5 +559,54 @@ def test_compute_derived_parameter_skips_inf() -> None:
     assert "test_file" not in config_steps.derived_parameters
 
 
+def test_forced_param_error_does_not_skip_remaining_params() -> None:
+    """When one forced parameter fails, remaining valid forced parameters should still be computed."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {
+        "forced_parameters": {
+            "GOOD_PARAM1": {"New Value": "10", "Change Reason": "Reason 1"},
+            "BAD_PARAM": {"New Value": "undefined_var + 1", "Change Reason": "Will fail"},
+            "GOOD_PARAM2": {"New Value": "20", "Change Reason": "Reason 2"},
+        }
+    }
+    variables = {
+        "doc_dict": {
+            "GOOD_PARAM1": {"values": {10: "value1"}},
+            "BAD_PARAM": {"values": {}},
+            "GOOD_PARAM2": {"values": {20: "value2"}},
+        }
+    }
+
+    result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    # Error should mention the bad parameter
+    assert "BAD_PARAM" in result
+
+    # Both valid parameters should still be stored
+    assert "test_file" in config_steps.forced_parameters
+    assert config_steps.forced_parameters["test_file"]["GOOD_PARAM1"].value == 10
+    assert config_steps.forced_parameters["test_file"]["GOOD_PARAM2"].value == 20
+
+
+def test_multiple_forced_param_errors_collected() -> None:
+    """When multiple forced parameters fail, all errors should be returned."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {
+        "forced_parameters": {
+            "BAD1": {"New Value": "undefined_a", "Change Reason": "Fail 1"},
+            "BAD2": {"New Value": "undefined_b", "Change Reason": "Fail 2"},
+        }
+    }
+    variables = {"doc_dict": {"BAD1": {"values": {}}, "BAD2": {"values": {}}}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    # Both errors should be present in the result
+    assert "BAD1" in result
+    assert "BAD2" in result
+    # Errors are newline-separated
+    assert "\n" in result
+
+
 if __name__ == "__main__":
     unittest.main()
