@@ -523,5 +523,41 @@ def test_safe_log_function_in_expression() -> None:
     assert abs(config_steps.forced_parameters["test_file"]["MOT_THST_EXPO"].value - 0.6) < 0.01
 
 
+def test_compute_forced_parameter_rejects_inf() -> None:
+    """Forced parameter evaluating to inf should return an error and not be stored."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"forced_parameters": {"PARAM1": {"New Value": "1e309", "Change Reason": "Test"}}}
+    variables = {"doc_dict": {"PARAM1": {"values": {}}}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    assert "non-finite" in result
+    assert "test_file" not in config_steps.forced_parameters
+
+
+def test_compute_forced_parameter_rejects_negative_inf() -> None:
+    """Forced parameter evaluating to -inf should return an error and not be stored."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"forced_parameters": {"PARAM1": {"New Value": "-1e309", "Change Reason": "Test"}}}
+    variables = {"doc_dict": {"PARAM1": {"values": {}}}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+    assert "non-finite" in result
+    assert "test_file" not in config_steps.forced_parameters
+
+
+def test_compute_derived_parameter_skips_inf() -> None:
+    """Derived parameter evaluating to inf should be skipped without error."""
+    config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
+    file_info = {"derived_parameters": {"PARAM1": {"New Value": "1e309", "Change Reason": "Test"}}}
+    variables = {"doc_dict": {"PARAM1": {"values": {}}}}
+
+    result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+
+    assert result == ""
+    assert "test_file" not in config_steps.derived_parameters
+
+
 if __name__ == "__main__":
     unittest.main()
