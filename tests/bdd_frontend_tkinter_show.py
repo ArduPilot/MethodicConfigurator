@@ -23,6 +23,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_show import (
+    TOOLTIP_HIDE_DELAY_MS,
+    TOOLTIP_SHOW_DELAY_MS,
     MonitorBounds,
     Tooltip,
     calculate_tooltip_position,
@@ -656,6 +658,13 @@ class TestMonitorBoundsDetection:
 class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
     """Test the Tooltip class and related functions."""
 
+    @pytest.fixture(autouse=True)
+    def reset_active_tooltip(self) -> None:
+        """Ensure tooltip singleton state does not leak across tests."""
+        Tooltip._active_tooltip = None
+        yield
+        Tooltip._active_tooltip = None
+
     @pytest.fixture
     def mock_widget(self) -> MagicMock:
         """Create a mock widget for testing."""
@@ -766,7 +775,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         # Check that tooltip is None initially
         assert tooltip.tooltip is None
         # Check bindings
-        mock_widget.bind.assert_any_call("<Enter>", tooltip.create_show, "+")
+        mock_widget.bind.assert_any_call("<Enter>", tooltip.schedule_show, "+")
         mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide, "+")
 
     def test_tooltip_create_show_on_macos(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
@@ -781,14 +790,18 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
             patch("tkinter.ttk.Label") as mock_label,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
             tooltip.create_show()
 
             assert tooltip.tooltip == mock_toplevel
             mock_label.assert_called_once()
-            mock_toplevel.bind.assert_any_call("<Enter>", tooltip._cancel_hide)
-            mock_toplevel.bind.assert_any_call("<Leave>", tooltip.destroy_hide)
+            mock_toplevel.withdraw.assert_called_once()
+            mock_toplevel.deiconify.assert_called_once()
 
     def test_tooltip_position_tooltip(self, mock_widget, mock_toplevel) -> None:
         """
@@ -853,7 +866,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
 
             tooltip.hide()
 
-            mock_widget.after.assert_called_once_with(10, tooltip._do_hide)
+            mock_widget.after.assert_called_once_with(TOOLTIP_HIDE_DELAY_MS, tooltip._do_hide)
 
     def test_tooltip_cancel_hide(self, mock_widget) -> None:
         """
@@ -892,6 +905,47 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
 
         mock_toplevel.destroy.assert_called_once()
         assert tooltip.tooltip is None
+
+    def test_tooltip_schedule_show_on_macos(self, mock_widget: MagicMock) -> None:
+        """
+        Test tooltip show is scheduled on macOS instead of appearing immediately.
+
+        GIVEN: macOS platform
+        WHEN: Mouse enters widget
+        THEN: Tooltip creation is delayed slightly
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
+            tooltip = Tooltip(mock_widget, "Test text")
+
+        tooltip.schedule_show()
+
+        mock_widget.after.assert_called_once_with(TOOLTIP_SHOW_DELAY_MS, tooltip.create_show)
+
+    def test_tooltip_create_show_hides_previous_active_tooltip(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
+        """
+        Test macOS only keeps one active tooltip visible at a time.
+
+        GIVEN: Another tooltip is already active
+        WHEN: A new tooltip is shown
+        THEN: The previous tooltip is hidden first
+        """
+        previous_tooltip = MagicMock()
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
+        ):
+            Tooltip._active_tooltip = previous_tooltip
+            tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.create_show()
+
+        previous_tooltip.force_hide.assert_called_once()
+        Tooltip._active_tooltip = None
 
     def test_tooltip_handles_widget_destruction_during_positioning(self, mock_widget, mock_toplevel) -> None:
         """
@@ -966,6 +1020,10 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
             patch("tkinter.Toplevel", return_value=mock_toplevel) as mock_toplevel_class,
             patch("tkinter.ttk.Label"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
             tooltip.create_show()
