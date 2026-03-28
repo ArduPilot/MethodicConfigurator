@@ -963,7 +963,7 @@ class TestVehicleComponents:
         assert msg == "/templates/user_vehicle_components_template.json"
         # Should save empty dict
         assert called[0], "Expected empty dict to be written"
-        assert captured_data == {}, f"Expected empty dict, got {captured_data}"
+        assert not captured_data, f"Expected empty dict, got {captured_data}"
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
