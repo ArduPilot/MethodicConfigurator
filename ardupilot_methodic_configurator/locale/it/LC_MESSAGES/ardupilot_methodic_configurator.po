@@ -455,7 +455,7 @@ msgstr ""
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' evaluation produced a non-finite value: {result}"
-msgstr ""
+msgstr "Nel file '{self.configuration_steps_filename}': la valutazione del parametro {parameter_type} '{parameter}' in '{filename}' ha prodotto un valore non finito: {result}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:256
 msgid ""
