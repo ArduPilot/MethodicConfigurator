@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-03-21 16:14+0000\n"
+"POT-Creation-Date: 2026-03-28 17:07+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -80,8 +80,8 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:369
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:237
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:77
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:140
 msgid "Fatal error reading parameter files"
 msgstr "Schwerwiegender Fehler beim Lesen der Parameterdateien"
 
@@ -321,11 +321,11 @@ msgstr ""
 "Die zuletzt hochgeladene Datei ist die letzte Datei in der Liste. Starte vom "
 "Anfang."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1048
+#: ardupilot_methodic_configurator/backend_filesystem.py:1075
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "Der Typ des Fahrzeugs. Standard ist ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1054
+#: ardupilot_methodic_configurator/backend_filesystem.py:1081
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -333,7 +333,7 @@ msgstr ""
 "Verzeichnis mit fahrzeugspezifischen Zwischenparameterdateien. Standard ist "
 "das aktuelle Arbeitsverzeichnis"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1062
+#: ardupilot_methodic_configurator/backend_filesystem.py:1089
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -345,7 +345,7 @@ msgstr ""
 "Sie in den Flugcontroller geschrieben haben. Wenn die Datei nicht existiert, "
 "wird mit der ersten Datei begonnen."
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1071
+#: ardupilot_methodic_configurator/backend_filesystem.py:1098
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -353,7 +353,7 @@ msgstr ""
 "Erlaubt das direkte Öffnen und Bearbeiten von Vorlagendateien. Nur für "
 "Softwareentwickler, die wissen, was sie tun. Standard ist %(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1080
+#: ardupilot_methodic_configurator/backend_filesystem.py:1107
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -361,7 +361,7 @@ msgstr ""
 "Speichern Sie die Fahrzeugkomponente in den Systemvorlagen. Nur für "
 "Softwareentwickler, die wissen, was sie tun. Standard ist %(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:88
 msgid ""
 "Configuration steps '%s' loaded from %s (overwriting default configuration "
 "steps)."
@@ -369,27 +369,27 @@ msgstr ""
 "Konfigurationsschritte '%s' von %s geladen (Standardkonfigurationsschritte "
 "überschreiben)."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:93
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:94
 msgid "Configuration steps '%s' loaded from %s."
 msgstr "Konfigurationsschritte '%s' von %s geladen."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:100
 msgid "Error in file '%s': %s"
 msgstr "Fehler in Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:109
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:110
 msgid "Schema file '%s' not found"
 msgstr "Schema-Datei '%s' nicht gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:111
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:112
 msgid "Configuration steps validation error: %s"
 msgstr "Fehler bei der Validierung der Konfigurationsschritte: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:113
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:114
 msgid "Error in schema file '%s': %s"
 msgstr "Fehler in Schema-Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:121
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:122
 msgid ""
 "No configuration steps documentation and no forced and derived parameters "
 "will be available."
@@ -397,22 +397,22 @@ msgstr ""
 "Keine Dokumentation zu Konfigurationsschritten verfügbar, und keine "
 "erzwungenen und abgeleiteten Parameter sind verfügbar."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:126
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:127
 msgid "No configuration phases documentation will be available."
 msgstr "Keine Dokumentation zu Konfigurationsphasen verfügbar."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:139
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:140
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
 msgstr "Fehler in Datei '%s': '%s' %s-Parameter ist kein Wörterbuch"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:148
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:149
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
 msgstr ""
 "Fehler in Datei '%s': '%s' %s-Parameter '%s' 'Neuer Wert'-Attribut nicht "
 "gefunden."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:156
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:157
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not "
 "found."
@@ -420,7 +420,7 @@ msgstr ""
 "Fehler in Datei '%s': '%s' %s-Parameter '%s' 'Änderungsgrund'-Attribut nicht "
 "gefunden."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:185
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:186
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
@@ -430,7 +430,7 @@ msgstr ""
 "'{parameter_type}'-Parameter '{parameter}' nicht berechnet werden: "
 "'fc_parameters' nicht gefunden, ist ein FC angeschlossen?"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:203
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:204
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' evaluation resulted in math error: {math_error}"
@@ -439,7 +439,7 @@ msgstr ""
 "Auswertung des {parameter_type}-Parameters '{parameter}' einen "
 "mathematischen Fehler: {math_error}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:226
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:227
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
@@ -449,7 +449,13 @@ msgstr ""
 "'{parameter_type}'-Parameter '{parameter}' nicht berechnet werden, keine "
 "Dokumentationsmetadaten verfügbar"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:242
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:239
+msgid ""
+"In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
+"parameter '{parameter}' evaluation produced a non-finite value: {result}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:256
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
@@ -457,8 +463,8 @@ msgstr ""
 "In der Datei '{self.configuration_steps_filename}': '{filename}' konnte der "
 "'{parameter_type}'-Parameter '{parameter}' nicht berechnet werden: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:266
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:280
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:294
 msgid ""
 "File '{self.configuration_steps_filename}' not found. No intermediate "
 "parameter configuration steps available"
@@ -466,8 +472,8 @@ msgstr ""
 "Datei '{self.configuration_steps_filename}' nicht gefunden. Keine "
 "verfügbaren Zwischendatei-Konfigurationsschritte"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:272
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:285
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:286
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:299
 msgid ""
 "No documentation available for {selected_file} in the {self."
 "configuration_steps_filename} file"
@@ -475,150 +481,150 @@ msgstr ""
 "Keine Dokumentation für {selected_file} in der Datei {self."
 "configuration_steps_filename} verfügbar"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:60
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:61
 msgid "Schema file '%s' is valid."
 msgstr "Schema-Datei '%s' ist gültig."
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:62
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:63
 msgid "Schema file '%s' is not a valid JSON Schema: %s"
 msgstr "Schema-Datei '%s' ist kein gültiges JSON-Schema: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:67
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:68
 msgid "Schema file '%s' not found."
 msgstr "Schema-Datei '%s' nicht gefunden."
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:69
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:70
 msgid "Error decoding JSON schema from file '%s'."
 msgstr "Fehler beim Dekodieren des JSON-Schemas aus Datei '%s'."
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:81
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:82
 msgid "Could not load validation schema"
 msgstr "Validierungsschema konnte nicht geladen werden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:87
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:88
 msgid "Validation error"
 msgstr "Validierungsfehler"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:99
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:100
 msgid "Invalid JSON file '%s': %s"
 msgstr "Ungültige JSON-Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:103
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:104
 msgid "File '%s' not found in %s."
 msgstr "Datei '%s' nicht gefunden in %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:105
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:106
 msgid "Error decoding JSON data from file '%s'."
 msgstr "Fehler beim Decodieren der JSON-Daten aus der Datei '%s'."
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:121
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:122
 msgid "Cannot save invalid JSON data: {}"
 msgstr "Kann ungültige JSON-Daten nicht speichern: {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:133
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:134
 msgid "Directory '{}' not found"
 msgstr "Verzeichnis '{}' nicht gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:137
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:138
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:274
 msgid "Permission denied when writing to file '{}'"
 msgstr "Schreibberechtigung für Datei '{}' verweigert"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:141
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:142
 msgid "Path '{}' is a directory, not a file"
 msgstr "Pfad '{}' ist ein Verzeichnis, keine Datei"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:145
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:146
 #: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:277
 msgid "OS error when writing to file '{}': {}"
 msgstr "Betriebssystemfehler beim Schreiben in Datei '{}': {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:149
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:150
 msgid "Type error when serializing data to JSON: {}"
 msgstr "Typfehler beim Serialisieren von Daten in JSON: {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:153
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:154
 msgid "Value error when serializing data to JSON: {}"
 msgstr "Wertfehler beim Serialisieren von Daten in JSON: {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:158
+#: ardupilot_methodic_configurator/backend_filesystem_json_with_schema.py:159
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr "Unerwarteter Fehler beim Speichern von Daten in Datei '{}': {}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:53
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:54
 msgid "General AMC workflow"
 msgstr "Allgemeiner AMC-Arbeitsablauf"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:56
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:57
 msgid "Component editor window introduction"
 msgstr "Einführung in das Komponenteneditor-Fenster"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:59
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:60
 msgid "Component editor window data validation"
 msgstr "Datenvalidierung im Komponenteneditor-Fenster"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:62
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:63
 msgid "Parameter file editor and uploader window"
 msgstr "Parameterdatei-Editor und -Uploader-Fenster"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:65
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:66
 msgid "Bitmask parameter editor usage window"
 msgstr "Bitmask-Parameter-Editor-Nutzungsfenster"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:68
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:69
 msgid "Only changed parameters get upload explanation"
 msgstr "Nur geänderte Parameter werden hochgeladen – Erklärung"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:117
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:118
 msgid "Connection string cannot be empty or whitespace-only"
 msgstr ""
 "Die Verbindungszeichenfolge darf nicht leer oder nur aus Leerzeichen bestehen"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:237
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:238
 msgid "Directory already exists, choose a different one"
 msgstr "Verzeichnis existiert bereits, wählen Sie ein anderes"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:242
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:243
 msgid "Error creating new vehicle directory: %s"
 msgstr "Fehler beim Erstellen des neuen Fahrzeugverzeichnisses: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:276
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:277
 msgid ""
 "The user configuration directory '{user_config_directory}' does not exist."
 msgstr ""
 "Das Benutzerkonfigurationsverzeichnis '{user_config_directory}' existiert "
 "nicht."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:279
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:280
 msgid "The path '{user_config_directory}' is not a directory."
 msgstr "Der Pfad '{user_config_directory}' ist kein Verzeichnis."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:295
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:296
 msgid ""
 "The site configuration directory '{site_config_directory}' does not exist."
 msgstr ""
 "Das Standortkonfigurationsverzeichnis '{site_config_directory}' existiert "
 "nicht."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:298
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:299
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "Der Pfad '{site_config_directory}' ist kein Verzeichnis."
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:480
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:479
 msgid "site_directory: %s"
 msgstr "standort_verzeichnis: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:517
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:516
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr ""
 "Nutzungs-Popup-Typ '%s' wurde im Einstellungs-Wörterbuch nicht gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:527
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:564
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:526
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:563
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "Einstellung '%s' nicht im Einstellungs-Wörterbuch gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:545
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:544
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
@@ -626,59 +632,59 @@ msgstr ""
 "Kann verschachtelte Einstellung '%s' nicht setzen: übergeordneter Pfad '%s' "
 "nicht gefunden oder kein Wörterbuch"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:558
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:557
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr "Einstellungspfad '%s' nicht im Einstellungs-Wörterbuch gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:597
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:596
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "Mehrere Motordiagramme für Klasse %d und Typ %d gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:606
+#: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:605
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "Motordiagramm für Klasse %d und Typ %d nicht gefunden"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:107
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:108
 msgid "System component templates file '%s' not found."
 msgstr "Systemkomponenten-Vorlagendatei '%s' nicht gefunden."
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:109
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:110
 msgid "Error decoding JSON system component templates from file '%s'."
 msgstr ""
 "Fehler beim Dekodieren der JSON-Systemkomponentenvorlagen aus Datei '%s'."
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:111
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:112
 msgid "Error reading system component templates from file '%s': %s"
 msgstr ""
 "Fehler beim Lesen der Systemkomponenten-Vorlagen aus der Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:113
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:114
 msgid "Unexpected error reading system component templates from file '%s': %s"
 msgstr ""
 "Unerwarteter Fehler beim Lesen der Systemkomponenten-Vorlagen aus der Datei "
 "'%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:131
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:132
 msgid "User component templates file '%s' not found."
 msgstr "Benutzerkomponenten-Vorlagendatei '%s' nicht gefunden."
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:133
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:134
 msgid "Error decoding JSON user component templates from file '%s'."
 msgstr ""
 "Fehler beim Dekodieren der JSON-Benutzerkomponentenvorlagen aus Datei '%s'."
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:135
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:136
 msgid "Error reading user component templates from file '%s': %s"
 msgstr ""
 "Fehler beim Lesen der Benutzerkomponenten-Vorlagen aus der Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:137
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:138
 msgid "Unexpected error reading user component templates from file '%s': %s"
 msgstr ""
 "Unerwarteter Fehler beim Lesen der Benutzerkomponenten-Vorlagen aus der "
 "Datei '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:253
+#: ardupilot_methodic_configurator/backend_filesystem_vehicle_components.py:254
 msgid "Failed to create templates directory '{}': {}"
 msgstr "Vorlagenverzeichnis '{}' konnte nicht erstellt werden: {}"
 
@@ -1017,12 +1023,12 @@ msgid "Failed to upload file: %(error)s"
 msgstr "Fehler beim Hochladen der Datei: %(error)s"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_files.py:136
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1219
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1215
 msgid "No flight controller connected"
 msgstr "Kein Flugcontroller verbunden"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_files.py:140
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1223
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1219
 msgid "MAVFTP is not supported by the flight controller"
 msgstr "MAVFTP wird vom Flugcontroller nicht unterstützt"
 
@@ -3659,15 +3665,15 @@ msgstr ""
 "\n"
 "Grund: %(reason)s"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:43
+#: ardupilot_methodic_configurator/data_model_par_dict.py:48
 msgid "Parameter name cannot be empty"
 msgstr "Parametername darf nicht leer sein"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:47
+#: ardupilot_methodic_configurator/data_model_par_dict.py:52
 msgid "Parameter name too long (max %d characters): %s"
 msgstr "Parametername zu lang (maximal %d Zeichen): %s"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:52
+#: ardupilot_methodic_configurator/data_model_par_dict.py:57
 msgid ""
 "Invalid parameter name format (must start with capital letter, contain only "
 "A-Z, 0-9, _): %s"
@@ -3675,22 +3681,22 @@ msgstr ""
 "Ungültiges Parameternamenformat (muss mit Großbuchstaben beginnen, nur A-Z, "
 "0-9, _ enthalten): %s"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:159
+#: ardupilot_methodic_configurator/data_model_par_dict.py:164
 msgid "Missing parameter-value separator: {line} in {param_file} line {i}"
 msgstr ""
 "Fehlender Parameter-Wert-Trennzeichen: {line} in {param_file} Zeile {i}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:168
+#: ardupilot_methodic_configurator/data_model_par_dict.py:173
 msgid "Fatal error reading {param_file}, file must be UTF-8 encoded: {exp}"
 msgstr ""
 "Fataler Fehler beim Lesen von {param_file}, Datei muss UTF-8-kodiert sein: "
 "{exp}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:185
+#: ardupilot_methodic_configurator/data_model_par_dict.py:190
 msgid "Too long parameter name: {parameter_name} in {param_file} line {i}"
 msgstr "Parametername zu lang: {parameter_name} in {param_file} Zeile {i}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:190
+#: ardupilot_methodic_configurator/data_model_par_dict.py:195
 msgid ""
 "Invalid characters in parameter name {parameter_name} in {param_file} line "
 "{i}"
@@ -3698,11 +3704,15 @@ msgstr ""
 "Ungültige Zeichen im Parameternamen {parameter_name} in {param_file} Zeile "
 "{i}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:195
+#: ardupilot_methodic_configurator/data_model_par_dict.py:200
 msgid "Duplicated parameter {parameter_name} in {param_file} line {i}"
 msgstr "Duplizierter Parameter {parameter_name} in {param_file} Zeile {i}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:202
+#: ardupilot_methodic_configurator/data_model_par_dict.py:207
+msgid "Invalid parameter value {value!r} in {param_file} line {i}"
+msgstr "Ungültiger Parameterwert {value!r} in {param_file} Zeile {i}"
+
+#: ardupilot_methodic_configurator/data_model_par_dict.py:212
 msgid ""
 "Non-finite parameter value {value!r} (parsed as {fvalue}) for "
 "{parameter_name} in {param_file} line {i}"
@@ -3710,19 +3720,15 @@ msgstr ""
 "Nicht-endlicher Parameterwert {value!r} (parsiert als {fvalue}) für "
 "{parameter_name} in {param_file} Zeile {i}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:208
-msgid "Invalid parameter value {value!r} in {param_file} line {i}"
-msgstr "Ungültiger Parameterwert {value!r} in {param_file} Zeile {i}"
-
-#: ardupilot_methodic_configurator/data_model_par_dict.py:217
+#: ardupilot_methodic_configurator/data_model_par_dict.py:223
 msgid "Caused by line {i} of file {param_file}: {original_line}"
 msgstr "Verursacht durch Zeile {i} der Datei {param_file}: {original_line}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:275
+#: ardupilot_methodic_configurator/data_model_par_dict.py:281
 msgid "ERROR: Unsupported file format {file_format}"
 msgstr "FEHLER: Nicht unterstütztes Dateiformat {file_format}"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:327
+#: ardupilot_methodic_configurator/data_model_par_dict.py:336
 msgid ""
 "\n"
 "{name} has {len_formatted_params} parameters:"
@@ -3730,7 +3736,7 @@ msgstr ""
 "\n"
 "{name} hat {len_formatted_params} Parameter:"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:331
+#: ardupilot_methodic_configurator/data_model_par_dict.py:340
 msgid ""
 "\n"
 "{name} list is long hit enter to continue"
@@ -3738,12 +3744,12 @@ msgstr ""
 "\n"
 "{name} Liste ist lang, Enter drücken um fortzufahren"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:350
+#: ardupilot_methodic_configurator/data_model_par_dict.py:359
 msgid "Can only append another ParDict instance"
 msgstr "Kann nur eine andere ParDict-Instanz anhängen"
 
-#: ardupilot_methodic_configurator/data_model_par_dict.py:378
-#: ardupilot_methodic_configurator/data_model_par_dict.py:404
+#: ardupilot_methodic_configurator/data_model_par_dict.py:387
+#: ardupilot_methodic_configurator/data_model_par_dict.py:413
 msgid "Can only compare with another ParDict instance"
 msgstr "Kann nur mit einer anderen ParDict-Instanz verglichen werden"
 
@@ -4011,35 +4017,35 @@ msgstr ""
 "%d FC-Parameter hatten bereits den in diesem Konfigurationsschritt "
 "definierten Wert"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1005
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1009
 msgid "Uploading %d selected %s parameters to flight controller..."
 msgstr "Hochladen von %d ausgewählten %s-Parametern auf den Flugcontroller..."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1043
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1047
 msgid "Parameter upload error"
 msgstr "Parameter hochladefehler"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1044
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1048
 msgid "Failed to upload the following parameters to the flight controller:\n"
 msgstr ""
 "Hochladen der folgenden Parameter auf den Flugcontroller fehlgeschlagen:\n"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1059
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1055
 msgid "All parameters uploaded to the flight controller successfully"
 msgstr "Alle Parameter erfolgreich auf den Flugcontroller hochgeladen"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1068
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1064
 msgid "Re-downloaded all parameters from the flight controller"
 msgstr "Alle Parameter vom Flugcontroller erneut heruntergeladen"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1079
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1075
 msgid ""
 "Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"
 msgstr ""
 "Hochladen des Parameters %s auf den Flugcontroller fehlgeschlagen. Erwartet: "
 "%f, Tatsächlich: %f"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1087
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1083
 msgid ""
 "Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/"
 "A"
@@ -4047,22 +4053,22 @@ msgstr ""
 "Hochladen des Parameters %s auf den Flugcontroller fehlgeschlagen. Erwartet: "
 "%f, Tatsächlich: nicht verfügbar"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1183
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1179
 msgid "Exported %d FC parameters missing or different in AMC files to %s"
 msgstr ""
 "%d FC-Parameter exportiert, die in AMC-Dateien fehlen oder unterschiedlich "
 "sind nach %s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1188
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1184
 msgid "No FC parameters are missing or different from AMC parameter files"
 msgstr ""
 "Keine FC-Parameter fehlen oder unterscheiden sich von AMC-Parameterdateien"
 
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1215
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1219
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1223
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1234
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1953
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1966
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1230
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1949
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1962
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:192
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:201
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:208
@@ -4090,7 +4096,7 @@ msgstr ""
 msgid "Error"
 msgstr "Fehler"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1232
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1228
 msgid ""
 "Flight log downloaded successfully to:\n"
 "%s"
@@ -4098,22 +4104,22 @@ msgstr ""
 "Flugprotokoll erfolgreich heruntergeladen nach:\n"
 "%s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1232
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1936
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1228
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1932
 msgid "Success"
 msgstr "Erfolg"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1234
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1230
 msgid "Failed to download flight log. Check the console for details."
 msgstr ""
 "Herunterladen des Flugprotokolls fehlgeschlagen. Prüfen Sie die Konsole für "
 "Details."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1341
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1337
 msgid "No parameters available for summary."
 msgstr "Keine Parameter für Zusammenfassung verfügbar."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1356
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1352
 msgid ""
 "Methodic configuration of {nr_total_params} parameters complete:\n"
 "\n"
@@ -4142,12 +4148,12 @@ msgstr ""
 "Nicht-Sensorkalibrierungen - diese können zwischen ähnlichen Fahrzeugen "
 "wiederverwendet werden"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1406
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1402
 msgid "Last parameter file processed"
 msgstr "Letzte bearbeitete Parameterdatei"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1475
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1509
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1471
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1505
 msgid ""
 "{} file already exists.\n"
 "Do you want to overwrite it?"
@@ -4155,16 +4161,16 @@ msgstr ""
 "{}-Datei existiert bereits.\n"
 "Möchten Sie sie überschreiben?"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1476
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1510
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1472
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1506
 msgid "Overwrite existing file"
 msgstr "Vorhandene Datei überschreiben"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1481
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1477
 msgid "Summary file %s written"
 msgstr "Zusammenfassungsdatei %s geschrieben"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1515
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1511
 msgid ""
 "All relevant files have been zipped into the \n"
 "{zip_file_path} file.\n"
@@ -4178,15 +4184,15 @@ msgstr ""
 "Sie können diese Datei jetzt im ArduPilot Methodic\n"
 "Konfigurationsblogbeitrag auf discuss.ardupilot.org hochladen."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1520
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1516
 msgid "Parameter files zipped"
 msgstr "Parameterdateien gezippt"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1634
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1630
 msgid "Zip file successfully created"
 msgstr "Zip-Datei erfolgreich erstellt"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1635
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1631
 msgid ""
 "Zipped all vehicle configuration files into the file \n"
 "{zip_fullpath}\n"
@@ -4210,58 +4216,58 @@ msgstr ""
 "Sie einen Link\n"
 "dazu im ArduPilot-Supportforum."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1649
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1645
 msgid "Failed to create zip file: {error}"
 msgstr "Fehler beim Erstellen der Zip-Datei: {error}"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1651
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1657
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1647
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1653
 msgid "Zip file creation failed"
 msgstr "Zip-Dateierstellung fehlgeschlagen"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1655
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1651
 msgid "Failed to create zip file due to file system error: {error}"
 msgstr ""
 "Fehler beim Erstellen der Zip-Datei aufgrund eines Dateisystemfehlers: "
 "{error}"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1694
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1690
 msgid "Failed to apply derived parameter %s: %s"
 msgstr "Anwendung des abgeleiteten Parameters %s fehlgeschlagen: %s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1701
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1697
 msgid "Derived parameter %s not found in current parameters, skipping"
 msgstr ""
 "Abgeleiteter Parameter %s nicht in aktuellen Parametern gefunden, "
 "überspringen"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1748
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1744
 msgid "Parameter not found"
 msgstr "Parameter nicht gefunden"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1749
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1745
 msgid "Parameter {param_name} could not be located."
 msgstr "Parameter {param_name} konnte nicht gefunden werden."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1761
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1767
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1757
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1763
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:402
 msgid "Out-of-range value"
 msgstr "Wert außerhalb des gültigen Bereichs"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1764
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1760
 msgid "Parameter %s out of range: %s"
 msgstr "Parameter %s außerhalb des Bereichs: %s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1771
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1767
 msgid "Invalid value for %s: %s"
 msgstr "Ungültiger Wert für %s: %s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1774
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1770
 msgid "Invalid value"
 msgstr "Ungültiger Wert"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1812
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1808
 msgid ""
 "No apm.pdef.xml file and no FC connected. Not possible autocomplete "
 "parameter names."
@@ -4269,23 +4275,23 @@ msgstr ""
 "Keine apm.pdef.xml Datei und kein FC verbunden. Autocomplete für "
 "Parameternamen nicht möglich."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1833
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1829
 msgid "Parameter name can not be empty."
 msgstr "Der Parametername darf nicht leer sein."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1842
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1838
 msgid "Parameter already exists, edit it instead"
 msgstr "Parameter existiert bereits, bearbeiten Sie ihn stattdessen"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1860
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1856
 msgid "Parameter name not found in the flight controller."
 msgstr "Parametername wurde im Flugcontroller nicht gefunden."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1878
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1874
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}' wurde in der apm.pdef.xml Datei nicht gefunden."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1883
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1879
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
@@ -4293,66 +4299,66 @@ msgstr ""
 "Parameter kann nicht hinzugefügt werden, wenn kein FC verbunden ist und "
 "keine apm.pdef.xml Datei existiert."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1936
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1932
 msgid "Successfully added %d parameter(s)."
 msgstr "%d Parameter erfolgreich hinzugefügt."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1940
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1936
 msgid "Added %d parameter(s)."
 msgstr "%d Parameter hinzugefügt."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1942
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1959
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1938
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1955
 msgid "Skipped %d parameter(s): %s"
 msgstr "%d Parameter übersprungen: %s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1944
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1961
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1940
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1957
 msgid "Failed %d parameter(s): %s"
 msgstr "%d Parameter fehlgeschlagen: %s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1945
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1941
 msgid "Partial Success"
 msgstr "Teilweise erfolgreich"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1949
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1945
 msgid "All %d parameter(s) already exist in the file."
 msgstr "Alle %d Parameter existieren bereits in der Datei."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1949
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1945
 msgid "No Changes"
 msgstr "Keine Änderungen"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1953
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1949
 msgid "Failed to add all %d parameter(s): %s"
 msgstr "Fehler beim Hinzufügen aller %d Parameter: %s"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1962
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1958
 msgid "No Parameters Added"
 msgstr "Keine Parameter hinzugefügt"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1966
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1962
 msgid "Unexpected result during bulk parameter addition."
 msgstr "Unerwartetes Ergebnis beim Massenhinzufügen von Parametern."
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2107
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2103
 msgid "Why: "
 msgstr "Warum:"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2109
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2105
 msgid "Why now: "
 msgstr "Warum jetzt:"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2114
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2110
 msgid "{current_file} Documentation"
 msgstr "{current_file} Dokumentation"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2116
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2112
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:62
 msgid "Documentation"
 msgstr "Dokumentation"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2136
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2132
 msgid ""
 "This configuration step ({current_file} intermediate parameter file) is "
 "{percentage}% mandatory"
@@ -4360,7 +4366,7 @@ msgstr ""
 "Dieser Konfigurationsschritt ({current_file} Zwischenparameterdatei) ist zu "
 "{percentage}% verbindlich"
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2140
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2136
 msgid ""
 "Mandatory level not available for this configuration step ({current_file})"
 msgstr ""
@@ -4935,11 +4941,11 @@ msgid "New vehicle name {new_vehicle_name} must not contain invalid characters"
 msgstr ""
 "Neuer Fahrzeugname {new_vehicle_name} darf keine ungültigen Zeichen enthalten"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:64
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:65
 msgid "No Last Vehicle Directory Found"
 msgstr "Kein zuletzt verwendetes Fahrzeugverzeichnis gefunden"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:65
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:66
 msgid ""
 "No last opened vehicle configuration directory was found.\n"
 "Please select a directory manually."
@@ -4948,20 +4954,20 @@ msgstr ""
 "gefunden.\n"
 "Bitte wählen Sie ein Verzeichnis manuell aus."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:76
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:139
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:77
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:140
 msgid "Fatal error reading parameter files: {exp}"
 msgstr "Schwerwiegender Fehler beim Lesen der Parameterdateien: {exp}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:82
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:91
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:145
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:154
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:92
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:146
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:155
 msgid "No parameter files found"
 msgstr "Keine Parameterdateien gefunden"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:92
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:84
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:93
 msgid ""
 "No intermediate parameter files found in the selected directory: "
 "{last_vehicle_dir}"
@@ -4969,8 +4975,8 @@ msgstr ""
 "Keine Zwischenparameterdateien im ausgewählten Verzeichnis gefunden: "
 "{last_vehicle_dir}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:116
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:183
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:117
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:184
 msgid ""
 "Selected directory must contain files matching \\d\\d_*\\.param and a "
 "{filename} file"
@@ -4978,12 +4984,12 @@ msgstr ""
 "Ausgewähltes Verzeichnis muss Dateien enthalten, die \\d\\d_*\\.param "
 "entsprechen und eine {filename}-Datei"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:119
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:124
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:120
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:125
 msgid "Invalid Vehicle Directory Selected"
 msgstr "Ungültiges ausgewähltes Fahrzeugverzeichnis"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:125
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:126
 msgid ""
 "Please do not edit the files provided 'vehicle_templates' directory\n"
 "as those are used as a template for new vehicles"
@@ -4992,8 +4998,8 @@ msgstr ""
 "Dateien\n"
 "nicht, da diese als Vorlage für neue Fahrzeuge verwendet werden"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:146
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:155
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:147
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:156
 msgid ""
 "No intermediate parameter files found in the selected directory: "
 "{vehicle_dir}"
@@ -5001,20 +5007,20 @@ msgstr ""
 "Keine Zwischenparameterdateien im ausgewählten Verzeichnis gefunden: "
 "{vehicle_dir}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:174
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
 msgid "Vehicle directory must not be empty"
 msgstr "Fahrzeugverzeichnis darf nicht leer sein"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:174
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:178
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:175
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
 msgid "Vehicle directory"
 msgstr "Fahrzeugverzeichnis"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:178
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:179
 msgid "Vehicle directory {vehicle_dir} does not exist"
 msgstr "Fahrzeugverzeichnis {vehicle_dir} existiert nicht"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:186
+#: ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:187
 msgid "Invalid Vehicle Directory"
 msgstr "Ungültiges Fahrzeugverzeichnis"
 
