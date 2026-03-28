@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib
+import io
 import json
 import logging
 import os
@@ -149,6 +150,39 @@ def mock_tkinter_context() -> Callable[[Optional[MockConfiguration]], tuple[cont
         return contextlib.ExitStack(), patches
 
     return _mock_context
+
+
+# ==================== SAFE-WRITE TEST HELPERS ====================
+
+
+def make_capture_safe_write() -> tuple[dict, list[bool], "Callable[[str, Callable], None]"]:
+    """
+    Create a ``safe_write`` side-effect that captures written JSON data.
+
+    Returns a (captured_data, called, side_effect) triple:
+    - ``captured_data``: dict updated with the JSON that the write_func produces.
+    - ``called``: single-element list (``[False]``) flipped to ``True`` on invocation.
+    - ``side_effect``: function to assign to ``mock_safe_write.side_effect``.
+
+    Usage::
+
+        captured_data, called, side_effect = make_capture_safe_write()
+        mock_safe_write.side_effect = side_effect
+        ...
+        assert called[0]
+        assert captured_data == expected
+
+    """
+    captured_data: dict = {}
+    called: list[bool] = [False]
+
+    def _capture(_filepath: str, write_func: "Callable") -> None:
+        fake_file = io.StringIO()
+        write_func(fake_file)
+        captured_data.update(json.loads(fake_file.getvalue()))
+        called[0] = True
+
+    return captured_data, called, _capture
 
 
 # ==================== VEHICLE COMPONENTS DATA MODEL FIXTURES ====================

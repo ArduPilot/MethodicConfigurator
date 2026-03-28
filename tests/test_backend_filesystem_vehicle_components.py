@@ -10,13 +10,12 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import io
-import json as json_mod
 import os.path
 from json.decoder import JSONDecodeError as RealJSONDecodeError
 from unittest.mock import mock_open, patch
 
 import pytest
+from conftest import make_capture_safe_write
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.data_model_template_overview import TemplateOverview
@@ -654,14 +653,8 @@ class TestVehicleComponents:
         mock_load_user.return_value = {}
 
         # Capture written data via safe_write callback
-        captured_data = {}
-
-        def capture_safe_write(_filepath, write_func) -> None:
-            fake_file = io.StringIO()
-            write_func(fake_file)
-            captured_data.update(json_mod.loads(fake_file.getvalue()))
-
-        mock_safe_write.side_effect = capture_safe_write
+        captured_data, _, side_effect = make_capture_safe_write()
+        mock_safe_write.side_effect = side_effect
 
         templates = {"Component1": [{"name": "Test Template", "data": {"param": "value"}, "is_user_modified": True}]}
 
@@ -725,14 +718,8 @@ class TestVehicleComponents:
         mock_load_user.return_value = {}
 
         # Capture and verify written data
-        captured_data = {}
-
-        def capture_safe_write(_filepath, write_func) -> None:
-            fake_file = io.StringIO()
-            write_func(fake_file)
-            captured_data.update(json_mod.loads(fake_file.getvalue()))
-
-        mock_safe_write.side_effect = capture_safe_write
+        captured_data, _, side_effect = make_capture_safe_write()
+        mock_safe_write.side_effect = side_effect
 
         # Call method
         result, msg = self.vehicle_components.save_component_templates(templates)
@@ -780,14 +767,8 @@ class TestVehicleComponents:
         mock_load_user.return_value = {}
 
         # Capture and verify written data
-        captured_data = {}
-
-        def capture_safe_write(_filepath, write_func) -> None:
-            fake_file = io.StringIO()
-            write_func(fake_file)
-            captured_data.update(json_mod.loads(fake_file.getvalue()))
-
-        mock_safe_write.side_effect = capture_safe_write
+        captured_data, _, side_effect = make_capture_safe_write()
+        mock_safe_write.side_effect = side_effect
 
         # Call method
         result, msg = self.vehicle_components.save_component_templates(templates)
@@ -836,14 +817,8 @@ class TestVehicleComponents:
         mock_load_user.return_value = {}
 
         # Capture and verify written data
-        captured_data = {}
-
-        def capture_safe_write(_filepath, write_func) -> None:
-            fake_file = io.StringIO()
-            write_func(fake_file)
-            captured_data.update(json_mod.loads(fake_file.getvalue()))
-
-        mock_safe_write.side_effect = capture_safe_write
+        captured_data, _, side_effect = make_capture_safe_write()
+        mock_safe_write.side_effect = side_effect
 
         # Call method
         result, msg = self.vehicle_components.save_component_templates(templates)
@@ -977,18 +952,8 @@ class TestVehicleComponents:
         mock_load_user.return_value = {}
 
         # Capture and verify written data
-        captured_data: dict = {}
-        wrote_empty = [False]
-
-        def capture_safe_write(_filepath, write_func) -> None:
-            fake_file = io.StringIO()
-            write_func(fake_file)
-            value = fake_file.getvalue()
-            captured_data.update(json_mod.loads(value))
-            if json_mod.loads(value) == {}:
-                wrote_empty[0] = True
-
-        mock_safe_write.side_effect = capture_safe_write
+        _, called, side_effect = make_capture_safe_write()
+        mock_safe_write.side_effect = side_effect
 
         # Call method with empty dictionary
         result, msg = self.vehicle_components.save_component_templates({})
@@ -997,7 +962,7 @@ class TestVehicleComponents:
         assert not result  # False means success
         assert msg == "/templates/user_vehicle_components_template.json"
         # Should save empty dict
-        assert wrote_empty[0], "Expected empty dict to be written"
+        assert called[0], "Expected empty dict to be written"
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")
@@ -1111,14 +1076,8 @@ class TestVehicleComponents:
         mock_load_user.return_value = existing_user_templates
 
         # Capture the write_func callback passed to safe_write to verify data
-        captured_data = {}
-
-        def capture_safe_write(_filepath, write_func) -> None:
-            fake_file = io.StringIO()
-            write_func(fake_file)
-            captured_data.update(json_mod.loads(fake_file.getvalue()))
-
-        mock_safe_write.side_effect = capture_safe_write
+        captured_data, _, side_effect = make_capture_safe_write()
+        mock_safe_write.side_effect = side_effect
 
         # Save a new ESC template (Battery is NOT included in this call)
         templates_to_save = {"ESC": [{"name": "BLHeli32 60A", "data": {"protocol": "DSHOT600"}, "is_user_modified": True}]}
