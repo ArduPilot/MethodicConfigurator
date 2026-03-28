@@ -90,8 +90,10 @@ FC_CONNECTION_TYPE_PATHS: list[ComponentPath] = [
 
 BATTERY_CELL_VOLTAGE_PATHS: list[ComponentPath] = [
     ("Battery", "Specifications", "Volt per cell max"),
+    ("Battery", "Specifications", "Volt per cell arm"),
     ("Battery", "Specifications", "Volt per cell low"),
     ("Battery", "Specifications", "Volt per cell crit"),
+    ("Battery", "Specifications", "Volt per cell min"),
 ]
 
 # Protocol dictionaries
@@ -269,10 +271,16 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 ("Battery", "Specifications", "Volt per cell max"), BatteryCell.recommended_max_voltage(value)
             )
             self.set_component_value(
+                ("Battery", "Specifications", "Volt per cell arm"), BatteryCell.recommended_arm_voltage(value)
+            )
+            self.set_component_value(
                 ("Battery", "Specifications", "Volt per cell low"), BatteryCell.recommended_low_voltage(value)
             )
             self.set_component_value(
                 ("Battery", "Specifications", "Volt per cell crit"), BatteryCell.recommended_crit_voltage(value)
+            )
+            self.set_component_value(
+                ("Battery", "Specifications", "Volt per cell min"), BatteryCell.recommended_min_voltage(value)
             )
 
         # Update possible choices for protocol fields when connection type changes
@@ -510,18 +518,33 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 return f"{e!s}\n{error_msg}", recommended_cell_voltage
 
             if path[-1] == "Volt per cell max":
+                lim = self.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
+                return self.validate_against_another_value(voltage, lim, "Volt per cell arm", above=True, delta=0.01)
+
+            # Makes no sense to arm a vehicle at a voltage lower than low voltage as that would trigger a failsafe immediately
+            if path[-1] == "Volt per cell arm":
+                lim = self.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+                err_msg, corr = self.validate_against_another_value(voltage, lim, "Volt per cell max", above=False, delta=0.01)
+                if err_msg:
+                    return err_msg, corr
                 lim = self.get_component_value(("Battery", "Specifications", "Volt per cell low"))
                 return self.validate_against_another_value(voltage, lim, "Volt per cell low", above=True, delta=0.01)
 
             if path[-1] == "Volt per cell low":
-                lim = self.get_component_value(("Battery", "Specifications", "Volt per cell max"))
-                err_msg, corr = self.validate_against_another_value(voltage, lim, "Volt per cell max", above=False, delta=0.01)
+                lim = self.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
+                err_msg, corr = self.validate_against_another_value(voltage, lim, "Volt per cell arm", above=False, delta=0.01)
                 if err_msg:
                     return err_msg, corr
                 lim = self.get_component_value(("Battery", "Specifications", "Volt per cell crit"))
                 return self.validate_against_another_value(voltage, lim, "Volt per cell crit", above=True, delta=0.01)
 
+            # There is no monotonicity requirement for Volt per cell crit and Volt per cell min, they just both need to be
+            # below Volt per cell low, so they are validated independently against those limits, not against each other
             if path[-1] == "Volt per cell crit":
+                lim = self.get_component_value(("Battery", "Specifications", "Volt per cell low"))
+                return self.validate_against_another_value(voltage, lim, "Volt per cell low", above=False, delta=0.01)
+
+            if path[-1] == "Volt per cell min":
                 lim = self.get_component_value(("Battery", "Specifications", "Volt per cell low"))
                 return self.validate_against_another_value(voltage, lim, "Volt per cell low", above=False, delta=0.01)
 
@@ -531,10 +554,14 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         """Get recommended cell voltage based on the path."""
         if path[-1] == "Volt per cell max":
             return BatteryCell.recommended_max_voltage(self._battery_chemistry)
+        if path[-1] == "Volt per cell arm":
+            return BatteryCell.recommended_arm_voltage(self._battery_chemistry)
         if path[-1] == "Volt per cell low":
             return BatteryCell.recommended_low_voltage(self._battery_chemistry)
         if path[-1] == "Volt per cell crit":
             return BatteryCell.recommended_crit_voltage(self._battery_chemistry)
+        if path[-1] == "Volt per cell min":
+            return BatteryCell.recommended_min_voltage(self._battery_chemistry)
         return 3.8
 
     def validate_against_another_value(  # pylint: disable=too-many-arguments,too-many-positional-arguments
