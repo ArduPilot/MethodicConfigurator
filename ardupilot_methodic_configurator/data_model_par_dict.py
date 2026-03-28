@@ -261,9 +261,9 @@ class ParDict(dict[str, Par]):
             sorted_dict = ParDict(sorted_items)
             formatted_params = [
                 (
-                    f"{key},{format(parameter.value, '.6f').rstrip('0').rstrip('.')}  # {parameter.comment}"
+                    f"{key},{format(parameter.value, '.10f').rstrip('0').rstrip('.')}  # {parameter.comment}"
                     if isinstance(parameter, Par) and parameter.comment
-                    else f"{key},{format(parameter.value if isinstance(parameter, Par) else parameter, '.6f').rstrip('0').rstrip('.')}"  # noqa: E501 # pylint: disable=line-too-long
+                    else f"{key},{format(parameter.value if isinstance(parameter, Par) else parameter, '.10f').rstrip('0').rstrip('.')}"  # noqa: E501 # pylint: disable=line-too-long
                 )
                 for key, parameter in sorted_dict.items()
             ]
@@ -271,9 +271,9 @@ class ParDict(dict[str, Par]):
             sorted_dict = ParDict(dict(sorted(self.items())))
             formatted_params = [
                 (
-                    f"{key:<16} {parameter.value:<8.6f}  # {parameter.comment}"
+                    f"{key:<16} {parameter.value:<14.10f}  # {parameter.comment}"
                     if isinstance(parameter, Par) and parameter.comment
-                    else f"{key:<16} {parameter.value if isinstance(parameter, Par) else parameter:<8.6f}"
+                    else f"{key:<16} {parameter.value if isinstance(parameter, Par) else parameter:<14.10f}"
                 )
                 for key, parameter in sorted_dict.items()
             ]
