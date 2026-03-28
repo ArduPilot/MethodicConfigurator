@@ -589,23 +589,36 @@ def test_forced_param_error_does_not_skip_remaining_params() -> None:
 
 
 def test_multiple_forced_param_errors_collected() -> None:
-    """When multiple forced parameters fail, all errors should be returned."""
+    """When multiple forced parameters fail among successes, all errors are returned and successes are stored."""
     config_steps = ConfigurationSteps("vehicle_dir", "vehicle_type")
     file_info = {
         "forced_parameters": {
+            "GOOD1": {"New Value": "10", "Change Reason": "Reason 1"},
             "BAD1": {"New Value": "undefined_a", "Change Reason": "Fail 1"},
+            "GOOD2": {"New Value": "20", "Change Reason": "Reason 2"},
             "BAD2": {"New Value": "undefined_b", "Change Reason": "Fail 2"},
         }
     }
-    variables = {"doc_dict": {"BAD1": {"values": {}}, "BAD2": {"values": {}}}}
+    variables = {
+        "doc_dict": {
+            "GOOD1": {"values": {10: "value1"}},
+            "BAD1": {"values": {}},
+            "GOOD2": {"values": {20: "value2"}},
+            "BAD2": {"values": {}},
+        }
+    }
 
     result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
 
-    # Both errors should be present in the result
+    # Both errors should be present, newline-separated
     assert "BAD1" in result
     assert "BAD2" in result
-    # Errors are newline-separated
     assert "\n" in result
+
+    # Successful parameters should still be stored
+    assert "test_file" in config_steps.forced_parameters
+    assert config_steps.forced_parameters["test_file"]["GOOD1"].value == 10
+    assert config_steps.forced_parameters["test_file"]["GOOD2"].value == 20
 
 
 if __name__ == "__main__":
