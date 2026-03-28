@@ -952,7 +952,7 @@ class TestVehicleComponents:
         mock_load_user.return_value = {}
 
         # Capture and verify written data
-        _, called, side_effect = make_capture_safe_write()
+        captured_data, called, side_effect = make_capture_safe_write()
         mock_safe_write.side_effect = side_effect
 
         # Call method with empty dictionary
@@ -963,6 +963,7 @@ class TestVehicleComponents:
         assert msg == "/templates/user_vehicle_components_template.json"
         # Should save empty dict
         assert called[0], "Expected empty dict to be written"
+        assert captured_data == {}, f"Expected empty dict, got {captured_data}"
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "_load_user_templates")

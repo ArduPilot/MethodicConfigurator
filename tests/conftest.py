@@ -23,7 +23,7 @@ import time
 import tkinter as tk
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import IO, Any, NamedTuple, Optional
 from unittest.mock import patch
 
 import pyautogui
@@ -155,7 +155,7 @@ def mock_tkinter_context() -> Callable[[Optional[MockConfiguration]], tuple[cont
 # ==================== SAFE-WRITE TEST HELPERS ====================
 
 
-def make_capture_safe_write() -> tuple[dict, list[bool], "Callable[[str, Callable], None]"]:
+def make_capture_safe_write() -> tuple[dict[str, Any], list[bool], Callable[[str, Callable[[IO[str]], object]], None]]:
     """
     Create a ``safe_write`` side-effect that captures written JSON data.
 
@@ -173,10 +173,10 @@ def make_capture_safe_write() -> tuple[dict, list[bool], "Callable[[str, Callabl
         assert captured_data == expected
 
     """
-    captured_data: dict = {}
+    captured_data: dict[str, Any] = {}
     called: list[bool] = [False]
 
-    def _capture(_filepath: str, write_func: "Callable") -> None:
+    def _capture(_filepath: str, write_func: Callable[[IO[str]], object]) -> None:
         fake_file = io.StringIO()
         write_func(fake_file)
         captured_data.update(json.loads(fake_file.getvalue()))
