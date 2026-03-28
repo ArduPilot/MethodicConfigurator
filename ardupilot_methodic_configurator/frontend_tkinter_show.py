@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from platform import system as platform_system
 from tkinter import messagebox, ttk
-from typing import Any, NamedTuple, Optional, cast
+from typing import Any, ClassVar, NamedTuple, Optional, cast
 from weakref import WeakKeyDictionary
 
 from ardupilot_methodic_configurator import _
@@ -21,6 +21,8 @@ from ardupilot_methodic_configurator import _
 # Tooltip positioning constants
 TOOLTIP_MAX_OFFSET = 100  # Maximum horizontal offset from widget edge
 TOOLTIP_VERTICAL_OFFSET = 10  # Vertical offset when positioning above widget
+TOOLTIP_SHOW_DELAY_MS = 250  # Delay before showing to avoid flicker while moving across dense UIs
+TOOLTIP_HIDE_DELAY_MS = 75  # Small delay prevents leave/enter jitter from leaving stale tooltips behind
 
 
 class MonitorBounds(NamedTuple):
@@ -456,6 +458,8 @@ class Tooltip:
     Creates a tooltip that appears when the mouse hovers over a widget and disappears when the mouse leaves the widget.
     """
 
+    _active_tooltip: ClassVar[Optional["Tooltip"]] = None
+
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         widget: tk.Widget,
@@ -470,15 +474,17 @@ class Tooltip:
         self.position_below: bool = position_below
         self.toplevel_class = toplevel_class or tk.Toplevel
         self.hide_timer: Optional[str] = None
+        self.show_timer: Optional[str] = None
 
         # Bind the <Enter> and <Leave> events to show and hide the tooltip
         if platform_system() == "Darwin":
-            # On macOS, only create the tooltip when the mouse enters the widget
+            # On macOS, defer tooltip creation slightly to avoid flashing while
+            # moving through dense tables and controls.
             if tag_name and isinstance(self.widget, tk.Text):
-                self.widget.tag_bind(tag_name, "<Enter>", self.create_show, "+")
+                self.widget.tag_bind(tag_name, "<Enter>", self.schedule_show, "+")
                 self.widget.tag_bind(tag_name, "<Leave>", self.destroy_hide, "+")
             else:
-                self.widget.bind("<Enter>", self.create_show, "+")
+                self.widget.bind("<Enter>", self.schedule_show, "+")
                 self.widget.bind("<Leave>", self.destroy_hide, "+")
         else:
             if tag_name and isinstance(self.widget, tk.Text):
@@ -499,12 +505,20 @@ class Tooltip:
             self.tooltip.bind("<Enter>", self._cancel_hide)
             self.tooltip.bind("<Leave>", self.hide)
 
+    def _cancel_show(self) -> None:
+        """Cancel any pending show timer."""
+        if self.show_timer:
+            self.widget.after_cancel(self.show_timer)
+            self.show_timer = None
+
     def show(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         """On non-macOS, tooltip already exists, show it on events."""
         self._cancel_hide()
+        self._hide_active_tooltip()
         if self.tooltip:
             self.position_tooltip()
             self.tooltip.deiconify()
+            Tooltip._active_tooltip = self
 
     def _cancel_hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         """Cancel the hide timer."""
@@ -512,12 +526,29 @@ class Tooltip:
             self.widget.after_cancel(self.hide_timer)
             self.hide_timer = None
 
+    def _hide_active_tooltip(self) -> None:
+        """Hide another active tooltip before showing this one."""
+        if Tooltip._active_tooltip and Tooltip._active_tooltip is not self:
+            Tooltip._active_tooltip.force_hide()
+
+    def schedule_show(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
+        """Delay tooltip creation slightly to avoid flicker during pointer movement."""
+        self._cancel_hide()
+        self._cancel_show()
+        self.show_timer = self.widget.after(TOOLTIP_SHOW_DELAY_MS, self.create_show)
+
     def create_show(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         """On macOS, only create the tooltip when the mouse enters the widget."""
+        self._cancel_show()
+        self._cancel_hide()
+        self._hide_active_tooltip()
+
         if self.tooltip:
+            Tooltip._active_tooltip = self
             return  # Avoid redundant tooltip creation
 
         self.tooltip = cast("tk.Toplevel", self.toplevel_class(self.widget))
+        self.tooltip.withdraw()
 
         try:
             self.tooltip.tk.call(
@@ -537,9 +568,8 @@ class Tooltip:
         )
         tooltip_label.pack()
         self.position_tooltip()
-        # Bind to tooltip to prevent hiding when mouse is over it
-        self.tooltip.bind("<Enter>", self._cancel_hide)
-        self.tooltip.bind("<Leave>", self.destroy_hide)
+        self.tooltip.deiconify()
+        Tooltip._active_tooltip = self
 
     def position_tooltip(self) -> None:
         """Position tooltip within monitor bounds, handling widget destruction gracefully."""
@@ -580,20 +610,32 @@ class Tooltip:
     def hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         """Hide the tooltip after a delay on non-macOS."""
         self._cancel_hide()
-        self.hide_timer = self.widget.after(10, self._do_hide)
+        self.hide_timer = self.widget.after(TOOLTIP_HIDE_DELAY_MS, self._do_hide)
 
     def _do_hide(self) -> None:
         """Actually hide or destroy the tooltip depending on platform."""
         if self.tooltip:
             self.tooltip.withdraw()
+        if Tooltip._active_tooltip is self:
+            Tooltip._active_tooltip = None
         self.hide_timer = None
+
+    def force_hide(self) -> None:
+        """Immediately hide or destroy the tooltip, depending on platform."""
+        self._cancel_show()
+        self._cancel_hide()
+        if self.tooltip:
+            if platform_system() == "Darwin":
+                self.tooltip.destroy()
+                self.tooltip = None
+            else:
+                self.tooltip.withdraw()
+        if Tooltip._active_tooltip is self:
+            Tooltip._active_tooltip = None
 
     def destroy_hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         """On macOS, fully destroy the tooltip when the mouse leaves the widget."""
-        self._cancel_hide()
-        if self.tooltip:
-            self.tooltip.destroy()
-            self.tooltip = None
+        self.force_hide()
 
 
 def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> Tooltip:
