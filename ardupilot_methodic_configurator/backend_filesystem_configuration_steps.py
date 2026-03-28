@@ -161,7 +161,7 @@ class ConfigurationSteps:
                         parameter,
                     )
 
-    def compute_parameters(  # noqa: PLR0911, PLR0915 # pylint: disable=too-many-branches, too-many-arguments, too-many-positional-arguments, too-many-return-statements, too-many-statements
+    def compute_parameters(  # pylint: disable=too-many-branches, too-many-arguments, too-many-positional-arguments, too-many-locals, too-many-nested-blocks
         self,
         filename: str,
         file_info: dict,
@@ -178,6 +178,17 @@ class ConfigurationSteps:
         if parameter_type + "_parameters" not in file_info or not variables:
             return ""
         destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
+        errors: list[str] = []
+
+        def log_parameter_error(
+            parameter_type: str, ignore_fc_derived_param_warnings: bool, errors: list[str], error_msg: str
+        ) -> None:
+            if parameter_type == "forced":
+                logging_error(error_msg)
+                errors.append(error_msg)
+            elif not ignore_fc_derived_param_warnings:
+                logging_warning(error_msg)
+
         for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
             try:
                 if ("fc_parameters" in str(parameter_info["New Value"])) and (
@@ -188,11 +199,7 @@ class ConfigurationSteps:
                         "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
                     )
                     error_msg = error_msg.format(**locals())
-                    if parameter_type == "forced":
-                        logging_error(error_msg)
-                        return error_msg
-                    if not ignore_fc_derived_param_warnings:
-                        logging_warning(error_msg)
+                    log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
                     continue
 
                 try:
@@ -206,11 +213,7 @@ class ConfigurationSteps:
                         "parameter '{parameter}' evaluation resulted in math error: {math_error}"
                     )
                     error_msg = error_msg.format(**locals())
-                    if parameter_type == "forced":
-                        logging_error(error_msg)
-                        return error_msg
-                    if not ignore_fc_derived_param_warnings:
-                        logging_warning(error_msg)
+                    log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
                     continue
 
                 # convert (combobox) string text to (parameter value) string int or float
@@ -229,10 +232,7 @@ class ConfigurationSteps:
                             "parameter '{parameter}' could not be computed, no documentation metadata available for it"
                         )
                         error_msg = error_msg.format(**locals())
-                        if parameter_type == "forced":
-                            logging_error(error_msg)
-                            return error_msg
-                        logging_warning(error_msg)
+                        log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
                         continue
 
                 if isinstance(result, (int, float)) and not isfinite(result):
@@ -241,11 +241,7 @@ class ConfigurationSteps:
                         "parameter '{parameter}' evaluation produced a non-finite value: {result}"
                     )
                     error_msg = error_msg.format(**locals())
-                    if parameter_type == "forced":
-                        logging_error(error_msg)
-                        return error_msg
-                    if not ignore_fc_derived_param_warnings:
-                        logging_warning(error_msg)
+                    log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
                     continue
 
                 if filename not in destination:
@@ -258,11 +254,8 @@ class ConfigurationSteps:
                     "parameter '{parameter}' could not be computed: {_e}"
                 )
                 error_msg = error_msg.format(**locals())
-                if parameter_type == "forced":
-                    logging_error(error_msg)
-                    return error_msg
-                logging_warning(error_msg)
-        return ""
+                log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
+        return "\n".join(errors)
 
     def auto_changed_by(self, selected_file: str) -> str:
         if selected_file in self.configuration_steps:
