@@ -899,12 +899,12 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
             tooltip = Tooltip(mock_widget, "Test text")
-        tooltip.tooltip = mock_toplevel
+            tooltip.tooltip = mock_toplevel  # Set the mock window while in "Mac mode"
 
-        tooltip.destroy_hide()
+            tooltip.destroy_hide()
 
-        mock_toplevel.destroy.assert_called_once()
-        assert tooltip.tooltip is None
+            mock_toplevel.destroy.assert_called_once()
+            assert tooltip.tooltip is None
 
     def test_tooltip_schedule_show_on_macos(self, mock_widget: MagicMock) -> None:
         """
@@ -916,10 +916,9 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
             tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.schedule_show()
 
-        tooltip.schedule_show()
-
-        mock_widget.after.assert_called_once_with(TOOLTIP_SHOW_DELAY_MS, tooltip.create_show)
+            mock_widget.after.assert_called_once_with(TOOLTIP_SHOW_DELAY_MS, tooltip.create_show)
 
     def test_tooltip_create_show_hides_previous_active_tooltip(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
         """
