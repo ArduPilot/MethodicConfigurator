@@ -233,12 +233,24 @@ class VehicleComponents:
             # System templates are part of the software installation and get updated when the program
             # is updated and deleted when the program is un-installed.
             templates_filename = "system_vehicle_components_template.json"
-            # Check if local system template file exists, use local dir if so.
+            # Check if local system template file exists, use local templates_dir if so.
             try:
-                local_dir = importlib_files("ardupilot_methodic_configurator") / "vehicle_templates"
-                filepath = str(local_dir / templates_filename)
+                templates_dir = ProgramSettings.get_templates_base_dir()
+                filepath = os_path.join(templates_dir, templates_filename)
+
                 if os_path.exists(filepath):
                     existing_templates = self._load_system_templates(filepath)
+                else:
+                    # Fallback to package path when system-wide path is unavailable
+                    local_dir = importlib_files("ardupilot_methodic_configurator") / "vehicle_templates"
+                    filepath = str(local_dir / templates_filename)
+                    if os_path.exists(filepath):
+                        existing_templates = self._load_system_templates(filepath)
+
+                # Ensure folder exists for safe writing in test and normal mode
+                dir_name = os_path.dirname(filepath)
+                if dir_name:
+                    os_makedirs(dir_name, exist_ok=True)
             except (OSError, ValueError) as e:
                 logging_debug("Failed to check local template file: %s", e)
                 # Fall back to default templates_dir

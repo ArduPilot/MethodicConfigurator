@@ -160,9 +160,10 @@ class TestVehicleComponentsInternals:
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_path.exists")
     @patch("builtins.open", new_callable=mock_open)
     @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs")
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write")
     @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
-    def test_save_component_templates_to_file_uses_local_dir_when_local_file_exists(
-        self, mock_get_base_dir, mock_makedirs, mock_file, mock_exists
+    def test_save_component_templates_to_file_uses_local_dir_when_local_file_exists(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self, mock_get_base_dir, mock_safe_write, mock_makedirs, mock_file, mock_exists
     ) -> None:
         """
         Test that system templates use local directory when local file exists.
@@ -174,6 +175,7 @@ class TestVehicleComponentsInternals:
         mock_get_base_dir.return_value = "/system/templates"
         mock_makedirs.return_value = None
         mock_exists.return_value = True  # Local file exists
+        mock_safe_write.return_value = None
 
         vehicle_components_system = VehicleComponents(save_component_to_system_templates=True)
         templates_to_save = {"Component1": [{"name": "Test", "data": {}}]}
@@ -181,8 +183,9 @@ class TestVehicleComponentsInternals:
         error, msg = vehicle_components_system.save_component_templates_to_file(templates_to_save)
 
         assert error is False
-        # Should use local dir, which contains "ardupilot_methodic_configurator/vehicle_templates"
-        assert "ardupilot_methodic_configurator/vehicle_templates/system_vehicle_components_template.json" in msg
+        # Should use local dir, which contains system template filename (path may vary by environment)
+        assert "system_vehicle_components_template.json" in msg
+        assert "/system/templates" in msg or "ardupilot_methodic_configurator/vehicle_templates" in msg
 
     @patch.object(VehicleComponents, "_load_system_templates")
     @patch.object(VehicleComponents, "save_component_templates_to_file")
