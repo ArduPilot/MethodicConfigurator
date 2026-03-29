@@ -884,13 +884,36 @@ class TestParameterFiltering:
         # Arrange: Parameters, defaults, and documentation provided by fixtures
 
         # Act: Categorize parameters
-        readonly, calibration, other = parameter_dict.categorize_by_documentation(documentation_dict, default_parameters)
+        readonly, calibration, ids, other = parameter_dict.categorize_by_documentation(documentation_dict, default_parameters)
 
         # Assert: Parameters categorized correctly
         # Note: Only non-default parameters are categorized
         assert "PILOT_SPEED_UP" in readonly  # Read-only and non-default
         assert "BATT_CAPACITY" in calibration  # Calibration and non-default
         assert "GPS_TYPE" in other  # Neither read-only nor calibration, non-default
+        assert not ids
+
+    def test_user_can_categorize_id_parameters(self, parameter_dict, default_parameters, documentation_dict) -> None:
+        """
+        Ensure ID parameter flags are correctly categorized into ids and excluded from other.
+
+        GIVEN: A parameter dictionary with a non-default ID parameter
+        WHEN: categorize_by_documentation is called
+        THEN: the ID parameter is returned in the id category and excluded from other.
+        """
+        # Arrange: Make sysid parameter non-default and set in defaults
+        parameter_dict["SYSID_THISMAV"] = Par(42.0)
+        default_parameters["SYSID_THISMAV"] = Par(1.0)
+        documentation_dict["SYSID_THISMAV"] = {"ReadOnly": False, "Calibration": False}
+
+        # Act
+        readonly, calibration, ids, other = parameter_dict.categorize_by_documentation(documentation_dict, default_parameters)
+
+        # Assert
+        assert "SYSID_THISMAV" in ids
+        assert "SYSID_THISMAV" not in other
+        assert "SYSID_THISMAV" not in readonly
+        assert "SYSID_THISMAV" not in calibration
 
 
 class TestParameterUtilities:
@@ -1061,7 +1084,7 @@ class TestParameterCategorization:
         # Arrange: Parameter dictionary with documentation
 
         # Act: Categorize parameters by documentation
-        readonly, calibration, other = parameter_dict.categorize_by_documentation(documentation_dict, default_parameters)
+        readonly, calibration, ids, other = parameter_dict.categorize_by_documentation(documentation_dict, default_parameters)
 
         # Assert: Parameters correctly categorized
         assert "PILOT_SPEED_UP" in readonly  # Marked as ReadOnly=True
@@ -1070,6 +1093,7 @@ class TestParameterCategorization:
         assert "ACRO_YAW_P" not in readonly  # Not read-only
         assert "ACRO_YAW_P" not in calibration  # Not calibration
         assert "GPS_TYPE" in other  # Non-default, non-readonly, non-calibration
+        assert not ids
 
     def test_user_can_categorize_parameters_with_tolerance_function(
         self, parameter_dict, documentation_dict, default_parameters
@@ -1087,7 +1111,7 @@ class TestParameterCategorization:
             return True
 
         # Act: Categorize with tolerance function
-        readonly, calibration, other = parameter_dict.categorize_by_documentation(
+        readonly, calibration, ids, other = parameter_dict.categorize_by_documentation(
             documentation_dict, default_parameters, always_within_tolerance
         )
 
@@ -1099,6 +1123,7 @@ class TestParameterCategorization:
         assert "BATT_CAPACITY" in calibration  # Still non-default, still calibration
         assert "COMPASS_ENABLE" in calibration  # Still non-default, still calibration
         assert "GPS_TYPE" in other  # Still non-default, not readonly, not calibration
+        assert not ids
 
 
 class TestParameterCommentAnnotation:

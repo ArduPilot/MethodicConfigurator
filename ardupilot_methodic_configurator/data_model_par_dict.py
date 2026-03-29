@@ -25,6 +25,11 @@ from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 
+# A stable list of known vehicle-instance ID parameters.
+# These parameters are typically specific to each vehicle and should not be reused
+# across different vehicles without intentional review.
+ID_PARAMETER_NAMES = {"SYSID_THISMAV", "SYSID_MYGCS", "FOLL_SYSID"}
+
 
 class ParamFileError(ValueError):
     """Raised when a .param file contains invalid or malformed data."""
@@ -591,14 +596,27 @@ class ParDict(dict[str, Par]):
             }
         )
 
+    def _filter_by_id(self, _doc_dict: dict) -> "ParDict":
+        """
+        Filter ID parameters.
+
+        Args:
+            _doc_dict: Documentation dictionary containing parameter metadata.
+
+        Returns:
+            A new ParDict containing only ID parameters.
+
+        """
+        return ParDict({param_name: param_info for param_name, param_info in self.items() if param_name in ID_PARAMETER_NAMES})
+
     def categorize_by_documentation(
         self,
         doc_dict: dict,
         default_params: "ParDict",
         tolerance_func: Optional[Callable[[float, float], bool]] = None,
-    ) -> tuple["ParDict", "ParDict", "ParDict"]:
+    ) -> tuple["ParDict", "ParDict", "ParDict", "ParDict"]:
         """
-        Categorize parameters into read-only, calibration, and other non-default parameters.
+        Categorize parameters into read-only, calibration, IDs and other non-default parameters.
 
         Args:
             doc_dict: Documentation dictionary containing parameter metadata.
@@ -606,10 +624,11 @@ class ParDict(dict[str, Par]):
             tolerance_func: Function to check if values are within tolerance.
 
         Returns:
-            A tuple of three ParDict objects:
+            A tuple of four ParDict objects:
             - Non-default read-only parameters
             - Non-default writable calibration parameters
-            - Non-default writable non-calibration parameters
+            - Non-default writable ID parameters
+            - Non-default writable non-calibration, non-ID parameters
 
         """
         non_default_params = self._filter_by_defaults(default_params, tolerance_func)
@@ -617,17 +636,18 @@ class ParDict(dict[str, Par]):
         # there are protected members from a locally created object, so it is OK to access them like this
         read_only_params = non_default_params._filter_by_readonly(doc_dict)  # pylint: disable=protected-access # noqa: SLF001
         calibration_params = non_default_params._filter_by_calibration(doc_dict)  # pylint: disable=protected-access # noqa: SLF001
+        id_params = non_default_params._filter_by_id(doc_dict)  # pylint: disable=protected-access # noqa: SLF001
 
-        # Non-calibration parameters are those that are not read-only and not calibration
+        # Non-calibration parameters are those that are not read-only, not ID, and not calibration
         other_params = ParDict(
             {
                 param_name: param_info
                 for param_name, param_info in non_default_params.items()
-                if param_name not in read_only_params and param_name not in calibration_params
+                if param_name not in read_only_params and param_name not in calibration_params and param_name not in id_params
             }
         )
 
-        return read_only_params, calibration_params, other_params
+        return read_only_params, calibration_params, id_params, other_params
 
     def annotate_with_comments(self, comment_lookup: dict[str, str]) -> "ParDict":
         """

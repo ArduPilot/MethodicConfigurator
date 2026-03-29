@@ -846,7 +846,8 @@ class TestSummaryFileWritingWorkflows:
             "complete": ParDict({"PARAM1": Par(1.0), "PARAM2": Par(2.0)}),
             "read_only": ParDict({"PARAM1": Par(1.0)}),
             "calibrations": ParDict({"PARAM2": Par(2.0)}),
-            "non_calibrations": ParDict(),
+            "ids": ParDict(),
+            "non_calibrations_non_ids": ParDict(),
         }
 
         # Set up filesystem mocks for file writing
@@ -922,7 +923,8 @@ class TestSummaryFileWritingWorkflows:
             "complete": ParDict({"PARAM1": Par(1.0)}),
             "read_only": ParDict(),
             "calibrations": ParDict(),
-            "non_calibrations": ParDict(),
+            "ids": ParDict(),
+            "non_calibrations_non_ids": ParDict(),
         }
 
         # Set up filesystem mocks - files exist
@@ -2152,11 +2154,13 @@ class TestParameterSummaryMethods:
 
         read_only = {"PARAM1": Par(1.0)}
         calibrations = {"PARAM2": Par(2.0)}
-        non_calibrations = {"PARAM3": Par(3.0)}
+        ids = {}
+        non_calibrations_non_ids = {"PARAM3": Par(3.0)}
         parameter_editor._local_filesystem.categorize_parameters.return_value = (
             read_only,
             calibrations,
-            non_calibrations,
+            ids,
+            non_calibrations_non_ids,
         )
 
         # Act: Generate parameter summary
@@ -2167,11 +2171,13 @@ class TestParameterSummaryMethods:
         assert "complete" in result
         assert "read_only" in result
         assert "calibrations" in result
-        assert "non_calibrations" in result
+        assert "ids" in result
+        assert "non_calibrations_non_ids" in result
         assert result["complete"] == annotated_params
         assert result["read_only"] == read_only
         assert result["calibrations"] == calibrations
-        assert result["non_calibrations"] == non_calibrations
+        assert result["ids"] == ids
+        assert result["non_calibrations_non_ids"] == non_calibrations_non_ids
 
     def test_generate_parameter_summary_with_no_fc_parameters(self, parameter_editor) -> None:
         """
@@ -2232,13 +2238,15 @@ class TestParameterSummaryMethods:
         }
         parameter_editor._local_filesystem.annotate_intermediate_comments_to_param_dict.return_value = annotated_params
 
-        read_only = {"PARAM1": Par(1.0)}
-        calibrations = {"PARAM2": Par(2.0), "PARAM3": Par(3.0)}
-        non_calibrations = {"PARAM4": Par(4.0)}
+        read_only = ParDict({"PARAM1": Par(1.0)})
+        calibrations = ParDict({"PARAM2": Par(2.0), "PARAM3": Par(3.0)})
+        ids = ParDict()
+        non_calibrations_non_ids = ParDict({"PARAM4": Par(4.0)})
         parameter_editor._local_filesystem.categorize_parameters.return_value = (
             read_only,
             calibrations,
-            non_calibrations,
+            ids,
+            non_calibrations_non_ids,
         )
 
         # Act: Get parameter summary message
@@ -2250,7 +2258,8 @@ class TestParameterSummaryMethods:
         assert "Methodic configuration of 4 parameters complete" in result
         assert "1 non-default read-only parameters" in result
         assert "2 non-default writable sensor-calibrations" in result
-        assert "1 non-default writable non-sensor-calibrations" in result
+        assert "0 non-default ID parameters" in result
+        assert "1 non-default writable non-sensor-calibrations non-IDs" in result
         assert "0 kept their default value" in result
 
     def test_get_parameter_summary_msg_with_empty_summary(self, parameter_editor) -> None:

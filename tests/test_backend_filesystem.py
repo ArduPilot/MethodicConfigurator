@@ -634,11 +634,12 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
 
         test_params = ParDict({"PARAM1": Par(2.0), "PARAM2": Par(2.0), "PARAM3": Par(2.0)})
 
-        readonly, calibration, other = lfs.categorize_parameters(test_params)
+        readonly, calibration, ids, other = lfs.categorize_parameters(test_params)
 
         assert "PARAM1" in readonly
         assert "PARAM2" in calibration
         assert "PARAM3" in other
+        assert not ids
 
     def test_calculate_derived_and_forced_param_changes(self) -> None:
         lfs = LocalFilesystem(
