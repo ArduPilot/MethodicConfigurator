@@ -365,7 +365,8 @@ pie title Summary files example
     "Unchanged parameters" : 728
     "Non-default read-only parameters - non-default_read-only.param" : 8
     "Non-default writable sensor calibrations - non-default_writable_calibrations.param" : 71
-    "Non-default writable non-sensor-calibrations - non-default_writable_non-calibrations.param" : 217
+    "Non-default writable IDs - non-default_writable_ids.param" : 3
+    "Non-default writable non-sensor-calibrations, non-IDs - non-default_writable_non-calibrations_non-ids.param" : 217
 ```
 
 If the diagram above does not display correctly [look here](https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md#9-completing-the-configuration-process)
@@ -378,7 +379,9 @@ If the diagram above does not display correctly [look here](https://github.com/A
 - **Non-default writable sensor calibrations**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles.
   They are typically related to sensor calibration and should be adjusted for each vehicle and are displayed on a yellow background 🟨.
 
-- **Non-default writable non-sensor calibrations**: These parameters can be reused between similar vehicles.
+- **Non-default writable IDs**: These parameters are vehicle-instance dependent and cannot be reused between similar vehicles.
+
+- **Non-default writable non-sensor calibrations, non-IDs parameters**: These parameters can be reused between similar vehicles.
   They are not related to sensor calibration and are generally applicable to a range of vehicles with the same configuration.
 
 After the summary message box is displayed, the application will write the summary information into separate files for easy reference and documentation. These files include:
@@ -386,15 +389,14 @@ After the summary message box is displayed, the application will write the summa
 - `complete.param`: Contains all parameters contained in the flight controller.
 - `non-default_read-only.param`: Contains all non-default read-only 🟥 parameters. You can ignore these.
 - `non-default_writable_calibrations.param`: Contains all non-default writable sensor calibration 🟨 parameters. These are non-reusable.
-- `non-default_writable_non-calibrations.param`: Contains all non-default writable non-sensor-calibration parameters. These are reusable across similar vehicles.
+- `non-default_writable_ids.param`: Contains all non-default writable IDs. These are non-reusable.
+- `non-default_writable_non-calibrations_non-ids.param`: Contains all non-default writable non-sensor-calibration, non-IDs parameters. These are reusable across similar vehicles.
 
 The summary files provide a clear overview of the changes made.
 
 The files are also automatically zipped into a file with the same name as the vehicle directory, inside the vehicle directory.
 
 ![Parameter files zipped message box](images/Parameter_files_zipped.png)
-
-You should upload this `.zip` file or the `non-default_writable_non-calibrations.param` file to the [How to methodically tune any ArduCopter Blog post](https://discuss.ardupilot.org/t/how-to-methodically-configure-and-tune-any-arducopter/110842/)
 
 Once the summary files are written, the application will close the connection to the flight controller and terminate.
 

@@ -1297,7 +1297,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         Returns:
             dict: Dictionary with parameter categories and their ParDict objects.
-                Keys: "complete", "read_only", "calibrations", "non_calibrations"
+                Keys: "complete", "read_only", "calibrations", "ids", "non_calibrations_non_ids"
 
         """
         # Get annotated FC parameters
@@ -1309,17 +1309,23 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Categorize parameters using filesystem logic
         categorized = self._local_filesystem.categorize_parameters(annotated_fc_parameters)
-        if not categorized or len(categorized) != 3:
+        if not categorized or len(categorized) != 4:
             # Return empty dict if categorization fails or returns empty tuple
             return {}
 
-        non_default__read_only_params, non_default__writable_calibrations, non_default__writable_non_calibrations = categorized
+        (
+            non_default__read_only_params,
+            non_default__writable_calibrations,
+            non_default__ids,
+            non_default__writable_non_calibrations_non_ids,
+        ) = categorized
 
         return {
             "complete": annotated_fc_parameters,
             "read_only": non_default__read_only_params,
             "calibrations": non_default__writable_calibrations,
-            "non_calibrations": non_default__writable_non_calibrations,
+            "ids": non_default__ids,
+            "non_calibrations_non_ids": non_default__writable_non_calibrations_non_ids,
         }
 
     def _get_parameter_summary_msg(self, parameter_summary: dict[str, ParDict]) -> str:
@@ -1340,12 +1346,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         nr_total_params = len(parameter_summary.get("complete", {}))
         nr_non_default__read_only_params = len(parameter_summary.get("read_only", {}))
         nr_non_default__writable_calibrations = len(parameter_summary.get("calibrations", {}))
-        nr_non_default__writable_non_calibrations = len(parameter_summary.get("non_calibrations", {}))
+        nr_non_default__ids = len(parameter_summary.get("ids", {}))
+        nr_non_default__writable_non_calibrations_non_ids = len(parameter_summary.get("non_calibrations_non_ids", {}))
         nr_unchanged_params = (
             nr_total_params
             - nr_non_default__read_only_params
             - nr_non_default__writable_calibrations
-            - nr_non_default__writable_non_calibrations
+            - nr_non_default__ids
+            - nr_non_default__writable_non_calibrations_non_ids
         )
 
         # Format the summary message
@@ -1356,7 +1364,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             "ignore these, you can not change them\n\n"
             "{nr_non_default__writable_calibrations} non-default writable sensor-calibrations - "
             "non-reusable between vehicles\n\n"
-            "{nr_non_default__writable_non_calibrations} non-default writable non-sensor-calibrations - "
+            "{nr_non_default__ids} non-default ID parameters - "
+            "vehicle-instance dependent non-reusable values; review before reuse\n\n"
+            "{nr_non_default__writable_non_calibrations_non_ids} non-default writable non-sensor-calibrations non-IDs - "
             "these can be reused between similar vehicles"
         )
 
@@ -1365,10 +1375,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             nr_unchanged_params=nr_unchanged_params,
             nr_non_default__read_only_params=nr_non_default__read_only_params,
             nr_non_default__writable_calibrations=nr_non_default__writable_calibrations,
-            nr_non_default__writable_non_calibrations=nr_non_default__writable_non_calibrations,
+            nr_non_default__ids=nr_non_default__ids,
+            nr_non_default__writable_non_calibrations_non_ids=nr_non_default__writable_non_calibrations_non_ids,
         )
 
-    def write_summary_files_workflow(
+    def write_summary_files_workflow(  # pylint: disable=too-many-locals
         self,
         show_info: ShowInfoCallback,
         ask_confirmation: AskConfirmationCallback,
@@ -1405,7 +1416,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         complete_params = parameter_summary["complete"]
         read_only_params = parameter_summary["read_only"]
         calibration_params = parameter_summary["calibrations"]
-        non_calibration_params = parameter_summary["non_calibrations"]
+        id_params = parameter_summary["ids"]
+        non_calibration_non_ids_params = parameter_summary["non_calibrations_non_ids"]
 
         # Write individual summary files
         wrote_complete = self._write_single_summary_file_workflow(
@@ -1420,9 +1432,15 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             annotate_doc=False,
             ask_confirmation=ask_confirmation,
         )
-        wrote_non_calibrations = self._write_single_summary_file_workflow(
-            non_calibration_params,
-            "non-default_writable_non-calibrations.param",
+        wrote_ids = self._write_single_summary_file_workflow(
+            id_params,
+            "non-default_writable_ids.param",
+            annotate_doc=False,
+            ask_confirmation=ask_confirmation,
+        )
+        wrote_non_calibrations_non_ids = self._write_single_summary_file_workflow(
+            non_calibration_non_ids_params,
+            "non-default_writable_non-calibrations_non-ids.param",
             annotate_doc=False,
             ask_confirmation=ask_confirmation,
         )
@@ -1432,7 +1450,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             (wrote_complete, "complete.param"),
             (wrote_read_only, "non-default_read-only.param"),
             (wrote_calibrations, "non-default_writable_calibrations.param"),
-            (wrote_non_calibrations, "non-default_writable_non-calibrations.param"),
+            (wrote_ids, "non-default_writable_ids.param"),
+            (wrote_non_calibrations_non_ids, "non-default_writable_non-calibrations_non-ids.param"),
         ]
 
         # Write zip file with user confirmation

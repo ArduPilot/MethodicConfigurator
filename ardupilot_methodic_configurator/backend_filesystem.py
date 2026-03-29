@@ -489,20 +489,21 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         ip_comments = self.__all_intermediate_parameter_file_comments()
         return ParDict.from_float_dict(param_dict).annotate_with_comments(ip_comments)
 
-    def categorize_parameters(self, param: ParDict) -> tuple[ParDict, ParDict, ParDict]:
+    def categorize_parameters(self, param: ParDict) -> tuple[ParDict, ParDict, ParDict, ParDict]:
         """
-        Categorize parameters into three categories based on their default values and documentation attributes.
+        Categorize parameters into four categories based on their default values and documentation attributes.
 
-        This method iterates through the provided ParDict of parameters and categorizes them into three groups:
+        This method iterates through the provided ParDict of parameters and categorizes them into four groups:
         - Non-default, read-only parameters
         - Non-default, writable calibrations
-        - Non-default, writable non-calibrations
+        - Non-default, writable IDs
+        - Non-default, writable non-calibrations, non-IDs
 
         Args:
           param (ParDict): A ParDict mapping parameter names to their 'Par' objects.
 
         Returns:
-          Tuple[ParDict, ParDict, ParDict]: A tuple of three ParDict objects.
+          Tuple[ParDict, ParDict, ParDict, ParDict]: A tuple of four ParDict objects.
                                   Each ParDict represents one of the categories mentioned above.
 
         """
