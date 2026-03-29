@@ -569,7 +569,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ), corrected
         return "", None  # value is within valid interval, return empty string as there is no error
 
-    def validate_all_data(self, entry_values: dict[ComponentPath, str]) -> tuple[bool, list[str]]:
+    def validate_all_data(self, entry_values: dict[ComponentPath, str]) -> tuple[bool, list[str]]:  # pylint: disable=too-many-branches
         """
         Centralize all data validation logic.
 
@@ -589,10 +589,19 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 errors.append(error_msg.format(value=value, paths_str=paths_str, allowed_str=allowed_str))
                 continue
 
+            # Keep protocol choices in sync with connection type changes in this batch.
+            # This ensures dependent fields like Battery Monitor protocol are validated correctly
+            # when both Type and Protocol are present in entry_values.
+            if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type" and isinstance(value, str):
+                self._update_possible_choices_for_path(path, value)
+
             # Check for duplicate connections
             if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type":
                 if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4", "None"}:
-                    battery_monitor_protocol = self.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
+                    battery_monitor_protocol = entry_values.get(
+                        ("Battery Monitor", "FC Connection", "Protocol"),
+                        self.get_component_value(("Battery Monitor", "FC Connection", "Protocol")),
+                    )
 
                     # Allow certain combinations
                     if path[0] in {"Telemetry", "RC Receiver"} and fc_serial_connection[value] in {"Telemetry", "RC Receiver"}:
