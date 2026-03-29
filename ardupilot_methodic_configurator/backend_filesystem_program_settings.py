@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
+import os
 from contextlib import suppress as contextlib_suppress
 from dataclasses import dataclass
 from glob import glob as glob_glob
@@ -470,6 +471,12 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def get_templates_base_dir() -> str:
+        # Allow tests to override the templates directory in a safe temporary location
+        test_templates_dir = os.environ.get("AMC_COMPONENT_TEMPLATES_DIR_TEST")
+        if test_templates_dir:
+            logging_debug("Using test templates directory: %s", test_templates_dir)
+            return test_templates_dir
+
         package_path = importlib_files("ardupilot_methodic_configurator")
         logging_debug("current script directory1: %s", package_path)
         if platform_system() == "Windows":
