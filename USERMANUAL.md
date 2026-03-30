@@ -367,6 +367,7 @@ pie title Summary files example
     "Non-default writable sensor calibrations - non-default_writable_calibrations.param" : 71
     "Non-default writable IDs - non-default_writable_ids.param" : 3
     "Non-default writable non-sensor-calibrations, non-IDs - non-default_writable_non-calibrations_non-ids.param" : 217
+    "Reusable parameters, including defaults - reusable.param" : 945
 ```
 
 If the diagram above does not display correctly [look here](https://github.com/ArduPilot/MethodicConfigurator/blob/master/USERMANUAL.md#9-completing-the-configuration-process)
@@ -391,6 +392,7 @@ After the summary message box is displayed, the application will write the summa
 - `non-default_writable_calibrations.param`: Contains all non-default writable sensor calibration 🟨 parameters. These are non-reusable.
 - `non-default_writable_ids.param`: Contains all non-default writable IDs. These are non-reusable.
 - `non-default_writable_non-calibrations_non-ids.param`: Contains all non-default writable non-sensor-calibration, non-IDs parameters. These are reusable across similar vehicles.
+- `reusable.param`: the same as above, but includes (non-read only, non-calibration, non-IDs) default values
 
 The summary files provide a clear overview of the changes made.
 

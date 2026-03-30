@@ -171,6 +171,7 @@ To semi-automate the steps and processes on that guide the following *system des
   - Non-default, writable calibrations *reason changed* annotated parameters in `non-default_writable_calibrations.param` file
   - Non-default, writable IDs *reason changed* annotated parameters in `non-default_writable_ids.param` file
   - Non-default, writable non-calibrations, non-IDs *reason changed* annotated parameters in `non-default_writable_non-calibrations_non-ids.param` file
+  - Reusable *reason changed* annotated parameters in `reusable.param` file
 - automatically create a parameter backup before the first usage of the software to change parameters [PR #173](https://github.com/ArduPilot/MethodicConfigurator/pull/173)
   - Only backs up the parameters if a backup file does not exist and only if AMC has not yet been used to write parameters to the FC
 
