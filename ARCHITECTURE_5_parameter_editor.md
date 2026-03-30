@@ -358,9 +358,10 @@ At completion, the system generates several summary files:
 
 - `complete.param`: All parameters with change reasons
 - `non-default_read-only.param`: Read-only parameters that differ from defaults
-- `non-default_writable_calibrations.param`: Vehicle-specific calibrations
-- `non-default_writable_ids.param`: Vehicle-specific IDs
-- `non-default_writable_non-calibrations_non-ids.param`: Reusable configuration parameters
+- `non-default_writable_calibrations.param`: Vehicle-specific calibrations that differ from defaults
+- `non-default_writable_ids.param`: Vehicle-specific IDs that differ from defaults
+- `non-default_writable_non-calibrations_non-ids.param`: Reusable configuration parameters that differ from defaults
+- `reusable.param`: Reusable configuration parameters including reusable defaults
 
 ### Configuration Steps Definition
 

@@ -1418,6 +1418,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         calibration_params = parameter_summary["calibrations"]
         id_params = parameter_summary["ids"]
         non_calibration_non_ids_params = parameter_summary["non_calibrations_non_ids"]
+        keys_to_remove = set(read_only_params) | set(calibration_params) | set(id_params)
+        reusable = ParDict({k: v for k, v in complete_params.items() if k not in keys_to_remove})
 
         # Write individual summary files
         wrote_complete = self._write_single_summary_file_workflow(
@@ -1444,6 +1446,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             annotate_doc=False,
             ask_confirmation=ask_confirmation,
         )
+        wrote_reusable = self._write_single_summary_file_workflow(
+            reusable,
+            "reusable.param",
+            annotate_doc=False,
+            ask_confirmation=ask_confirmation,
+        )
 
         # Create list of files for zipping
         files_to_zip = [
@@ -1452,6 +1460,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             (wrote_calibrations, "non-default_writable_calibrations.param"),
             (wrote_ids, "non-default_writable_ids.param"),
             (wrote_non_calibrations_non_ids, "non-default_writable_non-calibrations_non-ids.param"),
+            (wrote_reusable, "reusable.param"),
         ]
 
         # Write zip file with user confirmation
