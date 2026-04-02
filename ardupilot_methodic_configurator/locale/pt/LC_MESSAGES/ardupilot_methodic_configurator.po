@@ -4146,7 +4146,7 @@ msgid ""
 "\n"
 "{nr_non_default__writable_non_calibrations_non_ids} non-default writable non-"
 "sensor-calibrations non-IDs - these can be reused between similar vehicles"
-msgstr ""
+msgstr "Configuração metódica de {nr_total_params} parâmetros concluída:\n\n{nr_unchanged_params} mantiveram o valor por defeito\n\n{nr_non_default__read_only_params} parâmetros só de leitura com valor diferente do padrão - ignore, não pode alterá-los\n\n{nr_non_default__writable_calibrations} calibrações de sensores editáveis com valor diferente do padrão - não reutilizável entre veículos\n\n{nr_non_default__ids} parâmetros de ID com valor diferente do padrão - valores dependentes de cada instância do veículo, não reutilizáveis; reveja antes de reutilizar\n\n{nr_non_default__writable_non_calibrations_non_ids} parâmetros editáveis que não são calibrações de sensores nem IDs com valor diferente do padrão - podem ser reutilizados entre veículos semelhantes"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1413
 msgid "Last parameter file processed"

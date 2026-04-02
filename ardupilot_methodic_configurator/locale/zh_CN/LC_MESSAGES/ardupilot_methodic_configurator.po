@@ -3764,7 +3764,7 @@ msgid ""
 "\n"
 "{nr_non_default__writable_non_calibrations_non_ids} non-default writable non-"
 "sensor-calibrations non-IDs - these can be reused between similar vehicles"
-msgstr ""
+msgstr "{nr_total_params} 个参数的方法化配置完成：\n\n{nr_unchanged_params} 个参数保持默认值\n\n{nr_non_default__read_only_params} 个非默认的只读参数 - 忽略这些，你无法更改它们\n\n{nr_non_default__writable_calibrations} 个非默认的可写传感器校准参数 - 不可在车辆之间复用\n\n{nr_non_default__ids} 个非默认的 ID 参数 - 与车辆实例相关的不可复用值；在复用前请仔细检查\n\n{nr_non_default__writable_non_calibrations_non_ids} 个非默认的可写非传感器校准非 ID 参数 - 可在类似车辆间复用"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1413
 msgid "Last parameter file processed"

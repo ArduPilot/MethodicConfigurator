@@ -4005,7 +4005,7 @@ msgid ""
 "\n"
 "{nr_non_default__writable_non_calibrations_non_ids} non-default writable non-"
 "sensor-calibrations non-IDs - these can be reused between similar vehicles"
-msgstr ""
+msgstr "{nr_total_params}個のパラメータのメソディック設定が完了しました:\n\n{nr_unchanged_params}個はデフォルト値のままです\n\n{nr_non_default__read_only_params}個の非デフォルト読み取り専用パラメータ - これらは変更できないため無視してください\n\n{nr_non_default__writable_calibrations}個の非デフォルト書き込み可能なセンサキャリブレーション - 車両間では再利用できません\n\n{nr_non_default__ids}個の非デフォルトIDパラメータ - 車両インスタンス依存の再利用不可値です。再利用前にご確認ください\n\n{nr_non_default__writable_non_calibrations_non_ids}個の非デフォルト書き込み可能な非センサキャリブレーション・非IDパラメータ - これらは類似車両間で再利用可能です"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1413
 msgid "Last parameter file processed"
