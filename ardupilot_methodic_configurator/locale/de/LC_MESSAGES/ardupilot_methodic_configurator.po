@@ -4139,7 +4139,7 @@ msgid ""
 "\n"
 "{nr_non_default__writable_non_calibrations_non_ids} non-default writable non-"
 "sensor-calibrations non-IDs - these can be reused between similar vehicles"
-msgstr ""
+msgstr "Methodische Konfiguration von {nr_total_params} Parametern abgeschlossen:\n\n{nr_unchanged_params} behielten ihren Standardwert\n\n{nr_non_default__read_only_params} nicht-standardisierte, schreibgeschützte Parameter – ignorieren Sie diese, sie können nicht geändert werden\n\n{nr_non_default__writable_calibrations} nicht-standardisierte, beschreibbare Sensor-Kalibrierungen – diese sind nicht zwischen Fahrzeugen wiederverwendbar\n\n{nr_non_default__ids} nicht-standardisierte ID-Parameter – fahrzeugspezifische, nicht wiederverwendbare Werte; bitte vor Wiederverwendung überprüfen\n\n{nr_non_default__writable_non_calibrations_non_ids} nicht-standardisierte, beschreibbare, keine Sensor-Kalibrierungen, keine IDs – diese können zwischen ähnlichen Fahrzeugen wiederverwendet werden"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1413
 msgid "Last parameter file processed"
