@@ -2642,7 +2642,7 @@ msgstr "Autotune Yaw-Achse"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "Critical failsafe voltage x nr. of cells"
-msgstr ""
+msgstr "Kritische Failsafe-Spannung x Anzahl der Zellen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:253
 msgid "Defined in component editor"
@@ -2750,7 +2750,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:273
 msgid "Low failsafe voltage x nr. of cells"
-msgstr ""
+msgstr "Niedrige Failsafe-Spannung x Anzahl der Zellen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:274
 msgid "No more system identification chip injections"
@@ -2768,7 +2768,7 @@ msgstr "Eine .bin-Protokolldatei pro Flug, nicht pro Batterie/Neustart"
 msgid ""
 "Only arm above this voltage, to avoid taking off with insufficient battery "
 "capacity"
-msgstr ""
+msgstr "Nur über dieser Spannung scharfstellen, um einen Start mit unzureichender Batteriekapazität zu vermeiden"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:278
 msgid "Only for IMU and Raw-IMU"
@@ -2802,11 +2802,11 @@ msgstr "Zurückkehren und am Home- oder Rally-Punkt landen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:284
 msgid "Scale the PIDs up when battery voltage is above this threshold"
-msgstr ""
+msgstr "Skaliere die PIDs nach oben, wenn die Batteriespannung über diesem Schwellenwert liegt"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:285
 msgid "Scale the PIDs up when battery voltage is below this threshold"
-msgstr ""
+msgstr "Skaliere die PIDs nach oben, wenn die Batteriespannung unter diesem Schwellenwert liegt"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:286
 msgid "Selected in component editor window"
@@ -4675,13 +4675,13 @@ msgstr "BATT_CAPACITY-Parameter nicht in fc_parameters gefunden"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:438
 msgid "Invalid voltage type %s for battery voltage import"
-msgstr ""
+msgstr "Ungültiger Spannungstyp %s für Batterieimport"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:445
 msgid ""
 "Calculated  %s voltage %.2f V is out of expected range for %s chemistry "
 "(%.2f - %.2f V)"
-msgstr ""
+msgstr "Berechnete %s Spannung %.2f V liegt außerhalb des erwarteten Bereichs für %s Chemie (%.2f - %.2f V)"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:453
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:552
@@ -4692,7 +4692,7 @@ msgstr "Fehler beim Verarbeiten des %s-Parameters: %s"
 msgid ""
 "Current chemistry %s does not have valid volt per cell for %s, ignoring "
 "current chemistry"
-msgstr ""
+msgstr "Aktuelle Chemie %s hat keinen gültigen Zellenspannungswert für %s, aktuelle Chemie wird ignoriert"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:544
 msgid "Volt per cell value for %s is zero or invalid: %s"
@@ -7599,7 +7599,7 @@ msgstr "Version"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:55
 msgid "Volt per cell arm"
-msgstr ""
+msgstr "Zellenspannung beim Scharfstellen"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:56
 msgid "Volt per cell crit"
@@ -7615,7 +7615,7 @@ msgstr "Volt pro Zelle max"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:59
 msgid "Volt per cell min"
-msgstr ""
+msgstr "Minimale Zellenspannung"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:68
 msgid "Additional notes or comments about the component"
@@ -7623,7 +7623,7 @@ msgstr "Zusätzliche Hinweise oder Kommentare zur Komponente"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:69
 msgid "Arm threshold voltage per cell used for allowing arming (e.g., 3.7V)"
-msgstr ""
+msgstr "Scharfstell-Schwellenwert Zellenspannung, die zum Scharfstellen verwendet wird (z. B. 3,7V)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:70
 msgid "Base definition that all vehicle components inherit from"
@@ -7742,7 +7742,7 @@ msgstr "Minimales Startgewicht in Kilogramm"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:97
 msgid "Minimum voltage per cell below which PID scaling stops (e.g., 3.3V)"
-msgstr ""
+msgstr "Mindest-Zellenspannung, unterhalb derer das PID-Scaling stoppt (z. B. 3,3V)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:98
 msgid "Name of the configuration template"
