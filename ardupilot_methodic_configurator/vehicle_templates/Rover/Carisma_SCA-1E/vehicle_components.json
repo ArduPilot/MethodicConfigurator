@@ -57,8 +57,10 @@
             "Specifications": {
                 "Chemistry": "NiMH",
                 "Volt per cell max": 1.4,
+                "Volt per cell arm": 1.4833,
                 "Volt per cell low": 1.2,
                 "Volt per cell crit": 1.1,
+                "Volt per cell min": 1.0833,
                 "Number of cells": 6,
                 "Capacity mAh": 1400
             },
@@ -183,6 +185,6 @@
             "Notes": ""
         }
     },
-    "Program version": "2.9.6",
+    "Program version": "2.11.0",
     "Configuration template": "AION_R1"
 }

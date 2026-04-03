@@ -1,5 +1,5 @@
 BATT_AMP_PERVLT,52.706  # new calibrated value for Mamba F45_128k 4in1 ESC
-BATT_ARM_VOLT,23.6  # Do not allow arming below this voltage
+BATT_ARM_VOLT,23.5998  # Only arm above this voltage, to avoid taking off with insufficient battery capacity
 BATT_CAPACITY,3000  # Total battery capacity specified in the component editor
 BATT_CRT_MAH,0  # When only 0mAh out of the total 3000mAh remain, trigger critical failsafe
 BATT_CRT_VOLT,21.3  # (Critical voltage + 0.0) x no. of cells
@@ -11,5 +11,5 @@ BATT_LOW_MAH,600  # When only 600mAh out of the total 3000mAh remain, trigger lo
 BATT_LOW_VOLT,21.6  # (Low voltage + 0.0) x no. of cells
 BATT_MONITOR,4  # Selected in component editor window
 BATT_VOLT_MULT,11  # Use a power source with a voltage close to BATT_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it
-MOT_BAT_VOLT_MAX,25.2  # (Max voltage + 0.0) x no. of cells
-MOT_BAT_VOLT_MIN,21.3  # (Critical voltage + 0.0) x no. of cells
+MOT_BAT_VOLT_MAX,25.2  # Scale the PIDs up when battery voltage is below this threshold
+MOT_BAT_VOLT_MIN,21.3  # Scale the PIDs up when battery voltage is above this threshold
