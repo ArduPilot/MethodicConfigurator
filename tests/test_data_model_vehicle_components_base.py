@@ -10,12 +10,15 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from math import isnan
 from unittest.mock import MagicMock, Mock
 
 import pytest
 from test_data_model_vehicle_components_common import BasicTestMixin, ComponentDataModelFixtures, RealisticDataTestMixin
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
+from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentData, ComponentDataModelBase
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
@@ -577,7 +580,7 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         component_model = ComponentDataModelBase(data, component_datatypes, schema)
 
         # Call update_json_structure to create the Components key
-        component_model.update_json_structure()
+        component_model.update_json_structure(fc_parameters={})
 
         # Should create Components key
         assert "Components" in component_model._data
@@ -1054,6 +1057,217 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
         """
         empty_model.set_configuration_template(None)
         assert empty_model._data["Configuration template"] is None
+
+    # ---- Tests for Volt per cell arm / min migration (PR: Batt specifications) ----
+
+    def test_update_json_structure_adds_arm_and_min_voltages_to_legacy_data(self, basic_model) -> None:
+        """
+        Legacy components.json without arm/min voltages gets defaults populated.
+
+        GIVEN: A model whose battery Specifications has Volt per cell max/low/crit but NOT arm or min
+        WHEN: update_json_structure() is called
+        THEN: Volt per cell arm and Volt per cell min are added with chemistry-appropriate defaults
+        """
+        model = basic_model
+        # Directly set legacy-style battery data (no arm, no min)
+        model._data.setdefault("Components", {}).setdefault("Battery", {})["Specifications"] = {
+            "Chemistry": "Lipo",
+            "Volt per cell max": 4.2,
+            "Volt per cell low": 3.6,
+            "Volt per cell crit": 3.3,
+            "Number of cells in series": 4,
+            "Capacity mAh": 5000,
+        }
+
+        # Act
+        model.update_json_structure()
+
+        # Assert
+        specs = model._data["Components"]["Battery"]["Specifications"]
+        expected_arm = BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell arm")
+        expected_min = BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell min")
+        assert "Volt per cell arm" in specs, "arm voltage field should be added during migration"
+        assert "Volt per cell min" in specs, "min voltage field should be added during migration"
+        assert specs["Volt per cell arm"] == pytest.approx(expected_arm)
+        assert specs["Volt per cell min"] == pytest.approx(expected_min)
+
+    def test_update_json_structure_preserves_existing_arm_and_min_voltages(self, basic_model) -> None:
+        """
+        Migration does NOT overwrite existing arm and min values.
+
+        GIVEN: A model that already has Volt per cell arm and Volt per cell min set to custom values
+        WHEN: update_json_structure() is called
+        THEN: The existing arm and min values are left unchanged
+        """
+        model = basic_model
+        custom_arm = 3.75
+        custom_min = 3.1
+        model._data.setdefault("Components", {}).setdefault("Battery", {})["Specifications"] = {
+            "Chemistry": "Lipo",
+            "Volt per cell max": 4.2,
+            "Volt per cell arm": custom_arm,
+            "Volt per cell low": 3.6,
+            "Volt per cell crit": 3.3,
+            "Volt per cell min": custom_min,
+            "Number of cells in series": 4,
+            "Capacity mAh": 5000,
+        }
+
+        # Act
+        model.update_json_structure()
+
+        # Assert
+        specs = model._data["Components"]["Battery"]["Specifications"]
+        assert specs["Volt per cell arm"] == pytest.approx(custom_arm), "arm voltage should not be overwritten"
+        assert specs["Volt per cell min"] == pytest.approx(custom_min), "min voltage should not be overwritten"
+
+    def test_update_json_structure_uses_lipo_defaults_for_unknown_chemistry(self, basic_model) -> None:
+        """
+        Migration falls back to Lipo defaults when chemistry is unknown.
+
+        GIVEN: A model with an unrecognised battery chemistry
+        WHEN: update_json_structure() is called
+        THEN: arm and min voltages default to Lipo recommended values
+        """
+        model = basic_model
+        model._data.setdefault("Components", {}).setdefault("Battery", {})["Specifications"] = {
+            "Chemistry": "AlienPack42",  # Unknown chemistry
+            "Volt per cell max": 4.2,
+            "Volt per cell low": 3.6,
+            "Volt per cell crit": 3.3,
+        }
+
+        # Act
+        model.update_json_structure()
+
+        # Assert
+        specs = model._data["Components"]["Battery"]["Specifications"]
+        lipo_arm = BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell arm")
+        lipo_min = BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell min")
+        assert specs["Volt per cell arm"] == pytest.approx(lipo_arm), "unknown chemistry should fall back to Lipo arm"
+        assert specs["Volt per cell min"] == pytest.approx(lipo_min), "unknown chemistry should fall back to Lipo min"
+
+    def test_update_json_structure_skips_migration_when_no_max_voltage(self, basic_model) -> None:
+        """
+        Migration is only triggered when Volt per cell max already exists.
+
+        GIVEN: A model with battery Specifications that does NOT have Volt per cell max
+        WHEN: update_json_structure() is called
+        THEN: Volt per cell arm and Volt per cell min are NOT added
+        """
+        model = basic_model
+        model._data.setdefault("Components", {}).setdefault("Battery", {})["Specifications"] = {
+            "Chemistry": "Lipo",
+            "Number of cells in series": 4,
+            "Capacity mAh": 5000,
+            # Deliberately omitting all voltage fields
+        }
+
+        # Act
+        model.update_json_structure()
+
+        # Assert: no voltages added when max was absent
+        specs = model._data["Components"]["Battery"]["Specifications"]
+        assert "Volt per cell arm" not in specs, "arm should not be created without max voltage present"
+        assert "Volt per cell min" not in specs, "min should not be created without max voltage present"
+
+    def test_import_batt_arm_volt_returns_value_from_fc_parameters(self, basic_model) -> None:
+        """
+        import_fc_or_file_parameter returns the FC parameter value when BATT_ARM_VOLT is present.
+
+        GIVEN: fc_parameters contains BATT_ARM_VOLT and file_parameters is empty
+        WHEN: import_fc_or_file_parameter is called for BATT_ARM_VOLT
+        THEN: The FC parameter value is returned as a float
+        """
+        result = basic_model.import_fc_or_file_parameter({"BATT_ARM_VOLT": 16.8}, {}, "BATT_ARM_VOLT")
+        assert result == pytest.approx(16.8)
+
+    def test_import_batt_arm_volt_returns_value_from_file_parameters(self, basic_model) -> None:
+        """
+        import_fc_or_file_parameter falls back to file_parameters when fc_parameters lacks the key.
+
+        GIVEN: fc_parameters is empty but file_parameters has BATT_ARM_VOLT in a param file
+        WHEN: import_fc_or_file_parameter is called for BATT_ARM_VOLT
+        THEN: The file Par value is returned as a float
+        """
+        par_dict: ParDict = ParDict({"BATT_ARM_VOLT": Par(15.2)})
+        result = basic_model.import_fc_or_file_parameter({}, {"08_batt1.param": par_dict}, "BATT_ARM_VOLT")
+        assert result == pytest.approx(15.2)
+
+    def test_import_mot_batt_volt_min_returns_value_from_fc_parameters(self, basic_model) -> None:
+        """
+        import_fc_or_file_parameter returns the FC parameter value when MOT_BAT_VOLT_MIN is present.
+
+        GIVEN: fc_parameters contains MOT_BAT_VOLT_MIN and file_parameters is empty
+        WHEN: import_fc_or_file_parameter is called for MOT_BAT_VOLT_MIN
+        THEN: The FC parameter value is returned as a float
+        """
+        result = basic_model.import_fc_or_file_parameter({"MOT_BAT_VOLT_MIN": 12.8}, {}, "MOT_BAT_VOLT_MIN")
+        assert result == pytest.approx(12.8)
+
+    def test_import_mot_batt_volt_min_returns_value_from_file_parameters(self, basic_model) -> None:
+        """
+        import_fc_or_file_parameter falls back to file_parameters when fc_parameters lacks the key.
+
+        GIVEN: fc_parameters is empty but file_parameters has MOT_BAT_VOLT_MIN in a param file
+        WHEN: import_fc_or_file_parameter is called for MOT_BAT_VOLT_MIN
+        THEN: The file Par value is returned as a float
+        """
+        par_dict: ParDict = ParDict({"MOT_BAT_VOLT_MIN": Par(12.0)})
+        result = basic_model.import_fc_or_file_parameter({}, {"08_batt1.param": par_dict}, "MOT_BAT_VOLT_MIN")
+        assert result == pytest.approx(12.0)
+
+    def test_update_json_structure_derives_arm_and_min_from_fc_parameters(self, basic_model) -> None:
+        """
+        Migration divides FC total-voltage params by cell count when both are available.
+
+        GIVEN: Battery Specifications with Volt per cell max and Number of cells but NO arm/min
+        AND: fc_parameters contains BATT_ARM_VOLT and MOT_BAT_VOLT_MIN
+        WHEN: update_json_structure() is called with those fc_parameters
+        THEN: Volt per cell arm = BATT_ARM_VOLT / num_cells
+        AND: Volt per cell min = MOT_BAT_VOLT_MIN / num_cells
+        """
+        model = basic_model
+        num_cells = 4
+        model._data.setdefault("Components", {}).setdefault("Battery", {})["Specifications"] = {
+            "Chemistry": "Lipo",
+            "Volt per cell max": 4.2,
+            "Volt per cell low": 3.6,
+            "Volt per cell crit": 3.3,
+            "Number of cells": num_cells,
+            "Capacity mAh": 5000,
+        }
+
+        fc_parameters = {"BATT_ARM_VOLT": 15.2, "MOT_BAT_VOLT_MIN": 12.4}
+        model.update_json_structure(fc_parameters=fc_parameters)
+
+        specs = model._data["Components"]["Battery"]["Specifications"]
+        assert specs["Volt per cell arm"] == pytest.approx(15.2 / num_cells)
+        assert specs["Volt per cell min"] == pytest.approx(12.4 / num_cells)
+
+    def test_import_batt_arm_volt_returns_nan_when_key_absent_in_file_parameters(self, basic_model) -> None:
+        """
+        import_fc_or_file_parameter returns nan when file_parameters entries do not contain BATT_ARM_VOLT.
+
+        GIVEN: fc_parameters is empty AND file_parameters has a param file WITHOUT BATT_ARM_VOLT
+        WHEN: import_fc_or_file_parameter is called for BATT_ARM_VOLT
+        THEN: nan is returned (no crash, no incorrect value)
+        """
+        par_dict: ParDict = ParDict({"SOME_OTHER_PARAM": Par(1.0)})
+        result = basic_model.import_fc_or_file_parameter({}, {"08_batt1.param": par_dict}, "BATT_ARM_VOLT")
+        assert isnan(result)
+
+    def test_import_mot_batt_volt_min_returns_nan_when_key_absent_in_file_parameters(self, basic_model) -> None:
+        """
+        import_fc_or_file_parameter returns nan when file_parameters entries lack MOT_BAT_VOLT_MIN.
+
+        GIVEN: fc_parameters is empty AND file_parameters has a param file WITHOUT MOT_BAT_VOLT_MIN
+        WHEN: import_fc_or_file_parameter is called for MOT_BAT_VOLT_MIN
+        THEN: nan is returned (no crash, no incorrect value)
+        """
+        par_dict: ParDict = ParDict({"SOME_OTHER_PARAM": Par(1.0)})
+        result = basic_model.import_fc_or_file_parameter({}, {"08_batt1.param": par_dict}, "MOT_BAT_VOLT_MIN")
+        assert isnan(result)
 
 
 class TestComponentReordering:

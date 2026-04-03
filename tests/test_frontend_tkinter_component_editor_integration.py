@@ -150,8 +150,10 @@ class TestComponentEditorIntegration:
         # Test validation of valid battery cell voltage
         editor.data_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
         editor.data_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), "4.2")
+        editor.data_model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), "3.8")
         editor.data_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), "3.5")
         editor.data_model.set_component_value(("Battery", "Specifications", "Volt per cell crit"), "3.3")
+        editor.data_model.set_component_value(("Battery", "Specifications", "Volt per cell min"), "3.2")
 
         # Directly validate these values using validate_entry_limits instead
         # The validate_cell_voltage method is internal and should not be called directly
@@ -293,7 +295,7 @@ class TestComponentEditorWithMinimalMocking:
             patch("PIL.ImageTk.PhotoImage"),
         ):
             # Create the editor with real filesystem and data model
-            editor = ComponentEditorWindow("1.0.0", filesystem)
+            editor = ComponentEditorWindow("1.0.0", filesystem, {})
 
             # Use the real root from conftest.py
             editor.root = root
@@ -344,7 +346,7 @@ class TestComponentEditorWithMinimalMocking:
             patch("PIL.ImageTk.PhotoImage"),
         ):
             # Initialize with existing data_model using dependency injection
-            editor = ComponentEditorWindow("1.0.0", filesystem)
+            editor = ComponentEditorWindow("1.0.0", filesystem, {})
             editor.data_model = data_model  # Override the data model
             editor.root = root  # Use the real root from conftest.py
 

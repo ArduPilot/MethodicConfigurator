@@ -23,6 +23,7 @@ from test_frontend_tkinter_component_editor_base import (
     setup_common_editor_mocks,
 )
 
+from ardupilot_methodic_configurator.data_model_vehicle_components_validation import BATTERY_CELL_VOLTAGE_PATHS
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
@@ -261,19 +262,15 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
 
         # Set up mock data model
         editor_with_mocked_root.data_model.set_component_value = MagicMock()
-        # Need 4 return values: 1 for initial chemistry check + 3 for voltage values
-        editor_with_mocked_root.data_model.get_component_value = MagicMock(side_effect=["Different", 4.2, 3.3, 3.0])
+        # Need 6 return values: 1 for initial chemistry check + 5 for voltage values
+        editor_with_mocked_root.data_model.get_component_value = MagicMock(side_effect=["Different", 4.2, 3.6, 3.3, 3.0, 2.5])
 
         # Set up mock entry widgets - need to add the chemistry path to entry_widgets for the method to proceed
         mock_chemistry_entry = MagicMock()  # Mock for the chemistry combobox
         editor_with_mocked_root.entry_widgets[component_path] = mock_chemistry_entry
 
         mock_entries = {}
-        voltage_paths = [
-            ("Battery", "Specifications", "Volt per cell max"),
-            ("Battery", "Specifications", "Volt per cell low"),
-            ("Battery", "Specifications", "Volt per cell crit"),
-        ]
+        voltage_paths = BATTERY_CELL_VOLTAGE_PATHS
         for path in voltage_paths:
             mock_entry = MagicMock()
             mock_entries[path] = mock_entry
@@ -286,7 +283,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         # Should update data model and all voltage entries
         editor_with_mocked_root.data_model.set_component_value.assert_called_once_with(component_path, chemistry)
 
-        expected_values = [4.2, 3.3, 3.0]
+        expected_values = [4.2, 3.6, 3.3, 3.0, 2.5]
         for i, path in enumerate(voltage_paths):
             mock_entries[path].delete.assert_called_once_with(0, tk.END)
             mock_entries[path].insert.assert_called_once_with(0, str(expected_values[i]))
@@ -308,11 +305,7 @@ class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
         editor_with_mocked_root.entry_widgets[component_path] = mock_chemistry_entry
 
         # Set up mock entry widgets for ALL voltage paths to avoid KeyError
-        voltage_paths = [
-            ("Battery", "Specifications", "Volt per cell max"),
-            ("Battery", "Specifications", "Volt per cell low"),
-            ("Battery", "Specifications", "Volt per cell crit"),
-        ]
+        voltage_paths = BATTERY_CELL_VOLTAGE_PATHS
         for voltage_path in voltage_paths:
             mock_entry = MagicMock()
             editor_with_mocked_root.entry_widgets[voltage_path] = mock_entry
