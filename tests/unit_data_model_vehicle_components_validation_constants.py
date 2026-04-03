@@ -16,6 +16,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     ANALOG_PORTS,
     BATT_MONITOR_CONNECTION,
     BATTERY_CELL_VOLTAGE_PATHS,
+    BATTERY_CELL_VOLTAGE_TYPES,
     CAN_PORTS,
     FC_CONNECTION_TYPE_PATHS,
     GNSS_RECEIVER_CONNECTION,
@@ -66,12 +67,8 @@ class TestValidationConstants:
             assert len(path) == 3
             assert all(isinstance(element, str) for element in path)
 
-        # Verify specific required paths exist
-        expected_paths = [
-            ("Battery", "Specifications", "Volt per cell max"),
-            ("Battery", "Specifications", "Volt per cell low"),
-            ("Battery", "Specifications", "Volt per cell crit"),
-        ]
+        # Verify specific required paths exist and use shared constants for maintainability
+        expected_paths = [("Battery", "Specifications", vt) for vt in BATTERY_CELL_VOLTAGE_TYPES]
 
         for expected_path in expected_paths:
             assert expected_path in BATTERY_CELL_VOLTAGE_PATHS
@@ -82,13 +79,12 @@ class TestValidationConstants:
             assert path[1] == "Specifications"
             assert path[2].startswith("Volt per cell")
 
-        # Should contain exactly the three expected voltage types
-        assert len(BATTERY_CELL_VOLTAGE_PATHS) == 3
+        # Should contain exactly the five expected voltage types
+        assert len(BATTERY_CELL_VOLTAGE_PATHS) == 5
 
         # Verify that the expected voltage types are present
         voltage_types = {path[2] for path in BATTERY_CELL_VOLTAGE_PATHS}
-        expected_voltage_types = {"Volt per cell max", "Volt per cell low", "Volt per cell crit"}
-        assert voltage_types == expected_voltage_types
+        assert voltage_types == set(BATTERY_CELL_VOLTAGE_TYPES)
 
         # Should not have duplicates
         assert len(BATTERY_CELL_VOLTAGE_PATHS) == len(set(BATTERY_CELL_VOLTAGE_PATHS))

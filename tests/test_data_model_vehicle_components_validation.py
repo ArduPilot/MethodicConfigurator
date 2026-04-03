@@ -169,17 +169,23 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
         # Check that voltage values are set automatically
         max_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+        arm_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
         low_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell low"))
         crit_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell crit"))
+        min_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell min"))
 
         # Values should exist and be the expected float values (or defaults if not set)
         # The empty model may not have created the battery structure yet, so check if values are numeric
         if isinstance(max_voltage, (int, float)):
-            assert max_voltage == BatteryCell.recommended_max_voltage("Lipo")
+            assert max_voltage == BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell max")
+        if isinstance(arm_voltage, (int, float)):
+            assert arm_voltage == BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell arm")
         if isinstance(low_voltage, (int, float)):
-            assert low_voltage == BatteryCell.recommended_low_voltage("Lipo")
+            assert low_voltage == BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell low")
         if isinstance(crit_voltage, (int, float)):
-            assert crit_voltage == BatteryCell.recommended_crit_voltage("Lipo")
+            assert crit_voltage == BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell crit")
+        if isinstance(min_voltage, (int, float)):
+            assert min_voltage == BatteryCell.recommended_cell_voltage("Lipo", "Volt per cell min")
 
     def test_set_component_value_different_chemistries(self, empty_model) -> None:
         """
@@ -197,12 +203,16 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
             # Verify that recommended voltages are set correctly
             max_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+            arm_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
             low_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell low"))
             crit_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell crit"))
+            min_voltage = model.get_component_value(("Battery", "Specifications", "Volt per cell min"))
 
-            assert max_voltage == BatteryCell.recommended_max_voltage(chemistry)
-            assert low_voltage == BatteryCell.recommended_low_voltage(chemistry)
-            assert crit_voltage == BatteryCell.recommended_crit_voltage(chemistry)
+            assert max_voltage == BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell max")
+            assert arm_voltage == BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell arm")
+            assert low_voltage == BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell low")
+            assert crit_voltage == BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell crit")
+            assert min_voltage == BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell min")
 
     def test_set_component_value_no_side_effects_for_non_chemistry(self, empty_model) -> None:
         """
@@ -410,8 +420,10 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
         # Set up voltage relationships
         model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
         model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
         model.set_component_value(("Battery", "Specifications", "Volt per cell crit"), 3.3)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.2)
 
         test_cases = [
             (("Battery", "Specifications", "Volt per cell max"), "4.2"),
@@ -437,8 +449,10 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
         # Set up conflicting voltage relationships
         model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
         model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
         model.set_component_value(("Battery", "Specifications", "Volt per cell crit"), 3.3)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.2)
 
         # Test max voltage below low voltage
         error_msg, corrected_value = model.validate_cell_voltage("3.5", ("Battery", "Specifications", "Volt per cell max"))
@@ -538,17 +552,27 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
 
             # Test max voltage
             recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell max"))
-            expected = BatteryCell.recommended_max_voltage(chemistry)
+            expected = BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell max")
+            assert recommended == expected
+
+            # Test arm voltage
+            recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell arm"))
+            expected = BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell arm")
             assert recommended == expected
 
             # Test low voltage
             recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell low"))
-            expected = BatteryCell.recommended_low_voltage(chemistry)
+            expected = BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell low")
             assert recommended == expected
 
             # Test crit voltage
             recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell crit"))
-            expected = BatteryCell.recommended_crit_voltage(chemistry)
+            expected = BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell crit")
+            assert recommended == expected
+
+            # Test min voltage
+            recommended = model.recommended_cell_voltage(("Battery", "Specifications", "Volt per cell min"))
+            expected = BatteryCell.recommended_cell_voltage(chemistry, "Volt per cell min")
             assert recommended == expected
 
     def test_recommended_cell_voltage_unknown_path(self, realistic_model) -> None:
@@ -790,9 +814,8 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         model.set_component_value(("Battery Monitor", "FC Connection", "Protocol"), "ESC")
 
         # Test allowed Battery Monitor and ESC on same port when protocol is ESC
-        # Note: Battery Monitor should use a valid connection type like "Analog"
         allowed_entries = {
-            ("Battery Monitor", "FC Connection", "Type"): "Analog",
+            ("Battery Monitor", "FC Connection", "Type"): "other",
             ("Battery Monitor", "FC Connection", "Protocol"): "ESC",
             ("ESC", "FC Connection", "Type"): "Main Out",
         }
@@ -1331,3 +1354,176 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
                 # These combinations should have at least one protocol choice
                 assert len(protocol_choices) > 0, f"{component} with {value} should have protocols but got: {protocol_choices}"
             # If should_have_protocols is False, we don't assert anything (empty is acceptable)
+
+    # ---- Tests for new arm/min voltage validation (PR: Batt specifications) ----
+
+    def test_validate_arm_voltage_must_be_below_max_voltage(self, realistic_model) -> None:
+        """
+        User cannot set arm voltage higher than max voltage.
+
+        GIVEN: Lipo chemistry with max=4.2 V, arm=3.8 V, low=3.6 V set
+        WHEN: Validating arm voltage higher than max (e.g., 4.3 V)
+        THEN: Validation returns an error and a corrected value below max
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        # Act: arm voltage higher than max
+        err, corr = model.validate_cell_voltage("4.3", ("Battery", "Specifications", "Volt per cell arm"))
+
+        # Assert
+        assert err != ""
+        assert corr is not None
+        assert corr < 4.3
+
+    def test_validate_arm_voltage_must_be_above_low_voltage(self, realistic_model) -> None:
+        """
+        User cannot set arm voltage lower than low voltage (that would trigger failsafe immediately on arming).
+
+        GIVEN: Lipo with max=4.2, arm=3.8, low=3.6 set
+        WHEN: Validating arm voltage lower than low (e.g., 3.5 V)
+        THEN: Validation returns an error and a corrected value above low
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        # Act: arm voltage below low
+        err, corr = model.validate_cell_voltage("3.5", ("Battery", "Specifications", "Volt per cell arm"))
+
+        # Assert
+        assert err != ""
+        assert corr is not None
+        assert corr > 3.5
+
+    def test_validate_arm_voltage_valid_between_max_and_low(self, realistic_model) -> None:
+        """
+        User can set arm voltage that sits between max and low without error.
+
+        GIVEN: Lipo with max=4.2, low=3.6 set
+        WHEN: Validating arm voltage of 3.8 V (between 3.6 and 4.2)
+        THEN: Validation passes with no error
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        # Act
+        err, corr = model.validate_cell_voltage("3.8", ("Battery", "Specifications", "Volt per cell arm"))
+
+        # Assert
+        assert err == ""
+        assert corr is None
+
+    def test_validate_min_voltage_must_be_below_low_voltage(self, realistic_model) -> None:
+        """
+        User cannot set min voltage above low voltage.
+
+        GIVEN: Lipo with low=3.6, min=3.2 set
+        WHEN: Validating min voltage higher than low (e.g., 3.7 V)
+        THEN: Validation returns an error with a corrected value below low
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.2)
+
+        # Act: min voltage higher than low
+        err, corr = model.validate_cell_voltage("3.7", ("Battery", "Specifications", "Volt per cell min"))
+
+        # Assert
+        assert err != ""
+        assert corr is not None
+        assert corr < 3.7
+
+    def test_validate_min_voltage_valid_below_low(self, realistic_model) -> None:
+        """
+        User can set min voltage below low voltage without error.
+
+        GIVEN: Lipo with low=3.6, min=3.2 set
+        WHEN: Validating min voltage of 3.2 V (below low)
+        THEN: Validation passes with no error
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.2)
+
+        # Act
+        err, corr = model.validate_cell_voltage("3.2", ("Battery", "Specifications", "Volt per cell min"))
+
+        # Assert
+        assert err == ""
+        assert corr is None
+
+    def test_validate_min_and_crit_voltages_are_independent(self, realistic_model) -> None:
+        """
+        Min and crit voltages are independently validated against low, not against each other.
+
+        GIVEN: Lipo with low=3.6, crit=3.3, min=3.4 set (min > crit, but both < low)
+        WHEN: Validating min voltage (3.4 V) and crit voltage (3.3 V)
+        THEN: Both pass validation because each only needs to be below low
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell crit"), 3.3)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.4)
+
+        # Act: min=3.4 > crit=3.3 but both < low=3.6
+        err_min, _ = model.validate_cell_voltage("3.4", ("Battery", "Specifications", "Volt per cell min"))
+        err_crit, _ = model.validate_cell_voltage("3.3", ("Battery", "Specifications", "Volt per cell crit"))
+
+        # Assert: neither error (monotonicity between min/crit is NOT required)
+        assert err_min == ""
+        assert err_crit == ""
+
+    def test_max_voltage_validation_requires_above_arm_not_low(self, realistic_model) -> None:
+        """
+        Max voltage validation now checks it is above arm voltage (not directly above low).
+
+        GIVEN: Lipo with max=4.2, arm=3.8, low=3.6 se
+        WHEN: Validating max voltage of 3.7 V (above low but below arm)
+        THEN: Validation fails because max must be above arm
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        # Act: 3.7 is above low but below arm
+        err, corr = model.validate_cell_voltage("3.7", ("Battery", "Specifications", "Volt per cell max"))
+
+        # Assert: validation fails (max must be >= arm + delta)
+        assert err != ""
+        assert corr is not None
+
+    def test_low_voltage_validation_requires_below_arm_not_max(self, realistic_model) -> None:
+        """
+        Low voltage validation now checks it is below arm voltage (not below max).
+
+        GIVEN: Lipo with arm=3.8, low=3.6 set
+        WHEN: Validating low voltage of 3.9 V (above arm)
+        THEN: Validation fails because low must be below arm
+        """
+        model = realistic_model
+        model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+        model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+        model.set_component_value(("Battery", "Specifications", "Volt per cell crit"), 3.3)
+
+        # Act: 3.9 is above arm
+        err, corr = model.validate_cell_voltage("3.9", ("Battery", "Specifications", "Volt per cell low"))
+
+        # Assert
+        assert err != ""
+        assert corr is not None
