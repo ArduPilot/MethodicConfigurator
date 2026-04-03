@@ -52,9 +52,11 @@ def translatable_strings() -> None:
     _vehicle_components_strings = _("Type")
     _vehicle_components_strings = _("URL")
     _vehicle_components_strings = _("Version")
+    _vehicle_components_strings = _("Volt per cell arm")
     _vehicle_components_strings = _("Volt per cell crit")
     _vehicle_components_strings = _("Volt per cell low")
     _vehicle_components_strings = _("Volt per cell max")
+    _vehicle_components_strings = _("Volt per cell min")
 
 
 def translatable_descriptions() -> None:  # noqa: PLR0915 # pylint: disable=too-many-statements
@@ -64,6 +66,7 @@ def translatable_descriptions() -> None:  # noqa: PLR0915 # pylint: disable=too-
     For pygettext to extract them, they have no other function
     """
     _vehicle_components_descriptions = _("Additional notes or comments about the component")
+    _vehicle_components_descriptions = _("Arm threshold voltage per cell used for allowing arming (e.g., 3.7V)")
     _vehicle_components_descriptions = _("Base definition that all vehicle components inherit from")
     _vehicle_components_descriptions = _("Basic information about a product including manufacturer and model")
     _vehicle_components_descriptions = _("Battery capacity in milliampere-hours")
@@ -91,6 +94,7 @@ def translatable_descriptions() -> None:  # noqa: PLR0915 # pylint: disable=too-
     _vehicle_components_descriptions = _("Maximum voltage per cell when fully charged (e.g., 4.2V for LiPo)")
     _vehicle_components_descriptions = _("Microcontroller series used in the flight controller (e.g., STM32F4)")
     _vehicle_components_descriptions = _("Minimum take-off weight in kilograms")
+    _vehicle_components_descriptions = _("Minimum voltage per cell below which PID scaling stops (e.g., 3.3V)")
     _vehicle_components_descriptions = _("Name of the configuration template")
     _vehicle_components_descriptions = _("Number of cells in series (e.g., 4S means 4 cells)")
     _vehicle_components_descriptions = _("Number of magnetic pole pairs in the motor (affects RPM calculation)")
