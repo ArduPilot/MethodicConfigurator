@@ -57,8 +57,10 @@
             "Specifications": {
                 "Chemistry": "LipoHV",
                 "Volt per cell max": 4.35,
+                "Volt per cell arm": 4.1917,
                 "Volt per cell low": 3.9,
                 "Volt per cell crit": 3.8,
+                "Volt per cell min": 3.8,
                 "Number of cells": 12,
                 "Capacity mAh": 17000
             },
@@ -183,6 +185,6 @@
             "Notes": ""
         }
     },
-    "Program version": "2.9.6",
+    "Program version": "2.11.0",
     "Configuration template": "Tarot_X4"
 }
