@@ -2540,7 +2540,7 @@ msgstr "ヨー軸のオートチューン"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:252
 msgid "Critical failsafe voltage x nr. of cells"
-msgstr ""
+msgstr "セル数×クリティカルフェイルセーフ電圧"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:253
 msgid "Defined in component editor"
@@ -2643,7 +2643,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:273
 msgid "Low failsafe voltage x nr. of cells"
-msgstr ""
+msgstr "セル数×低フェイルセーフ電圧"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:274
 msgid "No more system identification chip injections"
@@ -2661,7 +2661,7 @@ msgstr "電池/再起動ごとではなく、飛行ごとに1つの.binログフ
 msgid ""
 "Only arm above this voltage, to avoid taking off with insufficient battery "
 "capacity"
-msgstr ""
+msgstr "十分なバッテリー容量がない状態で離陸するのを避けるため、この電圧以上でのみアームします"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:278
 msgid "Only for IMU and Raw-IMU"
@@ -2693,11 +2693,11 @@ msgstr "ホームまたはラリーポイントに戻って着陸"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:284
 msgid "Scale the PIDs up when battery voltage is above this threshold"
-msgstr ""
+msgstr "バッテリー電圧がこの閾値を超えた場合、PIDを増加させます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:285
 msgid "Scale the PIDs up when battery voltage is below this threshold"
-msgstr ""
+msgstr "バッテリー電圧がこの閾値を下回った場合、PIDを増加させます"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:286
 msgid "Selected in component editor window"
@@ -4527,13 +4527,13 @@ msgstr "BATT_CAPACITY パラメータが fc_parameters に見つかりません"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:438
 msgid "Invalid voltage type %s for battery voltage import"
-msgstr ""
+msgstr "バッテリー電圧インポートで無効な電圧タイプ %s"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:445
 msgid ""
 "Calculated  %s voltage %.2f V is out of expected range for %s chemistry "
 "(%.2f - %.2f V)"
-msgstr ""
+msgstr "計算された %s 電圧 %.2f V は %s 化学物質の予想範囲 (%.2f - %.2f V) を超えています"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:453
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:552
@@ -4544,7 +4544,7 @@ msgstr "%s パラメータの処理エラー: %s"
 msgid ""
 "Current chemistry %s does not have valid volt per cell for %s, ignoring "
 "current chemistry"
-msgstr ""
+msgstr "現在の化学組成 %s は、%s 用の有効なセル当たり電圧を持っていないため、現在の化学組成を無視します"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:544
 msgid "Volt per cell value for %s is zero or invalid: %s"
@@ -7367,7 +7367,7 @@ msgstr "バージョン"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:55
 msgid "Volt per cell arm"
-msgstr ""
+msgstr "アーム用セル当たり電圧"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:56
 msgid "Volt per cell crit"
@@ -7383,7 +7383,7 @@ msgstr "セル当たりの最大電圧"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:59
 msgid "Volt per cell min"
-msgstr ""
+msgstr "最小セル当たり電圧"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:68
 msgid "Additional notes or comments about the component"
@@ -7391,7 +7391,7 @@ msgstr "コンポーネントに関する追加のメモやコメント"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:69
 msgid "Arm threshold voltage per cell used for allowing arming (e.g., 3.7V)"
-msgstr ""
+msgstr "アーミング許可に使用されるセル当たりの閾値電圧（例：3.7V）"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:70
 msgid "Base definition that all vehicle components inherit from"
@@ -7506,7 +7506,7 @@ msgstr "最小離陸重量（キログラム）"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:97
 msgid "Minimum voltage per cell below which PID scaling stops (e.g., 3.3V)"
-msgstr ""
+msgstr "PIDスケーリングが停止するセル当たりの最小電圧（例：3.3V）"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:98
 msgid "Name of the configuration template"
