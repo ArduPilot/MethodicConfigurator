@@ -183,6 +183,7 @@ def mock_filesystem() -> MagicMock:
     filesystem = MagicMock(spec=LocalFilesystem)
     filesystem.vehicle_dir = "test_vehicle"
     filesystem.doc_dict = {}
+    filesystem.file_parameters = {}
     filesystem.vehicle_image_exists.return_value = False
     filesystem.vehicle_image_filepath.return_value = "test.jpg"
     filesystem.save_component_to_system_templates = MagicMock()
@@ -1204,10 +1205,10 @@ class TestUIInitializationWorkflows:
         )
 
         # Act: Finalize initialization
-        editor._finalize_initialization()
+        editor._finalize_initialization({})
 
         # Assert: Data model should be post-initialized
-        data_model.post_init.assert_called_once_with(mock_filesystem.doc_dict)
+        data_model.post_init.assert_called_once_with(mock_filesystem.doc_dict, {}, mock_filesystem.file_parameters)
 
 
 class TestVehicleImageDisplayWorkflows:

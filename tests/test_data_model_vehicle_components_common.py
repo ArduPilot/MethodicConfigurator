@@ -46,7 +46,7 @@ REALISTIC_VEHICLE_DATA = {
                 "URL": "https://www.mateksys.com/?portfolio=h743-slim",
                 "Version": "V3",
             },
-            "Firmware": {"Type": "ArduCopter", "Version": "4.6.x"},
+            "Firmware": {"Type": "ArduCopter", "Version": "4.6.3"},
             "Specifications": {"MCU Series": "STM32H7xx"},
             "Notes": "Flight controller with 20x20mm form factor",
         },
@@ -80,6 +80,16 @@ REALISTIC_VEHICLE_DATA = {
             "Firmware": {"Type": "Crossfire", "Version": "7"},
             "FC Connection": {"Type": "SERIAL7", "Protocol": "CRSF"},
             "Notes": "Connected to flight controller via SERIAL7",
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "None",
+                "Model": "None",
+                "URL": "",
+                "Version": "",
+            },
+            "FC Connection": {"Type": "None", "Protocol": "None"},
+            "Notes": "No battery monitor in this sample",
         },
         "Battery": {
             "Product": {

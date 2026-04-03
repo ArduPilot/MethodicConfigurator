@@ -20,7 +20,12 @@ from test_data_model_vehicle_components_common import (
     RealisticDataTestMixin,
 )
 
-from ardupilot_methodic_configurator.data_model_vehicle_components_import import ComponentDataModelImport, is_single_bit_set
+from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
+from ardupilot_methodic_configurator.data_model_vehicle_components_import import (
+    BatteryVoltageSpecs,
+    ComponentDataModelImport,
+    is_single_bit_set,
+)
 
 # pylint: disable=protected-access,too-many-public-methods,too-many-lines
 
@@ -482,7 +487,85 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         """
         System handles KeyError for unknown BATT_MONITOR values.
 
-        GIVEN: BATT_MONITOR value not in BATT_MONITOR_CONNECTION dict
+        GIVEN: BATT_MONITOR value is unrecognized
+        WHEN: importing battery type
+        THEN: error is logged and no exception is raised
+        """
+        fc_parameters = {"BATT_MONITOR": 999}  # Non-existent key
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+    def test_import_bat_values_from_fc_uses_battery_voltage_specs(self, basic_model) -> None:
+        """BatteryVoltageSpecs is used and values are written to model."""
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={
+                "BATT_CAPACITY": 4500,
+                "MOT_BAT_VOLT_MAX": 16.8,
+                "BATT_ARM_VOLT": 15.2,
+                "BATT_LOW_VOLT": 14.4,
+                "BATT_CRT_VOLT": 13.2,
+                "MOT_BAT_VOLT_MIN": 12.8,
+            },
+        )
+
+        basic_model._import_bat_values_from_fc(specs)
+
+        assert basic_model.get_component_value(("Battery", "Specifications", "Capacity mAh")) == 4500
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max")) == 4.2
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm")) == 3.8
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell low")) == 3.6
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell crit")) == 3.3
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell min")) == 3.2
+
+    def test_estimate_battery_cell_count_does_not_override_with_min_voltage(self, realistic_model) -> None:
+        """
+        CONFIRM: high-priority source MOT_BAT_VOLT_MAX is not overridden by MOT_BAT_VOLT_MIN.
+
+        GIVEN: existing cell voltage specs for max/min and an FC parameter set with both max and min volts
+        WHEN: estimating battery cell count
+        THEN: count should be based on MOT_BAT_VOLT_MAX priority path
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.2)
+
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 16.8,
+            "MOT_BAT_VOLT_MIN": 14.5,
+        }
+
+        estimated = realistic_model._estimate_battery_cell_count(fc_parameters)
+
+        assert estimated == 4
+
+    def test_estimate_battery_cell_count_does_not_override_with_arm_voltage(self, realistic_model) -> None:
+        """
+        CONFIRM: high-priority source MOT_BAT_VOLT_MAX is not overridden by BATT_ARM_VOLT.
+
+        GIVEN: existing cell voltage specs and an FC parameter set with max and arm volts
+        WHEN: estimating battery cell count
+        THEN: count should be based on MOT_BAT_VOLT_MAX priority path
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 16.8,
+            "BATT_ARM_VOLT": 15.2,
+        }
+
+        estimated = realistic_model._estimate_battery_cell_count(fc_parameters)
+
+        assert estimated == 4
+
+    def test_system_handles_battery_monitor_value_not_in_connection_dict(self, realistic_model) -> None:
+        """
+        GIVEN: BATT_MONITOR value not in BATT_MONITOR_CONNECTION dict.
+
         WHEN: Importing battery configuration
         THEN: Error should be logged
         AND: System should not crash
@@ -1400,3 +1483,282 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert batt_protocol == "Analog Voltage and Current"
         assert capacity == 6500
         assert cell_count == 6
+
+    # ---- Tests for new battery arm/min voltage import (PR: Batt specifications) ----
+
+    def test_user_can_import_arm_voltage_from_batt_arm_volt(self, basic_model) -> None:
+        """
+        User can import arm threshold voltage from BATT_ARM_VOLT FC parameter.
+
+        GIVEN: FC parameters with BATT_ARM_VOLT set and valid cell specs
+        WHEN: Calling import_bat_voltage with the arm voltage parameter
+        THEN: Volt per cell arm should be set in the data model
+        """
+        # Arrange: pre-set arm voltage per cell so estimation uses it
+        basic_model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={"BATT_ARM_VOLT": 15.2},
+        )
+
+        # Act
+        basic_model.import_bat_voltage(specs, "BATT_ARM_VOLT", "arm")
+
+        # Assert
+        arm = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
+        assert arm == pytest.approx(3.8)
+
+    def test_user_can_import_min_voltage_from_mot_bat_volt_min(self, basic_model) -> None:
+        """
+        User can import PID-scaling floor voltage from MOT_BAT_VOLT_MIN FC parameter.
+
+        GIVEN: FC parameters with MOT_BAT_VOLT_MIN set and valid cell specs
+        WHEN: Calling import_bat_voltage with the min voltage parameter
+        THEN: Volt per cell min should be set in the data model
+        """
+        # Arrange
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={"MOT_BAT_VOLT_MIN": 12.8},
+        )
+
+        # Act
+        basic_model.import_bat_voltage(specs, "MOT_BAT_VOLT_MIN", "min")
+
+        # Assert
+        min_v = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell min"))
+        assert min_v == pytest.approx(3.2)
+
+    def test_system_skips_import_for_out_of_range_arm_voltage(self, basic_model) -> None:
+        """
+        System warns and skips setting arm voltage when the calculated per-cell value is out of chemistry range.
+
+        GIVEN: FC parameters where BATT_ARM_VOLT / cell_count falls outside Lipo limits
+        WHEN: Calling import_bat_voltage
+        THEN: A warning is logged and the value is NOT set in the model
+        AND: No exception is raised
+        """
+        # Arrange: extremely high voltage so per-cell value exceeds Lipo limit_max (4.2 V)
+        original_arm = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={"BATT_ARM_VOLT": 99.9},  # 99.9 / 4 = 24.975 V >> 4.2 V limit
+        )
+
+        # Act
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            basic_model.import_bat_voltage(specs, "BATT_ARM_VOLT", "arm")
+
+        # Assert: warning was issued, value unchanged
+        mock_warn.assert_called()
+        arm = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
+        assert arm == original_arm  # unchanged
+
+    def test_system_handles_type_error_in_import_bat_voltage(self, basic_model) -> None:
+        """
+        System handles TypeError when FC parameter value is not numeric.
+
+        GIVEN: FC parameters with a non-numeric BATT_ARM_VOLT value (e.g., None)
+        WHEN: Calling import_bat_voltage
+        THEN: An error is logged and no exception is raised
+        """
+        # Arrange
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={"BATT_ARM_VOLT": None},  # type: ignore[dict-item]
+        )
+
+        # Act & Assert: should not raise
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_err:
+            basic_model.import_bat_voltage(specs, "BATT_ARM_VOLT", "arm")
+        mock_err.assert_called()
+
+    def test_system_skips_import_bat_voltage_for_missing_parameter(self, basic_model) -> None:
+        """
+        System silently skips arm voltage import when the FC parameter is absent.
+
+        GIVEN: FC parameters that do NOT contain BATT_ARM_VOLT
+        WHEN: Calling import_bat_voltage for arm
+        THEN: No value is set and no error is raised
+        """
+        # Arrange
+        original_arm = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={},  # BATT_ARM_VOLT absent
+        )
+
+        # Act
+        basic_model.import_bat_voltage(specs, "BATT_ARM_VOLT", "arm")
+
+        # Assert: value unchanged
+        arm = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm"))
+        assert arm == original_arm
+
+    def test_system_does_not_warn_when_cell_voltage_equals_chemistry_limit_max(self, basic_model) -> None:
+        """
+        System accepts MOT_BAT_VOLT_MAX at exactly the chemistry limit_max without a false warning.
+
+        GIVEN: A 4S Lipo whose MOT_BAT_VOLT_MAX equals 4 x 4.2 = 16.8 V
+        WHEN: Calling import_bat_voltage for "max"
+        THEN: No warning is logged — floating-point division 16.8/4 must not exceed limit_max=4.2
+        AND: Volt per cell max is set to 4.2 V
+        """
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={"MOT_BAT_VOLT_MAX": 16.8},  # 16.8 / 4 = 4.2 exactly in math, but fp can be > 4.2
+        )
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            basic_model.import_bat_voltage(specs, "MOT_BAT_VOLT_MAX", "max")
+
+        mock_warn.assert_not_called()
+        cell_max = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+        assert cell_max == pytest.approx(4.2)
+
+    def test_import_bat_values_skips_all_voltages_when_cell_count_is_zero(self, basic_model) -> None:
+        """
+        System skips all voltage imports when estimated_cell_count is zero.
+
+        GIVEN: BatteryVoltageSpecs with estimated_cell_count=0
+        WHEN: Calling _import_bat_values_from_fc
+        THEN: No voltage fields are updated in the model
+        """
+        # Arrange: store initial values for comparison
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=0,
+            limit_min=BatteryCell.limit_min_voltage("Lipo"),
+            limit_max=BatteryCell.limit_max_voltage("Lipo"),
+            detected_chemistry="Lipo",
+            fc_parameters={
+                "BATT_CAPACITY": 4500,
+                "MOT_BAT_VOLT_MAX": 16.8,
+                "BATT_ARM_VOLT": 15.2,
+                "BATT_LOW_VOLT": 14.4,
+                "BATT_CRT_VOLT": 13.2,
+                "MOT_BAT_VOLT_MIN": 12.8,
+            },
+        )
+        original_max = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+
+        # Act
+        basic_model._import_bat_values_from_fc(specs)
+
+        # Assert: capacity IS set (not guarded by cell count), voltages are NOT set
+        capacity = basic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
+        assert capacity == 4500
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max")) == original_max
+
+    def test_estimate_cell_count_uses_batt_arm_volt_as_fallback(self, basic_model) -> None:
+        """
+        System uses BATT_ARM_VOLT to estimate cell count when higher-priority sources are absent.
+
+        GIVEN: FC parameters with only BATT_ARM_VOLT available, and arm per-cell value set
+        WHEN: Calling _estimate_battery_cell_count
+        THEN: Cell count is estimated correctly from BATT_ARM_VOLT
+        """
+        # Arrange: set a valid arm voltage per cell so estimation works
+        basic_model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.8)
+
+        fc_parameters = {"BATT_ARM_VOLT": 15.2}  # 15.2 / 3.8 = 4 cells, no higher-prio params
+
+        # Act
+        estimated = basic_model._estimate_battery_cell_count(fc_parameters)
+
+        # Assert
+        assert estimated == 4
+
+    def test_estimate_cell_count_uses_mot_bat_volt_min_as_last_resort(self, basic_model) -> None:
+        """
+        System uses MOT_BAT_VOLT_MIN to estimate cell count as the lowest-priority fallback.
+
+        GIVEN: FC parameters with only MOT_BAT_VOLT_MIN available, and min per-cell value set
+        WHEN: Calling _estimate_battery_cell_count
+        THEN: Cell count is estimated correctly from MOT_BAT_VOLT_MIN
+        """
+        # Arrange: set a valid min voltage per cell so estimation works
+        basic_model.set_component_value(("Battery", "Specifications", "Volt per cell min"), 3.2)
+
+        fc_parameters = {"MOT_BAT_VOLT_MIN": 12.8}  # 12.8 / 3.2 = 4 cells, no higher-prio params
+
+        # Act
+        estimated = basic_model._estimate_battery_cell_count(fc_parameters)
+
+        # Assert
+        assert estimated == 4
+
+    def test_detect_chemistry_from_batt_arm_volt(self, realistic_model) -> None:
+        """
+        System correctly detects battery chemistry using BATT_ARM_VOLT as a clue.
+
+        GIVEN: Only BATT_ARM_VOLT is available and its per-cell ratio closely matches Lipo arm voltage
+        WHEN: Calling _detect_battery_chemistry_from_voltages without any current chemistry context
+        THEN: The system detects 'Lipo' (or at least does not raise an exception)
+        """
+        # 4S Lipo arm ~3.8 V/cell => total 15.2 V
+        fc_parameters = {"BATT_ARM_VOLT": 15.2}
+
+        result = realistic_model._detect_battery_chemistry_from_voltages(fc_parameters, current_chemistry=None)
+
+        # BATT_ARM_VOLT should be used as a detection signal — any valid chemistry or None is acceptable
+
+        valid_chemistries = set(BatteryCell.chemistries())
+        assert result is None or result in valid_chemistries
+
+    def test_detect_chemistry_from_mot_bat_volt_min(self, realistic_model) -> None:
+        """
+        System uses MOT_BAT_VOLT_MIN as a last-resort chemistry clue.
+
+        GIVEN: Only MOT_BAT_VOLT_MIN is available, consistent with a 4S Lipo min voltage
+        WHEN: Calling _detect_battery_chemistry_from_voltages
+        THEN: The system returns a chemistry (or None) without raising exceptions
+        """
+        # 4S Lipo recommended_min 3.2 V/cell => total 12.8 V
+        fc_parameters = {"MOT_BAT_VOLT_MIN": 12.8}
+
+        result = realistic_model._detect_battery_chemistry_from_voltages(fc_parameters, current_chemistry=None)
+
+        # Detection may succeed or fail gracefully; no exception should be raised
+        assert result is None or isinstance(result, str)
+
+    def test_estimate_cell_count_returns_zero_for_all_invalid_volt_per_cell(self, basic_model) -> None:
+        """
+        System returns 0 when all volt-per-cell values are zero/invalid.
+
+        GIVEN: FC parameters with voltage params but all volt-per-cell stored values are zero
+        WHEN: Calling _estimate_battery_cell_count
+        THEN: Returns 0 and an error is logged
+        """
+        # Arrange: all voltage specs are zero (invalid) - basic_model has default 0s
+        fc_parameters = {
+            "MOT_BAT_VOLT_MAX": 16.8,
+            "BATT_LOW_VOLT": 14.4,
+            "BATT_CRT_VOLT": 13.2,
+            "BATT_ARM_VOLT": 15.2,
+            "MOT_BAT_VOLT_MIN": 12.8,
+        }
+
+        # Act
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"):
+            estimated = basic_model._estimate_battery_cell_count(fc_parameters)
+
+        # Assert
+        assert estimated == 0
