@@ -57,8 +57,10 @@
             "Specifications": {
                 "Chemistry": "Lipo",
                 "Volt per cell max": 4.2,
+                "Volt per cell arm": 3.675,
                 "Volt per cell low": 3.4,
                 "Volt per cell crit": 3.3,
+                "Volt per cell min": 3.3,
                 "Number of cells": 4,
                 "Capacity mAh": 5000
             },
@@ -183,5 +185,5 @@
             "Notes": "100mW at 433MHz, 13.6g without antenna + \n7.4g for 433MHz antenna"
         }
     },
-    "Program version": "2.9.6"
+    "Program version": "2.11.0"
 }

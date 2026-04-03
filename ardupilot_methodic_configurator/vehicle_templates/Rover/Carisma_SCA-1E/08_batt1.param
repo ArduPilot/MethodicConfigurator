@@ -10,3 +10,5 @@ BATT_LOW_MAH,0
 BATT_LOW_VOLT,7.2  # (Low voltage + 0.0) x no. of cells
 BATT_MONITOR,4  # Selected in component editor window
 BATT_VOLT_MULT,11
+MOT_BAT_VOLT_MAX,9.2
+MOT_BAT_VOLT_MIN,6.5
