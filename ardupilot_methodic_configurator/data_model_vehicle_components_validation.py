@@ -387,12 +387,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 batt_available_protocols: list[str] = []
                 for conn_dict in BATT_MONITOR_CONNECTION.values():
                     conn_type = conn_dict["type"]
-                    # Handle both list and direct port type references
-                    if isinstance(conn_type, list):
-                        if value in conn_type:
-                            batt_available_protocols.append(str(conn_dict["protocol"]))
-                    elif value in conn_type:
-                        # conn_type is a reference to a port list (e.g., ANALOG_PORTS, I2C_PORTS)
+                    if isinstance(conn_type, list) and value in conn_type:
                         batt_available_protocols.append(str(conn_dict["protocol"]))
 
                 self._possible_choices[protocol_path] = (
@@ -421,19 +416,14 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 gnss_available_protocols: list[str] = []
                 for conn_dict in GNSS_RECEIVER_CONNECTION.values():
                     conn_type = conn_dict["type"]
-                    # Handle both list and direct port type references
-                    if isinstance(conn_type, list):
-                        if value in conn_type:
-                            gnss_available_protocols.append(str(conn_dict["protocol"]))
-                    elif value in conn_type:
-                        # conn_type is a reference to a port list (e.g., SERIAL_PORTS, CAN_PORTS)
+                    if isinstance(conn_type, list) and value in conn_type:
                         gnss_available_protocols.append(str(conn_dict["protocol"]))
 
                 self._possible_choices[protocol_path] = (
                     tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
                 )
 
-    def validate_entry_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
+    def validate_entry_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
         """
         Validate entry values against limits.
 
@@ -598,19 +588,8 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             # Check for duplicate connections
             if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type":
                 if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4", "None"}:
-                    battery_monitor_protocol = entry_values.get(
-                        ("Battery Monitor", "FC Connection", "Protocol"),
-                        self.get_component_value(("Battery Monitor", "FC Connection", "Protocol")),
-                    )
-
                     # Allow certain combinations
                     if path[0] in {"Telemetry", "RC Receiver"} and fc_serial_connection[value] in {"Telemetry", "RC Receiver"}:
-                        continue
-                    if (
-                        battery_monitor_protocol == "ESC"
-                        and path[0] in {"Battery Monitor", "ESC"}
-                        and fc_serial_connection[value] in {"Battery Monitor", "ESC"}
-                    ):
                         continue
 
                     error_msg = _("Duplicate FC connection type '{value}' for {paths_str}")
