@@ -470,3 +470,169 @@ class TestComponentDataModelBaseInternals:
         valid_data = {"Components": {"Battery": {}}, "Format version": 1}
         model = ComponentDataModelBase(valid_data, {}, schema)
         assert "Components" in model._data
+
+
+class TestComponentDataModelBaseUncoveredBranches:
+    """Tests targeting previously uncovered branches in ComponentDataModelBase."""
+
+    @pytest.fixture
+    def basic_model(self) -> ComponentDataModelBase:
+        """Create a basic ComponentDataModelBase fixture for testing."""
+        return ComponentDataModelFixtures.create_basic_model(ComponentDataModelBase)
+
+    @pytest.fixture
+    def realistic_model(self) -> ComponentDataModelBase:
+        """Create a realistic ComponentDataModelBase fixture for testing."""
+        return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelBase)
+
+    def test_system_converts_list_value_to_string_in_get_component_value(self, basic_model) -> None:
+        """
+        System converts non-primitive component values to strings.
+
+        GIVEN: A component path whose stored value is a list (not str/int/float/dict)
+        WHEN: get_component_value is called
+        THEN: The return value should be the str() representation of the list
+        """
+        # Inject a list directly bypassing the normal setter
+        basic_model._data["Components"]["Battery"]["Specifications"]["SomeList"] = [1, 2, 3]
+
+        result = basic_model.get_component_value(("Battery", "Specifications", "SomeList"))
+
+        assert isinstance(result, str)
+        assert result == str([1, 2, 3])
+
+    def test_system_handles_broken_datatypes_in_get_component_datatype(self, basic_model) -> None:
+        """
+        System returns None when _component_datatypes structure raises an exception.
+
+        GIVEN: A model whose _component_datatypes is a truthy non-dict (raises AttributeError on .get())
+        WHEN: _get_component_datatype is called for any path
+        THEN: The except clause fires and the method gracefully returns None without raising
+        """
+        # Use a truthy non-dict so the early `if not self._component_datatypes` guard passes,
+        # but list.get() then raises AttributeError, hitting the except block at lines 121-122.
+        basic_model._component_datatypes = [1, 2, 3]  # type: ignore[assignment]
+
+        result = basic_model._get_component_datatype(("Battery", "Specifications", "Chemistry"))
+        assert result is None
+
+    def test_system_casts_none_to_empty_list_for_list_datatype(self, basic_model) -> None:
+        """
+        System returns an empty list when casting None to list datatype.
+
+        GIVEN: A value of None and a target datatype of list
+        WHEN: _safe_cast_value is called
+        THEN: An empty list should be returned
+        """
+        result = basic_model._safe_cast_value(None, list, ("Battery", "Specifications", "Tags"))
+        assert result == []
+
+    def test_system_casts_none_to_empty_dict_for_dict_datatype(self, basic_model) -> None:
+        """
+        System returns an empty dict when casting None to dict datatype.
+
+        GIVEN: A value of None and a target datatype of dict
+        WHEN: _safe_cast_value is called
+        THEN: An empty dict should be returned
+        """
+        result = basic_model._safe_cast_value(None, dict, ("Battery", "Specifications", "Config"))
+        assert result == {}
+
+    def test_system_migrates_legacy_gnss_sbf_protocol_to_new_name(self, basic_model) -> None:
+        """
+        System migrates legacy GNSS protocol names to their canonical equivalents.
+
+        GIVEN: A model with a GNSS receiver using the legacy 'SBF' protocol name
+        WHEN: update_json_structure() is called
+        THEN: The protocol should be updated to 'Septentrio(SBF)'
+        """
+        basic_model._data["Components"]["GNSS Receiver"] = {"FC Connection": {"Protocol": "SBF"}}
+
+        basic_model.update_json_structure()
+
+        assert basic_model._data["Components"]["GNSS Receiver"]["FC Connection"]["Protocol"] == "Septentrio(SBF)"
+
+    def test_system_defaults_to_lipo_when_battery_chemistry_is_invalid(self, basic_model) -> None:
+        """
+        System logs an error and falls back to Lipo when battery chemistry is unrecognised.
+
+        GIVEN: A model where Battery.Specifications.Chemistry is set to an invalid value
+        WHEN: init_battery_chemistry() is called
+        THEN: _battery_chemistry should be set to 'Lipo' (the default)
+        AND: The data should also be corrected to 'Lipo'
+        """
+        basic_model._data["Components"]["Battery"]["Specifications"]["Chemistry"] = "InvalidChem"
+
+        basic_model.init_battery_chemistry()
+
+        assert basic_model._battery_chemistry == "Lipo"
+        assert basic_model._data["Components"]["Battery"]["Specifications"]["Chemistry"] == "Lipo"
+
+    def test_system_casts_string_yes_to_bool_true(self, basic_model) -> None:
+        """
+        System converts string 'yes' to True when casting to bool datatype.
+
+        GIVEN: A string value 'yes' and target datatype bool
+        WHEN: _safe_cast_value is called
+        THEN: True should be returned because 'yes' is in the truthy string set
+        """
+        result = basic_model._safe_cast_value("yes", bool, ("Battery", "Specifications", "SomeFlag"))
+
+        assert result is True
+
+    def test_system_casts_integer_to_bool(self, basic_model) -> None:
+        """
+        System converts a non-string, non-bool value to bool when casting to bool datatype.
+
+        GIVEN: An integer value 1 and target datatype bool
+        WHEN: _safe_cast_value is called
+        THEN: True should be returned via bool(1)
+        """
+        result = basic_model._safe_cast_value(1, bool, ("Battery", "Specifications", "SomeFlag"))
+
+        assert result is True
+
+    def test_system_migrates_battery_monitor_other_protocol_type(self, basic_model) -> None:
+        """
+        System sets Battery Monitor FC Connection Type to 'other' for protocols that use other ports.
+
+        GIVEN: A model with Battery Monitor using protocol 'ESC' (an OTHER_PORTS protocol)
+        WHEN: update_json_structure() is called
+        THEN: The FC Connection Type should be set to 'other'
+        """
+        basic_model._data["Components"]["Battery Monitor"] = {"FC Connection": {"Protocol": "ESC"}}
+
+        basic_model.update_json_structure()
+
+        assert basic_model._data["Components"]["Battery Monitor"]["FC Connection"]["Type"] == "other"
+
+    def test_system_skips_reordering_fields_absent_from_product_dict(self, basic_model) -> None:
+        """
+        System correctly reorders product fields, skipping those absent from the original dict.
+
+        GIVEN: A Battery Product dict that has 'Version' and 'URL' but no 'Manufacturer' or 'Model'
+        WHEN: update_json_structure() is called (which triggers _reorder_components)
+        THEN: Only 'Version' and 'URL' appear in the reordered product
+        AND: The 'if field in product:' False branch is exercised for missing fields
+        """
+        basic_model._data["Components"]["Battery"]["Product"] = {"Version": "v1", "URL": "http://example.com"}
+
+        basic_model.update_json_structure()
+
+        product = basic_model._data["Components"]["Battery"]["Product"]
+        assert "Version" in product
+        assert "URL" in product
+        assert "Manufacturer" not in product
+        assert "Model" not in product
+
+    def test_system_accepts_valid_battery_chemistry_without_changes(self, realistic_model) -> None:
+        """
+        System keeps existing valid chemistry unchanged when init_battery_chemistry is called.
+
+        GIVEN: A model whose Battery chemistry is already set to the valid value 'Lipo'
+        WHEN: init_battery_chemistry() is called
+        THEN: _battery_chemistry remains 'Lipo' and no error is logged (fall-through branch covered)
+        """
+        realistic_model.init_battery_chemistry()
+
+        assert realistic_model._battery_chemistry == "Lipo"

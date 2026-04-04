@@ -328,7 +328,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
             self.set_component_value(("ESC", "FC Connection", "Type"), "AIO")
 
         if "MOT_PWM_TYPE" in doc and "values" in doc["MOT_PWM_TYPE"]:
-            protocol = str(doc["MOT_PWM_TYPE"]["values"].get(str(mot_pwm_type)))
+            protocol = doc["MOT_PWM_TYPE"]["values"].get(str(mot_pwm_type), "")
             if protocol:
                 self.set_component_value(("ESC", "FC Connection", "Protocol"), protocol)
         # Fallback to MOT_PWM_TYPE_DICT if doc is not available

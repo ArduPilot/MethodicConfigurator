@@ -16,7 +16,6 @@ import pytest
 from test_data_model_vehicle_components_common import ComponentDataModelFixtures
 
 from ardupilot_methodic_configurator.data_model_vehicle_components_display import ComponentDataModelDisplay
-from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
 # pylint: disable=redefined-outer-name
 
@@ -24,28 +23,13 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema i
 @pytest.fixture
 def mock_schema() -> MagicMock:
     """Fixture providing a mock schema for display testing."""
-    schema = MagicMock()
-
-    # Default behavior: non-optional components
-    schema.get_component_property_description.return_value = ("Test description", False)
-
-    return schema
+    return ComponentDataModelFixtures.create_mock_schema()
 
 
 @pytest.fixture
 def display_model(mock_schema) -> ComponentDataModelDisplay:
     """Fixture providing a ComponentDataModelDisplay instance for testing."""
-    # Create minimal required dependencies
-    initial_data = {"Components": {}, "Format version": 1}
-    component_datatypes = {"Flight Controller": {"Product": {"Manufacturer": str}}}
-    schema_dict = ComponentDataModelFixtures.create_simple_schema()
-    schema = VehicleComponentsJsonSchema(schema_dict)
-
-    # Create and configure the display model
-    model = ComponentDataModelDisplay(initial_data, component_datatypes, schema)
-    # Override with mock schema for easier testing
-    model.schema = mock_schema
-    return model
+    return ComponentDataModelFixtures.create_display_model_with_mock_schema(mock_schema)
 
 
 @pytest.fixture

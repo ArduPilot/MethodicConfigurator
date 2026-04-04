@@ -14,6 +14,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
+from test_data_model_vehicle_components_common import ComponentDataModelFixtures, make_fc_schema
 
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
@@ -481,3 +482,65 @@ class TestVehicleComponentsJsonSchema:
         # Test that the schema reference is maintained
         assert json_schema.schema["properties"]["Components"] is not None
         assert "Flight Controller" in json_schema.schema["properties"]["Components"]["properties"]
+
+
+class TestVehicleComponentsJsonSchemaUncoveredBranches:
+    """Tests targeting previously uncovered branches in VehicleComponentsJsonSchema."""
+
+    def test_system_extracts_datatypes_from_property_with_allof_construct(self) -> None:
+        """
+        _extract_datatypes_from_property handles a property whose schema uses 'allOf'.
+
+        GIVEN: A schema where a component property uses 'allOf' (not 'properties' or 'type' directly)
+        WHEN: get_all_value_datatypes is called
+        THEN: The allOf branch is taken and the types are extracted into the target dict
+        """
+        schema_with_allof_property = {
+            "properties": {
+                "Components": {"properties": {"Frame": {"properties": {"Config": {"allOf": [{"type": "string"}]}}}}}
+            }
+        }
+        json_schema = VehicleComponentsJsonSchema(schema_with_allof_property)
+
+        result = json_schema.get_all_value_datatypes()
+
+        assert "Frame" in result
+        # The allOf branch creates an empty dict (target_dict[prop_name] = {})
+        assert "Config" in result["Frame"]
+
+    def test_system_returns_empty_description_for_component_not_in_schema(self) -> None:
+        """
+        _get_nested_property_description returns ('', False) when component type is absent from schema.
+
+        GIVEN: A real schema that contains 'Battery' but not 'UnknownComponent'
+        WHEN: get_component_property_description is called with path ('UnknownComponent', 'Spec', 'Field')
+        THEN: ('', False) should be returned without error
+        """
+        real_schema = ComponentDataModelFixtures.create_schema()
+
+        description, is_optional = real_schema.get_component_property_description(
+            ("UnknownComponent", "Specifications", "SomeField")
+        )
+
+        assert description == ""
+        assert is_optional is False
+
+    def test_system_returns_empty_description_for_missing_section_with_len2_path(self) -> None:
+        """
+        _get_section_field_description returns ('', False) when the section is not found in schema.
+
+        GIVEN: A schema for 'Flight Controller'
+        WHEN: get_component_property_description is called with a 2-element path pointing to a
+              non-existent section
+        THEN: ('', False) should be returned
+        """
+        schema = make_fc_schema(
+            {"allOf": [{"properties": {"Firmware": {"description": "Firmware info", "x-is-optional": False}}}]},
+            definitions={},
+        )
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        description, is_optional = json_schema.get_component_property_description(("Flight Controller", "NonExistentSection"))
+
+        assert description == ""
+        assert is_optional is False

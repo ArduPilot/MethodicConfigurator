@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import math
+from unittest.mock import patch as _patch
 
 import pytest
 from test_data_model_vehicle_components_common import (
@@ -1527,3 +1528,482 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         # Assert
         assert err != ""
         assert corr is not None
+
+
+class TestComponentDataModelValidationUncoveredBranches:
+    """Tests targeting previously uncovered branches in ComponentDataModelValidation."""
+
+    @pytest.fixture
+    def basic_model(self) -> ComponentDataModelValidation:
+        """Create a basic model."""
+        return ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
+
+    @pytest.fixture
+    def realistic_model(self) -> ComponentDataModelValidation:
+        """Create a realistic model with full battery and frame specs."""
+        return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelValidation)
+
+    # ------------------------------------------------------------------
+    # init_possible_choices - error logging paths (lines 309-310)
+    # ------------------------------------------------------------------
+    def test_system_logs_error_when_q_m_pwm_type_entry_has_no_values(self, basic_model) -> None:
+        """
+        init_possible_choices logs an error when Q_M_PWM_TYPE entry has no values or Bitmask.
+
+        GIVEN: A doc_dict where Q_M_PWM_TYPE exists but lacks both 'values' and 'Bitmask'
+        WHEN: init_possible_choices is called
+        THEN: Errors are logged for missing values AND for missing fallback
+        """
+        doc_dict = {"Q_M_PWM_TYPE": {}}  # key present, no values/Bitmask; NOT in fallbacks
+
+        with _patch("ardupilot_methodic_configurator.data_model_vehicle_components_validation.logging_error") as mock_err:
+            basic_model.init_possible_choices(doc_dict)
+
+        error_calls = " ".join(str(c) for c in mock_err.call_args_list)
+        assert "Q_M_PWM_TYPE" in error_calls or "No values" in error_calls or "fallback" in error_calls
+
+    # ------------------------------------------------------------------
+    # _update_possible_choices_for_path - None connection type branches
+    # ------------------------------------------------------------------
+    def test_system_restricts_rc_receiver_protocols_to_none_for_none_connection(self, basic_model) -> None:
+        """
+        _update_possible_choices_for_path sets RC Receiver protocol to ('None',) when type=None.
+
+        GIVEN: A model with initialized possible choices
+        WHEN: _update_possible_choices_for_path is called for RC Receiver with type 'None'
+        THEN: The protocol choices should be ('None',)
+        """
+        basic_model.init_possible_choices({})
+
+        basic_model._update_possible_choices_for_path(("RC Receiver", "FC Connection", "Type"), "None")
+
+        assert basic_model._possible_choices[("RC Receiver", "FC Connection", "Protocol")] == ("None",)
+
+    def test_system_restricts_battery_monitor_protocols_to_none_for_none_connection(self, basic_model) -> None:
+        """
+        _update_possible_choices_for_path restricts Battery Monitor protocols to ('None',) for None type.
+
+        GIVEN: A model with initialized possible choices
+        WHEN: _update_possible_choices_for_path is called for Battery Monitor with type 'None'
+        THEN: Protocol choices should be ('None',)
+        """
+        basic_model.init_possible_choices({})
+
+        basic_model._update_possible_choices_for_path(("Battery Monitor", "FC Connection", "Type"), "None")
+
+        assert basic_model._possible_choices[("Battery Monitor", "FC Connection", "Protocol")] == ("None",)
+
+    def test_system_restricts_esc_protocols_to_none_for_none_connection(self, basic_model) -> None:
+        """
+        _update_possible_choices_for_path sets ESC protocol to ('None',) when type=None.
+
+        GIVEN: A model with initialized possible choices
+        WHEN: _update_possible_choices_for_path is called for ESC with type 'None'
+        THEN: Protocol choices should be ('None',)
+        """
+        basic_model.init_possible_choices({})
+
+        basic_model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "None")
+
+        assert basic_model._possible_choices[("ESC", "FC Connection", "Protocol")] == ("None",)
+
+    def test_system_sets_esc_protocol_to_dronecan_for_can_connection(self, basic_model) -> None:
+        """
+        _update_possible_choices_for_path sets ESC protocol to ('DroneCAN',) for a CAN port.
+
+        GIVEN: A model with initialized possible choices
+        WHEN: _update_possible_choices_for_path is called for ESC with type 'CAN1'
+        THEN: Protocol choices should be ('DroneCAN',)
+        """
+        basic_model.init_possible_choices({})
+
+        basic_model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "CAN1")
+
+        assert basic_model._possible_choices[("ESC", "FC Connection", "Protocol")] == ("DroneCAN",)
+
+    def test_system_sets_esc_protocols_for_serial_connection(self, basic_model) -> None:
+        """
+        _update_possible_choices_for_path populates serial ESC protocol choices for SERIAL1.
+
+        GIVEN: A model with initialized possible choices
+        WHEN: _update_possible_choices_for_path is called for ESC with type 'SERIAL1'
+        THEN: Protocol choices should be a non-empty tuple of serial ESC protocols
+        """
+        basic_model.init_possible_choices({})
+
+        basic_model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "SERIAL1")
+
+        choices = basic_model._possible_choices[("ESC", "FC Connection", "Protocol")]
+        assert isinstance(choices, tuple)
+        assert len(choices) > 0
+
+    # ------------------------------------------------------------------
+    # validate_entry_limits - TOW max < TOW min (line 514)
+    # ------------------------------------------------------------------
+    def test_system_rejects_tow_max_below_tow_min(self, realistic_model) -> None:
+        """
+        validate_entry_limits returns an error when TOW max is lower than the existing TOW min.
+
+        GIVEN: A model where TOW min = 0.6 kg (realistic data)
+        WHEN: validate_entry_limits is called with TOW max = 0.5 kg
+        THEN: An error message should be returned
+        """
+        error_msg, corrected = realistic_model.validate_entry_limits("0.5", ("Frame", "Specifications", "TOW max Kg"))
+
+        assert error_msg != ""
+        assert corrected is not None
+
+    # ------------------------------------------------------------------
+    # validate_cell_voltage - ValueError and cross-voltage branches
+    # ------------------------------------------------------------------
+    def test_system_handles_non_numeric_cell_voltage_with_recommended_correction(self, realistic_model) -> None:
+        """
+        validate_cell_voltage returns an error and the recommended voltage for non-numeric input.
+
+        GIVEN: A string that cannot be converted to float
+        WHEN: validate_cell_voltage is called for Volt per cell max
+        THEN: An error message and the recommended cell voltage should be returned
+        """
+        err_msg, corrected = realistic_model.validate_cell_voltage(
+            "not_a_number", ("Battery", "Specifications", "Volt per cell max")
+        )
+
+        assert err_msg != ""
+        assert isinstance(corrected, float)
+
+    def test_system_rejects_max_voltage_below_arm_voltage(self, realistic_model) -> None:
+        """
+        validate_cell_voltage returns an error when Volt per cell max < Volt per cell arm.
+
+        GIVEN: Volt per cell arm = 3.85 already stored
+        WHEN: validate_cell_voltage is called with max = 3.7 (below arm)
+        THEN: An error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.85)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("3.7", ("Battery", "Specifications", "Volt per cell max"))
+
+        assert err_msg != ""
+
+    def test_system_accepts_max_voltage_above_arm_voltage(self, realistic_model) -> None:
+        """
+        validate_cell_voltage returns no error when Volt per cell max > arm.
+
+        GIVEN: Volt per cell arm = 3.85
+        WHEN: validate_cell_voltage is called with max = 4.2
+        THEN: No error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell arm"), 3.85)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("4.2", ("Battery", "Specifications", "Volt per cell max"))
+
+        assert err_msg == ""
+
+    def test_system_rejects_arm_voltage_above_max_voltage(self, realistic_model) -> None:
+        """
+        validate_cell_voltage rejects arm voltage when it exceeds max.
+
+        GIVEN: Volt per cell max = 4.2
+        WHEN: validate_cell_voltage is called with arm = 4.3
+        THEN: An error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("4.3", ("Battery", "Specifications", "Volt per cell arm"))
+
+        assert err_msg != ""
+
+    def test_system_accepts_arm_voltage_between_max_and_low(self, realistic_model) -> None:
+        """
+        validate_cell_voltage passes when arm is between max and low.
+
+        GIVEN: max=4.2, low=3.6
+        WHEN: validate_cell_voltage is called with arm = 3.85
+        THEN: No error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 4.2)
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("3.85", ("Battery", "Specifications", "Volt per cell arm"))
+
+        assert err_msg == ""
+
+    def test_system_rejects_crit_voltage_above_low_voltage(self, realistic_model) -> None:
+        """
+        validate_cell_voltage returns an error when Volt per cell crit exceeds low.
+
+        GIVEN: low = 3.6
+        WHEN: validate_cell_voltage is called with crit = 3.7 (above low)
+        THEN: An error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("3.7", ("Battery", "Specifications", "Volt per cell crit"))
+
+        assert err_msg != ""
+
+    def test_system_accepts_crit_voltage_below_low_voltage(self, realistic_model) -> None:
+        """
+        validate_cell_voltage passes when Volt per cell crit is below low.
+
+        GIVEN: low = 3.6
+        WHEN: validate_cell_voltage is called with crit = 3.5
+        THEN: No error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("3.5", ("Battery", "Specifications", "Volt per cell crit"))
+
+        assert err_msg == ""
+
+    def test_system_rejects_min_voltage_above_low_voltage(self, realistic_model) -> None:
+        """
+        validate_cell_voltage returns an error when Volt per cell min exceeds low.
+
+        GIVEN: low = 3.6
+        WHEN: validate_cell_voltage is called with min = 3.7
+        THEN: An error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("3.7", ("Battery", "Specifications", "Volt per cell min"))
+
+        assert err_msg != ""
+
+    def test_system_accepts_min_voltage_below_low_voltage(self, realistic_model) -> None:
+        """
+        validate_cell_voltage passes when Volt per cell min is below low.
+
+        GIVEN: low = 3.6
+        WHEN: validate_cell_voltage is called with min = 3.0
+        THEN: No error should be returned
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+
+        err_msg, _corrected = realistic_model.validate_cell_voltage("3.0", ("Battery", "Specifications", "Volt per cell min"))
+
+        assert err_msg == ""
+
+    # ------------------------------------------------------------------
+    # validate_cell_voltage — arm > stored max cross-validation early return (line 514 area)
+    # ------------------------------------------------------------------
+    def test_system_rejects_arm_voltage_above_stored_max_within_chemistry_limits(self, realistic_model) -> None:
+        """
+        validate_cell_voltage returns an early error when arm voltage exceeds the stored Volt per cell max.
+
+        GIVEN: Volt per cell max is set to 3.9 (within Lipo limits 3.0-4.2)
+        AND: Volt per cell arm = 4.1 (also within Lipo limits, but above max)
+        WHEN: validate_cell_voltage is called for arm
+        THEN: An error is returned immediately from the cross-validation against max
+        AND: The early-return branch (if err_msg: return err_msg, corr) is exercised
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell max"), 3.9)
+
+        err_msg, corr = realistic_model.validate_cell_voltage("4.1", ("Battery", "Specifications", "Volt per cell arm"))
+
+        assert err_msg != ""
+        assert corr is not None  # corrected value is returned
+
+    # ------------------------------------------------------------------
+    # validate_cell_voltage — unknown "Volt per cell X" type falls through to return "", None
+    # ------------------------------------------------------------------
+    def test_system_accepts_unknown_volt_per_cell_type_without_cross_validation(self, basic_model) -> None:
+        """
+        validate_cell_voltage returns ("", None) for unknown Volt per cell type names.
+
+        GIVEN: A path with "Volt per cell" in path[2] but not matching any of the 5 known types
+        WHEN: validate_cell_voltage is called directly with a valid voltage
+        THEN: No error is returned (the fall-through 'return "", None' is exercised)
+        """
+        # "Volt per cell custom" contains "Volt per cell" → passes outer if
+        # But is not max/arm/low/crit/min → all 5 inner if-checks are False → fall-through
+        err_msg, corr = basic_model.validate_cell_voltage("3.7", ("Battery", "Specifications", "Volt per cell custom"))
+
+        assert err_msg == ""
+        assert corr is None
+
+    # ------------------------------------------------------------------
+    # validate_all_data — Telemetry+RC sharing a serial port → allowed (line 614 area)
+    # ------------------------------------------------------------------
+    def test_system_allows_telemetry_and_rc_receiver_to_share_serial_port(self, basic_model) -> None:
+        """
+        validate_all_data does NOT report an error when Telemetry and RC Receiver share a serial port.
+
+        GIVEN: Both Telemetry and RC Receiver FC Connection Types are set to 'SERIAL1'
+        WHEN: validate_all_data is called
+        THEN: No duplicate connection error is raised for this combination (continue is executed)
+        AND: The 'if path[0] in Telemetry/RC Receiver' branch (line ~614) is exercised
+        """
+        entry_values = {
+            ("Telemetry", "FC Connection", "Type"): "SERIAL1",
+            ("RC Receiver", "FC Connection", "Type"): "SERIAL1",  # duplicate → allowed for Telemetry+RC
+        }
+
+        _is_valid, errors = basic_model.validate_all_data(entry_values)
+
+        # Verify no duplicate connection errors are raised for this pair
+        duplicate_errors = [e for e in errors if "Duplicate FC connection type" in e]
+        assert len(duplicate_errors) == 0
+
+    # ------------------------------------------------------------------
+    # validate_all_data — VALIDATION_RULES returns non-None corrected_value (line 637 area)
+    # ------------------------------------------------------------------
+    def test_system_corrects_and_stores_out_of_range_value_via_validation_rules(self, basic_model) -> None:
+        """
+        validate_all_data stores the corrected value when VALIDATION_RULES rejects with a non-None correction.
+
+        GIVEN: TOW max Kg is set to 700 (above max allowed 600)
+        WHEN: validate_all_data is called
+        THEN: An error is reported for the out-of-range value
+        AND: set_component_value is called with the corrected (clamped) value 600.0
+        AND: The 'if corrected_value is not None: set_component_value' branch is exercised
+        """
+        # "700" exceeds the (0.01, 600) range in VALIDATION_RULES → returns error + corrected=600.0
+        entry_values = {("Frame", "Specifications", "TOW max Kg"): "700"}
+
+        is_valid, errors = basic_model.validate_all_data(entry_values)
+
+        assert not is_valid
+        assert len(errors) > 0
+        # Verify the model was updated with the corrected value
+        corrected = basic_model.get_component_value(("Frame", "Specifications", "TOW max Kg"))
+        assert corrected == 600.0
+
+    # ------------------------------------------------------------------
+    # validate_entry_limits — TOW max with lim=0 (if lim: False branch — lines 464/473 area)
+    # ------------------------------------------------------------------
+    def test_system_skips_tow_cross_validation_when_tow_min_is_zero(self, basic_model) -> None:
+        """
+        validate_entry_limits skips TOW max cross-check when TOW min is zero (falsy).
+
+        GIVEN: TOW min Kg is explicitly set to 0
+        AND: TOW max Kg value is provided for validation
+        WHEN: validate_entry_limits is called for TOW max Kg
+        THEN: No cross-validation error is returned (lim is falsy → if lim: is False)
+        AND: The False branch of 'if lim: return validate_against_another_value(...)' is exercised
+        """
+        basic_model.set_component_value(("Frame", "Specifications", "TOW min Kg"), 0)
+
+        err_msg, corr = basic_model.validate_entry_limits("1.0", ("Frame", "Specifications", "TOW max Kg"))
+
+        assert err_msg == ""
+        assert corr is None
+
+    def test_system_skips_tow_cross_validation_when_tow_max_is_zero(self, basic_model) -> None:
+        """
+        validate_entry_limits skips TOW min cross-check when TOW max is zero (falsy).
+
+        GIVEN: TOW max Kg is explicitly set to 0
+        AND: TOW min Kg value is provided for validation
+        WHEN: validate_entry_limits is called for TOW min Kg
+        THEN: No cross-validation error is returned (lim is falsy → if lim: is False)
+        AND: The False branch of 'if lim: return validate_against_another_value(...)' is exercised
+        """
+        basic_model.set_component_value(("Frame", "Specifications", "TOW max Kg"), 0)
+
+        err_msg, corr = basic_model.validate_entry_limits("1.0", ("Frame", "Specifications", "TOW min Kg"))
+
+        assert err_msg == ""
+        assert corr is None
+
+    # ------------------------------------------------------------------
+    # _validate_motor_poles — odd poles (existing coverage) and even poles (verify)
+    # ------------------------------------------------------------------
+    def test_system_reports_error_for_odd_motor_poles_via_validate_all_data(self, realistic_model) -> None:
+        """
+        validate_all_data reports an error when motor poles count is odd.
+
+        GIVEN: Motor Poles is set to 13 (odd, within 2-59 range, passes VALIDATION_RULES int check)
+        WHEN: validate_all_data is called
+        THEN: An error is returned about needing even poles
+        AND: _validate_motor_poles (lines 629-636) is exercised
+        """
+        entry_values = {("Motors", "Specifications", "Poles"): "13"}
+
+        is_valid, errors = realistic_model.validate_all_data(entry_values)
+
+        assert not is_valid
+        assert any("even" in e for e in errors)
+
+    # ------------------------------------------------------------------
+    # validate_all_data — Battery Monitor + ESC sharing serial port allowed (line 598 area)
+    # ------------------------------------------------------------------
+    def test_system_reports_duplicate_error_when_esc_and_telemetry_share_serial_port(self, basic_model) -> None:
+        """
+        validate_all_data reports a duplicate error when ESC and Telemetry share a serial port.
+
+        GIVEN: Both Telemetry and ESC FC Connection Type = 'SERIAL1'
+        WHEN: validate_all_data is called
+        THEN: A duplicate connection error is raised (ESC+Telemetry is not an exempt combination)
+        """
+        entry_values = {
+            ("Telemetry", "FC Connection", "Type"): "SERIAL1",
+            ("ESC", "FC Connection", "Type"): "SERIAL1",
+        }
+
+        _is_valid, errors = basic_model.validate_all_data(entry_values)
+
+        duplicate_errors = [e for e in errors if "Duplicate FC connection type" in e]
+        assert len(duplicate_errors) >= 1
+
+    # ------------------------------------------------------------------
+    # validate_all_data — battery cell voltage error corrected and stored (lines 616-621 area)
+    # ------------------------------------------------------------------
+    def test_system_corrects_and_stores_out_of_range_cell_voltage_via_validate_all_data(self, realistic_model) -> None:
+        """
+        validate_all_data corrects and stores an out-of-range battery cell voltage.
+
+        GIVEN: 'Volt per cell max' is set to 4.5 (above Lipo chemistry limit of 4.2)
+        WHEN: validate_all_data is called
+        THEN: An error is reported for the out-of-range voltage
+        AND: set_component_value is called with the corrected limit (4.2)
+        AND: Lines 616-621 (validate_cell_voltage error + corrected_value handling) are exercised
+        """
+        entry_values = {("Battery", "Specifications", "Volt per cell max"): "4.5"}
+
+        is_valid, errors = realistic_model.validate_all_data(entry_values)
+
+        assert not is_valid
+        assert len(errors) > 0
+        # Verify the model was updated with the corrected (clamped) value
+        corrected = realistic_model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+        assert corrected == 4.2  # Lipo limit_max
+
+    def test_system_does_not_error_for_valid_cell_voltage_via_validate_all_data(self, realistic_model) -> None:
+        """
+        validate_all_data doesn't add an error for a valid Volt per cell crit value.
+
+        GIVEN: 'Volt per cell crit' is 3.5 (below Volt per cell low = 3.6, within Lipo limits)
+        WHEN: validate_all_data is called with a valid value
+        THEN: No error is raised for this entry
+        AND: The 'if error_msg: → False' branch (614->620 area) in the cell voltage block is exercised
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Volt per cell low"), 3.6)
+        entry_values = {("Battery", "Specifications", "Volt per cell crit"): "3.5"}
+
+        is_valid, errors = realistic_model.validate_all_data(entry_values)
+
+        cell_errors = [e for e in errors if "Volt per cell crit" in e or "crit" in e.lower()]
+        assert is_valid
+        assert len(cell_errors) == 0
+
+    def test_system_reports_error_without_correction_when_arm_limit_is_not_set(self, basic_model) -> None:
+        """
+        validate_all_data reports a cell voltage cross-validation error but with None corrected_value.
+
+        GIVEN: 'Volt per cell arm' is not set in the model (returns None for the limit)
+        AND: 'Volt per cell max' = 4.1 is passed to validate_all_data
+        WHEN: validate_all_data is called
+        THEN: An error is returned from validate_against_another_value (limit not a number)
+        AND: corrected_value is None → 'if corrected_value is not None: → False' (616->618 area)
+        """
+        # basic_model's Battery has no Volt per cell arm set → get_component_value returns None
+        # → validate_against_another_value returns (error_msg, None) with None corrected
+        entry_values = {("Battery", "Specifications", "Volt per cell max"): "4.1"}
+
+        is_valid, errors = basic_model.validate_all_data(entry_values)
+
+        # Error should be returned about arm not being set
+        assert not is_valid
+        assert len(errors) > 0
