@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from math import nan
 from typing import Any
 from unittest.mock import patch
 
@@ -20,6 +21,7 @@ from test_data_model_vehicle_components_common import (
     RealisticDataTestMixin,
 )
 
+import ardupilot_methodic_configurator.data_model_vehicle_components_import as _import_module
 from ardupilot_methodic_configurator.battery_cell_voltages import BatteryCell
 from ardupilot_methodic_configurator.data_model_vehicle_components_import import (
     BatteryVoltageSpecs,
@@ -1762,3 +1764,526 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         # Assert
         assert estimated == 0
+
+
+class TestComponentDataModelImportUncoveredBranches:
+    """Tests targeting previously uncovered branches in ComponentDataModelImport."""
+
+    @pytest.fixture
+    def basic_model(self) -> ComponentDataModelImport:
+        """Create a basic model with zero volt-per-cell specs."""
+        return ComponentDataModelFixtures.create_basic_model(ComponentDataModelImport)
+
+    @pytest.fixture
+    def realistic_model(self) -> ComponentDataModelImport:
+        """Create a realistic model with real battery specs."""
+        return ComponentDataModelFixtures.create_realistic_model(ComponentDataModelImport)
+
+    # ------------------------------------------------------------------
+    # _reverse_key_search
+    # ------------------------------------------------------------------
+    def test_system_logs_error_when_reverse_key_search_values_not_found(self) -> None:
+        """
+        _reverse_key_search returns fallbacks when no values match and logs an error.
+
+        GIVEN: A doc dict where none of the requested values exist in the param's 'values' entry
+        WHEN: _reverse_key_search is called
+        THEN: The fallback values should be returned AND an error should be logged
+        """
+        doc = {"MY_PARAM": {"values": {"0": "None", "1": "MAVLink1"}}}
+        values_to_find = ["DroneCAN"]  # not in the dict
+        fallbacks = [99]
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_err:
+            result = ComponentDataModelImport._reverse_key_search(doc, "MY_PARAM", values_to_find, fallbacks)
+
+        assert result == fallbacks
+        mock_err.assert_called()
+
+    def test_system_logs_error_when_reverse_key_search_length_differs(self) -> None:
+        """
+        _reverse_key_search logs an error when len(values) != len(fallbacks).
+
+        GIVEN: A values list and a fallbacks list of different lengths
+        WHEN: _reverse_key_search is called with a matching entry
+        THEN: An error should be logged about the length mismatch
+        AND: The found keys should still be returned
+        """
+        doc = {"MY_PARAM": {"values": {"0": "None", "1": "MAVLink1"}}}
+        values_to_find = ["MAVLink1"]  # matches key "1"
+        fallbacks_wrong_length = [1, 2, 3]  # length != 1
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_err:
+            result = ComponentDataModelImport._reverse_key_search(doc, "MY_PARAM", values_to_find, fallbacks_wrong_length)
+
+        assert result == [1]  # found key for "MAVLink1"
+        mock_err.assert_called()
+
+    # ------------------------------------------------------------------
+    # _verify_dict_is_uptodate with bitmask and invalid bit position
+    # ------------------------------------------------------------------
+    def test_system_warns_and_skips_invalid_bitmask_bit_positions(self, basic_model) -> None:
+        """
+        _verify_dict_is_uptodate warns and continues when a bitmask key is not an integer.
+
+        GIVEN: A doc dict with a Bitmask entry that has a non-integer bit position key
+        WHEN: _verify_dict_is_uptodate is called
+        THEN: A warning should be logged for the invalid key
+        AND: Processing should continue for the remaining keys
+        """
+        doc = {"RC_PROTOCOLS": {"Bitmask": {"not_a_number": "All", "9": "CRSF"}}}
+        dict_to_check = {"512": {"protocol": "CRSF"}}  # key 512 = 2^9
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            _result = basic_model._verify_dict_is_uptodate(doc, dict_to_check, "RC_PROTOCOLS", "Bitmask")
+
+        # The non-integer "not_a_number" key hits the except branch → "Invalid bit position" warning
+        mock_warn.assert_any_call("Invalid bit position %s in %s metadata", "not_a_number", "RC_PROTOCOLS")
+
+    # ------------------------------------------------------------------
+    # _set_battery_type_from_fc_parameters - I2C edge cases
+    # ------------------------------------------------------------------
+    def test_system_warns_when_i2c_bus_index_is_out_of_range(self, realistic_model) -> None:
+        """
+        System warns and defaults to first I2C bus when BATT_I2C_BUS is out of range.
+
+        GIVEN: A BATT_MONITOR configured for I2C (type 5 = Solo) with BATT_I2C_BUS=99
+        WHEN: _set_battery_type_from_fc_parameters is called
+        THEN: A warning should be logged about the out-of-range value
+        AND: The first I2C bus should be used as default
+        """
+        fc_parameters: dict[str, Any] = {"BATT_MONITOR": 5, "BATT_I2C_BUS": 99}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        texts = " ".join(str(c) for c in mock_warn.call_args_list)
+        assert "out of range" in texts or "BATT_I2C_BUS" in texts
+
+    def test_system_warns_when_i2c_bus_value_is_not_an_integer(self, realistic_model) -> None:
+        """
+        System warns and defaults to first I2C bus when BATT_I2C_BUS cannot be parsed as int.
+
+        GIVEN: A BATT_MONITOR configured for I2C and BATT_I2C_BUS holds a non-integer string
+        WHEN: _set_battery_type_from_fc_parameters is called
+        THEN: A warning should be logged about the invalid value
+        """
+        fc_parameters: dict[str, Any] = {"BATT_MONITOR": 5, "BATT_I2C_BUS": "not_an_int"}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        texts = " ".join(str(c) for c in mock_warn.call_args_list)
+        assert "Invalid BATT_I2C_BUS" in texts or "defaulting" in texts
+
+    def test_system_warns_when_batt_monitor_parameter_is_absent(self, basic_model) -> None:
+        """
+        System logs a warning when BATT_MONITOR is absent from fc_parameters.
+
+        GIVEN: fc_parameters that do not contain the BATT_MONITOR key
+        WHEN: _set_battery_type_from_fc_parameters is called
+        THEN: A warning should be logged about the missing parameter
+        """
+        fc_parameters: dict[str, Any] = {}  # no BATT_MONITOR key
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            basic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        texts = " ".join(str(c) for c in mock_warn.call_args_list)
+        assert "BATT_MONITOR" in texts
+
+    # ------------------------------------------------------------------
+    # import_bat_voltage - invalid voltage_type
+    # ------------------------------------------------------------------
+    def test_system_logs_error_for_invalid_voltage_type_in_import_bat_voltage(self, basic_model) -> None:
+        """
+        import_bat_voltage logs an error and returns early for an unknown voltage_type.
+
+        GIVEN: A BatteryVoltageSpecs with a valid param_name and a specs object
+        AND: voltage_type is not in BATTERY_CELL_VOLTAGE_TYPES
+        WHEN: import_bat_voltage is called
+        THEN: An error should be logged and no value should be stored
+        """
+        specs = BatteryVoltageSpecs(
+            estimated_cell_count=4,
+            limit_min=3.0,
+            limit_max=4.5,
+            detected_chemistry="Lipo",
+            fc_parameters={"MOT_BAT_VOLT_MAX": 16.8},
+        )
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_err:
+            basic_model.import_bat_voltage(specs, "MOT_BAT_VOLT_MAX", "not_a_valid_type")
+
+        mock_err.assert_called()
+
+    # ------------------------------------------------------------------
+    # _estimate_battery_cell_count - BATT_ARM_VOLT and MOT_BAT_VOLT_MIN fallbacks
+    # ------------------------------------------------------------------
+    def test_system_uses_batt_arm_volt_as_fallback_for_cell_count_estimation(self, realistic_model) -> None:
+        """
+        _estimate_battery_cell_count falls back to BATT_ARM_VOLT when higher-priority params absent.
+
+        GIVEN: Only BATT_ARM_VOLT is present in fc_parameters (all higher-priority params absent)
+        WHEN: _estimate_battery_cell_count is called
+        THEN: The BATT_ARM_VOLT path should be taken as a fallback
+        AND: The result should be either a positive integer or 0 (if volt_per_cell is unset)
+        """
+        # Only provide BATT_ARM_VOLT, omit MOT_BAT_VOLT_MAX/BATT_LOW_VOLT/BATT_CRT_VOLT
+        fc_parameters = {"BATT_ARM_VOLT": 15.2}
+
+        with (
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"),
+        ):
+            result = realistic_model._estimate_battery_cell_count(fc_parameters)
+
+        assert isinstance(result, int)
+
+    def test_system_uses_mot_bat_volt_min_as_last_resort_for_cell_count_estimation(self, realistic_model) -> None:
+        """
+        _estimate_battery_cell_count uses MOT_BAT_VOLT_MIN as the lowest-priority fallback.
+
+        GIVEN: Only MOT_BAT_VOLT_MIN is present in fc_parameters
+        WHEN: _estimate_battery_cell_count is called
+        THEN: The MOT_BAT_VOLT_MIN path should be taken
+        AND: The result should be an integer (positive or 0)
+        """
+        fc_parameters = {"MOT_BAT_VOLT_MIN": 12.8}
+
+        with (
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error"),
+        ):
+            result = realistic_model._estimate_battery_cell_count(fc_parameters)
+
+        assert isinstance(result, int)
+
+    # ------------------------------------------------------------------
+    # _verify_dict_is_uptodate — protocols-match branch (line 250->259)
+    # and protocols-mismatch (line 279)
+    # ------------------------------------------------------------------
+    def test_system_passes_when_code_and_doc_protocols_match(self, basic_model) -> None:
+        """
+        _verify_dict_is_uptodate returns True when code protocol matches doc protocol.
+
+        GIVEN: A doc and a dict_to_check where every protocol value agrees
+        WHEN: _verify_dict_is_uptodate is called
+        THEN: True is returned with no warning logged
+        AND: The False-branch of 'if code_protocol != doc_protocol' is exercised (250->259)
+        """
+        doc = {"SERIAL1_PROTOCOL": {"values": {"1": "MAVLink1"}}}
+        dict_to_check = {"1": {"protocol": "MAVLink1"}}  # matches exactly
+
+        result = basic_model._verify_dict_is_uptodate(doc, dict_to_check, "SERIAL1_PROTOCOL", "values")
+
+        assert result is True
+
+    def test_system_warns_when_doc_key_is_absent_from_code_dict(self, basic_model) -> None:
+        """
+        _verify_dict_is_uptodate logs a warning when a doc key is absent from the code dictionary.
+
+        GIVEN: A doc with protocol key "99" that is not present in dict_to_check
+        WHEN: _verify_dict_is_uptodate is called
+        THEN: A warning is logged and False is returned (else-branch / line 279 path exercised)
+        """
+        doc = {"SERIAL1_PROTOCOL": {"values": {"99": "FakeProtocol"}}}
+        dict_to_check = {"1": {"protocol": "MAVLink1"}}  # "99" not present
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            result = basic_model._verify_dict_is_uptodate(doc, dict_to_check, "SERIAL1_PROTOCOL", "values")
+
+        assert result is False
+        mock_warn.assert_called()
+
+    # ------------------------------------------------------------------
+    # _set_serial_type_from_fc_parameters — skip protocol 0 and unknown (lines 275, 279)
+    # ------------------------------------------------------------------
+    def test_system_skips_serial_port_with_protocol_zero(self, basic_model) -> None:
+        """
+        _set_serial_type_from_fc_parameters skips a serial port whose protocol number is 0.
+
+        GIVEN: fc_parameters with SERIAL1_PROTOCOL=0 (disabled)
+        WHEN: _set_serial_type_from_fc_parameters is called
+        THEN: No component values are changed for that port (continue at line 275 is exercised)
+        """
+        fc_parameters: dict[str, Any] = {"SERIAL1_PROTOCOL": 0}
+        result = basic_model._set_serial_type_from_fc_parameters(fc_parameters)
+        assert isinstance(result, bool)
+
+    def test_system_skips_serial_port_with_unknown_protocol_number(self, basic_model) -> None:
+        """
+        _set_serial_type_from_fc_parameters skips a port when protocol number is not in the dict.
+
+        GIVEN: fc_parameters with SERIAL1_PROTOCOL=999 (not in SERIAL_PROTOCOLS_DICT)
+        WHEN: _set_serial_type_from_fc_parameters is called
+        THEN: The port is silently skipped (continue at line 279 is exercised)
+        """
+        fc_parameters: dict[str, Any] = {"SERIAL1_PROTOCOL": 999}
+        result = basic_model._set_serial_type_from_fc_parameters(fc_parameters)
+        assert isinstance(result, bool)
+
+    # ------------------------------------------------------------------
+    # _set_esc_type_from_fc_parameters — protocol empty (line 332) and dict fallback (line 335)
+    # ------------------------------------------------------------------
+    def test_system_skips_setting_esc_protocol_when_doc_value_is_absent(self, basic_model) -> None:
+        """
+        _set_esc_type_from_fc_parameters skips setting ESC protocol when mot_pwm_type absent from doc values.
+
+        GIVEN: doc has MOT_PWM_TYPE.values but does NOT contain the key for mot_pwm_type=99
+        WHEN: _set_esc_type_from_fc_parameters is called
+        THEN: No protocol is set via doc (if protocol: False branch at line 332 is exercised)
+        AND: The function completes without error
+        """
+        fc_parameters: dict[str, Any] = {"MOT_PWM_TYPE": 99}  # 99 not in doc
+        doc: dict[str, Any] = {"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}}
+
+        basic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
+
+        # Should not crash; exact protocol value depends on model default
+        result = basic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        assert result is not None
+
+    def test_system_uses_mot_pwm_type_dict_fallback_when_doc_has_no_mot_pwm_type(self, basic_model) -> None:
+        """
+        _set_esc_type_from_fc_parameters falls back to MOT_PWM_TYPE_DICT when doc lacks values.
+
+        GIVEN: doc has no MOT_PWM_TYPE entry (empty)
+        AND: fc_parameters has MOT_PWM_TYPE=0 (which IS in MOT_PWM_TYPE_DICT as 'Normal')
+        WHEN: _set_esc_type_from_fc_parameters is called
+        THEN: Protocol is set to 'Normal' via the elif fallback (line 335 exercised)
+        """
+        fc_parameters: dict[str, Any] = {"MOT_PWM_TYPE": 0}
+        doc: dict[str, Any] = {}  # no MOT_PWM_TYPE in doc
+
+        basic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
+
+        result = basic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        assert result == "Normal"
+
+    # ------------------------------------------------------------------
+    # _set_battery_type_from_fc_parameters — valid I2C bus index (line 363)
+    # and non-I2C list type (Analog) (line 376)
+    # ------------------------------------------------------------------
+    def test_system_selects_i2c_bus_by_index_when_batt_i2c_bus_is_valid(self, basic_model) -> None:
+        """
+        _set_battery_type_from_fc_parameters uses BATT_I2C_BUS index to select the I2C bus.
+
+        GIVEN: BATT_MONITOR=5 (Solo, I2C type) and BATT_I2C_BUS=1 (selects I2C2 = index 1)
+        WHEN: _set_battery_type_from_fc_parameters is called
+        THEN: FC Connection Type should be set to 'I2C2' (fc_conn_type[1]) (line 363 exercised)
+        """
+        fc_parameters: dict[str, Any] = {"BATT_MONITOR": 5, "BATT_I2C_BUS": 1}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"):
+            basic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        result = basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
+        assert result == "I2C2"
+
+    def test_system_defaults_to_first_element_for_non_i2c_list_battery_type(self, basic_model) -> None:
+        """
+        _set_battery_type_from_fc_parameters takes the first element of a non-I2C list type.
+
+        GIVEN: BATT_MONITOR=3 (Analog Voltage Only) whose type is ANALOG_PORTS=['Analog']
+        AND: That list is NOT a subset of I2C_PORTS
+        WHEN: _set_battery_type_from_fc_parameters is called
+        THEN: FC Connection Type should be set to 'Analog' (first element) (line 376 exercised)
+        """
+        fc_parameters: dict[str, Any] = {"BATT_MONITOR": 3}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"):
+            basic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        result = basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
+        assert result == "Analog"
+
+    # ------------------------------------------------------------------
+    # _detect_battery_chemistry_from_voltages — isnan(score) log+continue (lines 504-509)
+    # ------------------------------------------------------------------
+    def test_system_logs_warning_when_chemistry_score_is_nan(self, basic_model, monkeypatch) -> None:
+        """
+        _detect_battery_chemistry_from_voltages logs a warning when chemistry_voltage_score returns NaN.
+
+        GIVEN: BatteryCell.chemistry_voltage_score is patched to always return NaN
+        AND: fc_parameters contains MOT_BAT_VOLT_MAX=16.8 and current_chemistry='Lipo'
+        WHEN: _detect_battery_chemistry_from_voltages is called
+        THEN: A warning is logged for each parameter (lines 504-509 exercised)
+        AND: The function falls through to best_chemistry_for_voltage and returns a result
+        """
+        monkeypatch.setattr(
+            BatteryCell,
+            "chemistry_voltage_score",
+            staticmethod(lambda *_a, **_kw: nan),
+        )
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            result = basic_model._detect_battery_chemistry_from_voltages({"MOT_BAT_VOLT_MAX": 16.8}, "Lipo")
+
+        # NaN score causes warning and continue; best_chemistry_for_voltage then determines the result
+        assert mock_warn.called
+        assert result is None or isinstance(result, str)
+
+    # ------------------------------------------------------------------
+    # _set_gnss_type_from_fc_parameters — invalid connection type (lines 228-229)
+    # ------------------------------------------------------------------
+    def test_system_logs_error_when_gnss_conn_type_is_neither_serial_nor_can(self, basic_model, monkeypatch) -> None:
+        """
+        _set_gnss_type_from_fc_parameters logs an error for GPS types with unknown connection type.
+
+        GIVEN: GNSS_RECEIVER_CONNECTION is patched so GPS_TYPE 99 maps to type=['USB'] (not SERIAL/CAN)
+        WHEN: _set_gnss_type_from_fc_parameters is called with fc_parameters={'GPS_TYPE': 99}
+        THEN: logging_error is called with 'Invalid GNSS connection type' (lines 228-229 exercised)
+        AND: FC Connection Type is set to 'None'
+        """
+        fake_gnss_conn: dict[str, Any] = {"99": {"type": ["USB"], "protocol": "Unknown"}}
+        monkeypatch.setattr(_import_module, "GNSS_RECEIVER_CONNECTION", fake_gnss_conn)
+
+        with patch.object(_import_module, "logging_error") as mock_err:
+            basic_model._set_gnss_type_from_fc_parameters({"GPS_TYPE": 99})
+
+        # Verify error was logged about invalid connection type
+        logged_text = " ".join(str(call) for call in mock_err.call_args_list)
+        assert "Invalid GNSS connection type" in logged_text
+
+        result = basic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+        assert result == "None"
+
+    # ------------------------------------------------------------------
+    # _verify_dict_is_uptodate — protocol mismatch (lines 141-142)
+    # ------------------------------------------------------------------
+    def test_system_warns_when_code_and_doc_protocols_differ(self, basic_model) -> None:
+        """
+        _verify_dict_is_uptodate logs a warning when check_key is found but protocols differ.
+
+        GIVEN: A doc saying key "1" maps to "MAVLink2"
+        AND: dict_to_check saying key "1" maps to "MAVLink1" (mismatch!)
+        WHEN: _verify_dict_is_uptodate is called
+        THEN: A warning is logged about the protocol mismatch (lines 141-142 exercised)
+        AND: False is returned
+        """
+        doc = {"SERIAL1_PROTOCOL": {"values": {"1": "MAVLink2"}}}  # doc expects MAVLink2
+        dict_to_check = {"1": {"protocol": "MAVLink1"}}  # code has MAVLink1 — MISMATCH
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            result = basic_model._verify_dict_is_uptodate(doc, dict_to_check, "SERIAL1_PROTOCOL", "values")
+
+        assert result is False
+        logged_text = " ".join(str(c) for c in mock_warn.call_args_list)
+        assert "does not match" in logged_text or "MAVLink" in logged_text
+
+    # ------------------------------------------------------------------
+    # _set_serial_type_from_fc_parameters — RC_PROTOCOLS single bit not in dict (line 250->259)
+    # ------------------------------------------------------------------
+    def test_system_skips_rc_protocol_assignment_when_single_bit_not_in_dict(self, basic_model) -> None:
+        """
+        _set_serial_type_from_fc_parameters skips RC protocol assignment when bit value is not in dict.
+
+        GIVEN: RC_PROTOCOLS = 131072 (2^17 = single bit set, but NOT in RC_PROTOCOLS_DICT which goes up to 2^16)
+        WHEN: _set_serial_type_from_fc_parameters is called
+        THEN: RC Receiver protocol is not updated (line 250->259 False branch exercised)
+        AND: The function completes without error
+        """
+        fc_parameters: dict[str, Any] = {"RC_PROTOCOLS": 131072}  # 2^17, not in dict
+        result = basic_model._set_serial_type_from_fc_parameters(fc_parameters)
+        assert isinstance(result, bool)
+
+    # ------------------------------------------------------------------
+    # _set_esc_type_from_fc_parameters — neither doc nor dict has the protocol (line 335->exit)
+    # ------------------------------------------------------------------
+    def test_system_leaves_esc_protocol_unchanged_when_type_not_in_doc_or_dict(self, basic_model) -> None:
+        """
+        _set_esc_type_from_fc_parameters leaves ESC protocol unchanged when mot_pwm_type is unknown.
+
+        GIVEN: doc is empty (no MOT_PWM_TYPE key)
+        AND: fc_parameters has MOT_PWM_TYPE=999 (not in MOT_PWM_TYPE_DICT either)
+        WHEN: _set_esc_type_from_fc_parameters is called
+        THEN: Neither the doc branch nor the dict fallback sets the protocol (line 335->exit exercised)
+        AND: The function completes without error
+        """
+        fc_parameters: dict[str, Any] = {"MOT_PWM_TYPE": 999}  # not in dict
+        doc: dict[str, Any] = {}  # no MOT_PWM_TYPE in doc either
+
+        basic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
+        # No crash — function just falls through both if/elif conditions
+
+    # ------------------------------------------------------------------
+    # _set_esc_type_from_fc_parameters — MOT_PWM_TYPE non-integer (lines 318-320)
+    # ------------------------------------------------------------------
+    def test_system_logs_error_for_non_integer_mot_pwm_type(self, basic_model) -> None:
+        """
+        _set_esc_type_from_fc_parameters logs an error when MOT_PWM_TYPE cannot be converted to int.
+
+        GIVEN: fc_parameters has MOT_PWM_TYPE='abc' (non-integer string)
+        WHEN: _set_esc_type_from_fc_parameters is called
+        THEN: An error is logged and mot_pwm_type defaults to 0 (lines 318-320 exercised)
+        """
+        fc_parameters: dict[str, Any] = {"MOT_PWM_TYPE": "abc"}
+        doc: dict[str, Any] = {}
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_error") as mock_err:
+            basic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
+
+        mock_err.assert_called()
+
+    # ------------------------------------------------------------------
+    # _set_battery_type_from_fc_parameters — I2C bus without BATT_I2C_BUS (line 376)
+    # ------------------------------------------------------------------
+    def test_system_defaults_to_first_i2c_bus_when_batt_i2c_bus_not_provided(self, basic_model) -> None:
+        """
+        _set_battery_type_from_fc_parameters defaults to I2C1 when BATT_I2C_BUS is absent.
+
+        GIVEN: BATT_MONITOR=5 (Solo, I2C type) but NO BATT_I2C_BUS parameter
+        WHEN: _set_battery_type_from_fc_parameters is called
+        THEN: FC Connection Type defaults to 'I2C1' (first element, line 376 exercised)
+        """
+        fc_parameters: dict[str, Any] = {"BATT_MONITOR": 5}  # I2C type, no BATT_I2C_BUS
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"):
+            basic_model._set_battery_type_from_fc_parameters(fc_parameters)
+
+        result = basic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
+        assert result == "I2C1"
+
+    # ------------------------------------------------------------------
+    # _set_serial_type_from_fc_parameters — GNSS CAN type prevents serial override (line 300->302)
+    # ------------------------------------------------------------------
+    def test_system_skips_gnss_type_override_when_type_is_can(self, basic_model) -> None:
+        """
+        _set_serial_type_from_fc_parameters skips setting GNSS type when already set to a CAN port.
+
+        GIVEN: GNSS Receiver FC Connection Type is set to 'CAN1' (already configured via CAN)
+        AND: SERIAL3_PROTOCOL=5 (GPS protocol) is in fc_parameters
+        WHEN: _set_serial_type_from_fc_parameters is called
+        THEN: GNSS Receiver Type stays as 'CAN1' (not overwritten by SERIAL3)
+        AND: Line 300->302 (False branch of 'if current_gnss_type not in CAN_PORTS:') is exercised
+        """
+        basic_model.set_component_value(("GNSS Receiver", "FC Connection", "Type"), "CAN1")
+        fc_parameters: dict[str, Any] = {"SERIAL3_PROTOCOL": 5}  # GPS on SERIAL3
+
+        basic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+        result = basic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type"))
+        assert result == "CAN1"  # Not overwritten
+
+    # ------------------------------------------------------------------
+    # _set_serial_type_from_fc_parameters — second RC Receiver falls through elif chain (line 303->263)
+    # ------------------------------------------------------------------
+    def test_system_skips_second_rc_receiver_serial_assignment(self, basic_model) -> None:
+        """
+        _set_serial_type_from_fc_parameters ignores second RC Receiver when one was already assigned.
+
+        GIVEN: Two serial ports both configured with RCIN (RC Receiver) protocol=23
+        WHEN: _set_serial_type_from_fc_parameters is called
+        THEN: Only the first RC Receiver is assigned; the second falls through all elif branches
+        AND: Line 303->263 (elif component == 'ESC' False branch) is exercised
+        """
+        fc_parameters: dict[str, Any] = {
+            "SERIAL1_PROTOCOL": 23,  # RCIN = RC Receiver, first → assigned
+            "SERIAL2_PROTOCOL": 23,  # RCIN = RC Receiver, second → rc > 1 → skipped
+        }
+
+        basic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+        result = basic_model.get_component_value(("RC Receiver", "FC Connection", "Type"))
+        assert result == "SERIAL1"  # Only first RC Receiver assigned

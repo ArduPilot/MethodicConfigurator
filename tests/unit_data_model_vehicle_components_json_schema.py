@@ -17,6 +17,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
+from test_data_model_vehicle_components_common import make_fc_schema
 
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
@@ -421,3 +422,276 @@ class TestVehicleComponentsJsonSchemaInternals:
         with patch("ardupilot_methodic_configurator.data_model_vehicle_components_json_schema.logging_error") as mock_log:
             json_schema.modify_schema_for_mcu_series(is_optional=True)
             mock_log.assert_called()
+
+    def test_modify_schema_logs_error_when_flight_controller_def_has_no_allof(self) -> None:
+        """
+        modify_schema_for_mcu_series logs an error when flightController definition has no allOf.
+
+        GIVEN: A schema where definitions.flightController exists but contains no 'allOf' key
+        WHEN: modify_schema_for_mcu_series is called
+        THEN: The 'if allOf in flight_controller_def' check is False (arc 126->132),
+              flight_controller_properties stays None, and an error is logged
+        """
+        schema_no_allof = {
+            "definitions": {
+                "flightController": {
+                    "properties": {"Firmware": {"type": "string"}}  # no 'allOf' key
+                }
+            }
+        }
+        json_schema = VehicleComponentsJsonSchema(schema_no_allof)
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_json_schema.logging_error") as mock_err:
+            json_schema.modify_schema_for_mcu_series(is_optional=True)
+
+        mock_err.assert_called()
+
+    def test_get_product_field_description_returns_empty_for_unknown_product_field(self) -> None:
+        """
+        _get_product_field_description returns ('', False) when field_name is not in product definition.
+
+        GIVEN: A schema with definitions.product containing 'Manufacturer' only
+        WHEN: get_component_property_description is called with a path like
+              ('FC', 'Product', 'NonExistentField')
+        THEN: ('', False) is returned (line 203 in _get_product_field_description)
+        """
+        schema = {
+            "properties": {"Components": {"properties": {"Flight Controller": {"description": "FC"}}}},
+            "definitions": {"product": {"properties": {"Manufacturer": {"type": "string"}}}},
+        }
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        result = json_schema.get_component_property_description(("Flight Controller", "Product", "NonExistentField"))
+
+        assert result == ("", False)
+
+    def test_get_section_field_description_returns_direct_property_description(self) -> None:
+        """
+        _get_section_field_description returns description when section found in direct properties.
+
+        GIVEN: A schema where 'Flight Controller' has 'Specifications' in its direct properties
+        WHEN: get_component_property_description is called with path ('Flight Controller', 'Specifications')
+        THEN: The description from the direct property is returned (line 240)
+        """
+        fc_body = {"description": "FC", "properties": {"Specifications": {"description": "Hardware specifications"}}}
+        schema = make_fc_schema(fc_body)
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        result = json_schema.get_component_property_description(("Flight Controller", "Specifications"))
+
+        assert result == ("Hardware specifications", False)
+
+    def test_get_section_field_description_finds_section_via_ref_in_allof(self) -> None:
+        """
+        _get_section_field_description returns description when section found via $ref inside allOf.
+
+        GIVEN: A schema where 'Flight Controller' has an allOf with a $ref, and the referenced
+               definition contains the target section in its properties
+        WHEN: get_component_property_description is called with path ('Flight Controller', 'Firmware')
+        THEN: The description from the resolved reference is returned (line 250)
+        """
+        schema = {
+            "properties": {"Components": {"properties": {"Flight Controller": {"allOf": [{"$ref": "#/definitions/fcBase"}]}}}},
+            "definitions": {
+                "fcBase": {"properties": {"Firmware": {"description": "Firmware section", "x-is-optional": True}}}
+            },
+        }
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        result = json_schema.get_component_property_description(("Flight Controller", "Firmware"))
+
+        assert result == ("Firmware section", True)
+
+    def test_modify_schema_logs_error_when_allof_has_no_specifications(self) -> None:
+        """
+        modify_schema_for_mcu_series logs an error when allOf items lack Specifications.
+
+        GIVEN: A schema where flightController.allOf exists but no item contains 'Specifications'
+        WHEN: modify_schema_for_mcu_series is called
+        THEN: An error should be logged ('Could not find Specifications ...')
+              and the function should return early without modifying anything
+        """
+        schema_no_specs = {
+            "definitions": {"flightController": {"allOf": [{"properties": {"NotSpecifications": {"type": "string"}}}]}}
+        }
+        json_schema = VehicleComponentsJsonSchema(schema_no_specs)
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_json_schema.logging_error") as mock_err:
+            json_schema.modify_schema_for_mcu_series(is_optional=True)
+
+        mock_err.assert_called()
+
+    def test_modify_schema_does_nothing_when_specifications_has_no_mcu_series_property(self) -> None:
+        """
+        modify_schema_for_mcu_series exits silently when MCU Series is absent from Specifications.
+
+        GIVEN: A schema where flightController references Specifications, but Specifications
+               has no 'properties' key (or no 'MCU Series' entry)
+        WHEN: modify_schema_for_mcu_series is called
+        THEN: No error should be logged and the function should complete without modification
+        """
+        schema_no_mcu = {
+            "definitions": {
+                "flightController": {
+                    "allOf": [
+                        {
+                            "properties": {
+                                "Specifications": {"type": "object"}  # no 'properties' sub-key
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+        json_schema = VehicleComponentsJsonSchema(schema_no_mcu)
+
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_json_schema.logging_error") as mock_err:
+            json_schema.modify_schema_for_mcu_series(is_optional=True)
+
+        mock_err.assert_not_called()
+
+    def test_get_component_property_description_returns_empty_for_unknown_top_level_component(self) -> None:
+        """
+        get_component_property_description returns empty tuple for an unknown top-level component.
+
+        GIVEN: A schema without 'NonExistentComponent' in its Components properties
+        WHEN: get_component_property_description is called with a single-element path
+        THEN: ('', False) should be returned
+        """
+        schema = {"properties": {"Components": {"properties": {"Flight Controller": {"description": "FC description"}}}}}
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        result = json_schema.get_component_property_description(("NonExistentComponent",))
+
+        assert result == ("", False)
+
+    def test_get_component_property_description_returns_empty_for_unknown_component_in_nested_path(self) -> None:
+        """
+        get_component_property_description returns empty tuple for unknown component in nested path.
+
+        The top-level component is not found while resolving a multi-element path.
+
+        GIVEN: A schema without 'NonExistent' as a component type
+        WHEN: get_component_property_description is called with a path starting with 'NonExistent'
+        THEN: ('', False) should be returned
+        """
+        schema = {"properties": {"Components": {"properties": {"Flight Controller": {"description": "FC description"}}}}}
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        result = json_schema.get_component_property_description(("NonExistent", "Specifications", "MCU Series"))
+
+        assert result == ("", False)
+
+    def test_get_component_property_description_returns_empty_for_missing_section(self) -> None:
+        """
+        get_component_property_description returns empty tuple for a missing section path.
+
+        When len(path)==2 and the section is not in the component schema, ('', False) is returned.
+
+        GIVEN: A schema with 'Flight Controller' in Components.properties
+               but no 'NonExistentSection' anywhere
+        WHEN: get_component_property_description is called with path of length 2
+        THEN: ('', False) should be returned from _get_section_field_description
+        """
+        schema = {
+            "properties": {
+                "Components": {
+                    "properties": {
+                        "Flight Controller": {
+                            "description": "FC",
+                            "properties": {"Product": {"description": "Product info"}},
+                        }
+                    }
+                }
+            }
+        }
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        result = json_schema.get_component_property_description(("Flight Controller", "NonExistentSection"))
+
+        assert result == ("", False)
+
+    def test_traverse_nested_path_returns_empty_when_part_not_found_in_any_strategy(self) -> None:
+        """
+        _traverse_nested_path returns ('', False) when a path part is not found.
+
+        No lookup strategy (direct, allOf, or ref) locates the requested property.
+        Also exercises: 243->257 (len(path)!=2 branch) and 289->302 (no allOf in schema_obj).
+
+        GIVEN: A schema where 'Flight Controller' has only a 'Product' property
+        WHEN: get_component_property_description is called with a length-3 path whose
+              second element is 'Specifications' (which does not exist)
+        THEN: _traverse_nested_path should exhaust all strategies and return ('', False)
+        """
+        schema = {
+            "properties": {
+                "Components": {
+                    "properties": {
+                        "Flight Controller": {
+                            "description": "FC",
+                            "properties": {"Product": {"description": "Product section"}},
+                        }
+                    }
+                }
+            }
+        }
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        # path length 3 with path[1] != 'Product' -> goes to _traverse_nested_path
+        result = json_schema.get_component_property_description(("Flight Controller", "Specifications", "Processor"))
+
+        assert result == ("", False)
+
+    def test_check_allof_constructs_finds_property_via_ref_inside_allof_item(self) -> None:
+        """
+        _check_allof_constructs returns True when the target property is found via $ref in allOf.
+
+        The first allOf item lacks the property but the second resolves via $ref to a definition
+        that contains it.
+
+        GIVEN: An allOf schema where the first item doesn't have the property
+               but the second item is a $ref that resolves to a definition containing it
+        WHEN: _check_allof_constructs is called for the target property
+        THEN: Should return True and the property schema
+        """
+        schema = {
+            "definitions": {"myDef": {"properties": {"TargetProp": {"type": "string", "description": "Found via $ref"}}}}
+        }
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        test_obj = {
+            "allOf": [
+                {"properties": {"OtherProp": {"type": "integer"}}},  # doesn't have TargetProp
+                {"$ref": "#/definitions/myDef"},  # resolves to definition with TargetProp
+            ]
+        }
+
+        found, result = json_schema._check_allof_constructs(test_obj, "TargetProp")
+
+        assert found is True
+        assert result["type"] == "string"
+
+    def test_check_references_finds_property_in_direct_properties_of_referenced_definition(self) -> None:
+        """
+        _check_references returns True for a target property in referenced definition's properties.
+
+        The $ref resolves to a definition with direct properties (not via allOf).
+
+        GIVEN: A schema where the $ref resolves to a definition with direct properties
+               containing the target property
+        WHEN: _check_references is called for the target property
+        THEN: Should return True and the property schema
+        """
+        schema = {
+            "definitions": {
+                "myDirectDef": {"properties": {"DirectProp": {"type": "boolean", "description": "Direct property"}}}
+            }
+        }
+        json_schema = VehicleComponentsJsonSchema(schema)
+
+        test_obj = {"$ref": "#/definitions/myDirectDef"}
+
+        found, result = json_schema._check_references(test_obj, "DirectProp")
+
+        assert found is True
+        assert result["type"] == "boolean"

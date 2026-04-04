@@ -20,7 +20,9 @@ from unittest.mock import patch
 import pytest
 from test_data_model_vehicle_components_common import ComponentDataModelFixtures
 
+from ardupilot_methodic_configurator.battery_cell_voltages import BATTERY_DEFAULT_CHEMISTRY, BatteryCell
 from ardupilot_methodic_configurator.data_model_vehicle_components_import import ComponentDataModelImport
+from ardupilot_methodic_configurator.data_model_vehicle_components_validation import ComponentDataModelValidation
 
 # pylint: disable=protected-access,too-many-public-methods
 
@@ -504,3 +506,67 @@ class TestComponentDataModelImportInternals:
         fc_parameters = {"MOT_BAT_VOLT_MAX": 300.0}  # ~71 cells
         realistic_model._estimate_battery_cell_count(fc_parameters)
         assert realistic_model.get_component_value(("Battery", "Specifications", "Number of cells")) == initial_cells
+
+    def test_set_battery_type_warns_when_batt_monitor_not_in_fc_parameters(self, realistic_model) -> None:
+        """
+        System logs a warning when BATT_MONITOR is absent from FC parameters.
+
+        GIVEN: FC parameters with no BATT_MONITOR key
+        WHEN: Setting battery type from FC parameters
+        THEN: A warning should be logged about missing BATT_MONITOR
+        AND: The rest of the battery processing (chemistry, cells) still runs without crash
+        """
+        with patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning") as mock_warn:
+            realistic_model._set_battery_type_from_fc_parameters({})
+        mock_warn.assert_called()
+
+    def test_set_battery_type_uses_default_chemistry_when_detection_returns_invalid_name(self, realistic_model) -> None:
+        """
+        System falls back to BATTERY_DEFAULT_CHEMISTRY when detected chemistry is not a valid name.
+
+        GIVEN: FC parameters where chemistry detection returns an unrecognised chemistry string
+        WHEN: Setting battery type from FC parameters
+        THEN: The invalid chemistry is replaced with BATTERY_DEFAULT_CHEMISTRY
+        AND: Subsequent voltage limit lookups use the default chemistry without error
+        """
+        assert BATTERY_DEFAULT_CHEMISTRY in BatteryCell.chemistries()
+
+        with (
+            patch.object(realistic_model, "_detect_battery_chemistry_from_voltages", return_value="InvalidChemistry"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.logging_warning"),
+        ):
+            # Should not raise — invalid chemistry triggers fallback to default
+            realistic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 4})
+
+    def test_estimate_battery_cell_count_returns_zero_when_cell_path_not_in_validation_rules(self, realistic_model) -> None:
+        """
+        Battery cell count estimation returns 0 when the cell path is absent from VALIDATION_RULES.
+
+        GIVEN: VALIDATION_RULES patched to be empty (no cell-count entry)
+        WHEN: Estimating battery cell count with a valid voltage parameter
+        THEN: Should return 0 (validation guard cannot be checked)
+        """
+        realistic_model.set_component_value(("Battery", "Specifications", "Chemistry"), "Lipo")
+
+        with patch.object(ComponentDataModelValidation, "VALIDATION_RULES", {}):
+            result = realistic_model._estimate_battery_cell_count({"MOT_BAT_VOLT_MAX": 16.8})
+
+        assert result == 0
+
+    def test_set_battery_type_handles_string_type_in_batt_monitor_connection(self, realistic_model) -> None:
+        """
+        Battery type setter handles non-list (string) type in BATT_MONITOR_CONNECTION.
+
+        GIVEN: BATT_MONITOR_CONNECTION patched to have a plain string 'type' (not a list)
+        WHEN: Setting battery type with that BATT_MONITOR value
+        THEN: isinstance(fc_conn_type, list) is False — the list-handling block is skipped
+              and the string type is set directly on the Battery Monitor component
+        """
+        with patch(
+            "ardupilot_methodic_configurator.data_model_vehicle_components_import.BATT_MONITOR_CONNECTION",
+            {"9": {"type": "Other", "protocol": "ESC"}},
+        ):
+            realistic_model._set_battery_type_from_fc_parameters({"BATT_MONITOR": 9})
+
+        batt_type = realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Type"))
+        assert batt_type == "Other"

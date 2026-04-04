@@ -12,8 +12,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import copy
 from typing import Any, Optional, TypeVar
+from unittest.mock import MagicMock
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
+from ardupilot_methodic_configurator.data_model_vehicle_components_display import ComponentDataModelDisplay
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
 # Type variables for generic fixture factories
@@ -163,6 +165,14 @@ SAMPLE_DOC_DICT = {
 }
 
 
+def make_fc_schema(fc_body: dict[str, Any], *, definitions: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Build a minimal schema dict wrapping a single Flight Controller component body."""
+    schema: dict[str, Any] = {"properties": {"Components": {"properties": {"Flight Controller": fc_body}}}}
+    if definitions is not None:
+        schema["definitions"] = definitions
+    return schema
+
+
 class ComponentDataModelFixtures:
     """Factory class for creating component data model fixtures."""
 
@@ -252,6 +262,24 @@ class ComponentDataModelFixtures:
         post_init = getattr(model, "post_init", None)
         if callable(post_init):
             post_init({})
+        return model
+
+    @staticmethod
+    def create_mock_schema() -> MagicMock:
+        """Create a mock schema with default non-optional behavior."""
+        schema = MagicMock()
+        schema.get_component_property_description.return_value = ("Test description", False)
+        return schema
+
+    @staticmethod
+    def create_display_model_with_mock_schema(mock_schema: MagicMock) -> ComponentDataModelDisplay:
+        """Create a ComponentDataModelDisplay instance backed by a mock schema."""
+        initial_data: dict[str, Any] = {"Components": {}, "Format version": 1}
+        component_datatypes: dict[str, Any] = {"Flight Controller": {"Product": {"Manufacturer": str}}}
+        schema_dict = ComponentDataModelFixtures.create_simple_schema()
+        schema = VehicleComponentsJsonSchema(schema_dict)
+        model = ComponentDataModelDisplay(initial_data, component_datatypes, schema)
+        model.schema = mock_schema
         return model
 
 

@@ -1192,3 +1192,31 @@ class TestComponentDataModelTemplates(BasicTestMixin, RealisticDataTestMixin):
         assert result["SerialNumber"] == "SN-ABC123"  # string
         assert result["CalibrationValue"] == 3.14159  # float
         assert result["Notes"] == "Calibrated on 2024-01-01"  # string
+
+
+class TestComponentDataModelTemplatesUncoveredBranches:  # pylint: disable=too-few-public-methods
+    """Tests targeting previously uncovered branches in ComponentDataModelTemplates (line 30)."""
+
+    def test_system_creates_components_key_when_data_has_no_components_key(self) -> None:
+        """
+        update_component creates the 'Components' dict when _data lacks the key.
+
+        GIVEN: A model whose _data does not contain a 'Components' key
+        WHEN: update_component is called
+        THEN: 'Components' should be created in _data
+        AND: The new component should be stored under it
+        """
+        component_datatypes = ComponentDataModelFixtures.create_component_datatypes()
+        schema = ComponentDataModelFixtures.create_schema()
+        # {"Format version": 1} is truthy → __init__ uses deepcopy → _data has no "Components"
+        model = ComponentDataModelTemplates({"Format version": 1}, component_datatypes, schema)
+        # At this point _data = {"Format version": 1} with no "Components" key
+        # pylint: disable=protected-access
+        assert "Components" not in model._data
+
+        model.update_component("NewComponent", {"Some": "data"})
+
+        assert "Components" in model._data
+        assert "NewComponent" in model._data["Components"]
+        assert model._data["Components"]["NewComponent"] == {"Some": "data"}
+        # pylint: enable=protected-access
