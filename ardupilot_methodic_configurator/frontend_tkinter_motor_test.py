@@ -27,10 +27,10 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
-from tkinter import Frame, Label, ttk
-from tkinter.messagebox import askyesno, showerror, showwarning
+from tkinter import Event, Frame, Label, ttk
+from tkinter.messagebox import askyesno, showerror, showinfo, showwarning
 from tkinter.simpledialog import askfloat
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
@@ -244,7 +244,18 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         ).pack(side="left", padx=5)
 
     def _create_motor_buttons(self, parent: Union[Frame, ttk.Frame]) -> None:
-        """Create the motor test buttons and detection comboboxes."""
+        """
+        Create per-motor test controls and configure detection selection handling.
+
+        For each configured motor, this builds the test button, motor information label,
+        detection combobox, and status label. It also binds each detection combobox's
+        selection event to `_on_combobox_selected` so swap/detection UI updates are
+        handled when the user changes a detected motor assignment.
+
+        Args:
+            parent: The container that will receive the per-motor control frames.
+
+        """
         motor_labels = self.model.motor_labels
         motor_numbers = self.model.motor_numbers
         motor_directions = self.model.motor_directions
@@ -274,11 +285,64 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             combo = ttk.Combobox(motor_frame, values=self.model.motor_labels, width=5)
             combo.pack()
             self.detected_comboboxes.append(combo)
+            # Bind the selection event to the new handler
+            combo.bind("<<ComboboxSelected>>", self._on_combobox_selected)
 
             # Add status label for visual feedback
             status_label = ttk.Label(motor_frame, text=_("Ready"), foreground="blue")
             status_label.pack()
             self.motor_status_labels.append(status_label)
+
+    def _on_combobox_selected(self, event: Event) -> None:
+        """Handle combobox selection by looking up the triggering widget."""
+        # Cast the generic widget to a ttk.Combobox so the type checker knows it has a .get() method
+        combobox = cast("ttk.Combobox", event.widget)
+
+        # Find which row this combobox belongs to in our saved list
+        if combobox in self.detected_comboboxes:
+            index = self.detected_comboboxes.index(combobox)
+            expected_label = self.model.motor_labels[index]
+            selected_label = combobox.get()
+
+            # Pass the data to the swap logic
+            self._on_motor_swapped(expected_label, selected_label)
+
+    def _on_motor_swapped(self, expected_label: str, detected_label: str) -> None:
+        """Handle the user selecting a different motor from the dropdown."""
+        if expected_label == detected_label:
+            # If they select 'A' for motor 'A', just clear the box and idle
+            for cb in self.detected_comboboxes:
+                cb.set("")
+            return
+
+        # Ask for confirmation
+        confirm = askyesno(
+            _("Swapping Motors?"),
+            _("Are you sure you want to swap the functions of Motor %(exp)s and Motor %(det)s?")
+            % {"exp": expected_label, "det": detected_label},
+        )
+
+        if not confirm:
+            for cb in self.detected_comboboxes:
+                cb.set("")
+            return
+
+        try:
+            self.model.swap_motor_functions(expected_label, detected_label)
+
+            showinfo(
+                _("Success"),
+                _("Motor %(exp)s and Motor %(det)s have been successfully swapped.")
+                % {"exp": expected_label, "det": detected_label},
+            )
+
+        except (ParameterError, ValidationError) as e:
+            showerror(_("Swap Failed"), str(e))
+
+        finally:
+            # To make the UI looks clean always clear the comboboxes after the action is done
+            for cb in self.detected_comboboxes:
+                cb.set("")
 
     def _update_view(self) -> None:
         """Update the view with data from the model."""

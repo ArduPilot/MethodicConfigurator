@@ -3267,3 +3267,86 @@ class TestNonSequentialFrameClassMapping:
         assert "Y6" in frame_options
         assert "SCRIPTINGMATRIX" in frame_options
         assert len(frame_options) == 3
+
+
+class TestMotorTestDataModelMotorSwapping:
+    """Test motor parameter swapping functionality."""
+
+    def test_swap_motor_functions_exits_early_when_labels_match(self, motor_test_model) -> None:
+        """
+        Swapping a motor with itself does nothing.
+
+        GIVEN: A request to swap motor 'A' with 'A'
+        WHEN: Calling swap_motor_functions
+        THEN: Returns immediately without reading or writing parameters
+        """
+        # Arrange: set parameter to ensure they aren't called
+        with (
+            patch.object(motor_test_model, "get_parameter") as mock_get,
+            patch.object(motor_test_model, "set_parameter") as mock_set,
+        ):
+            # Act: Attempt to swap
+            motor_test_model.swap_motor_functions("A", "A")
+
+            # Assert: No backend interactions occurred
+            mock_get.assert_not_called()
+            mock_set.assert_not_called()
+
+    def test_swap_motor_functions_swaps_parameters_successfully(self, motor_test_model) -> None:
+        """
+        Successfully swaps SERVO_FUNCTION parameters for two valid motors.
+
+        GIVEN: A request to swap motor 'A' (SERVO1) and 'C' (SERVO3)
+        WHEN: Calling swap_motor_functions and the FC returns valid data
+        THEN: The parameters are read and written back swapped
+        """
+
+        # Arrange: Set up mock parameter reading
+        def mock_get_param(param_name: str) -> Optional[float]:
+            if param_name == "SERVO1_FUNCTION":
+                return 33.0  # e.g, Motor 1 output function code
+            if param_name == "SERVO3_FUNCTION":
+                return 35.0  # e.g, Motor 3 output function code
+            return None
+
+        with (
+            patch.object(motor_test_model, "get_parameter", side_effect=mock_get_param) as mock_get,
+            patch.object(motor_test_model, "set_parameter") as mock_set,
+        ):
+            # Act: Execute swap
+            motor_test_model.swap_motor_functions("A", "C")
+
+            # Assert: Verify correct parameters were read
+            mock_get.assert_any_call("SERVO1_FUNCTION")
+            mock_get.assert_any_call("SERVO3_FUNCTION")
+
+            # Assert: Verify parameters were written back inverted
+            mock_set.assert_any_call("SERVO1_FUNCTION", 35.0)
+            mock_set.assert_any_call("SERVO3_FUNCTION", 33.0)
+            assert mock_set.call_count == 2
+
+    def test_swap_motor_functions_raises_validation_error_for_invalid_labels(self, motor_test_model) -> None:
+        """
+        Raises ValidationError when an invalid motor label is provided.
+
+        GIVEN: An invalid motor label not in the current frame
+        WHEN: Calling swap_motor_functions
+        THEN: Raises ValidationError preventing the swap
+        """
+        with pytest.raises(ValidationError, match="Invalid motor labels provided for swapping"):
+            motor_test_model.swap_motor_functions("A", "Z")
+
+    def test_swap_motor_functions_raises_parameter_error_on_read_failure(self, motor_test_model) -> None:
+        """
+        Raises ParameterError when failing to read existing parameter values.
+
+        GIVEN: Valid labels but the flight controller returns None for a parameter
+        WHEN: Calling swap_motor_functions
+        THEN: Raises ParameterError indicating the read failure
+        """
+        # Arrange, Act & Assert: Combine the mock and the exception check into one statement
+        with (
+            patch.object(motor_test_model, "get_parameter", return_value=None),
+            pytest.raises(ParameterError, match="Could not read parameters"),
+        ):
+            motor_test_model.swap_motor_functions("A", "B")
