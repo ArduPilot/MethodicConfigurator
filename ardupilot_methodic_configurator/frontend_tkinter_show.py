@@ -546,6 +546,14 @@ class Tooltip:
         """On macOS, only create the tooltip when the mouse enters the widget."""
         self._cancel_show()
         self._cancel_hide()
+
+        try:
+            pointed = self.widget.winfo_containing(self.widget.winfo_pointerx(), self.widget.winfo_pointery())
+            if pointed is not None and str(pointed).startswith(str(self.widget) + "."):
+                return
+        except tk.TclError:
+            return
+
         self._hide_active_tooltip()
 
         if self.tooltip:
