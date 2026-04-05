@@ -239,7 +239,7 @@ class TestDirectoryManagement:
         GIVEN: A user needs to validate potential directory names
         WHEN: User checks various directory name formats
         THEN: Validation should correctly identify valid and invalid names
-        AND: Platform-specific path separators should be handled appropriately
+        AND: Path separators and traversal segments should be rejected
         """
         # Arrange & Act & Assert: Test various directory name patterns
 
@@ -247,16 +247,30 @@ class TestDirectoryManagement:
         assert ProgramSettings.valid_directory_name("valid_dir_name-123") is True
         assert ProgramSettings.valid_directory_name("valid_dir_name") is True
 
-        # Platform-specific path separators
-        forward_slash_valid = ProgramSettings.valid_directory_name("valid_dir_name/")
-        assert forward_slash_valid is (platform.system() != "Windows")
-
-        backward_slash_valid = ProgramSettings.valid_directory_name("valid_dir_name\\")
-        assert backward_slash_valid is (platform.system() == "Windows")
+        # Path separators and traversal are not valid in a vehicle name
+        assert ProgramSettings.valid_directory_name("valid_dir_name/child") is False
+        assert ProgramSettings.valid_directory_name("valid_dir_name\\child") is False
+        assert ProgramSettings.valid_directory_name("../escape") is False
+        assert ProgramSettings.valid_directory_name("..") is False
+        assert ProgramSettings.valid_directory_name(".") is False
 
         # Invalid characters should fail validation
         assert ProgramSettings.valid_directory_name("invalid<dir>name") is False
         assert ProgramSettings.valid_directory_name("invalid*dir?name") is False
+
+    def test_windows_specific_vehicle_names_are_rejected(self) -> None:
+        """
+        User receives consistent validation for Windows-incompatible vehicle names.
+
+        GIVEN: AMC is validating a new vehicle name for a Windows environment
+        WHEN: The candidate name maps to a reserved device file or ends with a trailing dot
+        THEN: Validation should fail before AMC attempts to create the directory
+        """
+        with patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.IS_WINDOWS", new=True):
+            assert ProgramSettings.valid_directory_name("CON") is False
+            assert ProgramSettings.valid_directory_name("Lpt1.param") is False
+            assert ProgramSettings.valid_directory_name("vehicle.") is False
+            assert ProgramSettings.valid_directory_name("vehicle.v1") is True
 
 
 class TestUserConfigurationAccess:
