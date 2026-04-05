@@ -1050,9 +1050,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     )
                     if should_retry:
                         continue
-                    # If not retrying, continue without success message
-                else:
-                    logging_info(_("All parameters uploaded to the flight controller successfully"))
+                    return
+                logging_info(_("All parameters uploaded to the flight controller successfully"))
 
                 if self._should_export_fc_params_diff:
                     self._export_fc_params_missing_or_different()

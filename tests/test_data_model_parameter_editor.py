@@ -3774,18 +3774,20 @@ class TestParameterUploadNavigation:
         GIVEN: Parameters that were uploaded but their values are mismatched after re-download
         WHEN: upload_selected_params_workflow is called
         THEN: The ask_retry_cancel callback is invoked exactly once with a descriptive message
+        AND: The current step is not marked as successfully uploaded when the user cancels
         """
         # Arrange: FC value differs from what was uploaded so validation will fail
         parameter_editor._flight_controller.fc_parameters = {"P1": 1.0}
 
         mock_retry = MagicMock(return_value=False)  # User chooses not to retry
+        mock_write = MagicMock()
 
         with patch.multiple(
             parameter_editor,
             upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, {})),
             _upload_parameters_to_fc=MagicMock(return_value=1),
             download_flight_controller_parameters=MagicMock(),
-            _write_current_file=MagicMock(),
+            _write_current_file=mock_write,
             _export_fc_params_missing_or_different=MagicMock(),
             _validate_uploaded_parameters=MagicMock(return_value=["P1"]),
         ):
@@ -3799,6 +3801,8 @@ class TestParameterUploadNavigation:
 
         # Assert: retry dialog was presented exactly once
         mock_retry.assert_called_once()
+        mock_write.assert_not_called()
+        assert parameter_editor._at_least_one_changed is True
 
     @pytest.mark.parametrize(
         ("fc_val", "upload_val", "expect_mismatch"),
