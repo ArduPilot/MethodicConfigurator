@@ -24,11 +24,9 @@ from ntpath import normcase as ntpath_normcase
 from ntpath import normpath as ntpath_normpath
 from os import makedirs as os_makedirs
 from os import path as os_path
-from os import sep as os_sep
 from pathlib import Path
 from platform import system as platform_system
 from posixpath import normpath as posixpath_normpath
-from re import escape as re_escape
 from re import match as re_match
 from typing import Any, Optional, Union
 
@@ -40,6 +38,16 @@ from ardupilot_methodic_configurator.data_model_recent_items_history_list import
 
 # Platform detection constant to avoid repeated system calls
 IS_WINDOWS = platform_system() == "Windows"
+WINDOWS_RESERVED_FILENAMES = frozenset(
+    {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -248,11 +256,13 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
     @staticmethod
     def valid_directory_name(dir_name: str) -> bool:
         """
-        Check if a name contains only alphanumeric characters, underscores, hyphens, dots and the OS directory separator.
+        Check if a vehicle directory name is a single safe path segment.
 
-        This function is designed to ensure that the directory name does not contain characters that are
-        invalid for directory names in many operating systems. It does not guarantee that the name
-        is valid in all contexts or operating systems, as directory name validity can vary.
+        This function is designed to validate a user-provided vehicle name, not an
+        arbitrary path. Path separators and traversal segments are rejected so project
+        creation always remains under the selected base directory. Dots within a name
+        are allowed, but `.` and `..` are rejected as standalone traversal segments.
+        On Windows, trailing dots and reserved device names are also rejected.
 
         Args:
           dir_name (str): The directory name to check.
@@ -261,8 +271,16 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
           bool: True if the directory name matches the allowed pattern, False otherwise.
 
         """
-        # Include os.sep and dot in the pattern
-        pattern = r"^[\w" + re_escape(os_sep) + ".-]+$"
+        if not dir_name or dir_name in {".", ".."}:
+            return False
+        if "/" in dir_name or "\\" in dir_name:
+            return False
+        if IS_WINDOWS:
+            if dir_name.endswith("."):
+                return False
+            if dir_name.split(".", maxsplit=1)[0].upper() in WINDOWS_RESERVED_FILENAMES:
+                return False
+        pattern = r"^[\w.-]+$"
         return re_match(pattern, dir_name) is not None
 
     @staticmethod

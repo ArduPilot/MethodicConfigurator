@@ -202,16 +202,16 @@ class TestVehicleProjectCreatorValidation:
         new_base_dir = "/valid/base/dir"
         new_vehicle_name = "valid_name"
 
-        with patch.object(LocalFilesystem, "directory_exists", return_value=False):
+        with (
+            patch.object(LocalFilesystem, "directory_exists", return_value=False),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
             # Act & Assert: Should raise validation error
-            with pytest.raises(VehicleProjectCreationError) as exc_info:
-                project_creator.create_new_vehicle_from_template(
-                    template_dir, new_base_dir, new_vehicle_name, default_settings
-                )
+            project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
 
-            assert "Vehicle template directory" in exc_info.value.title
-            assert "does not exist" in exc_info.value.message
-            assert template_dir in exc_info.value.message
+        assert "Vehicle template directory" in exc_info.value.title
+        assert "does not exist" in exc_info.value.message
+        assert template_dir in exc_info.value.message
 
     def test_user_cannot_create_project_with_empty_vehicle_name(self, project_creator, default_settings) -> None:
         """
@@ -226,15 +226,15 @@ class TestVehicleProjectCreatorValidation:
         new_base_dir = "/valid/base/dir"
         new_vehicle_name = ""
 
-        with patch.object(LocalFilesystem, "directory_exists", return_value=True):
+        with (
+            patch.object(LocalFilesystem, "directory_exists", return_value=True),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
             # Act & Assert: Should raise validation error
-            with pytest.raises(VehicleProjectCreationError) as exc_info:
-                project_creator.create_new_vehicle_from_template(
-                    template_dir, new_base_dir, new_vehicle_name, default_settings
-                )
+            project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
 
-            assert "New vehicle directory" in exc_info.value.title
-            assert "must not be empty" in exc_info.value.message
+        assert "New vehicle directory" in exc_info.value.title
+        assert "must not be empty" in exc_info.value.message
 
     def test_user_cannot_create_project_with_invalid_vehicle_name(self, project_creator, default_settings) -> None:
         """
@@ -262,6 +262,28 @@ class TestVehicleProjectCreatorValidation:
             assert "New vehicle directory" in exc_info.value.title
             assert "invalid characters" in exc_info.value.message
             assert new_vehicle_name in exc_info.value.message
+
+    def test_user_cannot_create_project_with_traversal_style_vehicle_name(self, project_creator, default_settings) -> None:
+        """
+        User receives validation error when vehicle name contains path traversal syntax.
+
+        GIVEN: A user attempts to create a vehicle project
+        WHEN: They provide a vehicle name that looks like a relative path
+        THEN: AMC rejects it before any filesystem changes are attempted
+        """
+        template_dir = "/valid/template/dir"
+        new_base_dir = "/valid/base/dir"
+        new_vehicle_name = "../escape"
+
+        with (
+            patch.object(LocalFilesystem, "directory_exists", return_value=True),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
+            project_creator.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, default_settings)
+
+        assert "New vehicle directory" in exc_info.value.title
+        assert "invalid characters" in exc_info.value.message
+        project_creator.local_filesystem.create_new_vehicle_dir.assert_not_called()
 
 
 class TestVehicleProjectCreationWorkflow:
