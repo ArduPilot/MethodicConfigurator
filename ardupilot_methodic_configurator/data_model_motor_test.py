@@ -457,6 +457,58 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             logging_error(error_msg)
             raise ParameterError(error_msg) from e
 
+    def swap_motor_functions(self, expected_label: str, detected_label: str) -> None:
+        """
+        Swap the SERVOx_FUNCTION parameters between two motors.
+
+        Args:
+            expected_label: The letter of the motor that was tested (e.g., 'A').
+            detected_label: The letter of the motor that actually spun (e.g., 'C').
+
+        Raises:
+            ValidationError: If the labels are invalid.
+            ParameterError: If reading or writing the parameters fails.
+
+        """
+        if expected_label == detected_label:
+            return  # Nothing to swap
+
+        try:
+            # 1. Convert the letters (A, B, C...) into their test sequence index (0, 1, 2...)
+            expected_idx = self._motor_labels.index(expected_label)
+            detected_idx = self._motor_labels.index(detected_label)
+
+            # 2. Get the actual physical motor numbers (1, 2, 3, 4...)
+            expected_servo_num = self._motor_numbers[expected_idx]
+            detected_servo_num = self._motor_numbers[detected_idx]
+
+            # 3. Construct the parameter names (e.g., "SERVO1_FUNCTION", "SERVO3_FUNCTION")
+            expected_param = f"SERVO{expected_servo_num}_FUNCTION"
+            detected_param = f"SERVO{detected_servo_num}_FUNCTION"
+
+            # 4. Read the current values from the flight controller
+            expected_val = self.get_parameter(expected_param)
+            detected_val = self.get_parameter(detected_param)
+
+            if expected_val is None or detected_val is None:
+                raise ParameterError(
+                    _("Could not read parameters %(p1)s or %(p2)s from flight controller.")
+                    % {"p1": expected_param, "p2": detected_param}
+                )
+
+            # 5. Swap them
+            logging_info(
+                _("Swapping motor %(exp)s (%(p1)s) with motor %(det)s (%(p2)s)"),
+                {"exp": expected_label, "det": detected_label, "p1": expected_param, "p2": detected_param},
+            )
+
+            # Set one at a time
+            self.set_parameter(expected_param, detected_val)
+            self.set_parameter(detected_param, expected_val)
+
+        except ValueError as e:
+            raise ValidationError(_("Invalid motor labels provided for swapping.")) from e
+
     def get_parameter(self, param_name: str) -> Optional[float]:
         """
         Get a parameter value from the flight controller.

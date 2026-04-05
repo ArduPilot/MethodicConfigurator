@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 from importlib import import_module
-from tkinter import ttk
+from tkinter import Event, ttk
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, Callable, cast  # pylint: disable=unused-import
 from unittest.mock import MagicMock, patch
@@ -834,3 +834,111 @@ class TestCommandLineWorkflow:
             assert dummy_factory.calls
         finally:
             module_with_attr.plugin_factory = original_factory
+
+
+class TestMotorTestViewMotorSwapping:
+    """Test the frontend GUI logic specifically for motor swapping."""
+
+    def test_on_combobox_selected_routes_correctly(self, motor_view: MotorTestView, mocker) -> None:
+        """
+        Combobox selection routes the expected and detected labels to the swap logic.
+
+        GIVEN: A combobox selection event triggered by the first combobox
+        WHEN: _on_combobox_selected is called
+        THEN: It looks up the correct labels and routes data to _on_motor_swapped
+        """
+        cb = motor_view.detected_comboboxes[0]
+        cb.set("B")
+
+        mock_event = MagicMock(spec=Event)
+        mock_event.widget = cb
+
+        swap_spy = mocker.patch.object(motor_view, "_on_motor_swapped")
+
+        # Act
+        motor_view._on_combobox_selected(mock_event)
+
+        swap_spy.assert_called_once_with("A", "B")
+
+    def test_on_motor_swapped_early_exit(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        Swapping a motor with itself exits early without prompting.
+
+        GIVEN: A swap request where expected and detected labels are identical
+        WHEN: _on_motor_swapped is called
+        THEN: It clears the comboboxes and returns immediately without prompting the user
+        """
+        fake_model.swap_motor_functions = MagicMock()
+        motor_view.detected_comboboxes[0].set("A")
+
+        motor_view._on_motor_swapped("A", "A")
+
+        dialog_spies.askyesno.assert_not_called()
+        fake_model.swap_motor_functions.assert_not_called()
+        assert motor_view.detected_comboboxes[0].get() == ""
+
+    def test_on_motor_swapped_cancelled_by_user(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        Swap requests cancelled by the user reset the UI safely.
+
+        GIVEN: A valid swap request
+        WHEN: The user clicks 'No' on the confirmation dialog
+        THEN: It clears the comboboxes and aborts the swap
+        """
+        dialog_spies.askyesno.return_value = False
+        fake_model.swap_motor_functions = MagicMock()
+        motor_view.detected_comboboxes[0].set("B")
+
+        motor_view._on_motor_swapped("A", "B")
+
+        dialog_spies.askyesno.assert_called_once()
+        fake_model.swap_motor_functions.assert_not_called()
+        assert motor_view.detected_comboboxes[0].get() == ""
+
+    def test_on_motor_swapped_success(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace, mocker
+    ) -> None:
+        """
+        Successful swap requests apply parameters and show a success dialog.
+
+        GIVEN: A valid swap request confirmed by the user
+        WHEN: The data model successfully swaps the parameters
+        THEN: A success info dialog is shown and comboboxes are cleared
+        """
+        dialog_spies.askyesno.return_value = True
+        mock_showinfo = mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.showinfo")
+        fake_model.swap_motor_functions = MagicMock()
+        motor_view.detected_comboboxes[0].set("B")
+
+        motor_view._on_motor_swapped("A", "B")
+
+        fake_model.swap_motor_functions.assert_called_once_with("A", "B")
+        mock_showinfo.assert_called_once()
+        assert motor_view.detected_comboboxes[0].get() == ""
+
+    def test_on_motor_swapped_handles_exception(
+        self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
+    ) -> None:
+        """
+        Swap requests that fail at the backend show an error dialog.
+
+        GIVEN: A valid swap request confirmed by the user
+        WHEN: The data model raises an exception during the swap
+        THEN: An error dialog is shown and comboboxes are cleared
+        """
+        dialog_spies.askyesno.return_value = True
+        fake_model.swap_motor_functions = MagicMock(side_effect=ParameterError("Mock FC read error"))
+        motor_view.detected_comboboxes[0].set("B")
+
+        motor_view._on_motor_swapped("A", "B")
+
+        fake_model.swap_motor_functions.assert_called_once_with("A", "B")
+        dialog_spies.showerror.assert_called_once()
+
+        # Verify the actual error message was passed to the UI
+        assert "Mock FC read error" in dialog_spies.showerror.call_args[0][1]
+        assert motor_view.detected_comboboxes[0].get() == ""
