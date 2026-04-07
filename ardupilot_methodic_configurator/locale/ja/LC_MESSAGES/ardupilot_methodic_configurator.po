@@ -3312,15 +3312,15 @@ msgstr "パラメータ %(param)s の設定エラー：%(error)s"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:495
 msgid "Could not read parameters %(p1)s or %(p2)s from flight controller."
-msgstr ""
+msgstr "フライトコントローラーからパラメータ %(p1)s または %(p2)s を読み取れませんでした。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:501
 msgid "Swapping motor %(exp)s (%(p1)s) with motor %(det)s (%(p2)s)"
-msgstr ""
+msgstr "モーター %(exp)s (%(p1)s) とモーター %(det)s (%(p2)s) を入れ替えます。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:510
 msgid "Invalid motor labels provided for swapping."
-msgstr ""
+msgstr "入れ替え用の無効なモーターラベルが指定されました。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:538
 msgid ""
@@ -5677,21 +5677,21 @@ msgstr "準備完了"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:320
 msgid "Swapping Motors?"
-msgstr ""
+msgstr "モーターを入れ替えますか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:321
 msgid ""
 "Are you sure you want to swap the functions of Motor %(exp)s and Motor "
 "%(det)s?"
-msgstr ""
+msgstr "モーター %(exp)s とモーター %(det)s の機能を入れ替えてもよろしいですか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:335
 msgid "Motor %(exp)s and Motor %(det)s have been successfully swapped."
-msgstr ""
+msgstr "モーター %(exp)s とモーター %(det)s の入れ替えが正常に完了しました。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:340
 msgid "Swap Failed"
-msgstr ""
+msgstr "入れ替えに失敗しました。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:386
 msgid "Could not find motor grid frame"

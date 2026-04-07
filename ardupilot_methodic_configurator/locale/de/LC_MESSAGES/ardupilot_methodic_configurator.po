@@ -3447,15 +3447,15 @@ msgstr "Fehler beim Setzen des Parameters %(param)s: %(error)s"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:495
 msgid "Could not read parameters %(p1)s or %(p2)s from flight controller."
-msgstr ""
+msgstr "Konnte die Parameter %(p1)s oder %(p2)s nicht vom Flugcontroller lesen."
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:501
 msgid "Swapping motor %(exp)s (%(p1)s) with motor %(det)s (%(p2)s)"
-msgstr ""
+msgstr "Motor %(exp)s (%(p1)s) wird mit Motor %(det)s (%(p2)s) getauscht."
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:510
 msgid "Invalid motor labels provided for swapping."
-msgstr ""
+msgstr "Ungültige Motorbezeichnungen für den Tausch angegeben."
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:538
 msgid ""
@@ -5867,21 +5867,21 @@ msgstr "Bereit"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:320
 msgid "Swapping Motors?"
-msgstr ""
+msgstr "Motoren tauschen?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:321
 msgid ""
 "Are you sure you want to swap the functions of Motor %(exp)s and Motor "
 "%(det)s?"
-msgstr ""
+msgstr "Sind Sie sicher, dass Sie die Funktionen von Motor %(exp)s und Motor %(det)s tauschen möchten?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:335
 msgid "Motor %(exp)s and Motor %(det)s have been successfully swapped."
-msgstr ""
+msgstr "Motor %(exp)s und Motor %(det)s wurden erfolgreich getauscht."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:340
 msgid "Swap Failed"
-msgstr ""
+msgstr "Tausch fehlgeschlagen"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:386
 msgid "Could not find motor grid frame"
