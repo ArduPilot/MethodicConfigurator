@@ -3113,15 +3113,15 @@ msgstr "设置参数 %(param)s 错误：%(error)s"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:495
 msgid "Could not read parameters %(p1)s or %(p2)s from flight controller."
-msgstr ""
+msgstr "无法从飞控读取参数 %(p1)s 或 %(p2)s。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:501
 msgid "Swapping motor %(exp)s (%(p1)s) with motor %(det)s (%(p2)s)"
-msgstr ""
+msgstr "正在交换电机 %(exp)s (%(p1)s) 与电机 %(det)s (%(p2)s)。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:510
 msgid "Invalid motor labels provided for swapping."
-msgstr ""
+msgstr "用于交换的电机标签无效。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:538
 msgid ""
@@ -5380,21 +5380,21 @@ msgstr "就绪"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:320
 msgid "Swapping Motors?"
-msgstr ""
+msgstr "交换电机？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:321
 msgid ""
 "Are you sure you want to swap the functions of Motor %(exp)s and Motor "
 "%(det)s?"
-msgstr ""
+msgstr "您确定要交换电机 %(exp)s 和电机 %(det)s 的功能吗？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:335
 msgid "Motor %(exp)s and Motor %(det)s have been successfully swapped."
-msgstr ""
+msgstr "电机 %(exp)s 和电机 %(det)s 已成功交换。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:340
 msgid "Swap Failed"
-msgstr ""
+msgstr "交换失败"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:386
 msgid "Could not find motor grid frame"
