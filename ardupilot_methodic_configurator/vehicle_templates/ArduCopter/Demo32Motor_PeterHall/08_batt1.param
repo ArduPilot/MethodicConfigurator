@@ -1,12 +1,12 @@
 BATT_ARM_VOLT,14.7  # Only arm above this voltage, to avoid taking off with insufficient battery capacity
 BATT_CAPACITY,3300  # Total battery capacity specified in the component editor
 BATT_CRT_MAH,0
-BATT_CRT_VOLT,13.2  # (Critical voltage + 0.0) x no. of cells
+BATT_CRT_VOLT,13.2  # Critical failsafe voltage x nr. of cells
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,0
 BATT_LOW_MAH,0
-BATT_LOW_VOLT,14  # (Low voltage + 0.0) x no. of cells
+BATT_LOW_VOLT,14  # Low failsafe voltage x nr. of cells
 BATT_MONITOR,10  # Selected in component editor window
 BATT_SUM_MASK,60
 BATT2_CAPACITY,1800
