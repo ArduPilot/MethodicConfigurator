@@ -35,7 +35,7 @@ if command -v brew &> /dev/null; then
     fi
 
     echo "Found Python $PY_VER, installing python-tk..."
-    brew install uv python-tk@"$PY_VER"
+    brew install uv@0.10.9 python-tk@"$PY_VER"
 
     echo "Creating Python virtual environment with uv..."
     uv venv --python "$PY_VER"

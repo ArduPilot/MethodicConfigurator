@@ -18,7 +18,10 @@
     "windows/*.bat",
     "install_*.sh",
     "install_*.bash",
-    "install_*.bat"
+    "install_*.bat",
+    "INSTALL.md",
+    ".github/workflows/*.yml",
+    ".github/workflows/*.yaml"
   ],
   "packageRules": [
     {
@@ -58,41 +61,46 @@
       "customType": "regex",
       "managerFilePatterns": ["/\\.bash$/", "/\\.sh$/"],
       "matchStrings": [
-        "^npm install --global (?<depName>[^@\\s]+)@(?<currentValue>[\\d\\.]+)(?:\\s+--integrity\\s+(?<currentDigest>sha[0-9]+-[A-Za-z0-9+/=]+))?\\s*$"
+        "npm install --global (?<depName>[^@\\s]+)@(?<currentValue>[\\d\\.]+)(?:\\s+--integrity\\s+(?<currentDigest>sha[0-9]+-[A-Za-z0-9+/=]+))?"
       ],
       "datasourceTemplate": "npm",
       "autoReplaceStringTemplate": "npm install --global {{{depName}}}@{{{newValue}}}{{#if newDigest}} --integrity {{{newDigest}}}{{/if}}"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "managerFilePatterns": ["/\\.sh$", "/\\.bash$", "/\\.md$", "/\\.ya?ml$"],
       "matchStrings": [
-        "brew install (?<depName>python-tk)@(?<currentValue>[\\d\\.]+)"
+        "brew (?:list python-tk &>/dev/null \\|\\| brew )?install (?:uv(?:@[\\d\\.]+)? )?(?<depName>python-tk)(?:@(?<currentValue>[\\w\\.\"$]+))?"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "python/cpython"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
-      "matchStrings": ["brew install (?<depName>uv)(?:\\s|$)"],
+      "managerFilePatterns": ["/\\.sh$", "/\\.bash$", "/\\.md$"],
+      "matchStrings": [
+        "brew install (?<depName>uv)(?:@(?<currentValue>[\\d\\.]+))?(?:\\s| python-tk|$)"
+      ],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "astral-sh/uv",
-      "currentValueTemplate": "latest"
+      "depNameTemplate": "astral-sh/uv"
     },
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.py$/"],
+      "matchStringsStrategy": "recursive",
       "matchStrings": [
-        "# dependencies = \\[\\s*(?:[^\\]]*\\n)*?#\\s*\"(?<depName>[^\"]+)==(?<currentValue>[\\d\\.]+)\""
+        "# dependencies = \\[\\s*(?:[^\\]]*\\n)*?[^\\]]*\\]",
+        "\"(?<depName>[^\"=]+)(?:==(?<currentValue>[^\"]+))?\""
       ],
       "datasourceTemplate": "pypi"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/\\.py$/"],
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStringsStrategy": "recursive",
       "matchStrings": [
-        "subprocess\\.check_call\\(\\[sys\\.executable, \"-m\", \"pip\", \"install\", \"(?<depName>[^\"]+)\"\\]\\)"
+        "REQUIRED_PKGS=\\([^)]+\\)",
+        "\"(?<depName>[^\"@]+)(?:@(?<currentValue>[\\d\\.]+))?\""
       ],
       "datasourceTemplate": "pypi",
       "currentValueTemplate": "latest"
@@ -100,37 +108,32 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStrings": ["pip install (?<depName>[A-Za-z0-9][A-Za-z0-9._-]*)(?:\\s|$)"],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/", "/\\.md$", "/\\.ya?ml$"],
+      "matchStrings": ["uv pip install (?:\"|')?(?<depName>[A-Za-z0-9][A-Za-z0-9._-]*)(?:==(?<currentValue>[A-Za-z0-9._-]+))?(?:\"|')?(?:\\s|$)"],
+      "datasourceTemplate": "pypi",
+      "currentValueTemplate": "latest"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStringsStrategy": "recursive",
       "matchStrings": [
-        "REQUIRED_PKGS=\\([^)]*\"(?<depName>[^\"@]+)(?:@(?<currentValue>[\\d\\.]+))?\"[^)]*\\)"
+        "uv pip install(?<packages>(?:\\s+\"[^\"]+\")+)",
+        "\"(?<depName>[^\"=]+)==(?<currentValue>[^\"]+)\""
       ],
-      "datasourceTemplate": "pypi",
-      "currentValueTemplate": "latest"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
-      "matchStrings": ["pip install (?<depName>[\\w-]+)(?:\\s|$)"],
-      "datasourceTemplate": "pypi",
-      "currentValueTemplate": "latest"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
-      "matchStrings": ["uv pip install (?<depName>[\\w-]+)(?:\\s|$)"],
-      "datasourceTemplate": "pypi",
-      "currentValueTemplate": "latest"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
-      "matchStrings": ["uv pip install[^\"\\n]*\"(?<depName>[^\"=]+)==(?<currentValue>[^\"]+)\""],
       "datasourceTemplate": "pypi"
     },
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.bat$/"],
       "matchStrings": [
-        "set \"URL=https://github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/v(?<currentValue>[\\d\\.\\-]+)/[^\"]+\""
+        "set \"URL=https://github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/v(?<currentValue>[\\w\\.\\-]+)/[^\"]+\""
       ],
       "datasourceTemplate": "github-releases"
     },
@@ -146,15 +149,18 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.py$/"],
-      "matchStrings": ["required_packages = \\[[^\\]]*\"(?<depName>[^\"=]+)==(?<currentValue>[^\"]+)\""],
-      "datasourceTemplate": "pypi",
-      "currentValueTemplate": "latest"
+      "matchStringsStrategy": "recursive",
+      "matchStrings": [
+        "required_packages\\s*=\\s*\\[[^\\]]*\\]",
+        "\"(?<depName>[^\"=\\n]+)==(?<currentValue>[^\"\\n]+)\""
+      ],
+      "datasourceTemplate": "pypi"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/\\.bat$/"],
+      "managerFilePatterns": ["/\\.bat$", "/\\.md$", "/\\.ya?ml$"],
       "matchStrings": [
-        "github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/(?<currentValue>v[\\d\\.\\-]+)/"
+        "github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/(?<currentValue>[^/]+)/"
       ],
       "datasourceTemplate": "github-releases"
     }

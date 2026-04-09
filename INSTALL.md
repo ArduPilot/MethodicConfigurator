@@ -127,7 +127,7 @@ Alternatively, follow the Linux installation instructions above.
 You might need to also do:
 
 ```bash
-brew install uv python-tk@3.9
+brew install uv@0.10.9 python-tk@3.9
 ```
 
 ## Install *Mission Planner* software on a PC or Mac
@@ -218,10 +218,10 @@ This method uses the official SLSA verifier to check the cryptographic provenanc
 
 ```bash
 # Download the latest SLSA verifier (recommended: check https://github.com/slsa-framework/slsa-verifier/releases for the latest version)
-# Replace <latest-version> with the latest release tag, e.g. v2.7.0
-curl -sSLO https://github.com/slsa-framework/slsa-verifier/releases/latest/download/slsa-verifier-linux-amd64
+# Replace <latest-version> with the latest release tag, e.g. v2.7.1
+curl -sSLO https://github.com/slsa-framework/slsa-verifier/releases/download/v2.7.1/slsa-verifier-linux-amd64
 chmod +x slsa-verifier-linux-amd64
-# Alternatively, to use a specific version, replace 'latest' with the desired version tag (e.g. v2.7.0), but ensure you check for updates regularly.
+# Alternatively, to use a specific version, replace the version tag (e.g. v2.7.1) with the desired version, but ensure you check for updates regularly.
 
 # Verify the installer
 ./slsa-verifier-linux-amd64 verify-artifact \
@@ -237,7 +237,7 @@ chmod +x slsa-verifier-linux-amd64
 
 ```powershell
 # Download the SLSA verifier
-Invoke-WebRequest -Uri "https://github.com/slsa-framework/slsa-verifier/releases/download/v2.7.0/slsa-verifier-windows-amd64.exe" -OutFile "slsa-verifier.exe"
+Invoke-WebRequest -Uri "https://github.com/slsa-framework/slsa-verifier/releases/download/v2.7.1/slsa-verifier-windows-amd64.exe" -OutFile "slsa-verifier.exe"
 
 # Verify the installer
 .\slsa-verifier.exe verify-artifact `
@@ -257,7 +257,7 @@ If Cosign signatures are available, you can also verify using Cosign:
 
 ```bash
 # Install Cosign (if not already installed)
-curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+curl -O -L "https://github.com/sigstore/cosign/releases/download/v3.0.6/cosign-linux-amd64"
 chmod +x cosign-linux-amd64
 sudo mv cosign-linux-amd64 /usr/local/bin/cosign
 
