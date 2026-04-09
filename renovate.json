@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [],
+  "extends": ["config:best-practices", ":semanticCommits"],
   "enabledManagers": ["pre-commit", "custom.regex"],
   "repositories": ["ArduPilot/MethodicConfigurator"],
   "platform": "github",
@@ -21,6 +21,7 @@
     {
       "matchManagers": ["pre-commit"],
       "automerge": true,
+      "minimumReleaseAge": "14 days",
       "pinDigests": true,
       "rangeStrategy": "pin"
     },
@@ -45,7 +46,11 @@
     }
   ],
   "pin": {"enabled": true},
-  "dependencyDashboard": false,
+  "dependencyDashboard": true,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
   "ignorePaths": ["**/node_modules/**", "**/bower_components/**", "**/.git/**"],
   "customManagers": [
     {
