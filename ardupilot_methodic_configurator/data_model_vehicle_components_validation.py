@@ -423,6 +423,26 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
                 )
 
+    def _validate_tow_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
+        """Validate takeoff weight min/max cross-constraints."""
+        if path[2] == "TOW max Kg":
+            try:
+                tow_max = float(value)
+            except ValueError:
+                return _("Takeoff Weight max must be a float"), None
+            lim = self.get_component_value(("Frame", "Specifications", "TOW min Kg"))
+            if lim:
+                return self.validate_against_another_value(tow_max, lim, "TOW min Kg", above=True, delta=0.01)
+        if path[2] == "TOW min Kg":
+            try:
+                tow_min = float(value)
+            except ValueError:
+                return _("Takeoff Weight min must be a float"), None
+            lim = self.get_component_value(("Frame", "Specifications", "TOW max Kg"))
+            if lim:
+                return self.validate_against_another_value(tow_min, lim, "TOW max Kg", above=False, delta=0.01)
+        return "", None
+
     def validate_entry_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
         """
         Validate entry values against limits.
@@ -445,23 +465,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
 
             # Validate takeoff weight limits
             if path[0] == "Frame" and path[1] == "Specifications" and "TOW" in path[2]:
-                if path[2] == "TOW max Kg":
-                    try:
-                        tow_max = float(value)
-                    except ValueError:
-                        return _("Takeoff Weight max must be a float"), None
-                    lim = self.get_component_value(("Frame", "Specifications", "TOW min Kg"))
-                    if lim:
-                        return self.validate_against_another_value(tow_max, lim, "TOW min Kg", above=True, delta=0.01)
-
-                if path[2] == "TOW min Kg":
-                    try:
-                        tow_min = float(value)
-                    except ValueError:
-                        return _("Takeoff Weight min must be a float"), None
-                    lim = self.get_component_value(("Frame", "Specifications", "TOW max Kg"))
-                    if lim:
-                        return self.validate_against_another_value(tow_min, lim, "TOW max Kg", above=False, delta=0.01)
+                return self._validate_tow_limits(value, path)
 
         if path in BATTERY_CELL_VOLTAGE_PATHS:
             return self.validate_cell_voltage(value, path)
@@ -559,7 +563,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ), corrected
         return "", None  # value is within valid interval, return empty string as there is no error
 
-    def validate_all_data(self, entry_values: dict[ComponentPath, str]) -> tuple[bool, list[str]]:  # pylint: disable=too-many-branches
+    def validate_all_data(self, entry_values: dict[ComponentPath, str]) -> tuple[bool, list[str]]:
         """
         Centralize all data validation logic.
 
