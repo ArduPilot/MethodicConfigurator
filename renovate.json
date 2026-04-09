@@ -2,6 +2,9 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:best-practices", ":semanticCommits"],
   "enabledManagers": ["pre-commit", "custom.regex"],
+  "pre-commit": {
+    "enabled": true
+  },
   "repositories": ["ArduPilot/MethodicConfigurator"],
   "platform": "github",
   "includePaths": [
@@ -48,9 +51,7 @@
   "pin": {"enabled": true},
   "dependencyDashboard": true,
   "osvVulnerabilityAlerts": true,
-  "vulnerabilityAlerts": {
-    "enabled": true
-  },
+  "vulnerabilityAlerts": {"enabled": true},
   "ignorePaths": ["**/node_modules/**", "**/bower_components/**", "**/.git/**"],
   "customManagers": [
     {
@@ -121,6 +122,12 @@
     },
     {
       "customType": "regex",
+      "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
+      "matchStrings": ["uv pip install[^\"\\n]*\"(?<depName>[^\"=]+)==(?<currentValue>[^\"]+)\""],
+      "datasourceTemplate": "pypi"
+    },
+    {
+      "customType": "regex",
       "managerFilePatterns": ["/\\.bat$/"],
       "matchStrings": [
         "set \"URL=https://github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/v(?<currentValue>[\\d\\.\\-]+)/[^\"]+\""
@@ -139,7 +146,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.py$/"],
-      "matchStrings": ["required_packages = \\[[^\\]]*\"(?<depName>[^\"]+)\""],
+      "matchStrings": ["required_packages = \\[[^\\]]*\"(?<depName>[^\"=]+)==(?<currentValue>[^\"]+)\""],
       "datasourceTemplate": "pypi",
       "currentValueTemplate": "latest"
     },
