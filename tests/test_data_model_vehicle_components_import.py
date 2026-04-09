@@ -304,6 +304,17 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert esc_type == "AIO"
         assert esc_protocol == "DShot600"
 
+    def test_user_can_import_frame_class_from_fc(self, realistic_model) -> None:
+        """Given FRAME_CLASS from FC, set Frame.Specifications.Class."""
+        fc_parameters = {"FRAME_CLASS": 3, "MOT_PWM_TYPE": 6, "SERVO1_FUNCTION": 0}
+        doc = {"MOT_PWM_TYPE": {"values": {"6": "DShot600"}}}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, doc)
+
+        frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Class"))
+        assert frame_class == "3"
+
     def test_user_can_import_esc_connection_and_telemetry_from_serial_fc(self, realistic_model) -> None:
         """
         Import ESC serial config into FC->ESC Connection and ESC->FC Telemetry.
