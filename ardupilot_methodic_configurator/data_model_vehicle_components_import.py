@@ -334,6 +334,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
         else:
             self.set_component_value(("ESC", "FC->ESC Connection", "Type"), "AIO")
 
+        protocol = ""
         if "MOT_PWM_TYPE" in doc and "values" in doc["MOT_PWM_TYPE"]:
             protocol = doc["MOT_PWM_TYPE"]["values"].get(str(mot_pwm_type), "")
             if protocol:
@@ -342,6 +343,15 @@ class ComponentDataModelImport(ComponentDataModelBase):
         elif str(mot_pwm_type) in MOT_PWM_TYPE_DICT:
             protocol = str(MOT_PWM_TYPE_DICT[str(mot_pwm_type)]["protocol"])
             self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
+
+        # Set ESC->FC Telemetry: DShot protocols support BDShot telemetry on the same PWM wire
+        esc_conn_type = self.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        if protocol and protocol.startswith("DShot"):
+            self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), esc_conn_type)
+            self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "BDShot")
+        else:
+            self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), "None")
+            self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "None")
 
     def _set_battery_type_from_fc_parameters(self, fc_parameters: dict[str, float]) -> None:  # pylint: disable=too-many-branches
         """Process battery monitor parameters and update the data model."""

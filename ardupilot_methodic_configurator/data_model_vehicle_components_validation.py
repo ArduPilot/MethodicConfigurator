@@ -264,8 +264,8 @@ ESC_TELEMETRY_DICT: dict[str, dict[str, Union[list[str], str]]] = {
     "0": {"type": ["None"], "protocol": "None"},
     "1": {"type": PWM_OUT_PORTS, "protocol": "BDShot"},
     "2": {"type": CAN_PORTS, "protocol": "DroneCAN"},
-    "3": {"type": SERIAL_PORTS, "protocol": "DShot"},
-    "4": {"type": SERIAL_PORTS, "protocol": "FETtec OneWire"},
+    "3": {"type": SERIAL_PORTS, "protocol": "DShotTelemetry"},
+    "4": {"type": SERIAL_PORTS, "protocol": "FETtecOneWire"},
 }
 
 
@@ -371,6 +371,10 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("Battery Monitor", "FC Connection", "Protocol"): get_combobox_values("BATT_MONITOR"),
             ("ESC", "FC->ESC Connection", "Type"): (*PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
             ("ESC", "FC->ESC Connection", "Protocol"): self._mot_pwm_types,
+            ("ESC", "ESC->FC Telemetry", "Type"): ("None", *PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
+            ("ESC", "ESC->FC Telemetry", "Protocol"): tuple(
+                dict.fromkeys(str(v["protocol"]) for v in ESC_TELEMETRY_DICT.values())
+            ),
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
             ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
@@ -398,47 +402,61 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         self, path: ComponentPath, value: Union[ComponentData, ComponentValue, None]
     ) -> None:
         """Update _possible_choices when connection type values that affect protocol choices are changed."""
-        # Only update if this is a connection type change that affects protocol choices
-        if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type" and isinstance(value, str):
-            component_name = path[0]
-            protocol_path: ComponentPath = (component_name, "FC Connection", "Protocol")
+        if len(path) < 3 or path[2] != "Type" or not isinstance(value, str):
+            return
 
-            # Calculate the new possible choices for the corresponding protocol field
-            if component_name == "RC Receiver":
-                # Filter RC protocols based on the selected connection type
-                if value == "None":
-                    new_choices: tuple[str, ...] = ("None",)
-                else:
-                    # For any connection type, find protocols that support it
-                    new_choices = tuple(str(v["protocol"]) for v in RC_PROTOCOLS_DICT.values() if value in v["type"])
-                self._possible_choices[protocol_path] = new_choices
+        component_name = path[0]
+        section = path[1]
 
-            elif component_name == "Telemetry":
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                else:
-                    # For non-None telemetry connections, use the standard telemetry protocols
-                    self._possible_choices[protocol_path] = tuple(
-                        str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "Telemetry"
-                    )
+        if section not in ("FC Connection", "FC->ESC Connection", "ESC->FC Telemetry"):
+            return
 
-            elif component_name == "Battery Monitor":
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                    return
+        protocol_path: ComponentPath = (component_name, section, "Protocol")
 
-                # Find protocols available for the selected connection type
-                batt_available_protocols: list[str] = []
-                for conn_dict in BATT_MONITOR_CONNECTION.values():
-                    conn_type = conn_dict["type"]
-                    if isinstance(conn_type, list) and value in conn_type:
-                        batt_available_protocols.append(str(conn_dict["protocol"]))
+        # Calculate the new possible choices for the corresponding protocol field
+        if component_name == "RC Receiver":
+            # Filter RC protocols based on the selected connection type
+            if value == "None":
+                new_choices: tuple[str, ...] = ("None",)
+            else:
+                # For any connection type, find protocols that support it
+                new_choices = tuple(str(v["protocol"]) for v in RC_PROTOCOLS_DICT.values() if value in v["type"])
+            self._possible_choices[protocol_path] = new_choices
 
-                self._possible_choices[protocol_path] = (
-                    tuple(batt_available_protocols) if batt_available_protocols else ("None",)
+        elif component_name == "Telemetry":
+            if value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+            else:
+                # For non-None telemetry connections, use the standard telemetry protocols
+                self._possible_choices[protocol_path] = tuple(
+                    str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "Telemetry"
                 )
 
-            elif component_name == "ESC":
+        elif component_name == "Battery Monitor":
+            if value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+                return
+
+            # Find protocols available for the selected connection type
+            batt_available_protocols: list[str] = []
+            for conn_dict in BATT_MONITOR_CONNECTION.values():
+                conn_type = conn_dict["type"]
+                if isinstance(conn_type, list) and value in conn_type:
+                    batt_available_protocols.append(str(conn_dict["protocol"]))
+
+            self._possible_choices[protocol_path] = tuple(batt_available_protocols) if batt_available_protocols else ("None",)
+
+        elif component_name == "ESC":
+            if section == "ESC->FC Telemetry":
+                if value == "None":
+                    self._possible_choices[protocol_path] = ("None",)
+                else:
+                    self._possible_choices[protocol_path] = tuple(
+                        str(v["protocol"])
+                        for v in ESC_TELEMETRY_DICT.values()
+                        if isinstance(v["type"], list) and value in v["type"]
+                    ) or ("None",)
+            else:  # "FC->ESC Connection"
                 if value == "None":
                     self._possible_choices[protocol_path] = ("None",)
                 elif value in CAN_PORTS:
@@ -451,21 +469,19 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     # For PWM outputs, use motor PWM types
                     self._possible_choices[protocol_path] = self._mot_pwm_types
 
-            elif component_name == "GNSS Receiver":
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                    return
+        elif component_name == "GNSS Receiver":
+            if value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+                return
 
-                # Find protocols available for the selected connection type
-                gnss_available_protocols: list[str] = []
-                for conn_dict in GNSS_RECEIVER_CONNECTION.values():
-                    conn_type = conn_dict["type"]
-                    if isinstance(conn_type, list) and value in conn_type:
-                        gnss_available_protocols.append(str(conn_dict["protocol"]))
+            # Find protocols available for the selected connection type
+            gnss_available_protocols: list[str] = []
+            for conn_dict in GNSS_RECEIVER_CONNECTION.values():
+                conn_type = conn_dict["type"]
+                if isinstance(conn_type, list) and value in conn_type:
+                    gnss_available_protocols.append(str(conn_dict["protocol"]))
 
-                self._possible_choices[protocol_path] = (
-                    tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
-                )
+            self._possible_choices[protocol_path] = tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
 
     def _validate_tow_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
         """Validate takeoff weight min/max cross-constraints."""
@@ -630,14 +646,22 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             # Keep protocol choices in sync with connection type changes in this batch.
             # This ensures dependent fields like Battery Monitor protocol are validated correctly
             # when both Type and Protocol are present in entry_values.
-            if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type" and isinstance(value, str):
+            if len(path) >= 3 and path[2] == "Type" and isinstance(value, str):
                 self._update_possible_choices_for_path(path, value)
 
             # Check for duplicate connections
-            if len(path) >= 3 and path[1] == "FC Connection" and path[2] == "Type":
+            esc_conn_sections = {"FC->ESC Connection", "ESC->FC Telemetry"}
+            is_fc_conn_type = len(path) >= 3 and path[2] == "Type" and (
+                path[1] == "FC Connection" or path[1] in esc_conn_sections
+            )
+            if is_fc_conn_type:
                 if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4", "None"}:
                     # Allow certain combinations
                     if path[0] in {"Telemetry", "RC Receiver"} and fc_serial_connection[value] in {"Telemetry", "RC Receiver"}:
+                        continue
+
+                    # Allow ESC->FC Telemetry to share the same port as FC->ESC Connection (bidirectional serial)
+                    if path[0] == "ESC" and path[1] in esc_conn_sections and fc_serial_connection[value] == "ESC":
                         continue
 
                     error_msg = _("Duplicate FC connection type '{value}' for {paths_str}")

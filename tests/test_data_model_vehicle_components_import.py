@@ -2093,7 +2093,7 @@ class TestComponentDataModelImportUncoveredBranches:
 
         basic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        result = basic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        result = basic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert result == "Normal"
 
     # ------------------------------------------------------------------
