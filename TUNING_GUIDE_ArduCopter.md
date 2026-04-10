@@ -140,9 +140,231 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
 1. select the destination directory, give it a name and press `Create a vehicle configuration directory from template`
 1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):
    ![Component editor window](images/App_screenshot_Component_Editor.png)
-1. Make sure to **scroll all the way down and enter all the information requested**, even if it does not seem important to you.
-1. Click the `Save data and start configuration` button on the bottom
-1. You now have a vehicle configuration directory with the name that you selected. But the files are just templates, you need to edit them in the next steps.
+
+Most optional information fields are only visible in `normal` GUI complexity mode.
+
+All components have **optional** information about the product itself:
+
+![product](images/blog/component_editor_product.png)
+
+The URL can be used to store a link to a datasheet or a link to a shop product page.
+
+Some components have **optional** information about their firmware:
+
+![firmware](images/blog/component_editor_firmware.png)
+
+All components have an **optional** notes field.
+
+## Flight Controller
+
+![flight controller](images/blog/component_editor_flight_controller.png)
+
+Some information, if available, is automatically filed in by the software as seen in the example above.
+
+## Frame
+
+![frame](images/blog/component_editor_frame.png)
+
+The minimum take off weight and the maximum take off weight in Kilo are entered here.
+If you have variable payload configure the vehicle at the minimum take off weight.
+Only after completely tuned can you add the additional payload.
+
+## Battery Monitor
+
+All supported connection types and their corresponding protocols are:
+
+| Connection Type | Protocol |
+| --------------- | -------- |
+| `None` | `Disabled` |
+| `Analog` | `Analog Voltage Only` |
+| `Analog` | `Analog Voltage and Current` |
+| `Analog` | `FuelLevelAnalog` |
+| `Analog` | `Synthetic Current and Analog Voltage` |
+| `I2C1`–`I2C4` | `Solo` |
+| `I2C1`–`I2C4` | `Bebop` |
+| `I2C1`–`I2C4` | `SMBus-Generic` |
+| `I2C1`–`I2C4` | `FuelFlow` |
+| `I2C1`–`I2C4` | `SMBUS-SUI3` |
+| `I2C1`–`I2C4` | `SMBUS-SUI6` |
+| `I2C1`–`I2C4` | `NeoDesign` |
+| `I2C1`–`I2C4` | `SMBus-Maxell` |
+| `I2C1`–`I2C4` | `Generator-Elec` |
+| `I2C1`–`I2C4` | `Generator-Fuel` |
+| `I2C1`–`I2C4` | `Rotoye` |
+| `I2C1`–`I2C4` | `MPPT` |
+| `I2C1`–`I2C4` | `INA2XX` |
+| `I2C1`–`I2C4` | `LTC2946` |
+| `I2C1`–`I2C4` | `EFI` |
+| `I2C1`–`I2C4` | `AD7091R5` |
+| `CAN1`–`CAN2` | `DroneCAN-BatteryInfo` |
+| `PWM` | `FuelLevelPWM` |
+| `SPI` | `INA239_SPI` |
+| `other` | `ESC` |
+| `other` | `Sum Of Selected Monitors` |
+| `other` | `Torqeedo` |
+| `other` | `Scripting` |
+
+It is strongly recommended to use a battery monitor.
+But if you do not have one select `none` in the flight controller connection:
+
+![battery monitor none](images/blog/component_editor_battery_monitor_none.png)
+
+If your battery monitor has an analog connection to the FC, select `analog` and one of the possible protocols:
+
+![battery monitor analog](images/blog/component_editor_battery_monitor_analog.png)
+
+If your battery monitor has an I2C connection to the FC, select the I2C bus and one of the possible protocols:
+
+![battery monitor i2c](images/blog/component_editor_battery_monitor_i2c.png)
+
+If your battery monitor has a CAN connection to the FC, select the CAN bus:
+
+![battery monitor can](images/blog/component_editor_battery_monitor_can.png)
+
+If your battery monitor has a SPI connection to the FC, select the SPI bus:
+
+![battery monitor spi](images/blog/component_editor_battery_monitor_spi.png)
+
+If your battery monitor has a PWM connection to the FC, select the PWM:
+
+![battery monitor pwm](images/blog/component_editor_battery_monitor_pwm.png)
+
+Otherwise select `other` and one of the possible protocols:
+
+![battery monitor other](images/blog/component_editor_battery_monitor_other.png)
+
+## Battery
+
+![battery](images/blog/component_editor_battery.png)
+
+Select the correct battery chemistry, doing so will automatically set typical voltage thresholds for that battery chemistry.
+
+Afterwards you should tweak the voltage thresholds to meet your requirements.
+
+- `Volt per cell max` - PID values will only scale when below this voltage
+- `Volt per cell arm` - vehicle will only arm if battery voltage is above this threshold
+- `Volt per cell low` - first failsafe level gets triggered when below this value
+- `Volt per cell crit` - second failsafe level gets triggered when below this value
+- `Volt per cell min` - PID values will only scale when above this voltage
+
+They must obey `Volt per cell crit` < `Volt per cell low` < `Volt per cell arm` < `Volt per cell max`
+
+`Number of cells` is the number of cells connected in series.
+For a 6S battery this is 6.
+
+## ESC
+
+Electronic speed controllers have a `FC->ESC Connection` for control of the motor speed and
+an optional `ESC->FC Telemetry` for telemetry feedback from the ESC to the flight controller.
+
+![esc main out](images/blog/component_editor_esc_main_out.png)
+
+The `FC->ESC Connection` type can be `Main Out`, an `AIO` integrated output, a serial port, or a CAN bus.
+The protocol is determined by the `MOT_PWM_TYPE` parameter (e.g. `Normal`, `DShot600`) for PWM outputs,
+or the serial/CAN protocol (e.g. `FETtecOneWire`, `DroneCAN`) for digital connections.
+
+The `ESC->FC Telemetry` type and protocol describe the return path:
+
+| Connection Type | Protocol | Notes |
+| --------------- | -------- | ----- |
+| `None` | `None` | No ESC telemetry |
+| same as FC->ESC | `BDShot` | BDShot only on Main Out and/or AIO, without serial port backup channel |
+| serial port | `ESC Telemetry` | DShot or BDShot serial telemetry backup channel |
+| serial port | `FETtecOneWire` | Bidirectional FETtec protocol on the same wire |
+| serial port | `Scripting` | For T-Motor/Hobbywing Datalink v2 serial telemetry |
+| serial port | `Torqeedo` | For Torqeedo telemetry |
+| serial port | `CoDevESC` | For CoDevESC serial telemetry |
+| CAN port | `DroneCAN` | Telemetry over CAN bus |
+
+When using BDShot only on `Main Out` (1-8) and/or `Aux I/O` (9-14) connection, without serial port backup channel:
+
+![ESC telemetry BDshot only](images/blog/component_editor_esc_telem_main_out_aio.png)
+
+When using DShot or BDShot with a serial port backup channel:
+
+![ESC telemetry serial](images/blog/component_editor_esc_telem_serial.png)
+
+## Motors
+
+![Motor configuration interface showing pole count input](images/blog/component_editor_motors.png)
+
+Enter the number of magnetic **poles** of the motor rotor.
+This is the **P** number in the common `nNmP` motor winding notation (e.g. `12N14P` → 14 poles).
+The value must be an even integer.
+It is used by ArduPilot to calculate the actual motor RPM from the ESC telemetry electrical frequency.
+
+## Propellers
+
+![Propeller configuration interface showing diameter input](images/blog/component_editor_propellers.png)
+
+Enter the propeller **diameter in inches**.
+This value affects many initial PID values.
+
+## GNSS Receiver
+
+![GNSS receiver configuration interface](images/blog/component_editor_gnss.png)
+
+Select the FC connection **type** (serial port or CAN bus) and the matching **protocol**:
+
+| Connection Type | Protocol |
+| --------------- | -------- |
+| None | `None` |
+| CAN bus | `DroneCAN` |
+| serial port — auto-detect | `AUTO` |
+| serial port — vendor-specific | other |
+
+If you do not have a GNSS receiver, select `None` as the connection type.
+
+## RC Controller
+
+The hand-held controller used by the pilot.
+Enter the manufacturer and model for documentation purposes.
+This component has no FC connection — it communicates wirelessly via the RC Transmitter and RC Receiver pair.
+
+## RC Transmitter
+
+The RF transmitter module (may be integrated in the RC Controller or a separate module).
+Enter the manufacturer and model for documentation purposes.
+This component has no FC connection.
+
+## RC Receiver
+
+Select the FC connection **type** and **protocol** that match how the receiver is wired to the flight controller:
+
+| Connection Type | Protocol |
+| --------------- | -------- |
+| RCin/SBUS — auto-detect all protocols | `All` |
+| RCin/SBUS | `PPM` |
+| RCin/SBUS or serial | `SBUS` / `SBUS_NI` |
+| serial port | `DSM` |
+| serial port | `CRSF` |
+| serial port | `FPORT` |
+| serial port | `MAVRadio` |
+| serial port — vendor-specific | other |
+
+If your receiver is connected to a dedicated RC input pin, choose `RCin/SBUS` as the type.
+If it is connected to a UART (e.g. CRSF, FPORT, DSM), choose the corresponding serial port.
+
+## Telemetry
+
+Select the FC connection **type** (serial port or CAN bus) and the matching **protocol**:
+
+| Connection Type | Protocol | Notes |
+| --------------- | -------- | ----- |
+| None | `None` | when not present |
+| serial | `MAVLink2` | recommended for most ground stations |
+| serial | `MAVLink1` | legacy ground stations |
+| serial | `MAVLink High Latency` | satellite / low-bandwidth links |
+| serial | `DDS XRCE` | ROS 2 micro-XRCE-DDS bridge |
+| serial | other | vendor-specific |
+
+If you do not have a telemetry radio, select `None` as the connection type.
+
+Make sure to **scroll all the way down and enter all the information requested**, even if it does not seem important to you.
+Click the `Save data and start configuration` button on the bottom
+
+You now have a vehicle configuration directory with the name that you selected.
+But the files are just templates, you need to edit them in the next steps.
 
 # 4. Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)
 
