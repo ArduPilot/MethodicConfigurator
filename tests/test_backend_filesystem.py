@@ -158,9 +158,9 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             patch("ardupilot_methodic_configurator.backend_filesystem.os_listdir") as mock_listdir,
         ):
             ret = filesystem.remove_created_files_and_vehicle_dir()
-            # Should return a non-empty error message mentioning the new vehicle directory
+            # Should return a non-empty error message mentioning the removed vehicle directory
             assert isinstance(ret, str)
-            assert "New vehicle directory does not exist" in ret
+            assert "Vehicle directory to remove does not exist" in ret
             # listdir must not have been called when directory doesn't exist
             assert not mock_listdir.called
             mock_exists.assert_called()
