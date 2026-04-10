@@ -217,4 +217,3 @@ Select the FC connection **type** (serial port or CAN bus) and the matching **pr
 | other | vendor-specific |
 
 If you do not have a telemetry radio, select `None` as the connection type.
-
