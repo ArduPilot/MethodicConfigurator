@@ -685,11 +685,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                         param.value = new_value
 
     def remove_created_files_and_vehicle_dir(self) -> str:
-        # Remove the created files in the new vehicle directory
+        # Remove the created files and the vehicle directory itself
         try:
             if not os_path.exists(self.vehicle_dir):
                 # Use the actual vehicle_dir value to avoid KeyError from missing format keys
-                error_msg = _("New vehicle directory does not exist: {vehicle_dir}")
+                error_msg = _("Vehicle directory to remove does not exist: {vehicle_dir}")
                 error_msg = error_msg.format(vehicle_dir=self.vehicle_dir)
                 logging_error(error_msg)
                 return error_msg
