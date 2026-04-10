@@ -456,18 +456,17 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                         for v in ESC_TELEMETRY_DICT.values()
                         if isinstance(v["type"], list) and value in v["type"]
                     ) or ("None",)
-            else:  # "FC->ESC Connection"
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                elif value in CAN_PORTS:
-                    self._possible_choices[protocol_path] = ("DroneCAN",)
-                elif value in SERIAL_PORTS:
-                    self._possible_choices[protocol_path] = tuple(
-                        str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "ESC"
-                    )
-                else:
-                    # For PWM outputs, use motor PWM types
-                    self._possible_choices[protocol_path] = self._mot_pwm_types
+            elif value == "None":
+                self._possible_choices[protocol_path] = ("None",)
+            elif value in CAN_PORTS:
+                self._possible_choices[protocol_path] = ("DroneCAN",)
+            elif value in SERIAL_PORTS:
+                self._possible_choices[protocol_path] = tuple(
+                    str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "ESC"
+                )
+            else:
+                # For PWM outputs, use motor PWM types
+                self._possible_choices[protocol_path] = self._mot_pwm_types
 
         elif component_name == "GNSS Receiver":
             if value == "None":
@@ -651,8 +650,8 @@ class ComponentDataModelValidation(ComponentDataModelBase):
 
             # Check for duplicate connections
             esc_conn_sections = {"FC->ESC Connection", "ESC->FC Telemetry"}
-            is_fc_conn_type = len(path) >= 3 and path[2] == "Type" and (
-                path[1] == "FC Connection" or path[1] in esc_conn_sections
+            is_fc_conn_type = (
+                len(path) >= 3 and path[2] == "Type" and (path[1] == "FC Connection" or path[1] in esc_conn_sections)
             )
             if is_fc_conn_type:
                 if value in fc_serial_connection and value not in {"CAN1", "CAN2", "I2C1", "I2C2", "I2C3", "I2C4", "None"}:
