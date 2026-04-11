@@ -235,7 +235,7 @@ msgstr "将模板文件复制到新车辆目录时出错：{_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:692
 msgid "Vehicle directory to remove does not exist: {vehicle_dir}"
-msgstr ""
+msgstr "要移除的车辆目录不存在：{vehicle_dir}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:710
 msgid "Error removing %s"

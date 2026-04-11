@@ -254,7 +254,7 @@ msgstr "Erro ao criar novo diretório de veículo: {_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:692
 msgid "Vehicle directory to remove does not exist: {vehicle_dir}"
-msgstr ""
+msgstr "O diretório do veículo a remover não existe: {vehicle_dir}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:710
 msgid "Error removing %s"
