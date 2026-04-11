@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-04-07 02:49+0000\n"
+"POT-Creation-Date: 2026-04-11 00:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -193,7 +193,7 @@ msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:692
-msgid "New vehicle directory does not exist: {vehicle_dir}"
+msgid "Vehicle directory to remove does not exist: {vehicle_dir}"
 msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:710
@@ -3844,62 +3844,62 @@ msgid "No fallback values found for %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:447
-msgid "{name} must be a {data_type_name} between {min} and {max}"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:452
-msgid "Invalid {data_type_name} value for {name}"
-msgstr ""
-
-#:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:432
 msgid "Takeoff Weight max must be a float"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:471
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:440
 msgid "Takeoff Weight min must be a float"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:457
+msgid "{name} must be a {data_type_name} between {min} and {max}"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
+msgid "Invalid {data_type_name} value for {name}"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:487
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:498
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:492
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:502
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:496
 msgid "Invalid value. Will be set to the recommended value."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:554
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:548
 msgid "{limit_name} is not a float nor string"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:558
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:552
 msgid "{limit_name} is not convertible to float"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:562
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:556
 msgid "is below the {limit_name} of {limit_value}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:567
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:561
 msgid "is above the {limit_name} of {limit_value}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:588
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:582
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:278
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
@@ -3907,17 +3907,17 @@ msgid ""
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:616
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:599
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:650
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:633
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:653
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:636
 msgid "Invalid integer value for {paths_str}"
 msgstr ""
 

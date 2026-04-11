@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-04-07 02:49+0000\n"
+"POT-Creation-Date: 2026-04-11 00:21+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -248,8 +248,8 @@ msgstr ""
 "た: {_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:692
-msgid "New vehicle directory does not exist: {vehicle_dir}"
-msgstr "新しい機体ディレクトリが存在しません: {vehicle_dir}"
+msgid "Vehicle directory to remove does not exist: {vehicle_dir}"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:710
 msgid "Error removing %s"
@@ -3312,7 +3312,9 @@ msgstr "パラメータ %(param)s の設定エラー：%(error)s"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:495
 msgid "Could not read parameters %(p1)s or %(p2)s from flight controller."
-msgstr "フライトコントローラーからパラメータ %(p1)s または %(p2)s を読み取れませんでした。"
+msgstr ""
+"フライトコントローラーからパラメータ %(p1)s または %(p2)s を読み取れませんで"
+"した。"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:501
 msgid "Swapping motor %(exp)s (%(p1)s) with motor %(det)s (%(p2)s)"
@@ -4605,52 +4607,52 @@ msgstr "get_component_property_description で例外が発生しました: {}"
 msgid "No fallback values found for %s"
 msgstr "%sのフォールバック値が見つかりません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:447
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:432
+msgid "Takeoff Weight max must be a float"
+msgstr "離陸重量の最大値は浮動小数点数でなければなりません"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:440
+msgid "Takeoff Weight min must be a float"
+msgstr "離陸重量の最小値は浮動小数点数でなければなりません"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:457
 msgid "{name} must be a {data_type_name} between {min} and {max}"
 msgstr ""
 "{name} は {min} から {max} の間の {data_type_name} でなければなりません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:452
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
 msgid "Invalid {data_type_name} value for {name}"
 msgstr "{name} の {data_type_name} 値が無効です"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
-msgid "Takeoff Weight max must be a float"
-msgstr "離陸重量の最大値は浮動小数点数でなければなりません"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:471
-msgid "Takeoff Weight min must be a float"
-msgstr "離陸重量の最小値は浮動小数点数でなければなりません"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:487
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "{chemistry}の最小制限{volt_limit}を下回っています"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:498
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:492
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "{chemistry}の最大制限{volt_limit}を超えています"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:502
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:496
 msgid "Invalid value. Will be set to the recommended value."
 msgstr "無効な値です。推奨値に設定されます。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:554
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:548
 msgid "{limit_name} is not a float nor string"
 msgstr "{limit_name}は浮動小数点数でも文字列でもありません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:558
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:552
 msgid "{limit_name} is not convertible to float"
 msgstr "{limit_name}は浮動小数点数に変換できません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:562
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:556
 msgid "is below the {limit_name} of {limit_value}"
 msgstr "{limit_name}の{limit_value}より下回っています"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:567
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:561
 msgid "is above the {limit_name} of {limit_value}"
 msgstr "{limit_name}の{limit_value}を超えています"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:588
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:582
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:278
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
@@ -4659,15 +4661,15 @@ msgstr ""
 "{paths_str}に対する無効な値'{value}'\n"
 "許可される値: {allowed_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:616
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:599
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr "{paths_str}に対する重複したFC接続タイプ'{value}'"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:650
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:633
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr "{paths_str} の磁気ローター極数は偶数でなければなりません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:653
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:636
 msgid "Invalid integer value for {paths_str}"
 msgstr "{paths_str} の整数値が無効です"
 
@@ -5683,7 +5685,8 @@ msgstr "モーターを入れ替えますか？"
 msgid ""
 "Are you sure you want to swap the functions of Motor %(exp)s and Motor "
 "%(det)s?"
-msgstr "モーター %(exp)s とモーター %(det)s の機能を入れ替えてもよろしいですか？"
+msgstr ""
+"モーター %(exp)s とモーター %(det)s の機能を入れ替えてもよろしいですか？"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:335
 msgid "Motor %(exp)s and Motor %(det)s have been successfully swapped."
@@ -7660,6 +7663,9 @@ msgstr "ハードウェアのバージョンまたはリビジョン"
 #: ardupilot_methodic_configurator/vehicle_components.py:126
 msgid "Web link to the product page or documentation"
 msgstr "製品ページまたはドキュメントへのウェブリンク"
+
+#~ msgid "New vehicle directory does not exist: {vehicle_dir}"
+#~ msgstr "新しい機体ディレクトリが存在しません: {vehicle_dir}"
 
 #~ msgid ""
 #~ "Methodic configuration of {nr_total_params} parameters complete:\n"

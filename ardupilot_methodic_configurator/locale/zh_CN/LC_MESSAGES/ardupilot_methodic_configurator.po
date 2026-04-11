@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-04-07 02:49+0000\n"
+"POT-Creation-Date: 2026-04-11 00:21+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -234,8 +234,8 @@ msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr "将模板文件复制到新车辆目录时出错：{_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:692
-msgid "New vehicle directory does not exist: {vehicle_dir}"
-msgstr "新载具目录不存在: {vehicle_dir}"
+msgid "Vehicle directory to remove does not exist: {vehicle_dir}"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:710
 msgid "Error removing %s"
@@ -4345,51 +4345,51 @@ msgstr "在 get_component_property_description 中发生异常：{}"
 msgid "No fallback values found for %s"
 msgstr "没找到 %s 的回退值"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:447
-msgid "{name} must be a {data_type_name} between {min} and {max}"
-msgstr "{name} 必须是 {min} 到 {max} 之间的 {data_type_name}"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:452
-msgid "Invalid {data_type_name} value for {name}"
-msgstr "{name} 的 {data_type_name} 值无效"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:432
 msgid "Takeoff Weight max must be a float"
 msgstr "起飞重量最大值必须是浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:471
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:440
 msgid "Takeoff Weight min must be a float"
 msgstr "起飞重量最小值必须是浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:457
+msgid "{name} must be a {data_type_name} between {min} and {max}"
+msgstr "{name} 必须是 {min} 到 {max} 之间的 {data_type_name}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
+msgid "Invalid {data_type_name} value for {name}"
+msgstr "{name} 的 {data_type_name} 值无效"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:487
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "低于 {chemistry} 的最小电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:498
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:492
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "高于 {chemistry} 的最大电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:502
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:496
 msgid "Invalid value. Will be set to the recommended value."
 msgstr "无效值。将设置为推荐值。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:554
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:548
 msgid "{limit_name} is not a float nor string"
 msgstr "{limit_name} 既不是浮点数也不是字符串"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:558
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:552
 msgid "{limit_name} is not convertible to float"
 msgstr "{limit_name} 不能转换为浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:562
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:556
 msgid "is below the {limit_name} of {limit_value}"
 msgstr "低于 {limit_value} 的 {limit_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:567
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:561
 msgid "is above the {limit_name} of {limit_value}"
 msgstr "高于 {limit_value} 的 {limit_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:588
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:582
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:278
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
@@ -4398,15 +4398,15 @@ msgstr ""
 "{paths_str} 的无效值 '{value}'\n"
 "允许的值为: {allowed_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:616
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:599
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr "{paths_str} 的重复FC连接类型 '{value}'"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:650
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:633
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr "{paths_str} 的磁转子极数必须为偶数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:653
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:636
 msgid "Invalid integer value for {paths_str}"
 msgstr "{paths_str} 的整数值无效"
 
@@ -7303,6 +7303,9 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:126
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid "New vehicle directory does not exist: {vehicle_dir}"
+#~ msgstr "新载具目录不存在: {vehicle_dir}"
 
 #~ msgid ""
 #~ "Methodic configuration of {nr_total_params} parameters complete:\n"
