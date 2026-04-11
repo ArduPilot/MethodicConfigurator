@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-04-07 02:49+0000\n"
+"POT-Creation-Date: 2026-04-11 00:21+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -253,8 +253,8 @@ msgid "Error copying template files to new vehicle directory: {_e}"
 msgstr "Erro ao criar novo diretório de veículo: {_e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:692
-msgid "New vehicle directory does not exist: {vehicle_dir}"
-msgstr "O novo diretório do veículo não existe: {vehicle_dir}"
+msgid "Vehicle directory to remove does not exist: {vehicle_dir}"
+msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:710
 msgid "Error removing %s"
@@ -3433,7 +3433,8 @@ msgstr "Erro ao definir parâmetro %(param)s: %(error)s"
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:495
 msgid "Could not read parameters %(p1)s or %(p2)s from flight controller."
-msgstr "Não foi possível ler os parâmetros %(p1)s ou %(p2)s do controlador de voo."
+msgstr ""
+"Não foi possível ler os parâmetros %(p1)s ou %(p2)s do controlador de voo."
 
 #: ardupilot_methodic_configurator/data_model_motor_test.py:501
 msgid "Swapping motor %(exp)s (%(p1)s) with motor %(det)s (%(p2)s)"
@@ -4761,51 +4762,51 @@ msgstr "Ocorreu uma exceção em get_component_property_description: {}"
 msgid "No fallback values found for %s"
 msgstr "Nenhum valor de fallback encontrado para %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:447
-msgid "{name} must be a {data_type_name} between {min} and {max}"
-msgstr "{name} tem de ser um(a) {data_type_name} entre {min} e {max}"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:452
-msgid "Invalid {data_type_name} value for {name}"
-msgstr "Valor inválido de {data_type_name} para {name}"
-
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:432
 msgid "Takeoff Weight max must be a float"
 msgstr "O peso máximo de descolagem deve ser um número decimal"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:471
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:440
 msgid "Takeoff Weight min must be a float"
 msgstr "O peso mínimo de descolagem deve ser um número decimal"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:457
+msgid "{name} must be a {data_type_name} between {min} and {max}"
+msgstr "{name} tem de ser um(a) {data_type_name} entre {min} e {max}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:462
+msgid "Invalid {data_type_name} value for {name}"
+msgstr "Valor inválido de {data_type_name} para {name}"
+
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:487
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "está abaixo do limite mínimo de {chemistry} de {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:498
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:492
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "está acima do limite máximo de {chemistry} de {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:502
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:496
 msgid "Invalid value. Will be set to the recommended value."
 msgstr "Valor inválido. Será definido para o valor recomendado."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:554
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:548
 msgid "{limit_name} is not a float nor string"
 msgstr "{limit_name} não é um número decimal nem uma string"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:558
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:552
 msgid "{limit_name} is not convertible to float"
 msgstr "{limit_name} não é convertível para número decimal"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:562
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:556
 msgid "is below the {limit_name} of {limit_value}"
 msgstr "está abaixo do {limit_name} de {limit_value}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:567
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:561
 msgid "is above the {limit_name} of {limit_value}"
 msgstr "está acima do {limit_name} de {limit_value}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:588
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:582
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:278
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
@@ -4814,15 +4815,15 @@ msgstr ""
 "Valor inválido '{value}' para {paths_str}\n"
 "Valores permitidos: {allowed_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:616
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:599
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr "Tipo de conexão FC duplicado '{value}' para {paths_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:650
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:633
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr "Número de polos magnéticos do rotor tem de ser par para {paths_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:653
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:636
 msgid "Invalid integer value for {paths_str}"
 msgstr "Valor inteiro inválido para {paths_str}"
 
@@ -5867,7 +5868,8 @@ msgstr "Mudar Motores?"
 msgid ""
 "Are you sure you want to swap the functions of Motor %(exp)s and Motor "
 "%(det)s?"
-msgstr "Tem a certeza que quer trocar as funções do Motor %(exp)s e do Motor %(det)s?"
+msgstr ""
+"Tem a certeza que quer trocar as funções do Motor %(exp)s e do Motor %(det)s?"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:335
 msgid "Motor %(exp)s and Motor %(det)s have been successfully swapped."
@@ -7885,6 +7887,9 @@ msgstr "Versão ou revisão do hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:126
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid "New vehicle directory does not exist: {vehicle_dir}"
+#~ msgstr "O novo diretório do veículo não existe: {vehicle_dir}"
 
 #~ msgid ""
 #~ "Methodic configuration of {nr_total_params} parameters complete:\n"
