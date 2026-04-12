@@ -432,6 +432,7 @@ class ComponentDataModelBase:
         reordered_components.update(remaining_components)
 
         # Second step: for each component, ensure Product fields are in correct order (Version before URL)
+        # and ensure "Notes" is always the last field
         for component_name, component_data in reordered_components.items():
             if "Product" in component_data and isinstance(component_data["Product"], dict):
                 product = component_data["Product"]
@@ -447,6 +448,10 @@ class ComponentDataModelBase:
                         if field not in ordered_product:
                             ordered_product[field] = value
                     reordered_components[component_name]["Product"] = ordered_product
+
+            if "Notes" in component_data:
+                notes_value = component_data.pop("Notes")
+                component_data["Notes"] = notes_value
 
         return reordered_components
 
