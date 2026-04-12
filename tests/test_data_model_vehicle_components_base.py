@@ -1529,3 +1529,159 @@ class TestComponentReordering:
         assert product["Custom Field 1"] == "Custom Value 1"
         assert product["Custom Field 2"] == "Custom Value 2"
         assert product["Custom Field 3"] == "Custom Value 3"
+
+    def test_user_sees_notes_field_always_last_in_component(self, model_instance) -> None:
+        """
+        User sees the Notes field displayed at the bottom of every component editor section.
+
+        GIVEN: A component where "Notes" appears before other fields
+        WHEN: The system processes the component data
+        THEN: "Notes" is moved to be the very last field in that component
+        AND: All other field values and their order are preserved
+        """
+        # Arrange: Component with Notes appearing before connection data
+        existing_components = {
+            "Telemetry": {
+                "Notes": "SiK radio on Telem1",
+                "Product": {"Manufacturer": "RFDesign", "Model": "RFD900x"},
+                "FC Connection": {"Type": "SERIAL1", "Protocol": "MAVLink2"},
+            }
+        }
+
+        # Act
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Notes is last
+        fields = list(result["Telemetry"].keys())
+        assert fields[-1] == "Notes", "Notes should be the last field in the component"
+        assert result["Telemetry"]["Notes"] == "SiK radio on Telem1"
+        # Other fields are preserved in their original relative order
+        original_non_notes_fields = [key for key in existing_components["Telemetry"] if key != "Notes"]
+        reordered_non_notes_fields = [key for key in fields if key != "Notes"]
+        assert reordered_non_notes_fields == original_non_notes_fields
+
+    def test_user_sees_notes_field_last_when_already_at_end(self, model_instance) -> None:
+        """
+        User sees Notes remain last when it is already the last field.
+
+        GIVEN: A component where "Notes" is already the last field
+        WHEN: The system processes the component data
+        THEN: "Notes" stays last and all other fields are untouched
+        """
+        # Arrange: Notes already last
+        existing_components = {
+            "GNSS Receiver": {
+                "Product": {"Manufacturer": "u-blox", "Model": "NEO-M8N"},
+                "FC Connection": {"Type": "SERIAL3", "Protocol": "AUTO"},
+                "Notes": "Primary GPS",
+            }
+        }
+
+        # Act
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert
+        fields = list(result["GNSS Receiver"].keys())
+        assert fields[-1] == "Notes"
+        assert result["GNSS Receiver"]["Notes"] == "Primary GPS"
+
+    def test_user_sees_components_without_notes_field_unaffected(self, model_instance) -> None:
+        """
+        User sees components that have no Notes field remain completely unaffected by Notes ordering.
+
+        GIVEN: Components with no Notes field
+        WHEN: The system processes the component data
+        THEN: All component fields are preserved without modification
+        """
+        # Arrange
+        existing_components = {
+            "Motors": {
+                "Product": {"Manufacturer": "T-Motor", "Model": "F60 Pro IV"},
+                "Specifications": {"Poles": 14},
+            },
+            "Propellers": {
+                "Product": {"Manufacturer": "HQProp", "Model": "5.1x4.6"},
+                "Specifications": {"Diameter_inches": 5.1},
+            },
+        }
+
+        # Act
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: No Notes key injected, all fields unchanged
+        assert "Notes" not in result["Motors"]
+        assert "Notes" not in result["Propellers"]
+        assert list(result["Motors"].keys()) == ["Product", "Specifications"]
+        assert list(result["Propellers"].keys()) == ["Product", "Specifications"]
+
+    def test_user_sees_notes_last_across_all_components_simultaneously(self, model_instance) -> None:
+        """
+        User sees Notes consistently last in every component when multiple components are processed together.
+
+        GIVEN: Multiple components each with Notes in different positions
+        WHEN: The system processes all component data at once
+        THEN: Notes is the last field in every component that has it
+        AND: Components without Notes are unaffected
+        """
+        # Arrange: Multiple components with Notes in varying positions
+        existing_components = {
+            "Flight Controller": {
+                "Notes": "flight controller notes",
+                "Product": {"Manufacturer": "Holybro", "Model": "Pixhawk 6C"},
+                "Firmware": {"Type": "ArduCopter", "Version": "4.6.x"},
+            },
+            "Battery": {
+                "Product": {"Manufacturer": "Tattu"},
+                "Notes": "battery notes",
+                "Specifications": {"Chemistry": "Lipo"},
+            },
+            "ESC": {
+                "Product": {"Manufacturer": "Mamba"},
+                "FC->ESC Connection": {"Type": "Main Out", "Protocol": "DShot600"},
+                "ESC->FC Telemetry": {"Type": "Main Out", "Protocol": "BDShot"},
+                "Notes": "esc notes",
+            },
+            "Motors": {
+                "Specifications": {"Poles": 14},
+                # No Notes field
+            },
+        }
+
+        # Act
+        result = model_instance._reorder_components(existing_components)
+
+        # Assert: Notes is last in every component that has it
+        for component_name in ["Flight Controller", "Battery", "ESC"]:
+            fields = list(result[component_name].keys())
+            assert fields[-1] == "Notes", f"Notes should be last in {component_name}, got: {fields}"
+
+        # Motors has no Notes and should be unaffected
+        assert "Notes" not in result["Motors"]
+
+    def test_system_moves_notes_last_during_update_json_structure(self, model_instance) -> None:
+        """
+        System moves Notes to be the last field during a full update_json_structure call.
+
+        GIVEN: A stored vehicle_components.json where Notes appears before connection data
+        WHEN: update_json_structure is called on load
+        THEN: Notes is the last field in the affected component after migration
+        """
+        # Arrange: Inject raw data with Notes in the middle
+        model_instance._data = {
+            "Format version": 1,
+            "Components": {
+                "RC Receiver": {
+                    "Notes": "FrSky receiver",
+                    "Product": {"Manufacturer": "FrSky", "Model": "R-XSR"},
+                    "FC Connection": {"Type": "RCin/SBUS", "Protocol": "SBUS"},
+                }
+            },
+        }
+
+        # Act
+        model_instance.update_json_structure()
+
+        # Assert
+        rc_fields = list(model_instance._data["Components"]["RC Receiver"].keys())
+        assert rc_fields[-1] == "Notes", f"Notes should be last after update_json_structure, got: {rc_fields}"
+        assert model_instance._data["Components"]["RC Receiver"]["Notes"] == "FrSky receiver"
