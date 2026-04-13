@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 35,
-                "TOW max Kg": 50
+                "TOW max Kg": 50,
+                "Class": "1"
             },
             "Notes": "customized drone"
         },

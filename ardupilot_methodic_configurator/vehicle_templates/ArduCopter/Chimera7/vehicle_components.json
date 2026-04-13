@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 0.9,
-                "TOW max Kg": 0.9
+                "TOW max Kg": 0.9,
+                "Class": "1"
             },
             "Notes": ""
         },

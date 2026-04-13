@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 5,
-                "TOW max Kg": 7
+                "TOW max Kg": 7,
+                "Class": "1"
             },
             "Notes": "A frame with 960mm diameter (motor to notor) using T-Motor MN7005(7206) propulsion sets for 25mm tube arms"
         },

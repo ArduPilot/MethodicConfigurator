@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 1.09,
-                "TOW max Kg": 2.11
+                "TOW max Kg": 2.11,
+                "Class": "1"
             },
             "Notes": "Frame is X500 type. Look on holybro site for more specifications"
         },
