@@ -184,7 +184,7 @@ jobs:
 
       - name: Upload translation files as artifacts
         if: steps.prepare-translations.outputs.translations-to-process == 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: translation-files
           path: |
@@ -361,7 +361,7 @@ jobs:
 
       - name: Upload translated file
         if: always()  # Upload even if translation failed, for debugging
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: translated-${{ matrix.lang_code }}${{ matrix.suffix }}
           path: ${{ matrix.file }}
