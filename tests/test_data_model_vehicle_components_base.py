@@ -1556,7 +1556,9 @@ class TestComponentReordering:
         assert fields[-1] == "Notes", "Notes should be the last field in the component"
         assert result["Telemetry"]["Notes"] == "SiK radio on Telem1"
         # Other fields are preserved in their original relative order
-        assert fields.index("Product") < fields.index("FC Connection")
+        original_non_notes_fields = [key for key in existing_components["Telemetry"] if key != "Notes"]
+        reordered_non_notes_fields = [key for key in fields if key != "Notes"]
+        assert reordered_non_notes_fields == original_non_notes_fields
 
     def test_user_sees_notes_field_last_when_already_at_end(self, model_instance) -> None:
         """
