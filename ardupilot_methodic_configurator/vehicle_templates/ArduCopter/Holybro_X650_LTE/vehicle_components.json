@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 5.6,
-                "TOW max Kg": 7.6
+                "TOW max Kg": 7.6,
+                "Class": "1"
             },
             "Notes": "Frame is X650 V2 type. Look on holybro site for more specifications"
         },

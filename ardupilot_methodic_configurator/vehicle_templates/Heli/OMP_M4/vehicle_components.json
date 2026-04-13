@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 1,
-                "TOW max Kg": 1
+                "TOW max Kg": 1,
+                "Class": "6"
             },
             "Notes": "This was done with the Basic M4 Combo kit, not the max"
         },

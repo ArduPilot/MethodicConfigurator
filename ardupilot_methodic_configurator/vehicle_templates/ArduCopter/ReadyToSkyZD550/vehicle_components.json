@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 2.884,
-                "TOW max Kg": 2.884
+                "TOW max Kg": 2.884,
+                "Class": "1"
             },
             "Notes": "10-14\" Props"
         },

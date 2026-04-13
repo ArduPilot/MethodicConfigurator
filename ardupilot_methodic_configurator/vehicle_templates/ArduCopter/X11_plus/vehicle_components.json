@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 20,
-                "TOW max Kg": 50
+                "TOW max Kg": 50,
+                "Class": "1"
             },
             "Notes": "Frame is custom, X type frame, the middle is welded. Arm length is 1950mm."
         },

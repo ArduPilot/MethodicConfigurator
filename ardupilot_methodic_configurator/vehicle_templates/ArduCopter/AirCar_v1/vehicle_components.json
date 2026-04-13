@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 320,
-                "TOW max Kg": 500
+                "TOW max Kg": 500,
+                "Class": "4"
             },
             "Notes": "Frame is custom, X type frame. Arm length is 2650mm."
         },
