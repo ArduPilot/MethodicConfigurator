@@ -52,7 +52,11 @@ class TestValidationConstants:
 
         # All paths should follow the pattern (Component, "FC Connection", "Type")
         for path in FC_CONNECTION_TYPE_PATHS:
-            assert path[1] == "FC Connection"
+            assert path[1] in [
+                "FC Connection",
+                "FC->ESC Connection",
+                "ESC->FC Telemetry",
+            ]
             assert path[2] == "Type"
 
     def test_battery_cell_voltage_paths_structure(self) -> None:
@@ -111,7 +115,7 @@ class TestValidationConstants:
             assert set(value.keys()) == required_fields, f"Value for key '{key}' missing required fields"
 
             # Check field types
-            assert isinstance(value["type"], list), f"'type' field for key '{key}' is not a list"
+            assert isinstance(value["type"], tuple), f"'type' field for key '{key}' is not a tuple"
 
             assert isinstance(value["protocol"], str), f"'protocol' field for key '{key}' is not a string"
             assert value["component"] is None or isinstance(value["component"], str), (
@@ -127,7 +131,7 @@ class TestValidationConstants:
                 assert isinstance(port_type, str), f"Port type in key '{key}' is not a string"
 
             # Type should reference known port lists
-            assert type_list in (SERIAL_PORTS, ["None"]), f"'type' field for key '{key}' does not reference SERIAL_PORTS"
+            assert type_list in (SERIAL_PORTS, ("None",)), f"'type' field for key '{key}' does not reference SERIAL_PORTS"
 
         # Verify some expected protocols exist
         expected_protocols = {
@@ -163,7 +167,7 @@ class TestValidationConstants:
             assert set(value.keys()) == required_fields, f"Value for key '{key}' has incorrect fields"
 
             # Check field types
-            assert isinstance(value["type"], list), f"'type' field for key '{key}' is not a list"
+            assert isinstance(value["type"], tuple), f"'type' field for key '{key}' is not a tuple"
             assert isinstance(value["protocol"], str), f"'protocol' field for key '{key}' is not a string"
 
             # Type should reference known port lists or be specific port names
@@ -229,7 +233,7 @@ class TestValidationConstants:
             assert set(value.keys()) == required_fields, f"Value for key '{key}' has incorrect fields"
 
             # Check field types
-            assert isinstance(value["type"], list), f"'type' field for key '{key}' is not a list"
+            assert isinstance(value["type"], tuple), f"'type' field for key '{key}' is not a tuple"
             assert isinstance(value["protocol"], str), f"'protocol' field for key '{key}' is not a string"
 
             # Type should reference known port lists or be specific port names
@@ -263,43 +267,47 @@ class TestValidationConstants:
 
     def test_mot_pwm_type_dict_structure(self) -> None:
         """Test MOT_PWM_TYPE_DICT structure and data types."""
-        # Should be a dict
+        # Should be a dict of vehicle-type sub-dicts
         assert isinstance(MOT_PWM_TYPE_DICT, dict)
         assert len(MOT_PWM_TYPE_DICT) > 0
 
-        # Keys should be strings representing PWM type numbers
-        for key in MOT_PWM_TYPE_DICT:
-            assert isinstance(key, str)
-            # Should be convertible to int
-            try:
-                int(key)
-            except ValueError:
-                pytest.fail(f"Key '{key}' is not a valid integer string")
+        # Top-level keys are vehicle type strings (e.g. "ArduCopter", "Rover")
+        for vtype, sub_dict in MOT_PWM_TYPE_DICT.items():
+            assert isinstance(vtype, str), f"Vehicle type key '{vtype}' is not a string"
+            assert isinstance(sub_dict, dict), f"Sub-dict for '{vtype}' is not a dict"
 
-        # Values should be dicts with specific structure
-        required_fields = {"type", "protocol", "is_dshot"}
-        for key, value in MOT_PWM_TYPE_DICT.items():
-            assert isinstance(value, dict), f"Value for key '{key}' is not a dict"
-            assert set(value.keys()) == required_fields, f"Value for key '{key}' has incorrect fields"
+            # Inner keys should be integer strings representing PWM type numbers
+            for key in sub_dict:
+                assert isinstance(key, str)
+                try:
+                    int(key)
+                except ValueError:
+                    pytest.fail(f"Key '{key}' in MOT_PWM_TYPE_DICT['{vtype}'] is not a valid integer string")
 
-            # Check field types
-            assert isinstance(value["type"], list), f"'type' field for key '{key}' is not a list"
-            assert isinstance(value["protocol"], str), f"'protocol' field for key '{key}' is not a string"
-            assert isinstance(value["is_dshot"], bool), f"'is_dshot' field for key '{key}' is not a boolean"
+            # Values should be dicts with specific structure
+            required_fields = {"type", "protocol", "is_dshot"}
+            for key, value in sub_dict.items():
+                assert isinstance(value, dict), f"Value for key '{key}' in '{vtype}' is not a dict"
+                assert set(value.keys()) == required_fields, f"Value for key '{key}' in '{vtype}' has incorrect fields"
 
-            # Type should reference PWM output ports
-            assert value["type"] == PWM_OUT_PORTS, f"'type' field for key '{key}' does not reference PWM_OUT_PORTS"
+                # Check field types
+                assert isinstance(value["type"], tuple), f"'type' field for key '{key}' in '{vtype}' is not a tuple"
+                assert isinstance(value["protocol"], str), f"'protocol' field for key '{key}' in '{vtype}' is not a string"
+                assert isinstance(value["is_dshot"], bool), f"'is_dshot' field for key '{key}' in '{vtype}' is not a boolean"
 
-        # Verify some expected PWM types exist
+                # Type should reference PWM output ports
+                assert value["type"] == PWM_OUT_PORTS, f"'type' for key '{key}' in '{vtype}' does not reference PWM_OUT_PORTS"
+
+        # Verify expected PWM types exist in the ArduCopter sub-dict
         expected_pwm_types = {
             "0": {"protocol": "Normal", "is_dshot": False},
             "6": {"protocol": "DShot600", "is_dshot": True},
         }
-
+        copter_sub = MOT_PWM_TYPE_DICT["ArduCopter"]
         for key, expected_data in expected_pwm_types.items():
-            assert key in MOT_PWM_TYPE_DICT
-            assert MOT_PWM_TYPE_DICT[key]["protocol"] == expected_data["protocol"]
-            assert MOT_PWM_TYPE_DICT[key]["is_dshot"] == expected_data["is_dshot"]
+            assert key in copter_sub
+            assert copter_sub[key]["protocol"] == expected_data["protocol"]
+            assert copter_sub[key]["is_dshot"] == expected_data["is_dshot"]
 
     def test_rc_protocols_dict_structure(self) -> None:
         """Test RC_PROTOCOLS_DICT structure and data types."""
@@ -323,7 +331,7 @@ class TestValidationConstants:
             assert set(value.keys()) == required_fields, f"Value for key '{key}' has incorrect fields"
 
             # Check field types
-            assert isinstance(value["type"], list), f"'type' field for key '{key}' is not a list"
+            assert isinstance(value["type"], tuple), f"'type' field for key '{key}' is not a tuple"
             assert isinstance(value["protocol"], str), f"'protocol' field for key '{key}' is not a string"
 
             # Type should be combination of RC_PORTS + SERIAL_PORTS or CAN_PORTS
@@ -370,8 +378,8 @@ class TestValidationConstants:
         ]
 
         for port_name, port_list in port_lists:
-            # Should be a list
-            assert isinstance(port_list, list), f"{port_name} is not a list"
+            # Should be a tuple (constants use tuple for immutability)
+            assert isinstance(port_list, tuple), f"{port_name} is not a tuple"
 
             # Should not be empty
             assert len(port_list) > 0, f"{port_name} is empty"
@@ -418,9 +426,10 @@ class TestValidationConstants:
             assert 0 <= gps_num <= 50, f"GPS type number {gps_num} is out of expected range"
 
         # Motor PWM type numbers should be reasonable (typically 0-10)
-        for key in MOT_PWM_TYPE_DICT:
-            pwm_num = int(key)
-            assert 0 <= pwm_num <= 20, f"Motor PWM type number {pwm_num} is out of expected range"
+        for sub_dict in MOT_PWM_TYPE_DICT.values():
+            for key in sub_dict:
+                pwm_num = int(key)
+                assert 0 <= pwm_num <= 20, f"Motor PWM type number {pwm_num} is out of expected range"
 
         # RC protocol numbers should be reasonable bit positions (typically 0-15)
         for key in RC_PROTOCOLS_DICT:
@@ -433,7 +442,6 @@ class TestValidationConstants:
             ("SERIAL_PROTOCOLS_DICT", SERIAL_PROTOCOLS_DICT),
             ("BATT_MONITOR_CONNECTION", BATT_MONITOR_CONNECTION),
             ("GNSS_RECEIVER_CONNECTION", GNSS_RECEIVER_CONNECTION),
-            ("MOT_PWM_TYPE_DICT", MOT_PWM_TYPE_DICT),
             ("RC_PROTOCOLS_DICT", RC_PROTOCOLS_DICT),
         ]
 
@@ -443,13 +451,22 @@ class TestValidationConstants:
                 assert isinstance(protocol_name, str), f"Protocol name for key '{key}' in {dict_name} is not a string"
                 assert len(protocol_name.strip()) > 0, f"Protocol name for key '{key}' in {dict_name} is empty or whitespace"
 
+        for vtype, sub_dict in MOT_PWM_TYPE_DICT.items():
+            for key, value in sub_dict.items():
+                protocol_name = value["protocol"]
+                assert isinstance(protocol_name, str), (
+                    f"Protocol name for key '{key}' in MOT_PWM_TYPE_DICT['{vtype}'] is not a string"
+                )
+                assert len(protocol_name.strip()) > 0, (
+                    f"Protocol name for key '{key}' in MOT_PWM_TYPE_DICT['{vtype}'] is empty"
+                )
+
     def test_no_protocol_duplicates_within_dict(self) -> None:
         """Test that there are no duplicate protocol names within each dictionary."""
         protocol_dicts = [
             ("SERIAL_PROTOCOLS_DICT", SERIAL_PROTOCOLS_DICT),
             ("BATT_MONITOR_CONNECTION", BATT_MONITOR_CONNECTION),
             ("GNSS_RECEIVER_CONNECTION", GNSS_RECEIVER_CONNECTION),
-            ("MOT_PWM_TYPE_DICT", MOT_PWM_TYPE_DICT),
             ("RC_PROTOCOLS_DICT", RC_PROTOCOLS_DICT),
         ]
 
@@ -465,6 +482,17 @@ class TestValidationConstants:
             uniqueness_ratio = len(unique_names) / len(protocol_names)
             assert uniqueness_ratio >= 0.8, (
                 f"Too many duplicate protocol names in {dict_name}: {len(unique_names)}/{len(protocol_names)} unique"
+            )
+
+        # Check uniqueness within each vehicle-type sub-dict of MOT_PWM_TYPE_DICT
+        for vtype, sub_dict in MOT_PWM_TYPE_DICT.items():
+            protocol_names = [value["protocol"] for value in sub_dict.values()]
+            unique_names = set(protocol_names)
+            assert len(unique_names) > 0, f"No protocols found in MOT_PWM_TYPE_DICT['{vtype}']"
+            uniqueness_ratio = len(unique_names) / len(protocol_names)
+            assert uniqueness_ratio >= 0.8, (
+                f"Too many duplicate protocol names in MOT_PWM_TYPE_DICT['{vtype}']: "
+                f"{len(unique_names)}/{len(protocol_names)} unique"
             )
 
     def test_serial_bus_labels_structure(self) -> None:

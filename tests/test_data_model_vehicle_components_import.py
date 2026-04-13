@@ -214,26 +214,28 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
     @patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1", "SERIAL2"])
     @patch(
         "ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PROTOCOLS_DICT",
-        {"30": {"component": "ESC", "protocol": "ESC Telem"}},
+        {"30": {"component": "ESC", "protocol": "ESC Telemetry"}},
     )
     def test_system_detects_multiple_serial_esc_connections(self, realistic_model) -> None:
         """
-        System detects when multiple serial ports have ESC telemetry.
+        System uses first serial ESC telemetry port and allows ESC type detection to proceed.
 
         GIVEN: Flight controller with ESC telemetry on multiple serial ports
         WHEN: Importing serial port configuration
-        THEN: First ESC connection should be used
-        AND: Should return True indicating multiple ESC ports detected
+        THEN: First ESC telemetry connection should be used
+        AND: Should return False because telemetry-only protocols leave FC->ESC undetermined
         """
         fc_parameters = {"SERIAL1_PROTOCOL": 30, "SERIAL2_PROTOCOL": 30}
 
         result = realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
-        assert esc_type == "SERIAL1"
-        assert esc_protocol == "ESC Telem"
-        assert result is True  # Multiple ESCs
+        esc_telem_type = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        esc_telem_protocol = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol"))
+        assert esc_telem_type == "SERIAL1"
+        assert esc_telem_protocol == "ESC Telemetry"
+        assert (
+            result is False
+        )  # Telemetry-only protocol: FC->ESC is still DShot/PWM, _set_esc_type_from_fc_parameters must run
 
     @patch("ardupilot_methodic_configurator.data_model_vehicle_components_import.SERIAL_PORTS", ["SERIAL1"])
     def test_system_handles_invalid_serial_protocol_value(self, realistic_model) -> None:
@@ -253,8 +255,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert result is False
 
     @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.MOT_PWM_TYPE_DICT",
-        {"6": {"protocol": "DShot600"}},
+        "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
+        lambda *_: {"6": {"protocol": "DShot600"}},
     )
     def test_system_imports_esc_on_main_outputs(self, realistic_model) -> None:
         """
@@ -273,14 +275,14 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert esc_type == "Main Out"
         assert esc_protocol == "DShot600"
 
     @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.MOT_PWM_TYPE_DICT",
-        {"6": {"protocol": "DShot600"}},
+        "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
+        lambda *_: {"6": {"protocol": "DShot600"}},
     )
     def test_system_imports_esc_aio_configuration(self, realistic_model) -> None:
         """
@@ -294,15 +296,40 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         fc_parameters = {
             "MOT_PWM_TYPE": 6,
             "SERVO1_FUNCTION": 0,  # Not motor function
+            "SERVO9_FUNCTION": 33,  # Motor function on AUX output indicates AIO
         }
         doc: dict[str, Any] = {}
 
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert esc_type == "AIO"
         assert esc_protocol == "DShot600"
+
+    def test_user_can_import_esc_connection_and_telemetry_from_serial_fc(self, realistic_model) -> None:
+        """
+        Import ESC serial config into FC->ESC Connection and ESC->FC Telemetry.
+
+        GIVEN: Flight controller serial port protocol maps to ESC.
+
+        WHEN: User imports serial port configuration.
+
+        THEN: ESC FC->ESC Connection and ESC->FC Telemetry should be populated.
+        """
+        fc_parameters = {"SERIAL1_PROTOCOL": 38}
+
+        realistic_model._set_serial_type_from_fc_parameters(fc_parameters)
+
+        esc_conn_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_conn_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
+        esc_telemetry_type = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
+        esc_telemetry_protocol = realistic_model.get_component_value(("ESC", "ESC->FC Telemetry", "Protocol"))
+
+        assert esc_conn_type == "SERIAL1"
+        assert esc_conn_protocol == "FETtecOneWire"
+        assert esc_telemetry_type == "SERIAL1"
+        assert esc_telemetry_protocol == "FETtecOneWire"
 
     def test_user_can_import_battery_monitor_configuration(self, realistic_model) -> None:
         """
@@ -447,8 +474,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        assert esc_type == "AIO"  # Should default to AIO when no main out functions
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        assert esc_type == "Main Out"  # Should default to Main Out when no AUX functions
 
     def test_system_falls_back_to_mot_pwm_dict_when_doc_empty(self, realistic_model) -> None:
         """
@@ -460,15 +487,15 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         AND: ESC protocol should be correctly identified
         """
         with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.MOT_PWM_TYPE_DICT",
-            {"6": {"protocol": "DShot600"}},
+            "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
+            return_value={"6": {"protocol": "DShot600"}},
         ):
             fc_parameters = {"MOT_PWM_TYPE": 6}
             doc: dict[str, Any] = {}  # Empty doc should trigger fallback
 
             realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-            esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+            esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
             assert esc_protocol == "DShot600"
 
     def test_system_handles_esc_protocol_not_found(self, realistic_model) -> None:
@@ -885,8 +912,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         THEN: System should handle gracefully without setting poles
         """
         with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.MOT_PWM_TYPE_DICT",
-            {"6": {"protocol": "DShot600", "is_dshot": True}},
+            "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
+            lambda *_: {"6": {"protocol": "DShot600", "is_dshot": True}},
         ):
             fc_parameters = {
                 "MOT_PWM_TYPE": 6,
@@ -972,8 +999,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert realistic_model.get_component_value(("GNSS Receiver", "FC Connection", "Type")) == "SERIAL2"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Type")) == "SERIAL3"
         assert realistic_model.get_component_value(("RC Receiver", "FC Connection", "Protocol")) == "CRSF"
-        assert realistic_model.get_component_value(("ESC", "FC Connection", "Type")) == "Main Out"
-        assert realistic_model.get_component_value(("ESC", "FC Connection", "Protocol")) == "DShot600"
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type")) == "Main Out"
+        assert realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) == "DShot600"
         assert realistic_model.get_component_value(("Motors", "Specifications", "Poles")) == 14
         assert (
             realistic_model.get_component_value(("Battery Monitor", "FC Connection", "Protocol"))
@@ -1005,8 +1032,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
             realistic_model.process_fc_parameters(fc_parameters, doc)
 
         # Should use serial ESC, not PWM ESC
-        esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
-        esc_protocol = realistic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
+        esc_protocol = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert esc_type == "SERIAL1"
         assert esc_protocol == "FETtecOneWire"
 
@@ -1164,21 +1191,24 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         AND: AIO should be detected when no motor functions on SERVO outputs
         """
         test_cases = [
-            # Test case: (servo functions, expected_esc_type)
-            ([0, 0, 0, 0, 0, 0, 0, 0], "AIO"),  # No motors on main out
-            ([33, 0, 0, 0, 0, 0, 0, 0], "Main Out"),  # Motor1 on SERVO1
-            ([0, 34, 0, 0, 0, 0, 0, 0], "Main Out"),  # Motor2 on SERVO2
-            ([0, 0, 35, 0, 0, 0, 0, 0], "Main Out"),  # Motor3 on SERVO3
-            ([0, 0, 0, 36, 0, 0, 0, 0], "Main Out"),  # Motor4 on SERVO4
-            ([0, 0, 0, 0, 33, 0, 0, 0], "Main Out"),  # Motor1 on SERVO5 (still main out, not AUX)
-            ([1, 2, 3, 4, 5, 6, 7, 8], "AIO"),  # Other functions, no motors
-            ([33, 34, 35, 36, 0, 0, 0, 0], "Main Out"),  # All 4 motors on main out
+            # Test case: (servo functions 1-14, expected_esc_type)
+            ([0] * 14, "Main Out"),  # No motors anywhere
+            ([33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Main Out"),  # Motor1 on SERVO1
+            ([0, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Main Out"),  # Motor2 on SERVO2
+            ([0, 0, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Main Out"),  # Motor3 on SERVO3
+            ([0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Main Out"),  # Motor4 on SERVO4
+            ([0, 0, 0, 0, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Main Out"),  # Motor1 on SERVO5
+            ([1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0], "Main Out"),  # Other functions on main, no motors
+            ([33, 34, 35, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "Main Out"),  # All 4 motors on main out
+            ([0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 0], "AIO"),  # Motor1 on SERVO9 (AUX)
+            ([0, 0, 0, 0, 0, 0, 0, 0, 0, 34, 0, 0, 0, 0], "AIO"),  # Motor2 on SERVO10 (AUX)
+            ([0, 0, 0, 0, 0, 0, 0, 0, 33, 34, 35, 36, 0, 0], "AIO"),  # Motors on SERVO9-12 (AUX)
         ]
 
         for servo_functions, expected_esc_type in test_cases:
             fc_parameters = {"MOT_PWM_TYPE": 6}  # DShot600
 
-            # Set all servo functions
+            # Set all servo functions (SERVO1 to SERVO14)
             for i, function in enumerate(servo_functions, 1):
                 fc_parameters[f"SERVO{i}_FUNCTION"] = function
 
@@ -1186,7 +1216,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
             realistic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-            esc_type = realistic_model.get_component_value(("ESC", "FC Connection", "Type"))
+            esc_type = realistic_model.get_component_value(("ESC", "FC->ESC Connection", "Type"))
             assert esc_type == expected_esc_type, f"Failed for servo functions {servo_functions}"
 
     def test_gps1_type_parameter_support(self, realistic_model) -> None:
@@ -1659,15 +1689,19 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
                 "MOT_BAT_VOLT_MIN": 12.8,
             },
         )
-        original_max = basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
+        basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max"))
 
         # Act
         basic_model._import_bat_values_from_fc(specs)
 
-        # Assert: capacity IS set (not guarded by cell count), voltages are NOT set
+        # Assert: capacity IS set, voltages are set to 0.0 (invalid marker) when cell_count is 0
         capacity = basic_model.get_component_value(("Battery", "Specifications", "Capacity mAh"))
         assert capacity == 4500
-        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max")) == original_max
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell max")) == 0.0
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell arm")) == 0.0
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell low")) == 0.0
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell crit")) == 0.0
+        assert basic_model.get_component_value(("Battery", "Specifications", "Volt per cell min")) == 0.0
 
     def test_estimate_cell_count_uses_batt_arm_volt_as_fallback(self, basic_model) -> None:
         """
@@ -1743,19 +1777,19 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
     def test_estimate_cell_count_returns_zero_for_all_invalid_volt_per_cell(self, basic_model) -> None:
         """
-        System returns 0 when all volt-per-cell values are zero/invalid.
+        System returns 0 when all voltage parameter values are zero or negative.
 
-        GIVEN: FC parameters with voltage params but all volt-per-cell stored values are zero
+        GIVEN: FC parameters where all voltage values are zero
         WHEN: Calling _estimate_battery_cell_count
         THEN: Returns 0 and an error is logged
         """
-        # Arrange: all voltage specs are zero (invalid) - basic_model has default 0s
+        # Arrange: all voltage parameter values are 0, triggering the 'voltage <= 0' guard
         fc_parameters = {
-            "MOT_BAT_VOLT_MAX": 16.8,
-            "BATT_LOW_VOLT": 14.4,
-            "BATT_CRT_VOLT": 13.2,
-            "BATT_ARM_VOLT": 15.2,
-            "MOT_BAT_VOLT_MIN": 12.8,
+            "MOT_BAT_VOLT_MAX": 0.0,
+            "BATT_LOW_VOLT": 0.0,
+            "BATT_CRT_VOLT": 0.0,
+            "BATT_ARM_VOLT": 0.0,
+            "MOT_BAT_VOLT_MIN": 0.0,
         }
 
         # Act
@@ -2058,7 +2092,7 @@ class TestComponentDataModelImportUncoveredBranches:
 
         basic_model._set_esc_type_from_fc_parameters(fc_parameters, doc)
 
-        result = basic_model.get_component_value(("ESC", "FC Connection", "Protocol"))
+        result = basic_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol"))
         assert result == "Normal"
 
     # ------------------------------------------------------------------

@@ -365,17 +365,17 @@ class TestComponentDataModelImportInternals:
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
         # pylint: enable=duplicate-code
 
-    def test_set_battery_type_handles_list_type_values(self, realistic_model) -> None:
+    def test_set_battery_type_handles_tuple_type_values(self, realistic_model) -> None:
         """
-        Internal battery type setter handles list-type configuration values.
+        Internal battery type setter handles tuple-type configuration values.
 
-        GIVEN: Battery configuration with list values for type and protocol
+        GIVEN: Battery configuration with tuple values for type and protocol
         WHEN: Setting battery type from parameters
-        THEN: First element of each list should be used
+        THEN: First element of each tuple should be used
         """
         with patch(
             "ardupilot_methodic_configurator.data_model_vehicle_components_import.BATT_MONITOR_CONNECTION",
-            {"4": {"type": ["Analog", "Digital"], "protocol": ["Voltage", "Current"]}},
+            {"4": {"type": ("Analog", "Digital"), "protocol": ("Voltage", "Current")}},
         ):
             fc_parameters = {"BATT_MONITOR": 4}
             realistic_model._set_battery_type_from_fc_parameters(fc_parameters)
