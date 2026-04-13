@@ -12,4 +12,4 @@ BATT_LOW_VOLT,14.4  # Low failsafe voltage x nr. of cells
 BATT_MONITOR,4  # Selected in component editor window
 BATT_VOLT_MULT,10.985  # Use a power source with a voltage close to BATT_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it
 MOT_BAT_VOLT_MAX,16.8  # Scale the PIDs up when battery voltage is below this threshold
-MOT_BAT_VOLT_MIN,14.2  # Scale the PIDs up when battery voltage is above this threshold
+MOT_BAT_VOLT_MIN,13.2  # Scale the PIDs up when battery voltage is above this threshold

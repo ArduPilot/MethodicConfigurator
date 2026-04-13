@@ -60,7 +60,7 @@
                 "Volt per cell arm": 3.9429,
                 "Volt per cell low": 3.6,
                 "Volt per cell crit": 3.55,
-                "Volt per cell min": 3.55,
+                "Volt per cell min": 3.3,
                 "Number of cells": 14,
                 "Capacity mAh": 160000
             },
@@ -77,9 +77,13 @@
                 "Type": "",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": "https://ardupilot.org/copter/docs/common-hobbywing-dronecan-esc.html"
         },

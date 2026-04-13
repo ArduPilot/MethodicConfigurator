@@ -1,15 +1,15 @@
 BATT_AMP_PERVLT,0
-BATT_ARM_VOLT,55.2
+BATT_ARM_VOLT,0
 BATT_CAPACITY,0
 BATT_CRT_MAH,0
-BATT_CRT_VOLT,49.7
+BATT_CRT_VOLT,0
 BATT_FS_CRT_ACT,1
 BATT_FS_LOW_ACT,2
 BATT_FS_VOLTSRC,0
 BATT_I2C_BUS,0
 BATT_LOW_MAH,0
-BATT_LOW_VOLT,50.4
-BATT_MONITOR,0
+BATT_LOW_VOLT,0
+BATT_MONITOR,0  # Selected in component editor window
 BATT_VOLT_MULT,0
 MOT_BAT_VOLT_MAX,0  # Scale the PIDs up when battery voltage is below this threshold
 MOT_BAT_VOLT_MIN,0  # Scale the PIDs up when battery voltage is above this threshold

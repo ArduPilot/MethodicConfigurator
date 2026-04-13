@@ -77,9 +77,13 @@
                 "Type": "hobbywing",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": "ESCs are integrated in the motor arm sets"
         },

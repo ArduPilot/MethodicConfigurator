@@ -56,11 +56,11 @@
             },
             "Specifications": {
                 "Chemistry": "Lipo",
-                "Volt per cell max": 4.2,
-                "Volt per cell arm": 3.8,
-                "Volt per cell low": 3.6,
-                "Volt per cell crit": 3.55,
-                "Volt per cell min": 3.2,
+                "Volt per cell max": 0.0,
+                "Volt per cell arm": 0.0,
+                "Volt per cell low": 0.0,
+                "Volt per cell crit": 0.0,
+                "Volt per cell min": 0.0,
                 "Number of cells": 0,
                 "Capacity mAh": 0
             },
@@ -77,9 +77,13 @@
                 "Type": "",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": ""
         },

@@ -57,9 +57,9 @@
             "Specifications": {
                 "Chemistry": "NiMH",
                 "Volt per cell max": 1.4,
-                "Volt per cell arm": 1.4833,
-                "Volt per cell low": 1.2,
-                "Volt per cell crit": 1.1,
+                "Volt per cell arm": 1.25,
+                "Volt per cell low": 1.1167,
+                "Volt per cell crit": 1.0917,
                 "Volt per cell min": 1.0833,
                 "Number of cells": 6,
                 "Capacity mAh": 1400
@@ -77,9 +77,13 @@
                 "Type": "",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": ""
         },
@@ -119,8 +123,8 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "SERIAL3",
-                "Protocol": "AUTO"
+                "Type": "CAN1",
+                "Protocol": "DroneCAN"
             },
             "Notes": ""
         },
@@ -179,7 +183,7 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "SERIAL1",
+                "Type": "SERIAL4",
                 "Protocol": "MAVLink2"
             },
             "Notes": ""

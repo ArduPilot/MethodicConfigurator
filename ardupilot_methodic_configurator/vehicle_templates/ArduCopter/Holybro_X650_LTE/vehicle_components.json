@@ -77,9 +77,13 @@
                 "Type": "AM32",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "DShot600"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "Main Out",
+                "Protocol": "BDShot"
             },
             "Notes": ""
         },
