@@ -12,4 +12,4 @@ BATT_LOW_VOLT,50.4  # Low failsafe voltage x nr. of cells
 BATT_MONITOR,9  # Selected in component editor window
 BATT_VOLT_MULT,0  # WE TAKE DATA FROM ESC TELEMETRY, so this can stay at 0
 MOT_BAT_VOLT_MAX,58.8  # Scale the PIDs up when battery voltage is below this threshold
-MOT_BAT_VOLT_MIN,49.7  # Scale the PIDs up when battery voltage is above this threshold
+MOT_BAT_VOLT_MIN,46.2  # Scale the PIDs up when battery voltage is above this threshold

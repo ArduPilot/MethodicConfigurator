@@ -56,11 +56,11 @@
             },
             "Specifications": {
                 "Chemistry": "LipoHV",
-                "Volt per cell max": 4.2,
+                "Volt per cell max": 4.35,
                 "Volt per cell arm": 3.9333,
                 "Volt per cell low": 3.6,
                 "Volt per cell crit": 3.55,
-                "Volt per cell min": 3.55,
+                "Volt per cell min": 3.3,
                 "Number of cells": 6,
                 "Capacity mAh": 30000
             },
@@ -77,9 +77,13 @@
                 "Type": "",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": ""
         },

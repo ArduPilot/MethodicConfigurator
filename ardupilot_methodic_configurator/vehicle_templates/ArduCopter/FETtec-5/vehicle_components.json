@@ -60,7 +60,7 @@
                 "Volt per cell arm": 3.5833,
                 "Volt per cell low": 3.5,
                 "Volt per cell crit": 3.2,
-                "Volt per cell min": 3.2,
+                "Volt per cell min": 3.3,
                 "Number of cells": 6,
                 "Capacity mAh": 5000
             },
@@ -77,7 +77,11 @@
                 "Type": "FETtec",
                 "Version": "10_224"
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "FETtecOneWire"
+            },
+            "ESC->FC Telemetry": {
                 "Type": "SERIAL1",
                 "Protocol": "FETtecOneWire"
             },

@@ -77,9 +77,13 @@
                 "Type": "BlueJay",
                 "Version": "21.0"
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "DShot600"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "SERIAL7",
+                "Protocol": "ESC Telemetry"
             },
             "Notes": "Runs BDshot600 on Main out, One of two 4-in-1 ESCs, the other being a RuiBet 55A, this is the one used for Voltage and Current measurements. \"If you are still on 0.20.0, please upgrade to version 0.21.0 - there have been issues with stall detection and motor protection which might result in broken ESCs and/or motors\""
         },
