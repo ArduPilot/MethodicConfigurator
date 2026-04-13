@@ -133,7 +133,7 @@ class TestValidateAllDataBehaviorDriven:
         invalid_entries = {
             ("Battery", "Specifications", "Chemistry"): "UnknownChemistry",  # Chemistry has combobox choices
             ("RC Receiver", "FC Connection", "Protocol"): "InvalidProtocol",  # RC Protocol has choices
-            ("ESC", "FC Connection", "Protocol"): "NonExistentProtocol",  # ESC Protocol has choices
+            ("ESC", "FC->ESC Connection", "Protocol"): "NonExistentProtocol",  # ESC Protocol has choices
         }
 
         # Act: Validate all data
@@ -161,7 +161,7 @@ class TestValidateAllDataBehaviorDriven:
         # Arrange: Create entries with duplicate FC connections that are NOT allowed
         duplicate_entries = {
             ("GNSS Receiver", "FC Connection", "Type"): "SERIAL2",
-            ("ESC", "FC Connection", "Type"): "SERIAL2",  # Not allowed duplicate
+            ("ESC", "FC->ESC Connection", "Type"): "SERIAL2",  # Not allowed duplicate
             ("RC Receiver", "FC Connection", "Type"): "SERIAL3",
             (
                 "Battery Monitor",
@@ -358,7 +358,7 @@ class TestValidateAllDataBehaviorDriven:
         large_entries[("Battery", "Specifications", "Chemistry")] = "InvalidChem"  # Invalid combobox
         large_entries[("Battery", "Specifications", "Volt per cell max")] = "5.0"  # Invalid battery voltage for Lipo
         large_entries[("RC Receiver", "FC Connection", "Type")] = "SERIAL1"
-        large_entries[("ESC", "FC Connection", "Type")] = "SERIAL1"  # Not allowed duplicate
+        large_entries[("ESC", "FC->ESC Connection", "Type")] = "SERIAL1"  # Not allowed duplicate
 
         # Act: Validate all data
         is_valid, errors = validation_model.validate_all_data(large_entries)
