@@ -8,7 +8,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import contextlib
 from dataclasses import dataclass
 
 # from logging import debug as logging_debug
@@ -463,7 +462,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
             final_chemistry = BATTERY_DEFAULT_CHEMISTRY
 
         specs = BatteryVoltageSpecs(
-            estimated_cell_count=self._estimate_battery_cell_count(fc_parameters),
+            estimated_cell_count=self._estimate_battery_cell_count(fc_parameters, final_chemistry),
             limit_min=BatteryCell.limit_min_voltage(final_chemistry),
             limit_max=BatteryCell.limit_max_voltage(final_chemistry),
             detected_chemistry=final_chemistry,
@@ -586,50 +585,52 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
         return None
 
-    def _estimate_cells_from_voltage_param(
-        self, param_name: str, param_value: float, volt_per_cell_spec: str
+    def _estimate_cells_from_voltage_param_default(
+        self, param_name: str, param_value: float, volt_per_cell_spec: str, chemistry: str
     ) -> Optional[int]:
         """
-        Estimate cell count from a voltage parameter.
+        Estimate cell count from a voltage parameter using the chemistry-specific default per-cell voltages.
 
         Args:
             param_name: Name of the parameter for logging
             param_value: Value of the voltage parameter
             volt_per_cell_spec: Battery specification name (e.g., "Volt per cell max")
+            chemistry: Battery chemistry to use for default per-cell voltages
 
         Returns:
             Estimated cell count or None if estimation failed
 
         """
-        volt_per_cell_value = self.get_component_value(("Battery", "Specifications", volt_per_cell_spec))
-
-        volt_per_cell = 0.0
-        if isinstance(volt_per_cell_value, (int, float, str)) and volt_per_cell_value:
-            with contextlib.suppress(ValueError, TypeError):
-                volt_per_cell = float(volt_per_cell_value)
-
-        if volt_per_cell <= 0:
-            logging_warning(_("Volt per cell value for %s is zero or invalid: %s"), volt_per_cell_spec, volt_per_cell_value)
+        # Get default per-cell voltage for this chemistry and spec
+        volt_per_cell = BatteryCell.recommended_cell_voltage(chemistry, volt_per_cell_spec)
+        if isnan(volt_per_cell) or volt_per_cell <= 0:
+            logging_error(_("No recommended voltage for %s %s"), chemistry, volt_per_cell_spec)
             return None
 
         try:
             voltage = float(param_value)
-            if voltage > 0:
-                return round(voltage / volt_per_cell)
-        except (ValueError, TypeError, ZeroDivisionError) as e:
+            if voltage <= 0:
+                logging_warning(_("Voltage value for %s is zero or invalid: %s"), param_name, param_value)
+                return None
+            estimated_cells = round(voltage / volt_per_cell)
+            # Validate reasonable range
+            if 1 <= estimated_cells <= 50:  # Reasonable range for battery packs
+                return estimated_cells
+            logging_warning(_("Estimated cell count %d from %s seems unreasonable"), estimated_cells, param_name)
+        except (ValueError, TypeError) as e:
             logging_error(_("Error processing %s parameter: %s"), param_name, str(e))
-
         return None
 
-    def _estimate_battery_cell_count(self, fc_parameters: dict[str, float]) -> int:
+    def _estimate_battery_cell_count(self, fc_parameters: dict[str, float], chemistry: str = BATTERY_DEFAULT_CHEMISTRY) -> int:
         """
         Estimate battery cell count from voltage parameters.
 
         Uses MOT_BAT_VOLT_MAX, BATT_LOW_VOLT, BATT_CRT_VOLT, BATT_ARM_VOLT, or MOT_BAT_VOLT_MIN
-        along with current volt-per-cell values to estimate the number of cells.
+        along with default volt-per-cell values for the given chemistry to estimate the number of cells.
 
         Args:
             fc_parameters: Dictionary of flight controller parameters
+            chemistry: Battery chemistry to use for default per-cell voltages
 
         """
         # Try to estimate cell count from available voltage parameters
@@ -637,29 +638,29 @@ class ComponentDataModelImport(ComponentDataModelBase):
         estimated_cells = None
 
         if "MOT_BAT_VOLT_MAX" in fc_parameters:
-            estimated_cells = self._estimate_cells_from_voltage_param(
-                "MOT_BAT_VOLT_MAX", fc_parameters["MOT_BAT_VOLT_MAX"], "Volt per cell max"
+            estimated_cells = self._estimate_cells_from_voltage_param_default(
+                "MOT_BAT_VOLT_MAX", fc_parameters["MOT_BAT_VOLT_MAX"], "Volt per cell max", chemistry
             )
 
         if estimated_cells is None and "BATT_LOW_VOLT" in fc_parameters:
-            estimated_cells = self._estimate_cells_from_voltage_param(
-                "BATT_LOW_VOLT", fc_parameters["BATT_LOW_VOLT"], "Volt per cell low"
+            estimated_cells = self._estimate_cells_from_voltage_param_default(
+                "BATT_LOW_VOLT", fc_parameters["BATT_LOW_VOLT"], "Volt per cell low", chemistry
             )
 
         if estimated_cells is None and "BATT_CRT_VOLT" in fc_parameters:
-            estimated_cells = self._estimate_cells_from_voltage_param(
-                "BATT_CRT_VOLT", fc_parameters["BATT_CRT_VOLT"], "Volt per cell crit"
+            estimated_cells = self._estimate_cells_from_voltage_param_default(
+                "BATT_CRT_VOLT", fc_parameters["BATT_CRT_VOLT"], "Volt per cell crit", chemistry
             )
 
         # lower prio, because less often used
         if estimated_cells is None and "BATT_ARM_VOLT" in fc_parameters:
-            estimated_cells = self._estimate_cells_from_voltage_param(
-                "BATT_ARM_VOLT", fc_parameters["BATT_ARM_VOLT"], "Volt per cell arm"
+            estimated_cells = self._estimate_cells_from_voltage_param_default(
+                "BATT_ARM_VOLT", fc_parameters["BATT_ARM_VOLT"], "Volt per cell arm", chemistry
             )
 
         if estimated_cells is None and "MOT_BAT_VOLT_MIN" in fc_parameters:
-            estimated_cells = self._estimate_cells_from_voltage_param(
-                "MOT_BAT_VOLT_MIN", fc_parameters["MOT_BAT_VOLT_MIN"], "Volt per cell min"
+            estimated_cells = self._estimate_cells_from_voltage_param_default(
+                "MOT_BAT_VOLT_MIN", fc_parameters["MOT_BAT_VOLT_MIN"], "Volt per cell min", chemistry
             )
 
         # If no estimation succeeded, all volt per cell values must be invalid
