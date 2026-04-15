@@ -77,9 +77,13 @@
                 "Type": "",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": ""
         },
@@ -119,7 +123,7 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "SERIAL3",
+                "Type": "SERIAL4",
                 "Protocol": "AUTO"
             },
             "Notes": ""
@@ -185,5 +189,5 @@
             "Notes": ""
         }
     },
-    "Program version": "2.11.0"
+    "Program version": "2.11.1"
 }

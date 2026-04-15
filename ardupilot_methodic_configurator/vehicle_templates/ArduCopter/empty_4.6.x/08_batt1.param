@@ -11,5 +11,5 @@ BATT_LOW_MAH,0
 BATT_LOW_VOLT,50.4
 BATT_MONITOR,0  # Selected in component editor window
 BATT_VOLT_MULT,0
-MOT_BAT_VOLT_MAX,0  # Scale the PIDs up when battery voltage is below this threshold
-MOT_BAT_VOLT_MIN,0  # Scale the PIDs up when battery voltage is above this threshold
+MOT_BAT_VOLT_MAX,58.8  # Scale the PIDs up when battery voltage is below this threshold
+MOT_BAT_VOLT_MIN,44.8  # Scale the PIDs up when battery voltage is above this threshold

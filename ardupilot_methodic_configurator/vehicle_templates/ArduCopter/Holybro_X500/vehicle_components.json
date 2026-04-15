@@ -77,9 +77,13 @@
                 "Type": "",
                 "Version": ""
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": ""
         },
@@ -185,5 +189,5 @@
             "Notes": "100mW at 433MHz, 13.6g without antenna + \n7.4g for 433MHz antenna"
         }
     },
-    "Program version": "2.11.0"
+    "Program version": "2.11.1"
 }

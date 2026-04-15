@@ -6,4 +6,5 @@ GPS_POS1_X,0
 GPS_POS1_Y,0
 GPS_POS1_Z,0
 GPS_TYPE,9
+GPS1_TYPE,9  # Defined in component editor
 SERIAL3_PROTOCOL,5

@@ -60,7 +60,7 @@
                 "Volt per cell arm": 3.925,
                 "Volt per cell low": 3.6,
                 "Volt per cell crit": 3.55,
-                "Volt per cell min": 3.55,
+                "Volt per cell min": 3.3,
                 "Number of cells": 4,
                 "Capacity mAh": 1800
             },
@@ -77,9 +77,13 @@
                 "Type": "BLHeli32",
                 "Version": "32.10"
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "DShot600"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "SERIAL5",
+                "Protocol": "ESC Telemetry"
             },
             "Notes": "Runs BDshot600 on Main out and uses SERIAL5 as extra connection for low rate telemetry"
         },
@@ -185,5 +189,5 @@
             "Notes": "A cheap WiFi alternative to the more commonly used 3DR and RFDesigns telemetry modems"
         }
     },
-    "Program version": "2.11.0"
+    "Program version": "2.11.1"
 }

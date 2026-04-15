@@ -60,8 +60,8 @@
                 "Volt per cell arm": 3.925,
                 "Volt per cell low": 3.6,
                 "Volt per cell crit": 3.55,
-                "Volt per cell min": 3.55,
-                "Number of cells": 4,
+                "Volt per cell min": 3.2,
+                "Number of cells": 3,
                 "Capacity mAh": 1800
             },
             "Notes": "A Simulated battery"
@@ -77,9 +77,13 @@
                 "Type": "-",
                 "Version": "-"
             },
-            "FC Connection": {
+            "FC->ESC Connection": {
                 "Type": "Main Out",
                 "Protocol": "Normal"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "None",
+                "Protocol": "None"
             },
             "Notes": ""
         },
@@ -185,6 +189,6 @@
             "Notes": ""
         }
     },
-    "Program version": "2.11.0",
+    "Program version": "2.11.1",
     "Configuration template": "4.5.x-params"
 }
