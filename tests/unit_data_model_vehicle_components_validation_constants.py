@@ -18,10 +18,10 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     BATTERY_CELL_VOLTAGE_PATHS,
     BATTERY_CELL_VOLTAGE_TYPES,
     CAN_PORTS,
+    ESC_CONNECTION_DICT,
     FC_CONNECTION_TYPE_PATHS,
     GNSS_RECEIVER_CONNECTION,
     I2C_PORTS,
-    MOT_PWM_TYPE_DICT,
     OTHER_PORTS,
     PWM_IN_PORTS,
     PWM_OUT_PORTS,
@@ -265,27 +265,27 @@ class TestValidationConstants:
             assert key in GNSS_RECEIVER_CONNECTION
             assert GNSS_RECEIVER_CONNECTION[key]["protocol"] == protocol
 
-    def test_mot_pwm_type_dict_structure(self) -> None:
-        """Test MOT_PWM_TYPE_DICT structure and data types."""
+    def test_esc_connection_dict_structure(self) -> None:
+        """Test ESC_CONNECTION_DICT structure and data types (replaces deleted MOT_PWM_TYPE_DICT)."""
         # Should be a dict of vehicle-type sub-dicts
-        assert isinstance(MOT_PWM_TYPE_DICT, dict)
-        assert len(MOT_PWM_TYPE_DICT) > 0
+        assert isinstance(ESC_CONNECTION_DICT, dict)
+        assert len(ESC_CONNECTION_DICT) > 0
 
         # Top-level keys are vehicle type strings (e.g. "ArduCopter", "Rover")
-        for vtype, sub_dict in MOT_PWM_TYPE_DICT.items():
+        for vtype, sub_dict in ESC_CONNECTION_DICT.items():
             assert isinstance(vtype, str), f"Vehicle type key '{vtype}' is not a string"
             assert isinstance(sub_dict, dict), f"Sub-dict for '{vtype}' is not a dict"
 
-            # Inner keys should be integer strings representing PWM type numbers
+            # Inner keys should be integer strings representing protocol numbers
             for key in sub_dict:
                 assert isinstance(key, str)
                 try:
                     int(key)
                 except ValueError:
-                    pytest.fail(f"Key '{key}' in MOT_PWM_TYPE_DICT['{vtype}'] is not a valid integer string")
+                    pytest.fail(f"Key '{key}' in ESC_CONNECTION_DICT['{vtype}'] is not a valid integer string")
 
             # Values should be dicts with specific structure
-            required_fields = {"type", "protocol", "is_dshot"}
+            required_fields = {"type", "protocol", "ESC_to_FC"}
             for key, value in sub_dict.items():
                 assert isinstance(value, dict), f"Value for key '{key}' in '{vtype}' is not a dict"
                 assert set(value.keys()) == required_fields, f"Value for key '{key}' in '{vtype}' has incorrect fields"
@@ -293,21 +293,14 @@ class TestValidationConstants:
                 # Check field types
                 assert isinstance(value["type"], tuple), f"'type' field for key '{key}' in '{vtype}' is not a tuple"
                 assert isinstance(value["protocol"], str), f"'protocol' field for key '{key}' in '{vtype}' is not a string"
-                assert isinstance(value["is_dshot"], bool), f"'is_dshot' field for key '{key}' in '{vtype}' is not a boolean"
-
-                # Type should reference PWM output ports
-                assert value["type"] == PWM_OUT_PORTS, f"'type' for key '{key}' in '{vtype}' does not reference PWM_OUT_PORTS"
+                assert isinstance(value["ESC_to_FC"], dict), f"'ESC_to_FC' field for key '{key}' in '{vtype}' is not a dict"
 
         # Verify expected PWM types exist in the ArduCopter sub-dict
-        expected_pwm_types = {
-            "0": {"protocol": "Normal", "is_dshot": False},
-            "6": {"protocol": "DShot600", "is_dshot": True},
-        }
-        copter_sub = MOT_PWM_TYPE_DICT["ArduCopter"]
-        for key, expected_data in expected_pwm_types.items():
-            assert key in copter_sub
-            assert copter_sub[key]["protocol"] == expected_data["protocol"]
-            assert copter_sub[key]["is_dshot"] == expected_data["is_dshot"]
+        copter_sub = ESC_CONNECTION_DICT["ArduCopter"]
+        assert "0" in copter_sub
+        assert copter_sub["0"]["protocol"] == "Normal"
+        assert "6" in copter_sub
+        assert copter_sub["6"]["protocol"] == "DShot600"
 
     def test_rc_protocols_dict_structure(self) -> None:
         """Test RC_PROTOCOLS_DICT structure and data types."""
@@ -425,11 +418,11 @@ class TestValidationConstants:
             gps_num = int(key)
             assert 0 <= gps_num <= 50, f"GPS type number {gps_num} is out of expected range"
 
-        # Motor PWM type numbers should be reasonable (typically 0-10)
-        for sub_dict in MOT_PWM_TYPE_DICT.values():
+        # Motor PWM type numbers should be reasonable (typically -1 to 200)
+        for sub_dict in ESC_CONNECTION_DICT.values():
             for key in sub_dict:
                 pwm_num = int(key)
-                assert 0 <= pwm_num <= 20, f"Motor PWM type number {pwm_num} is out of expected range"
+                assert -1 <= pwm_num <= 200, f"ESC connection key {pwm_num} is out of expected range"
 
         # RC protocol numbers should be reasonable bit positions (typically 0-15)
         for key in RC_PROTOCOLS_DICT:
@@ -451,14 +444,14 @@ class TestValidationConstants:
                 assert isinstance(protocol_name, str), f"Protocol name for key '{key}' in {dict_name} is not a string"
                 assert len(protocol_name.strip()) > 0, f"Protocol name for key '{key}' in {dict_name} is empty or whitespace"
 
-        for vtype, sub_dict in MOT_PWM_TYPE_DICT.items():
+        for vtype, sub_dict in ESC_CONNECTION_DICT.items():
             for key, value in sub_dict.items():
                 protocol_name = value["protocol"]
                 assert isinstance(protocol_name, str), (
-                    f"Protocol name for key '{key}' in MOT_PWM_TYPE_DICT['{vtype}'] is not a string"
+                    f"Protocol name for key '{key}' in ESC_CONNECTION_DICT['{vtype}'] is not a string"
                 )
                 assert len(protocol_name.strip()) > 0, (
-                    f"Protocol name for key '{key}' in MOT_PWM_TYPE_DICT['{vtype}'] is empty"
+                    f"Protocol name for key '{key}' in ESC_CONNECTION_DICT['{vtype}'] is empty"
                 )
 
     def test_no_protocol_duplicates_within_dict(self) -> None:
@@ -484,14 +477,14 @@ class TestValidationConstants:
                 f"Too many duplicate protocol names in {dict_name}: {len(unique_names)}/{len(protocol_names)} unique"
             )
 
-        # Check uniqueness within each vehicle-type sub-dict of MOT_PWM_TYPE_DICT
-        for vtype, sub_dict in MOT_PWM_TYPE_DICT.items():
+        # Check uniqueness within each vehicle-type sub-dict of ESC_CONNECTION_DICT
+        for vtype, sub_dict in ESC_CONNECTION_DICT.items():
             protocol_names = [value["protocol"] for value in sub_dict.values()]
             unique_names = set(protocol_names)
-            assert len(unique_names) > 0, f"No protocols found in MOT_PWM_TYPE_DICT['{vtype}']"
+            assert len(unique_names) > 0, f"No protocols found in ESC_CONNECTION_DICT['{vtype}']"
             uniqueness_ratio = len(unique_names) / len(protocol_names)
             assert uniqueness_ratio >= 0.8, (
-                f"Too many duplicate protocol names in MOT_PWM_TYPE_DICT['{vtype}']: "
+                f"Too many duplicate protocol names in ESC_CONNECTION_DICT['{vtype}']: "
                 f"{len(unique_names)}/{len(protocol_names)} unique"
             )
 

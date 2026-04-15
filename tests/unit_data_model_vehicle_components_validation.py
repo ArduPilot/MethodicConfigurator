@@ -22,12 +22,13 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     SERIAL_BUS_LABELS,
     SERIAL_DISPLAY_TO_KEY,
     ComponentDataModelValidation,
+    get_esc_connection_sub_dict,
 )
 
 # pylint: disable=protected-access
 
 
-class TestValidationInternals:
+class TestValidationInternals:  # pylint: disable=too-many-public-methods
     """Unit tests for ComponentDataModelValidation internal implementation."""
 
     @pytest.fixture
@@ -99,11 +100,18 @@ class TestValidationInternals:
         """Test _update_possible_choices_for_path with ESC CAN connection."""
         model = realistic_model
         model.init_possible_choices({"MOT_PWM_TYPE": {"values": {"0": "Normal", "6": "DShot600"}}})
+        expected_protocols = tuple(
+            dict.fromkeys(
+                str(entry["protocol"])
+                for entry in get_esc_connection_sub_dict("ArduCopter").values()
+                if isinstance(entry.get("type"), tuple) and "CAN1" in entry["type"]
+            )
+        )
 
         model._update_possible_choices_for_path(("ESC", "FC->ESC Connection", "Type"), "CAN1")
         protocol_choices = model._possible_choices.get(("ESC", "FC->ESC Connection", "Protocol"), ())
 
-        assert protocol_choices == ("DroneCAN",)
+        assert protocol_choices == expected_protocols
 
     def test_update_possible_choices_for_esc_pwm(self, realistic_model) -> None:
         """Test _update_possible_choices_for_path with ESC PWM connection."""  # pylint: disable=duplicate-code  # Common connection test pattern
@@ -115,6 +123,24 @@ class TestValidationInternals:
 
         assert len(protocol_choices) > 0
         # pylint: enable=duplicate-code
+
+    def test_esc_telemetry_type_can_uses_derived_protocols(self, realistic_model) -> None:
+        """Test CAN telemetry types use the protocols derived from the ESC connection table."""
+        model = realistic_model
+        model.init_possible_choices({})
+        expected_protocols = tuple(
+            dict.fromkeys(
+                str(entry["protocol"])
+                for entry in get_esc_connection_sub_dict("ArduCopter").values()
+                if isinstance(entry.get("type"), tuple) and "CAN1" in entry["type"]
+            )
+        )
+
+        protocol_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+
+        model._update_esc_telemetry_type_protocol_choices("CAN1", protocol_path)
+
+        assert model._possible_choices[protocol_path] == expected_protocols
 
     def test_update_possible_choices_for_gnss_none(self, realistic_model) -> None:
         """Test _update_possible_choices_for_path with GNSS Receiver None connection."""

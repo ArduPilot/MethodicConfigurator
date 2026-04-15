@@ -255,8 +255,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert result is False
 
     @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
-        lambda *_: {"6": {"protocol": "DShot600"}},
+        "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_esc_connection_sub_dict",
+        lambda *_: {"6": {"protocol": "DShot600", "ESC_to_FC": {}, "type": ("Main Out", "AIO")}},
     )
     def test_system_imports_esc_on_main_outputs(self, realistic_model) -> None:
         """
@@ -281,8 +281,10 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert esc_protocol == "DShot600"
 
     @patch(
-        "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
-        lambda *_: {"6": {"protocol": "DShot600"}},
+        "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_esc_connection_sub_dict",
+        lambda *_: {
+            "6": {"protocol": "DShot600", "ESC_to_FC": {("same_as_FC_to_ESC",): "BDShotOnly"}, "type": ("Main Out", "AIO")}
+        },
     )
     def test_system_imports_esc_aio_configuration(self, realistic_model) -> None:
         """
@@ -479,16 +481,18 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
     def test_system_falls_back_to_mot_pwm_dict_when_doc_empty(self, realistic_model) -> None:
         """
-        System falls back to MOT_PWM_TYPE_DICT when documentation is empty.
+        System falls back to ESC_CONNECTION_DICT when documentation is empty.
 
-        GIVEN: Empty documentation but MOT_PWM_TYPE_DICT available
+        GIVEN: Empty documentation but ESC_CONNECTION_DICT available
         WHEN: Importing ESC configuration
-        THEN: MOT_PWM_TYPE_DICT should be used as fallback
+        THEN: ESC_CONNECTION_DICT should be used as fallback
         AND: ESC protocol should be correctly identified
         """
         with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
-            return_value={"6": {"protocol": "DShot600"}},
+            "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_esc_connection_sub_dict",
+            return_value={
+                "6": {"protocol": "DShot600", "ESC_to_FC": {("same_as_FC_to_ESC",): "BDShotOnly"}, "type": ("Main Out", "AIO")}
+            },
         ):
             fc_parameters = {"MOT_PWM_TYPE": 6}
             doc: dict[str, Any] = {}  # Empty doc should trigger fallback
@@ -502,7 +506,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         """
         System handles ESC protocol not found in either documentation or dictionary.
 
-        GIVEN: MOT_PWM_TYPE not in documentation or MOT_PWM_TYPE_DICT
+        GIVEN: MOT_PWM_TYPE not in documentation or ESC_CONNECTION_DICT
         WHEN: Importing ESC configuration
         THEN: System should handle gracefully without setting protocol
         """
@@ -912,8 +916,10 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         THEN: System should handle gracefully without setting poles
         """
         with patch(
-            "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_mot_pwm_type_sub_dict",
-            lambda *_: {"6": {"protocol": "DShot600", "is_dshot": True}},
+            "ardupilot_methodic_configurator.data_model_vehicle_components_import.get_esc_connection_sub_dict",
+            lambda *_: {
+                "6": {"protocol": "DShot600", "type": ("Main Out", "AIO"), "ESC_to_FC": {("same_as_FC_to_ESC",): "BDShotOnly"}}
+            },
         ):
             fc_parameters = {
                 "MOT_PWM_TYPE": 6,
@@ -2080,12 +2086,12 @@ class TestComponentDataModelImportUncoveredBranches:
 
     def test_system_uses_mot_pwm_type_dict_fallback_when_doc_has_no_mot_pwm_type(self, basic_model) -> None:
         """
-        _set_esc_type_from_fc_parameters falls back to MOT_PWM_TYPE_DICT when doc lacks values.
+        _set_esc_type_from_fc_parameters falls back to ESC_CONNECTION_DICT when doc lacks values.
 
         GIVEN: doc has no MOT_PWM_TYPE entry (empty)
-        AND: fc_parameters has MOT_PWM_TYPE=0 (which IS in MOT_PWM_TYPE_DICT as 'Normal')
+        AND: fc_parameters has MOT_PWM_TYPE=0 (which IS in ESC_CONNECTION_DICT as 'Normal')
         WHEN: _set_esc_type_from_fc_parameters is called
-        THEN: Protocol is set to 'Normal' via the elif fallback (line 335 exercised)
+        THEN: Protocol is set to 'Normal' via the elif fallback
         """
         fc_parameters: dict[str, Any] = {"MOT_PWM_TYPE": 0}
         doc: dict[str, Any] = {}  # no MOT_PWM_TYPE in doc
@@ -2230,9 +2236,9 @@ class TestComponentDataModelImportUncoveredBranches:
         _set_esc_type_from_fc_parameters leaves ESC protocol unchanged when mot_pwm_type is unknown.
 
         GIVEN: doc is empty (no MOT_PWM_TYPE key)
-        AND: fc_parameters has MOT_PWM_TYPE=999 (not in MOT_PWM_TYPE_DICT either)
+        AND: fc_parameters has MOT_PWM_TYPE=999 (not in ESC_CONNECTION_DICT either)
         WHEN: _set_esc_type_from_fc_parameters is called
-        THEN: Neither the doc branch nor the dict fallback sets the protocol (line 335->exit exercised)
+        THEN: Neither the doc branch nor the dict fallback sets the protocol
         AND: The function completes without error
         """
         fc_parameters: dict[str, Any] = {"MOT_PWM_TYPE": 999}  # not in dict
