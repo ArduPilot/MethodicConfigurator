@@ -23,11 +23,14 @@ from test_frontend_tkinter_component_editor_base import (
     setup_common_editor_mocks,
 )
 
-from ardupilot_methodic_configurator.data_model_vehicle_components_validation import BATTERY_CELL_VOLTAGE_PATHS
+from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
+    BATTERY_CELL_VOLTAGE_PATHS,
+    get_connection_type_tuples_with_labels,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 
-# pylint: disable=protected-access,redefined-outer-name
+# pylint: disable=protected-access,redefined-outer-name,too-many-lines
 
 
 @pytest.fixture
@@ -55,6 +58,24 @@ def editor_with_mocked_root() -> ComponentEditorWindow:
         add_editor_helper_methods(editor)
 
         yield editor
+
+
+class _FakePairTupleCombobox(PairTupleCombobox):  # pylint: disable=too-many-ancestors
+    """Lightweight PairTupleCombobox-compatible test double."""
+
+    def __init__(self, selected_key: str) -> None:  # pylint: disable=super-init-not-called
+        self._selected_key = selected_key
+        self.list_keys: list[str] = [selected_key] if selected_key else []
+        self.configure = MagicMock()
+        self.update_idletasks = MagicMock()
+        self.set_entries_tuple = MagicMock(side_effect=self._set_entries_tuple)
+
+    def _set_entries_tuple(self, entries: list[tuple[str, str]], selection: str = "") -> None:
+        self.list_keys = [key for key, _ in entries]
+        self._selected_key = selection or ""
+
+    def get_selected_key(self) -> str:
+        return self._selected_key
 
 
 class TestComponentEditorWindow:  # pylint: disable=too-many-public-methods
@@ -831,3 +852,169 @@ class TestConnectionTypeProtocolChanges:
                 # If SBUS is valid for RCin/SBUS, no error should occur
                 mock_show_error.assert_not_called()
                 assert result == ""
+
+    def test_esc_fc_telemetry_type_widget_refreshes_to_same_serial_port_when_fc_esc_connection_changes_to_serial(
+        self, editor_with_mocked_root
+    ) -> None:
+        """
+        ESC->FC Telemetry Type widget is refreshed to the new serial port when FC->ESC Connection type changes.
+
+        GIVEN: ESC FC->ESC Connection Type combobox is changed to a SERIAL port (e.g. SERIAL1)
+        WHEN: update_component_protocol_combobox_entries is called with the new SERIAL port
+        THEN: The ESC->FC Telemetry Type combobox is updated to display only that same SERIAL port
+        AND: The displayed selection in the widget matches the SERIAL port that was chosen
+        """
+        editor = editor_with_mocked_root
+        serial_port = "SERIAL1"
+        fc_esc_type_path = ("ESC", "FC->ESC Connection", "Type")
+        fc_esc_proto_path = ("ESC", "FC->ESC Connection", "Protocol")
+        telem_type_path = ("ESC", "ESC->FC Telemetry", "Type")
+        telem_proto_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+
+        fc_esc_protocol = "FETtecOneWire"
+
+        # GIVEN: Data model cascade returns SERIAL1 as the only valid Telemetry Type option
+        # (what _update_esc_fc_connection_choices produces when FC->ESC is SERIAL)
+        def combobox_values_for_path(path) -> tuple:
+            return {
+                fc_esc_proto_path: (fc_esc_protocol,),
+                telem_type_path: (serial_port,),
+                telem_proto_path: ("None",),
+            }.get(path, ())
+
+        editor.data_model.get_combobox_values_for_path.side_effect = combobox_values_for_path
+        editor.data_model.get_component_value = MagicMock(
+            side_effect=lambda path: fc_esc_protocol if path == fc_esc_proto_path else serial_port
+        )
+
+        # GIVEN: PairTupleCombobox-compatible test doubles are registered for all three paths
+        fc_esc_proto_widget = _FakePairTupleCombobox(fc_esc_protocol)
+        telem_type_widget = _FakePairTupleCombobox(serial_port)
+        telem_proto_widget = _FakePairTupleCombobox("None")
+
+        editor.entry_widgets[fc_esc_proto_path] = fc_esc_proto_widget
+        editor.entry_widgets[telem_type_path] = telem_type_widget
+        editor.entry_widgets[telem_proto_path] = telem_proto_widget
+
+        # WHEN: User changes FC->ESC Connection Type to SERIAL1
+        editor.update_component_protocol_combobox_entries(fc_esc_type_path, serial_port)
+
+        # THEN: ESC->FC Telemetry Type widget is refreshed with only the matching SERIAL port
+        telem_type_widget.set_entries_tuple.assert_called_once_with(
+            get_connection_type_tuples_with_labels((serial_port,)), serial_port
+        )
+
+    def test_esc_fc_telemetry_comboboxes_are_disabled_when_fc_esc_connection_type_is_serial(
+        self, editor_with_mocked_root
+    ) -> None:
+        """
+        ESC->FC Telemetry comboboxes are greyed-out (disabled) when FC->ESC Connection type is SERIAL.
+
+        GIVEN: ESC FC->ESC Connection Type is changed to a SERIAL port
+        WHEN: update_component_protocol_combobox_entries is called
+        THEN: Both ESC->FC Telemetry Type and Protocol comboboxes are set to state="disabled"
+        AND: The user cannot independently change the Telemetry port (it is locked to the FC->ESC port)
+        """
+        editor = editor_with_mocked_root
+        serial_port = "SERIAL2"
+        fc_esc_type_path = ("ESC", "FC->ESC Connection", "Type")
+        fc_esc_proto_path = ("ESC", "FC->ESC Connection", "Protocol")
+        telem_type_path = ("ESC", "ESC->FC Telemetry", "Type")
+        telem_proto_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+
+        fc_esc_protocol = "FETtecOneWire"
+
+        # GIVEN: Data model cascade returns the SERIAL port for both Telemetry fields
+        def combobox_values_for_path(path) -> tuple:
+            return {
+                fc_esc_proto_path: (fc_esc_protocol,),
+                telem_type_path: (serial_port,),
+                telem_proto_path: ("None",),
+            }.get(path, ())
+
+        editor.data_model.get_combobox_values_for_path.side_effect = combobox_values_for_path
+        editor.data_model.get_component_value = MagicMock(
+            side_effect=lambda path: fc_esc_protocol if path == fc_esc_proto_path else serial_port
+        )
+
+        # GIVEN: PairTupleCombobox-compatible test doubles registered for the telemetry paths
+        fc_esc_proto_widget = _FakePairTupleCombobox(fc_esc_protocol)
+        telem_type_widget = _FakePairTupleCombobox(serial_port)
+        telem_proto_widget = _FakePairTupleCombobox("None")
+
+        editor.entry_widgets[fc_esc_proto_path] = fc_esc_proto_widget
+        editor.entry_widgets[telem_type_path] = telem_type_widget
+        editor.entry_widgets[telem_proto_path] = telem_proto_widget
+
+        # WHEN: User changes FC->ESC Connection Type to a SERIAL port
+        editor.update_component_protocol_combobox_entries(fc_esc_type_path, serial_port)
+
+        # THEN: Both ESC->FC Telemetry comboboxes are disabled (user cannot change them independently)
+        telem_type_widget.configure.assert_any_call(state="disabled")
+        telem_proto_widget.configure.assert_any_call(state="disabled")
+
+    def test_esc_fc_telemetry_protocol_mirrors_fc_esc_protocol_when_type_changes_to_serial(
+        self, editor_with_mocked_root
+    ) -> None:
+        """
+        ESC->FC Telemetry Protocol is mirrored to FC->ESC Protocol when FC->ESC Type changes to SERIAL.
+
+        GIVEN: FC->ESC Protocol is already set to "FETtecOneWire"
+        WHEN: FC->ESC Connection Type is changed to SERIAL1
+        THEN: ESC->FC Telemetry Protocol widget is updated to display "FETtecOneWire" (not "None")
+        AND: The widget selection is set to the same protocol, not left stale
+        """
+        editor = editor_with_mocked_root
+        serial_port = "SERIAL1"
+        fc_esc_protocol = "FETtecOneWire"
+        fc_esc_type_path = ("ESC", "FC->ESC Connection", "Type")
+        fc_esc_proto_path = ("ESC", "FC->ESC Connection", "Protocol")
+        telem_type_path = ("ESC", "ESC->FC Telemetry", "Type")
+        telem_proto_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+
+        # GIVEN: Data model returns the correct cascaded values after the Type change
+        def combobox_values_for_path(path) -> tuple:
+            return {
+                fc_esc_proto_path: (fc_esc_protocol,),
+                telem_type_path: (serial_port,),
+                telem_proto_path: ("None", fc_esc_protocol),
+            }.get(path, ())
+
+        editor.data_model.get_combobox_values_for_path.side_effect = combobox_values_for_path
+        # _on_esc_fc_protocol_changed reads the FC->ESC Connection Type and Protocol from data model
+        editor.data_model.get_component_value = MagicMock(
+            side_effect=lambda path: fc_esc_protocol if path == fc_esc_proto_path else serial_port
+        )
+
+        fc_esc_proto_widget = _FakePairTupleCombobox(fc_esc_protocol)
+        telem_type_widget = _FakePairTupleCombobox(serial_port)
+
+        # ESC->FC Protocol was previously "None" — this is the stale value the bug leaves
+        telem_proto_widget = _FakePairTupleCombobox("None")
+
+        editor.entry_widgets[fc_esc_proto_path] = fc_esc_proto_widget
+        editor.entry_widgets[telem_type_path] = telem_type_widget
+        editor.entry_widgets[telem_proto_path] = telem_proto_widget
+
+        # WHEN: User changes FC->ESC Connection Type to SERIAL1
+        editor.update_component_protocol_combobox_entries(fc_esc_type_path, serial_port)
+
+        # THEN: ESC->FC Telemetry Protocol widget is set to the same protocol as FC->ESC
+        telem_proto_widget.set_entries_tuple.assert_called_with([(fc_esc_protocol, fc_esc_protocol)], fc_esc_protocol)
+
+    def test_update_protocol_combobox_entries_autoselects_only_option_when_selection_is_empty(
+        self, editor_with_mocked_root
+    ) -> None:
+        """Single-option protocol comboboxes auto-select their sole value even when no current selection exists."""
+        editor = editor_with_mocked_root
+        protocol_path = ("ESC", "ESC->FC Telemetry", "Protocol")
+        protocol_widget = _FakePairTupleCombobox("")
+
+        editor.entry_widgets[protocol_path] = protocol_widget
+
+        result = editor.update_protocol_combobox_entries(("DroneCAN",), protocol_path)
+
+        assert result == ""
+        editor.data_model.set_component_value.assert_any_call(protocol_path, "DroneCAN")
+        assert protocol_widget.list_keys == ["DroneCAN"]
+        assert protocol_widget.get_selected_key() == "DroneCAN"
