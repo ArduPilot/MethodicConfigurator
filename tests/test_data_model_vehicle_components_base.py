@@ -1668,7 +1668,7 @@ class TestComponentReordering:
             "ESC": {
                 "Product": {"Manufacturer": "Mamba"},
                 "FC->ESC Connection": {"Type": "Main Out", "Protocol": "DShot600"},
-                "ESC->FC Telemetry": {"Type": "Main Out", "Protocol": "BDShot"},
+                "ESC->FC Telemetry": {"Type": "Main Out", "Protocol": "BDShotOnly"},
                 "Notes": "esc notes",
             },
             "Motors": {

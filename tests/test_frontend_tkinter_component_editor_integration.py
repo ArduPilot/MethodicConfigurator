@@ -293,6 +293,7 @@ class TestComponentEditorWithMinimalMocking:
             patch.object(ComponentEditorWindow, "_create_save_frame") as mock_save_frame,
             patch("tkinter.PhotoImage"),
             patch("PIL.ImageTk.PhotoImage"),
+            patch("tkinter.Tk", return_value=root),
         ):
             # Create the editor with real filesystem and data model
             editor = ComponentEditorWindow("1.0.0", filesystem, {})
@@ -344,6 +345,7 @@ class TestComponentEditorWithMinimalMocking:
             patch.object(ComponentEditorWindow, "_initialize_ui"),
             patch("tkinter.PhotoImage"),
             patch("PIL.ImageTk.PhotoImage"),
+            patch("tkinter.Tk", return_value=root),
         ):
             # Initialize with existing data_model using dependency injection
             editor = ComponentEditorWindow("1.0.0", filesystem, {})
