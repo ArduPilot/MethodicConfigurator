@@ -797,8 +797,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         # Check if there is a file following last_uploaded_filename
         start_file_index = last_uploaded_index + 1
         if start_file_index >= len(files):
-            # Handle the case where last_uploaded_filename is the last file in the list
+            # Last uploaded file is the last file in the list. Respect the existing
+            # tcal_available branching (files[2] already skips 00_default+01_tcal
+            # when tcal is not available) and only adjust when start_file is the
+            # read-only 00_default.param snapshot -- see #1507.
             logging_warning(_("Last uploaded file is the last file in the list. Starting from the beginning."))
+            if start_file == "00_default.param":
+                start_file = next((c for c in files if c != "00_default.param"), "")
+                if not start_file:
+                    msg = _("Cannot restart configuration: 00_default.param is the only available file and is not editable.")
+                    raise ValueError(msg)
             return start_file
         return files[start_file_index]
 

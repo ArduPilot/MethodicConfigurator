@@ -579,6 +579,49 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         result = lfs.get_start_file(-1, tcal_available=False)
         assert result == "03_file.param"
 
+    def test_get_start_file_after_final_file_skips_default(self) -> None:
+        """
+        After the sequence completes, restart skips 00_default.param (see #1507).
+
+        The configuration flow records the last uploaded filename on every step.
+        When the user reaches the final step (``53_everyday_use.param``) and
+        relaunches the program, ``get_start_file`` should not present the
+        read-only ``00_default.param`` snapshot -- that is not an editable
+        configuration step.
+        """
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.file_parameters = {
+            "00_default.param": {},
+            "01_tcal.param": {},
+            "02_first_real.param": {},
+            "53_everyday_use.param": {},
+        }
+
+        # tcal available -> start_file = files[0] = 00_default.param, so we must
+        # move off it to the first non-default file.
+        with patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value="53_everyday_use.param"):
+            result = lfs.get_start_file(-1, tcal_available=True)
+        assert result != "00_default.param"
+        assert result == "01_tcal.param"
+
+        # tcal NOT available -> start_file is already files[2] (first non-tcal
+        # editable step), which is the correct wraparound target. The fix must
+        # not clobber that by walking forward and landing on 01_tcal.param.
+        with patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value="53_everyday_use.param"):
+            result = lfs.get_start_file(-1, tcal_available=False)
+        assert result == "02_first_real.param"
+
+        # When 00_default.param is the only remaining entry, raise rather than
+        # silently hand the user a non-editable file to edit.
+        lfs.file_parameters = {"00_default.param": {}}
+        with (
+            patch.object(lfs, "_LocalFilesystem__read_last_uploaded_filename", return_value="00_default.param"),
+            pytest.raises(ValueError, match=r"00_default\.param"),
+        ):
+            lfs.get_start_file(-1, tcal_available=True)
+
     def test_get_eval_variables(self) -> None:
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
