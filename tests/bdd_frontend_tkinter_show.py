@@ -795,6 +795,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
                 return_value=MonitorBounds(0, 0, 1920, 1080),
             ),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text")
             tooltip.create_show()
 
@@ -882,12 +883,12 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
-            tooltip.hide_timer = "timer_id"
+            tooltip.timers["hide"] = "timer_id"
 
             tooltip._cancel_hide()
 
             mock_widget.after_cancel.assert_called_once_with("timer_id")
-            assert tooltip.hide_timer is None
+            assert "hide" not in tooltip.timers
 
     def test_tooltip_destroy_hide_on_macos(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
         """
@@ -939,6 +940,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
                 return_value=MonitorBounds(0, 0, 1920, 1080),
             ),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             Tooltip._active_tooltip = previous_tooltip
             tooltip = Tooltip(mock_widget, "Test text")
             tooltip.create_show()
@@ -1024,6 +1026,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
                 return_value=MonitorBounds(0, 0, 1920, 1080),
             ),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text")
             tooltip.create_show()
 
@@ -1110,6 +1113,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
                 return_value=MonitorBounds(0, 0, 1920, 1080),
             ),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             mock_toplevel.tk.call = MagicMock()
             mock_toplevel._w = ".tooltip"
 
@@ -1142,6 +1146,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
                 return_value=MonitorBounds(0, 0, 1920, 1080),
             ),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             # Configure mock to raise AttributeError during tk.call
             mock_toplevel.tk.call.side_effect = AttributeError("tk.call failed")
             mock_toplevel._w = ".tooltip"
