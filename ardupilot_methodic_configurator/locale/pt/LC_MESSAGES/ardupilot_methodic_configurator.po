@@ -4721,15 +4721,15 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:607
 msgid "No recommended voltage for %s %s"
-msgstr ""
+msgstr "Não existe uma voltagem recomendada para %s %s"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:613
 msgid "Voltage value for %s is zero or invalid: %s"
-msgstr ""
+msgstr "O valor de voltagem para %s é zero ou inválido: %s"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:619
 msgid "Estimated cell count %d from %s seems unreasonable"
-msgstr ""
+msgstr "A contagem estimada de células %d a partir de %s parece pouco razoável"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:668
 msgid ""
@@ -7529,7 +7529,7 @@ msgstr "ESC"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:28
 msgid "ESC->FC Telemetry"
-msgstr ""
+msgstr "Telemetria ESC->FC"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:29
 msgid "FC Connection"
@@ -7537,7 +7537,7 @@ msgstr "Conexão FC"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:30
 msgid "FC->ESC Connection"
-msgstr ""
+msgstr "Ligação FC->ESC"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:31
 msgid "Firmware"
@@ -7722,7 +7722,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/vehicle_components.py:85
 msgid "Data path from flight controller to ESC"
-msgstr ""
+msgstr "Caminho de dados do controlador de voo para o ESC"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:86
 msgid "Details about how a component connects to the flight controller"
@@ -7730,11 +7730,11 @@ msgstr "Detalhes sobre como um componente se liga ao controlador de voo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:87
 msgid "ESC firmware information"
-msgstr ""
+msgstr "Informação do firmware do ESC"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:88
 msgid "Electronic Speed Controller component with (optional) telemetry"
-msgstr ""
+msgstr "Componente Controlador Electrónico de Velocidade com telemetria (opcional)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:89
 msgid "Electronic Speed Controller for the motors"
@@ -7894,7 +7894,7 @@ msgstr "Especificações técnicas da estrutura do veículo"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:126
 msgid "Telemetry path from ESC to flight controller (if applicable)"
-msgstr ""
+msgstr "Caminho de telemetria do ESC para o controlador de voo (se aplicável)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:127
 msgid "Transmitter part of the remote control system"
