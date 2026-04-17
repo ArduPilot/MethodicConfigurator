@@ -302,7 +302,7 @@ msgstr "最后上传的文件是列表中的最后一个文件。从头开始。
 msgid ""
 "Cannot restart configuration: 00_default.param is the only available file "
 "and is not editable."
-msgstr ""
+msgstr "无法重新启动配置：00_default.param 是唯一可用的文件，无法编辑。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:1084
 msgid "The type of the vehicle. Default is ArduCopter"

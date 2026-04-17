@@ -321,7 +321,7 @@ msgstr ""
 msgid ""
 "Cannot restart configuration: 00_default.param is the only available file "
 "and is not editable."
-msgstr ""
+msgstr "構成を再起動できません: 00_default.paramは利用可能な唯一のファイルであり、編集できません。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:1084
 msgid "The type of the vehicle. Default is ArduCopter"
