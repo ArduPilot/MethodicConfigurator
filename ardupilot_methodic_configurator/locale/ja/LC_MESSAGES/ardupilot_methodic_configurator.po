@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-04-16 04:36+0000\n"
+"POT-Creation-Date: 2026-04-17 04:25+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -310,18 +310,24 @@ msgstr "最後にアップロードされたファイルが見つかりません
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "最後にアップロードされたファイルがファイルリストに見つかりません。%s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:801
+#: ardupilot_methodic_configurator/backend_filesystem.py:804
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr ""
 "最後にアップロードされたファイルがリストの最後のファイルです。最初から開始し"
 "ます。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1076
+#: ardupilot_methodic_configurator/backend_filesystem.py:808
+msgid ""
+"Cannot restart configuration: 00_default.param is the only available file "
+"and is not editable."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem.py:1084
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "機体の種類。デフォルトはArduCopterです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1082
+#: ardupilot_methodic_configurator/backend_filesystem.py:1090
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -329,7 +335,7 @@ msgstr ""
 "機体固有の中間パラメータファイルを含むディレクトリ。デフォルトは現在の作業"
 "ディレクトリです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1090
+#: ardupilot_methodic_configurator/backend_filesystem.py:1098
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -340,7 +346,7 @@ msgstr ""
 "デフォルトでは、フライトコントローラに書き込んだ最後のファイルの次のファイル"
 "から開始します。ファイルが存在しない場合は、最初のファイルから開始します。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1099
+#: ardupilot_methodic_configurator/backend_filesystem.py:1107
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -348,7 +354,7 @@ msgstr ""
 "テンプレートファイルを直接開いて編集することを許可します。これは何をしている"
 "かを理解しているソフトウェア開発者のみ対象です。デフォルトは%(default)sです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1108
+#: ardupilot_methodic_configurator/backend_filesystem.py:1116
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
