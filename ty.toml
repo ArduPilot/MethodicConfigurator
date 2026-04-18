@@ -4,5 +4,6 @@ unresolved-attribute = "ignore"
 invalid-assignment = "ignore"
 unused-type-ignore-comment = "ignore"
 possibly-missing-attribute = "ignore"
+# These are mostly ty false positives for now. Revisit this at a later date once ty fixes this upstream.
 too-many-positional-arguments = "ignore"
 invalid-return-type = "ignore"
