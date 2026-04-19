@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from contextlib import suppress
 
 # from logging import debug as logging_debug
 from logging import basicConfig as logging_basicConfig
@@ -329,6 +330,22 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             entry.delete(0, tk.END)
             entry.insert(0, value)
             entry.config(state="disabled")
+
+    @staticmethod
+    def set_combobox_entries_preserving_width(
+        combobox: PairTupleCombobox, entries: list[tuple[str, str]], selection: Optional[str]
+    ) -> None:
+        """Set combobox entries while preserving the currently configured widget width."""
+        width: Optional[int] = None
+        try:
+            width = int(combobox.cget("width"))
+        except (AttributeError, TypeError, ValueError, tk.TclError):
+            # Test doubles may not have a live Tk backend; skip width preservation in that case.
+            width = None
+        combobox.set_entries_tuple(entries, selection)
+        if width is not None:
+            with suppress(AttributeError, tk.TclError):
+                combobox.config(width=width)
 
     def populate_frames(self) -> None:
         """Populates the ScrollFrame with widgets based on the JSON data."""

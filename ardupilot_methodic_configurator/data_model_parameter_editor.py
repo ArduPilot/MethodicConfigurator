@@ -1024,7 +1024,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # If reset happened, fc_parameters cache was cleared during disconnect/reconnect
             # Re-download parameters now so _upload_parameters_to_fc has valid cache for comparison
             if reset_happened:
-                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)
+                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)  # type: ignore[misc]
 
             # Upload remaining parameters (excluding those already uploaded in reset workflow)
             remaining_params = {k: v for k, v in selected_params.items() if k not in already_uploaded_params}
@@ -1039,7 +1039,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if self._at_least_one_changed:
                 # Re-download all parameters to validate
                 # Note: Passing the callback directly, not the factory, since we already got it
-                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)
+                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)  # type: ignore[misc]
                 param_upload_error = self._validate_uploaded_parameters(selected_params)
 
                 if param_upload_error:
