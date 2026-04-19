@@ -425,6 +425,22 @@ class TestConnectionSelectionWindow:
             window.close_and_quit()
         mock_widgets.stop_periodic_refresh.assert_called_once()
 
+    def test_close_and_quit_disconnects_flight_controller(
+        self, connection_window: tuple[ConnectionSelectionWindow, MagicMock], mock_fc: MagicMock
+    ) -> None:
+        """
+        The flight controller connection is released when the user closes the connection window.
+
+        GIVEN: The connection window is open and bound to a flight controller instance
+        WHEN: The user closes the window via the window manager (X button)
+        THEN: disconnect should be called on the flight controller before the process exits
+        AND: The underlying serial port is not left locked for the next launch
+        """
+        window, _ = connection_window
+        with patch(f"{_MOD}.sys_exit"):
+            window.close_and_quit()
+        mock_fc.disconnect.assert_called_once()
+
     def test_fc_autoconnect(self, connection_window: tuple[ConnectionSelectionWindow, MagicMock]) -> None:
         """Test fc_autoconnect method calls reconnect."""
         window, _ = connection_window

@@ -319,6 +319,7 @@ class ConnectionSelectionWindow(BaseWindow):
         self.root.geometry(self.calculate_scaled_geometry(520, 380))
         self.center_window_on_screen(self.root)
         self.default_baudrate = default_baudrate
+        self.flight_controller = flight_controller
 
         # Explain why we are here
         if flight_controller.comport is None:
@@ -413,6 +414,8 @@ class ConnectionSelectionWindow(BaseWindow):
         # Stop periodic refresh when window is closing
         if hasattr(self, "connection_selection_widgets"):
             self.connection_selection_widgets.stop_periodic_refresh()
+        # Release the flight controller connection so the serial port is not left locked
+        self.flight_controller.disconnect()
         sys_exit(0)
 
     def fc_autoconnect(self) -> None:
