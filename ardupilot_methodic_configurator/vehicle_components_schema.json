@@ -199,6 +199,10 @@
                 "TOW max Kg": {
                   "type": "number",
                   "description": "Maximum take-off weight in kilograms"
+                },
+                "Class": {
+                  "type": "string",
+                  "description": "Frame class/category (e.g., Quad, Hexa, Octa, etc.)"
                 }
               },
               "description": "Technical specifications of the vehicle frame"
