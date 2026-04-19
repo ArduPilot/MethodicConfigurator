@@ -13,7 +13,7 @@ import functools
 import operator
 from logging import error as logging_error
 from types import MappingProxyType
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
@@ -24,6 +24,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import (
     ComponentPath,
     ComponentValue,
 )
+
+# pylint: disable=too-many-lines
 
 # Port definitions
 ANALOG_PORTS: tuple[str, ...] = ("Analog",)
@@ -147,8 +149,16 @@ SERIAL_PROTOCOLS_DICT: dict[str, dict[str, Any]] = {
     "49": {"type": SERIAL_PORTS, "protocol": "i-BUS Telemetry", "component": None},
 }
 
-# ESC protocol constants
-ESC_TELEMETRY_PROTOCOLS = {"ESC Telemetry", "Scripting"}  # Serial telemetry-only protocols
+# Serial telemetry-only protocols
+ESC_TELEMETRY_ONLY_PROTOCOLS: tuple[str, ...] = ("ESC Telemetry", "Scripting")
+
+# Protocols where FC->ESC and ESC->FC Telemetry share the same SERIAL port.
+# The ESC->FC Telemetry protocol is implicitly determined by (and must match) the FC->ESC Connection protocol.
+ESC_SERIAL_SAME_PORT_PROTOCOLS: tuple[str, ...] = tuple(
+    str(v["protocol"])
+    for v in SERIAL_PROTOCOLS_DICT.values()
+    if v.get("component") == "ESC" and v["protocol"] not in ESC_TELEMETRY_ONLY_PROTOCOLS
+)
 
 BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "0": {"type": ("None",), "protocol": "Disabled"},
@@ -208,50 +218,82 @@ GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "26": {"type": SERIAL_PORTS, "protocol": "Septentrio-DualAntenna(SBF)"},
 }
 
-MOT_PWM_TYPE_DICT: dict[str, dict[str, dict[str, Union[tuple[str, ...], str, bool]]]] = {
+# Key: tuple of possible ESC->FC telemetry connection types, or a sentinel such as
+# ("same_as_FC_to_ESC",); value: telemetry protocol string for that connection choice.
+EscToFcTelemetryDict = dict[tuple[str, ...], str]
+ESC_TO_FC_TELEMETRY_NONE: EscToFcTelemetryDict = {("None",): "None"}
+ESC_TO_FC_TELEMETRY_SCRIPTING_ONLY: EscToFcTelemetryDict = {("None",): "None", SERIAL_PORTS: "Scripting"}
+ESC_TO_FC_TELEMETRY_SERIAL_ONLY: EscToFcTelemetryDict = {("None",): "None", SERIAL_PORTS: "ESC Telemetry"}
+ESC_TO_FC_TELEMETRY_DSHOT: EscToFcTelemetryDict = {
+    ("None",): "None",
+    ("same_as_FC_to_ESC",): "BDShotOnly",
+    SERIAL_PORTS: "ESC Telemetry",
+}
+ESC_TO_FC_TELEMETRY_SAME: EscToFcTelemetryDict = {("same_as_FC_to_ESC",): "same_as_FC_to_ESC"}
+
+# FC->ESC Connection types and protocols determine the possible ESC->FC Telemetry protocols,
+# with some variations by vehicle type.
+ESC_CONNECTION_DICT: dict[str, dict[str, dict[str, Union[tuple[str, ...], str, EscToFcTelemetryDict]]]] = {
     "ArduCopter": {
-        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "is_dshot": False},
-        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "is_dshot": True},
-        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "is_dshot": True},
-        "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "is_dshot": False},
-        "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "is_dshot": True},
-        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "is_dshot": True},
-        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
-        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
-        "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
-        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
+        "-1": {"type": ("None",), "protocol": "None", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SCRIPTING_ONLY},
+        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "100": {"type": SERIAL_PORTS, "protocol": "FETtecOneWire", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "101": {"type": SERIAL_PORTS, "protocol": "Torqeedo", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "102": {"type": SERIAL_PORTS, "protocol": "CoDevESC", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "200": {"type": CAN_PORTS, "protocol": "DroneCAN", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
     },
     "Heli": {
-        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "is_dshot": False},
-        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "is_dshot": True},
-        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "is_dshot": True},
-        "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "is_dshot": False},
-        "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "is_dshot": True},
-        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "is_dshot": True},
-        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
-        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
-        "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
-        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
+        "-1": {"type": ("None",), "protocol": "None", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SCRIPTING_ONLY},
+        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "100": {"type": SERIAL_PORTS, "protocol": "FETtecOneWire", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "101": {"type": SERIAL_PORTS, "protocol": "Torqeedo", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "102": {"type": SERIAL_PORTS, "protocol": "CoDevESC", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "200": {"type": CAN_PORTS, "protocol": "DroneCAN", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
     },
     "Rover": {
-        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "is_dshot": False},
-        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "is_dshot": True},
-        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "is_dshot": True},
-        "3": {"type": PWM_OUT_PORTS, "protocol": "BrushedWithRelay", "is_dshot": False},
-        "4": {"type": PWM_OUT_PORTS, "protocol": "BrushedBiPolar", "is_dshot": False},
-        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "is_dshot": True},
-        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "is_dshot": True},
-        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "is_dshot": True},
-        "8": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "is_dshot": True},
-        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "is_dshot": False},
-        "10": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "is_dshot": False},
+        "-1": {"type": ("None",), "protocol": "None", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SCRIPTING_ONLY},
+        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "3": {"type": PWM_OUT_PORTS, "protocol": "BrushedWithRelay", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "4": {"type": PWM_OUT_PORTS, "protocol": "BrushedBiPolar", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "8": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "10": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "100": {"type": SERIAL_PORTS, "protocol": "FETtecOneWire", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "101": {"type": SERIAL_PORTS, "protocol": "Torqeedo", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "102": {"type": SERIAL_PORTS, "protocol": "CoDevESC", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+        "200": {"type": CAN_PORTS, "protocol": "DroneCAN", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
     },
 }
 
 
-def get_mot_pwm_type_sub_dict(vehicle_type: str) -> dict[str, dict[str, Union[tuple[str, ...], str, bool]]]:
-    """Return the vehicle-type-specific entry sub-dict from MOT_PWM_TYPE_DICT."""
-    return MOT_PWM_TYPE_DICT.get(vehicle_type, MOT_PWM_TYPE_DICT["ArduCopter"])
+def get_esc_connection_sub_dict(
+    vehicle_type: str,
+) -> dict[str, dict[str, Union[tuple[str, ...], str, EscToFcTelemetryDict]]]:
+    """Return the vehicle-type-specific entry sub-dict from ESC_CONNECTION_DICT."""
+    return ESC_CONNECTION_DICT.get(vehicle_type, ESC_CONNECTION_DICT["ArduCopter"])
 
 
 # RC_PROTOCOLS is a bitmask parameter, so keys are actual bitmask values (2^bit_position)
@@ -275,23 +317,6 @@ RC_PROTOCOLS_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "16384": {"type": CAN_PORTS, "protocol": "DroneCAN"},  # Bit 14
     "32768": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "Ghost"},  # Bit 15
     "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
-}
-
-# ESC->FC telemetry connections
-ESC_TELEMETRY_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
-    "0": {"type": ("None",), "protocol": "None"},
-    # On DShot: FC->ESC is either Main Out or AIO; and ESC->FC Telemetry is serial
-    # On BDShot: FC->ESC is either Main Out or AIO; and ESC->FC Telemetry is also Main Out or AIO
-    #            but there is an optional backup serial telemetry channel
-    "1": {"type": SERIAL_PORTS, "protocol": "ESC Telemetry"},
-    # On BShot if the optional serial ESC->FC backup telemetry is unused, choose this
-    "2": {"type": PWM_OUT_PORTS, "protocol": "BDShot"},
-    # The same CAN connection is used for both FC->ESC and ESC->FC telemetry
-    "3": {"type": CAN_PORTS, "protocol": "DroneCAN"},
-    # The same serial connection is used for both FC->ESC and ESC->FC telemetry
-    "4": {"type": SERIAL_PORTS, "protocol": "FETtecOneWire"},
-    # On T-Motor/Hobbywing Datalink v2: FC->ESC is either Main Out or AIO; and serial telemetry is received via scripting
-    "5": {"type": SERIAL_PORTS, "protocol": "Scripting"},
 }
 
 
@@ -328,6 +353,64 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         # Update possible choices for protocol fields when connection type changes
         self._update_possible_choices_for_path(path, value)
 
+    def _get_current_esc_to_fc_dict(self) -> "EscToFcTelemetryDict":
+        """Return the ESC_to_FC dict for the currently selected FC->ESC Type + Protocol entry."""
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        fc_esc_conn_type = str(self.get_component_value(("ESC", "FC->ESC Connection", "Type")) or "")
+        fc_esc_protocol = str(self.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) or "")
+        for entry in get_esc_connection_sub_dict(fw_type).values():
+            if fc_esc_conn_type in entry.get("type", ()) and entry.get("protocol") == fc_esc_protocol:
+                return cast("EscToFcTelemetryDict", entry.get("ESC_to_FC", {}))
+        return {}
+
+    def get_valid_esc_telemetry_types(self) -> tuple[str, ...]:
+        """
+        Return valid ESC->FC Telemetry Type values for the current FC->ESC connection protocol.
+
+        Uses the ESC_CONNECTION_DICT directly (via _get_current_esc_to_fc_dict) so it does not
+        depend on _mot_pwm_types being populated from a doc file.  This makes it safe to call from
+        the GUI cascade code regardless of whether a parameter-definition file has been loaded.
+        """
+        esc_to_fc_dict = self._get_current_esc_to_fc_dict()
+        fc_esc_conn_type = str(self.get_component_value(("ESC", "FC->ESC Connection", "Type")) or "")
+        valid: list[str] = []
+        for port_key in esc_to_fc_dict:
+            if port_key == ("same_as_FC_to_ESC",):
+                if fc_esc_conn_type not in valid:
+                    valid.append(fc_esc_conn_type)
+            else:
+                for port in port_key:
+                    if port not in valid:
+                        valid.append(port)
+        return tuple(valid) if valid else ("None",)
+
+    def is_esc_telemetry_type_mirrored(self) -> bool:
+        """
+        Return True when the ESC->FC Telemetry Type combobox should be greyed-out.
+
+        True ONLY when the ESC_to_FC dict has EXACTLY ONE key: ("same_as_FC_to_ESC",).
+        This covers fully-mirrored entries like ESC_TO_FC_TELEMETRY_SAME (CAN/DroneCAN and
+        SERIAL same-port protocols FETtecOneWire, Torqeedo, CoDevESC).
+
+        False for entries with multiple type keys like ESC_TO_FC_TELEMETRY_DSHOT which has
+        ("None",), ("same_as_FC_to_ESC",), and SERIAL_PORTS — these are NOT fully mirrored.
+        """
+        esc_to_fc_dict = self._get_current_esc_to_fc_dict()
+        # Type is mirrored only if the sole key is ("same_as_FC_to_ESC",)
+        return esc_to_fc_dict == {("same_as_FC_to_ESC",): esc_to_fc_dict.get(("same_as_FC_to_ESC",))}
+
+    def is_esc_telemetry_protocol_mirrored(self) -> bool:
+        """
+        Return True when the ESC->FC Telemetry Protocol combobox should be greyed-out.
+
+        True when the matching ESC_CONNECTION_DICT entry has "same_as_FC_to_ESC" as a value,
+        meaning the telemetry protocol is forced to match the FC->ESC protocol exactly.
+        This covers only fully-mirrored entries (ESC_TO_FC_TELEMETRY_SAME: CAN/DroneCAN and
+        SERIAL same-port protocols FETtecOneWire, Torqeedo, CoDevESC). BDShot entries have
+        ("same_as_FC_to_ESC",) as a key but "BDShotOnly" as the value — not mirrored here.
+        """
+        return "same_as_FC_to_ESC" in self._get_current_esc_to_fc_dict().values()
+
     def is_valid_component_data(self) -> bool:
         """
         Validate the component data structure.
@@ -350,7 +433,11 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         fallbacks: dict[str, tuple[str, ...]] = {
             "RC_PROTOCOLS": get_all_protocols(RC_PROTOCOLS_DICT),
             "BATT_MONITOR": get_all_protocols(BATT_MONITOR_CONNECTION),
-            "MOT_PWM_TYPE": get_all_protocols(get_mot_pwm_type_sub_dict(fw_type)),
+            "MOT_PWM_TYPE": tuple(
+                str(v["protocol"])
+                for v in get_esc_connection_sub_dict(fw_type).values()
+                if isinstance(v.get("type"), tuple) and v["type"] == PWM_OUT_PORTS
+            ),
             "GPS_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),
             "GPS1_TYPE": get_all_protocols(GNSS_RECEIVER_CONNECTION),  # GPS_TYPE was renamed to GPS1_TYPE in 4.6
         }
@@ -381,6 +468,9 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 )
             )
 
+        # Always initialize from the fallback so that PWM protocol choices are available
+        # even when no parameter-definition file (apm.pdef.xml) has been loaded (e.g. in tests).
+        self._mot_pwm_types = fallbacks["MOT_PWM_TYPE"]
         if "MOT_PWM_TYPE" in doc_dict:
             self._mot_pwm_types = get_combobox_values("MOT_PWM_TYPE")
         if "Q_M_PWM_TYPE" in doc_dict:
@@ -400,7 +490,13 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("ESC", "FC->ESC Connection", "Protocol"): self._mot_pwm_types,
             ("ESC", "ESC->FC Telemetry", "Type"): ("None", *PWM_OUT_PORTS, *SERIAL_PORTS, *CAN_PORTS),
             ("ESC", "ESC->FC Telemetry", "Protocol"): tuple(
-                dict.fromkeys(str(v["protocol"]) for v in ESC_TELEMETRY_DICT.values())
+                dict.fromkeys(
+                    telem_protocol
+                    for entry in get_esc_connection_sub_dict(fw_type).values()
+                    if isinstance(entry.get("ESC_to_FC"), dict)
+                    for telem_protocol in cast("EscToFcTelemetryDict", entry["ESC_to_FC"]).values()
+                    if telem_protocol != "same_as_FC_to_ESC" and telem_protocol not in ESC_SERIAL_SAME_PORT_PROTOCOLS
+                )
             ),
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
             ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
@@ -425,89 +521,268 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                     self.get_component_value((component, "FC Connection", "Type")),
                 )
 
-    def _update_possible_choices_for_path(  # pylint: disable=too-many-branches
+    def _update_esc_fc_connection_choices(self, value: str, protocol_path: ComponentPath) -> None:
+        """Update FC->ESC Connection Protocol and cascade ESC->FC Telemetry choices when connection Type changes."""
+        # Update FC->ESC Protocol choices based on connection type
+        if value == "None":
+            self._possible_choices[protocol_path] = ("None",)
+        elif value in CAN_PORTS:
+            self._possible_choices[protocol_path] = self._get_esc_connection_protocols_for_type(value) or ("None",)
+        elif value in SERIAL_PORTS:
+            self._possible_choices[protocol_path] = tuple(
+                str(v["protocol"])
+                for v in SERIAL_PROTOCOLS_DICT.values()
+                if v["component"] == "ESC" and v["protocol"] not in ESC_TELEMETRY_ONLY_PROTOCOLS
+            )
+        else:
+            # For PWM outputs, use motor PWM types
+            self._possible_choices[protocol_path] = self._mot_pwm_types
+
+        # Cascade-update ESC->FC Telemetry Type and Protocol choices
+        telemetry_type_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Type")
+        telemetry_protocol_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Protocol")
+        telemetry_types, telemetry_protocols = self._compute_esc_telemetry_choices(value)
+        self._possible_choices[telemetry_type_path] = telemetry_types
+        self._possible_choices[telemetry_protocol_path] = telemetry_protocols
+
+    def _compute_telem_serial_protocols(
+        self,
+        telem_type_value: str,
+        esc_sub: dict[str, dict[str, Union[tuple[str, ...], str, "EscToFcTelemetryDict"]]],
+    ) -> tuple[str, ...]:
+        """
+        Compute ESC->FC Telemetry Protocol choices when Telemetry Type is a SERIAL port.
+
+        When FC->ESC Type is also SERIAL (same-port mirror mode), returns the matching same-port
+        protocol. When FC->ESC Type is PWM/None (independent back-channel), restricts to the
+        protocols allowed by the specific current FC->ESC Protocol (e.g., "Normal" only allows
+        "Scripting", not "ESC Telemetry" which belongs to DShot/OneShot protocols).
+        """
+        fc_esc_type = str(self.get_component_value(("ESC", "FC->ESC Connection", "Type")) or "")
+        if fc_esc_type in SERIAL_PORTS:
+            fc_esc_protocol = str(self.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) or "")
+            return ("None", fc_esc_protocol) if fc_esc_protocol in ESC_SERIAL_SAME_PORT_PROTOCOLS else ("None",)
+        # PWM / None: restrict to protocols supported by the currently selected FC->ESC Protocol.
+        fc_esc_protocol = str(self.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) or "")
+        # Find the ESC_to_FC dict for the current protocol entry.
+        esc_to_fc: EscToFcTelemetryDict = {("None",): "None"}
+        for entry in esc_sub.values():
+            if entry.get("protocol") == fc_esc_protocol:
+                raw = entry.get("ESC_to_FC", {("None",): "None"})
+                esc_to_fc = cast("EscToFcTelemetryDict", raw)
+                break
+        return tuple(
+            dict.fromkeys(
+                telem_protocol
+                for port_key, telem_protocol in esc_to_fc.items()
+                if isinstance(port_key, tuple)
+                and telem_type_value in port_key
+                and telem_protocol not in ESC_SERIAL_SAME_PORT_PROTOCOLS
+                and telem_protocol != "same_as_FC_to_ESC"
+            )
+        )
+
+    def _compute_esc_telemetry_choices_union_pwm(self, fc_esc_conn_type: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """
+        Compute ESC->FC Telemetry choices as the union across all PWM protocol options.
+
+        Used when FC->ESC Protocol is stale (e.g., transitioning from CAN) so no single
+        protocol is authoritative yet.  Shows every back-channel type/protocol that any
+        PWM protocol supports, giving the user the broadest valid choice set.
+        """
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        esc_sub = get_esc_connection_sub_dict(fw_type)
+        collected_types: list[str] = ["None"]
+        collected_protocols: list[str] = ["None"]
+        for entry in esc_sub.values():
+            if entry.get("type") != PWM_OUT_PORTS:
+                continue
+            esc_to_fc = entry.get("ESC_to_FC", {("None",): "None"})
+            for port_key, telem_protocol in cast("EscToFcTelemetryDict", esc_to_fc).items():
+                if telem_protocol == "same_as_FC_to_ESC" or telem_protocol in ESC_SERIAL_SAME_PORT_PROTOCOLS:
+                    continue
+                if port_key == ("None",):
+                    pass  # "None" already seeded above
+                elif port_key == ("same_as_FC_to_ESC",):
+                    if fc_esc_conn_type not in collected_types:
+                        collected_types.append(fc_esc_conn_type)
+                else:
+                    for p in port_key:
+                        if p not in collected_types:
+                            collected_types.append(p)
+                if telem_protocol not in collected_protocols:
+                    collected_protocols.append(telem_protocol)
+        return tuple(collected_types), tuple(collected_protocols)
+
+    def _compute_esc_telemetry_choices_pwm(
+        self, fc_esc_conn_type: str, current_protocol: str
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """Compute ESC->FC Telemetry choices when FC->ESC Connection is a PWM output."""
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        esc_sub = get_esc_connection_sub_dict(fw_type)
+        esc_to_fc: dict = {("None",): "None"}
+        for entry in esc_sub.values():
+            if entry.get("protocol") == current_protocol:
+                esc_to_fc = entry.get("ESC_to_FC", {("None",): "None"})  # type: ignore[assignment]
+                break
+        collected_types: list[str] = ["None"]
+        collected_protocols: list[str] = ["None"]
+        for port_key, telem_protocol in esc_to_fc.items():
+            if telem_protocol == "same_as_FC_to_ESC" or telem_protocol in ESC_SERIAL_SAME_PORT_PROTOCOLS:
+                continue
+            if port_key == ("None",):
+                pass  # "None" already seeded above
+            elif port_key == ("same_as_FC_to_ESC",):
+                if fc_esc_conn_type not in collected_types:
+                    collected_types.append(fc_esc_conn_type)
+            else:
+                for p in port_key:
+                    if p not in collected_types:
+                        collected_types.append(p)
+            if telem_protocol not in collected_protocols:
+                collected_protocols.append(telem_protocol)
+        return tuple(collected_types), tuple(collected_protocols)
+
+    def _compute_esc_telemetry_choices(self, fc_esc_conn_type: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """Compute valid ESC->FC Telemetry Type and Protocol choices for the given FC->ESC Connection Type."""
+        if fc_esc_conn_type in CAN_PORTS:
+            return (fc_esc_conn_type,), self._get_esc_connection_protocols_for_type(fc_esc_conn_type) or ("None",)
+        if fc_esc_conn_type in SERIAL_PORTS:
+            # The ESC->FC Telemetry uses the same SERIAL port as the FC->ESC connection.
+            # Only the matching same-port protocol is valid (FETtecOneWire, Torqeedo, CoDevESC).
+            # ESC Telemetry and Scripting are PWM-only back-channels and must not appear here.
+            current_protocol = str(self.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) or "")
+            if current_protocol in ESC_SERIAL_SAME_PORT_PROTOCOLS:
+                return (fc_esc_conn_type,), ("None", current_protocol)
+            return (fc_esc_conn_type,), ("None",)
+        if fc_esc_conn_type == "None":
+            return ("None",), ("None",)
+        # PWM
+        current_protocol = str(self.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) or "")
+        if current_protocol not in self._mot_pwm_types:
+            # Protocol is stale (e.g., transitioning from CAN/SERIAL) — compute the union of
+            # all possible PWM back-channel options so the user sees the full valid choice set.
+            return self._compute_esc_telemetry_choices_union_pwm(fc_esc_conn_type)
+        return self._compute_esc_telemetry_choices_pwm(fc_esc_conn_type, current_protocol)
+
+    def _update_rc_receiver_protocol_choices(self, value: str, protocol_path: ComponentPath) -> None:
+        """Update RC Receiver protocol choices based on the selected connection type."""
+        if value == "None":
+            self._possible_choices[protocol_path] = ("None",)
+        else:
+            self._possible_choices[protocol_path] = tuple(
+                str(v["protocol"]) for v in RC_PROTOCOLS_DICT.values() if value in v["type"]
+            )
+
+    def _update_telemetry_protocol_choices(self, value: str, protocol_path: ComponentPath) -> None:
+        """Update Telemetry protocol choices based on the selected connection type."""
+        if value == "None":
+            self._possible_choices[protocol_path] = ("None",)
+        else:
+            self._possible_choices[protocol_path] = tuple(
+                str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "Telemetry"
+            )
+
+    def _update_battery_monitor_protocol_choices(self, value: str, protocol_path: ComponentPath) -> None:
+        """Update Battery Monitor protocol choices based on the selected connection type."""
+        if value == "None":
+            self._possible_choices[protocol_path] = ("None",)
+            return
+        batt_available_protocols: list[str] = [
+            str(conn_dict["protocol"])
+            for conn_dict in BATT_MONITOR_CONNECTION.values()
+            if isinstance(conn_dict["type"], tuple) and value in conn_dict["type"]
+        ]
+        self._possible_choices[protocol_path] = tuple(batt_available_protocols) if batt_available_protocols else ("None",)
+
+    def _get_esc_connection_protocols_for_type(self, connection_type: str) -> tuple[str, ...]:
+        """Return ESC FC->ESC protocols supported by the given connection type for the active vehicle."""
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        return tuple(
+            dict.fromkeys(
+                str(entry["protocol"])
+                for entry in get_esc_connection_sub_dict(fw_type).values()
+                if isinstance(entry.get("type"), tuple) and connection_type in entry["type"]
+            )
+        )
+
+    def _update_esc_telemetry_type_protocol_choices(self, value: str, protocol_path: ComponentPath) -> None:
+        """Update ESC->FC Telemetry protocol choices based on the selected telemetry type."""
+        if value == "None":
+            self._possible_choices[protocol_path] = ("None",)
+            return
+        if value in CAN_PORTS:
+            self._possible_choices[protocol_path] = self._get_esc_connection_protocols_for_type(value) or ("None",)
+            return
+        fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
+        esc_sub = get_esc_connection_sub_dict(fw_type)
+        if value in PWM_OUT_PORTS:
+            # BDShot back-channel: collect protocols from ("same_as_FC_to_ESC",) keys
+            valid_protocols: tuple[str, ...] = tuple(
+                dict.fromkeys(
+                    telem_protocol
+                    for entry in esc_sub.values()
+                    if isinstance(entry.get("ESC_to_FC"), dict)
+                    for port_key, telem_protocol in cast("EscToFcTelemetryDict", entry["ESC_to_FC"]).items()
+                    if port_key == ("same_as_FC_to_ESC",) and telem_protocol != "same_as_FC_to_ESC"
+                )
+            )
+        else:
+            valid_protocols = self._compute_telem_serial_protocols(value, esc_sub)
+        self._possible_choices[protocol_path] = valid_protocols or ("None",)
+
+    def _update_gnss_receiver_protocol_choices(self, value: str, protocol_path: ComponentPath) -> None:
+        """Update GNSS Receiver protocol choices based on the selected connection type."""
+        if value == "None":
+            self._possible_choices[protocol_path] = ("None",)
+            return
+        gnss_available_protocols: list[str] = [
+            str(conn_dict["protocol"])
+            for conn_dict in GNSS_RECEIVER_CONNECTION.values()
+            if isinstance(conn_dict["type"], tuple) and value in conn_dict["type"]
+        ]
+        self._possible_choices[protocol_path] = tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
+
+    def _update_possible_choices_for_path(
         self, path: ComponentPath, value: Union[ComponentData, ComponentValue, None]
     ) -> None:
         """Update _possible_choices when connection type values that affect protocol choices are changed."""
-        if len(path) < 3 or path[2] != "Type" or not isinstance(value, str):
+        if len(path) < 3 or not isinstance(value, str):
             return
 
         component_name = path[0]
         section = path[1]
 
+        # When ESC FC->ESC Connection Protocol changes, cascade-update ESC->FC Telemetry Type choices.
+        # This ensures the Type widget entries are always consistent with the selected FC->ESC Protocol
+        # (e.g., switching from Brushed to DShot expands the type options to include BDShot/SERIAL ports).
+        if path[2] == "Protocol" and component_name == "ESC" and section == "FC->ESC Connection":
+            fc_esc_type = str(self.get_component_value(("ESC", "FC->ESC Connection", "Type")) or "")
+            telem_types, telem_protocols = self._compute_esc_telemetry_choices(fc_esc_type)
+            self._possible_choices[("ESC", "ESC->FC Telemetry", "Type")] = telem_types
+            self._possible_choices[("ESC", "ESC->FC Telemetry", "Protocol")] = telem_protocols
+            return
+
+        if path[2] != "Type":
+            return
+
         if section not in ("FC Connection", "FC->ESC Connection", "ESC->FC Telemetry"):
             return
 
         protocol_path: ComponentPath = (component_name, section, "Protocol")
-
-        # Calculate the new possible choices for the corresponding protocol field
-        if component_name == "RC Receiver":
-            # Filter RC protocols based on the selected connection type
-            if value == "None":
-                new_choices: tuple[str, ...] = ("None",)
-            else:
-                # For any connection type, find protocols that support it
-                new_choices = tuple(str(v["protocol"]) for v in RC_PROTOCOLS_DICT.values() if value in v["type"])
-            self._possible_choices[protocol_path] = new_choices
-
-        elif component_name == "Telemetry":
-            if value == "None":
-                self._possible_choices[protocol_path] = ("None",)
-            else:
-                # For non-None telemetry connections, use the standard telemetry protocols
-                self._possible_choices[protocol_path] = tuple(
-                    str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "Telemetry"
-                )
-
-        elif component_name == "Battery Monitor":
-            if value == "None":
-                self._possible_choices[protocol_path] = ("None",)
-                return
-
-            # Find protocols available for the selected connection type
-            batt_available_protocols: list[str] = []
-            for conn_dict in BATT_MONITOR_CONNECTION.values():
-                conn_type = conn_dict["type"]
-                if isinstance(conn_type, tuple) and value in conn_type:
-                    batt_available_protocols.append(str(conn_dict["protocol"]))
-
-            self._possible_choices[protocol_path] = tuple(batt_available_protocols) if batt_available_protocols else ("None",)
-
+        updater = {
+            "RC Receiver": self._update_rc_receiver_protocol_choices,
+            "Telemetry": self._update_telemetry_protocol_choices,
+            "Battery Monitor": self._update_battery_monitor_protocol_choices,
+            "GNSS Receiver": self._update_gnss_receiver_protocol_choices,
+        }.get(component_name)
+        if updater is not None:
+            updater(value, protocol_path)
         elif component_name == "ESC":
             if section == "ESC->FC Telemetry":
-                if value == "None":
-                    self._possible_choices[protocol_path] = ("None",)
-                else:
-                    self._possible_choices[protocol_path] = tuple(
-                        str(v["protocol"])
-                        for v in ESC_TELEMETRY_DICT.values()
-                        if isinstance(v["type"], tuple) and value in v["type"]
-                    ) or ("None",)
-            elif value == "None":
-                self._possible_choices[protocol_path] = ("None",)
-            elif value in CAN_PORTS:
-                self._possible_choices[protocol_path] = ("DroneCAN",)
-            elif value in SERIAL_PORTS:
-                self._possible_choices[protocol_path] = tuple(
-                    str(v["protocol"]) for v in SERIAL_PROTOCOLS_DICT.values() if v["component"] == "ESC"
-                )
-            else:
-                # For PWM outputs, use motor PWM types
-                self._possible_choices[protocol_path] = self._mot_pwm_types
-
-        elif component_name == "GNSS Receiver":
-            if value == "None":
-                self._possible_choices[protocol_path] = ("None",)
-                return
-
-            # Find protocols available for the selected connection type
-            gnss_available_protocols: list[str] = []
-            for conn_dict in GNSS_RECEIVER_CONNECTION.values():
-                conn_type = conn_dict["type"]
-                if isinstance(conn_type, tuple) and value in conn_type:
-                    gnss_available_protocols.append(str(conn_dict["protocol"]))
-
-            self._possible_choices[protocol_path] = tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
+                self._update_esc_telemetry_type_protocol_choices(value, protocol_path)
+            else:  # section == "FC->ESC Connection"
+                self._update_esc_fc_connection_choices(value, protocol_path)
 
     def _validate_tow_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
         """Validate takeoff weight min/max cross-constraints."""

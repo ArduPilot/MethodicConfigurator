@@ -268,7 +268,7 @@ The `ESC->FC Telemetry` type and protocol describe the return path:
 | Connection Type | Protocol | Notes |
 | --------------- | -------- | ----- |
 | `None` | `None` | No ESC telemetry |
-| same as FC->ESC | `BDShot` | BDShot only on Main Out and/or AIO, without serial port backup channel |
+| same as FC->ESC | `BDShotOnly` | BDShot only on Main Out and/or AIO, without serial port backup channel |
 | serial port | `ESC Telemetry` | DShot or BDShot serial telemetry backup channel |
 | serial port | `FETtecOneWire` | Bidirectional FETtec protocol on the same wire |
 | serial port | `Scripting` | For T-Motor/Hobbywing Datalink v2 serial telemetry |
@@ -278,7 +278,7 @@ The `ESC->FC Telemetry` type and protocol describe the return path:
 
 When using BDShot only on `Main Out` (1-8) and/or `Aux I/O` (9-14) connection, without serial port backup channel:
 
-![ESC telemetry BDshot only](images/blog/component_editor_esc_telem_main_out_aio.png)
+![ESC telemetry BDShotOnly](images/blog/component_editor_esc_telem_main_out_aio.png)
 
 When using DShot or BDShot with a serial port backup channel:
 

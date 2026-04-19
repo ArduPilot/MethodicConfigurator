@@ -26,15 +26,16 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import C
 from ardupilot_methodic_configurator.data_model_vehicle_components_validation import (
     BATT_MONITOR_CONNECTION,
     CAN_PORTS,
-    ESC_TELEMETRY_PROTOCOLS,
+    ESC_TELEMETRY_ONLY_PROTOCOLS,
     GNSS_RECEIVER_CONNECTION,
     I2C_PORTS,
+    PWM_OUT_PORTS,
     RC_PROTOCOLS_DICT,
     SERIAL_PORTS,
     SERIAL_PROTOCOLS_DICT,
     SERVO_FUNCTION_ESC_CONTROL,
     ComponentDataModelValidation,
-    get_mot_pwm_type_sub_dict,
+    get_esc_connection_sub_dict,
 )
 
 
@@ -179,7 +180,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
         elif "GPS_TYPE" in doc:
             self._verify_dict_is_uptodate(doc, GNSS_RECEIVER_CONNECTION, "GPS_TYPE", "values")
         fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
-        self._verify_dict_is_uptodate(doc, get_mot_pwm_type_sub_dict(fw_type), "MOT_PWM_TYPE", "values")
+        self._verify_dict_is_uptodate(doc, get_esc_connection_sub_dict(fw_type), "MOT_PWM_TYPE", "values")
         self._verify_dict_is_uptodate(doc, RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask")
 
         # Process parameters in sequence
@@ -330,7 +331,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
                     self.set_component_value(("GNSS Receiver", "FC Connection", "Type"), serial)
                 gnss += 1
             elif component == "ESC":
-                if protocol in ESC_TELEMETRY_PROTOCOLS:
+                if protocol in ESC_TELEMETRY_ONLY_PROTOCOLS:
                     # Serial ESC->FC telemetry only (DShot with UART feedback, or Hobbywing Datalink v2).
                     # FC->ESC connection is still PWM/DShot; _set_esc_type_from_fc_parameters handles it.
                     # Do NOT increment esc so that function is still called.
@@ -372,13 +373,13 @@ class ComponentDataModelImport(ComponentDataModelBase):
             protocol = doc["MOT_PWM_TYPE"]["values"].get(str(mot_pwm_type), "")
             if protocol:
                 self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
-        # Fallback to MOT_PWM_TYPE_DICT if doc is not available
+        # Fallback to ESC_CONNECTION_DICT if doc is not available
         else:
-            mot_pwm_sub = get_mot_pwm_type_sub_dict(
+            esc_conn_sub = get_esc_connection_sub_dict(
                 str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
             )
-            if str(mot_pwm_type) in mot_pwm_sub:
-                protocol = str(mot_pwm_sub[str(mot_pwm_type)]["protocol"])
+            if str(mot_pwm_type) in esc_conn_sub:
+                protocol = str(esc_conn_sub[str(mot_pwm_type)]["protocol"])
                 self.set_component_value(("ESC", "FC->ESC Connection", "Protocol"), protocol)
 
         # Set ESC->FC Telemetry: DShot supports BDShot telemetry on the same PWM wire.
@@ -388,9 +389,9 @@ class ComponentDataModelImport(ComponentDataModelBase):
         current_telemetry_type = self.get_component_value(("ESC", "ESC->FC Telemetry", "Type"))
         if protocol and protocol.startswith("DShot"):
             if current_telemetry_type not in SERIAL_PORTS and current_telemetry_type not in CAN_PORTS:
-                # No dedicated serial/CAN telemetry port detected; fall back to BDShot on the PWM wire
+                # No dedicated serial/CAN telemetry port detected; fall back to BDShotOnly on the PWM wire
                 self.set_component_value(("ESC", "ESC->FC Telemetry", "Type"), esc_conn_type)
-                self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "BDShot")
+                self.set_component_value(("ESC", "ESC->FC Telemetry", "Protocol"), "BDShotOnly")
         elif not current_telemetry_type or (
             current_telemetry_type not in SERIAL_PORTS and current_telemetry_type not in CAN_PORTS
         ):
@@ -688,10 +689,18 @@ class ComponentDataModelImport(ComponentDataModelBase):
         poles = 0.0
         if "MOT_PWM_TYPE" in fc_parameters:
             mot_pwm_type_str = str(int(fc_parameters["MOT_PWM_TYPE"]))
-            mot_pwm_sub = get_mot_pwm_type_sub_dict(
+            esc_conn_sub = get_esc_connection_sub_dict(
                 str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
             )
-            if mot_pwm_type_str in mot_pwm_sub and mot_pwm_sub[mot_pwm_type_str].get("is_dshot", False):
+            entry = esc_conn_sub.get(mot_pwm_type_str)
+            is_dshot = (
+                entry is not None
+                and isinstance(entry.get("ESC_to_FC"), dict)
+                and ("same_as_FC_to_ESC",) in entry["ESC_to_FC"]  # type: ignore[operator]
+                and isinstance(entry.get("type"), tuple)
+                and entry["type"] == PWM_OUT_PORTS
+            )
+            if is_dshot:
                 if fc_parameters.get("SERVO_BLH_POLES"):  # DShot ESCs
                     poles = fc_parameters["SERVO_BLH_POLES"]
             elif fc_parameters.get("SERVO_FTW_MASK") and fc_parameters.get("SERVO_FTW_POLES"):
