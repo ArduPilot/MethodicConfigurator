@@ -340,6 +340,7 @@ FRAME_CLASS_DICT: dict[int, str] = {
     17: "Dynamic Scripting Matrix",
 }
 
+
 class ComponentDataModelValidation(ComponentDataModelBase):
     """
     A class to handle component data operations separate from UI logic.
