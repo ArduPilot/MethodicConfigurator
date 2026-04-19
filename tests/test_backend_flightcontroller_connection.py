@@ -1518,11 +1518,11 @@ class TestFlightControllerConnectionBannerParsing:
         assert os_ver == ""
         assert index is None
 
-    def test_extract_chibios_version_handles_banner_without_trailing_space(self) -> None:
+    def test_extract_chibios_version_handles_banner_truncated_after_prefix(self) -> None:
         """
-        _extract_chibios_version_from_banner tolerates a malformed banner line with no space after the prefix.
+        _extract_chibios_version_from_banner tolerates a banner truncated immediately after the ChibiOS prefix.
 
-        GIVEN: Banner messages where the ChibiOS line has no space between the prefix and the version
+        GIVEN: Banner messages where the ChibiOS line has no hash and no separator after the prefix
         WHEN: _extract_chibios_version_from_banner is called
         THEN: An empty version string should be returned
         AND: The index of the ChibiOS line should still be recorded
@@ -1547,6 +1547,23 @@ class TestFlightControllerConnectionBannerParsing:
         """
         connection = FlightControllerConnection(info=FlightControllerInfo())
         banner_msgs = ["ChibiOS:"]
+
+        os_ver, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        assert os_ver == ""
+        assert index == 0
+
+    def test_extract_chibios_version_handles_hash_packed_without_space(self) -> None:
+        """
+        _extract_chibios_version_from_banner tolerates a banner where the hash is packed directly after the prefix.
+
+        GIVEN: A banner line where the version hash follows the 'ChibiOS:' prefix without a separating space
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: An empty version string should be returned (rather than crashing with IndexError)
+        AND: The index of the ChibiOS line should still be recorded
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        banner_msgs = ["ChibiOS:abc1234567"]
 
         os_ver, index = connection._extract_chibios_version_from_banner(banner_msgs)
 

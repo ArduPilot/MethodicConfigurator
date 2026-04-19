@@ -976,7 +976,7 @@ msgstr ""
 "Melden Sie sich danach ab und wieder an, damit die Änderungen wirksam werden."
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:640
-msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
+msgid "ChibiOS version mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "ChibiOS Versionskonflikt: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:706

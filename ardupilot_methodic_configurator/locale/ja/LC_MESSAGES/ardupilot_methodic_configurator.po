@@ -965,7 +965,7 @@ msgstr ""
 "その後、ログアウトして再度ログインすると変更が有効になります。"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:640
-msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
+msgid "ChibiOS version mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "ChibiOSバージョンの不一致: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
 #: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:706
