@@ -631,7 +631,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         for i, msg in enumerate(banner_msgs):
             if "ChibiOS:" in msg:
-                os_custom_version = msg.split(" ")[1].strip()
+                parts = msg.split(" ", 1)
+                os_custom_version = parts[1].strip() if len(parts) > 1 else ""
                 hash_len1 = max(7, len(os_custom_version) - 1)
                 hash_len2 = max(7, len(self.info.os_custom_version) - 1)
                 hash_len = min(hash_len1, hash_len2)
