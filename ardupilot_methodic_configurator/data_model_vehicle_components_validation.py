@@ -319,6 +319,26 @@ RC_PROTOCOLS_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
 }
 
+FRAME_CLASS_DICT: dict[int, str] = {
+    0: "Undefined",
+    1: "Quad",
+    2: "Hexa",
+    3: "Octa",
+    4: "OctaQuad",
+    5: "Y6",
+    6: "Heli",
+    7: "Tri",
+    8: "SingleCopter",
+    9: "CoaxCopter",
+    10: "BiCopter",
+    11: "Heli_Dual",
+    12: "DodecaHexa",
+    13: "HeliQuad",
+    14: "Deca",
+    15: "Scripting Matrix",
+    16: "6DoF Scripting",
+    17: "Dynamic Scripting Matrix",
+}
 
 class ComponentDataModelValidation(ComponentDataModelBase):
     """
