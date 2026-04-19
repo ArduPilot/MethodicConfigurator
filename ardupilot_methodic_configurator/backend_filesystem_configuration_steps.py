@@ -249,7 +249,7 @@ class ConfigurationSteps:
                     destination[filename] = ParDict()
                 change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
                 destination[filename][parameter] = Par(float(result), change_reason)
-            except (SyntaxError, NameError, KeyError, StopIteration) as _e:
+            except (SyntaxError, NameError, KeyError, StopIteration, ValueError, TypeError) as _e:
                 error_msg = _(
                     "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
                     "parameter '{parameter}' could not be computed: {_e}"
