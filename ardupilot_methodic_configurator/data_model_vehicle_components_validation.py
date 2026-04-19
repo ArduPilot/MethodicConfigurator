@@ -316,6 +316,46 @@ RC_PROTOCOLS_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
 }
 
+FRAME_CLASS_DICT: dict[str, dict[int, str]] = {
+    "ArduCopter": {
+        0: "Undefined",
+        1: "Quad",
+        2: "Hexa",
+        3: "Octa",
+        4: "OctaQuad",
+        5: "Y6",
+        6: "Heli",
+        7: "Tri",
+        8: "SingleCopter",
+        9: "CoaxCopter",
+        10: "BiCopter",
+        11: "Heli_Dual",
+        12: "DodecaHexa",
+        13: "HeliQuad",
+        14: "Deca",
+        15: "Scripting Matrix",
+        16: "6DoF Scripting",
+        17: "Dynamic Scripting Matrix",
+    },
+    "Heli": {
+        6: "Heli",
+        11: "Heli_Dual",
+        13: "HeliQuad",
+    },
+    "Rover": {
+        0: "Undefined",
+        1: "Rover",
+        2: "Boat",
+        3: "BalanceBot",
+    },
+    "ArduPlane": {},
+}
+
+
+def get_frame_class_sub_dict(vehicle_type: str) -> dict[int, str]:
+    """Return the vehicle-type-specific frame class mapping from FRAME_CLASS_DICT."""
+    return FRAME_CLASS_DICT.get(vehicle_type, FRAME_CLASS_DICT["ArduCopter"])
+
 
 class ComponentDataModelValidation(ComponentDataModelBase):
     """

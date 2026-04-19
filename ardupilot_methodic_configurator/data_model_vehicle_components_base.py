@@ -262,6 +262,7 @@ class ComponentDataModelBase:
                     "Specifications": {
                         "TOW min Kg": 1,
                         "TOW max Kg": 1,
+                        "Frame class": "Undefined",
                     }
                 },
                 "Flight Controller": {
