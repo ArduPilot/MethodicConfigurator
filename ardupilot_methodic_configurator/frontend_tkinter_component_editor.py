@@ -96,15 +96,166 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             if mcu.upper() in ("STM32F4XX", "STM32F7XX", "STM32H7XX"):
                 self.data_model.schema.modify_schema_for_mcu_series(is_optional=True)
 
+    def populate_frames(self) -> None:
+        """Populate frames and then apply initial mirror state for ESC->FC Telemetry comboboxes."""
+        super().populate_frames()
+        self._set_esc_telemetry_combobox_mirror_state()
+
     def update_component_protocol_combobox_entries(self, component_path: ComponentPath, connection_type: str) -> str:
         """Updates the Protocol combobox entries based on the selected component connection Type."""
         self.data_model.set_component_value(component_path, connection_type)
 
         # when the connection Type changes, we need to update the Protocol combobox entries
         protocol_path: ComponentPath = (component_path[0], component_path[1], "Protocol")
-        return self.update_protocol_combobox_entries(
+        err_msg = self.update_protocol_combobox_entries(
             self.data_model.get_combobox_values_for_path(protocol_path), protocol_path
         )
+
+        # When FC->ESC Connection Type changes, also cascade-update ESC->FC Telemetry comboboxes
+        # (the data model already computed the new choices in _update_possible_choices_for_path)
+        if component_path == ("ESC", "FC->ESC Connection", "Type"):
+            telemetry_type_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Type")
+            telemetry_protocol_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Protocol")
+            # Capture both sets of choices BEFORE updating the Type combobox.
+            # Updating the Type may auto-select a new value and trigger set_component_value, which
+            # calls _update_possible_choices_for_path and overwrites the protocol choices that
+            # _update_esc_fc_connection_choices already computed correctly.
+            telemetry_type_choices = self.data_model.get_combobox_values_for_path(telemetry_type_path)
+            telemetry_protocol_choices = self.data_model.get_combobox_values_for_path(telemetry_protocol_path)
+            err_msg += self.update_protocol_combobox_entries(telemetry_type_choices, telemetry_type_path)
+            err_msg += self.update_protocol_combobox_entries(telemetry_protocol_choices, telemetry_protocol_path)
+            # For same-port connections (CAN, SERIAL with same-port protocol) mirror FC->ESC Protocol
+            # to ESC->FC Telemetry Protocol.  For PWM or SERIAL with back-channel protocols the
+            # telemetry comboboxes remain independently editable.
+            # _set_esc_telemetry_combobox_mirror_state reads the current FC->ESC Protocol from the
+            # data model, but it was set above by set_component_value(connection_type) which triggered
+            # _update_esc_fc_connection_choices — the protocol may have been auto-selected.
+            self._set_esc_telemetry_combobox_mirror_state()
+            if self.data_model.is_esc_telemetry_type_mirrored():
+                current_fc_esc_protocol = str(
+                    self.data_model.get_component_value(("ESC", "FC->ESC Connection", "Protocol")) or ""
+                )
+                self._on_esc_fc_protocol_changed(current_fc_esc_protocol)
+
+        return err_msg
+
+    def _set_esc_telemetry_combobox_mirror_state(self) -> None:
+        """
+        Mirror (grey-out) or unmirror ESC->FC Telemetry comboboxes according to the data model.
+
+        The mirror rules are protocol-dependent, not based solely on FC->ESC Connection Type:
+        - Telemetry Type mirroring is determined by `is_esc_telemetry_type_mirrored()`.
+          In practice, CAN setups are mirrored, while SERIAL is mirrored only for
+          same-port/shared-port protocols; PWM/DShot cases are not fully mirrored.
+        - Telemetry Protocol mirroring is determined by `is_esc_telemetry_protocol_mirrored()`.
+          CAN is mirrored, and SERIAL is mirrored only when the selected FC->ESC
+          protocol uses the same port for telemetry.
+        """
+        for telem_path, mirrored in (
+            (("ESC", "ESC->FC Telemetry", "Type"), self.data_model.is_esc_telemetry_type_mirrored()),
+            (("ESC", "ESC->FC Telemetry", "Protocol"), self.data_model.is_esc_telemetry_protocol_mirrored()),
+        ):
+            widget = self.entry_widgets.get(telem_path)
+            if isinstance(widget, PairTupleCombobox):
+                widget.configure(state="disabled" if mirrored else "normal")
+
+    def _on_esc_fc_protocol_mirrored(self, new_protocol: str) -> None:
+        """Handle mirrored telemetry protocol: FC->ESC Protocol mirrors to ESC->FC Telemetry Protocol."""
+        telem_protocol_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Protocol")
+        self.data_model.set_component_value(telem_protocol_path, new_protocol)
+        widget = self.entry_widgets.get(telem_protocol_path)
+        if isinstance(widget, PairTupleCombobox):
+            self.set_combobox_entries_preserving_width(widget, [(new_protocol, new_protocol)], new_protocol)
+            widget.update_idletasks()
+        self._set_esc_telemetry_combobox_mirror_state()
+
+    def _on_esc_fc_protocol_invalid_type(self, valid_telem_types: tuple[str, ...]) -> None:
+        """Reset both telemetry Type and Protocol to 'None' when current Type is no longer valid."""
+        telem_type_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Type")
+        telem_protocol_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Protocol")
+        self.data_model.set_component_value(telem_type_path, "None")
+        self.data_model.set_component_value(telem_protocol_path, "None")
+        telem_type_widget = self.entry_widgets.get(telem_type_path)
+        if isinstance(telem_type_widget, PairTupleCombobox):
+            type_tuples = get_connection_type_tuples_with_labels(valid_telem_types)
+            self.set_combobox_entries_preserving_width(telem_type_widget, type_tuples, "None")
+            telem_type_widget.update_idletasks()
+        telem_protocol_widget = self.entry_widgets.get(telem_protocol_path)
+        if isinstance(telem_protocol_widget, PairTupleCombobox):
+            valid_telem_protocols = self.data_model.get_combobox_values_for_path(telem_protocol_path)
+            protocol_tuples = [(p, p) for p in valid_telem_protocols]
+            self.set_combobox_entries_preserving_width(telem_protocol_widget, protocol_tuples, "None")
+            telem_protocol_widget.update_idletasks()
+
+    def _on_esc_fc_protocol_recompute(self, current_telem_type: str) -> None:
+        """Recompute telemetry type AND protocol choices and validate current selection."""
+        telem_type_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Type")
+        telem_protocol_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Protocol")
+        # Update the Type widget entries to reflect valid telem types for the current FC->ESC Protocol.
+        # get_combobox_values_for_path returns the updated telem type choices set by the data model's
+        # Protocol-change handler in _update_possible_choices_for_path.
+        valid_telem_types = self.data_model.get_combobox_values_for_path(telem_type_path)
+        telem_type_widget = self.entry_widgets.get(telem_type_path)
+        if isinstance(telem_type_widget, PairTupleCombobox):
+            type_tuples = get_connection_type_tuples_with_labels(valid_telem_types)
+            self.set_combobox_entries_preserving_width(telem_type_widget, type_tuples, current_telem_type)
+            telem_type_widget.update_idletasks()
+        self.data_model.set_component_value(telem_type_path, current_telem_type)
+        new_choices = self.data_model.get_combobox_values_for_path(telem_protocol_path)
+        widget = self.entry_widgets.get(telem_protocol_path)
+        if not isinstance(widget, PairTupleCombobox):
+            return
+        current_selection = widget.get_selected_key() or str(self.data_model.get_component_value(telem_protocol_path) or "")
+        if not current_selection and "None" in new_choices:
+            current_selection = "None"
+        protocol_tuples = [(p, p) for p in new_choices]
+        if current_selection and current_selection not in new_choices:
+            if len(new_choices) == 1:
+                new_selection = new_choices[0]
+                self.set_combobox_entries_preserving_width(widget, protocol_tuples, new_selection)
+                self.data_model.set_component_value(telem_protocol_path, new_selection)
+            else:
+                self.set_combobox_entries_preserving_width(widget, protocol_tuples, None)
+                component: str = " > ".join(telem_protocol_path)
+                err_msg = _(
+                    "On {component} the selected\nprotocol '{current_selection}' "
+                    "is not available for the selected connection Type."
+                )
+                show_error_message(_("Error"), err_msg.format(component=component, current_selection=current_selection))
+                widget.configure(style="comb_input_invalid.TCombobox")
+        else:
+            if not current_selection and len(new_choices) == 1:
+                current_selection = new_choices[0]
+                self.data_model.set_component_value(telem_protocol_path, current_selection)
+            self.set_combobox_entries_preserving_width(widget, protocol_tuples, current_selection)
+        widget.update_idletasks()
+
+    def _on_esc_fc_protocol_changed(self, new_protocol: str) -> None:
+        """
+        Handle FC->ESC protocol changes.
+
+        When ``is_esc_telemetry_protocol_mirrored()`` is true, mirror the FC->ESC
+        Protocol into ESC->FC Telemetry. Otherwise, recompute and validate the
+        available ESC->FC telemetry Type/Protocol choices for the selected
+        connection and ensure the telemetry comboboxes are enabled.
+        """
+        # Persist the new protocol into the data model immediately.  <<ComboboxSelected>> fires
+        # before <ButtonRelease> persists the value via _validate_combobox, so the cascade
+        # computations below would otherwise read the *previous* protocol and produce stale results.
+        fc_esc_protocol_path: ComponentPath = ("ESC", "FC->ESC Connection", "Protocol")
+        self.data_model.set_component_value(fc_esc_protocol_path, new_protocol)
+        if self.data_model.is_esc_telemetry_protocol_mirrored():
+            self._on_esc_fc_protocol_mirrored(new_protocol)
+        else:
+            telem_type_path: ComponentPath = ("ESC", "ESC->FC Telemetry", "Type")
+            valid_telem_types = self.data_model.get_valid_esc_telemetry_types()
+            current_telem_type = str(self.data_model.get_component_value(telem_type_path) or "")
+            if current_telem_type not in valid_telem_types:
+                self._on_esc_fc_protocol_invalid_type(valid_telem_types)
+            else:
+                self._on_esc_fc_protocol_recompute(current_telem_type)
+            # Ensure both ESC->FC Telemetry comboboxes are enabled (not greyed).
+            self._set_esc_telemetry_combobox_mirror_state()
 
     def update_protocol_combobox_entries(self, protocols: tuple[str, ...], protocol_path: ComponentPath) -> str:
         err_msg = ""
@@ -113,22 +264,41 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             # Only update if this is actually a PairTupleCombobox (protocol comboboxes should be)
             if isinstance(protocol_combobox, PairTupleCombobox):
                 # Rebuild the (key, display) pairs for PairTupleCombobox
-                protocol_tuples = [(p, p) for p in protocols]
+                if protocol_path == ("ESC", "ESC->FC Telemetry", "Type"):
+                    protocol_tuples = get_connection_type_tuples_with_labels(protocols)
+                else:
+                    protocol_tuples = [(p, p) for p in protocols]
                 # Get current selection and validate it against new protocols
                 current_selection = protocol_combobox.get_selected_key()
+                if len(protocols) == 1 and not current_selection:
+                    current_selection = protocols[0]
+                    self.data_model.set_component_value(protocol_path, current_selection)
                 if current_selection and current_selection not in protocols:
-                    # Current selection is not valid for new protocols, clear it
-                    invalid_selection = current_selection
-                    current_selection = None
-                    component: str = " > ".join(protocol_path)
-                    err_msg = _(
-                        "On {component} the selected\nprotocol '{invalid_selection}' "
-                        "is not available for the selected connection Type."
-                    )
-                    err_msg = err_msg.format(component=component, invalid_selection=invalid_selection)
+                    if len(protocols) == 1:
+                        # Only one option available — auto-select it silently
+                        current_selection = protocols[0]
+                        self.data_model.set_component_value(protocol_path, current_selection)
+                    else:
+                        # Current selection is not valid for new protocols, clear it
+                        invalid_selection = current_selection
+                        current_selection = None
+                        if "None" in protocols:
+                            self.data_model.set_component_value(protocol_path, "None")
+                        component: str = " > ".join(protocol_path)
+                        err_msg = _(
+                            "On {component} the selected\nprotocol '{invalid_selection}' "
+                            "is not available for the selected connection Type."
+                        )
+                        err_msg = err_msg.format(component=component, invalid_selection=invalid_selection)
 
-                # Update the combobox entries using set_entries_tuple with validated selection
-                protocol_combobox.set_entries_tuple(protocol_tuples, current_selection)
+                # Keep ESC->FC Telemetry combobox width stable while repopulating choices.
+                if protocol_path in (
+                    ("ESC", "ESC->FC Telemetry", "Type"),
+                    ("ESC", "ESC->FC Telemetry", "Protocol"),
+                ):
+                    self.set_combobox_entries_preserving_width(protocol_combobox, protocol_tuples, current_selection)
+                else:
+                    protocol_combobox.set_entries_tuple(protocol_tuples, current_selection)
 
                 if err_msg:
                     show_error_message(_("Error"), err_msg)
@@ -222,6 +392,15 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 cb.bind(
                     "<<ComboboxSelected>>",
                     lambda _event: self.update_component_protocol_combobox_entries(path, cb.get_selected_key() or ""),
+                )
+
+            # When FC->ESC Connection Protocol changes on a SERIAL/CAN connection, mirror it to
+            # ESC->FC Telemetry Protocol and keep it mirrored; on PWM it stays user-selectable.
+            if path == ("ESC", "FC->ESC Connection", "Protocol"):
+                cb.bind(
+                    "<<ComboboxSelected>>",
+                    lambda _event: self._on_esc_fc_protocol_changed(cb.get_selected_key() or ""),
+                    add="+",
                 )
 
             # When battery chemistry changes, the max, low and crit voltages will change to the

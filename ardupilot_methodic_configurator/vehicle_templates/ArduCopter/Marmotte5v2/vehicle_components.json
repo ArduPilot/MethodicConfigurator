@@ -83,7 +83,7 @@
             },
             "ESC->FC Telemetry": {
                 "Type": "Main Out",
-                "Protocol": "BDShot"
+                "Protocol": "BDShotOnly"
             },
             "Notes": "Runs BDshot600 on Main out and no serial telemetry backup channel"
         },
