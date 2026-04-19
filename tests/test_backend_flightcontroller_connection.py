@@ -1518,6 +1518,41 @@ class TestFlightControllerConnectionBannerParsing:
         assert os_ver == ""
         assert index is None
 
+    def test_extract_chibios_version_handles_banner_without_trailing_space(self) -> None:
+        """
+        _extract_chibios_version_from_banner tolerates a malformed banner line with no space after the prefix.
+
+        GIVEN: Banner messages where the ChibiOS line has no space between the prefix and the version
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: An empty version string should be returned
+        AND: The index of the ChibiOS line should still be recorded
+        AND: No IndexError should be raised
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        banner_msgs = ["ArduCopter V4.5.0", "ChibiOS:"]
+
+        os_ver, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        assert os_ver == ""
+        assert index == 1
+
+    def test_extract_chibios_version_handles_banner_with_only_prefix(self) -> None:
+        """
+        _extract_chibios_version_from_banner tolerates a banner line that is exactly the ChibiOS prefix.
+
+        GIVEN: A banner line consisting only of the 'ChibiOS:' prefix with no hash at all
+        WHEN: _extract_chibios_version_from_banner is called
+        THEN: An empty version string should be returned
+        AND: No IndexError should be raised
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        banner_msgs = ["ChibiOS:"]
+
+        os_ver, index = connection._extract_chibios_version_from_banner(banner_msgs)
+
+        assert os_ver == ""
+        assert index == 0
+
     def test_extract_firmware_type_from_message_after_chibios(self) -> None:
         """
         _extract_firmware_type_from_banner extracts type from message after ChibiOS line.
