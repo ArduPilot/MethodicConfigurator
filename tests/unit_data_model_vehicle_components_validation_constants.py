@@ -21,6 +21,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     ESC_CONNECTION_DICT,
     ESC_SERIAL_SAME_PORT_PROTOCOLS,
     FC_CONNECTION_TYPE_PATHS,
+    FRAME_CLASS_DICT,
     GNSS_RECEIVER_CONNECTION,
     I2C_PORTS,
     OTHER_PORTS,
@@ -33,6 +34,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     SERIAL_PROTOCOLS_DICT,
     SPI_PORTS,
     get_connection_type_tuples_with_labels,
+    get_frame_class_sub_dict,
 )
 
 
@@ -556,3 +558,83 @@ class TestValidationConstants:
                 assert protocol in vehicle_protocols, (
                     f"Protocol '{protocol}' from ESC_SERIAL_SAME_PORT_PROTOCOLS not found in ESC_CONNECTION_DICT['{vtype}']"
                 )
+
+
+class TestFrameClassDict:
+    """Tests for FRAME_CLASS_DICT and get_frame_class_sub_dict."""
+
+    def test_frame_class_dict_structure(self) -> None:
+        """FRAME_CLASS_DICT is keyed by vehicle type with int->str sub-dicts."""
+        assert isinstance(FRAME_CLASS_DICT, dict)
+        assert len(FRAME_CLASS_DICT) > 0
+
+        for vtype, sub_dict in FRAME_CLASS_DICT.items():
+            assert isinstance(vtype, str), f"Vehicle type key '{vtype}' is not a string"
+            assert isinstance(sub_dict, dict), f"Sub-dict for '{vtype}' is not a dict"
+            for key, value in sub_dict.items():
+                assert isinstance(key, int), f"Frame class key '{key}' in '{vtype}' is not an int"
+                assert isinstance(value, str), f"Frame class value '{value}' in '{vtype}' is not a string"
+                assert value.strip(), f"Frame class name for key {key} in '{vtype}' is empty"
+
+    def test_frame_class_dict_contains_required_vehicle_types(self) -> None:
+        """FRAME_CLASS_DICT contains entries for all expected vehicle types."""
+        for required in ("ArduCopter", "Heli", "Rover", "ArduPlane"):
+            assert required in FRAME_CLASS_DICT, f"Missing vehicle type '{required}' in FRAME_CLASS_DICT"
+
+    def test_arducopter_frame_class_values(self) -> None:
+        """ArduCopter sub-dict contains the standard multirotor frame classes."""
+        sub = FRAME_CLASS_DICT["ArduCopter"]
+        assert sub[1] == "Quad"
+        assert sub[2] == "Hexa"
+        assert sub[3] == "Octa"
+        assert sub[6] == "Heli"
+        assert sub[11] == "Heli_Dual"
+        assert sub[13] == "HeliQuad"
+
+    def test_heli_frame_class_values(self) -> None:
+        """Heli sub-dict contains only helicopter-relevant frame classes."""
+        sub = FRAME_CLASS_DICT["Heli"]
+        assert sub[6] == "Heli"
+        assert sub[11] == "Heli_Dual"
+        assert sub[13] == "HeliQuad"
+        # Non-heli classes must not appear
+        assert 1 not in sub, "Quad should not be in Heli FRAME_CLASS_DICT"
+        assert 2 not in sub, "Hexa should not be in Heli FRAME_CLASS_DICT"
+
+    def test_rover_frame_class_values(self) -> None:
+        """Rover sub-dict uses Rover-specific frame class values."""
+        sub = FRAME_CLASS_DICT["Rover"]
+        assert sub[1] == "Rover"
+        assert sub[2] == "Boat"
+        assert sub[3] == "BalanceBot"
+        # Multirotor classes must not appear in Rover
+        assert 4 not in sub, "OctaQuad should not be in Rover FRAME_CLASS_DICT"
+
+    def test_arduplane_frame_class_is_empty(self) -> None:
+        """ArduPlane has no FRAME_CLASS parameter, so its sub-dict must be empty."""
+        assert FRAME_CLASS_DICT["ArduPlane"] == {}
+
+    def test_get_frame_class_sub_dict_known_vehicle_types(self) -> None:
+        """get_frame_class_sub_dict returns the correct sub-dict for known vehicle types."""
+        assert get_frame_class_sub_dict("ArduCopter") is FRAME_CLASS_DICT["ArduCopter"]
+        assert get_frame_class_sub_dict("Heli") is FRAME_CLASS_DICT["Heli"]
+        assert get_frame_class_sub_dict("Rover") is FRAME_CLASS_DICT["Rover"]
+        assert get_frame_class_sub_dict("ArduPlane") is FRAME_CLASS_DICT["ArduPlane"]
+
+    def test_get_frame_class_sub_dict_unknown_type_falls_back_to_arducopter(self) -> None:
+        """get_frame_class_sub_dict falls back to ArduCopter for unknown vehicle types."""
+        result = get_frame_class_sub_dict("UnknownVehicle")
+        assert result is FRAME_CLASS_DICT["ArduCopter"]
+
+    def test_get_frame_class_sub_dict_empty_string_falls_back_to_arducopter(self) -> None:
+        """get_frame_class_sub_dict falls back to ArduCopter when fw_type is empty."""
+        result = get_frame_class_sub_dict("")
+        assert result is FRAME_CLASS_DICT["ArduCopter"]
+
+    def test_frame_class_values_are_unique_per_vehicle_type(self) -> None:
+        """Within each vehicle type, frame class names must be unique."""
+        for vtype, sub_dict in FRAME_CLASS_DICT.items():
+            if not sub_dict:
+                continue
+            names = list(sub_dict.values())
+            assert len(names) == len(set(names)), f"Duplicate frame class names found in '{vtype}'"
