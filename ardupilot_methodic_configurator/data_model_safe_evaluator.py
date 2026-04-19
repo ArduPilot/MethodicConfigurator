@@ -13,9 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from math import log
 from types import MappingProxyType
-from typing import Union
+from typing import Union, cast
 
-from simpleeval import simple_eval
+from simpleeval import InvalidExpression, simple_eval
 
 SAFE_FUNCTIONS = MappingProxyType(
     {
@@ -27,6 +27,19 @@ SAFE_FUNCTIONS = MappingProxyType(
         "log": log,
     }
 )
+
+
+class ConfigurationStepEvalError(Exception):
+    """
+    Raised when evaluating a configuration step expression fails.
+
+    Wraps the full exception surface of :func:`safe_evaluate` so callers
+    can catch a single domain-level exception instead of enumerating
+    every error type that simpleeval, Python arithmetic, or dict
+    lookups inside the evaluated expression can raise. The original
+    exception is preserved as ``__cause__`` and its class name is
+    included in the string form for diagnostics.
+    """
 
 
 def safe_evaluate(expression: str, variables: dict) -> Union[int, float, str]:
@@ -46,8 +59,25 @@ def safe_evaluate(expression: str, variables: dict) -> Union[int, float, str]:
         The result of evaluating the expression.
 
     Raises:
-        InvalidExpression: If the expression uses a disallowed feature,
-            calls an unknown function, or references an undefined variable.
+        ConfigurationStepEvalError: If the expression is malformed,
+            references an undefined name or missing dict key, performs a
+            disallowed operation, or triggers a runtime error
+            (ZeroDivisionError, OverflowError, ValueError, TypeError,
+            AttributeError) while evaluating. The original exception is
+            attached as ``__cause__``.
 
     """
-    return simple_eval(expression, names=variables, functions=SAFE_FUNCTIONS)
+    try:
+        return cast("Union[int, float, str]", simple_eval(expression, names=variables, functions=SAFE_FUNCTIONS))
+    except (
+        InvalidExpression,
+        SyntaxError,
+        KeyError,
+        TypeError,
+        AttributeError,
+        ZeroDivisionError,
+        OverflowError,
+        ValueError,
+    ) as e:
+        msg = f"{type(e).__name__}: {e}"
+        raise ConfigurationStepEvalError(msg) from e

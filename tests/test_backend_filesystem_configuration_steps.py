@@ -99,7 +99,27 @@ class TestConfigurationSteps(unittest.TestCase):
         file_info = {"forced_parameters": {"PARAM1": {"New Value": "invalid_expression", "Change Reason": "Test reason"}}}
         variables: dict[str, dict] = {"doc_dict": {"PARAM1": {"values": {10: "value"}}}}
         result = self.config_steps.compute_parameters("test_file", file_info, "forced", variables)
-        assert "could not be computed" in result
+        assert "could not be evaluated" in result
+        assert "NameNotDefined" in result
+
+    def test_compute_parameters_with_undefined_fc_parameter_key(self) -> None:
+        """A forced expression that subscripts a missing fc_parameters key is reported cleanly."""
+        file_info = {
+            "forced_parameters": {"PARAM1": {"New Value": "fc_parameters['DOES_NOT_EXIST'] * 2", "Change Reason": "Test"}}
+        }
+        variables: dict[str, dict] = {"doc_dict": {"PARAM1": {"values": {}}}, "fc_parameters": {"OTHER": 1.0}}
+        result = self.config_steps.compute_parameters("test_file", file_info, "forced", variables)
+        assert "could not be evaluated" in result
+        assert "KeyError" in result
+        assert "DOES_NOT_EXIST" in result
+
+    def test_compute_parameters_with_type_error_in_expression(self) -> None:
+        """A forced expression that mixes incompatible operand types is reported cleanly."""
+        file_info = {"forced_parameters": {"PARAM1": {"New Value": "'abc' + 1", "Change Reason": "Test"}}}
+        variables: dict[str, dict] = {"doc_dict": {"PARAM1": {"values": {}}}}
+        result = self.config_steps.compute_parameters("test_file", file_info, "forced", variables)
+        assert "could not be evaluated" in result
+        assert "TypeError" in result
 
     def test_compute_parameters_with_missing_doc_dict(self) -> None:
         file_info = {"forced_parameters": {"PARAM1": {"New Value": "10", "Change Reason": "Test reason"}}}

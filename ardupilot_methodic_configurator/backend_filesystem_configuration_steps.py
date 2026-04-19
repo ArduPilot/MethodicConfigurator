@@ -21,11 +21,10 @@ from typing import Optional, TypedDict
 # from logging import debug as logging_debug
 from jsonschema import validate as json_validate
 from jsonschema.exceptions import ValidationError
-from simpleeval import InvalidExpression
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.data_model_safe_evaluator import safe_evaluate
+from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError, safe_evaluate
 
 
 class PhaseData(TypedDict, total=False):
@@ -204,13 +203,15 @@ class ConfigurationSteps:
 
                 try:
                     result = safe_evaluate(str(parameter_info["New Value"]), variables)
-                except (ZeroDivisionError, ValueError):
-                    # Handle math errors like:
-                    # - ZeroDivisionError: division by zero or 0.0 raised to negative power
-                    # - ValueError: math domain error (e.g., Diameter_inches**-0.838 when Diameter_inches is 0)
+                except ConfigurationStepEvalError as _eval_err:
+                    # safe_evaluate wraps the full exception surface (malformed
+                    # expression, undefined name, missing dict key, math error,
+                    # type mismatch, overflow) into a single domain exception so
+                    # the error can be surfaced here with useful diagnostics
+                    # without crashing the configuration-step load.
                     error_msg = _(
                         "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-                        "parameter '{parameter}' evaluation resulted in math error: {math_error}"
+                        "parameter '{parameter}' could not be evaluated: {_eval_err}"
                     )
                     error_msg = error_msg.format(**locals())
                     log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
@@ -248,7 +249,7 @@ class ConfigurationSteps:
                     destination[filename] = ParDict()
                 change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
                 destination[filename][parameter] = Par(float(result), change_reason)
-            except (SyntaxError, NameError, KeyError, StopIteration, InvalidExpression) as _e:
+            except (SyntaxError, NameError, KeyError, StopIteration) as _e:
                 error_msg = _(
                     "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
                     "parameter '{parameter}' could not be computed: {_e}"
