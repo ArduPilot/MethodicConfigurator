@@ -404,7 +404,7 @@ msgstr ""
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be evaluated: {_eval_err}"
-msgstr ""
+msgstr "在文件 '{self.configuration_steps_filename}' 中：'{filename}' 的 {parameter_type} 参数 '{parameter}' 无法评估：{_eval_err}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:231
 msgid ""
