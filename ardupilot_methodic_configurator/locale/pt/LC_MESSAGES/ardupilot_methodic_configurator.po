@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-04-17 04:25+0000\n"
+"POT-Creation-Date: 2026-04-20 13:45+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -325,7 +325,9 @@ msgstr ""
 msgid ""
 "Cannot restart configuration: 00_default.param is the only available file "
 "and is not editable."
-msgstr "Não é possível reiniciar a configuração: 00_default.param é o único ficheiro disponível e não é editável."
+msgstr ""
+"Não é possível reiniciar a configuração: 00_default.param é o único ficheiro "
+"disponível e não é editável."
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:1084
 msgid "The type of the vehicle. Default is ArduCopter"
@@ -367,7 +369,7 @@ msgstr ""
 "Guardar o componente do veículo nos modelos do sistema. Apenas para "
 "programadores que sabem o que estão a fazer. Por defeito é %(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:88
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
 msgid ""
 "Configuration steps '%s' loaded from %s (overwriting default configuration "
 "steps)."
@@ -375,27 +377,27 @@ msgstr ""
 "Passos de configuração '%s' carregados de %s (substituindo passos de "
 "configuração padrão)."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:94
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:93
 msgid "Configuration steps '%s' loaded from %s."
 msgstr "Passos de configuração '%s' carregados de %s."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:100
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
 msgid "Error in file '%s': %s"
 msgstr "Erro no ficheiro '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:110
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:109
 msgid "Schema file '%s' not found"
 msgstr "Ficheiro de esquema '%s' não encontrado"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:112
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:111
 msgid "Configuration steps validation error: %s"
 msgstr "Erro de validação dos passos de configuração: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:114
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:113
 msgid "Error in schema file '%s': %s"
 msgstr "Erro no ficheiro de esquema '%s': %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:122
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:121
 msgid ""
 "No configuration steps documentation and no forced and derived parameters "
 "will be available."
@@ -403,22 +405,22 @@ msgstr ""
 "Nenhuma documentação de passos de configuração disponível e nenhum parâmetro "
 "forçado ou derivado estará disponível."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:127
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:126
 msgid "No configuration phases documentation will be available."
 msgstr "Não estará disponível documentação sobre as fases de configuração."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:140
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:139
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
 msgstr "Erro no ficheiro '%s': '%s' %s parâmetro não é um dicionário"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:149
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:148
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
 msgstr ""
 "Erro no ficheiro '%s': '%s' %s parâmetro '%s' atributo 'Novo Valor' não "
 "encontrado."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:157
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:156
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not "
 "found."
@@ -426,7 +428,7 @@ msgstr ""
 "Erro no ficheiro '%s': '%s' %s parâmetro '%s' atributo 'Razão da Mudança' "
 "não encontrado."
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:197
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:196
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
@@ -436,15 +438,13 @@ msgstr ""
 "'{parameter}' {parameter_type} não pôde ser computado: 'fc_parameters' não "
 "encontrado, um FC está conectado?"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:211
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:212
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-"parameter '{parameter}' evaluation resulted in math error: {math_error}"
+"parameter '{parameter}' could not be evaluated: {_eval_err}"
 msgstr ""
-"No ficheiro '{self.configuration_steps_filename}': '{filename}' parâmetro "
-"{parameter_type} '{parameter}' resultou num erro matemático: {math_error}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:230
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:231
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
@@ -454,7 +454,7 @@ msgstr ""
 "{parameter_type} '{parameter}' não pôde ser calculado, pois seus metadados "
 "de documentação não estão disponíveis"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:239
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:240
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' evaluation produced a non-finite value: {result}"
@@ -463,7 +463,7 @@ msgstr ""
 "'{parameter}' do tipo {parameter_type} em '{filename}' produziu um valor não "
 "finito: {result}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:252
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:253
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
@@ -471,8 +471,8 @@ msgstr ""
 "No ficheiro '{self.configuration_steps_filename}': '{filename}' parâmetro "
 "'{parameter}' {parameter_type} não pôde ser computado: {_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:273
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:287
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:274
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:288
 msgid ""
 "File '{self.configuration_steps_filename}' not found. No intermediate "
 "parameter configuration steps available"
@@ -480,8 +480,8 @@ msgstr ""
 "Arquivo '{self.configuration_steps_filename}' não encontrado. Nenhum passo "
 "de configuração de parâmetros intermediários disponível"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:279
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:292
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:280
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:293
 msgid ""
 "No documentation available for {selected_file} in the {self."
 "configuration_steps_filename} file"
@@ -981,12 +981,12 @@ msgstr ""
 "Depois termine a sessão e volte a iniciar sessão para que as alterações "
 "tenham efeito."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:640
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:641
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr ""
 "Incompatibilidade de versão ChibiOS: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:706
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:707
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -996,27 +996,27 @@ msgstr ""
 "Apenas versões do ArduPilot mais recentes que 4.3.8 são suportadas.\n"
 "Certifique-se de que o parâmetro SERIAL0_PROTOCOL está definido como 2"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:724
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:725
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "Disparidade de tipo de FC: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:834
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:835
 msgid "Will connect to %s"
 msgstr "Irá ligar a %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:836
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:837
 msgid "Will connect to %s @ %u baud"
 msgstr "Irá conectar-se a %s @ %u baud"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:846
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:847
 msgid "Waiting for MAVLink heartbeats..."
 msgstr "A aguardar heartbeats MAVLink..."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:864
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:865
 msgid "Connection failed: %s"
 msgstr "Conexão falhou: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:865
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:866
 msgid "Failed to connect after %d attempts."
 msgstr "Falha ao conectar após %d tentativas."
 
@@ -5620,16 +5620,16 @@ msgstr "Taxa de Transmissão Inválida"
 msgid "AMC {version} - Flight controller connection"
 msgstr "AMC {version} - Ligação ao controlador de voo"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:325
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:326
 msgid "No ArduPilot flight controller was auto-detected detected yet."
 msgstr ""
 "Nenhum controlador de voo ArduPilot foi detectado automaticamente ainda."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:339
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:340
 msgid "Auto connection"
 msgstr "Conexão automática"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:346
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:347
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5639,19 +5639,19 @@ msgstr ""
 "espere 7 segundos para que arranque e\n"
 "pressione o botão Conexão automática abaixo para se ligar"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:353
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:354
 msgid "Auto-connect"
 msgstr "Conexão automática"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:355
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:356
 msgid "Auto-connect to a 'Mavlink'-talking serial device"
 msgstr "Conectar automaticamente a um dispositivo serial que fala 'Mavlink'"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:358
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:359
 msgid "Manual connection"
 msgstr "Conexão manual"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:366
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:367
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5661,15 +5661,15 @@ msgstr ""
 "espere 7 segundos para que arranque e\n"
 "selecione a ligação manualmente ou adicione uma nova"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:385
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:386
 msgid "No connection"
 msgstr "Nenhuma conexão"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:397
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:398
 msgid "Skip FC connection, just edit the .param files on disk"
 msgstr "Sem a conexão FC, apenas edite os ficheiros .param no disco"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:403
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:404
 msgid ""
 "No parameter values will be fetched from the FC, default parameter values "
 "from disk will be used\n"
@@ -5681,7 +5681,7 @@ msgstr ""
 "(se o ficheiro '00_default.param' estiver presente) e você pode apenas "
 "editar os ficheiros intermediários '.param' no disco"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:422
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:425
 msgid ""
 "Will proceed without FC connection. FC parameters will not be downloaded nor "
 "uploaded"
@@ -5689,12 +5689,12 @@ msgstr ""
 "Prosseguirá sem conexão FC. Os parâmetros do FC não serão baixados nem "
 "enviados"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:423
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:426
 msgid "Only the intermediate '.param' files on the PC disk will be edited"
 msgstr ""
 "Apenas os ficheiros intermediários '.param' no disco do PC serão editados"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:442
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:445
 msgid ""
 "This main is for testing and development only. Usually, the "
 "ConnectionSelectionWidgets is called from another script"
@@ -5702,7 +5702,7 @@ msgstr ""
 "Este main é apenas para teste e desenvolvimento. Normalmente, o "
 "ConnectionSelectionWidgets é chamado de outro script"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:458
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:461
 msgid ""
 "This main is for testing and development only, usually the "
 "ConnectionSelectionWindow is called from another script"
@@ -7926,6 +7926,14 @@ msgstr "Versão ou revisão do hardware"
 #: ardupilot_methodic_configurator/vehicle_components.py:132
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid ""
+#~ "In file '{self.configuration_steps_filename}': "
+#~ "'{filename}' {parameter_type} parameter '{parameter}' evaluation resulted "
+#~ "in math error: {math_error}"
+#~ msgstr ""
+#~ "No ficheiro '{self.configuration_steps_filename}': '{filename}' parâmetro "
+#~ "{parameter_type} '{parameter}' resultou num erro matemático: {math_error}"
 
 #~ msgid "Volt per cell value for %s is zero or invalid: %s"
 #~ msgstr "Valor de voltagem por célula para %s é zero ou inválido: %s"

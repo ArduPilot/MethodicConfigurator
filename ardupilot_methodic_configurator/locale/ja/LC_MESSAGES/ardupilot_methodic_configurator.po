@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-04-17 04:25+0000\n"
+"POT-Creation-Date: 2026-04-20 13:45+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -321,7 +321,9 @@ msgstr ""
 msgid ""
 "Cannot restart configuration: 00_default.param is the only available file "
 "and is not editable."
-msgstr "構成を再起動できません: 00_default.paramは利用可能な唯一のファイルであり、編集できません。"
+msgstr ""
+"構成を再起動できません: 00_default.paramは利用可能な唯一のファイルであり、編"
+"集できません。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:1084
 msgid "The type of the vehicle. Default is ArduCopter"
@@ -362,55 +364,55 @@ msgstr ""
 "車両コンポーネントをシステムテンプレートに保存します。これは何をしているか分"
 "かっている開発者のみ使用してください。デフォルトは %(default)s です"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:88
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
 msgid ""
 "Configuration steps '%s' loaded from %s (overwriting default configuration "
 "steps)."
 msgstr ""
 "設定手順'%s'を%sから読み込みました（デフォルトの設定手順を上書きします）。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:94
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:93
 msgid "Configuration steps '%s' loaded from %s."
 msgstr "設定手順'%s'を%sから読み込みました。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:100
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
 msgid "Error in file '%s': %s"
 msgstr "ファイル'%s'にエラーがあります: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:110
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:109
 msgid "Schema file '%s' not found"
 msgstr "スキーマファイル'%s'が見つかりません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:112
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:111
 msgid "Configuration steps validation error: %s"
 msgstr "設定手順の検証エラー: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:114
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:113
 msgid "Error in schema file '%s': %s"
 msgstr "スキーマファイル'%s'にエラーがあります: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:122
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:121
 msgid ""
 "No configuration steps documentation and no forced and derived parameters "
 "will be available."
 msgstr "設定手順のドキュメントと強制および派生パラメータは利用できません。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:127
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:126
 msgid "No configuration phases documentation will be available."
 msgstr "設定フェーズのドキュメントは利用できません。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:140
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:139
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
 msgstr "ファイル'%s'にエラー: '%s' %sパラメータが辞書ではありません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:149
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:148
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
 msgstr ""
 "ファイル'%s'にエラー: '%s' %sパラメータ'%s'の'New Value'属性が見つかりませ"
 "ん。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:157
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:156
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not "
 "found."
@@ -418,7 +420,7 @@ msgstr ""
 "ファイル'%s'にエラー: '%s' %sパラメータ'%s'の'Change Reason'属性が見つかりま"
 "せん。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:197
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:196
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
@@ -428,16 +430,13 @@ msgstr ""
 "'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした: "
 "'fc_parameters'が見つかりません。FCは接続されていますか？"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:211
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:212
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-"parameter '{parameter}' evaluation resulted in math error: {math_error}"
+"parameter '{parameter}' could not be evaluated: {_eval_err}"
 msgstr ""
-"ファイル '{self.configuration_steps_filename}' 内: "
-"'{filename}' {parameter_type} パラメータ '{parameter}' の評価で数学エラーが発"
-"生しました: {math_error}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:230
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:231
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
@@ -447,7 +446,7 @@ msgstr ""
 "'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした。"
 "利用可能なドキュメントメタデータがありません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:239
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:240
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' evaluation produced a non-finite value: {result}"
@@ -456,7 +455,7 @@ msgstr ""
 "{parameter_type}パラメータ「{parameter}」の評価で非有限値が生成されました: "
 "{result}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:252
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:253
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
@@ -465,8 +464,8 @@ msgstr ""
 "'{filename}' {parameter_type}パラメータ'{parameter}'を計算できませんでした: "
 "{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:273
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:287
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:274
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:288
 msgid ""
 "File '{self.configuration_steps_filename}' not found. No intermediate "
 "parameter configuration steps available"
@@ -474,8 +473,8 @@ msgstr ""
 "ファイル'{self.configuration_steps_filename}'が見つかりません。中間パラメータ"
 "設定手順は利用できません"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:279
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:292
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:280
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:293
 msgid ""
 "No documentation available for {selected_file} in the {self."
 "configuration_steps_filename} file"
@@ -964,11 +963,11 @@ msgstr ""
 "    sudo adduser $USER dialout\n"
 "その後、ログアウトして再度ログインすると変更が有効になります。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:640
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:641
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr "ChibiOSバージョンの不一致: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:706
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:707
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -979,27 +978,27 @@ msgstr ""
 "ArduPilotバージョン4.3.8以降のみがサポートされています。\n"
 "パラメータSERIAL0_PROTOCOLが2に設定されていることを確認してください"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:724
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:725
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "FCファームウェアタイプの不一致: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:834
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:835
 msgid "Will connect to %s"
 msgstr "%s に接続します"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:836
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:837
 msgid "Will connect to %s @ %u baud"
 msgstr "%s @ %u ボーに接続します"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:846
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:847
 msgid "Waiting for MAVLink heartbeats..."
 msgstr "MAVLink ハートビートを待機中..."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:864
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:865
 msgid "Connection failed: %s"
 msgstr "接続に失敗しました: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:865
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:866
 msgid "Failed to connect after %d attempts."
 msgstr "%d回試行後も接続に失敗しました。"
 
@@ -5446,15 +5445,15 @@ msgstr "無効なボーレート"
 msgid "AMC {version} - Flight controller connection"
 msgstr "AMC {version} - フライトコントローラー接続"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:325
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:326
 msgid "No ArduPilot flight controller was auto-detected detected yet."
 msgstr "ArduPilotフライトコントローラがまだ自動検出されていません。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:339
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:340
 msgid "Auto connection"
 msgstr "自動接続"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:346
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:347
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5464,19 +5463,19 @@ msgstr ""
 "完全に起動するまで7秒待ってから\n"
 "下の自動接続ボタンを押して接続してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:353
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:354
 msgid "Auto-connect"
 msgstr "自動接続"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:355
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:356
 msgid "Auto-connect to a 'Mavlink'-talking serial device"
 msgstr "'Mavlink'対応のシリアルデバイスに自動接続する"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:358
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:359
 msgid "Manual connection"
 msgstr "手動接続"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:366
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:367
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5486,15 +5485,15 @@ msgstr ""
 "完全に起動するまで7秒待ってから\n"
 "フライトコントローラーの接続を手動で選択するか、新しい接続を追加してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:385
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:386
 msgid "No connection"
 msgstr "接続なし"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:397
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:398
 msgid "Skip FC connection, just edit the .param files on disk"
 msgstr "FC接続をスキップし、ディスク上の.paramファイルのみ編集する"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:403
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:404
 msgid ""
 "No parameter values will be fetched from the FC, default parameter values "
 "from disk will be used\n"
@@ -5506,18 +5505,18 @@ msgstr ""
 "('00_default.param'ファイルが存在する場合)。ディスク上の中間'.param'ファイル"
 "のみを編集します"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:422
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:425
 msgid ""
 "Will proceed without FC connection. FC parameters will not be downloaded nor "
 "uploaded"
 msgstr ""
 "FC接続なしで続行します。FCパラメータはダウンロードもアップロードもされません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:423
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:426
 msgid "Only the intermediate '.param' files on the PC disk will be edited"
 msgstr "PC上の中間'.param'ファイルのみが編集されます"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:442
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:445
 msgid ""
 "This main is for testing and development only. Usually, the "
 "ConnectionSelectionWidgets is called from another script"
@@ -5525,7 +5524,7 @@ msgstr ""
 "このメインはテストと開発専用です。通常、ConnectionSelectionWidgetsは別のスク"
 "リプトから呼び出されます"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:458
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:461
 msgid ""
 "This main is for testing and development only, usually the "
 "ConnectionSelectionWindow is called from another script"
@@ -7701,6 +7700,15 @@ msgstr "ハードウェアのバージョンまたはリビジョン"
 #: ardupilot_methodic_configurator/vehicle_components.py:132
 msgid "Web link to the product page or documentation"
 msgstr "製品ページまたはドキュメントへのウェブリンク"
+
+#~ msgid ""
+#~ "In file '{self.configuration_steps_filename}': "
+#~ "'{filename}' {parameter_type} parameter '{parameter}' evaluation resulted "
+#~ "in math error: {math_error}"
+#~ msgstr ""
+#~ "ファイル '{self.configuration_steps_filename}' 内: "
+#~ "'{filename}' {parameter_type} パラメータ '{parameter}' の評価で数学エラー"
+#~ "が発生しました: {math_error}"
 
 #~ msgid "Volt per cell value for %s is zero or invalid: %s"
 #~ msgstr "%s のセル当たり電圧値がゼロまたは無効です: %s"
