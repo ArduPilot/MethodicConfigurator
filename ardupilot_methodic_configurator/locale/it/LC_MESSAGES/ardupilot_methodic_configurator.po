@@ -444,7 +444,7 @@ msgstr ""
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be evaluated: {_eval_err}"
-msgstr ""
+msgstr "Nel file '{self.configuration_steps_filename}': il parametro {parameter_type} '{parameter}' in '{filename}' non può essere valutato: {_eval_err}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:231
 msgid ""
@@ -5368,7 +5368,7 @@ msgid ""
 "On {component} the selected\n"
 "protocol '{current_selection}' is not available for the selected connection "
 "Type."
-msgstr ""
+msgstr "Su {component} il protocollo selezionato\n'{current_selection}' non è disponibile per il tipo di connessione selezionato."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:288
 msgid ""
