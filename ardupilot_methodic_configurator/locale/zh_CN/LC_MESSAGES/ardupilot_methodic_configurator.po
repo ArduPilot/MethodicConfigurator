@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-04-17 04:25+0000\n"
+"POT-Creation-Date: 2026-04-21 15:26+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -99,8 +99,8 @@ msgstr "将参数重置为默认值失败: %(error)s"
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:144
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:147
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:148
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:85
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:89
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:86
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:90
 msgid "Unknown"
 msgstr "未知"
 
@@ -340,58 +340,58 @@ msgstr ""
 "将车辆组件保存到系统模板中。仅供了解其操作的软件开发人员使用。默认值为 "
 "%(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:88
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
 msgid ""
 "Configuration steps '%s' loaded from %s (overwriting default configuration "
 "steps)."
 msgstr "配置步骤 '%s' 已恢复, 记录来自于 %s (替代默认步骤)"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:94
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:93
 msgid "Configuration steps '%s' loaded from %s."
 msgstr "配置步骤 '%s' 已恢复, 记录来自于 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:100
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
 msgid "Error in file '%s': %s"
 msgstr "文件 '%s' 中有错误: %s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:110
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:109
 msgid "Schema file '%s' not found"
 msgstr "未找到模式文件'%s'"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:112
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:111
 msgid "Configuration steps validation error: %s"
 msgstr "配置步骤验证错误：%s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:114
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:113
 msgid "Error in schema file '%s': %s"
 msgstr "模式文件'%s'中的错误：%s"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:122
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:121
 msgid ""
 "No configuration steps documentation and no forced and derived parameters "
 "will be available."
 msgstr "没有相关步骤的文档, 以及没有可用的衍生参数。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:127
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:126
 msgid "No configuration phases documentation will be available."
 msgstr "将没有可用的配置阶段文档。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:140
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:139
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
 msgstr "文件 '%s' 中有错误: '%s' %s 不是一个有效目录"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:149
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:148
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
 msgstr "文件 '%s' 中有错误: '%s' %s 参数 '%s' 未找到 '新参数' 属性。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:157
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:156
 msgid ""
 "Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not "
 "found."
 msgstr "文件 '%s' 中有错误: '%s' %s 参数 '%s' 未找到 '修改原因' 属性。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:197
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:196
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
@@ -400,15 +400,13 @@ msgstr ""
 "在文件 '{self.configuration_steps_filename}'：'{filename}' {parameter_type} "
 "参数 '{parameter}' 无法计算：未找到 'fc_parameters'，是否已连接飞控？"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:211
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:212
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-"parameter '{parameter}' evaluation resulted in math error: {math_error}"
+"parameter '{parameter}' could not be evaluated: {_eval_err}"
 msgstr ""
-"在文件 '{self.configuration_steps_filename}'：'{filename}' {parameter_type} "
-"参数 '{parameter}' 计算时出现数学错误: {math_error}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:230
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:231
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
@@ -417,7 +415,7 @@ msgstr ""
 "在文件'{self.configuration_steps_filename}'中：'{filename}' 的 "
 "{parameter_type} 参数 '{parameter}' 无法计算，因为没有可用的文档元数据"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:239
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:240
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' evaluation produced a non-finite value: {result}"
@@ -425,7 +423,7 @@ msgstr ""
 "在文件 '{self.configuration_steps_filename}' 中：'{filename}' 的 "
 "{parameter_type} 参数 '{parameter}' 的计算产生了非有限值：{result}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:252
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:253
 msgid ""
 "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {_e}"
@@ -433,16 +431,16 @@ msgstr ""
 "在文件 '{self.configuration_steps_filename}'：'{filename}' {parameter_type} "
 "参数 '{parameter}' 无法计算：{_e}"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:273
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:287
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:274
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:288
 msgid ""
 "File '{self.configuration_steps_filename}' not found. No intermediate "
 "parameter configuration steps available"
 msgstr ""
 "文件 '{self.configuration_steps_filename}' 未找到。没有可用的模版配置。"
 
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:279
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:292
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:280
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:293
 msgid ""
 "No documentation available for {selected_file} in the {self."
 "configuration_steps_filename} file"
@@ -907,11 +905,11 @@ msgstr ""
 "    sudo adduser $USER dialout\n"
 "然后注销并重新登录以使更改生效。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:640
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:641
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr "ChibiOS版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:706
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:707
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -924,27 +922,27 @@ msgstr ""
 "仅支持 4.3.8 版本之后的 ArduPilot。\n"
 "请确保参数 SERIAL0_PROTOCOL 设置为 2。"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:724
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:725
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "FC 固件类型不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:834
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:835
 msgid "Will connect to %s"
 msgstr "将连接到 %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:836
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:837
 msgid "Will connect to %s @ %u baud"
 msgstr "将连接到 %s @ %u 波特率"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:846
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:847
 msgid "Waiting for MAVLink heartbeats..."
 msgstr "等待 MAVLink 心跳..."
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:864
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:865
 msgid "Connection failed: %s"
 msgstr "连接失败: %s"
 
-#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:865
+#: ardupilot_methodic_configurator/backend_flightcontroller_connection.py:866
 msgid "Failed to connect after %d attempts."
 msgstr "重试 %d 次后依旧连接失败。"
 
@@ -3745,12 +3743,13 @@ msgstr "没有FC参数缺失或与AMC参数文件不同"
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:234
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:241
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:408
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:134
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:279
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:306
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:510
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:534
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:559
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:224
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:304
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:458
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:485
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:527
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:551
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:576
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:176
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:594
@@ -4212,126 +4211,126 @@ msgstr ""
 "\n"
 "这是可选的，可以留空"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:102
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:103
 msgid "Length of values %u and fallbacks %u differ for %s"
 msgstr "%u 值的长度和回退值 %u 与 %s 不一致"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:105
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:364
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:106
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:448
 msgid "No values found for %s in the metadata"
 msgstr "元数据中未找到 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:144
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:145
 msgid "Invalid bit position %s in %s metadata"
 msgstr "%s 元数据中的无效位位置 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:154
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:155
 msgid "Protocol %s does not match %s in %s metadata"
 msgstr "协议 %s 与 %s 不匹配, 后者源自 %s 元数据"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:158
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:159
 msgid ""
 "Protocol %s (%s) not found in %s code dictionary (firmware may be newer)"
 msgstr "在 %s 代码字典中找不到协议 %s (%s)(固件可能较新)"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:202
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:203
 msgid "Invalid non-integer value for %s: %s"
 msgstr "%s 的无效非整数值: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:235
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:236
 msgid "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"
 msgstr "无效的 CAN_Dx_PROTOCOL %s 和 CAN_Px_DRIVER %s 对于 GNSS 接收器"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:259
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:260
 msgid "Invalid non-integer value for RC_PROTOCOLS %s"
 msgstr "RC_PROTOCOLS 的无效非整数值 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:280
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:281
 msgid ""
 "RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active "
 "protocol."
 msgstr "RC_PROTOCOLS启用了多个协议 (%d)。无法确定活动协议。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:299
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:300
 msgid "Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}"
 msgstr "{serial}_PROTOCOL {serial_protocol_nr} 的非整数值无效。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:359
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:360
 msgid "Invalid non-integer value for MOT_PWM_TYPE %s"
 msgstr "MOT_PWM_TYPE 的无效非整数值 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:408
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:409
 msgid "BATT_MONITOR value %s not found in BATT_MONITOR_CONNECTION"
 msgstr "在 BATT_MONITOR_CONNECTION 中未找到 BATT_MONITOR 值 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:427
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:428
 msgid "BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus"
 msgstr "BATT_I2C_BUS 值 %d 超出范围 (0-%d)，将使用第一个总线"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:433
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:434
 msgid "Invalid BATT_I2C_BUS value, defaulting to first bus"
 msgstr "无效的 BATT_I2C_BUS 值，将使用第一个总线"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:448
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:449
 msgid "Error processing BATT_MONITOR parameter: %s"
 msgstr "处理 BATT_MONITOR 参数时出错: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:450
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:451
 msgid "BATT_MONITOR parameter not found in fc_parameters"
 msgstr "在 fc_parameters 中未找到 BATT_MONITOR 参数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:482
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:483
 msgid "BATT_CAPACITY is zero or negative: %s"
 msgstr "BATT_CAPACITY 为零或负数: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:484
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:485
 msgid "Error processing BATT_CAPACITY parameter: %s"
 msgstr "处理BATT_CAPACITY参数时出错: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:486
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:487
 msgid "BATT_CAPACITY parameter not found in fc_parameters"
 msgstr "在 fc_parameters 中未找到 BATT_CAPACITY 参数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:505
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:506
 msgid "Invalid voltage type %s for battery voltage import"
 msgstr "电池电压导入时电压类型 %s 无效"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:512
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:513
 msgid ""
 "Calculated  %s voltage %.2f V is out of expected range for %s chemistry "
 "(%.2f - %.2f V)"
 msgstr "计算得到的 %s 电压 %.2f V 超出 %s 化学成分的预期范围 (%.2f - %.2f V)"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:520
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:621
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:521
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:622
 msgid "Error processing %s parameter: %s"
 msgstr "处理 %s 参数时出错: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:572
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:573
 msgid ""
 "Current chemistry %s does not have valid volt per cell for %s, ignoring "
 "current chemistry"
 msgstr "当前化学成分 %s 没有针对 %s 的有效单体电压，忽略当前化学成分"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:607
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:608
 msgid "No recommended voltage for %s %s"
 msgstr "%s %s 没有推荐电压"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:613
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:614
 msgid "Voltage value for %s is zero or invalid: %s"
 msgstr "%s 的电压值为零或无效：%s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:619
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:620
 msgid "Estimated cell count %d from %s seems unreasonable"
 msgstr "来自 %s 的估算电池数量 %d 似乎不合理"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:668
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:669
 msgid ""
 "All volt per cell values are zero or invalid; cannot estimate battery cell "
 "count"
 msgstr "所有每格电压值均为零或无效;无法估算电池格数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:679
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:680
 msgid "Estimated battery cell count %s is out of valid range (%d to %d)"
 msgstr "估算的电池格数 %s 超出有效范围 (%d 到 %d)"
 
@@ -4355,56 +4354,56 @@ msgstr "修改MCU系列模式时出错: %s"
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr "在 get_component_property_description 中发生异常：{}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:367
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:451
 msgid "No fallback values found for %s"
 msgstr "没找到 %s 的回退值"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:518
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:791
 msgid "Takeoff Weight max must be a float"
 msgstr "起飞重量最大值必须是浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:526
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:799
 msgid "Takeoff Weight min must be a float"
 msgstr "起飞重量最小值必须是浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:543
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:816
 msgid "{name} must be a {data_type_name} between {min} and {max}"
 msgstr "{name} 必须是 {min} 到 {max} 之间的 {data_type_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:548
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:821
 msgid "Invalid {data_type_name} value for {name}"
 msgstr "{name} 的 {data_type_name} 值无效"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:573
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:846
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "低于 {chemistry} 的最小电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:578
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:851
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "高于 {chemistry} 的最大电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:582
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:855
 msgid "Invalid value. Will be set to the recommended value."
 msgstr "无效值。将设置为推荐值。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:634
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:907
 msgid "{limit_name} is not a float nor string"
 msgstr "{limit_name} 既不是浮点数也不是字符串"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:638
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:911
 msgid "{limit_name} is not convertible to float"
 msgstr "{limit_name} 不能转换为浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:642
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:915
 msgid "is below the {limit_name} of {limit_value}"
 msgstr "低于 {limit_value} 的 {limit_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:647
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:920
 msgid "is above the {limit_name} of {limit_value}"
 msgstr "高于 {limit_value} 的 {limit_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:688
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:278
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:961
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:457
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "Allowed values are: {allowed_str}"
@@ -4412,15 +4411,15 @@ msgstr ""
 "{paths_str} 的无效值 '{value}'\n"
 "允许的值为: {allowed_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:716
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:989
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr "{paths_str} 的重复FC连接类型 '{value}'"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:733
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1006
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr "{paths_str} 的磁转子极数必须为偶数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:736
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1009
 msgid "Invalid integer value for {paths_str}"
 msgstr "{paths_str} 的整数值无效"
 
@@ -4850,7 +4849,7 @@ msgid ""
 msgstr "此主程序仅用于测试和开发，通常 BatteryMonitorView 由另一个脚本调用"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:51
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:57
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:58
 msgid ""
 "A GUI for editing JSON files that contain vehicle component configurations. "
 "Not to be used directly, but through the main ArduPilot methodic "
@@ -4859,7 +4858,14 @@ msgstr ""
 "一个用于编辑包含载具组件配置的 JSON 文件的用户界面。此工具不应被直接使用，而"
 "应通过 ArduPilot 调参助手来使用。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:124
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:220
+msgid ""
+"On {component} the selected\n"
+"protocol '{current_selection}' is not available for the selected connection "
+"Type."
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:288
 msgid ""
 "On {component} the selected\n"
 "protocol '{invalid_selection}' is not available for the selected connection "
@@ -4868,11 +4874,11 @@ msgstr ""
 "在 {component} 上选择的\n"
 "协议 '{invalid_selection}' 不适用于选定的连接类型。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:149
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:319
 msgid "Warning"
 msgstr "警告"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:150
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:320
 msgid ""
 "Will update the cell voltage limits to the recommended\n"
 "values for {chemistry} chemistry.\n"
@@ -4882,11 +4888,11 @@ msgstr ""
 "推荐值。\n"
 "这将覆盖您可能设置的任何自定义值。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:170
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:340
 msgid "No valid value found for {voltage_path} with chemistry {chemistry}.\n"
 msgstr "使用 {chemistry} 化学类型找不到 {voltage_path} 的有效值。\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:303
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:482
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
 "{error_msg}"
@@ -4894,22 +4900,22 @@ msgstr ""
 "{paths_str} 的无效值 '{value}'\n"
 "{error_msg}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:155
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:156
 msgid " - Vehicle Component Editor"
 msgstr " - 载具组件编辑器"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:155
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:156
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:254
 #: ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:54
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:53
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucas 的 - ArduPilot 调参助手"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:197
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:198
 msgid "GUI Complexity:"
 msgstr "图形界面复杂度:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:212
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:213
 msgid ""
 "Select the graphical user interface complexity level:\n"
 "simple for beginners, only minimal mandatory fields no optional params "
@@ -4920,34 +4926,34 @@ msgstr ""
 "简单 - 适合初学者，仅显示最少的必填字段，不显示可选参数\n"
 "正常 - 适合其他所有人。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:219
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:220
 msgid "Please configure properties of the vehicle components.\n"
 msgstr "请配置车辆组件的属性。\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:220
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:221
 msgid "Labels for optional properties are displayed in gray text.\n"
 msgstr "可选属性的标签以灰色文本显示。\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:221
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:222
 msgid "Scroll down to ensure that you do not overlook any properties.\n"
 msgstr "向下滚动以确保不遗漏任何属性。\n"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:259
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:260
 msgid ""
 "Replace the vehicle.jpg file in the vehicle directory to change the vehicle "
 "image."
 msgstr "在载具目录中替换 vehicle.jpg 文件以更改车辆图像。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:261
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:262
 msgid "Add a 'vehicle.jpg' image file to the vehicle directory."
 msgstr "将 'vehicle.jpg' 图像文件添加到载具目录。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:274
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:275
 #: ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:112
 msgid "Save data and start configuration"
 msgstr "保存数据并开始配置"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:277
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:278
 msgid ""
 "Save component data to the vehicle_components.json file\n"
 "and start parameter value configuration and tuning."
@@ -4955,35 +4961,35 @@ msgstr ""
 "将组件数据保存到 vehicle_components.json 文件中\n"
 "并开始参数值配置和调整。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:501
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:518
 msgid "Validation Errors"
 msgstr "验证错误"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:502
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:519
 msgid "Validation failed. Please correct the errors before saving."
 msgstr "验证失败。请在保存前更正错误。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:534
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:551
 msgid "Failed to save data to file."
 msgstr "无法保存数据到文件。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:537
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:554
 msgid "Vehicle component data saved successfully."
 msgstr "载具组件数据保存成功。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:544
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:561
 msgid "Do you want to save the changes before closing?"
 msgstr "是否在关闭前保存更改？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:544
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:561
 msgid "Save Changes?"
 msgstr "保存更改？"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:561
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:578
 msgid "Changes discarded. No data saved."
 msgstr "更改已丢弃。未保存数据。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:585
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:602
 msgid ""
 "Skip the component editor window. Only use this if all components have been "
 "configured. Default is %(default)s"
@@ -5147,15 +5153,15 @@ msgstr "无效的波特率"
 msgid "AMC {version} - Flight controller connection"
 msgstr "AMC {version} - 飞行控制器连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:325
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:326
 msgid "No ArduPilot flight controller was auto-detected detected yet."
 msgstr "尚未自动检测到 ArduPilot 飞控。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:339
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:340
 msgid "Auto connection"
 msgstr "自动连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:346
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:347
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5167,19 +5173,19 @@ msgstr ""
 "等待 7 秒钟让它完全启动，\n"
 "然后按下下面的自动连接按钮进行连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:353
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:354
 msgid "Auto-connect"
 msgstr "自动连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:355
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:356
 msgid "Auto-connect to a 'Mavlink'-talking serial device"
 msgstr "自动连接到一个使用 'Mavlink' 协议的串行设备"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:358
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:359
 msgid "Manual connection"
 msgstr "手动连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:366
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:367
 msgid ""
 "Connect a flight controller to the PC,\n"
 "wait 7 seconds for it to fully boot and\n"
@@ -5189,15 +5195,15 @@ msgstr ""
 "等待 7 秒鐘讓其完全啟動，然後\n"
 "手動選擇飛行控制器連接或添加新連接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:385
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:386
 msgid "No connection"
 msgstr "无连接"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:397
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:398
 msgid "Skip FC connection, just edit the .param files on disk"
 msgstr "跳过飞控连接，仅编辑磁盘上的 .param 文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:403
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:404
 msgid ""
 "No parameter values will be fetched from the FC, default parameter values "
 "from disk will be used\n"
@@ -5209,17 +5215,17 @@ msgstr ""
 "从飞控获取参数值，将使用磁盘上的默认参数值\n"
 "（如果存在 '00_default.param' 文件），并仅编辑磁盘上的中间 '.param' 文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:422
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:425
 msgid ""
 "Will proceed without FC connection. FC parameters will not be downloaded nor "
 "uploaded"
 msgstr "将继续进行，而不连接飞控。飞控参数将不会被下载或上传"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:423
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:426
 msgid "Only the intermediate '.param' files on the PC disk will be edited"
 msgstr "仅会编辑 PC 磁盘上的模版 '.param' 文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:442
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:445
 msgid ""
 "This main is for testing and development only. Usually, the "
 "ConnectionSelectionWidgets is called from another script"
@@ -5227,7 +5233,7 @@ msgstr ""
 "此主程序仅用于测试和开发。通常，ConnectionSelectionWidgets 是从其他脚本中调用"
 "的"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:458
+#: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:461
 msgid ""
 "This main is for testing and development only, usually the "
 "ConnectionSelectionWindow is called from another script"
@@ -7341,6 +7347,15 @@ msgstr "硬件的版本或修订号"
 #: ardupilot_methodic_configurator/vehicle_components.py:132
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid ""
+#~ "In file '{self.configuration_steps_filename}': "
+#~ "'{filename}' {parameter_type} parameter '{parameter}' evaluation resulted "
+#~ "in math error: {math_error}"
+#~ msgstr ""
+#~ "在文件 '{self."
+#~ "configuration_steps_filename}'：'{filename}' {parameter_type} 参数 "
+#~ "'{parameter}' 计算时出现数学错误: {math_error}"
 
 #~ msgid "Volt per cell value for %s is zero or invalid: %s"
 #~ msgstr "%s 的每节电压值为零或无效: %s"
