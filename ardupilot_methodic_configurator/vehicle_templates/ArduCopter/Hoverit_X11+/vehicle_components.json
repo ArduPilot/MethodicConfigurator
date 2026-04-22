@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.5.7 official"
+                "Version": "4.6.3 official"
             },
             "Specifications": {
                 "MCU Series": "STM32H7xx"
@@ -45,7 +45,7 @@
                 "Type": "other",
                 "Protocol": "ESC"
             },
-            "Notes": "Voltage and current are monitored via the ESC."
+            "Notes": "Voltage and current are monitored via the ESC DatalinkV2."
         },
         "Battery": {
             "Product": {
@@ -82,10 +82,10 @@
                 "Protocol": "Normal"
             },
             "ESC->FC Telemetry": {
-                "Type": "None",
-                "Protocol": "None"
+                "Type": "SERIAL2",
+                "Protocol": "Scripting"
             },
-            "Notes": ""
+            "Notes": "https://ardupilot.org/copter/docs/common-hobbywing-dronecan-esc.html"
         },
         "Motors": {
             "Product": {
@@ -97,7 +97,7 @@
             "Specifications": {
                 "Poles": 14
             },
-            "Notes": "High thrust and powerful motors"
+            "Notes": "https://ardupilot.org/copter/docs/common-hobbywing-dronecan-esc.html"
         },
         "Propellers": {
             "Product": {
@@ -126,7 +126,7 @@
                 "Type": "CAN2",
                 "Protocol": "DroneCAN"
             },
-            "Notes": "RTK GNSS receiver HERE 4 "
+            "Notes": "RTK GNSS receiver HERE 4"
         },
         "RC Controller": {
             "Product": {
@@ -143,7 +143,7 @@
         },
         "RC Transmitter": {
             "Product": {
-                "Manufacturer": "SIYI ",
+                "Manufacturer": "SIYI",
                 "Model": "mk32 RADIO",
                 "Version": "1",
                 "URL": "https://shop.siyi.biz/products/siyi-mk32"
@@ -169,7 +169,7 @@
                 "Type": "RCin/SBUS",
                 "Protocol": "SBUS"
             },
-            "Notes": "MK32 RADIO COMBO "
+            "Notes": "MK32 RADIO COMBO"
         },
         "Telemetry": {
             "Product": {
@@ -186,7 +186,7 @@
                 "Type": "SERIAL1",
                 "Protocol": "MAVLink2"
             },
-            "Notes": "mk32 COMBO RADIO "
+            "Notes": "mk32 COMBO RADIO"
         }
     },
     "Program version": "2.11.0",

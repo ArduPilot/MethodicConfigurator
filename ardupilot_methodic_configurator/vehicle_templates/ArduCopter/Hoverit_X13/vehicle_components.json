@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.5.7 official"
+                "Version": "4.6.3 official"
             },
             "Specifications": {
                 "MCU Series": "STM32H7xx"
@@ -82,8 +82,8 @@
                 "Protocol": "Normal"
             },
             "ESC->FC Telemetry": {
-                "Type": "None",
-                "Protocol": "None"
+                "Type": "SERIAL2",
+                "Protocol": "Scripting"
             },
             "Notes": "https://ardupilot.org/copter/docs/common-hobbywing-dronecan-esc.html"
         },
