@@ -1,6 +1,6 @@
-ATC_RAT_PIT_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-ATC_RAT_RLL_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
-ATC_RAT_YAW_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_PIT_SMAX,25  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,25  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,25  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 ESC_HW_POLES,14  # Specified in component editor window
 MOT_HOVER_LEARN,2  # So that it can tune the throttle controller on 20_throttle_controller.param file
 MOT_PWM_MAX,1950  # HOBBYWING X13 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
@@ -8,8 +8,8 @@ MOT_PWM_MIN,1050  # HOBBYWING X13 Plus operating pulse width: 1050-1950us (fixed
 MOT_PWM_TYPE,0  # Specified in component editor window
 MOT_SPOOL_TIME,2  # Big props take longer to spool
 NTF_BUZZ_TYPES,5  # Our CubeOrangePlus have it self buzzer.
-NTF_LED_TYPES,231  # want to keep default
-PSC_ACCZ_SMAX,0  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+NTF_LED_TYPES,231
+PSC_ACCZ_SMAX,1000  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
 SERVO_BLH_POLES,14  # Specified in component editor window
 SERVO_FTW_POLES,14  # Specified in component editor window
 SERVO1_MAX,1950  # HOBBYWING X13 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
@@ -25,4 +25,5 @@ SERVO4_MAX,1950  # HOBBYWING X13 Plus operating pulse width: 1050-1950us (fixed 
 SERVO4_MIN,1050  # HOBBYWING X13 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
 SERVO4_TRIM,1500  # HOBBYWING X13 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
 TKOFF_RPM_MIN,200  # Abort takeoff if one of the motors fails to spool
-TKOFF_SLEW_TIME,4  # Big drone needs time to takeoff
+TKOFF_SLEW_TIME,4  # This is a big copter, takeoff slower to avoid I term buildup
+TKOFF_THR_MAX,0.3  # Our hover throttle is ~0.2 and we do not want to overshoot the takeoff

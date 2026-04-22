@@ -1,4 +1,4 @@
-MOT_SPIN_ARM,0.105  # as per previous drone setup similar specs
-MOT_SPIN_MAX,0.9  # as per previous drone setup similar specs
-MOT_SPIN_MIN,0.125  # as per previous drone setup similar specs
-MOT_THST_EXPO,0.75  # as per previous drone setup similar specs
+MOT_SPIN_ARM,0.105  # Below this value the UAV arms vibrate a lot
+MOT_SPIN_MAX,0.9  # Acorning to the manufacturer thrust is mostly linear up-to 90%
+MOT_SPIN_MIN,0.125  # Must be at least a bit above the MOT_SPIN_ARM
+MOT_THST_EXPO,0.75  # As per previous drone setup similar specs

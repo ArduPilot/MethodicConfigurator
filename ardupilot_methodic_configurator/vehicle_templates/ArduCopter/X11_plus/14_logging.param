@@ -1,4 +1,4 @@
-INS_LOG_BAT_CNT,512  # the default of 1024 causes some problems with https://firmware.ardupilot.org/Tools/WebTools/FilterReview/
+INS_LOG_BAT_CNT,1024
 INS_LOG_BAT_MASK,1  # Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others
 INS_LOG_BAT_OPT,4  # Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others
 INS_RAW_LOG_OPT,0  # Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others
