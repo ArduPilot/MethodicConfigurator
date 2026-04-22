@@ -67,7 +67,7 @@ class ParameterEditorTableDialogs:
     ask_yes_no: Callable[[str, str], bool] = ask_yesno_popup
 
 
-class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
+class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
     """
     A class to manage and display the parameter editor table within the GUI.
 
@@ -93,6 +93,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
         self._pending_scroll_to_bottom = False
+
+        self._params_list: list[tuple[str, ArduPilotParameter]] = []
+        self._total_params: int = 0
+        self._current_idx: int = 0
+        self._gui_complexity: str = ""
+        self._is_loading: bool = False
+        self._add_button_widget: Optional[ttk.Button] = None
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
@@ -241,9 +248,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         start_idx = self._current_idx
         end_idx = min(start_idx + chunk_size, self._total_params)
 
-        if hasattr(self, "_add_button_widget") and self._add_button_widget.winfo_exists():
+        if self._add_button_widget and self._add_button_widget.winfo_exists():
             self._add_button_widget.destroy()
 
+        param_name = ""
         try:
             for i in range(start_idx, end_idx):
                 param_name, param = self._params_list[i]
