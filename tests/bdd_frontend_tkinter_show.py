@@ -23,7 +23,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_show import (
-    TOOLTIP_HIDE_DELAY_MS,
     TOOLTIP_SHOW_DELAY_MS,
     MonitorBounds,
     Tooltip,
@@ -747,19 +746,15 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
-            patch("tkinter.ttk.Label") as mock_label,
+            patch("tkinter.ttk.Label"),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
 
-            # Check that Toplevel was created
-            assert tooltip.tooltip == mock_toplevel
+            # Check that Toplevel was NOT created yet (Lazy Loading)
+            assert tooltip.tooltip is None
             # Check bindings
-            mock_widget.bind.assert_any_call("<Enter>", tooltip.show, "+")
-            mock_widget.bind.assert_any_call("<Leave>", tooltip.hide, "+")
-            # Check tooltip setup
-            mock_toplevel.wm_overrideredirect.assert_called_with(boolean=True)
-            mock_label.assert_called_once()
-            mock_toplevel.withdraw.assert_called_once()
+            mock_widget.bind.assert_any_call("<Enter>", tooltip.schedule_show, "+")
+            mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide, "+")
 
     def test_tooltip_initialization_macos(self, mock_widget: MagicMock) -> None:
         """
@@ -822,10 +817,10 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             ),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
+            mock_widget.winfo_containing.return_value = mock_widget  # Tell the test the mouse is hovering
+            tooltip.create_show()
 
-            tooltip.position_tooltip()
-
-            # Check that geometry was set
+            # Check that geometry was set (create_show did this automatically!)
             mock_toplevel.geometry.assert_called_once()
             # The call should be with calculated position
             call_args = mock_toplevel.geometry.call_args[0][0]
@@ -844,19 +839,20 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("tkinter.ttk.Label"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text")
 
-            tooltip.show()
+            tooltip.create_show()
 
             mock_toplevel.deiconify.assert_called_once()
 
     def test_tooltip_hide(self, mock_widget, mock_toplevel) -> None:
         """
-        Test tooltip hide.
+        Test tooltip immediate destruction on mouse leave.
 
-        GIVEN: Tooltip instance
-        WHEN: hide is called
-        THEN: Timer is set to hide tooltip
+        GIVEN: A visible tooltip instance
+        WHEN: destroy_hide is called (mouse leaves widget)
+        THEN: Tooltip is destroyed immediately and active tooltip is cleared
         """
         with (
             patch("tkinter.Toplevel", return_value=mock_toplevel),
@@ -864,18 +860,20 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.tooltip = mock_toplevel  # Mock that it was created
+            tooltip.destroy_hide()
 
-            tooltip.hide()
+            # As it destroys immediately, check if active_tooltip is cleared
+            assert Tooltip._active_tooltip is None
+            mock_toplevel.destroy.assert_called_once()
 
-            mock_widget.after.assert_called_once_with(TOOLTIP_HIDE_DELAY_MS, tooltip._do_hide)
-
-    def test_tooltip_cancel_hide(self, mock_widget) -> None:
+    def test_tooltip_cancel_timer_removes_arbitrary_timer(self, mock_widget) -> None:
         """
-        Test canceling hide timer.
+        Test that _cancel_timer removes any named timer entry.
 
-        GIVEN: Hide timer is set
-        WHEN: _cancel_hide is called
-        THEN: Timer is canceled
+        GIVEN: An arbitrary timer entry is set in the timers dict
+        WHEN: _cancel_timer is called with that name
+        THEN: after_cancel is called and the entry is removed
         """
         with (
             patch("tkinter.Toplevel"),
@@ -883,12 +881,12 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
-            tooltip.timers["hide"] = "timer_id"
+            tooltip.timers["show"] = "timer_id"
 
-            tooltip._cancel_hide()
+            tooltip._cancel_timer("show")
 
             mock_widget.after_cancel.assert_called_once_with("timer_id")
-            assert "hide" not in tooltip.timers
+            assert "show" not in tooltip.timers
 
     def test_tooltip_destroy_hide_on_macos(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
         """
@@ -990,24 +988,52 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
 
         # Assert: No exception, no positioning attempted
 
-    def test_tooltip_do_hide_withdraws_on_non_macos(self, mock_widget, mock_toplevel) -> None:
+    def test_tooltip_force_hide_destroys_globally(self, mock_widget, mock_toplevel) -> None:
         """
-        Test tooltip _do_hide withdraws tooltip on non-macOS.
+        Test tooltip force_hide destroys the tooltip globally across all OSs and clears the active tooltip.
 
-        GIVEN: Tooltip on non-macOS platform
-        WHEN: _do_hide is called
-        THEN: Tooltip is withdrawn
+        GIVEN: Tooltip on any platform
+        WHEN: force_hide is called
+        THEN: Tooltip is destroyed and active tooltip is cleared
         """
         with (
             patch("tkinter.Toplevel", return_value=mock_toplevel),
             patch("tkinter.ttk.Label"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.create_show()  # Must create it before we can destroy it
 
-            tooltip._do_hide()
+            tooltip.force_hide()
 
-            mock_toplevel.withdraw.assert_called()
+            mock_toplevel.destroy.assert_called_once()
+            assert tooltip.tooltip is None
+
+    def test_tooltip_force_hide_suppresses_tcl_error_when_already_destroyed(
+        self, mock_widget: MagicMock, mock_toplevel: MagicMock
+    ) -> None:
+        """
+        Test that force_hide handles TclError when tooltip was already externally destroyed.
+
+        GIVEN: Tooltip window that was already destroyed externally
+        WHEN: force_hide is called (e.g. via destroy_hide on Leave event)
+        THEN: TclError is suppressed and tooltip reference is cleared
+        AND: No exception propagates to the UI event handler
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"):
+            tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.tooltip = mock_toplevel
+            Tooltip._active_tooltip = tooltip
+            # Simulate that the Toplevel was already destroyed externally
+            mock_toplevel.destroy.side_effect = tk.TclError("invalid command name")
+
+            # Act: Should not raise
+            tooltip.force_hide()
+
+            # Assert: Reference cleared, active tooltip cleared
+            assert tooltip.tooltip is None
+            assert Tooltip._active_tooltip is None
 
     def test_tooltip_create_show_avoids_redundant_creation(self, mock_widget, mock_toplevel) -> None:
         """
@@ -1046,6 +1072,8 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         """
         mock_text = MagicMock(spec=tk.Text)
         mock_text.tag_bind = MagicMock()
+        mock_text.tk = MagicMock()
+        mock_text.tk.call.return_value = "aqua"
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"):
             Tooltip(mock_text, "Test text", tag_name="test_tag")
@@ -1067,10 +1095,13 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
             patch("tkinter.ttk.Label"),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text", toplevel_class=custom_toplevel_class)
 
-        # Assert: Custom class was used
-        custom_toplevel_class.assert_called_once_with(mock_widget)
+            tooltip.create_show()  # Trigger lazy load
+
+        # Assert: Custom class was used with the expected widget and bg argument
+        custom_toplevel_class.assert_called_once_with(mock_widget, bg="#ffffe0")
         assert tooltip.tooltip == mock_toplevel
 
     def test_tooltip_position_below_false(self, mock_widget, mock_toplevel) -> None:
@@ -1091,9 +1122,10 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             ),
         ):
             tooltip = Tooltip(mock_widget, "Test text", position_below=False)
-            tooltip.position_tooltip()
+            mock_widget.winfo_containing.return_value = mock_widget  # Tell the test the mouse is hovering
+            tooltip.create_show()
 
-        # Assert: Geometry set (indicates positioning occurred)
+        # Assert: Geometry set
         mock_toplevel.geometry.assert_called_once()
 
     def test_tooltip_create_show_uses_macos_styling(self, mock_widget, mock_toplevel) -> None:
@@ -1113,6 +1145,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
                 return_value=MonitorBounds(0, 0, 1920, 1080),
             ),
         ):
+            mock_widget.tk.call.return_value = "aqua"
             mock_widget.winfo_containing.return_value = mock_widget
             mock_toplevel.tk.call = MagicMock()
             mock_toplevel._w = ".tooltip"
@@ -1146,6 +1179,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
                 return_value=MonitorBounds(0, 0, 1920, 1080),
             ),
         ):
+            mock_widget.tk.call.return_value = "aqua"
             mock_widget.winfo_containing.return_value = mock_widget
             # Configure mock to raise AttributeError during tk.call
             mock_toplevel.tk.call.side_effect = AttributeError("tk.call failed")
@@ -1157,3 +1191,205 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             # Assert: Fallback styling applied
             mock_toplevel.wm_attributes.assert_any_call("-alpha", 1.0)
             mock_toplevel.wm_attributes.assert_any_call("-topmost", True)  # noqa: FBT003
+
+    def test_tooltip_on_widget_destroy_cancels_all_timers(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
+        """
+        Test that widget destruction event cancels all pending timers.
+
+        GIVEN: Tooltip with multiple active timers
+        WHEN: Widget receives <Destroy> event
+        THEN: All timers (show, hide, alpha) are canceled
+        AND: Tooltip window is destroyed
+        """
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text")
+            # Simulate multiple timers
+            tooltip.timers["show"] = "show_timer"
+            tooltip.timers["alpha"] = "alpha_timer"
+            tooltip.tooltip = mock_toplevel
+
+            # Simulate the widget destroy event
+            tooltip._on_widget_destroy()
+
+            # Assert: All timers canceled
+            assert mock_widget.after_cancel.call_count == 2
+            mock_widget.after_cancel.assert_any_call("show_timer")
+            mock_widget.after_cancel.assert_any_call("alpha_timer")
+            # Tooltip destroyed
+            mock_toplevel.destroy.assert_called_once()
+            assert tooltip.tooltip is None
+
+    def test_tooltip_timer_cancellation_handles_already_fired_timers(self, mock_widget: MagicMock) -> None:
+        """
+        Test that timer cancellation handles already-fired timers gracefully.
+
+        GIVEN: Timer ID that no longer exists
+        WHEN: _cancel_timer tries to cancel it
+        THEN: TclError is caught and suppressed
+        AND: Timer dict entry is removed
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"):
+            tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.timers["show"] = "stale_timer"
+
+            # Simulate TclError from after_cancel
+            mock_widget.after_cancel.side_effect = tk.TclError("invalid timer")
+
+            # Act: Should not raise exception
+            tooltip._cancel_timer("show")
+
+            # Assert: Timer removed from dict
+            assert "show" not in tooltip.timers
+
+    def test_tooltip_widget_destruction_during_create_show(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
+        """
+        Test that widget destruction during create_show is handled safely.
+
+        GIVEN: Widget destroyed while create_show is executing
+        WHEN: winfo_containing or other Tk call raises TclError
+        THEN: Method returns gracefully without creating tooltip
+        """
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text")
+            # Make winfo_containing raise TclError (widget destroyed)
+            mock_widget.winfo_containing.side_effect = tk.TclError("invalid widget")
+
+            # Act: Should not raise exception
+            tooltip.create_show()
+
+            # Assert: Tooltip was not created
+            assert tooltip.tooltip is None
+
+    def test_tooltip_macos_alpha_animation_timer_canceled_on_destroy(
+        self, mock_widget: MagicMock, mock_toplevel: MagicMock
+    ) -> None:
+        """
+        Test that macOS alpha animation timer is properly canceled on widget destroy.
+
+        GIVEN: macOS platform with alpha animation timer active
+        WHEN: Widget is destroyed
+        THEN: Alpha timer is canceled along with other timers
+        AND: No dangling timers remain
+        """
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Darwin"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                return_value=MonitorBounds(0, 0, 1920, 1080),
+            ),
+        ):
+            # Mock tk.call to return "aqua" for macOS detection
+            mock_widget.tk.call.return_value = "aqua"
+            mock_toplevel.tk.call.return_value = "aqua"
+            mock_widget.winfo_containing.return_value = mock_widget
+
+            tooltip = Tooltip(mock_widget, "Test text")
+            # Create tooltip which will set alpha timer on macOS
+            tooltip.create_show()
+
+            # Verify alpha timer is set (alpha animation happens on macOS)
+            assert "alpha" in tooltip.timers
+
+            # Simulate widget destroy
+            tooltip._on_widget_destroy()
+
+            # Assert: Alpha timer was canceled
+            mock_widget.after_cancel.assert_called()
+            assert "alpha" not in tooltip.timers
+
+    def test_tooltip_schedule_show_cancels_pending_show_timer(self, mock_widget: MagicMock) -> None:
+        """
+        Test that schedule_show cancels any pending show timer before rescheduling.
+
+        GIVEN: A show timer is already pending (mouse left and re-entered quickly)
+        WHEN: schedule_show is called again
+        THEN: Previous show timer is canceled
+        AND: New show timer is scheduled
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"):
+            tooltip = Tooltip(mock_widget, "Test text")
+            # Simulate show timer already in progress (mouse left and re-entered)
+            tooltip.timers["show"] = "previous_show_timer"
+
+            # Act: Schedule show again
+            tooltip.schedule_show()
+
+            # Assert: Previous show timer was canceled
+            mock_widget.after_cancel.assert_called_with("previous_show_timer")
+            # New show timer scheduled
+            assert "show" in tooltip.timers
+
+    def test_tooltip_behavior_consistent_across_platforms(self, mock_widget: MagicMock, mock_toplevel: MagicMock) -> None:
+        """
+        Test that tooltip behavior is consistent across all platforms after unification.
+
+        GIVEN: Different operating systems
+        WHEN: Tooltip is created and shown
+        THEN: Behavior is identical (lazy loading, timer-based show/hide)
+        """
+        platforms = ["Linux", "Windows", "Darwin"]
+
+        for platform in platforms:
+            with (
+                patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value=platform),
+                patch("tkinter.Toplevel", return_value=mock_toplevel),
+                patch("tkinter.ttk.Label"),
+                patch(
+                    "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+                    return_value=MonitorBounds(0, 0, 1920, 1080),
+                ),
+            ):
+                # Reset tooltip state
+                Tooltip._active_tooltip = None
+                mock_widget.reset_mock()
+                mock_toplevel.reset_mock()
+
+                tooltip = Tooltip(mock_widget, "Test text")
+
+                # Verify: Lazy loading (tooltip not created in __init__)
+                assert tooltip.tooltip is None
+
+                # Verify: Bindings use schedule_show/destroy_hide on all platforms
+                mock_widget.bind.assert_any_call("<Enter>", tooltip.schedule_show, "+")
+                mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide, "+")
+
+                # Verify: Mouse enter schedules show with same delay
+                tooltip.schedule_show()
+                mock_widget.after.assert_called_with(TOOLTIP_SHOW_DELAY_MS, tooltip.create_show)
+
+    def test_tooltip_pointer_check_prevents_creation_on_widget_exit(
+        self, mock_widget: MagicMock, mock_toplevel: MagicMock
+    ) -> None:
+        """
+        Test that tooltip respects pointer position during create_show.
+
+        GIVEN: Pointer was over widget but leaves before timer fires
+        WHEN: create_show executes after TOOLTIP_SHOW_DELAY_MS
+        THEN: winfo_containing returns different widget (pointer outside)
+        AND: Tooltip is not created
+        """
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch("tkinter.Toplevel", return_value=mock_toplevel),
+            patch("tkinter.ttk.Label"),
+        ):
+            tooltip = Tooltip(mock_widget, "Test text")
+            # Pointer left the widget before timer fired
+            other_widget = MagicMock()
+            mock_widget.winfo_containing.return_value = other_widget
+
+            # Act: create_show after pointer has left
+            tooltip.create_show()
+
+            # Assert: Tooltip was not created
+            assert tooltip.tooltip is None
