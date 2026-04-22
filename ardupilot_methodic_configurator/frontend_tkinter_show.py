@@ -646,12 +646,13 @@ class Tooltip:
     #     self.timers.pop("hide", None)
 
     def force_hide(self) -> None:
-        """Immediately hide the tooltip globally across all OSs."""
+        """Immediately destroy the tooltip globally across all OSs."""
         self._cancel_show()
         self._cancel_hide()
         self._cancel_timer("alpha")
         if self.tooltip:
-            self.tooltip.withdraw()  # Withdraw instead of destroy to prevent UI jank
+            self.tooltip.destroy()
+            self.tooltip = None
         if Tooltip._active_tooltip is self:
             Tooltip._active_tooltip = None
 
