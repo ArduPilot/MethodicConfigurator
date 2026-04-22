@@ -477,33 +477,13 @@ class Tooltip:
         self.timers: dict[str, Optional[str]] = {}
 
         # Bind the <Enter> and <Leave> events to show and hide the tooltip
-        if platform_system() == "Darwin":
-            # On macOS, defer tooltip creation slightly to avoid flashing while
-            # moving through dense tables and controls.
-            if tag_name and isinstance(self.widget, tk.Text):
-                self.widget.tag_bind(tag_name, "<Enter>", self.schedule_show, "+")
-                self.widget.tag_bind(tag_name, "<Leave>", self.destroy_hide, "+")
-            else:
-                self.widget.bind("<Enter>", self.schedule_show, "+")
-                self.widget.bind("<Leave>", self.destroy_hide, "+")
+        # Defer tooltip creation slightly to avoid flashing while moving through dense tables.
+        if tag_name and isinstance(self.widget, tk.Text):
+            self.widget.tag_bind(tag_name, "<Enter>", self.schedule_show, "+")
+            self.widget.tag_bind(tag_name, "<Leave>", self.destroy_hide, "+")
         else:
-            if tag_name and isinstance(self.widget, tk.Text):
-                self.widget.tag_bind(tag_name, "<Enter>", self.show, "+")
-                self.widget.tag_bind(tag_name, "<Leave>", self.hide, "+")
-            else:
-                self.widget.bind("<Enter>", self.show, "+")
-                self.widget.bind("<Leave>", self.hide, "+")
-            # On non-macOS, create the tooltip immediately and show/hide it on events
-            self.tooltip = cast("tk.Toplevel", self.toplevel_class(widget))
-            self.tooltip.wm_overrideredirect(boolean=True)
-            tooltip_label = ttk.Label(
-                self.tooltip, text=text, background="#ffffe0", relief="solid", borderwidth=1, justify=tk.LEFT
-            )
-            tooltip_label.pack()
-            self.tooltip.withdraw()  # Initially hide the tooltip
-            # Bind to tooltip to prevent hiding when mouse is over it
-            self.tooltip.bind("<Enter>", self._cancel_hide)
-            self.tooltip.bind("<Leave>", self.hide)
+            self.widget.bind("<Enter>", self.schedule_show, "+")
+            self.widget.bind("<Leave>", self.destroy_hide, "+")
 
         self.widget.bind("<Destroy>", self._on_widget_destroy, "+")
 
@@ -517,14 +497,14 @@ class Tooltip:
     def _cancel_show(self) -> None:
         self._cancel_timer("show")
 
-    def show(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
-        """On non-macOS, tooltip already exists, show it on events."""
-        self._cancel_hide()
-        self._hide_active_tooltip()
-        if self.tooltip:
-            self.position_tooltip()
-            self.tooltip.deiconify()
-            Tooltip._active_tooltip = self
+    # def show(self, event: Optional[tk.Event] = None) -> None:  # pylint: disable=unused-argument
+    #     """On non-macOS, tooltip already exists, show it on events."""
+    #     self._cancel_hide()
+    #     self._hide_active_tooltip()
+    #     if self.tooltip:
+    #         self.position_tooltip()
+    #         self.tooltip.deiconify()
+    #         Tooltip._active_tooltip = self
 
     def _cancel_hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         self._cancel_timer("hide")
@@ -589,7 +569,7 @@ class Tooltip:
                 "noActivates",
             )
             self.tooltip.configure(bg="#ffffe0")
-        except AttributeError:  # Catches protected member access error
+        except (AttributeError, tk.TclError):  # Catches protected member access error
             self.tooltip.wm_attributes("-alpha", 1.0)  # Ensure opacity
             self.tooltip.wm_attributes("-topmost", True)  # Keep on top # noqa: FBT003
             self.tooltip.configure(bg="#ffffe0")
@@ -652,18 +632,18 @@ class Tooltip:
             # Silently ignore - tooltip will be recreated on next hover if needed
             pass
 
-    def hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
-        """Hide the tooltip after a delay on non-macOS."""
-        self._cancel_hide()
-        self.timers["hide"] = self.widget.after(TOOLTIP_HIDE_DELAY_MS, self._do_hide)
+    # def hide(self, event: Optional[tk.Event] = None) -> None:  # pylint: disable=unused-argument
+    #     """Hide the tooltip after a delay on non-macOS."""
+    #     self._cancel_hide()
+    #     self.timers["hide"] = self.widget.after(TOOLTIP_HIDE_DELAY_MS, self._do_hide)
 
-    def _do_hide(self) -> None:
-        """Actually hide or destroy the tooltip depending on platform."""
-        if self.tooltip:
-            self.tooltip.withdraw()
-        if Tooltip._active_tooltip is self:
-            Tooltip._active_tooltip = None
-        self.timers.pop("hide", None)
+    # def _do_hide(self) -> None:
+    #     """Actually hide or destroy the tooltip depending on platform."""
+    #     if self.tooltip:
+    #         self.tooltip.withdraw()
+    #     if Tooltip._active_tooltip is self:
+    #         Tooltip._active_tooltip = None
+    #     self.timers.pop("hide", None)
 
     def force_hide(self) -> None:
         """Immediately hide or destroy the tooltip, depending on platform."""
@@ -671,11 +651,8 @@ class Tooltip:
         self._cancel_hide()
         self._cancel_timer("alpha")
         if self.tooltip:
-            if platform_system() == "Darwin":
-                self.tooltip.destroy()
-                self.tooltip = None
-            else:
-                self.tooltip.withdraw()
+            self.tooltip.destroy()
+            self.tooltip = None
         if Tooltip._active_tooltip is self:
             Tooltip._active_tooltip = None
 
