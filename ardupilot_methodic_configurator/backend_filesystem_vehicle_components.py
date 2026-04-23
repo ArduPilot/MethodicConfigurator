@@ -13,11 +13,11 @@ from json import JSONDecodeError
 from json import dump as json_dump
 from json import load as json_load
 
-# from logging import warning as logging_warning
 # from sys import exit as sys_exit
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
+from logging import warning as logging_warning
 from os import makedirs as os_makedirs
 from os import path as os_path
 from os import walk as os_walk
@@ -337,6 +337,28 @@ class VehicleComponents:
             error_msg = _("FW version string {version_str} on {filename} is invalid")
             logging_error(error_msg.format(version_str=version_str, filename=self.vehicle_components_fs.json_filename))
         return ""
+
+    def set_fc_fw_version_and_type_in_components_json(self, fw_version: str, vehicle_type: str, vehicle_dir: str) -> None:
+        """
+        Update the firmware version and type in the loaded vehicle_components.json and save it to disk.
+
+        This ensures the project's component metadata reflects the actual firmware that was
+        running when the .bin log was recorded, rather than the template's placeholder values.
+
+        Args:
+            fw_version: Full firmware version string in "major.minor.patch" format (e.g. "4.6.3").
+            vehicle_type: Firmware type string (e.g. "ArduCopter").
+            vehicle_dir: Path to the vehicle directory containing vehicle_components.json.
+
+        """
+        data = self.vehicle_components_fs.data
+        if data and "Components" in data:
+            fc_firmware = data["Components"].setdefault("Flight Controller", {}).setdefault("Firmware", {})
+            fc_firmware["Version"] = fw_version
+            fc_firmware["Type"] = vehicle_type
+            error_occurred, msg = self.save_vehicle_components_json_data(data, vehicle_dir)
+            if error_occurred:
+                logging_warning(_("%s"), msg)
 
     @staticmethod
     def supported_vehicles() -> tuple[str, ...]:

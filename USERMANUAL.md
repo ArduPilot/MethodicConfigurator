@@ -167,7 +167,7 @@ It provides three main options for selecting a vehicle directory:
 
 #### New
 
-Create a new vehicle configuration directory
+Create a new vehicle configuration directory, either from a template or from a `.bin` log file.
 
 #### Open
 
@@ -200,6 +200,23 @@ It's useful for setting up a new vehicle configuration quickly.
 - Use the "Destination base directory" `...` button to select the existing directory where the new vehicle directory will be created.
 - Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
 - Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
+
+### Create a New Vehicle Configuration Directory from a .bin Log File
+
+If you have an ArduPilot `.bin` log file recorded by a correctly running vehicle, the software can
+build a complete project from it — no physical flight controller connection required.
+
+- Click the **Create a vehicle project from a .bin log file** button in the **New** panel.
+- In the file-picker, select your `.bin` log file.
+- The software automatically:
+  - Reads the vehicle type and firmware version from the log's `VER` (or `MSG`) record.
+  - Selects the matching template directory (e.g. `ArduCopter/empty_4.6.x`).
+  - Names the project after the log file (without the `.bin` extension).
+  - Writes the default parameter values extracted from the log into `00_default.param`.
+  - Creates `xx_imported_bin_log_parameters.param` for any current values that differ from the
+    template's parameter files, giving you a clear delta to review.
+  - Sets the firmware type and version in `vehicle_components.json`.
+- You are taken directly to the Vehicle Component Editor with the firmware fields pre-filled.
 
 ### Step 3: Vehicle Component Editor Interface
 

@@ -254,7 +254,38 @@ The data flow follows the layered architecture pattern with clear separation of 
    - Project creation delegated to specialized creator services
    - Success/failure feedback provided through manager interface
 
-4. **Existing Project Opening Flow**
+4. **.bin Log Import Flow**
+   - User clicks *Create a vehicle project from a .bin log file* in VehicleProjectOpenerWindow (option-1 panel, via `BinLogSelectionWidgets`)
+   - Frontend opens a file-picker; user selects a `.bin` ArduPilot log file
+   - Frontend delegates to `project_manager.create_new_vehicle_from_bin_log(bin_file)`
+   - `VehicleProjectManager` orchestrates the following steps via `VehicleProjectCreator`:
+     1. `extract_firmware_version_from_bin_log()` — reads the `VER` (or `MSG`) record from the
+        log to determine vehicle type (e.g. `ArduCopter`) and firmware version (e.g. `4.6.3`);
+        `pymavlink` is imported lazily at call time so it does not slow application startup
+     2. `template_dir_for_bin_import()` — resolves and validates the matching template directory
+        (e.g. `ArduCopter/empty_4.6.x`); raises a user-friendly error if none is installed
+     3. `create_new_vehicle_from_template()` — copies the template with `fc_connected=False`
+        so no live FC values are injected
+     4. `extract_param_files_from_bin_log()` — extracts default and current parameter values
+        from the log's `PARM` messages; also imported lazily
+     5. `LocalFilesystem.fw_version` is set to `"major.minor.patch"` before `re_init()` is
+        called, preventing the template's placeholder version from being used
+     6. `re_init()` — points the filesystem at the new vehicle directory
+     7. `set_fc_fw_version_and_type_in_components_json()` — persists the detected firmware
+        version and type into `vehicle_components.json`
+     8. `write_param_default_values_to_file()` — overwrites `00_default.param` with the
+        log-extracted defaults
+     9. Parameters present in the log but absent/different in the template files are exported
+        to `xx_imported_bin_log_parameters.param`; `re_init()` is called again to pick up
+        the new file
+    10. Manager state (`_settings`, `configuration_template`, recent-dir history) is updated
+        only after `open_vehicle_directory()` succeeds, ensuring manager metadata
+        is committed only on success
+   - Success/failure feedback provided through manager interface; on failure the new directory
+     is not registered in session history and manager in-memory state is not updated,
+     though filesystem changes to the new project directory are not rolled back
+
+5. **Existing Project Opening Flow**
    - User interacts with VehicleProjectOpenerWindow
    - Frontend presents project opening and re-opening options
    - User selects existing directory through DirectorySelectionWidgets with callbacks
@@ -263,14 +294,14 @@ The data flow follows the layered architecture pattern with clear separation of 
    - Project state is reconstructed and validated
    - Error handling managed through consistent interface
 
-5. **Architecture Benefits**
+6. **Architecture Benefits**
    - Frontend never directly accesses backend services
    - All business logic centralized in VehicleProjectManager
    - Easy to test with mock VehicleProjectManager
    - Changes to backend services don't affect frontend code
    - Clean separation between project opening and project creation concerns
 
-6. **Recent Directories History Flow**
+7. **Recent Directories History Flow**
    - On application startup, `ProgramSettings.get_recent_vehicle_dirs()` loads history from settings.json; the history is passed through the manager
    - History is passed to VehicleProjectOpenerWindow to populate the combobox widget
    - User selects a directory from the combobox dropdown
