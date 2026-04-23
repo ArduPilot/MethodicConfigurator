@@ -14,6 +14,7 @@ import os
 import sys
 import tempfile
 import unittest
+from collections.abc import Generator
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -316,7 +317,7 @@ class TestExtractMissingTranslations(unittest.TestCase):
 
 # These are pytest-style standalone functions, outside the class
 @pytest.fixture
-def temp_dir() -> str:
+def temp_dir() -> Generator[str, None, None]:
     with tempfile.TemporaryDirectory() as tmpdirname:
         yield tmpdirname
 

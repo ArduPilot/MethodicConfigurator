@@ -77,7 +77,7 @@ def test_download_file_success(mock_get, tmp_path) -> None:
 
 
 @pytest.fixture
-def mock_get_() -> Mock:
+def mock_get_() -> Generator[Mock, None, None]:
     with patch("ardupilot_methodic_configurator.backend_internet.requests_get") as _mock:
         yield _mock
 
@@ -564,12 +564,12 @@ class TestDownloadFile:
         return response
 
     @pytest.fixture
-    def mock_get(self) -> Mock:
+    def mock_get(self) -> Generator[Mock, None, None]:
         with patch("ardupilot_methodic_configurator.backend_internet.requests_get") as _mock:
             yield _mock
 
     @pytest.fixture
-    def mock_verify(self) -> Mock:
+    def mock_verify(self) -> Generator[Mock, None, None]:
         with patch("ardupilot_methodic_configurator.backend_internet._get_verify_param") as _mock:
             _mock.return_value = "/path/to/certs.pem"
             yield _mock

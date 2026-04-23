@@ -211,7 +211,7 @@ class IMUData:
         if len(self.accel.keys()) != len(self.gyro.keys()):
             logging.critical("accel and gyro data doesn't match")
             sys.exit(1)
-        return self.accel.keys()  # type: ignore[return-value]
+        return list(self.accel)
 
     def add_accel(self, imu: int, temperature: float, time: float, value: Vector3) -> None:
         if imu not in self.accel:
@@ -260,26 +260,26 @@ class IMUData:
     def accel_at_temp(self, imu: int, axis: str, temperature: float) -> float:
         """Return the accel value closest to the given temperature."""
         if temperature < self.accel[imu]["T"][0]:
-            return self.accel[imu][axis][0]  # type: ignore[no-any-return]
+            return float(self.accel[imu][axis][0])
         for i in range(len(self.accel[imu]["T"]) - 1):
             if self.accel[imu]["T"][i] <= temperature <= self.accel[imu]["T"][i + 1]:
                 v1 = self.accel[imu][axis][i]
                 v2 = self.accel[imu][axis][i + 1]
                 p = (temperature - self.accel[imu]["T"][i]) / (self.accel[imu]["T"][i + 1] - self.accel[imu]["T"][i])
-                return v1 + (v2 - v1) * p  # type: ignore[no-any-return]
-        return self.accel[imu][axis][-1]  # type: ignore[no-any-return]
+                return float(v1 + (v2 - v1) * p)
+        return float(self.accel[imu][axis][-1])
 
     def gyro_at_temp(self, imu: int, axis: str, temperature: float) -> float:
         """Return the gyro value closest to the given temperature."""
         if temperature < self.gyro[imu]["T"][0]:
-            return self.gyro[imu][axis][0]  # type: ignore[no-any-return]
+            return float(self.gyro[imu][axis][0])
         for i in range(len(self.gyro[imu]["T"]) - 1):
             if self.gyro[imu]["T"][i] <= temperature <= self.gyro[imu]["T"][i + 1]:
                 v1 = self.gyro[imu][axis][i]
                 v2 = self.gyro[imu][axis][i + 1]
                 p = (temperature - self.gyro[imu]["T"][i]) / (self.gyro[imu]["T"][i + 1] - self.gyro[imu]["T"][i])
-                return v1 + (v2 - v1) * p  # type: ignore[no-any-return]
-        return self.gyro[imu][axis][-1]  # type: ignore[no-any-return]
+                return float(v1 + (v2 - v1) * p)
+        return float(self.gyro[imu][axis][-1])
 
 
 def constrain(value: float, minv: float, maxv: float) -> Union[float, int]:

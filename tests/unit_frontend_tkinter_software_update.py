@@ -386,8 +386,8 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
             mock_calls = mock_label.call_args_list
             # Find the call that created the label with our version info
             version_label_call_found = False
-            for call in mock_calls:
-                _args, kwargs = call
+            for m_call in mock_calls:
+                _args, kwargs = m_call
                 if "text" in kwargs and kwargs["text"] == version_info:
                     version_label_call_found = True
                     break

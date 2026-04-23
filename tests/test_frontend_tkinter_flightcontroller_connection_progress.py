@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -23,7 +24,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connectio
 
 
 @pytest.fixture
-def mock_progress_window() -> tuple[MagicMock, MagicMock]:
+def mock_progress_window() -> Generator[tuple[MagicMock, MagicMock], None, None]:
     """Fixture providing a mock ProgressWindow for testing."""
     with patch(
         "ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress.ProgressWindow"
@@ -35,7 +36,7 @@ def mock_progress_window() -> tuple[MagicMock, MagicMock]:
 
 
 @pytest.fixture
-def mock_tkinter_root() -> tuple[MagicMock, MagicMock, MagicMock]:
+def mock_tkinter_root() -> Generator[tuple[MagicMock, MagicMock, MagicMock], None, None]:
     """Fixture providing a mock Tk root window."""
     with (
         patch("tkinter.Tk") as mock_tk,

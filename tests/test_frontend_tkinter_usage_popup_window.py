@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Generator
 from tkinter import ttk
 from unittest.mock import MagicMock, Mock, patch
 
@@ -30,7 +31,7 @@ _IS_MACOS_PATH = "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_w
 
 
 @pytest.fixture
-def popup_window(tk_root) -> BaseWindow:
+def popup_window(tk_root) -> Generator[BaseWindow, None, None]:
     """Fixture providing a BaseWindow instance configured for popup display."""
     window = BaseWindow(tk_root)
     yield window
@@ -47,7 +48,7 @@ def rich_text_widget(popup_window) -> RichText:
 
 
 @pytest.fixture
-def mock_program_settings() -> MagicMock:
+def mock_program_settings() -> Generator[MagicMock, None, None]:
     """Fixture providing mocked ProgramSettings for popup preference testing."""
     with patch("ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.ProgramSettings") as mock_settings:
         mock_settings.display_usage_popup.return_value = True

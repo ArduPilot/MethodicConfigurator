@@ -659,7 +659,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
     """Test the Tooltip class and related functions."""
 
     @pytest.fixture(autouse=True)
-    def reset_active_tooltip(self) -> None:
+    def reset_active_tooltip(self) -> Generator[None, None, None]:
         """Ensure tooltip singleton state does not leak across tests."""
         Tooltip._active_tooltip = None
         yield

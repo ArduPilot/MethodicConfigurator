@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Generator
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, Optional, cast
@@ -91,7 +92,7 @@ def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-argu
 
 
 @pytest.fixture
-def mock_master() -> tk.Tk:
+def mock_master() -> Generator[tk.Tk, None, None]:
     """Create a mock tkinter root window."""
     root = tk.Tk()
     yield root

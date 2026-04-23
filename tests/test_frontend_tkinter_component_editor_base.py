@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser
+from collections.abc import Generator
 from tkinter import ttk
 from typing import Union, cast, get_args, get_origin
 from unittest.mock import MagicMock, patch
@@ -126,7 +127,7 @@ class SharedTestArgumentParser:
 
 
 @pytest.fixture
-def editor_with_mocked_root() -> ComponentEditorWindowBase:
+def editor_with_mocked_root() -> Generator[ComponentEditorWindowBase, None, None]:
     """Create a mock ComponentEditorWindowBase for testing."""
     # Create the class without initialization
     with patch.object(ComponentEditorWindowBase, "__init__", return_value=None):

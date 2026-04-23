@@ -75,7 +75,7 @@ class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
         return fc_info
 
     @pytest.fixture
-    def mocked_mavutil_enums(self) -> MagicMock:
+    def mocked_mavutil_enums(self) -> dict[str, dict[int, MagicMock]]:
         """Fixture providing mocked mavutil enums."""
         return {
             "MAV_PROTOCOL_CAPABILITY": {

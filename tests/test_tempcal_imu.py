@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import tempfile
 import unittest
+from collections.abc import Generator
 from unittest.mock import patch
 
 import numpy as np
@@ -248,7 +249,7 @@ class TestUtilityFunctions(unittest.TestCase):
 
 
 @pytest.fixture
-def temp_output_file() -> str:
+def temp_output_file() -> Generator[str, None, None]:
     """Fixture to create a temporary output file."""
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         yield tmp.name

@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Generator
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
@@ -34,7 +35,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
 
 
 @pytest.fixture
-def editor_with_mocked_root() -> ComponentEditorWindow:
+def editor_with_mocked_root() -> Generator[ComponentEditorWindow, None, None]:
     """Create a mock ComponentEditorWindow for testing."""
     # Create the class without initialization
     with patch.object(ComponentEditorWindow, "__init__", return_value=None):
