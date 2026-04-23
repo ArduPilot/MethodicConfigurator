@@ -1519,3 +1519,205 @@ class TestVehicleComponents:
 
         # Verify empty string is returned
         assert version == ""
+
+
+class TestSetFcFwVersionAndTypeInComponentsJson:
+    """BDD tests for set_fc_fw_version_and_type_in_components_json."""
+
+    @pytest.fixture
+    def vehicle_components_with_data(self) -> VehicleComponents:
+        """Fixture providing a VehicleComponents instance with typical component data."""
+        vc = VehicleComponents()
+        vc.vehicle_components_fs.data = {
+            "Components": {
+                "Flight Controller": {
+                    "Firmware": {"Type": "ArduCopter", "Version": "4.6.0"},
+                    "Product": {"Manufacturer": "Holybro", "Model": "Pixhawk 6C"},
+                }
+            }
+        }
+        return vc
+
+    def test_firmware_version_is_written_into_component_data(self, vehicle_components_with_data: VehicleComponents) -> None:
+        """
+        The firmware version is correctly updated in the in-memory component data.
+
+        GIVEN: Components data that has a placeholder firmware version "4.6.0"
+        WHEN: set_fc_fw_version_and_type_in_components_json is called with "4.6.3"
+        THEN: The Firmware Version field in the component data is updated to "4.6.3"
+        """
+        vc = vehicle_components_with_data
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")):
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        assert vc.vehicle_components_fs.data is not None
+        version = vc.vehicle_components_fs.data["Components"]["Flight Controller"]["Firmware"]["Version"]
+        assert version == "4.6.3"
+
+    def test_firmware_type_is_written_into_component_data(self, vehicle_components_with_data: VehicleComponents) -> None:
+        """
+        The firmware type is correctly updated in the in-memory component data.
+
+        GIVEN: Components data that has firmware Type "ArduCopter"
+        WHEN: set_fc_fw_version_and_type_in_components_json is called with "Rover"
+        THEN: The Firmware Type field is updated to "Rover"
+        """
+        vc = vehicle_components_with_data
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")):
+            vc.set_fc_fw_version_and_type_in_components_json("4.5.1", "Rover", "/vehicles/rover_project")
+
+        assert vc.vehicle_components_fs.data is not None
+        fw_type = vc.vehicle_components_fs.data["Components"]["Flight Controller"]["Firmware"]["Type"]
+        assert fw_type == "Rover"
+
+    def test_save_is_called_with_updated_data_and_correct_directory(
+        self, vehicle_components_with_data: VehicleComponents
+    ) -> None:
+        """
+        save_vehicle_components_json_data is called with the updated data and the given vehicle_dir.
+
+        GIVEN: Component data in memory and a known vehicle directory path
+        WHEN: set_fc_fw_version_and_type_in_components_json is called
+        THEN: save_vehicle_components_json_data receives the full data dict and the correct path
+        """
+        vc = vehicle_components_with_data
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")) as mock_save:
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/my_project")
+
+        mock_save.assert_called_once()
+        saved_data, saved_dir = mock_save.call_args.args
+        assert saved_dir == "/vehicles/my_project"
+        assert saved_data["Components"]["Flight Controller"]["Firmware"]["Version"] == "4.6.3"
+        assert saved_data["Components"]["Flight Controller"]["Firmware"]["Type"] == "ArduCopter"
+
+    def test_other_component_fields_are_not_disturbed(self, vehicle_components_with_data: VehicleComponents) -> None:
+        """
+        Non-firmware component fields remain intact after the firmware update.
+
+        GIVEN: Components data that includes manufacturer and model information
+        WHEN: set_fc_fw_version_and_type_in_components_json is called
+        THEN: Product Manufacturer and Model are unchanged
+        """
+        vc = vehicle_components_with_data
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")):
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        assert vc.vehicle_components_fs.data is not None
+        product = vc.vehicle_components_fs.data["Components"]["Flight Controller"]["Product"]
+        assert product["Manufacturer"] == "Holybro"
+        assert product["Model"] == "Pixhawk 6C"
+
+    def test_creates_firmware_section_when_absent(self) -> None:
+        """
+        The Firmware sub-dict is created if the Flight Controller component lacks it.
+
+        GIVEN: Components data where "Flight Controller" has no "Firmware" key at all
+        WHEN: set_fc_fw_version_and_type_in_components_json is called
+        THEN: A "Firmware" section is created and populated with Version and Type
+        """
+        vc = VehicleComponents()
+        vc.vehicle_components_fs.data = {"Components": {"Flight Controller": {"Product": {"Model": "CubeOrange"}}}}
+
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")):
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        firmware = vc.vehicle_components_fs.data["Components"]["Flight Controller"]["Firmware"]
+        assert firmware["Version"] == "4.6.3"
+        assert firmware["Type"] == "ArduCopter"
+
+    def test_creates_flight_controller_section_when_absent(self) -> None:
+        """
+        The Flight Controller section is created if the Components dict lacks it entirely.
+
+        GIVEN: Components data that has no "Flight Controller" key
+        WHEN: set_fc_fw_version_and_type_in_components_json is called
+        THEN: "Flight Controller" → "Firmware" is created with the correct values
+        """
+        vc = VehicleComponents()
+        vc.vehicle_components_fs.data = {"Components": {}}
+
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")):
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        firmware = vc.vehicle_components_fs.data["Components"]["Flight Controller"]["Firmware"]
+        assert firmware["Version"] == "4.6.3"
+        assert firmware["Type"] == "ArduCopter"
+
+    def test_does_nothing_when_data_is_none(self) -> None:
+        """
+        No save is attempted when the component data is None.
+
+        GIVEN: vehicle_components_fs.data is None (vehicle_components.json was never loaded)
+        WHEN: set_fc_fw_version_and_type_in_components_json is called
+        THEN: save_vehicle_components_json_data is NOT called and no exception is raised
+        """
+        vc = VehicleComponents()
+        vc.vehicle_components_fs.data = None
+
+        with patch.object(vc, "save_vehicle_components_json_data") as mock_save:
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        mock_save.assert_not_called()
+
+    def test_does_nothing_when_data_has_no_components_key(self) -> None:
+        """
+        No save is attempted when the loaded data lacks the "Components" top-level key.
+
+        GIVEN: vehicle_components_fs.data is a dict without a "Components" key
+        WHEN: set_fc_fw_version_and_type_in_components_json is called
+        THEN: save_vehicle_components_json_data is NOT called
+        """
+        vc = VehicleComponents()
+        vc.vehicle_components_fs.data = {"SomethingElse": {}}
+
+        with patch.object(vc, "save_vehicle_components_json_data") as mock_save:
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        mock_save.assert_not_called()
+
+    def test_version_is_readable_back_via_get_fc_fw_version(self, vehicle_components_with_data: VehicleComponents) -> None:
+        """
+        After setting, get_fc_fw_version_from_vehicle_components_json returns the new version.
+
+        GIVEN: Components data with an old firmware version
+        WHEN: set_fc_fw_version_and_type_in_components_json writes "4.6.3"
+        THEN: get_fc_fw_version_from_vehicle_components_json returns "4.6.3"
+        """
+        vc = vehicle_components_with_data
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")):
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        assert vc.get_fc_fw_version_from_vehicle_components_json() == "4.6.3"
+
+    def test_warning_is_logged_when_save_fails(self, vehicle_components_with_data: VehicleComponents) -> None:
+        """
+        A warning is logged and execution continues when the save operation reports an error.
+
+        GIVEN: Component data is valid but save_vehicle_components_json_data returns an error
+        WHEN: set_fc_fw_version_and_type_in_components_json is called
+        THEN: A warning is logged containing the error message and no exception is raised
+        """
+        vc = vehicle_components_with_data
+        with (
+            patch.object(vc, "save_vehicle_components_json_data", return_value=(True, "disk write error")),
+            patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.logging_warning") as mock_warn,
+        ):
+            vc.set_fc_fw_version_and_type_in_components_json("4.6.3", "ArduCopter", "/vehicles/test")
+
+        mock_warn.assert_called_once()
+        args = mock_warn.call_args.args
+        assert "disk write error" in args[1]
+
+    def test_type_is_readable_back_via_get_fc_fw_type(self, vehicle_components_with_data: VehicleComponents) -> None:
+        """
+        After setting, get_fc_fw_type_from_vehicle_components_json returns the new type.
+
+        GIVEN: Components data with ArduCopter as the firmware type
+        WHEN: set_fc_fw_version_and_type_in_components_json writes "ArduPlane"
+        THEN: get_fc_fw_type_from_vehicle_components_json returns "ArduPlane"
+        """
+        vc = vehicle_components_with_data
+        with patch.object(vc, "save_vehicle_components_json_data", return_value=(False, "")):
+            vc.set_fc_fw_version_and_type_in_components_json("4.5.1", "ArduPlane", "/vehicles/test")
+
+        assert vc.get_fc_fw_type_from_vehicle_components_json() == "ArduPlane"

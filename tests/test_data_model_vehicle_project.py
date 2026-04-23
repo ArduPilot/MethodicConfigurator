@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSettings,
@@ -1027,3 +1028,377 @@ class TestIntegrationScenarios:
             assert vehicle_path == "/opened/vehicle/path"
             mock_open.assert_called_once_with("/vehicle/path")
             mock_store.assert_called_once_with("/opened/vehicle/path")
+
+
+class TestCreateNewVehicleFromBinLog:
+    """Test the create_new_vehicle_from_bin_log orchestration method."""
+
+    def _make_manager(self, with_fc: bool = False) -> "VehicleProjectManager":
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_flight_controller = MagicMock() if with_fc else None
+        return VehicleProjectManager(mock_filesystem, mock_flight_controller)
+
+    def test_user_can_create_project_from_bin_log_successfully(self) -> None:
+        """
+        User can create a new vehicle project from a valid .bin log file.
+
+        GIVEN: A project manager and a valid .bin log file
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: The vehicle directory is created, defaults replaced, and the path returned
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        fake_defaults = ParDict.from_float_dict({"PARAM_A": 1.0})
+        fake_current = ParDict.from_float_dict({"PARAM_A": 1.0, "PARAM_B": 2.0})
+        empty_compound = ParDict.from_float_dict({})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl/ArduCopter/empty_4.6.x"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="my_flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(
+                manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/my_flight"
+            ) as mock_create,
+            patch.object(manager._creator, "next_import_filename", return_value="02_imported_bin_log_parameters.param"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory") as mock_open,
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file") as mock_write,
+            patch.object(manager._local_filesystem, "compound_params", return_value=(empty_compound, "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param"),
+            patch.object(manager._local_filesystem, "re_init"),
+        ):
+            # Act
+            result = manager.create_new_vehicle_from_bin_log("/logs/my_flight.bin")
+
+        # Assert: correct path returned
+        assert result == "/vehicles/my_flight"
+        # Assert: template creation called with fc_connected=False (key difference from normal flow)
+        _args, kwargs = mock_create.call_args
+        assert kwargs.get("fc_connected") is False
+        # Assert: vehicle directory opened immediately after creation
+        mock_open.assert_called_once_with("/vehicles/my_flight")
+        # Assert: extracted defaults written (replacing the template's 00_default.param)
+        mock_write.assert_called_once_with(fake_defaults)
+
+    def test_bin_log_defaults_are_written_to_vehicle_directory(self) -> None:
+        """
+        The defaults extracted from the .bin log replace the template's 00_default.param.
+
+        GIVEN: A valid .bin log file with a known defaults snapshot
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: write_param_default_values_to_file is called with the extracted defaults ParDict
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        fake_defaults = ParDict.from_float_dict({"BARO_ALT_OFFSET": 0.0})
+        fake_current = ParDict.from_float_dict({"BARO_ALT_OFFSET": 0.5})
+        empty_compound = ParDict.from_float_dict({})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(empty_compound, "00_default.param")),
+            patch.object(manager._creator, "next_import_filename", return_value="02_imported_bin_log_parameters.param"),
+            patch.object(manager._local_filesystem, "export_to_param"),
+            patch.object(manager._local_filesystem, "re_init"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file") as mock_write,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        # Assert: the extracted defaults — not the template's — are written
+        mock_write.assert_called_once_with(fake_defaults)
+
+    def test_missing_params_exported_to_import_file(self) -> None:
+        """
+        Parameters present in the .bin log but absent from the AMC files are exported.
+
+        GIVEN: A .bin log where current params include entries not covered by AMC files
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: export_to_param is called for the difference, and the filesystem is re-initialised
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        fake_defaults = ParDict.from_float_dict({"PARAM_A": 1.0})
+        fake_current = ParDict.from_float_dict({"PARAM_A": 1.0, "EXTRA_PARAM": 99.0})
+        # compound_params covers only PARAM_A — EXTRA_PARAM is missing
+        compound = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(manager._creator, "next_import_filename", return_value="02_imported_bin_log_parameters.param"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(compound, "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param") as mock_export,
+            patch.object(manager._local_filesystem, "re_init") as mock_reinit,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        # Assert: the import file is created and the filesystem is re-initialised
+        mock_export.assert_called_once()
+        exported_params, export_filename = mock_export.call_args.args[:2]
+        assert export_filename == "02_imported_bin_log_parameters.param"
+        assert "EXTRA_PARAM" in exported_params
+        assert "PARAM_A" not in exported_params
+        assert mock_export.call_args.kwargs.get("annotate_doc") is False
+        # re_init is called once unconditionally (to point filesystem at new_path) and
+        # once more after exporting imported params (to reload the new file).
+        assert mock_reinit.call_count == 2
+
+    def test_no_import_file_when_all_params_covered_by_amc_files(self) -> None:
+        """
+        No extra import file is created when all current params are already in AMC files.
+
+        GIVEN: A .bin log where all current params match the AMC param files
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: export_to_param and re_init are NOT called
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        params = ParDict.from_float_dict({"PARAM_A": 1.0, "PARAM_B": 2.0})
+        compound = ParDict.from_float_dict({"PARAM_A": 1.0, "PARAM_B": 2.0})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(params, params)),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(compound, "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param") as mock_export,
+            patch.object(manager._local_filesystem, "re_init") as mock_reinit,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        # Assert: no extra import file written; re_init called exactly once (the unconditional
+        # initial call to point the filesystem at the new vehicle directory).
+        mock_export.assert_not_called()
+        mock_reinit.assert_called_once_with("/vehicles/flight", "ArduCopter")
+        # Assert: fw_version is set to the full "major.minor.patch" string from the log,
+        # not just "major.minor" or whatever the template's vehicle_components.json contained.
+        assert manager._local_filesystem.fw_version == "4.6.3"
+        # Assert: the correct firmware version and type are written into vehicle_components.json.
+        manager._local_filesystem.set_fc_fw_version_and_type_in_components_json.assert_called_once_with(
+            "4.6.3", "ArduCopter", "/vehicles/flight"
+        )
+
+    def test_no_import_file_for_params_matching_defaults_but_missing_from_step_files(self) -> None:
+        """
+        Params equal to extracted defaults are not exported just because step files omit them.
+
+        GIVEN: Current log params include a value that equals the extracted default
+               and no numbered step file defines that parameter
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: No import file is written for that parameter
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        default_params = ParDict.from_float_dict({"PARAM_A": 10.0})
+        current_params = ParDict.from_float_dict({"PARAM_A": 10.0})
+        empty_step_compound = ParDict.from_float_dict({})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(default_params, current_params)),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(empty_step_compound, "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param") as mock_export,
+            patch.object(manager._local_filesystem, "re_init") as mock_reinit,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        # Assert: nothing to export because current value equals default baseline
+        mock_export.assert_not_called()
+        mock_reinit.assert_called_once_with("/vehicles/flight", "ArduCopter")
+
+    def test_fc_parameters_synced_when_flight_controller_connected(self) -> None:
+        """
+        When a flight controller is connected, its fc_parameters are updated.
+
+        GIVEN: A project manager with an active flight controller
+        WHEN: create_new_vehicle_from_bin_log completes successfully
+        THEN: The flight controller's fc_parameters are set to the current log params
+        """
+        # Arrange
+        manager = self._make_manager(with_fc=True)
+
+        fake_defaults = ParDict.from_float_dict({"PARAM_A": 1.0})
+        fake_current = ParDict.from_float_dict({"PARAM_A": 1.0})
+        compound = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(compound, "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param"),
+            patch.object(manager._local_filesystem, "re_init"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        # Assert: FC parameters updated to the values extracted from the log
+        assert manager._flight_controller.fc_parameters == {"PARAM_A": 1.0}
+
+    def test_creation_error_propagates_to_caller(self) -> None:
+        """
+        VehicleProjectCreationError from param extraction propagates unchanged.
+
+        GIVEN: A .bin log file that cannot have its params extracted
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: VehicleProjectCreationError is raised with the original title/message
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="bad"),
+            patch.object(
+                manager._creator,
+                "extract_param_files_from_bin_log",
+                side_effect=VehicleProjectCreationError(".bin log import", "Corrupt log"),
+            ),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/bad.bin")
+
+        assert exc_info.value.title == ".bin log import"
+        assert exc_info.value.message == "Corrupt log"
+
+    def test_firmware_version_error_propagates_to_caller(self) -> None:
+        """
+        VehicleProjectCreationError from firmware extraction propagates unchanged.
+
+        GIVEN: A .bin log file with no firmware version information
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: VehicleProjectCreationError is raised immediately
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_firmware_version_from_bin_log",
+                side_effect=VehicleProjectCreationError(".bin log import", "No VER or MSG found"),
+            ),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/no_ver.bin")
+
+        assert exc_info.value.title == ".bin log import"
+        assert "No VER or MSG found" in exc_info.value.message
+
+    def test_template_creation_always_called_with_fc_connected_false(self) -> None:
+        """
+        create_new_vehicle_from_template is always called with fc_connected=False.
+
+        This is the key difference from the normal template-creation flow: the vehicle
+        is scaffolded without a live FC connection, using log-extracted params instead.
+
+        GIVEN: A project manager that even has a flight controller connected
+        WHEN: create_new_vehicle_from_bin_log is called
+        THEN: create_new_vehicle_from_template receives fc_connected=False
+        """
+        # Arrange: manager WITH a connected flight controller
+        manager = self._make_manager(with_fc=True)
+
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+        compound = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(params, params)),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight") as mock_create,
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(compound, "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param"),
+            patch.object(manager._local_filesystem, "re_init"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        # Assert: regardless of FC connection, fc_connected must be False
+        _args, kwargs = mock_create.call_args
+        assert kwargs.get("fc_connected") is False
+
+    def test_manager_state_updated_after_bin_log_import(self) -> None:
+        """
+        Manager internal state is updated correctly after a successful .bin log import.
+
+        GIVEN: A project manager in its initial state
+        WHEN: create_new_vehicle_from_bin_log completes successfully
+        THEN: _settings carries the bin-log import options and configuration_template
+              is set to the template directory name
+        """
+        # Arrange
+        manager = self._make_manager()
+
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+        compound = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl/ArduCopter/empty_4.6.x"),
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(params, params)),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(compound, "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param"),
+            patch.object(manager._local_filesystem, "re_init"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
+
+        # Assert: settings reflect the bin-log import defaults
+        assert manager._settings is not None
+        assert manager._settings.blank_change_reason is True
+        assert manager._settings.infer_comp_specs_and_conn_from_fc_params is True
+        assert manager._settings.use_fc_params is True
+        # Assert: configuration_template is the leaf directory name of the template path
+        assert manager.configuration_template == "empty_4.6.x"
