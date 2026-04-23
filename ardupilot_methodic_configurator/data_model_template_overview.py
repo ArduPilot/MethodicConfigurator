@@ -50,4 +50,4 @@ class TemplateOverview:  # pylint: disable=too-many-instance-attributes
         )
 
     def attributes(self) -> list[str]:
-        return self.__dict__.keys()  # type: ignore[return-value]
+        return list(self.__dict__)

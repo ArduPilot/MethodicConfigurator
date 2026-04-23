@@ -30,6 +30,7 @@ import pytest
 from test_data_model_vehicle_components_common import SAMPLE_DOC_DICT, ComponentDataModelFixtures
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -156,7 +157,7 @@ def mock_tkinter_context() -> Callable[[Optional[MockConfiguration]], tuple[cont
 
 # Make all fixtures available across test files
 @pytest.fixture
-def vehicle_components() -> ComponentDataModelFixtures:
+def vehicle_components() -> VehicleComponents:
     """Create a VehicleComponents instance."""
     return ComponentDataModelFixtures.create_vehicle_components()
 

@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import unittest
+from collections.abc import Generator
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
@@ -30,7 +31,7 @@ from ardupilot_methodic_configurator.extract_param_defaults import (
 
 
 @pytest.fixture
-def mock_print() -> Mock:
+def mock_print() -> Generator[Mock, None, None]:
     with patch("builtins.print") as mock:
         yield mock
 

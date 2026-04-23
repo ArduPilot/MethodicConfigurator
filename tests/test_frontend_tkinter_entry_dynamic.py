@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Generator
 from tkinter.constants import END
 from unittest.mock import MagicMock, patch
 
@@ -24,7 +25,7 @@ class TestEntryWithDynamicalyFilteredListbox:  # pylint: disable=too-many-public
 
     # pylint: disable=protected-access
     @pytest.fixture
-    def setup_widget(self) -> tuple:
+    def setup_widget(self) -> Generator[tuple[tk.Tk, EntryWithDynamicalyFilteredListbox], None, None]:
         root = tk.Tk()
         list_of_items = ["item1", "item2", "item3", "anotheritem", "test"]
         widget = EntryWithDynamicalyFilteredListbox(root, list_of_items=list_of_items)

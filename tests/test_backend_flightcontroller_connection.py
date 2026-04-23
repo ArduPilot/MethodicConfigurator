@@ -23,9 +23,6 @@ import pytest
 import serial.tools.list_ports_common
 from pymavlink import mavutil
 
-if TYPE_CHECKING:
-    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
-
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
     SUPPORTED_BAUDRATES,
@@ -42,6 +39,9 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial imp
     SystemSerialPortDiscovery,
 )
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
 
 # pylint: disable=protected-access, too-many-lines
 

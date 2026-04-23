@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 from argparse import ArgumentParser
+from collections.abc import Generator
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
@@ -32,7 +33,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 
 
 @pytest.fixture
-def temp_vehicle_dir() -> str:
+def temp_vehicle_dir() -> Generator[str, None, None]:
     """Fixture providing a temporary directory for vehicle configuration."""
     with TemporaryDirectory(prefix="test_vehicle_") as tmpdir:
         yield tmpdir
