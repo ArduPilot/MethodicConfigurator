@@ -159,6 +159,7 @@ ignore-words-list = "datas,intoto,juli,laf,ned,parm,sade,sitl,thst,sie,mot,caris
 skip = "*.pdef.xml,*.pdf,*.po"
 
 [tool.ruff]
+target-version = "py39"
 exclude = [
     ".git",
     "__pycache__",
@@ -182,71 +183,14 @@ exclude = [
 ]
 
 # https://docs.astral.sh/ruff/rules/
-lint.select = [
-    #"ERA",  # eradicate
-    "YTT",  # flake8-2020
-    "ANN",  # flake8-annotations
-    "ASYNC",# flake8-async
-    "S",    # flake8-bandit
-    #"BLE",  # flake8-blind-except
-    "FBT",  # flake8-boolean-trap
-    "B",    # flake8-bugbear
-    "A",    # flake8-builtins
-    "COM",  # flake8-commas
-    "C4",   # flake8-comprehensions
-    #"CPY",  # flake8-copyright
-    "DTZ",  # flake8-datetimez
-    "T10",  # flake8-debugger
-    "EM",   # flake8-errmsg
-    "EXE",  # flake8-executable
-    "FIX",  # flake8-fixme
-    "FA",   # flake8-future-annotations
-    "INT",  # flake8-gettext
-    "ISC",  # flake8-implicit-str-concat
-    "ICN",  # flake8-import-conventions
-    "LOG",  # flake8-logging
-    "G",    # flake8-logging-format
-    "INP",  # flake8-no-pep420
-    "PIE",  # flake8-pie
-    "T20",  # flake8-print
-    "PYI",  # flake8-pyi
-    "PT",   # flake8-pytest-style
-    "Q",    # flake8-quotes
-    "RSE",  # flake8-raise
-    "RET",  # flake8-return
-    "SLF",  # flake8-self
-    "SIM",  # flake8-simplify
-    "SLOT", # flake8-slots
-    "TID",  # flake8-tidy-imports
-    "TD",   # flake8-todos
-    "TC",   # flake8-type-checking
-    "ARG",  # flake8-unused-arguments
-    #"PTH",  # flake8-use-pathlib
-    "FLY",  # flynt
-    "I",    # isort
-    "C90",  # maccabe
-    "NPY",  # NumPy-specific rules
-    "PD",   # pandas-vet
-    "N",    # pep8-naming
-    "PERF", # Performance-related issues
-    "E",    # pycodestyle -Error
-    "W",    # pycodestyle - Warning
-    #"DOC",  # pydoclint
-    "D",    # pydocstyle
-    "F",    # Pyflakes
-    "PGH",  # pygrep-hooks
-    "PL",   # Pylint
-    "PLC",  # Convention
-    "PLE",  # Error
-    "PLR",  # Refactor
-    "PLW",  # Warning
-    "UP",   # pyupgrade
-    "FURB", # refurb
-    "RUF",  # Ruff-specific codes
-    #"TRY",  # tryceratops
-]
-
+lint.select = ["ALL"]
 lint.ignore = [
+    "ERA",     # eradicate
+    "BLE",     # flake8-blind-except
+    "CPY",     # flake8-copyright
+    "PTH",     # flake8-use-pathlib
+    "DOC",     # pydoclint
+    "TRY",     # tryceratops
     "ISC001",  # to let formatter run
     "ANN002",
     "ANN003",
