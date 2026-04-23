@@ -531,13 +531,13 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         # Test writing
         test_filename = "test_param.param"
         expected_path = os_path.join("vehicle_dir", "last_uploaded_filename.txt")
-        with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
+        with patch("builtins.open", mock_open()) as mock_file:
             lfs.write_last_uploaded_filename(test_filename)
             mock_file.assert_called_once_with(expected_path, "w", encoding="utf-8", newline="\n")
             mock_file().write.assert_called_once_with(test_filename)
 
         # Test reading
-        with patch("builtins.open", unittest.mock.mock_open(read_data=test_filename)) as mock_file:
+        with patch("builtins.open", mock_open(read_data=test_filename)) as mock_file:
             result = lfs._LocalFilesystem__read_last_uploaded_filename()  # pylint: disable=protected-access
             assert result == test_filename
             mock_file.assert_called_once_with(expected_path, encoding="utf-8")

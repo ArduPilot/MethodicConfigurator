@@ -16,12 +16,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 from time import time as real_time
-from typing import NoReturn
+from typing import TYPE_CHECKING, NoReturn, Optional
 from unittest.mock import Mock, patch
 
 import pytest
 import serial.tools.list_ports_common
 from pymavlink import mavutil
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_flightcontroller_protocols import MavlinkConnection
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
@@ -855,14 +858,14 @@ class TestConnectionErrorHandling:
         class ExplodingFactory(SystemMavlinkConnectionFactory):  # pylint: disable=too-few-public-methods
             """MAVLink factory that always raises ConnectionError."""
 
-            def create(  # type: ignore[override] # pylint: disable=too-many-arguments, too-many-positional-arguments
+            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
                 self,
                 device: str,
                 baudrate: int,
                 timeout: float = 5.0,
                 retries: int = 3,
-                progress_callback: object = None,
-            ) -> object:
+                progress_callback: Optional[object] = None,  # noqa: UP045
+            ) -> Optional[MavlinkConnection]:  # noqa: UP045
                 _ = (baudrate, timeout, retries, progress_callback)
                 msg = f"{device}: Permission denied"
                 raise ConnectionError(msg)
