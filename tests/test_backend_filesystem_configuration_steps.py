@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 from json import JSONDecodeError
-from unittest.mock import mock_open, patch
+from unittest.mock import Mock, call, mock_open, patch
 
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 
@@ -31,10 +31,10 @@ class TestConfigurationSteps(unittest.TestCase):
     @patch("os.path.abspath")
     def test_re_init(
         self,
-        mock_abspath: unittest.mock.Mock,
-        mock_dirname: unittest.mock.Mock,
-        mock_join: unittest.mock.Mock,
-        mock_open2: unittest.mock.Mock,
+        mock_abspath: Mock,
+        mock_dirname: Mock,
+        mock_join: Mock,
+        mock_open2: Mock,
     ) -> None:
         mock_abspath.return_value = "abs_path"
         mock_dirname.return_value = "dir_name"
@@ -43,8 +43,8 @@ class TestConfigurationSteps(unittest.TestCase):
         assert self.config_steps.configuration_steps
         mock_open2.assert_has_calls(
             [
-                unittest.mock.call("vehicle_dir/configuration_steps_vehicle_type.json", encoding="utf-8-sig"),
-                unittest.mock.call("dir_name/configuration_steps_schema.json", encoding="utf-8"),
+                call("vehicle_dir/configuration_steps_vehicle_type.json", encoding="utf-8-sig"),
+                call("dir_name/configuration_steps_schema.json", encoding="utf-8"),
             ],
             any_order=True,
         )

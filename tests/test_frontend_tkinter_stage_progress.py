@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Generator
+from tkinter import ttk
 
 import pytest
 
@@ -244,7 +245,7 @@ class TestWindowResizing:
         initial_wraplengths = {}
         for phase_name, frame in progress_bar.phase_frames.items():
             for child in frame.winfo_children():
-                if isinstance(child, tk.ttk.Label):
+                if isinstance(child, ttk.Label):
                     initial_wraplengths[phase_name] = child.cget("wraplength")
 
         # Simulate window resize by updating width and calling resize handler
@@ -254,7 +255,7 @@ class TestWindowResizing:
         # Verify wraplength has been updated for all phase labels
         for phase_name, frame in progress_bar.phase_frames.items():
             for child in frame.winfo_children():
-                if isinstance(child, tk.ttk.Label):
+                if isinstance(child, ttk.Label):
                     # Wraplength should be set to a positive value
                     current_wraplength = child.cget("wraplength")
                     initial_wraplength = initial_wraplengths[phase_name]
@@ -283,10 +284,10 @@ class TestOptionalPhaseStyling:
         optional_label = None
         normal_label = None
         for child in optional_frame.winfo_children():
-            if isinstance(child, tk.ttk.Label):
+            if isinstance(child, ttk.Label):
                 optional_label = child
         for child in normal_frame.winfo_children():
-            if isinstance(child, tk.ttk.Label):
+            if isinstance(child, ttk.Label):
                 normal_label = child
 
         assert optional_label is not None
@@ -314,9 +315,9 @@ class TestPhaseFrameStructure:
         progressbar = None
         label = None
         for child in children:
-            if isinstance(child, tk.ttk.Progressbar):
+            if isinstance(child, ttk.Progressbar):
                 progressbar = child
-            elif isinstance(child, tk.ttk.Label):
+            elif isinstance(child, ttk.Label):
                 label = child
 
         assert progressbar is not None, "Progressbar should exist"
@@ -363,7 +364,7 @@ class TestLabelTextFormatting:
         frame = progress.phase_frames["A"]
         label = None
         for child in frame.winfo_children():
-            if isinstance(child, tk.ttk.Label):
+            if isinstance(child, ttk.Label):
                 label = child
                 break
 
@@ -385,7 +386,7 @@ class TestLabelTextFormatting:
         frame = progress.phase_frames["Short"]
         label = None
         for child in frame.winfo_children():
-            if isinstance(child, tk.ttk.Label):
+            if isinstance(child, ttk.Label):
                 label = child
                 break
 
@@ -407,7 +408,7 @@ class TestLabelTextFormatting:
         frame = progress.phase_frames["Medium Text"]
         label = None
         for child in frame.winfo_children():
-            if isinstance(child, tk.ttk.Label):
+            if isinstance(child, ttk.Label):
                 label = child
                 break
 

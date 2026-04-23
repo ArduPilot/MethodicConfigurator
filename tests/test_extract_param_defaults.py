@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 
@@ -297,7 +297,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         output_params(defaults, "missionplanner")
 
         # Check if the print function was called with the correct parameters
-        expected_calls = [unittest.mock.call("PARAM2,1"), unittest.mock.call("PARAM1,2")]
+        expected_calls = [call("PARAM2,1"), call("PARAM1,2")]
         mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
@@ -309,7 +309,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         output_params(defaults, "missionplanner")
 
         # Check if the print function was called with the correct parameters
-        expected_calls = [unittest.mock.call("PARAM1,non-numeric")]
+        expected_calls = [call("PARAM1,non-numeric")]
         mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")
@@ -323,8 +323,8 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [
-            unittest.mock.call("%-15s %.6f" % ("PARAM1", 1.0)),  # pylint: disable=consider-using-f-string
-            unittest.mock.call("%-15s %.6f" % ("PARAM2", 2.0)),  # pylint: disable=consider-using-f-string
+            call("%-15s %.6f" % ("PARAM1", 1.0)),  # pylint: disable=consider-using-f-string
+            call("%-15s %.6f" % ("PARAM2", 2.0)),  # pylint: disable=consider-using-f-string
         ]
         mock_print_.assert_has_calls(expected_calls, any_order=False)
 
@@ -339,9 +339,9 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [
-            unittest.mock.call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
-            unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
-            unittest.mock.call("%u %u %-15s %.6f %u" % (1, 1, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
+            call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
+            call("%u %u %-15s %.6f %u" % (1, 1, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
+            call("%u %u %-15s %.6f %u" % (1, 1, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
         ]
         mock_print_.assert_has_calls(expected_calls, any_order=False)
 
@@ -356,9 +356,9 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [
-            unittest.mock.call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
-            unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
-            unittest.mock.call("%u %u %-15s %.6f %u" % (2, 4, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
+            call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
+            call("%u %u %-15s %.6f %u" % (2, 4, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
+            call("%u %u %-15s %.6f %u" % (2, 4, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
         ]
         mock_print_.assert_has_calls(expected_calls, any_order=False)
 
@@ -373,10 +373,10 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
 
         # Check if the print function was called with the correct parameters
         expected_calls = [
-            unittest.mock.call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
-            unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
-            unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
-            unittest.mock.call("%u %u %-15s %.6f %u" % (3, 7, "SYSID_THISMAV", 3.0, 9)),  # pylint: disable=consider-using-f-string
+            call("\n# # Vehicle-Id Component-Id Name Value Type\n"),
+            call("%u %u %-15s %.6f %u" % (3, 7, "PARAM1", 1.0, 9)),  # pylint: disable=consider-using-f-string
+            call("%u %u %-15s %.6f %u" % (3, 7, "PARAM2", 2.0, 9)),  # pylint: disable=consider-using-f-string
+            call("%u %u %-15s %.6f %u" % (3, 7, "SYSID_THISMAV", 3.0, 9)),  # pylint: disable=consider-using-f-string
         ]
         mock_print_.assert_has_calls(expected_calls, any_order=False)
 
@@ -420,7 +420,7 @@ class TestOutputParams(unittest.TestCase):  # pylint: disable=missing-class-docs
         output_params(defaults, "missionplanner")
 
         # Check if the print function was called with the correct parameters
-        expected_calls = [unittest.mock.call("PARAM1,1.01"), unittest.mock.call("PARAM2,2")]
+        expected_calls = [call("PARAM1,1.01"), call("PARAM2,2")]
         mock_print_.assert_has_calls(expected_calls, any_order=False)
 
     @patch("builtins.print")

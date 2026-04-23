@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_software_update import UpdateDialog
@@ -141,7 +141,7 @@ class TestUpdateDialog(unittest.TestCase):  # pylint: disable=too-many-instance-
 
         # Check that grid_columnconfigure was called exactly twice with the right arguments
         assert dialog.frame.grid_columnconfigure.call_count == 2  # pylint: disable=no-member
-        dialog.frame.grid_columnconfigure.assert_has_calls([unittest.mock.call(0, weight=1), unittest.mock.call(1, weight=1)])  # pylint: disable=no-member
+        dialog.frame.grid_columnconfigure.assert_has_calls([call(0, weight=1), call(1, weight=1)])  # pylint: disable=no-member
 
     def test_init_scroll_frame(self) -> None:
         """Test ScrollFrame setup during initialization."""
