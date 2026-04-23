@@ -4865,7 +4865,7 @@ msgid ""
 "On {component} the selected\n"
 "protocol '{current_selection}' is not available for the selected connection "
 "Type."
-msgstr ""
+msgstr "{component} 上所选的协议“{current_selection}”对于所选的连接类型不可用。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:288
 msgid ""
