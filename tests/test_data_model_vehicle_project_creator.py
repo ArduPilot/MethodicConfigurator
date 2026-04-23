@@ -13,11 +13,13 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSetting,
     NewVehicleProjectSettings,
@@ -1061,6 +1063,265 @@ class TestGetFCDependentErrorMessageGuardClause:
 
         # Assert
         assert "no flight controller connected" in error_message
+
+
+class TestBinLogImportHelpers:
+    """Test static helper methods on VehicleProjectCreator used for .bin log imports."""
+
+    def test_template_dir_for_bin_import_returns_correct_path(self, tmp_path) -> None:
+        """
+        template_dir_for_bin_import returns the empty_{major}.{minor}.x path for a given vehicle type.
+
+        GIVEN: A user wants to create a project from a .bin log file for ArduCopter 4.6
+        WHEN: They request the template directory with the extracted vehicle_type and version
+        THEN: The path ends with ArduCopter/empty_4.6.x and points to an existing directory
+        """
+        # Arrange: create the expected directory structure so the existence check passes
+        template_dir = tmp_path / "ArduCopter" / "empty_4.6.x"
+        template_dir.mkdir(parents=True)
+
+        with patch.object(LocalFilesystem, "get_templates_base_dir", return_value=str(tmp_path)):
+            result = VehicleProjectCreator.template_dir_for_bin_import("ArduCopter", 4, 6)
+
+        # Assert: returned path ends with the correct vehicle/version subdirectory
+        assert result.endswith(("ArduCopter/empty_4.6.x", "ArduCopter\\empty_4.6.x"))
+
+    def test_template_dir_for_bin_import_uses_major_minor_for_template_name(self, tmp_path) -> None:
+        """
+        template_dir_for_bin_import uses the extracted major.minor version numbers.
+
+        GIVEN: A .bin log from a Rover running firmware 4.5
+        WHEN: They request the template directory with vehicle_type="Rover", major=4, minor=5
+        THEN: The path contains Rover and empty_4.5.x
+        """
+        # Arrange: create expected directory structure
+        template_dir = tmp_path / "Rover" / "empty_4.5.x"
+        template_dir.mkdir(parents=True)
+
+        with patch.object(LocalFilesystem, "get_templates_base_dir", return_value=str(tmp_path)):
+            result = VehicleProjectCreator.template_dir_for_bin_import("Rover", 4, 5)
+
+        assert "Rover" in result
+        assert "empty_4.5.x" in result
+
+    def test_template_dir_for_bin_import_raises_when_template_directory_missing(self, tmp_path) -> None:
+        """
+        template_dir_for_bin_import raises VehicleProjectCreationError for unsupported vehicle/version.
+
+        GIVEN: A .bin log whose vehicle type has no matching template directory
+        WHEN: template_dir_for_bin_import is called with that vehicle_type and version
+        THEN: VehicleProjectCreationError is raised with the .bin log import title
+        """
+        # Arrange: directory does NOT exist (no mkdir)
+        with (
+            patch.object(LocalFilesystem, "get_templates_base_dir", return_value=str(tmp_path)),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
+            VehicleProjectCreator.template_dir_for_bin_import("UnknownVehicle", 9, 9)
+
+        assert exc_info.value.title == ".bin log import"
+        assert "UnknownVehicle" in exc_info.value.message
+        assert "empty_9.9.x" in exc_info.value.message
+
+    def test_extract_firmware_version_from_bin_log_returns_vehicle_type_and_version(self) -> None:
+        """
+        extract_firmware_version_from_bin_log returns (vehicle_type, major, minor, patch).
+
+        GIVEN: A .bin log file whose VER message reports ArduCopter 4.6.3
+        WHEN: extract_firmware_version_from_bin_log is called
+        THEN: Returns ("ArduCopter", 4, 6, 3)
+        """
+        with patch(
+            "ardupilot_methodic_configurator.extract_param_defaults.extract_firmware_version_and_vehicle_type",
+            return_value=("ArduCopter", 4, 6, 3),
+        ):
+            result = VehicleProjectCreator.extract_firmware_version_from_bin_log("any.bin")
+
+        assert result == ("ArduCopter", 4, 6, 3)
+
+    def test_extract_firmware_version_from_bin_log_raises_creation_error_on_failure(self) -> None:
+        """
+        extract_firmware_version_from_bin_log converts SystemExit to VehicleProjectCreationError.
+
+        GIVEN: A .bin log file with no firmware version information
+        WHEN: extract_firmware_version_from_bin_log is called
+        THEN: VehicleProjectCreationError is raised with the .bin log import title
+        """
+        with (
+            patch(
+                "ardupilot_methodic_configurator.extract_param_defaults.extract_firmware_version_and_vehicle_type",
+                side_effect=SystemExit("No VER or MSG message found"),
+            ),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
+            VehicleProjectCreator.extract_firmware_version_from_bin_log("no_ver.bin")
+
+        assert ".bin log import" in exc_info.value.title
+        assert "No VER or MSG message found" in exc_info.value.message
+
+    def test_vehicle_name_from_bin_log_uses_file_stem(self, project_creator) -> None:
+        """
+        vehicle_name_from_bin_log returns just the filename stem.
+
+        GIVEN: A user selects a .bin log file with a known name
+        WHEN: The helper derives the vehicle name
+        THEN: Only the filename without extension or directory is returned
+        """
+        # Arrange
+        bin_file = "/logs/2024-04-24/my_flight.bin"
+
+        # Act
+        result = VehicleProjectCreator.vehicle_name_from_bin_log(bin_file)
+
+        # Assert
+        assert result == "my_flight"
+
+    def test_next_import_filename_starts_at_one_when_no_param_files_exist(self, tmp_path) -> None:
+        """
+        next_import_filename returns 01_… when there are no .param files.
+
+        GIVEN: A newly created vehicle directory with no .param files
+        WHEN: The next import filename is requested
+        THEN: The filename should start with "01_"
+        """
+        # Arrange: empty directory (no .param files)
+        vehicle_dir = str(tmp_path)
+
+        # Act
+        result = VehicleProjectCreator.next_import_filename(vehicle_dir)
+
+        # Assert: the canonical import filename is returned verbatim
+        assert result == "01_imported_bin_log_parameters.param"
+
+    def test_next_import_filename_increments_beyond_highest_numbered_file(self, tmp_path) -> None:
+        """
+        next_import_filename returns one higher than the highest existing prefix.
+
+        GIVEN: A vehicle directory containing numbered .param files up to prefix 05
+        WHEN: The next import filename is requested
+        THEN: The filename should start with "06_"
+        """
+        # Arrange: create some numbered .param files
+        for name in ("01_setup.param", "03_tuning.param", "05_final.param"):
+            (tmp_path / name).write_text("")
+
+        # Act
+        result = VehicleProjectCreator.next_import_filename(str(tmp_path))
+
+        # Assert
+        assert result == "06_imported_bin_log_parameters.param"
+
+    def test_next_import_filename_ignores_non_param_files(self, tmp_path) -> None:
+        """
+        next_import_filename ignores files that are not .param files.
+
+        GIVEN: A vehicle directory containing a mix of file types
+        WHEN: The next import filename is requested
+        THEN: Non-.param files are not counted and do not affect the prefix
+        """
+        # Arrange: one .param file and one unrelated file with a high numeric name
+        (tmp_path / "03_setup.param").write_text("")
+        (tmp_path / "99_readme.txt").write_text("")
+
+        # Act
+        result = VehicleProjectCreator.next_import_filename(str(tmp_path))
+
+        # Assert: txt file must not have inflated the counter
+        assert result == "04_imported_bin_log_parameters.param"
+
+    def test_next_import_filename_converts_os_error_to_creation_error(self, tmp_path, monkeypatch) -> None:
+        """
+        next_import_filename converts filesystem errors into VehicleProjectCreationError.
+
+        GIVEN: The vehicle directory cannot be scanned due to an OSError
+        WHEN: next_import_filename is called
+        THEN: VehicleProjectCreationError is raised with a Parameter import title
+        """
+        vehicle_dir = str(tmp_path)
+
+        def raise_os_error(_: Path) -> None:
+            msg = "permission denied"
+            raise OSError(msg)
+
+        monkeypatch.setattr(Path, "iterdir", raise_os_error)
+
+        with pytest.raises(VehicleProjectCreationError) as exc_info:
+            VehicleProjectCreator.next_import_filename(vehicle_dir)
+
+        assert exc_info.value.title == "Parameter import"
+        assert "permission denied" in exc_info.value.message
+        assert vehicle_dir in exc_info.value.message
+
+    def test_next_import_filename_raises_when_all_slots_used(self, tmp_path) -> None:
+        """
+        next_import_filename raises VehicleProjectCreationError when slot 99 is taken.
+
+        GIVEN: A vehicle directory where a .param file already uses prefix 99
+        WHEN: The next import filename is requested
+        THEN: VehicleProjectCreationError is raised
+        """
+        # Arrange: prefix 99 is occupied
+        (tmp_path / "99_last.param").write_text("")
+
+        # Act & Assert
+        with pytest.raises(VehicleProjectCreationError) as exc_info:
+            VehicleProjectCreator.next_import_filename(str(tmp_path))
+
+        assert exc_info.value.title == "Parameter import"
+        assert str(tmp_path) in exc_info.value.message
+
+    def test_extract_param_files_from_bin_log_returns_two_par_dicts(self) -> None:
+        """
+        extract_param_files_from_bin_log returns (defaults, current) ParDict pair.
+
+        GIVEN: A valid .bin log file that extract_parameter_values can parse
+        WHEN: extract_param_files_from_bin_log is called
+        THEN: Two non-empty ParDict objects are returned (defaults first, current second)
+        """
+        # Arrange
+        fake_defaults = {"PARAM_A": 1.0, "PARAM_B": 2.0}
+        fake_current = {"PARAM_A": 1.5, "PARAM_B": 2.0, "PARAM_C": 3.0}
+
+        with patch(
+            "ardupilot_methodic_configurator.extract_param_defaults.extract_parameter_values",
+            side_effect=[fake_defaults, fake_current],
+        ):
+            # Act
+            result_defaults, result_current = VehicleProjectCreator.extract_param_files_from_bin_log("any.bin")
+
+        # Assert: both results are ParDict instances with correct keys and values
+        assert isinstance(result_defaults, ParDict)
+        assert isinstance(result_current, ParDict)
+        assert set(result_defaults.keys()) == {"PARAM_A", "PARAM_B"}
+        assert result_defaults["PARAM_A"].value == pytest.approx(1.0)
+        assert result_defaults["PARAM_B"].value == pytest.approx(2.0)
+        assert set(result_current.keys()) == {"PARAM_A", "PARAM_B", "PARAM_C"}
+        assert result_current["PARAM_A"].value == pytest.approx(1.5)
+        assert result_current["PARAM_C"].value == pytest.approx(3.0)
+
+    def test_extract_param_files_raises_creation_error_when_extraction_fails(self) -> None:
+        """
+        extract_param_files_from_bin_log converts SystemExit into VehicleProjectCreationError.
+
+        GIVEN: A .bin log file that extract_parameter_values cannot parse
+        WHEN: extract_param_files_from_bin_log is called
+        THEN: VehicleProjectCreationError is raised with the .bin log import title
+        """
+        with (
+            patch(
+                "ardupilot_methodic_configurator.extract_param_defaults.extract_parameter_values",
+                side_effect=SystemExit("bad log"),
+            ),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
+            VehicleProjectCreator.extract_param_files_from_bin_log("corrupt.bin")
+
+        assert ".bin log import" in exc_info.value.title
+        assert "bad log" in exc_info.value.message
+
+
+class TestGetFCDependentErrorMessageWorksForParams:
+    """Test the non-guard-clause cases of get_fc_dependent_error_message."""
 
     def test_get_fc_dependent_error_message_works_for_param_dependent(self) -> None:
         """
