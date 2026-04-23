@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project import VehiclePr
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import (
+    BinLogSelectionWidgets,
     VehicleDirectorySelectionWidgets,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
@@ -64,7 +65,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
             self.main_frame,
             anchor=tk.CENTER,
             justify=tk.CENTER,
-            text=introduction_text + _("\nChoose one of the following three options:"),
+            text=introduction_text + _("\nChoose one of the following options:"),
         )
         introduction_label.pack(expand=False, fill=tk.X, padx=6, pady=6)
         _template_dir, _new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
@@ -95,6 +96,17 @@ class VehicleProjectOpenerWindow(BaseWindow):
             create_vehicle_directory_from_template_button,
             _("Create a new vehicle configuration directory, choose this option when using the software for the first time"),
         )
+
+        def on_bin_log_selected(bin_file: str) -> None:
+            self.project_manager.create_new_vehicle_from_bin_log(bin_file)
+            self.root.destroy()
+
+        self.bin_log_selection_widgets = BinLogSelectionWidgets(
+            self,
+            option1_label_frame,
+            on_select_file_callback=on_bin_log_selected,
+        )
+        self.bin_log_selection_widgets.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=(0, 5), anchor=tk.NW)
 
     # pylint: enable=duplicate-code
 

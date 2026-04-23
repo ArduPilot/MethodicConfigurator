@@ -14,6 +14,7 @@ from tkinter import filedialog, messagebox, ttk
 from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import VehicleProjectCreationError
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
@@ -133,6 +134,58 @@ class DirectorySelectionWidgets:
 
     def get_selected_directory(self) -> str:
         return self.directory
+
+
+class BinLogSelectionWidgets:  # pylint: disable=too-few-public-methods
+    """A GUI widget for selecting a .bin log file and invoking a callback."""
+
+    def __init__(
+        self,
+        parent: BaseWindow,
+        parent_frame: ttk.Widget,
+        on_select_file_callback: Callable[[str], None],
+    ) -> None:
+        self.parent = parent
+        self.on_select_file_callback = on_select_file_callback
+
+        self.container_frame = ttk.Frame(parent_frame)
+        self.select_file_button = ttk.Button(
+            self.container_frame,
+            text=_("Create a vehicle project from a .bin log file"),
+            command=self.on_select_file,
+        )
+        self.select_file_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
+        show_tooltip(
+            self.select_file_button,
+            _(
+                "Extract default and current parameters from an ArduPilot .bin log file.\n"
+                "The vehicle type and firmware version are read from the log and the matching\n"
+                "empty template is used. The template's 00_default.param is replaced with the\n"
+                "extracted defaults snapshot. Continue with the normal component editor flow."
+            ),
+        )
+
+    def on_select_file(self) -> bool:
+        selected_file = filedialog.askopenfilename(
+            parent=self.parent.root,
+            title=_("Select an ArduPilot .bin log file"),
+            filetypes=[(_("ArduPilot binary log files"), "*.bin"), (_("All files"), "*.*")],
+        )
+        if not selected_file:
+            return False
+
+        try:
+            self.on_select_file_callback(selected_file)
+            return True
+        except VehicleProjectCreationError as exc:
+            messagebox.showerror(exc.title, exc.message)
+            return False
+        except VehicleProjectOpenError as exc:
+            messagebox.showerror(exc.title, exc.message)
+            return False
+        except OSError as exc:
+            messagebox.showerror(_(".bin log import"), str(exc))
+            return False
 
 
 class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):

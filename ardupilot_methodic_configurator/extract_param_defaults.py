@@ -175,6 +175,62 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
             raise SystemExit(msg)
 
 
+def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, int, int]:
+    """
+    Extract vehicle type and firmware version from an ArduPilot .bin log file.
+
+    Prefers the structured VER message (fields Maj, Min, Pat, FWS) and falls back to
+    scanning MSG messages until one with a parseable "Vx.y" version is found
+    (e.g. "ArduCopter V4.6.3 (hash)").
+
+    Args:
+        logfile: The path to the ArduPilot .bin log file.
+
+    Returns:
+        A tuple of (vehicle_type, major, minor, patch), e.g. ("ArduCopter", 4, 6, 3).
+
+    """
+    try:
+        mlog = mavutil.mavlink_connection(logfile)
+    except Exception as e:
+        msg = f"Error opening the {logfile} logfile: {e!s}"
+        raise SystemExit(msg) from e
+
+    try:
+        msg_fallback_result: Union[tuple[str, int, int, int], None] = None
+        while True:
+            m = mlog.recv_match(type=["VER", "MSG"])
+            if m is None:
+                break
+            if m.get_type() == "VER":
+                fws = str(m.FWS)  # e.g. "ArduCopter V4.6.3 (3fc7011a)"
+                vehicle_type = fws.split(maxsplit=1)[0] if fws else ""
+                maj, min_, pat = m.Maj, m.Min, m.Pat
+                if maj is None or min_ is None or pat is None:
+                    continue
+                return vehicle_type, int(maj), int(min_), int(pat)
+            # Parse each MSG; store the first parseable Vx.y one as fallback and keep scanning for VER
+            if msg_fallback_result is None:
+                parts = str(m.Message).split()
+                if len(parts) >= 2 and parts[1].startswith("V"):
+                    version_parts = parts[1][1:].split(".")  # Remove "V" prefix, split by "."
+                    if len(version_parts) >= 2:
+                        with contextlib.suppress(ValueError):
+                            patch_val = int(version_parts[2]) if len(version_parts) >= 3 else 0
+                            msg_fallback_result = (parts[0], int(version_parts[0]), int(version_parts[1]), patch_val)
+
+        if msg_fallback_result is not None:
+            return msg_fallback_result
+
+        msg = f"No firmware version information found in {logfile}"
+        raise SystemExit(msg)
+    finally:
+        close_method = getattr(mlog, "close", None)
+        if callable(close_method):
+            with contextlib.suppress(Exception):
+                close_method()
+
+
 def missionplanner_sort(item: str) -> tuple[str, ...]:
     """
     Sorts a parameter name according to the rules defined in the Mission Planner software.
