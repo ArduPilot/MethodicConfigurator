@@ -1092,7 +1092,7 @@ class TestComponentDataModelBase(BasicTestMixin, RealisticDataTestMixin):
 
     def test_update_json_structure_adds_arm_and_min_voltages_to_legacy_data(self, basic_model) -> None:
         """
-        Legacy components.json without arm/min voltages gets defaults populated.
+        Legacy vehicle_components.json without arm/min voltages gets defaults populated.
 
         GIVEN: A model whose battery Specifications has Volt per cell max/low/crit but NOT arm or min
         WHEN: update_json_structure() is called
