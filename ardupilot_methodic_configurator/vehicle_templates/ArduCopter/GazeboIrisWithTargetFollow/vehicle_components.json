@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 0.6,
-                "TOW max Kg": 0.6
+                "TOW max Kg": 0.6,
+                "Class": "1"
             },
             "Notes": "TOW in this case a taken ideal, and not calculated including gimbal."
         },

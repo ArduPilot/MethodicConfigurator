@@ -17,6 +17,7 @@ from math import isnan
 from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_flightcontroller_business_logic import get_frame_info
 from ardupilot_methodic_configurator.battery_cell_voltages import (
     BATTERY_CELL_VOLTAGE_TYPES,
     BATTERY_DEFAULT_CHEMISTRY,
@@ -182,6 +183,10 @@ class ComponentDataModelImport(ComponentDataModelBase):
         fw_type = str(self.get_component_value(("Flight Controller", "Firmware", "Type")) or "")
         self._verify_dict_is_uptodate(doc, get_esc_connection_sub_dict(fw_type), "MOT_PWM_TYPE", "values")
         self._verify_dict_is_uptodate(doc, RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask")
+
+        # Process frame information first (if available)
+        frame_class, _ = get_frame_info(fc_parameters)
+        self.set_component_value(("Frame", "Specifications", "Class"), str(frame_class))
 
         # Process parameters in sequence
         self._set_gnss_type_from_fc_parameters(fc_parameters)
