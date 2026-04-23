@@ -567,11 +567,12 @@ def process_component_editor_results(
 
     """
     # Get existing FC parameters for reference
-    fc_param_names: list[str] = []
+    fc_param_names: dict[str, float] = {}
     if flight_controller.fc_parameters:
-        fc_param_names = list(flight_controller.fc_parameters.keys())
+        fc_param_names = flight_controller.fc_parameters
     elif local_filesystem.param_default_dict:
-        fc_param_names = list(local_filesystem.param_default_dict.keys())
+        # Extract the float values from the ParDict objects
+        fc_param_names = {k: v.value for k, v in local_filesystem.param_default_dict.items()}
 
     try:
         component_dependent_param_changes = local_filesystem.calculate_derived_and_forced_param_changes(

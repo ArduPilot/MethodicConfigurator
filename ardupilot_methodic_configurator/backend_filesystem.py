@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
+import re
 from argparse import ArgumentParser
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -835,9 +836,26 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             variables["doc_dict"] = self.doc_dict
         return variables
 
+    def _auto_import_params(
+        self, step_dict: dict[str, Any], fc_param_names: Union[list[str], dict[str, float]], working: ParDict
+    ) -> None:
+        # Only run if the dict of values was passed, and the regex rule exists
+        if "autoimport_nondefault_regexp" not in step_dict or not isinstance(fc_param_names, dict):
+            return
+
+        regex_rules = step_dict["autoimport_nondefault_regexp"]
+        for live_key, live_value in fc_param_names.items():
+            if live_key in working:
+                continue
+
+            if any(re.match(pattern, live_key) for pattern in regex_rules) and live_key in self.param_default_dict:
+                default_value = self.param_default_dict[live_key].value
+                if not is_within_tolerance(live_value, default_value):
+                    working[live_key] = Par(float(live_value), "")
+
     def calculate_derived_and_forced_param_changes(
         self,
-        fc_param_names: list[str],
+        fc_param_names: Union[list[str], dict[str, float]],
     ) -> dict[str, ParDict]:
         """
         Compute updated parameter values without mutating the in-memory data model.
@@ -854,7 +872,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         disk call :meth:`save_vehicle_params_to_files` afterwards.
 
         Args:
-            fc_param_names: List of parameter names that exist in the FC.
+            fc_param_names: List of parameter names or dictionary of parameter values from the FC.
                             If empty or None all parameters are assumed to exist.
 
         Returns:
@@ -909,6 +927,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                     param_filename, self.derived_parameters, fc_param_names, target=working
                 )
 
+                self._auto_import_params(step_dict, fc_param_names, working)
+
             # Include in computed_changes if the working copy differs from the loaded in-memory state
             if working.differs_from(param_dict):
                 computed_changes[param_filename] = working
@@ -942,7 +962,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self,
         filename: str,
         new_parameters: dict[str, ParDict],
-        fc_param_names: Optional[list[str]],
+        fc_param_names: Optional[Union[list[str], dict[str, float]]],
         target: Optional[ParDict] = None,
     ) -> bool:
         """

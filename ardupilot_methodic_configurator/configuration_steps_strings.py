@@ -344,6 +344,9 @@ def configuration_steps_descriptions() -> None:
 
     For pygettext to extract them, they have no other function
     """
+    _config_steps_descriptions = _(
+        "A list of regular expressions to match parameters for automatic import if they have non-default values."
+    )
     _config_steps_descriptions = _("Description of the phase")
     _config_steps_descriptions = _("Explanation of why this step is needed")
     _config_steps_descriptions = _("Explanation of why this step needs to be done at this point")
