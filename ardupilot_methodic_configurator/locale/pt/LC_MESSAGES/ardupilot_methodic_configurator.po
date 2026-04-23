@@ -5329,7 +5329,7 @@ msgid ""
 "On {component} the selected\n"
 "protocol '{current_selection}' is not available for the selected connection "
 "Type."
-msgstr ""
+msgstr "No {component} o protocolo selecionado\n'{current_selection}' não está disponível para o tipo de ligação selecionado."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:288
 msgid ""
