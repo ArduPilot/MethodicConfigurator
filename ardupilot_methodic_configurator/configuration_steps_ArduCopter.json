@@ -124,6 +124,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BATT.*"],
             "forced_parameters": {
                 "BATT_FS_CRT_ACT": { "New Value": 1, "Change Reason": "Land ASAP" },
                 "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Return and land at home or rally point" }
@@ -169,6 +170,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["GPS.*", "GNSS.*"],
             "derived_parameters": {
                 "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
                 "GPS1_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }

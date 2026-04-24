@@ -11,13 +11,14 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import re
 from logging import info as logging_info
 from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.data_model_safe_evaluator import safe_evaluate
 
 
@@ -100,10 +101,10 @@ class ConfigurationStepProcessor:
             # Collect derived parameter values to apply later in domain model
             elif selected_file in self.local_filesystem.derived_parameters:
                 # Filter derived parameters that exist in FC (if fc_parameters provided)
-                fc_param_names = set(fc_parameters.keys()) if fc_parameters else set()
+                fc_param_keys = set(fc_parameters.keys()) if fc_parameters else set()
                 for param_name, param in self.local_filesystem.derived_parameters[selected_file].items():
                     # Only include if no FC filter OR parameter exists in FC
-                    if not fc_param_names or param_name in fc_param_names:
+                    if not fc_param_keys or param_name in fc_param_keys:
                         derived_params_to_apply[param_name] = param
 
             # Populate new_connection_prefix from rename_connection configuration step (per-step scope)
@@ -123,6 +124,9 @@ class ConfigurationStepProcessor:
         # Create domain model parameters
         current_step_parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
 
+        # Call the _apply_auto_imports import
+        self._apply_auto_imports(selected_file, fc_parameters, current_step_parameters)
+
         # Check for ExpressLRS and add FLTMODE_CH warning
         if current_step_parameters.get("RC_OPTIONS") is not None or current_step_parameters.get("FLTMODE_CH") is not None:
             rc_options = int(fc_parameters.get("RC_OPTIONS", 32))
@@ -141,6 +145,34 @@ class ConfigurationStepProcessor:
                     )
 
         return current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params_to_apply
+
+    def _apply_auto_imports(
+        self,
+        selected_file: str,
+        fc_parameters: dict[str, float],
+        current_step_parameters: dict[str, ArduPilotParameter],
+    ) -> None:
+        """Automatically import non-default FC parameters matching regex rules into the domain model."""
+        step_dict = self.local_filesystem.configuration_steps.get(selected_file, {})
+        if "autoimport_nondefault_regexp" not in step_dict or not fc_parameters:
+            return
+
+        regex_rules = step_dict["autoimport_nondefault_regexp"]
+        for live_key, live_value in fc_parameters.items():
+            if live_key in current_step_parameters:
+                continue
+
+            is_matching_regex = any(re.match(pattern, live_key) for pattern in regex_rules)
+            is_in_defaults = live_key in self.local_filesystem.param_default_dict
+
+            if is_matching_regex and is_in_defaults:
+                default_value = self.local_filesystem.param_default_dict[live_key].value
+                if not is_within_tolerance(live_value, default_value):
+                    # Create the parameter with a blank reason and inject it into the UI domain model
+                    param = Par(float(live_value), "")
+                    current_step_parameters[live_key] = self.create_ardupilot_parameter(
+                        live_key, param, selected_file, fc_parameters
+                    )
 
     def _handle_connection_renaming(
         self, selected_file: str, variables: dict
