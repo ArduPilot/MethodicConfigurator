@@ -23,7 +23,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_show import (
-    TOOLTIP_HIDE_DELAY_MS,
     TOOLTIP_SHOW_DELAY_MS,
     MonitorBounds,
     Tooltip,
@@ -747,19 +746,15 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
             patch("tkinter.Toplevel", return_value=mock_toplevel),
-            patch("tkinter.ttk.Label") as mock_label,
+            patch("tkinter.ttk.Label"),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
 
-            # Check that Toplevel was created
-            assert tooltip.tooltip == mock_toplevel
+            # Check that Toplevel was NOT created yet (Lazy Loading)
+            assert tooltip.tooltip is None
             # Check bindings
-            mock_widget.bind.assert_any_call("<Enter>", tooltip.show, "+")
-            mock_widget.bind.assert_any_call("<Leave>", tooltip.hide, "+")
-            # Check tooltip setup
-            mock_toplevel.wm_overrideredirect.assert_called_with(boolean=True)
-            mock_label.assert_called_once()
-            mock_toplevel.withdraw.assert_called_once()
+            mock_widget.bind.assert_any_call("<Enter>", tooltip.schedule_show, "+")
+            mock_widget.bind.assert_any_call("<Leave>", tooltip.destroy_hide, "+")
 
     def test_tooltip_initialization_macos(self, mock_widget: MagicMock) -> None:
         """
@@ -822,10 +817,10 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             ),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
+            mock_widget.winfo_containing.return_value = mock_widget  # Tell the test the mouse is hovering
+            tooltip.create_show()
 
-            tooltip.position_tooltip()
-
-            # Check that geometry was set
+            # Check that geometry was set (create_show did this automatically!)
             mock_toplevel.geometry.assert_called_once()
             # The call should be with calculated position
             call_args = mock_toplevel.geometry.call_args[0][0]
@@ -844,9 +839,10 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("tkinter.ttk.Label"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text")
 
-            tooltip.show()
+            tooltip.create_show()
 
             mock_toplevel.deiconify.assert_called_once()
 
@@ -864,10 +860,12 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
             tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.tooltip = mock_toplevel  # Mock that it was created
+            tooltip.destroy_hide()
 
-            tooltip.hide()
-
-            mock_widget.after.assert_called_once_with(TOOLTIP_HIDE_DELAY_MS, tooltip._do_hide)
+            # As it destroys immediately, check if active_tooltip is cleared
+            assert Tooltip._active_tooltip is None
+            mock_toplevel.destroy.assert_called_once()
 
     def test_tooltip_cancel_hide(self, mock_widget) -> None:
         """
@@ -990,7 +988,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
 
         # Assert: No exception, no positioning attempted
 
-    def test_tooltip_do_hide_withdraws_on_non_macos(self, mock_widget, mock_toplevel) -> None:
+    def test_tooltip_force_hide_destroys_globally(self, mock_widget, mock_toplevel) -> None:
         """
         Test tooltip _do_hide withdraws tooltip on non-macOS.
 
@@ -1003,11 +1001,14 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("tkinter.ttk.Label"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text")
+            tooltip.create_show()  # Must create it before we can destroy it
 
-            tooltip._do_hide()
+            tooltip.force_hide()
 
-            mock_toplevel.withdraw.assert_called()
+            mock_toplevel.destroy.assert_called_once()
+            assert tooltip.tooltip is None
 
     def test_tooltip_create_show_avoids_redundant_creation(self, mock_widget, mock_toplevel) -> None:
         """
@@ -1067,11 +1068,13 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
             patch("tkinter.ttk.Label"),
         ):
+            mock_widget.winfo_containing.return_value = mock_widget
             tooltip = Tooltip(mock_widget, "Test text", toplevel_class=custom_toplevel_class)
 
+            tooltip.create_show()  # Trigger lazy load
+
         # Assert: Custom class was used
-        custom_toplevel_class.assert_called_once_with(mock_widget)
-        assert tooltip.tooltip == mock_toplevel
+        custom_toplevel_class.assert_called_once()
 
     def test_tooltip_position_below_false(self, mock_widget, mock_toplevel) -> None:
         """
@@ -1091,9 +1094,10 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             ),
         ):
             tooltip = Tooltip(mock_widget, "Test text", position_below=False)
-            tooltip.position_tooltip()
+            mock_widget.winfo_containing.return_value = mock_widget  # Tell the test the mouse is hovering
+            tooltip.create_show()
 
-        # Assert: Geometry set (indicates positioning occurred)
+        # Assert: Geometry set
         mock_toplevel.geometry.assert_called_once()
 
     def test_tooltip_create_show_uses_macos_styling(self, mock_widget, mock_toplevel) -> None:

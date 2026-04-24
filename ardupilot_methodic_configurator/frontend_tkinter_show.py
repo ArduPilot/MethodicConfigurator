@@ -497,15 +497,6 @@ class Tooltip:
     def _cancel_show(self) -> None:
         self._cancel_timer("show")
 
-    # def show(self, event: Optional[tk.Event] = None) -> None:  # pylint: disable=unused-argument
-    #     """On non-macOS, tooltip already exists, show it on events."""
-    #     self._cancel_hide()
-    #     self._hide_active_tooltip()
-    #     if self.tooltip:
-    #         self.position_tooltip()
-    #         self.tooltip.deiconify()
-    #         Tooltip._active_tooltip = self
-
     def _cancel_hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         self._cancel_timer("hide")
 
@@ -527,13 +518,13 @@ class Tooltip:
                 Tooltip._active_tooltip.force_hide()
             Tooltip._active_tooltip = None
 
-    def schedule_show(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
+    def schedule_show(self, _event: Optional[tk.Event] = None) -> None:
         """Delay tooltip creation slightly to avoid flicker during pointer movement."""
         self._cancel_hide()
         self._cancel_show()
         self.timers["show"] = self.widget.after(TOOLTIP_SHOW_DELAY_MS, self.create_show)
 
-    def create_show(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
+    def create_show(self, _event: Optional[tk.Event] = None) -> None:
         """On macOS, only create the tooltip when the mouse enters the widget."""
         self._cancel_show()
         self._cancel_hide()
@@ -631,19 +622,6 @@ class Tooltip:
             # Widget or tooltip was destroyed during positioning
             # Silently ignore - tooltip will be recreated on next hover if needed
             pass
-
-    # def hide(self, event: Optional[tk.Event] = None) -> None:  # pylint: disable=unused-argument
-    #     """Hide the tooltip after a delay on non-macOS."""
-    #     self._cancel_hide()
-    #     self.timers["hide"] = self.widget.after(TOOLTIP_HIDE_DELAY_MS, self._do_hide)
-
-    # def _do_hide(self) -> None:
-    #     """Actually hide or destroy the tooltip depending on platform."""
-    #     if self.tooltip:
-    #         self.tooltip.withdraw()
-    #     if Tooltip._active_tooltip is self:
-    #         Tooltip._active_tooltip = None
-    #     self.timers.pop("hide", None)
 
     def force_hide(self) -> None:
         """Immediately destroy the tooltip globally across all OSs."""
