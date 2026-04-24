@@ -421,6 +421,10 @@ These files are crucial for the tool's operation and are organized in a specific
   The `configuration_steps_ArduCopter.json` documentation file is first searched in the selected vehicle-specific directory,
   and if not found, in the directory where the script is located.
 
+- **Configuration Steps File**: The `configuration_steps_*.json` files (like `configuration_steps_ArduCopter.json`) define the workflow,
+ for each intermediate parameter file. They provide the documentation links, explanations("why" and "why now"), mandatory/optional percentages,
+ and advanced logic rules like `autoimport_nondefault_regexp` to automatically pull specific non-default parameters from the live flight controller into the GUI.
+
 - **Default Parameter Values File**: The `00_defaults.param` file is located in the vehicle-specific directory.
   If the file does not exist or is invalid, use this command to regenerate it
 

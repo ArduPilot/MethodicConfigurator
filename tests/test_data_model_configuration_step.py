@@ -190,6 +190,56 @@ class TestConfigurationStepProcessorWorkflows:
         # Should have info messages about parameter renaming since configuration includes rename_connection
         assert len(ui_infos) > 0
 
+    def test_user_can_auto_import_nondefault_parameters_matching_regex(self, processor) -> None:
+        """
+        User can automatically import non-default flight controller parameters that match regex rules.
+
+        GIVEN: A configuration step with auto-import regex rules
+        WHEN: The step is processed with live FC parameters
+        THEN: Non-default matching parameters are added to the domain model with a blank reason
+        AND: Parameters already in the file or matching firmware defaults are not overridden
+        """
+        # Arrange: Set up configuration with regex rules and mixed FC states
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {selected_file: {"autoimport_nondefault_regexp": ["BATT.*", "GPS.*"]}}
+        processor.local_filesystem.param_default_dict = {
+            "BATT_OPTIONS": Par(value=0.0, comment="Default option"),
+            "BATT_MONITOR": Par(value=0.0, comment="Default monitor"),
+            "GPS_TYPE": Par(value=0.0, comment="Default type"),
+        }
+        processor.local_filesystem.file_parameters = {
+            selected_file: {
+                "BATT_MONITOR": Par(value=4.0, comment="User comment")  # Already exists in file
+            }
+        }
+        test_fc_parameters = {
+            "BATT_OPTIONS": 5.0,  # Non-default, matching regex -> MUST IMPORT
+            "BATT_MONITOR": 4.0,  # Already in file -> MUST SKIP
+            "GPS_TYPE": 0.0,  # Default value -> MUST SKIP
+            "SERIAL1_BAUD": 115200.0,  # Doesn't match regex -> MUST SKIP
+        }
+
+        # Act: Process configuration step
+        parameters, ui_errors, _, _, _, _ = processor.process_configuration_step(selected_file, test_fc_parameters)
+
+        # Assert: No errors
+        assert ui_errors == []
+
+        # BATT_OPTIONS should be auto-imported with a blank reason
+        assert "BATT_OPTIONS" in parameters
+        assert parameters["BATT_OPTIONS"].get_new_value() == 5.0
+        assert parameters["BATT_OPTIONS"].change_reason == ""
+
+        # BATT_MONITOR should remain untouched (protecting the user comment)
+        assert "BATT_MONITOR" in parameters
+        assert parameters["BATT_MONITOR"].change_reason == "User comment"
+
+        # GPS_TYPE should NOT be imported (it is at default value)
+        assert "GPS_TYPE" not in parameters
+
+        # SERIAL1_BAUD should NOT be imported (does not match regex)
+        assert "SERIAL1_BAUD" not in parameters
+
 
 class TestConfigurationStepProcessorConnectionRenaming:
     """Test connection renaming workflows and edge cases."""

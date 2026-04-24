@@ -23,6 +23,13 @@
               "type": "string",
               "description": "Explanation of why this step is needed"
             },
+            "autoimport_nondefault_regexp": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of regular expressions to match parameters for automatic import if they have non-default values."
+            },
             "why_now": {
               "type": "string",
               "description": "Explanation of why this step needs to be done at this point"
