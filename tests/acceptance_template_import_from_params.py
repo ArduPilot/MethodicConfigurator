@@ -225,9 +225,9 @@ def perform_component_inference(
     local_filesystem.load_vehicle_components_json_data(new_vehicle_dir)
 
     # Regenerate parameter files from the inferred component data
-    fc_param_names = list(fc_parameters.keys())
+    fc_parameters = list(fc_parameters.keys())
     try:
-        pending = local_filesystem.calculate_derived_and_forced_param_changes(fc_param_names=fc_param_names)
+        pending = local_filesystem.calculate_derived_and_forced_param_changes(fc_parameters=fc_parameters)
     except ValueError as e:
         return False, f"Failed to update and export parameters: {e}"
     local_filesystem.apply_computed_changes(pending)

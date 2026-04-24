@@ -126,11 +126,11 @@ def process_template_directory(template_dir: Path) -> None:
 
         local_fs.save_vehicle_components_json_data(local_fs.vehicle_components_fs.data, str(template_dir))
 
-        fc_param_names = list(local_fs.param_default_dict.keys()) if local_fs.param_default_dict else []
+        fc_parameters = list(local_fs.param_default_dict.keys()) if local_fs.param_default_dict else []
 
         # Test parameter derivation (passing None means only forced/derived params are computed)
         try:
-            computed_changes = local_fs.calculate_derived_and_forced_param_changes(fc_param_names=fc_param_names)
+            computed_changes = local_fs.calculate_derived_and_forced_param_changes(fc_parameters=fc_parameters)
             local_fs.apply_computed_changes(computed_changes)
             local_fs.save_vehicle_params_to_files(list(local_fs.file_parameters))
         except ValueError as e:

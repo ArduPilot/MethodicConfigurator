@@ -567,16 +567,16 @@ def process_component_editor_results(
 
     """
     # Get existing FC parameters for reference
-    fc_param_names: dict[str, float] = {}
+    fc_parameters: dict[str, float] = {}
     if flight_controller.fc_parameters:
-        fc_param_names = flight_controller.fc_parameters
+        fc_parameters = flight_controller.fc_parameters
     elif local_filesystem.param_default_dict:
         # Extract the float values from the ParDict objects
-        fc_param_names = {k: v.value for k, v in local_filesystem.param_default_dict.items()}
+        fc_parameters = {k: v.value for k, v in local_filesystem.param_default_dict.items()}
 
     try:
         component_dependent_param_changes = local_filesystem.calculate_derived_and_forced_param_changes(
-            fc_param_names=fc_param_names,
+            fc_parameters=fc_parameters,
         )
     except ValueError as e:
         error_msg = str(e)

@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 # from sys import exit as sys_exit
-import re
 from argparse import ArgumentParser
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -836,26 +835,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             variables["doc_dict"] = self.doc_dict
         return variables
 
-    def _auto_import_params(
-        self, step_dict: dict[str, Any], fc_param_names: Union[list[str], dict[str, float]], working: ParDict
-    ) -> None:
-        # Only run if the dict of values was passed, and the regex rule exists
-        if "autoimport_nondefault_regexp" not in step_dict or not isinstance(fc_param_names, dict):
-            return
-
-        regex_rules = step_dict["autoimport_nondefault_regexp"]
-        for live_key, live_value in fc_param_names.items():
-            if live_key in working:
-                continue
-
-            if any(re.match(pattern, live_key) for pattern in regex_rules) and live_key in self.param_default_dict:
-                default_value = self.param_default_dict[live_key].value
-                if not is_within_tolerance(live_value, default_value):
-                    working[live_key] = Par(float(live_value), "")
-
     def calculate_derived_and_forced_param_changes(
         self,
-        fc_param_names: Union[list[str], dict[str, float]],
+        fc_parameters: Union[list[str], dict[str, float]],
     ) -> dict[str, ParDict]:
         """
         Compute updated parameter values without mutating the in-memory data model.
@@ -872,7 +854,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         disk call :meth:`save_vehicle_params_to_files` afterwards.
 
         Args:
-            fc_param_names: List of parameter names or dictionary of parameter values from the FC.
+            fc_parameters: List of parameter names or dictionary of parameter values from the FC.
                             If empty or None all parameters are assumed to exist.
 
         Returns:
@@ -886,7 +868,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         Example:
             computed_changes = fs.calculate_derived_and_forced_param_changes(
-                fc_param_names=["PARAM1"],
+                fc_parameters=["PARAM1"],
             )
             if computed_changes:
                 if user_confirms:
@@ -915,7 +897,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if error_msg:
                     msg = f"Error computing forced parameters for {param_filename}: {error_msg}"
                     raise ValueError(msg)
-                self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, fc_param_names, target=working)
+                self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, fc_parameters, target=working)
 
                 error_msg = self.compute_parameters(
                     param_filename, step_dict, "derived", eval_variables, ignore_fc_derived_param_warnings=True
@@ -923,11 +905,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 if error_msg:
                     msg = f"Error computing derived parameters for {param_filename}: {error_msg}"
                     raise ValueError(msg)
-                self.merge_forced_or_derived_parameters(
-                    param_filename, self.derived_parameters, fc_param_names, target=working
-                )
-
-                self._auto_import_params(step_dict, fc_param_names, working)
+                self.merge_forced_or_derived_parameters(param_filename, self.derived_parameters, fc_parameters, target=working)
 
             # Include in computed_changes if the working copy differs from the loaded in-memory state
             if working.differs_from(param_dict):
@@ -962,7 +940,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self,
         filename: str,
         new_parameters: dict[str, ParDict],
-        fc_param_names: Optional[Union[list[str], dict[str, float]]],
+        fc_parameters: Optional[Union[list[str], dict[str, float]]],
         target: Optional[ParDict] = None,
     ) -> bool:
         """
@@ -971,7 +949,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Args:
             filename: The name of the parameter file.
             new_parameters: Dictionary of new parameters to potentially merge.
-            fc_param_names: Optional list of flight controller parameter names.
+            fc_parameters: Optional list of flight controller parameter names.
             target: ParDict to merge into.  When *None* (default), merges into
                     ``self.file_parameters[filename]`` (legacy behaviour used by the
                     parameter-editor upload path).  Pass the working copy from
@@ -988,7 +966,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         at_least_one_param_changed = False
         for param_name, param in new_parameters[filename].items():
-            if fc_param_names is None or not fc_param_names or param_name in fc_param_names:
+            if fc_parameters is None or not fc_parameters or param_name in fc_parameters:
                 if param_name in dest:
                     if not is_within_tolerance(dest[param_name].value, param.value):
                         at_least_one_param_changed = True

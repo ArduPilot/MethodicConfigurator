@@ -1259,7 +1259,7 @@ class TestComponentEditorHelperFunctions:
         # Assert: FC parameter names used as existing-parameter reference
         mock_filesystem.calculate_derived_and_forced_param_changes.assert_called_once()
         call_args = mock_filesystem.calculate_derived_and_forced_param_changes.call_args
-        assert call_args.kwargs["fc_param_names"] == {"PARAM1": 1.0, "PARAM2": 2.0}
+        assert call_args.kwargs["fc_parameters"] == {"PARAM1": 1.0, "PARAM2": 2.0}
 
         # Assert: No disk write - in-memory model already matches disk when pending list is empty
         mock_filesystem.save_vehicle_params_to_files.assert_not_called()

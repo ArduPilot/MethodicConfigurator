@@ -85,7 +85,7 @@ class TestParameterSafetyChecks:
 
         # WHEN: Call update without permission (commit_derived_changes=False)
         pending_changes = fs.calculate_derived_and_forced_param_changes(
-            fc_param_names=[],
+            fc_parameters=[],
         )
 
         # THEN: The changed file is reported as pending
@@ -114,7 +114,7 @@ class TestParameterSafetyChecks:
 
         # WHEN: Call update to detect changes, then save with permission
         pending_changes = fs.calculate_derived_and_forced_param_changes(
-            fc_param_names=[],
+            fc_parameters=[],
         )
 
         # Changes detected - simulate user saying Yes: apply then save
@@ -154,7 +154,7 @@ class TestParameterSafetyChecks:
 
         # WHEN
         pending_changes = fs.calculate_derived_and_forced_param_changes(
-            fc_param_names=[],
+            fc_parameters=[],
         )
 
         # THEN: Comment change alone triggers the pending flag
@@ -189,7 +189,7 @@ class TestParameterSafetyChecks:
 
         # WHEN: Call update
         pending_changes = fs.calculate_derived_and_forced_param_changes(
-            fc_param_names=[],
+            fc_parameters=[],
         )
 
         # THEN: Derived value (11.75) differs from loaded value (15.7) → detected
