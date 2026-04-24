@@ -2,6 +2,7 @@ BRD_BOOT_DELAY,7000  # Make sure the Here4 GNSS receivers fully boot before the 
 BRD_SAFETY_DEFLT,1  # Use a safety switch
 CAN_D2_PROTOCOL,1
 CAN_P2_DRIVER,1
+GPS_TYPE,9  # Defined in component editor
 GPS1_GNSS_MODE,69
 GPS1_POS_X,0
 GPS1_POS_Y,0
