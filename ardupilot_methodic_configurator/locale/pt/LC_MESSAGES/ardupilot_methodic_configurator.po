@@ -3015,7 +3015,7 @@ msgstr "Identificação do sistema e otimização analítica de PID"
 msgid ""
 "A list of regular expressions to match parameters for automatic import if "
 "they have non-default values."
-msgstr ""
+msgstr "Uma lista de expressões regulares para corresponder parâmetros para importação automática caso tenham valores não padrão."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:350
 msgid "Description of the phase"
