@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-04-23 10:49+0000\n"
+"POT-Creation-Date: 2026-04-25 14:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,7 +76,7 @@ msgid "Unknown"
 msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:583
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:99
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:100
 msgid "Error in derived parameters"
 msgstr ""
 
@@ -2375,94 +2375,98 @@ msgid "System identification and analytical PID optimization"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:347
-msgid "Description of the phase"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:348
-msgid "Explanation of why this step is needed"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:349
-msgid "Explanation of why this step needs to be done at this point"
+msgid "A list of regular expressions to match parameters for automatic import if they have non-default values."
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:350
-msgid "Expression to derive new parameter value"
+msgid "Description of the phase"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:351
-msgid "Expression to rename connection"
+msgid "Explanation of why this step is needed"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:352
-msgid "Message about possible jump to another step"
+msgid "Explanation of why this step needs to be done at this point"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:353
-msgid "Name of tool/process that automatically changes these parameters"
+msgid "Expression to derive new parameter value"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:354
-msgid "Name/description of external tool needed"
+msgid "Expression to rename connection"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:355
-msgid "New value for the parameter"
+msgid "Message about possible jump to another step"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:356
-msgid "Phases of the configuration process"
+msgid "Name of tool/process that automatically changes these parameters"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:357
-msgid "Previous filenames for this step"
+msgid "Name/description of external tool needed"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:358
-msgid "Reason for changing the parameter"
+msgid "New value for the parameter"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:359
-msgid "Reason for the derived parameter"
+msgid "Phases of the configuration process"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:360
-msgid "Short description for blog reference"
+msgid "Previous filenames for this step"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:361
-msgid "Short description for wiki reference"
+msgid "Reason for changing the parameter"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:362
-msgid "Starting step number of this phase"
+msgid "Reason for the derived parameter"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:363
-msgid "Text indicating if step is mandatory or optional with percentages"
+msgid "Short description for blog reference"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:364
-msgid "The name of the plugin to load"
+msgid "Short description for wiki reference"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:365
-msgid "URL to blog documentation"
+msgid "Starting step number of this phase"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:366
-msgid "URL to external tool"
+msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:367
-msgid "URL to wiki documentation"
+msgid "The name of the plugin to load"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:368
-msgid "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents"
+msgid "URL to blog documentation"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:369
+msgid "URL to external tool"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:370
+msgid "URL to wiki documentation"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:371
+msgid "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:372
 msgid "Whether this phase is optional"
 msgstr ""
 
@@ -2583,40 +2587,40 @@ msgstr ""
 msgid "Battery monitoring stopped"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:134
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:138
 msgid "ExpressLRS Configuration Warning"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:135
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:139
 msgid ""
 "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
 "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
 "to avoid conflicts with the required RC5 arming channel."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:179
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:211
 msgid "Removing duplicate parameter %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:180
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:212
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:181
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:213
 msgid "Parameter Removed"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:185
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:217
 msgid "Renaming parameter %s to %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:186
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:218
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
 "to obey the flight controller connection defined in the component editor window."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:190
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:222
 msgid "Parameter Renamed"
 msgstr ""
 
