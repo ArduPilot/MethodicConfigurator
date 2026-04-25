@@ -12,6 +12,7 @@ Hence the two main use cases are:
 
 But there are other use cases as well:
 
+- [Create a vehicle project from a .bin log file](#create-a-vehicle-project-from-a-bin-log-file)
 - [Create a vehicle configuration based on a correctly configured vehicle](#create-a-vehicle-configuration-based-on-a-correctly-configured-vehicle)
 - [Review and or edit configuration files without having the vehicle FC](#review-and-or-edit-configuration-files-without-having-the-vehicle-fc)
 - [Use the correct default values](#use-the-correct-default-values)
@@ -75,6 +76,42 @@ Please scroll down and make sure you do not miss a property.
 1. You should now see the *Parameter file editor and uploader* window.
 ![AMC parameter file editor and uploader](images/App_screenshot2.png)
 1. Proceed as explained in [parameter editor workflow overview](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface)
+
+If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
+
+## Create a vehicle project from a .bin log file
+
+Use this workflow when you have an ArduPilot `.bin` flight-log file recorded by a vehicle that was already
+running a valid configuration and you want to reconstruct a methodic-configurator project from it —
+no physical flight controller required.
+
+The software reads the `.bin` file to automatically determine:
+
+- **Vehicle type** (e.g. ArduCopter, ArduPlane, Rover) from the log's `VER` or `MSG` record
+- **Firmware version** (major.minor.patch) from the same record — used to select the right
+  parameter-documentation metadata and to populate `vehicle_components.json`
+- **Default parameter values** — the per-build defaults stored in the log (`PARM` messages with `Default` attribute)
+- **Current parameter values** — the values that were actually active when the log was recorded
+
+1. Open the *ArduPilot Methodic Configurator* software.
+1. Select `Skip FC connection, just edit .param files on disk` button.
+![AMC no connection](images/App_screenshot_FC_connection_no_connection.png)
+1. Click the **Create a vehicle project from a .bin log file** button.
+1. In the file-picker that opens, select your `.bin` log file.
+   - The software automatically detects the vehicle type and firmware version.
+   - A matching template directory (e.g. `ArduCopter/empty_4.6.x`) is selected automatically.
+   - The project is named after the log file (without the `.bin` extension) and created in the
+     default vehicles directory.
+   - `00_default.param` is populated with the default values extracted from the log.
+   - A `xx_imported_bin_log_parameters.param` file is created for any current values that differ
+     from the template's parameter files — giving you a clear delta to review and tune.
+   - `vehicle_components.json` is updated with the detected firmware type and version.
+1. Review and edit the vehicle components in the *Vehicle Component Editor* window.
+   The firmware type and version fields will already be pre-filled from the log.
+1. Press *Save data and start configuration*.
+1. You should now see the *Parameter file editor and uploader* window.
+   ![AMC parameter file editor and uploader](images/App_screenshot2.png)
+1. Follow the procedure to [configure the vehicle parameters](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface).
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 

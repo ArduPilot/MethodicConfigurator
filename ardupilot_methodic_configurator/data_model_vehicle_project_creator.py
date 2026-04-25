@@ -12,10 +12,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import MISSING, dataclass, fields
+from pathlib import Path
 from typing import ClassVar, NamedTuple, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 
 class VehicleProjectCreationError(Exception):
@@ -387,7 +389,7 @@ class NewVehicleProjectSettings:
         return NewVehicleProjectSettings(**adjusted_settings)
 
 
-class VehicleProjectCreator:  # pylint: disable=too-few-public-methods
+class VehicleProjectCreator:
     """Manages vehicle project creation operations."""
 
     def __init__(self, local_filesystem: LocalFilesystem) -> None:
@@ -399,6 +401,80 @@ class VehicleProjectCreator:  # pylint: disable=too-few-public-methods
 
         """
         self.local_filesystem = local_filesystem
+
+    @staticmethod
+    def template_dir_for_bin_import(vehicle_type: str, major: int, minor: int) -> str:
+        """
+        Return the empty template directory for .bin log imports, validated to exist.
+
+        Builds the path as <templates_base>/<vehicle_type>/empty_{major}.{minor}.x and
+        raises VehicleProjectCreationError if the directory does not exist in the
+        installed templates, so unsupported vehicle types are caught as late as possible.
+        """
+        template_name = f"empty_{major}.{minor}.x"
+        template_dir = Path(LocalFilesystem.get_templates_base_dir()) / vehicle_type / template_name
+        if not template_dir.is_dir():
+            msg = _("No template found for {vehicle_type} {template_name}.\nExpected directory: {template_dir}").format(
+                vehicle_type=vehicle_type, template_name=template_name, template_dir=template_dir
+            )
+            raise VehicleProjectCreationError(_(".bin log import"), msg)
+        return str(template_dir)
+
+    @staticmethod
+    def vehicle_name_from_bin_log(bin_file: str) -> str:
+        """Return the default vehicle directory name derived from the .bin filename."""
+        return Path(bin_file).stem
+
+    @staticmethod
+    def next_import_filename(vehicle_dir: str) -> str:
+        """Return the next available numbered parameter filename for imported log parameters."""
+        highest_prefix = 0
+        for file_path in Path(vehicle_dir).iterdir():
+            if not file_path.is_file() or file_path.suffix != ".param":
+                continue
+            prefix = file_path.name[:2]
+            if prefix.isdigit():
+                highest_prefix = max(highest_prefix, int(prefix))
+
+        next_prefix = highest_prefix + 1
+        if next_prefix > 99:
+            msg = _("Could not create an import parameter file because no numbered slot is available in {vehicle_dir}")
+            raise VehicleProjectCreationError(_("Parameter import"), msg.format(vehicle_dir=vehicle_dir))
+        return f"{next_prefix:02d}_imported_bin_log_parameters.param"
+
+    @staticmethod
+    def extract_firmware_version_from_bin_log(bin_file: str) -> tuple[str, int, int, int]:
+        """
+        Extract vehicle type and firmware version from an ArduPilot .bin log file.
+
+        Returns:
+            (vehicle_type, major, minor, patch) e.g. ("ArduCopter", 4, 6, 3)
+
+        """
+        from ardupilot_methodic_configurator.extract_param_defaults import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            extract_firmware_version_and_vehicle_type,
+        )
+
+        try:
+            return extract_firmware_version_and_vehicle_type(bin_file)
+        except SystemExit as exc:
+            msg = str(exc) or _("Failed to read firmware version from the selected .bin log file")
+            raise VehicleProjectCreationError(_(".bin log import"), msg) from exc
+
+    @staticmethod
+    def extract_param_files_from_bin_log(bin_file: str) -> tuple[ParDict, ParDict]:
+        """Extract default and current parameter snapshots from an ArduPilot .bin log file."""
+        from ardupilot_methodic_configurator.extract_param_defaults import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            extract_parameter_values,
+        )
+
+        try:
+            default_params = ParDict.from_float_dict(extract_parameter_values(bin_file, "defaults"))
+            current_params = ParDict.from_float_dict(extract_parameter_values(bin_file, "values"))
+        except SystemExit as exc:
+            msg = str(exc) or _("Failed to extract parameters from the selected .bin log file")
+            raise VehicleProjectCreationError(_(".bin log import"), msg) from exc
+        return default_params, current_params
 
     def create_new_vehicle_from_template(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,

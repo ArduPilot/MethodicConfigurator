@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_par_dict import is_within_tolerance
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import NewVehicleProjectSettings, VehicleProjectCreator
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener
 
@@ -154,6 +155,92 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             # performed consistently for both project creation and opening.
             self.store_recently_used_template_dirs(template_dir, new_base_dir)
             self.open_vehicle_directory(new_path)
+        return new_path
+
+    def create_new_vehicle_from_bin_log(self, bin_file: str) -> str:
+        """
+        Create a new vehicle configuration directory from an ArduPilot .bin log file.
+
+        The vehicle type and firmware version are extracted from the .bin file itself.
+        The project is based on the matching empty_{major}.{minor}.x template, uses the
+        extracted current parameter values for template substitution, replaces the
+        template's 00_default.param with the extracted defaults snapshot, and exports any
+        remaining parameters missing from the AMC files into a final import file.
+
+        Args:
+            bin_file: Path to the ArduPilot .bin log file
+
+        Returns:
+            The created vehicle directory path
+
+        Raises:
+            VehicleProjectCreationError: If creation, extraction, or template lookup fails
+
+        """
+        firmware_info = self._creator.extract_firmware_version_from_bin_log(bin_file)
+        vehicle_type = firmware_info[0]
+        fw_version = f"{firmware_info[1]}.{firmware_info[2]}.{firmware_info[3]}"
+        template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
+        default_params, current_params = self._creator.extract_param_files_from_bin_log(bin_file)
+        fc_parameters = {name: param.value for name, param in current_params.items()}
+        settings = NewVehicleProjectSettings(
+            blank_change_reason=True,
+            infer_comp_specs_and_conn_from_fc_params=True,
+            use_fc_params=True,
+        )
+
+        new_path = self._creator.create_new_vehicle_from_template(
+            template_dir,
+            str(LocalFilesystem.get_vehicles_default_dir()),
+            self._creator.vehicle_name_from_bin_log(bin_file),
+            settings,
+            fc_connected=False,
+            fc_parameters=fc_parameters,
+        )
+
+        # Point the filesystem at the new vehicle directory before any reads or writes.
+        # write_param_default_values_to_file() and compound_params() rely on vehicle_dir,
+        # so re_init() must be called here to avoid accidentally operating on the previously-open project.
+        # Set fw_version first so re_init() does not override it with the template's placeholder version.
+        self._local_filesystem.fw_version = fw_version
+        self._local_filesystem.re_init(new_path, vehicle_type)
+        # Persist the correct firmware version and type into vehicle_components.json so subsequent
+        # re_init calls (and the user when they inspect the project) see the actual recorded firmware.
+        self._local_filesystem.set_fc_fw_version_and_type_in_components_json(fw_version, vehicle_type, new_path)
+
+        self._local_filesystem.write_param_default_values_to_file(default_params)
+
+        # Build the baseline from log-extracted defaults plus compounded AMC step files.
+        # This avoids exporting params that merely match 00_default.param but are absent
+        # from the numbered step files.
+        compounded_step_params, _first_config_step = self._local_filesystem.compound_params(skip_default=True)
+        baseline_params = default_params.deep_copy()
+        baseline_params.update(compounded_step_params)
+
+        if imported_params := current_params.get_missing_or_different(baseline_params, is_within_tolerance):
+            self._local_filesystem.export_to_param(
+                imported_params,
+                self._creator.next_import_filename(new_path),
+                annotate_doc=False,
+            )
+            self._local_filesystem.re_init(new_path, vehicle_type)
+
+        if self._flight_controller is not None:
+            self._flight_controller.fc_parameters = fc_parameters
+
+        # Open the vehicle directory only after all file modifications are complete and filesystem state is synced.
+        # This ensures the UI/session operates on the authoritative filesystem state, not stale in-memory cache.
+        # Also note: infer_comp_specs_and_conn_from_fc_params and use_fc_params are reused for log-derived params
+        # because the semantics align: we're supplying external parameter values for template substitution.
+        self.open_vehicle_directory(new_path)
+
+        # Update manager state only after the whole import succeeds so that a failure in any preceding step
+        # (including open_vehicle_directory) does not leave the manager in a partially-updated state and
+        # does not pollute the recently-used template history with an incomplete project.
+        self._settings = settings
+        self.configuration_template = self.get_directory_name_from_path(template_dir)
+        self.store_recently_used_template_dirs(template_dir, str(LocalFilesystem.get_vehicles_default_dir()))
+
         return new_path
 
     # Vehicle project opening operations
