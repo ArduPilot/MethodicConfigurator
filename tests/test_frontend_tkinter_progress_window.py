@@ -247,8 +247,8 @@ class TestProgressWindowUserExperience:
         WHEN: Progress updates fail due to widget errors
         THEN: Errors are logged but no exceptions are raised
         """
-        # Mock progress_bar.update to raise TclError
-        progress_window.progress_bar.update = MagicMock(side_effect=tk.TclError("Widget destroyed"))
+        # Mock progress_bar.update_idletasks to raise TclError
+        progress_window.progress_bar.update_idletasks = MagicMock(side_effect=tk.TclError("Widget destroyed"))
 
         with patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.logging_error") as mock_logging:
             # This should not raise an exception
@@ -257,6 +257,28 @@ class TestProgressWindowUserExperience:
             # Verify error was logged
             mock_logging.assert_called_once()
             assert "Updating progress widgets" in mock_logging.call_args[0][0]
+
+    def test_progress_updates_do_not_pump_user_events(self, progress_window) -> None:
+        """
+        Progress updates must use update_idletasks(), not update().
+
+        GIVEN: A blocking I/O operation (param upload, FC connection, etc.) is
+            running on the main thread and periodically calling
+            update_progress_bar to refresh the bar.
+        WHEN: The progress window is initialised and then updated.
+        THEN: Only update_idletasks() is called on the progress bar. The
+            full update() variant pumps the entire event queue and would
+            re-dispatch user clicks that arrived during the blocking call,
+            allowing reentrant button callbacks while the caller is still
+            in the middle of upload/connection logic.
+        """
+        progress_window.progress_bar.update = MagicMock()
+        progress_window.progress_bar.update_idletasks = MagicMock()
+
+        progress_window.update_progress_bar(25, 100)
+
+        progress_window.progress_bar.update.assert_not_called()
+        progress_window.progress_bar.update_idletasks.assert_called_once()
 
     def test_user_sees_progress_window_handle_lazy_window_relift(self, progress_window) -> None:
         """

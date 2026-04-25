@@ -153,8 +153,12 @@ class FlightControllerInfoWindow(BaseWindow):
         progress_message = _("Downloaded {} of {} parameters").format(current_value, max_value)
         self.progress_label.config(text=progress_message)
 
-        # Update the display
-        self.progress_bar.update()
+        # Update the display. update_idletasks() repaints the bar/label
+        # without re-entering the event loop; the plain update() variant
+        # would pump the full event queue (including queued user clicks
+        # against other windows) while the caller is still in the middle
+        # of a blocking parameter download.
+        self.progress_bar.update_idletasks()
         self.root.update_idletasks()
 
         # Hide progress bar when complete
