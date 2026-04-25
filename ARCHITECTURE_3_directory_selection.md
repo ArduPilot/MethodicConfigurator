@@ -278,9 +278,9 @@ The data flow follows the layered architecture pattern with clear separation of 
      9. Parameters present in the log but absent/different in the template files are exported
         to `xx_imported_bin_log_parameters.param`; `re_init()` is called again to pick up
         the new file
-    10. Manager state (`_settings`, `configuration_template`, recent-dir history) is updated
-        only after `open_vehicle_directory()` succeeds, ensuring manager metadata
-        is committed only on success
+     10. Manager state (`_settings`, `configuration_template`, recent-dir history) is updated
+         only after `open_vehicle_directory()` succeeds, ensuring manager metadata
+         is committed only on success
    - Success/failure feedback provided through manager interface; on failure the new directory
      is not registered in session history and manager in-memory state is not updated,
      though filesystem changes to the new project directory are not rolled back
