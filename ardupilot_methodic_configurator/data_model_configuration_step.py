@@ -124,7 +124,7 @@ class ConfigurationStepProcessor:
         # Create domain model parameters
         current_step_parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
 
-        # Call the _apply_auto_imports import
+        # Apply auto-imports for the current step
         self._apply_auto_imports(selected_file, fc_parameters, current_step_parameters)
 
         # Check for ExpressLRS and add FLTMODE_CH warning
