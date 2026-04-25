@@ -504,6 +504,44 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
         result = lfs.get_start_file(1, tcal_available=True)
         assert result == ""
 
+    def test_get_start_file_empty_files_no_explicit_index(self) -> None:
+        """
+        Regression: get_start_file must not crash with an empty file list.
+
+        GIVEN: A vehicle directory with no intermediate parameter files
+        WHEN: get_start_file is called with the implicit (-1) index
+        THEN: An empty string is returned for both tcal branches instead of an
+              IndexError on files[0] / files[2].
+        """
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.file_parameters = {}
+
+        assert lfs.get_start_file(-1, tcal_available=True) == ""
+        assert lfs.get_start_file(-1, tcal_available=False) == ""
+
+    def test_get_start_file_fewer_than_three_files_no_tcal(self) -> None:
+        """
+        Regression: get_start_file must not raise IndexError on files[2].
+
+        It must not raise when fewer than three intermediate parameter files
+        exist and IMU temperature calibration is not available.
+
+        GIVEN: A vehicle directory with one or two parameter files
+        WHEN: get_start_file is called with implicit index and tcal_available=False
+        THEN: A valid filename is returned (the last file) rather than crashing.
+        """
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+
+        lfs.file_parameters = {"01_only.param": {}}
+        assert lfs.get_start_file(-1, tcal_available=False) == "01_only.param"
+
+        lfs.file_parameters = {"01_a.param": {}, "02_b.param": {}}
+        assert lfs.get_start_file(-1, tcal_available=False) == "02_b.param"
+
     def test_get_eval_variables_with_none(self) -> None:
         """Test get_eval_variables with None values."""
         lfs = LocalFilesystem(
