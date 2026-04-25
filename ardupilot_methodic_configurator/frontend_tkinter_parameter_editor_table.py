@@ -67,7 +67,7 @@ class ParameterEditorTableDialogs:
     ask_yes_no: Callable[[str, str], bool] = ask_yesno_popup
 
 
-class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
+class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
     """
     A class to manage and display the parameter editor table within the GUI.
 
@@ -93,6 +93,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
         self._pending_scroll_to_bottom = False
+
+        self._params_list: list[tuple[str, ArduPilotParameter]] = []
+        self._total_params: int = 0
+        self._current_idx: int = 0
+        self._gui_complexity: str = ""
+        self._is_loading: bool = False
+        self._add_button_widget: Optional[ttk.Button] = None
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
@@ -219,44 +226,83 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.canvas.yview_moveto(position)
 
     def _update_table(self, params: dict[str, ArduPilotParameter], gui_complexity: str) -> None:
-        """Update the parameter table with the given parameters."""
-        current_param_name: str = ""
-        show_upload_column = self._should_show_upload_column(gui_complexity)
+        """Initialize scroll load."""
+        self._params_list = list(params.items())
+        self._total_params = len(self._params_list)
+        self._current_idx = 0
+        self._gui_complexity = gui_complexity
+        self._is_loading = False
 
-        should_try_to_display_bitmask_parameter_editor_usage = False
+        self._load_next_chunk(chunk_size=20)
+        self._page_scroll()
+
+    def _load_next_chunk(self, chunk_size: int = 15) -> None:
+        """Appends the next batch of widgets to the bottom of the table."""
+        if self._is_loading or self._current_idx >= self._total_params:
+            return
+
+        self._is_loading = True
+        show_upload_column = self._should_show_upload_column(self._gui_complexity)
+        should_show_bitmask_usage = False
+
+        start_idx = self._current_idx
+        end_idx = min(start_idx + chunk_size, self._total_params)
+
+        if self._add_button_widget and self._add_button_widget.winfo_exists():
+            self._add_button_widget.destroy()
+
+        param_name = ""
         try:
-            for i, (param_name, param) in enumerate(params.items(), 1):
-                current_param_name = param_name
-
-                row_widgets: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
+            for i in range(start_idx, end_idx):
+                param_name, param = self._params_list[i]
+                row_widgets = self._create_column_widgets(param_name, param, show_upload_column)
                 if self.parameter_editor.should_display_bitmask_parameter_editor_usage(param_name):
-                    should_try_to_display_bitmask_parameter_editor_usage = True
-                self._grid_column_widgets(row_widgets, i, show_upload_column)
-
-            # Add the "Add" button at the bottom of the table
-            add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
-            tooltip_msg = _("Add a parameter to the {self.parameter_editor.current_file} file")
-            show_tooltip(add_button, tooltip_msg.format(**locals()))
-            add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
-
+                    should_show_bitmask_usage = True
+                self._grid_column_widgets(row_widgets, i + 1, show_upload_column)
         except KeyError as e:
             logging_critical(
                 _("Parameter %s not found in the %s file: %s"),
-                current_param_name,
+                param_name,
                 self.parameter_editor.current_file,
                 e,
                 exc_info=True,
             )
             sys_exit(1)
 
+        self._current_idx = end_idx
+
+        # Fix layout if all items are loaded
+        if self._current_idx >= self._total_params:
+            self._add_button_widget = ttk.Button(
+                self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add
+            )
+            show_tooltip(
+                self._add_button_widget,
+                _("Add a parameter to the {self.parameter_editor.current_file} file").format(**locals()),
+            )
+            self._add_button_widget.grid(row=self._total_params + 2, column=0, sticky="w", pady=(10, 0))
+
+            parent_root = self._get_parent_root()
+            if parent_root and should_show_bitmask_usage and UsagePopupWindow.should_display("bitmask_parameter_editor"):
+                display_bitmask_parameters_editor_usage_popup(parent_root)
+
         self._configure_table_columns(show_upload_column)
-        parent_root = self._get_parent_root()
-        if (
-            parent_root
-            and should_try_to_display_bitmask_parameter_editor_usage
-            and UsagePopupWindow.should_display("bitmask_parameter_editor")
-        ):
-            display_bitmask_parameters_editor_usage_popup(parent_root)
+        self.view_port.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self._is_loading = False
+
+    def _page_scroll(self) -> None:
+        """Load more items when reaching the bottom."""
+        if not self.winfo_exists() or self._current_idx >= self._total_params:
+            return
+
+        try:
+            if self.canvas.yview()[1] > 0.85:
+                self._load_next_chunk(chunk_size=15)
+        except tk.TclError:
+            pass
+
+        self.after(150, self._page_scroll)
 
     def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
