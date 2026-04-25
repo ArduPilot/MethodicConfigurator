@@ -773,15 +773,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 )
             return files[start_file_index]
 
+        # In the no-tcal branch the historical behaviour is files[2], i.e. skip
+        # the first two files (typically 00_default.param + 01_tcal.param). Fall
+        # back to the last available file when fewer than 3 files are present
+        # so we never crash on a small or non-standard file set.
         if tcal_available:
             start_file = files[0]
             info_msg = _("Starting with the first file.")
-        else:
-            # files[2] skips 00_default.param + 01_tcal.param when tcal is not
-            # available; fall back to the last file if fewer than 3 are present
-            # so we never crash on a small or non-standard file set.
-            start_file = files[2] if len(files) >= 3 else files[-1]
+        elif len(files) >= 3:
+            start_file = files[2]
             info_msg = _("Starting with the first non-tcal file.")
+        else:
+            start_file = files[-1]
+            info_msg = _("Fewer than three files available; starting with the last file.")
 
         last_uploaded_filename = self.__read_last_uploaded_filename()
         if last_uploaded_filename:
