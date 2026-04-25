@@ -758,10 +758,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         # Get the list of intermediate parameter files files that will be processed sequentially
         files = list(self.file_parameters.keys())
 
-        if explicit_index >= 0:
-            if not files:
-                return ""
+        if not files:
+            return ""
 
+        if explicit_index >= 0:
             # Determine the starting file based on the --n command line argument
             start_file_index = explicit_index  # Ensure the index is within the range of available files
             if start_file_index >= len(files):
@@ -773,12 +773,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 )
             return files[start_file_index]
 
+        # In the no-tcal branch the historical behaviour is files[2], i.e. skip
+        # the first two files (typically 00_default.param + 01_tcal.param). Fall
+        # back to the last available file when fewer than 3 files are present
+        # so we never crash on a small or non-standard file set.
         if tcal_available:
             start_file = files[0]
             info_msg = _("Starting with the first file.")
-        else:
+        elif len(files) >= 3:
             start_file = files[2]
             info_msg = _("Starting with the first non-tcal file.")
+        else:
+            start_file = files[-1]
+            info_msg = _("Fewer than three files available; starting with the last file.")
 
         last_uploaded_filename = self.__read_last_uploaded_filename()
         if last_uploaded_filename:
