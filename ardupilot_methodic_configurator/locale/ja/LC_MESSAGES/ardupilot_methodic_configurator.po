@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-04-23 10:49+0000\n"
+"POT-Creation-Date: 2026-04-25 14:30+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -108,7 +108,7 @@ msgid "Unknown"
 msgstr "不明"
 
 #: ardupilot_methodic_configurator/__main__.py:583
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:99
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:100
 msgid "Error in derived parameters"
 msgstr "派生パラメータにエラーがあります"
 
@@ -2901,90 +2901,96 @@ msgid "System identification and analytical PID optimization"
 msgstr "システム識別と解析的PID最適化"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:347
+msgid ""
+"A list of regular expressions to match parameters for automatic import if "
+"they have non-default values."
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:350
 msgid "Description of the phase"
 msgstr "フェーズの説明"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:348
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:351
 msgid "Explanation of why this step is needed"
 msgstr "このステップが必要な理由の説明"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:349
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:352
 msgid "Explanation of why this step needs to be done at this point"
 msgstr "このステップがこの時点で実行される必要がある理由の説明"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:350
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:353
 msgid "Expression to derive new parameter value"
 msgstr "新しいパラメータ値を導出する式"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:351
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:354
 msgid "Expression to rename connection"
 msgstr "接続名を変更する式"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:352
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:355
 msgid "Message about possible jump to another step"
 msgstr "別のステップへのジャンプの可能性に関するメッセージ"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:353
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:356
 msgid "Name of tool/process that automatically changes these parameters"
 msgstr "これらのパラメータを自動的に変更するツール/プロセスの名前"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:354
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:357
 msgid "Name/description of external tool needed"
 msgstr "必要な外部ツールの名前/説明"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:355
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:358
 msgid "New value for the parameter"
 msgstr "パラメータの新しい値"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:356
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:359
 msgid "Phases of the configuration process"
 msgstr "構成プロセスのフェーズ"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:357
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:360
 msgid "Previous filenames for this step"
 msgstr "このステップの以前のファイル名"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:358
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:361
 msgid "Reason for changing the parameter"
 msgstr "パラメータを変更する理由"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:359
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:362
 msgid "Reason for the derived parameter"
 msgstr "導出されたパラメータの理由"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:360
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:363
 msgid "Short description for blog reference"
 msgstr "ブログ参照用の短い説明"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:361
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:364
 msgid "Short description for wiki reference"
 msgstr "Wiki参照用の短い説明"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:362
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:365
 msgid "Starting step number of this phase"
 msgstr "このフェーズの開始ステップ番号"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:363
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:366
 msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr "ステップが必須か任意かを割合付きで示すテキスト"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:364
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:367
 msgid "The name of the plugin to load"
 msgstr "読み込むプラグインの名前"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:365
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:368
 msgid "URL to blog documentation"
 msgstr "ブログドキュメントへのURL"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:366
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid "URL to external tool"
 msgstr "外部ツールへのURL"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:367
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:370
 msgid "URL to wiki documentation"
 msgstr "Wikiドキュメントへのダイム"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:368
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid ""
 "Where to place the plugin: 'left' for left of scrollable frame, 'top' for "
 "above contents"
@@ -2992,7 +2998,7 @@ msgstr ""
 "プラグインを配置する場所: スクロール可能なフレームの左側に配置する場合"
 "は'left'、コンテンツの上に配置する場合は'top'"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:369
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:372
 msgid "Whether this phase is optional"
 msgstr "このフェーズが任意かどうか"
 
@@ -3119,11 +3125,11 @@ msgstr "危険"
 msgid "Battery monitoring stopped"
 msgstr "バッテリー監視が停止しました"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:134
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:138
 msgid "ExpressLRS Configuration Warning"
 msgstr "ExpressLRS 設定警告"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:135
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:139
 msgid ""
 "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
 "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
@@ -3134,23 +3140,23 @@ msgstr ""
 "FLTMODE_CH を別のチャンネル (例: 6, 7, 8 など) に変更してください\n"
 "必要な RC5 アーミングチャンネルとの競合を避けるため。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:179
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:211
 msgid "Removing duplicate parameter %s"
 msgstr "重複パラメータ%sを削除中"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:180
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:212
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr "パラメータ'{old_name}'は重複のため削除されました。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:181
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:213
 msgid "Parameter Removed"
 msgstr "パラメータ削除済み"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:185
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:217
 msgid "Renaming parameter %s to %s"
 msgstr "パラメータ%sを%sに名前変更中"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:186
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:218
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
 "to obey the flight controller connection defined in the component editor "
@@ -3160,7 +3166,7 @@ msgstr ""
 "コンポーネントエディタウィンドウで定義されたフライトコントローラ接続に従うた"
 "めです。"
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:190
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:222
 msgid "Parameter Renamed"
 msgstr "パラメータ名変更済み"
 
@@ -5159,7 +5165,9 @@ msgid ""
 "On {component} the selected\n"
 "protocol '{current_selection}' is not available for the selected connection "
 "Type."
-msgstr "{component} では、選択した接続タイプに対して選択されたプロトコル '{current_selection}' は利用できません。"
+msgstr ""
+"{component} では、選択した接続タイプに対して選択されたプロトコル "
+"'{current_selection}' は利用できません。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:288
 msgid ""
