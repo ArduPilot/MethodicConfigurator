@@ -2716,7 +2716,7 @@ msgstr "系统识别和分析性PID优化"
 msgid ""
 "A list of regular expressions to match parameters for automatic import if "
 "they have non-default values."
-msgstr ""
+msgstr "用于自动导入参数的正则表达式列表，如果这些参数具有非默认值则匹配。"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:350
 msgid "Description of the phase"
