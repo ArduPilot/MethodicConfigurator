@@ -75,7 +75,11 @@ class ProgressWindow:
             # Show the window now that it's properly positioned
             self.progress_window.lift()
             self._shown = True
-            self.progress_bar.update()
+            # Use update_idletasks() rather than update(): the latter pumps the
+            # full event queue (including queued mouse clicks against other
+            # windows) and can re-enter user-event handlers while the caller
+            # is still in the middle of a blocking I/O operation.
+            self.progress_bar.update_idletasks()
 
     def _center_progress_window(self) -> None:
         """
@@ -133,7 +137,11 @@ class ProgressWindow:
                 # Update the progress message
                 self.progress_label.config(text=self.message.format(current_value, max_value))
 
-                self.progress_bar.update()
+                # update_idletasks() repaints the bar/label without re-entering
+                # the event loop. The plain update() variant processes pending
+                # user events (clicks, keypresses) which can fire callbacks on
+                # other windows while a blocking upload/download is in flight.
+                self.progress_bar.update_idletasks()
 
                 # Close the progress window when the process is complete
                 if current_value == max_value:
