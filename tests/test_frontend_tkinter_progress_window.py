@@ -278,7 +278,7 @@ class TestProgressWindowUserExperience:
         progress_window.update_progress_bar(25, 100)
 
         progress_window.progress_bar.update.assert_not_called()
-        progress_window.progress_bar.update_idletasks.assert_called()
+        progress_window.progress_bar.update_idletasks.assert_called_once()
 
     def test_user_sees_progress_window_handle_lazy_window_relift(self, progress_window) -> None:
         """
