@@ -283,6 +283,10 @@
             }
         },
         "16_pid_adjustment.param": {
+            "instructions_popup": {
+              "type": "info",
+              "msg": "This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate"
+            },
             "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",
             "why_now": "Most other parameters are done and these need to be corrected (depending on the vehicle size) before the first flight",
             "blog_text": "Adjust the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight",
