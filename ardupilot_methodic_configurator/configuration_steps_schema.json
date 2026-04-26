@@ -168,6 +168,23 @@
                   "description": "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents"
                 }
               }
+            },
+            "instructions_popup": {
+              "type": "object",
+              "description": "Optional instructions to display as a popup when entering this step",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["info", "warning"],
+                  "description": "The type of popup dialog to display (info or warning)"
+                },
+                "msg": {
+                  "type": "string",
+                  "description": "The instruction message to display to the user"
+                }
+              },
+              "required": ["type", "msg"],
+              "additionalProperties": false
             }
           }
         }
