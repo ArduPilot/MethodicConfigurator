@@ -2170,6 +2170,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     def get_plugin(self, filename: str) -> Optional[dict]:
         return self._local_filesystem.get_plugin(filename)
 
+    def get_instructions_popup(self, filename: str) -> Optional[dict]:
+        """Get the optional instructions popup data for a given configuration step."""
+        return self._local_filesystem.get_instructions_popup(filename)
+
     def create_plugin_data_model(self, plugin_name: str) -> Optional[object]:
         """
         Create and return a data model for the specified plugin.

@@ -641,5 +641,21 @@ def test_multiple_forced_param_errors_collected() -> None:
     assert config_steps.forced_parameters["test_file"]["GOOD2"].value == 20
 
 
+def test_get_instructions_popup() -> None:
+    """Test that the filesystem correctly retrieves the instructions popup dictionary."""
+    config_steps = ConfigurationSteps("dummy_dir", "dummy_type")
+    config_steps.configuration_steps = {
+        "16_pid_adjustment.param": {"instructions_popup": {"type": "info", "msg": "Test message"}},
+        "other.param": {},
+    }
+
+    # Test when it exists
+    assert config_steps.get_instructions_popup("16_pid_adjustment.param") == {"type": "info", "msg": "Test message"}
+    # Test when it doesn't exist
+    assert config_steps.get_instructions_popup("other.param") is None
+    # Test when file doesn't exist
+    assert config_steps.get_instructions_popup("missing.param") is None
+
+
 if __name__ == "__main__":
     unittest.main()

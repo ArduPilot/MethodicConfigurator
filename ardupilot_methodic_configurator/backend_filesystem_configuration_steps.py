@@ -335,3 +335,9 @@ class ConfigurationSteps:
         if selected_file in self.configuration_steps:
             return self.configuration_steps[selected_file].get("plugin")
         return None
+
+    def get_instructions_popup(self, selected_file: str) -> Optional[dict]:
+        """Get the instructions popup configuration for the selected file."""
+        if selected_file in self.configuration_steps:
+            return self.configuration_steps[selected_file].get("instructions_popup")
+        return None
