@@ -2002,3 +2002,41 @@ class TestZipVehicleForForumHelpButton:
 
         # Assert - workflow was called three times
         assert param_editor_mock.create_forum_help_zip_workflow.call_count == 3
+
+
+class TestStepInstructionsPopupWorkflows:
+    """Cover the step instructions popup behaviors when navigating files."""
+
+    def test_user_sees_info_popup_when_instructions_exist(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        User receives an informational popup for steps with info instructions.
+
+        GIVEN: Instructions exist with type 'info'
+        WHEN: The parameter file changes to that step
+        THEN: An info popup is displayed to the user
+        """
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.get_instructions_popup.return_value = {"type": "info", "msg": "Test info message"}
+
+        parameter_editor_window.on_param_file_combobox_change(None)
+
+        ui_mock = cast("MagicMock", parameter_editor_window.ui)
+        ui_mock.show_info.assert_called_once_with("Step Instructions", "Test info message")
+        ui_mock.show_warning.assert_not_called()
+
+    def test_user_sees_warning_popup_when_instructions_exist(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        User receives a warning popup for steps with warning instructions.
+
+        GIVEN: Instructions exist with type 'warning'
+        WHEN: The parameter file changes to that step
+        THEN: A warning popup is displayed to the user
+        """
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.get_instructions_popup.return_value = {"type": "warning", "msg": "Test warning message"}
+
+        parameter_editor_window.on_param_file_combobox_change(None)
+
+        ui_mock = cast("MagicMock", parameter_editor_window.ui)
+        ui_mock.show_warning.assert_called_once_with("Step Instructions", "Test warning message")
+        ui_mock.show_info.assert_not_called()

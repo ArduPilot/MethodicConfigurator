@@ -1028,6 +1028,17 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.repopulate_parameter_table()
             self._update_skip_button_state()
 
+            # Display optional instruction step
+            popup_data = self.parameter_editor.get_instructions_popup(final_file)
+            if popup_data:
+                msg = popup_data.get("msg", "")
+                popup_type = popup_data.get("type", "info")
+
+                if popup_type == "warning":
+                    self.ui.show_warning(_("Step Instructions"), _(msg))
+                else:
+                    self.ui.show_info(_("Step Instructions"), _(msg))
+
     def _update_progress_bar_from_file(self, selected_file: str) -> None:
         if self.parameter_editor.configuration_phases():
             try:
