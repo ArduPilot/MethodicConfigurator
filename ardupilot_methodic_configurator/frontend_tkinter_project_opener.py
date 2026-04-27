@@ -82,7 +82,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
 
     def create_option1_widgets(self) -> None:
         # Option 1 - Create a new vehicle configuration directory based on an existing template
-        option1_label = ttk.Label(text=_("New vehicle"), style="Bold.TLabel")
+        option1_label = ttk.Label(self.main_frame, text=_("New vehicle"), style="Bold.TLabel")
         option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label)
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
 
@@ -112,7 +112,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
 
     def create_option2_widgets(self, initial_dir: str) -> None:
         # Option 2 - Use an existing vehicle configuration directory
-        option2_label = ttk.Label(text=_("Open vehicle"), style="Bold.TLabel")
+        option2_label = ttk.Label(self.main_frame, text=_("Open vehicle"), style="Bold.TLabel")
         option2_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option2_label)
         option2_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
         option2_label = ttk.Label(
@@ -140,7 +140,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
 
     def create_option3_widgets(self) -> None:
         # Option 3 - Open the last used vehicle configuration directory
-        option3_label = ttk.Label(text=_("Re-Open vehicle"), style="Bold.TLabel")
+        option3_label = ttk.Label(self.main_frame, text=_("Re-Open vehicle"), style="Bold.TLabel")
         option3_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option3_label)
         option3_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
 
