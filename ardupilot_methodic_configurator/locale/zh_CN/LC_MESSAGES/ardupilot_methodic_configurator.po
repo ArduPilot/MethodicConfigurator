@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-04-25 14:30+0000\n"
+"POT-Creation-Date: 2026-04-27 09:10+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -273,48 +273,52 @@ msgstr "读取上传的最后一个文件的文件名时发生错误: %s"
 msgid "Starting file index %s is out of range. Starting with file %s instead."
 msgstr "起始文件索引 %s 超出范围。改为从文件 %s 开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:778
+#: ardupilot_methodic_configurator/backend_filesystem.py:782
 msgid "Starting with the first file."
 msgstr "从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:781
+#: ardupilot_methodic_configurator/backend_filesystem.py:785
 msgid "Starting with the first non-tcal file."
 msgstr "从第一个非温度校准文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:785
+#: ardupilot_methodic_configurator/backend_filesystem.py:788
+msgid "Fewer than three files available; starting with the last file."
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem.py:792
 msgid "Last uploaded file was %s."
 msgstr "最后上传的文件是 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:787
+#: ardupilot_methodic_configurator/backend_filesystem.py:794
 msgid "No last uploaded file found. %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:792
+#: ardupilot_methodic_configurator/backend_filesystem.py:799
 msgid "Last uploaded file not found in the list of files.  %s."
 msgstr "未找到最后上传的文件。 %s。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:804
+#: ardupilot_methodic_configurator/backend_filesystem.py:811
 msgid ""
 "Last uploaded file is the last file in the list. Starting from the beginning."
 msgstr "最后上传的文件是列表中的最后一个文件。从头开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:808
+#: ardupilot_methodic_configurator/backend_filesystem.py:815
 msgid ""
 "Cannot restart configuration: 00_default.param is the only available file "
 "and is not editable."
 msgstr "无法重新启动配置：00_default.param 是唯一可用的文件，无法编辑。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1084
+#: ardupilot_methodic_configurator/backend_filesystem.py:1091
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "飞行器类型。默认为ArduCopter"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1090
+#: ardupilot_methodic_configurator/backend_filesystem.py:1097
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
 msgstr "包含飞行器特定中间参数文件的目录。默认为当前工作目录"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1098
+#: ardupilot_methodic_configurator/backend_filesystem.py:1105
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -324,7 +328,7 @@ msgstr ""
 "直接从第n个中间参数文件开始（跳过之前的文件）。默认从上次写入飞控的文件之后开"
 "始。如果文件不存在，将从第一个文件开始。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1107
+#: ardupilot_methodic_configurator/backend_filesystem.py:1114
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -332,7 +336,7 @@ msgstr ""
 "允许直接打开和编辑模板文件。仅供了解相关操作的软件开发人员使用。默认"
 "为%(default)s"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1116
+#: ardupilot_methodic_configurator/backend_filesystem.py:1123
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -2755,60 +2759,72 @@ msgid "New value for the parameter"
 msgstr "参数的新值"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:359
+msgid "Optional instructions to display as a popup when entering this step"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:360
 msgid "Phases of the configuration process"
 msgstr "配置过程的阶段"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:360
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:361
 msgid "Previous filenames for this step"
 msgstr "此步骤的先前文件名"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:361
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:362
 msgid "Reason for changing the parameter"
 msgstr "更改参数的原因"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:362
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:363
 msgid "Reason for the derived parameter"
 msgstr "派生参数的原因"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:363
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:364
 msgid "Short description for blog reference"
 msgstr "博客参考的简短描述"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:364
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:365
 msgid "Short description for wiki reference"
 msgstr "维基参考的简短描述"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:365
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:366
 msgid "Starting step number of this phase"
 msgstr "此阶段的起始步骤编号"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:366
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:367
 msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr "指示步骤是否必须或可选的文本（带百分比）"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:367
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:368
+msgid "The instruction message to display to the user"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid "The name of the plugin to load"
 msgstr "要加载的插件名称"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:368
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:370
+msgid "The type of popup dialog to display (info or warning)"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid "URL to blog documentation"
 msgstr "博客文档链接"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:369
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:372
 msgid "URL to external tool"
 msgstr "外部工具链接"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:370
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:373
 msgid "URL to wiki documentation"
 msgstr "维基文档链接"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:371
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:374
 msgid ""
 "Where to place the plugin: 'left' for left of scrollable frame, 'top' for "
 "above contents"
 msgstr "放置插件的位置: 'left'表示可滚动框架左侧,'top'表示内容上方"
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:372
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:375
 msgid "Whether this phase is optional"
 msgstr "此阶段是否可选"
 
@@ -3759,7 +3775,7 @@ msgstr "没有FC参数缺失或与AMC参数文件不同"
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:551
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:576
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:176
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:180
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:594
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:610
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:637
@@ -5309,15 +5325,15 @@ msgstr "升起窗口：{_e}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:153
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:193
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1049
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1060
 msgid "Downloaded {} of {} parameters"
 msgstr "已下载 {} / {} 个参数"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:167
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:171
 msgid "Starting parameter download..."
 msgstr "开始下载参数..."
 
-#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:176
+#: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:180
 msgid "Failed to download parameters"
 msgstr "参数下载失败"
 
@@ -5698,7 +5714,7 @@ msgid "{} of {} percent"
 msgstr "{} 的 {} 百分比"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:192
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1041
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1052
 msgid "Re-downloading FC parameters"
 msgstr "重新下载飞控参数"
 
@@ -5962,44 +5978,49 @@ msgstr "正在上传文件"
 msgid "Uploaded {} of {} %"
 msgstr "已上传 {} 中的 {} %"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1037
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1038
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1040
+msgid "Step Instructions"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1048
 msgid ""
 "Failed to update progress bar, {selected_file} does not start with two "
 "digits like it should: {_e}"
 msgstr ""
 "更新进度条失败，{selected_file}不是以两位数字开头，如其应有的格式：{_e}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1041
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1052
 msgid "Downloading FC parameters"
 msgstr "下载飞控参数"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1105
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1116
 msgid "Downloading Flight Log"
 msgstr "正在下载飞行日志"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1106
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1117
 msgid "Downloaded {}% from {}%"
 msgstr "已下载 {}%，总共 {}%"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1112
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1123
 msgid "Save flight log as"
 msgstr "将飞行日志另存为"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1115
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1126
 msgid "Binary log files"
 msgstr "二进制日志文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1116
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1127
 msgid "All files"
 msgstr "所有文件"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1187
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1198
 msgid ""
 "Export FC params that are missing or different in the configuration steps. "
 "Default is %(default)s"
 msgstr "导出在配置步骤中缺失或不同的飞控参数。默认值为 %(default)s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1203
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1214
 msgid ""
 "A GUI for editing ArduPilot param files. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
@@ -6345,11 +6366,11 @@ msgstr "无效的参数名称。"
 msgid "Operation not possible"
 msgstr "操作不可行"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:94
+#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:98
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr "请耐心等待, 已完成 {:.1f}% of {}%"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:142
+#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:150
 msgid "Updating progress widgets: {_e}"
 msgstr "正在更新进度控件：{_e}"
 
