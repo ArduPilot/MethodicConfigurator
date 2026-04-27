@@ -430,20 +430,17 @@ class VehicleProjectCreator:
         """Return the next available numbered parameter filename for imported log parameters."""
         highest_prefix = 0
         try:
-            directory_iter = Path(vehicle_dir).iterdir()
+            for file_path in Path(vehicle_dir).iterdir():
+                if not file_path.is_file() or file_path.suffix != ".param":
+                    continue
+                prefix = file_path.name[:2]
+                if prefix.isdigit():
+                    highest_prefix = max(highest_prefix, int(prefix))
         except OSError as exc:
             msg = _("Could not scan the vehicle directory for imported parameter files: {vehicle_dir}. {error}").format(
                 vehicle_dir=vehicle_dir, error=str(exc)
             )
             raise VehicleProjectCreationError(_("Parameter import"), msg) from exc
-
-        for file_path in directory_iter:
-            if not file_path.is_file() or file_path.suffix != ".param":
-                continue
-            prefix = file_path.name[:2]
-            if prefix.isdigit():
-                highest_prefix = max(highest_prefix, int(prefix))
-
         next_prefix = highest_prefix + 1
         if next_prefix > 99:
             msg = _("Could not create an import parameter file because no numbered slot is available in {vehicle_dir}")
