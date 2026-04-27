@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 1,
-                "TOW max Kg": 1
+                "TOW max Kg": 1,
+                "Frame class": "Heli"
             },
             "Notes": "This was done with the Basic M4 Combo kit, not the max"
         },
