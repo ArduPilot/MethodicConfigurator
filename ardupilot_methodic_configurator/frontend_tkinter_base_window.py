@@ -140,7 +140,8 @@ class BaseWindow:
         # https://pythonassets.com/posts/window-icon-in-tk-tkinter/
         try:
             icon_path = ProgramSettings.application_icon_filepath()
-            self.root.iconphoto(True, tk.PhotoImage(file=icon_path))  # noqa: FBT003
+            self._icon_photo = tk.PhotoImage(master=self.root, file=icon_path)
+            self.root.iconphoto(True, self._icon_photo)  # noqa: FBT003
         except (tk.TclError, FileNotFoundError) as e:
             # Silently ignore icon loading errors (common in test environments)
             logging_error(_("Could not load application icon: %s"), e)
@@ -524,7 +525,7 @@ class BaseWindow:
                 buffer.seek(0)
 
                 # Create PhotoImage from buffer
-                photo = tk.PhotoImage(data=buffer.getvalue())
+                photo = tk.PhotoImage(master=parent, data=buffer.getvalue())
 
             if is_debugging():
                 return ttk.Label(parent)  # the vscode debugger can not cope with the images
