@@ -773,9 +773,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 )
             return files[start_file_index]
 
-        # In the no-tcal branch the historical behaviour is files[2], i.e. skip
-        # the first two files (typically 02_imu_temperature_calibration_setup.param + 03_imu_temperature_calibration_results.param). Fall
-        # back to the last available file when fewer than 3 files are present
+        # In the no-tcal branch the historical behaviour is files[2], i.e. skip the first two files,
+        # typically 02_imu_temperature_calibration_setup.param + 03_imu_temperature_calibration_results.param.
+        # Fall back to the last available file when fewer than 3 files are present
         # so we never crash on a small or non-standard file set.
         if tcal_available:
             start_file = files[0]
