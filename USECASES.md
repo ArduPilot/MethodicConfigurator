@@ -125,7 +125,8 @@ If something is not clear, read the [ArduPilot Methodic Configurator user manual
 1. Select the vehicle template that better resembles your vehicle.
 ![AMC template selection1](images/App_screenshot_Vehicle_directory_vehicle_params0.png)
 ![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
-1. **select the `Use parameter values from connected FC, not from template files` checkbox**
+1. **select the `Infer component specifications and FC connections from FC Parameters, not from template files`
+   and the `Use parameter values from connected FC, not from template files` checkboxes**
 ![AMC template selection1](images/App_screenshot_Vehicle_directory_vehicle_params1.png)
 1. Give a name to your vehicle.
 ![AMC new vehicle name](images/App_screenshot_Vehicle_directory_vehicle_params2.png)
