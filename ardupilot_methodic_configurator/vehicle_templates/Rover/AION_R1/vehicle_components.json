@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 0.6,
-                "TOW max Kg": 0.6
+                "TOW max Kg": 0.6,
+                "Frame class": "Rover"
             },
             "Notes": ""
         },

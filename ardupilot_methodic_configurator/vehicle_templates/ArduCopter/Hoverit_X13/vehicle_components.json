@@ -26,7 +26,8 @@
             },
             "Specifications": {
                 "TOW min Kg": 56,
-                "TOW max Kg": 90
+                "TOW max Kg": 90,
+                "Frame class": "Quad"
             },
             "Notes": "z50 eft frame"
         },
