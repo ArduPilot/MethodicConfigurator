@@ -92,7 +92,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
         connected_fc_vehicle_type: str,
     ) -> None:
         # Option 1 - Create a new vehicle configuration directory based on an existing template
-        option1_label = ttk.Label(text=_("New vehicle"), style="Bold.TLabel")
+        option1_label = ttk.Label(self.main_frame, text=_("New vehicle"), style="Bold.TLabel")
         option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label)
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
         template_dir_edit_tooltip = _(
