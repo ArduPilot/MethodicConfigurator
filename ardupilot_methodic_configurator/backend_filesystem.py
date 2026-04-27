@@ -984,17 +984,27 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 dest[param_name] = param
         return at_least_one_param_changed
 
-    def write_param_default_values(self, param_default_values: ParDict) -> bool:
+    def set_param_default_values_if_different(self, param_default_values: ParDict) -> bool:
+        """
+        Set the default parameter values if they are different from the current ones.
+
+        Args:    param_default_values: A ParDict containing the default parameter values to compare against the current ones.
+        Returns: bool: True if the default parameter values were updated, False if they were the same as the current ones.
+        """
         param_default_values = ParDict(dict(sorted(param_default_values.items())))
         if self.param_default_dict != param_default_values:
             self.param_default_dict = param_default_values
             return True
         return False
 
-    def write_param_default_values_to_file(self, param_default_values: ParDict, filename: str = "00_default.param") -> None:
-        if self.write_param_default_values(param_default_values):
+    def write_param_default_values_to_file(
+        self, param_default_values: ParDict, filename: str = "00_default.param", vehicle_dir: str = ""
+    ) -> None:
+        if self.set_param_default_values_if_different(param_default_values):
             self.file_parameters[filename] = param_default_values
-            self.param_default_dict.export_to_param(os_path.join(self.vehicle_dir, filename))
+            if len(vehicle_dir) == 0:
+                vehicle_dir = self.vehicle_dir
+            self.param_default_dict.export_to_param(os_path.join(vehicle_dir, filename))
 
     @staticmethod
     def _safe_path_join(base_dir: str, untrusted_path: str) -> str:

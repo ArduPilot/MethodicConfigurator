@@ -580,19 +580,19 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert result == test_filename
             mock_file.assert_called_once_with(expected_path, encoding="utf-8")
 
-    def test_write_param_default_values(self) -> None:
+    def test_set_param_default_values_if_different(self) -> None:
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
         )
 
         # Test with new values
         new_values = {"PARAM1": MagicMock(value=1.0)}
-        result = lfs.write_param_default_values(new_values)
+        result = lfs.set_param_default_values_if_different(new_values)
         assert result is True
         assert lfs.param_default_dict == new_values
 
         # Test with same values (no change)
-        result = lfs.write_param_default_values(new_values)
+        result = lfs.set_param_default_values_if_different(new_values)
         assert result is False
 
     def test_get_start_file(self) -> None:

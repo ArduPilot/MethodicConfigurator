@@ -354,7 +354,7 @@ class TestFlightControllerConnection:
             mock_fc_info = MagicMock()
             mock_fc_info.get_param_default_values.return_value = default_params
             mock_fc_window.return_value = mock_fc_info
-            mock_local_filesystem.write_param_default_values.return_value = True
+            mock_local_filesystem.set_param_default_values_if_different.return_value = True
 
             # Act: User initializes with connected hardware
             initialize_flight_controller_and_filesystem(application_state)
@@ -364,6 +364,7 @@ class TestFlightControllerConnection:
             assert application_state.vehicle_type == "ArduCopter"
             assert application_state.local_filesystem is mock_local_filesystem
             assert application_state.param_default_values == default_params
+            mock_local_filesystem.set_param_default_values_if_different.assert_called_once_with(default_params)
             assert application_state.param_default_values_dirty is True
 
     def test_user_can_work_in_simulation_mode(self, application_state: ApplicationState) -> None:
