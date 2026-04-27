@@ -1001,7 +1001,6 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self, param_default_values: ParDict, filename: str = "00_default.param", vehicle_dir: str = ""
     ) -> None:
         if self.set_param_default_values_if_different(param_default_values):
-            self.file_parameters[filename] = param_default_values
             if len(vehicle_dir) == 0:
                 vehicle_dir = self.vehicle_dir
             self.param_default_dict.export_to_param(os_path.join(vehicle_dir, filename))
