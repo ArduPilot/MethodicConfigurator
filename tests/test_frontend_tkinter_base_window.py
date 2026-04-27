@@ -301,7 +301,7 @@ class TestImageDisplayBehavior:
             mocks["open_mock"].assert_called_once_with(sample_image_file)
             mocks["image"].resize.assert_called_once()
             # Check that PhotoImage was called with data parameter (our new implementation)
-            mocks["photo_mock"].assert_called_once_with(data=b"fake_png_data")
+            mocks["photo_mock"].assert_called_once_with(master=parent_frame, data=b"fake_png_data")
 
     def test_user_sees_fallback_when_image_unavailable(self, image_test_context, mocked_base_window) -> None:
         """
