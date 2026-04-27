@@ -1080,7 +1080,7 @@ class TestCreateNewVehicleFromBinLog:
         assert kwargs.get("fc_connected") is False
         # Assert: vehicle directory opened immediately after creation
         mock_open.assert_called_once_with("/vehicles/my_flight")
-        # Assert: extracted defaults written (replacing the template's 00_default.param)
+        # Assert: extracted defaults written (target path/filename come from LocalFilesystem state after re_init)
         mock_write.assert_called_once_with(fake_defaults)
 
     def test_bin_log_defaults_are_written_to_vehicle_directory(self) -> None:

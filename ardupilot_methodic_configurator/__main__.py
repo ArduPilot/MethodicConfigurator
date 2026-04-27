@@ -371,7 +371,9 @@ def initialize_filesystem(state: ApplicationState) -> None:
 
     # Write parameter default values if available
     if state.param_default_values:
-        state.param_default_values_dirty = state.local_filesystem.write_param_default_values(state.param_default_values)
+        state.param_default_values_dirty = state.local_filesystem.set_param_default_values_if_different(
+            state.param_default_values
+        )
 
 
 def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None:
