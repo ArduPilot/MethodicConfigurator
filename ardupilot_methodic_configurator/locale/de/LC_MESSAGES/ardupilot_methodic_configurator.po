@@ -304,7 +304,7 @@ msgstr "Beginne mit der ersten Nicht-TCAL-Datei."
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:788
 msgid "Fewer than three files available; starting with the last file."
-msgstr ""
+msgstr "Weniger als drei Dateien verfügbar; es wird mit der letzten Datei begonnen."
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:792
 msgid "Last uploaded file was %s."
@@ -3075,7 +3075,7 @@ msgstr "Neuer Wert für den Parameter"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:359
 msgid "Optional instructions to display as a popup when entering this step"
-msgstr ""
+msgstr "Optionale Anweisungen, die beim Betreten dieses Schrittes als Popup angezeigt werden"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:360
 msgid "Phases of the configuration process"
@@ -3113,7 +3113,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:368
 msgid "The instruction message to display to the user"
-msgstr ""
+msgstr "Die Anweisungsnachricht, die dem Benutzer angezeigt werden soll"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid "The name of the plugin to load"
@@ -3121,7 +3121,7 @@ msgstr "Der Name des zu ladenden Plugins"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:370
 msgid "The type of popup dialog to display (info or warning)"
-msgstr ""
+msgstr "Der Typ des Popup-Dialogs, der angezeigt werden soll (Info oder Warnung)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid "URL to blog documentation"
@@ -6504,7 +6504,7 @@ msgstr "Erfolgreich hochgeladen {} von {} %"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1038
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1040
 msgid "Step Instructions"
-msgstr ""
+msgstr "Schrittanweisungen"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1048
 msgid ""

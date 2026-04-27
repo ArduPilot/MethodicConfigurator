@@ -283,7 +283,7 @@ msgstr "从第一个非温度校准文件开始。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:788
 msgid "Fewer than three files available; starting with the last file."
-msgstr ""
+msgstr "可用文件不足三个；从最后一个文件开始。"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:792
 msgid "Last uploaded file was %s."
@@ -2760,7 +2760,7 @@ msgstr "参数的新值"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:359
 msgid "Optional instructions to display as a popup when entering this step"
-msgstr ""
+msgstr "在进入此步骤时显示为弹窗的可选说明"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:360
 msgid "Phases of the configuration process"
@@ -2796,7 +2796,7 @@ msgstr "指示步骤是否必须或可选的文本（带百分比）"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:368
 msgid "The instruction message to display to the user"
-msgstr ""
+msgstr "向用户显示的说明信息"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid "The name of the plugin to load"
@@ -2804,7 +2804,7 @@ msgstr "要加载的插件名称"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:370
 msgid "The type of popup dialog to display (info or warning)"
-msgstr ""
+msgstr "要显示的弹窗对话框类型（信息或警告）"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid "URL to blog documentation"
@@ -5981,7 +5981,7 @@ msgstr "已上传 {} 中的 {} %"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1038
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1040
 msgid "Step Instructions"
-msgstr ""
+msgstr "步骤说明"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1048
 msgid ""
