@@ -350,8 +350,11 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def populate_frames(self) -> None:
         """Populates the ScrollFrame with widgets based on the JSON data."""
         components = self.data_model.get_all_components()
-        for key, value in components.items():
+        for i, (key, value) in enumerate(components.items(), 1):
             self.add_widget(self.scroll_frame.view_port, key, value, [])
+            if i % 5 == 0:  # yield to the event loop periodically to keep the UI responsive
+                self.scroll_frame.view_port.update_idletasks()
+
         # Scroll to the top after (re-)populating
         self.scroll_frame.canvas.yview("moveto", 0)
 

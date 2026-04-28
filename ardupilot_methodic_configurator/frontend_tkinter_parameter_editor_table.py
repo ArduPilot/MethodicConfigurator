@@ -232,6 +232,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 if self.parameter_editor.should_display_bitmask_parameter_editor_usage(param_name):
                     should_try_to_display_bitmask_parameter_editor_usage = True
                 self._grid_column_widgets(row_widgets, i, show_upload_column)
+                if i % 20 == 0:
+                    self.view_port.update_idletasks()  # yield to the event loop periodically to keep the UI responsive
 
             # Add the "Add" button at the bottom of the table
             add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)

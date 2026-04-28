@@ -1703,6 +1703,33 @@ class TestUIErrorInfoHandling:
             tooltip_call_args = mock_tooltip.call_args[0]
             assert "Add a parameter to the test_file.param file" in tooltip_call_args[1]
 
+    def test_update_table_yields_to_event_loop_every_twenty_rows(self, parameter_editor_table) -> None:
+        """
+        Table update yields to the event loop periodically during large renders.
+
+        GIVEN: More than twenty parameters to render
+        WHEN: The table is updated
+        THEN: The viewport idletasks are processed every twentieth row
+        """
+        params = {
+            f"TEST_PARAM_{index:02d}": create_mock_data_model_ardupilot_parameter(
+                name=f"TEST_PARAM_{index:02d}", value=float(index)
+            )
+            for index in range(1, 46)
+        }
+
+        with (
+            patch.object(parameter_editor_table, "_create_column_widgets", return_value=[MagicMock() for _ in range(7)]),
+            patch.object(parameter_editor_table, "_grid_column_widgets"),
+            patch.object(parameter_editor_table, "_configure_table_columns"),
+            patch.object(parameter_editor_table.view_port, "update_idletasks") as mock_update_idletasks,
+            patch("tkinter.ttk.Button"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+        ):
+            parameter_editor_table._update_table(params, "simple")
+
+        assert mock_update_idletasks.call_count == 2
+
     def test_create_flightcontroller_value_sets_correct_background_colors(self, parameter_editor_table) -> None:  # pylint: disable=too-many-statements # noqa: PLR0915
         """
         Flight controller value labels display with appropriate background colors based on parameter state.
