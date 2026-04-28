@@ -71,12 +71,6 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         """Reset the scroll region to encompass the inner frame."""
         # Whenever the size of the frame changes, alter the scroll region respectively.
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        # Calculate the bounding box for the scroll region, starting from the second row
-        # bbox = self.canvas.bbox("all")
-        # if bbox:
-        #     # Adjust the bounding box to start from the second row
-        #     bbox = (bbox[0], bbox[1] + self.canvas.winfo_reqheight(), bbox[2], bbox[3])
-        #     self.canvas.configure(scrollregion=bbox)
 
     def on_canvas_configure(self, event: tk.Event) -> None:
         """Reset the canvas window to encompass inner frame when required."""
@@ -86,7 +80,8 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
 
     def on_mouse_wheel(self, event: tk.Event) -> None:  # cross platform scroll wheel event
         canvas_height = self.canvas.winfo_height()
-        rows_height = self.canvas.bbox("all")[3]
+        bbox = self.canvas.bbox("all")
+        rows_height = bbox[3] if bbox is not None else 0
 
         if rows_height > canvas_height:  # only scroll if the rows overflow the frame
             if platform_system() == "Windows":
