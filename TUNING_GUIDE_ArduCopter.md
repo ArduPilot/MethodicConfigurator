@@ -860,8 +860,10 @@ Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-t
 
 ## 6.14 Optional PID adjustment
 
-If you have a very small, or a very large vehicle that requires non-default PID values for a safe flight.
-Usually, smaller vehicles require lower than default PID rate values. Larger vehicles usually require higher than default PID rate values.
+The default PID gains of ArduCopter are for a 9'' to 12'' inch prop diameter sized vehicle.
+If you have a much smaller, or a much larger vehicle it might require non-default PID values for a safe flight.
+Usually, smaller vehicles require lower than default PID rate values.
+Larger vehicles usually require higher than default PID rate values.
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `16_pid_adjustment.param` file
 
