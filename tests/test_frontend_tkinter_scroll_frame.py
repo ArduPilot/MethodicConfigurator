@@ -154,6 +154,25 @@ class TestScrollFrameUserExperience:
         # Verify no scrolling occurred
         scrollable_frame.canvas.yview_scroll.assert_not_called()
 
+    def test_user_does_not_crash_when_canvas_has_no_items(self, scrollable_frame) -> None:
+        """
+        User does not hit a crash when scrolling before any canvas items exist.
+
+        GIVEN: A ScrollFrame whose canvas reports no bounding box yet
+        WHEN: The user scrolls
+        THEN: No scrolling occurs and no exception is raised
+        """
+        scrollable_frame.canvas.winfo_height.return_value = 100
+        scrollable_frame.canvas.bbox.return_value = None
+
+        event = MagicMock()
+        event.delta = 120
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_scroll_frame.platform_system", return_value="Windows"):
+            scrollable_frame.on_mouse_wheel(event)
+
+        scrollable_frame.canvas.yview_scroll.assert_not_called()
+
     def test_user_mouse_events_are_properly_managed_on_enter_leave(self, scrollable_frame) -> None:
         """
         User mouse events are properly bound and unbound as cursor enters/leaves the scroll area.
