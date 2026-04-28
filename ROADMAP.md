@@ -62,9 +62,9 @@ We need contributors to help realize this roadmap! Here's how you can get involv
 
 ## Timeline
 
-- **Q4 2025**: Complete ESC configuration automation prototype
-- **Q1 2026**: Release notch filter automation tools
-- **Q2 2026**: Add ArduPlane support
+- **Q2 2026**: Complete ESC configuration automation prototype
+- **Q3 2026**: Release notch filter automation tools
+- **Q4 2026**: Add ArduPlane support
 - **Q3-Q4 2026**: Extend support to Rover and Helicopter
 - **2027**: Complete support for remaining vehicle types
 
@@ -72,6 +72,9 @@ We need contributors to help realize this roadmap! Here's how you can get involv
 
 ## Reached Milestones
 
+- 2026.04.28 - [96% test coverage](https://coveralls.io/builds/79158977)
+- 2026.04.26 - Partial ESC telemetry configuration in component editor
+- 2026.04.21 - 30 code PR contributors
 - 2025.11.26 - 83% of [Gold OSS best practices](https://www.bestpractices.dev/en/projects/9101?criteria_level=2) reached
 - 2025.11.25 - [91% test coverage](https://coveralls.io/builds/76659097)
 - 2025.11.22 - 100 Github stars
