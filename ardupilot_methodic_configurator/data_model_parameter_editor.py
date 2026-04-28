@@ -1077,7 +1077,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     self._flight_controller.fc_parameters[param_name],
                 )
                 param_upload_error.append(param_name)
-            if param_name not in self._flight_controller.fc_parameters:
+            if param_name not in self._flight_controller.fc_parameters and param is not None:
                 logging_error(
                     _("Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/A"),
                     param_name,
