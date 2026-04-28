@@ -7728,7 +7728,7 @@ msgstr "Telaio"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
 msgid "Frame class"
-msgstr ""
+msgstr "Classe del telaio"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:36
 msgid "GNSS Receiver"
@@ -7931,7 +7931,7 @@ msgstr "Controllore di volo che esegue il firmware ArduPilot"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:94
 msgid "Frame class/category (e.g., Quad, Hexa, Octa, etc.)"
-msgstr ""
+msgstr "Classe/categoria del telaio (ad es. Quad, Hexa, Octa, ecc.)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:95
 msgid "Global Navigation Satellite System receiver for positioning"
