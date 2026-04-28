@@ -88,7 +88,8 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         if not hasattr(self, "canvas") or not self.canvas.winfo_exists():
             return  # The widget was destroyed, ignore the scroll event
         canvas_height = self.canvas.winfo_height()
-        rows_height = self.canvas.bbox("all")[3]
+        bbox = self.canvas.bbox("all")
+        rows_height = bbox[3] if bbox is not None else 0
 
         if rows_height > canvas_height:  # only scroll if the rows overflow the frame
             if platform_system() == "Windows":

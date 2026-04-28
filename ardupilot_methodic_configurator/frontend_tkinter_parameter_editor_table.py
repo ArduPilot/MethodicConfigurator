@@ -100,6 +100,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self._gui_complexity: str = ""
         self._is_loading: bool = False
         self._add_button_widget: Optional[ttk.Button] = None
+        self._page_scroll_after_id: Optional[str] = None
+        self._page_scroll_destroy_binding_registered: bool = False
 
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
@@ -226,7 +228,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.canvas.yview_moveto(position)
 
     def _update_table(self, params: dict[str, ArduPilotParameter], gui_complexity: str) -> None:
-        """Initialize scroll load."""
+        """
+        Update the table from a new parameter set and start incremental rendering.
+
+        This method is the entry point used when the table is rebuilt for a
+        fresh ``params`` mapping. It resets the incremental-load state, stores
+        the active GUI complexity, renders the first batch of rows immediately
+        (currently 20 parameters), and then starts the page-scroll/polling
+        mechanism that loads additional chunks as needed.
+        """
         self._params_list = list(params.items())
         self._total_params = len(self._params_list)
         self._current_idx = 0
@@ -291,18 +301,52 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors, 
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         self._is_loading = False
 
+    def _cancel_page_scroll_after(self) -> None:
+        """Cancel any scheduled page-scroll polling callback."""
+        after_id = getattr(self, "_page_scroll_after_id", None)
+        if not after_id:
+            return
+        try:
+            self.after_cancel(after_id)
+        except tk.TclError:
+            pass
+        finally:
+            self._page_scroll_after_id = None
+
+    def _on_destroy_cancel_page_scroll(self, _event: Optional[tk.Event] = None) -> None:
+        """Stop page-scroll polling when the widget is being destroyed."""
+        self._cancel_page_scroll_after()
+
     def _page_scroll(self) -> None:
         """Load more items when reaching the bottom."""
-        if not self.winfo_exists() or self._current_idx >= self._total_params:
+        self._page_scroll_after_id = None
+
+        # 1. ALWAYS check if the widget exists FIRST before doing Tkinter operations
+        if not self.winfo_exists():
+            self._cancel_page_scroll_after()
+            return
+
+        # 2. Now it is safe to bind events
+        if not getattr(self, "_page_scroll_destroy_binding_registered", False):
+            self.bind("<Destroy>", self._on_destroy_cancel_page_scroll, add="+")
+            self._page_scroll_destroy_binding_registered = True
+
+        # 3. Check if we are done loading
+        if self._current_idx >= self._total_params:
+            self._cancel_page_scroll_after()
             return
 
         try:
             if self.canvas.yview()[1] > 0.85:
                 self._load_next_chunk(chunk_size=15)
         except tk.TclError:
-            pass
+            return
 
-        self.after(150, self._page_scroll)
+        if self.winfo_exists() and self._current_idx < self._total_params:
+            try:
+                self._page_scroll_after_id = self.after(150, self._page_scroll)
+            except tk.TclError:
+                self._page_scroll_after_id = None
 
     def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""

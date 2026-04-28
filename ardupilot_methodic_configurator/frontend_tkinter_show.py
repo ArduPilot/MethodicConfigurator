@@ -525,7 +525,7 @@ class Tooltip:
         self.timers["show"] = self.widget.after(TOOLTIP_SHOW_DELAY_MS, self.create_show)
 
     def create_show(self, _event: Optional[tk.Event] = None) -> None:
-        """On macOS, only create the tooltip when the mouse enters the widget."""
+        """Create and show the tooltip when the pointer is still over the widget after the delay."""
         self._cancel_show()
         self._cancel_hide()
 

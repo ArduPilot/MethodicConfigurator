@@ -990,7 +990,7 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
 
     def test_tooltip_force_hide_destroys_globally(self, mock_widget, mock_toplevel) -> None:
         """
-        Test tooltip _do_hide withdraws tooltip on non-macOS.
+        Test tooltip force_hide destroys the tooltip globally across all OSs and clears the active tooltip.
 
         GIVEN: Tooltip on non-macOS platform
         WHEN: _do_hide is called
@@ -1074,7 +1074,8 @@ class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods
             tooltip.create_show()  # Trigger lazy load
 
         # Assert: Custom class was used
-        custom_toplevel_class.assert_called_once()
+        custom_toplevel_class.assert_called_once_with(mock_widget, bg="#ffffe0")
+        assert tooltip.tooltip == mock_toplevel
 
     def test_tooltip_position_below_false(self, mock_widget, mock_toplevel) -> None:
         """
