@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-04-28 07:41+0000\n"
+"POT-Creation-Date: 2026-04-28 14:36+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -99,8 +99,8 @@ msgstr "将参数重置为默认值失败: %(error)s"
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:144
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:147
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:148
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:86
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:90
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:88
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:92
 msgid "Unknown"
 msgstr "未知"
 
@@ -3049,7 +3049,7 @@ msgid "Component ID"
 msgstr "組件 ID"
 
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:105
-#: ardupilot_methodic_configurator/vehicle_components.py:36
+#: ardupilot_methodic_configurator/vehicle_components.py:37
 msgid "MCU Series"
 msgstr "MCU系列"
 
@@ -4222,7 +4222,7 @@ msgstr ""
 msgid "Failed to cast value '%s' to %s for path %s: %s"
 msgstr "无法将值 '%s' 转换为 %s（路径 %s）: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_base.py:477
+#: ardupilot_methodic_configurator/data_model_vehicle_components_base.py:478
 msgid "Invalid battery chemistry %s, defaulting to Lipo"
 msgstr "无效的电池化学类型 %s，默认使用锂聚合物"
 
@@ -4235,126 +4235,126 @@ msgstr ""
 "\n"
 "这是可选的，可以留空"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:103
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:105
 msgid "Length of values %u and fallbacks %u differ for %s"
 msgstr "%u 值的长度和回退值 %u 与 %s 不一致"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:106
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:448
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:108
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:488
 msgid "No values found for %s in the metadata"
 msgstr "元数据中未找到 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:145
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:147
 msgid "Invalid bit position %s in %s metadata"
 msgstr "%s 元数据中的无效位位置 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:155
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:157
 msgid "Protocol %s does not match %s in %s metadata"
 msgstr "协议 %s 与 %s 不匹配, 后者源自 %s 元数据"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:159
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:161
 msgid ""
 "Protocol %s (%s) not found in %s code dictionary (firmware may be newer)"
 msgstr "在 %s 代码字典中找不到协议 %s (%s)(固件可能较新)"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:203
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:213
 msgid "Invalid non-integer value for %s: %s"
 msgstr "%s 的无效非整数值: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:236
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:246
 msgid "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"
 msgstr "无效的 CAN_Dx_PROTOCOL %s 和 CAN_Px_DRIVER %s 对于 GNSS 接收器"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:260
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:270
 msgid "Invalid non-integer value for RC_PROTOCOLS %s"
 msgstr "RC_PROTOCOLS 的无效非整数值 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:281
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:291
 msgid ""
 "RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active "
 "protocol."
 msgstr "RC_PROTOCOLS启用了多个协议 (%d)。无法确定活动协议。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:300
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:310
 msgid "Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}"
 msgstr "{serial}_PROTOCOL {serial_protocol_nr} 的非整数值无效。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:360
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:370
 msgid "Invalid non-integer value for MOT_PWM_TYPE %s"
 msgstr "MOT_PWM_TYPE 的无效非整数值 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:409
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:419
 msgid "BATT_MONITOR value %s not found in BATT_MONITOR_CONNECTION"
 msgstr "在 BATT_MONITOR_CONNECTION 中未找到 BATT_MONITOR 值 %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:428
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:438
 msgid "BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus"
 msgstr "BATT_I2C_BUS 值 %d 超出范围 (0-%d)，将使用第一个总线"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:434
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:444
 msgid "Invalid BATT_I2C_BUS value, defaulting to first bus"
 msgstr "无效的 BATT_I2C_BUS 值，将使用第一个总线"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:449
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:459
 msgid "Error processing BATT_MONITOR parameter: %s"
 msgstr "处理 BATT_MONITOR 参数时出错: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:451
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:461
 msgid "BATT_MONITOR parameter not found in fc_parameters"
 msgstr "在 fc_parameters 中未找到 BATT_MONITOR 参数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:483
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:493
 msgid "BATT_CAPACITY is zero or negative: %s"
 msgstr "BATT_CAPACITY 为零或负数: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:485
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:495
 msgid "Error processing BATT_CAPACITY parameter: %s"
 msgstr "处理BATT_CAPACITY参数时出错: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:487
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:497
 msgid "BATT_CAPACITY parameter not found in fc_parameters"
 msgstr "在 fc_parameters 中未找到 BATT_CAPACITY 参数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:506
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:516
 msgid "Invalid voltage type %s for battery voltage import"
 msgstr "电池电压导入时电压类型 %s 无效"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:513
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:523
 msgid ""
 "Calculated  %s voltage %.2f V is out of expected range for %s chemistry "
 "(%.2f - %.2f V)"
 msgstr "计算得到的 %s 电压 %.2f V 超出 %s 化学成分的预期范围 (%.2f - %.2f V)"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:521
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:622
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:531
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:632
 msgid "Error processing %s parameter: %s"
 msgstr "处理 %s 参数时出错: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:573
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:583
 msgid ""
 "Current chemistry %s does not have valid volt per cell for %s, ignoring "
 "current chemistry"
 msgstr "当前化学成分 %s 没有针对 %s 的有效单体电压，忽略当前化学成分"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:608
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:618
 msgid "No recommended voltage for %s %s"
 msgstr "%s %s 没有推荐电压"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:614
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:624
 msgid "Voltage value for %s is zero or invalid: %s"
 msgstr "%s 的电压值为零或无效：%s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:620
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:630
 msgid "Estimated cell count %d from %s seems unreasonable"
 msgstr "来自 %s 的估算电池数量 %d 似乎不合理"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:669
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:679
 msgid ""
 "All volt per cell values are zero or invalid; cannot estimate battery cell "
 "count"
 msgstr "所有每格电压值均为零或无效;无法估算电池格数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:680
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:690
 msgid "Estimated battery cell count %s is out of valid range (%d to %d)"
 msgstr "估算的电池格数 %s 超出有效范围 (%d 到 %d)"
 
@@ -4378,55 +4378,55 @@ msgstr "修改MCU系列模式时出错: %s"
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr "在 get_component_property_description 中发生异常：{}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:451
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:491
 msgid "No fallback values found for %s"
 msgstr "没找到 %s 的回退值"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:791
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:831
 msgid "Takeoff Weight max must be a float"
 msgstr "起飞重量最大值必须是浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:799
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:839
 msgid "Takeoff Weight min must be a float"
 msgstr "起飞重量最小值必须是浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:816
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:856
 msgid "{name} must be a {data_type_name} between {min} and {max}"
 msgstr "{name} 必须是 {min} 到 {max} 之间的 {data_type_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:821
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:861
 msgid "Invalid {data_type_name} value for {name}"
 msgstr "{name} 的 {data_type_name} 值无效"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:846
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:886
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "低于 {chemistry} 的最小电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:851
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:891
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "高于 {chemistry} 的最大电压限制 {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:855
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:895
 msgid "Invalid value. Will be set to the recommended value."
 msgstr "无效值。将设置为推荐值。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:907
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:947
 msgid "{limit_name} is not a float nor string"
 msgstr "{limit_name} 既不是浮点数也不是字符串"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:911
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:951
 msgid "{limit_name} is not convertible to float"
 msgstr "{limit_name} 不能转换为浮点数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:915
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:955
 msgid "is below the {limit_name} of {limit_value}"
 msgstr "低于 {limit_value} 的 {limit_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:920
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:960
 msgid "is above the {limit_name} of {limit_value}"
 msgstr "高于 {limit_value} 的 {limit_name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:961
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1001
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:457
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
@@ -4435,15 +4435,15 @@ msgstr ""
 "{paths_str} 的无效值 '{value}'\n"
 "允许的值为: {allowed_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:989
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1029
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr "{paths_str} 的重复FC连接类型 '{value}'"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1006
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1046
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr "{paths_str} 的磁转子极数必须为偶数"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1009
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1049
 msgid "Invalid integer value for {paths_str}"
 msgstr "{paths_str} 的整数值无效"
 
@@ -4583,7 +4583,9 @@ msgstr "飞行控制器参数"
 msgid ""
 "No template found for {vehicle_type} {template_name}.\n"
 "Expected directory: {template_dir}"
-msgstr "未找到适用于 {vehicle_type} {template_name} 的模板。\n预期目录：{template_dir}"
+msgstr ""
+"未找到适用于 {vehicle_type} {template_name} 的模板。\n"
+"预期目录：{template_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:420
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:467
@@ -5319,7 +5321,10 @@ msgid ""
 "empty template is used. The template's 00_default.param is replaced with "
 "the\n"
 "extracted defaults snapshot. Continue with the normal component editor flow."
-msgstr "从 ArduPilot .bin 日志文件提取默认参数和当前参数。\n车辆类型和固件版本将从日志中读取，并使用匹配的空模板。\n模板的 00_default.param 将被提取的默认快照替换。然后继续常规组件编辑流程。"
+msgstr ""
+"从 ArduPilot .bin 日志文件提取默认参数和当前参数。\n"
+"车辆类型和固件版本将从日志中读取，并使用匹配的空模板。\n"
+"模板的 00_default.param 将被提取的默认快照替换。然后继续常规组件编辑流程。"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:171
 msgid "Select an ArduPilot .bin log file"
@@ -6536,7 +6541,9 @@ msgstr " - 选择载具配置目录"
 msgid ""
 "\n"
 "Choose one of the following options:"
-msgstr "\n请选择以下选项之一："
+msgstr ""
+"\n"
+"请选择以下选项之一："
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:97
 msgid ""
@@ -7077,359 +7084,367 @@ msgid "Frame"
 msgstr "框架"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
+msgid "Frame class"
+msgstr ""
+
+#: ardupilot_methodic_configurator/vehicle_components.py:36
 msgid "GNSS Receiver"
 msgstr "GNSS 接收器"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:37
+#: ardupilot_methodic_configurator/vehicle_components.py:38
 msgid "Manufacturer"
 msgstr "製造商"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:38
+#: ardupilot_methodic_configurator/vehicle_components.py:39
 msgid "Model"
 msgstr "型號"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:39
+#: ardupilot_methodic_configurator/vehicle_components.py:40
 msgid "Motors"
 msgstr "電機"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:40
+#: ardupilot_methodic_configurator/vehicle_components.py:41
 msgid "Notes"
 msgstr "備註"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:41
+#: ardupilot_methodic_configurator/vehicle_components.py:42
 msgid "Number of cells"
 msgstr "電池數量"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:42
+#: ardupilot_methodic_configurator/vehicle_components.py:43
 msgid "Poles"
 msgstr "極數"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:43
+#: ardupilot_methodic_configurator/vehicle_components.py:44
 msgid "Product"
 msgstr "產品"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:44
+#: ardupilot_methodic_configurator/vehicle_components.py:45
 msgid "Program version"
 msgstr "程序版本"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:45
+#: ardupilot_methodic_configurator/vehicle_components.py:46
 msgid "Propellers"
 msgstr "螺旋槳"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:46
+#: ardupilot_methodic_configurator/vehicle_components.py:47
 msgid "Protocol"
 msgstr "協議"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:47
+#: ardupilot_methodic_configurator/vehicle_components.py:48
 msgid "RC Controller"
 msgstr "RC 控制器"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:48
+#: ardupilot_methodic_configurator/vehicle_components.py:49
 msgid "RC Receiver"
 msgstr "RC 接收機"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:49
+#: ardupilot_methodic_configurator/vehicle_components.py:50
 msgid "RC Transmitter"
 msgstr "RC 發射機"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:50
+#: ardupilot_methodic_configurator/vehicle_components.py:51
 msgid "Specifications"
 msgstr "規格"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:51
+#: ardupilot_methodic_configurator/vehicle_components.py:52
 msgid "TOW max Kg"
 msgstr "最大起飛重量 Kg"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:52
+#: ardupilot_methodic_configurator/vehicle_components.py:53
 msgid "TOW min Kg"
 msgstr "最小起飛重量 Kg"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:53
+#: ardupilot_methodic_configurator/vehicle_components.py:54
 msgid "Telemetry"
 msgstr "遙測"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:54
+#: ardupilot_methodic_configurator/vehicle_components.py:55
 msgid "Type"
 msgstr "類型"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:55
+#: ardupilot_methodic_configurator/vehicle_components.py:56
 msgid "URL"
 msgstr "URL"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:56
+#: ardupilot_methodic_configurator/vehicle_components.py:57
 msgid "Version"
 msgstr "版本"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:57
+#: ardupilot_methodic_configurator/vehicle_components.py:58
 msgid "Volt per cell arm"
 msgstr "单体电压解锁"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:58
+#: ardupilot_methodic_configurator/vehicle_components.py:59
 msgid "Volt per cell crit"
 msgstr "每個電池的臨界電壓"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:59
+#: ardupilot_methodic_configurator/vehicle_components.py:60
 msgid "Volt per cell low"
 msgstr "每個電池的低電壓"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:60
+#: ardupilot_methodic_configurator/vehicle_components.py:61
 msgid "Volt per cell max"
 msgstr "每個電池的最大電壓"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:61
+#: ardupilot_methodic_configurator/vehicle_components.py:62
 msgid "Volt per cell min"
 msgstr "单体电压最小值"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:70
+#: ardupilot_methodic_configurator/vehicle_components.py:71
 msgid "Additional notes or comments about the component"
 msgstr "关于组件的附加说明或评论"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:71
+#: ardupilot_methodic_configurator/vehicle_components.py:72
 msgid "Arm threshold voltage per cell used for allowing arming (e.g., 3.7V)"
 msgstr "用于允许解锁的单体电压阈值（例如 3.7V）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:72
+#: ardupilot_methodic_configurator/vehicle_components.py:73
 msgid "Base definition that all vehicle components inherit from"
 msgstr "所有飞行器组件继承的基本定义"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:73
+#: ardupilot_methodic_configurator/vehicle_components.py:74
 msgid "Basic information about a product including manufacturer and model"
 msgstr "关于产品的基本信息，包括制造商和型号"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:74
+#: ardupilot_methodic_configurator/vehicle_components.py:75
 msgid "Battery capacity in milliampere-hours"
 msgstr "电池容量，以毫安时为单位"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:75
+#: ardupilot_methodic_configurator/vehicle_components.py:76
 msgid "Battery chemistry type (e.g., LiPo, Li-Ion, LiFe)"
 msgstr "电池化学类型（如LiPo、锂离子、LiFe）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:76
+#: ardupilot_methodic_configurator/vehicle_components.py:77
 msgid "Collection of all components that make up the vehicle system"
 msgstr "构成飞行器系统的所有组件集合"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:77
+#: ardupilot_methodic_configurator/vehicle_components.py:78
 msgid "Communication protocol used (e.g., SBUS, MAVLink)"
 msgstr "使用的通信协议（如SBUS、MAVLink）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:78
+#: ardupilot_methodic_configurator/vehicle_components.py:79
 msgid "Company or brand that manufactures the component"
 msgstr "生产组件的公司或品牌"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:79
+#: ardupilot_methodic_configurator/vehicle_components.py:80
 msgid "Component firmware information"
 msgstr "组件固件信息"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:80
+#: ardupilot_methodic_configurator/vehicle_components.py:81
 msgid "Component for wireless communication with ground station"
 msgstr "用于与地面站无线通信的组件"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:81
+#: ardupilot_methodic_configurator/vehicle_components.py:82
 msgid "Component that connects to the flight controller"
 msgstr "连接到飞控的组件"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:82
+#: ardupilot_methodic_configurator/vehicle_components.py:83
 msgid "Component that monitors battery voltage and current"
 msgstr "监测电池电压和电流的组件"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:83
+#: ardupilot_methodic_configurator/vehicle_components.py:84
 msgid "Connection type (e.g., UART, I2C, SPI)"
 msgstr "连接类型（如UART、I2C、SPI）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:84
+#: ardupilot_methodic_configurator/vehicle_components.py:85
 msgid "Critical voltage per cell below which damage may occur (e.g., 3.3V)"
 msgstr "每节电池的临界电压，低于此值可能导致损坏（如3.3V）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:85
+#: ardupilot_methodic_configurator/vehicle_components.py:86
 msgid "Data path from flight controller to ESC"
 msgstr "从飞控到电调的数据路径"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:86
+#: ardupilot_methodic_configurator/vehicle_components.py:87
 msgid "Details about how a component connects to the flight controller"
 msgstr "关于组件如何连接到飞控的详细信息"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:87
+#: ardupilot_methodic_configurator/vehicle_components.py:88
 msgid "ESC firmware information"
 msgstr "电调固件信息"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:88
+#: ardupilot_methodic_configurator/vehicle_components.py:89
 msgid "Electronic Speed Controller component with (optional) telemetry"
 msgstr "带有（可选）遥测的电子速度控制器组件"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:89
+#: ardupilot_methodic_configurator/vehicle_components.py:90
 msgid "Electronic Speed Controller for the motors"
 msgstr "电机的电子调速控制器"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:90
+#: ardupilot_methodic_configurator/vehicle_components.py:91
 msgid "Flight controller component that runs the ArduPilot firmware"
 msgstr "运行ArduPilot固件的飞控组件"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:91
+#: ardupilot_methodic_configurator/vehicle_components.py:92
 msgid "Flight controller firmware information"
 msgstr "飞控固件信息"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:92
+#: ardupilot_methodic_configurator/vehicle_components.py:93
 msgid "Flight controller that runs ArduPilot firmware"
 msgstr "运行ArduPilot固件的飞控"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:93
+#: ardupilot_methodic_configurator/vehicle_components.py:94
+msgid "Frame class/category (e.g., Quad, Hexa, Octa, etc.)"
+msgstr ""
+
+#: ardupilot_methodic_configurator/vehicle_components.py:95
 msgid "Global Navigation Satellite System receiver for positioning"
 msgstr "用于定位的全球导航卫星系统接收器"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:94
+#: ardupilot_methodic_configurator/vehicle_components.py:96
 msgid "How this component connects to the flight controller"
 msgstr "此组件如何连接到飞控"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:95
+#: ardupilot_methodic_configurator/vehicle_components.py:97
 msgid "Information about the firmware running on a component"
 msgstr "关于组件上运行的固件的信息"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:96
+#: ardupilot_methodic_configurator/vehicle_components.py:98
 msgid ""
 "Low voltage threshold per cell when battery should be changed (e.g., 3.5V)"
 msgstr "每节电池应更换的低电压阈值（如3.5V）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:97
+#: ardupilot_methodic_configurator/vehicle_components.py:99
 msgid "Main power source for the vehicle"
 msgstr "飞行器的主要电源"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:98
+#: ardupilot_methodic_configurator/vehicle_components.py:100
 msgid "Maximum take-off weight in kilograms"
 msgstr "最大起飞重量，以千克为单位"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:99
+#: ardupilot_methodic_configurator/vehicle_components.py:101
 msgid "Maximum voltage per cell when fully charged (e.g., 4.2V for LiPo)"
 msgstr "完全充电时每节电池的最大电压（LiPo为4.2V）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:100
+#: ardupilot_methodic_configurator/vehicle_components.py:102
 msgid "Microcontroller series used in the flight controller (e.g., STM32F4)"
 msgstr "飞控使用的微控制器系列（如STM32F4）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:101
+#: ardupilot_methodic_configurator/vehicle_components.py:103
 msgid "Minimum take-off weight in kilograms"
 msgstr "最小起飞重量，以千克为单位"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:102
+#: ardupilot_methodic_configurator/vehicle_components.py:104
 msgid "Minimum voltage per cell below which PID scaling stops (e.g., 3.3V)"
 msgstr "PID缩放停止时的最低单体电压（例如 3.3V）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:103
+#: ardupilot_methodic_configurator/vehicle_components.py:105
 msgid "Name of the configuration template"
 msgstr "配置模板的名称"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:104
+#: ardupilot_methodic_configurator/vehicle_components.py:106
 msgid "Number of cells in series (e.g., 4S means 4 cells)"
 msgstr "电池串联节数（例如，4S表示4节电池）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:105
+#: ardupilot_methodic_configurator/vehicle_components.py:107
 msgid "Number of magnetic pole pairs in the motor (affects RPM calculation)"
 msgstr "电机磁极对数量（影响RPM计算）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:106
+#: ardupilot_methodic_configurator/vehicle_components.py:108
 msgid "Physical frame and structure of the vehicle"
 msgstr "飞行器的物理框架和结构"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:107
+#: ardupilot_methodic_configurator/vehicle_components.py:109
 msgid "Physical structure of the vehicle"
 msgstr "飞行器的物理结构"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:108
+#: ardupilot_methodic_configurator/vehicle_components.py:110
 msgid "Power source for the vehicle"
 msgstr "飞行器的电源"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:109
+#: ardupilot_methodic_configurator/vehicle_components.py:111
 msgid "Product information including manufacturer and model"
 msgstr "产品信息，包括制造商和型号"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:110
+#: ardupilot_methodic_configurator/vehicle_components.py:112
 msgid "Propeller diameter in inches (affects PID tuning)"
 msgstr "螺旋桨直径（英寸）（影响PID调谐）"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:111
+#: ardupilot_methodic_configurator/vehicle_components.py:113
 msgid "Propellers that generate thrust"
 msgstr "产生推力的螺旋桨"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:112
+#: ardupilot_methodic_configurator/vehicle_components.py:114
 msgid "Propellers that generate thrust for the vehicle"
 msgstr "为飞行器产生推力的螺旋桨"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:113
+#: ardupilot_methodic_configurator/vehicle_components.py:115
 msgid "Propulsion motors for the vehicle"
 msgstr "飞行器的推进电机"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:114
+#: ardupilot_methodic_configurator/vehicle_components.py:116
 msgid "Propulsion motors that power the vehicle"
 msgstr "为飞行器提供动力的推进电机"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:115
+#: ardupilot_methodic_configurator/vehicle_components.py:117
 msgid "Receiver that connects to the flight controller"
 msgstr "连接到飞控的接收机"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:116
+#: ardupilot_methodic_configurator/vehicle_components.py:118
 msgid "Remote control component firmware information"
 msgstr "遥控组件固件信息"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:117
+#: ardupilot_methodic_configurator/vehicle_components.py:119
 msgid "Remote control device used by the pilot"
 msgstr "飞行员使用的遥控设备"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:118
+#: ardupilot_methodic_configurator/vehicle_components.py:120
 msgid "Remote control system component"
 msgstr "遥控系统组件"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:119
+#: ardupilot_methodic_configurator/vehicle_components.py:121
 msgid "Schema format version"
 msgstr "模式格式版本"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:120
+#: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Specific model name/number of the component"
 msgstr "组件的具体型号/编号"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:121
+#: ardupilot_methodic_configurator/vehicle_components.py:123
 msgid "Technical specifications of the battery"
 msgstr "电池的技术规格"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:122
+#: ardupilot_methodic_configurator/vehicle_components.py:124
 msgid "Technical specifications of the flight controller"
 msgstr "飞控的技术规格"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:123
+#: ardupilot_methodic_configurator/vehicle_components.py:125
 msgid "Technical specifications of the motors"
 msgstr "电机的技术规格"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:124
+#: ardupilot_methodic_configurator/vehicle_components.py:126
 msgid "Technical specifications of the propellers"
 msgstr "螺旋桨的技术规格"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:125
+#: ardupilot_methodic_configurator/vehicle_components.py:127
 msgid "Technical specifications of the vehicle frame"
 msgstr "飞行器机架的技术规格"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:126
+#: ardupilot_methodic_configurator/vehicle_components.py:128
 msgid "Telemetry path from ESC to flight controller (if applicable)"
 msgstr "如果适用，则从电调到飞控的遥测路径"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:127
+#: ardupilot_methodic_configurator/vehicle_components.py:129
 msgid "Transmitter part of the remote control system"
 msgstr "遥控系统的发射器部分"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:128
+#: ardupilot_methodic_configurator/vehicle_components.py:130
 msgid "Type of firmware"
 msgstr "固件类型"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:129
+#: ardupilot_methodic_configurator/vehicle_components.py:131
 msgid "Version number of the firmware"
 msgstr "固件的版本号"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:130
+#: ardupilot_methodic_configurator/vehicle_components.py:132
 msgid "Version of the program"
 msgstr "程序版本"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:131
+#: ardupilot_methodic_configurator/vehicle_components.py:133
 msgid "Version or revision of the hardware"
 msgstr "硬件的版本或修订号"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:132
+#: ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
 

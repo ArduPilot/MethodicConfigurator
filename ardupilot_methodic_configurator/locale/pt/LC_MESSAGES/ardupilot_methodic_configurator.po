@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-04-28 07:41+0000\n"
+"POT-Creation-Date: 2026-04-28 14:36+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -106,8 +106,8 @@ msgstr "Falha ao repor parâmetros para valores predefinidos: %(error)s"
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:144
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:147
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:148
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:86
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:90
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:88
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:92
 msgid "Unknown"
 msgstr "Desconhecido"
 
@@ -3363,7 +3363,7 @@ msgid "Component ID"
 msgstr "ID do Componente"
 
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:105
-#: ardupilot_methodic_configurator/vehicle_components.py:36
+#: ardupilot_methodic_configurator/vehicle_components.py:37
 msgid "MCU Series"
 msgstr "Série MCU"
 
@@ -4627,7 +4627,7 @@ msgstr ""
 msgid "Failed to cast value '%s' to %s for path %s: %s"
 msgstr "Falha ao converter o valor '%s' para %s para o caminho %s: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_base.py:477
+#: ardupilot_methodic_configurator/data_model_vehicle_components_base.py:478
 msgid "Invalid battery chemistry %s, defaulting to Lipo"
 msgstr "Química de bateria inválida %s, a usar Lipo por padrão"
 
@@ -4640,43 +4640,43 @@ msgstr ""
 "\n"
 "Isto é opcional e pode ficar em branco"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:103
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:105
 msgid "Length of values %u and fallbacks %u differ for %s"
 msgstr "Comprimento dos valores %u e fallback %u diferem para %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:106
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:448
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:108
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:488
 msgid "No values found for %s in the metadata"
 msgstr "Nenhum valor encontrado para %s nos metadados"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:145
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:147
 msgid "Invalid bit position %s in %s metadata"
 msgstr "Posição de bit inválida %s nos metadados %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:155
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:157
 msgid "Protocol %s does not match %s in %s metadata"
 msgstr "Protocolo %s não corresponde a %s nos metadados %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:159
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:161
 msgid ""
 "Protocol %s (%s) not found in %s code dictionary (firmware may be newer)"
 msgstr ""
 "Protocolo %s (%s) não encontrado no dicionário de código %s (o firmware pode "
 "ser mais recente)"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:203
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:213
 msgid "Invalid non-integer value for %s: %s"
 msgstr "Valor não inteiro inválido para %s: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:236
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:246
 msgid "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"
 msgstr "CAN_Dx_PROTOCOL %s e CAN_Px_DRIVER %s inválidos para o receptor GNSS"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:260
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:270
 msgid "Invalid non-integer value for RC_PROTOCOLS %s"
 msgstr "Valor não inteiro inválido para RC_PROTOCOLS %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:281
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:291
 msgid ""
 "RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active "
 "protocol."
@@ -4684,54 +4684,54 @@ msgstr ""
 "RC_PROTOCOLS tem vários protocolos ativados (%d). Não é possível determinar "
 "o protocolo ativo."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:300
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:310
 msgid "Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}"
 msgstr "Valor inválido não inteiro para {serial}_PROTOCOL {serial_protocol_nr}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:360
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:370
 msgid "Invalid non-integer value for MOT_PWM_TYPE %s"
 msgstr "Valor não inteiro inválido para MOT_PWM_TYPE %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:409
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:419
 msgid "BATT_MONITOR value %s not found in BATT_MONITOR_CONNECTION"
 msgstr "Valor BATT_MONITOR %s não encontrado em BATT_MONITOR_CONNECTION"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:428
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:438
 msgid "BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus"
 msgstr ""
 "Valor BATT_I2C_BUS %d fora do intervalo (0-%d), a usar o primeiro barramento "
 "por defeito"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:434
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:444
 msgid "Invalid BATT_I2C_BUS value, defaulting to first bus"
 msgstr ""
 "Valor inválido de BATT_I2C_BUS, a usar o primeiro barramento por defeito"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:449
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:459
 msgid "Error processing BATT_MONITOR parameter: %s"
 msgstr "Erro ao processar o parâmetro BATT_MONITOR: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:451
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:461
 msgid "BATT_MONITOR parameter not found in fc_parameters"
 msgstr "Parâmetro BATT_MONITOR não encontrado em fc_parameters"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:483
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:493
 msgid "BATT_CAPACITY is zero or negative: %s"
 msgstr "BATT_CAPACITY é zero ou negativo: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:485
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:495
 msgid "Error processing BATT_CAPACITY parameter: %s"
 msgstr "Erro ao processar o parâmetro BATT_CAPACITY: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:487
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:497
 msgid "BATT_CAPACITY parameter not found in fc_parameters"
 msgstr "Parâmetro BATT_CAPACITY não encontrado em fc_parameters"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:506
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:516
 msgid "Invalid voltage type %s for battery voltage import"
 msgstr "Tipo de tensão inválido %s para importação da tensão da bateria"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:513
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:523
 msgid ""
 "Calculated  %s voltage %.2f V is out of expected range for %s chemistry "
 "(%.2f - %.2f V)"
@@ -4739,12 +4739,12 @@ msgstr ""
 "A tensão calculada %s de %.2f V está fora do intervalo esperado para a "
 "química %s (%.2f - %.2f V)"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:521
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:622
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:531
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:632
 msgid "Error processing %s parameter: %s"
 msgstr "Erro ao processar o parâmetro %s: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:573
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:583
 msgid ""
 "Current chemistry %s does not have valid volt per cell for %s, ignoring "
 "current chemistry"
@@ -4752,19 +4752,19 @@ msgstr ""
 "A química atual %s não tem voltagem válida por célula para %s, a química "
 "atual será ignorada"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:608
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:618
 msgid "No recommended voltage for %s %s"
 msgstr "Não existe uma voltagem recomendada para %s %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:614
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:624
 msgid "Voltage value for %s is zero or invalid: %s"
 msgstr "O valor de voltagem para %s é zero ou inválido: %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:620
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:630
 msgid "Estimated cell count %d from %s seems unreasonable"
 msgstr "A contagem estimada de células %d a partir de %s parece pouco razoável"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:669
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:679
 msgid ""
 "All volt per cell values are zero or invalid; cannot estimate battery cell "
 "count"
@@ -4772,7 +4772,7 @@ msgstr ""
 "Todos os valores de volt por célula são zero ou inválidos; não é possível "
 "estimar a contagem de células da bateria"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:680
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:690
 msgid "Estimated battery cell count %s is out of valid range (%d to %d)"
 msgstr ""
 "A contagem estimada de células da bateria %s está fora do intervalo válido "
@@ -4799,55 +4799,55 @@ msgstr "Erro ao modificar o esquema para a Série MCU: %s"
 msgid "Exception occurred in get_component_property_description: {}"
 msgstr "Ocorreu uma exceção em get_component_property_description: {}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:451
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:491
 msgid "No fallback values found for %s"
 msgstr "Nenhum valor de fallback encontrado para %s"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:791
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:831
 msgid "Takeoff Weight max must be a float"
 msgstr "O peso máximo de descolagem deve ser um número decimal"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:799
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:839
 msgid "Takeoff Weight min must be a float"
 msgstr "O peso mínimo de descolagem deve ser um número decimal"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:816
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:856
 msgid "{name} must be a {data_type_name} between {min} and {max}"
 msgstr "{name} tem de ser um(a) {data_type_name} entre {min} e {max}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:821
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:861
 msgid "Invalid {data_type_name} value for {name}"
 msgstr "Valor inválido de {data_type_name} para {name}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:846
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:886
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr "está abaixo do limite mínimo de {chemistry} de {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:851
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:891
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr "está acima do limite máximo de {chemistry} de {volt_limit}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:855
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:895
 msgid "Invalid value. Will be set to the recommended value."
 msgstr "Valor inválido. Será definido para o valor recomendado."
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:907
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:947
 msgid "{limit_name} is not a float nor string"
 msgstr "{limit_name} não é um número decimal nem uma string"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:911
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:951
 msgid "{limit_name} is not convertible to float"
 msgstr "{limit_name} não é convertível para número decimal"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:915
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:955
 msgid "is below the {limit_name} of {limit_value}"
 msgstr "está abaixo do {limit_name} de {limit_value}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:920
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:960
 msgid "is above the {limit_name} of {limit_value}"
 msgstr "está acima do {limit_name} de {limit_value}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:961
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1001
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:457
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
@@ -4856,15 +4856,15 @@ msgstr ""
 "Valor inválido '{value}' para {paths_str}\n"
 "Valores permitidos: {allowed_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:989
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1029
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr "Tipo de conexão FC duplicado '{value}' para {paths_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1006
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1046
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr "Número de polos magnéticos do rotor tem de ser par para {paths_str}"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1009
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1049
 msgid "Invalid integer value for {paths_str}"
 msgstr "Valor inteiro inválido para {paths_str}"
 
@@ -5028,7 +5028,9 @@ msgstr "Parâmetros do Controlador de Voo"
 msgid ""
 "No template found for {vehicle_type} {template_name}.\n"
 "Expected directory: {template_dir}"
-msgstr "Não foi encontrado um modelo para {vehicle_type} {template_name}.\nDiretório esperado: {template_dir}"
+msgstr ""
+"Não foi encontrado um modelo para {vehicle_type} {template_name}.\n"
+"Diretório esperado: {template_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:420
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:467
@@ -5041,7 +5043,9 @@ msgstr "Importação de log .bin"
 msgid ""
 "Could not scan the vehicle directory for imported parameter files: "
 "{vehicle_dir}. {error}"
-msgstr "Não foi possível analisar o diretório do veículo para ficheiros de parâmetros importados: {vehicle_dir}. {error}"
+msgstr ""
+"Não foi possível analisar o diretório do veículo para ficheiros de "
+"parâmetros importados: {vehicle_dir}. {error}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:447
@@ -5052,11 +5056,15 @@ msgstr "Importação de parâmetros"
 msgid ""
 "Could not create an import parameter file because no numbered slot is "
 "available in {vehicle_dir}"
-msgstr "Não foi possível criar um ficheiro de parâmetros de importação porque não existe nenhum espaço numerado disponível em {vehicle_dir}"
+msgstr ""
+"Não foi possível criar um ficheiro de parâmetros de importação porque não "
+"existe nenhum espaço numerado disponível em {vehicle_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:466
 msgid "Failed to read firmware version from the selected .bin log file"
-msgstr "Falha ao ler a versão do firmware a partir do ficheiro de log .bin selecionado"
+msgstr ""
+"Falha ao ler a versão do firmware a partir do ficheiro de log .bin "
+"selecionado"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:480
 msgid "Failed to extract parameters from the selected .bin log file"
@@ -5800,7 +5808,15 @@ msgid ""
 "empty template is used. The template's 00_default.param is replaced with "
 "the\n"
 "extracted defaults snapshot. Continue with the normal component editor flow."
-msgstr "Extraia os parâmetros padrão e atuais de um ficheiro de log .bin do ArduPilot.\nO tipo de veículo e a versão do firmware são lidos a partir do log e o modelo\nvazio correspondente é utilizado. O ficheiro 00_default.param do modelo é substituído\npelo instantâneo de predefinidos extraído. Continue com o fluxo normal do editor de componentes."
+msgstr ""
+"Extraia os parâmetros padrão e atuais de um ficheiro de log .bin do "
+"ArduPilot.\n"
+"O tipo de veículo e a versão do firmware são lidos a partir do log e o "
+"modelo\n"
+"vazio correspondente é utilizado. O ficheiro 00_default.param do modelo é "
+"substituído\n"
+"pelo instantâneo de predefinidos extraído. Continue com o fluxo normal do "
+"editor de componentes."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:171
 msgid "Select an ArduPilot .bin log file"
@@ -7084,7 +7100,9 @@ msgstr " - Selecione o diretório de configuração do veículo"
 msgid ""
 "\n"
 "Choose one of the following options:"
-msgstr "\nEscolha uma das seguintes opções:"
+msgstr ""
+"\n"
+"Escolha uma das seguintes opções:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:97
 msgid ""
@@ -7659,368 +7677,376 @@ msgid "Frame"
 msgstr "Frame"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
+msgid "Frame class"
+msgstr ""
+
+#: ardupilot_methodic_configurator/vehicle_components.py:36
 msgid "GNSS Receiver"
 msgstr "Recetor GNSS"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:37
+#: ardupilot_methodic_configurator/vehicle_components.py:38
 msgid "Manufacturer"
 msgstr "Fabricante"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:38
+#: ardupilot_methodic_configurator/vehicle_components.py:39
 msgid "Model"
 msgstr "Modelo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:39
+#: ardupilot_methodic_configurator/vehicle_components.py:40
 msgid "Motors"
 msgstr "Motores"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:40
+#: ardupilot_methodic_configurator/vehicle_components.py:41
 msgid "Notes"
 msgstr "Notas"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:41
+#: ardupilot_methodic_configurator/vehicle_components.py:42
 msgid "Number of cells"
 msgstr "Número de células"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:42
+#: ardupilot_methodic_configurator/vehicle_components.py:43
 msgid "Poles"
 msgstr "Nr. de pólos"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:43
+#: ardupilot_methodic_configurator/vehicle_components.py:44
 msgid "Product"
 msgstr "Produto"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:44
+#: ardupilot_methodic_configurator/vehicle_components.py:45
 msgid "Program version"
 msgstr "Versão do programa"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:45
+#: ardupilot_methodic_configurator/vehicle_components.py:46
 msgid "Propellers"
 msgstr "Hélices"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:46
+#: ardupilot_methodic_configurator/vehicle_components.py:47
 msgid "Protocol"
 msgstr "Protocolo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:47
+#: ardupilot_methodic_configurator/vehicle_components.py:48
 msgid "RC Controller"
 msgstr "Controlador RC"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:48
+#: ardupilot_methodic_configurator/vehicle_components.py:49
 msgid "RC Receiver"
 msgstr "Recetor RC"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:49
+#: ardupilot_methodic_configurator/vehicle_components.py:50
 msgid "RC Transmitter"
 msgstr "Transmissor RC"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:50
+#: ardupilot_methodic_configurator/vehicle_components.py:51
 msgid "Specifications"
 msgstr "Especificações"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:51
+#: ardupilot_methodic_configurator/vehicle_components.py:52
 msgid "TOW max Kg"
 msgstr "Peso máx [Kg]"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:52
+#: ardupilot_methodic_configurator/vehicle_components.py:53
 msgid "TOW min Kg"
 msgstr "Peso min [Kg]"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:53
+#: ardupilot_methodic_configurator/vehicle_components.py:54
 msgid "Telemetry"
 msgstr "Telemetria"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:54
+#: ardupilot_methodic_configurator/vehicle_components.py:55
 msgid "Type"
 msgstr "Tipo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:55
+#: ardupilot_methodic_configurator/vehicle_components.py:56
 msgid "URL"
 msgstr "URL"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:56
+#: ardupilot_methodic_configurator/vehicle_components.py:57
 msgid "Version"
 msgstr "Versão"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:57
+#: ardupilot_methodic_configurator/vehicle_components.py:58
 msgid "Volt per cell arm"
 msgstr "Voltagem por célula para armar"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:58
+#: ardupilot_methodic_configurator/vehicle_components.py:59
 msgid "Volt per cell crit"
 msgstr "Volt por célula crítico"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:59
+#: ardupilot_methodic_configurator/vehicle_components.py:60
 msgid "Volt per cell low"
 msgstr "Volt por célula baixo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:60
+#: ardupilot_methodic_configurator/vehicle_components.py:61
 msgid "Volt per cell max"
 msgstr "Volt por célula máx"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:61
+#: ardupilot_methodic_configurator/vehicle_components.py:62
 msgid "Volt per cell min"
 msgstr "Voltagem mínima por célula"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:70
+#: ardupilot_methodic_configurator/vehicle_components.py:71
 msgid "Additional notes or comments about the component"
 msgstr "Notas adicionais ou comentários sobre o componente"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:71
+#: ardupilot_methodic_configurator/vehicle_components.py:72
 msgid "Arm threshold voltage per cell used for allowing arming (e.g., 3.7V)"
 msgstr "Limite de voltagem por célula usado para permitir armar (ex.: 3.7V)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:72
+#: ardupilot_methodic_configurator/vehicle_components.py:73
 msgid "Base definition that all vehicle components inherit from"
 msgstr "Definição base de que todos os componentes do veículo herdam"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:73
+#: ardupilot_methodic_configurator/vehicle_components.py:74
 msgid "Basic information about a product including manufacturer and model"
 msgstr "Informação básica sobre um produto incluindo fabricante e modelo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:74
+#: ardupilot_methodic_configurator/vehicle_components.py:75
 msgid "Battery capacity in milliampere-hours"
 msgstr "Capacidade da bateria em miliamperes-hora"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:75
+#: ardupilot_methodic_configurator/vehicle_components.py:76
 msgid "Battery chemistry type (e.g., LiPo, Li-Ion, LiFe)"
 msgstr "Tipo de química da bateria (ex., LiPo, Li-Ion, LiFe)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:76
+#: ardupilot_methodic_configurator/vehicle_components.py:77
 msgid "Collection of all components that make up the vehicle system"
 msgstr "Coleção de todos os componentes que constituem o sistema do veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:77
+#: ardupilot_methodic_configurator/vehicle_components.py:78
 msgid "Communication protocol used (e.g., SBUS, MAVLink)"
 msgstr "Protocolo de comunicação utilizado (ex., SBUS, MAVLink)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:78
+#: ardupilot_methodic_configurator/vehicle_components.py:79
 msgid "Company or brand that manufactures the component"
 msgstr "Empresa ou marca que fabrica o componente"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:79
+#: ardupilot_methodic_configurator/vehicle_components.py:80
 msgid "Component firmware information"
 msgstr "Informação de firmware do componente"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:80
+#: ardupilot_methodic_configurator/vehicle_components.py:81
 msgid "Component for wireless communication with ground station"
 msgstr "Componente para comunicação sem fios com a estação terrestre"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:81
+#: ardupilot_methodic_configurator/vehicle_components.py:82
 msgid "Component that connects to the flight controller"
 msgstr "Componente que se liga ao controlador de voo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:82
+#: ardupilot_methodic_configurator/vehicle_components.py:83
 msgid "Component that monitors battery voltage and current"
 msgstr "Componente que monitoriza a tensão e corrente da bateria"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:83
+#: ardupilot_methodic_configurator/vehicle_components.py:84
 msgid "Connection type (e.g., UART, I2C, SPI)"
 msgstr "Tipo de ligação (ex., UART, I2C, SPI)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:84
+#: ardupilot_methodic_configurator/vehicle_components.py:85
 msgid "Critical voltage per cell below which damage may occur (e.g., 3.3V)"
 msgstr ""
 "Tensão crítica por célula abaixo da qual podem ocorrer danos (ex., 3,3V)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:85
+#: ardupilot_methodic_configurator/vehicle_components.py:86
 msgid "Data path from flight controller to ESC"
 msgstr "Caminho de dados do controlador de voo para o ESC"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:86
+#: ardupilot_methodic_configurator/vehicle_components.py:87
 msgid "Details about how a component connects to the flight controller"
 msgstr "Detalhes sobre como um componente se liga ao controlador de voo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:87
+#: ardupilot_methodic_configurator/vehicle_components.py:88
 msgid "ESC firmware information"
 msgstr "Informação do firmware do ESC"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:88
+#: ardupilot_methodic_configurator/vehicle_components.py:89
 msgid "Electronic Speed Controller component with (optional) telemetry"
 msgstr ""
 "Componente Controlador Electrónico de Velocidade com telemetria (opcional)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:89
+#: ardupilot_methodic_configurator/vehicle_components.py:90
 msgid "Electronic Speed Controller for the motors"
 msgstr "Controlador Eletrónico de Velocidade para os motores"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:90
+#: ardupilot_methodic_configurator/vehicle_components.py:91
 msgid "Flight controller component that runs the ArduPilot firmware"
 msgstr "Componente do controlador de voo que executa o firmware ArduPilot"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:91
+#: ardupilot_methodic_configurator/vehicle_components.py:92
 msgid "Flight controller firmware information"
 msgstr "Informação do firmware do controlador de voo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:92
+#: ardupilot_methodic_configurator/vehicle_components.py:93
 msgid "Flight controller that runs ArduPilot firmware"
 msgstr "Controlador de voo que executa firmware ArduPilot"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:93
+#: ardupilot_methodic_configurator/vehicle_components.py:94
+msgid "Frame class/category (e.g., Quad, Hexa, Octa, etc.)"
+msgstr ""
+
+#: ardupilot_methodic_configurator/vehicle_components.py:95
 msgid "Global Navigation Satellite System receiver for positioning"
 msgstr ""
 "Recetor de Sistema Global de Navegação por Satélite para posicionamento"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:94
+#: ardupilot_methodic_configurator/vehicle_components.py:96
 msgid "How this component connects to the flight controller"
 msgstr "Como este componente se liga ao controlador de voo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:95
+#: ardupilot_methodic_configurator/vehicle_components.py:97
 msgid "Information about the firmware running on a component"
 msgstr "Informação sobre o firmware em execução num componente"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:96
+#: ardupilot_methodic_configurator/vehicle_components.py:98
 msgid ""
 "Low voltage threshold per cell when battery should be changed (e.g., 3.5V)"
 msgstr ""
 "Limiar de baixa tensão por célula quando a bateria deve ser mudada (ex., "
 "3,5V)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:97
+#: ardupilot_methodic_configurator/vehicle_components.py:99
 msgid "Main power source for the vehicle"
 msgstr "Fonte de energia principal para o veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:98
+#: ardupilot_methodic_configurator/vehicle_components.py:100
 msgid "Maximum take-off weight in kilograms"
 msgstr "Peso máximo de descolagem em quilogramas"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:99
+#: ardupilot_methodic_configurator/vehicle_components.py:101
 msgid "Maximum voltage per cell when fully charged (e.g., 4.2V for LiPo)"
 msgstr ""
 "Tensão máxima por célula quando totalmente carregada (ex., 4,2V para LiPo)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:100
+#: ardupilot_methodic_configurator/vehicle_components.py:102
 msgid "Microcontroller series used in the flight controller (e.g., STM32F4)"
 msgstr ""
 "Série de microcontrolador utilizada no controlador de voo (ex., STM32F4)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:101
+#: ardupilot_methodic_configurator/vehicle_components.py:103
 msgid "Minimum take-off weight in kilograms"
 msgstr "Peso mínimo de descolagem em quilogramas"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:102
+#: ardupilot_methodic_configurator/vehicle_components.py:104
 msgid "Minimum voltage per cell below which PID scaling stops (e.g., 3.3V)"
 msgstr ""
 "Tensão mínima por célula abaixo da qual a escala dos PID é interrompida "
 "(ex.: 3,3V)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:103
+#: ardupilot_methodic_configurator/vehicle_components.py:105
 msgid "Name of the configuration template"
 msgstr "Nome do modelo de configuração"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:104
+#: ardupilot_methodic_configurator/vehicle_components.py:106
 msgid "Number of cells in series (e.g., 4S means 4 cells)"
 msgstr "Número de células em série (ex., 4S significa 4 células)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:105
+#: ardupilot_methodic_configurator/vehicle_components.py:107
 msgid "Number of magnetic pole pairs in the motor (affects RPM calculation)"
 msgstr "Número de pares de polos magnéticos no motor (afeta o cálculo de RPM)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:106
+#: ardupilot_methodic_configurator/vehicle_components.py:108
 msgid "Physical frame and structure of the vehicle"
 msgstr "Estrutura física e quadro do veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:107
+#: ardupilot_methodic_configurator/vehicle_components.py:109
 msgid "Physical structure of the vehicle"
 msgstr "Estrutura física do veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:108
+#: ardupilot_methodic_configurator/vehicle_components.py:110
 msgid "Power source for the vehicle"
 msgstr "Fonte de alimentação para o veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:109
+#: ardupilot_methodic_configurator/vehicle_components.py:111
 msgid "Product information including manufacturer and model"
 msgstr "Informação do produto incluindo fabricante e modelo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:110
+#: ardupilot_methodic_configurator/vehicle_components.py:112
 msgid "Propeller diameter in inches (affects PID tuning)"
 msgstr "Diâmetro da hélice em polegadas (afeta a afinação PID)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:111
+#: ardupilot_methodic_configurator/vehicle_components.py:113
 msgid "Propellers that generate thrust"
 msgstr "Hélices que geram impulso"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:112
+#: ardupilot_methodic_configurator/vehicle_components.py:114
 msgid "Propellers that generate thrust for the vehicle"
 msgstr "Hélices que geram impulso para o veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:113
+#: ardupilot_methodic_configurator/vehicle_components.py:115
 msgid "Propulsion motors for the vehicle"
 msgstr "Motores de propulsão para o veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:114
+#: ardupilot_methodic_configurator/vehicle_components.py:116
 msgid "Propulsion motors that power the vehicle"
 msgstr "Motores de propulsão que alimentam o veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:115
+#: ardupilot_methodic_configurator/vehicle_components.py:117
 msgid "Receiver that connects to the flight controller"
 msgstr "Recetor que se liga ao controlador de voo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:116
+#: ardupilot_methodic_configurator/vehicle_components.py:118
 msgid "Remote control component firmware information"
 msgstr "Informação do firmware do componente de controlo remoto"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:117
+#: ardupilot_methodic_configurator/vehicle_components.py:119
 msgid "Remote control device used by the pilot"
 msgstr "Dispositivo de controlo remoto utilizado pelo piloto"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:118
+#: ardupilot_methodic_configurator/vehicle_components.py:120
 msgid "Remote control system component"
 msgstr "Componente do sistema de controlo remoto"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:119
+#: ardupilot_methodic_configurator/vehicle_components.py:121
 msgid "Schema format version"
 msgstr "Versão do formato do esquema"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:120
+#: ardupilot_methodic_configurator/vehicle_components.py:122
 msgid "Specific model name/number of the component"
 msgstr "Nome/número específico do modelo do componente"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:121
+#: ardupilot_methodic_configurator/vehicle_components.py:123
 msgid "Technical specifications of the battery"
 msgstr "Especificações técnicas da bateria"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:122
+#: ardupilot_methodic_configurator/vehicle_components.py:124
 msgid "Technical specifications of the flight controller"
 msgstr "Especificações técnicas do controlador de voo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:123
+#: ardupilot_methodic_configurator/vehicle_components.py:125
 msgid "Technical specifications of the motors"
 msgstr "Especificações técnicas dos motores"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:124
+#: ardupilot_methodic_configurator/vehicle_components.py:126
 msgid "Technical specifications of the propellers"
 msgstr "Especificações técnicas das hélices"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:125
+#: ardupilot_methodic_configurator/vehicle_components.py:127
 msgid "Technical specifications of the vehicle frame"
 msgstr "Especificações técnicas da estrutura do veículo"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:126
+#: ardupilot_methodic_configurator/vehicle_components.py:128
 msgid "Telemetry path from ESC to flight controller (if applicable)"
 msgstr "Caminho de telemetria do ESC para o controlador de voo (se aplicável)"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:127
+#: ardupilot_methodic_configurator/vehicle_components.py:129
 msgid "Transmitter part of the remote control system"
 msgstr "Transmissor parte do sistema de controlo remoto"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:128
+#: ardupilot_methodic_configurator/vehicle_components.py:130
 msgid "Type of firmware"
 msgstr "Tipo de firmware"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:129
+#: ardupilot_methodic_configurator/vehicle_components.py:131
 msgid "Version number of the firmware"
 msgstr "Número da versão do firmware"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:130
+#: ardupilot_methodic_configurator/vehicle_components.py:132
 msgid "Version of the program"
 msgstr "Versão do programa"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:131
+#: ardupilot_methodic_configurator/vehicle_components.py:133
 msgid "Version or revision of the hardware"
 msgstr "Versão ou revisão do hardware"
 
-#: ardupilot_methodic_configurator/vehicle_components.py:132
+#: ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
 
