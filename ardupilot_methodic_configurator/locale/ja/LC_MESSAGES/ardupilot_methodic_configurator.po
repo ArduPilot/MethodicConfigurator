@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-04-27 09:10+0000\n"
+"POT-Creation-Date: 2026-04-28 07:41+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -82,7 +82,7 @@ msgstr ""
 msgid "Fatal error reading parameter files"
 msgstr "パラメータファイルの読み込みで致命的なエラーが発生しました"
 
-#: ardupilot_methodic_configurator/__main__.py:406
+#: ardupilot_methodic_configurator/__main__.py:408
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
@@ -90,11 +90,11 @@ msgstr ""
 "FCが接続されておらず、コマンドラインで明示的な車両タイプが設定されていないた"
 "め、すべての車両タイプのすべての車両テンプレートを表示します"
 
-#: ardupilot_methodic_configurator/__main__.py:420
+#: ardupilot_methodic_configurator/__main__.py:422
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "パラメータのデフォルト値へのリセットに失敗しました: %(error)s"
 
-#: ardupilot_methodic_configurator/__main__.py:488
+#: ardupilot_methodic_configurator/__main__.py:490
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:129
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:132
 #: ardupilot_methodic_configurator/data_model_flightcontroller_info.py:134
@@ -107,12 +107,12 @@ msgstr "パラメータのデフォルト値へのリセットに失敗しまし
 msgid "Unknown"
 msgstr "不明"
 
-#: ardupilot_methodic_configurator/__main__.py:583
+#: ardupilot_methodic_configurator/__main__.py:585
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:100
 msgid "Error in derived parameters"
 msgstr "派生パラメータにエラーがあります"
 
-#: ardupilot_methodic_configurator/__main__.py:590
+#: ardupilot_methodic_configurator/__main__.py:592
 msgid ""
 "The component or connection changes you just did will have repercussions on "
 "the following parameter files:\n"
@@ -122,7 +122,7 @@ msgstr ""
 "す。\n"
 "\n"
 
-#: ardupilot_methodic_configurator/__main__.py:592
+#: ardupilot_methodic_configurator/__main__.py:594
 msgid ""
 "Please review the changes, and upload the updated parameter files to the "
 "flight controller.\n"
@@ -130,7 +130,7 @@ msgstr ""
 "変更内容を確認し、更新されたパラメータファイルをフライトコントローラーにアッ"
 "プロードしてください。\n"
 
-#: ardupilot_methodic_configurator/__main__.py:594
+#: ardupilot_methodic_configurator/__main__.py:596
 msgid ""
 "If you already uploaded said parameters to the FC, switch to the normal GUI "
 "complexity mode\n"
@@ -138,23 +138,23 @@ msgstr ""
 "すでにこれらのパラメータをFCにアップロード済みの場合は、通常のGUI複雑度モード"
 "に切り替えてください\n"
 
-#: ardupilot_methodic_configurator/__main__.py:598
+#: ardupilot_methodic_configurator/__main__.py:600
 msgid "in order to be able to jump to those specific parameter files"
 msgstr "指定されたパラメータファイルにジャンプできるようにするためです"
 
-#: ardupilot_methodic_configurator/__main__.py:601
+#: ardupilot_methodic_configurator/__main__.py:603
 msgid "Component derived param changes"
 msgstr "コンポーネント由来のパラメータ変更"
 
-#: ardupilot_methodic_configurator/__main__.py:647
+#: ardupilot_methodic_configurator/__main__.py:649
 msgid "Created backup file autobackup_%02d.param"
 msgstr "バックアップファイル autobackup_%02d.param を作成しました"
 
-#: ardupilot_methodic_configurator/__main__.py:649
+#: ardupilot_methodic_configurator/__main__.py:651
 msgid "Permission denied when creating backup files: %s"
 msgstr "バックアップファイルの作成時にアクセス拒否されました: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:650
+#: ardupilot_methodic_configurator/__main__.py:652
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
@@ -162,27 +162,27 @@ msgstr ""
 "ファイルの権限を確認し、車両ディレクトリへの書き込みアクセス権があることを確"
 "認してください"
 
-#: ardupilot_methodic_configurator/__main__.py:653
+#: ardupilot_methodic_configurator/__main__.py:655
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "バックアップファイルを作成するためのディスク容量が不足しています: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:654
+#: ardupilot_methodic_configurator/__main__.py:656
 msgid "Please free up disk space and try again"
 msgstr "ディスク容量を解放して再試行してください"
 
-#: ardupilot_methodic_configurator/__main__.py:656
+#: ardupilot_methodic_configurator/__main__.py:658
 msgid "Failed to create backup files: %s"
 msgstr "バックアップファイルの作成に失敗しました: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:658
+#: ardupilot_methodic_configurator/__main__.py:660
 msgid "Unexpected error creating backup files: %s"
 msgstr "バックアップファイルの作成中に予期しないエラーが発生しました: %s"
 
-#: ardupilot_methodic_configurator/__main__.py:773
+#: ardupilot_methodic_configurator/__main__.py:775
 msgid "Incompatible parameter definition file detected"
 msgstr "互換性のないパラメータ定義ファイルが検出されました"
 
-#: ardupilot_methodic_configurator/__main__.py:774
+#: ardupilot_methodic_configurator/__main__.py:776
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -329,11 +329,11 @@ msgstr ""
 "構成を再起動できません: 00_default.paramは利用可能な唯一のファイルであり、編"
 "集できません。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1091
+#: ardupilot_methodic_configurator/backend_filesystem.py:1100
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr "機体の種類。デフォルトはArduCopterです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1097
+#: ardupilot_methodic_configurator/backend_filesystem.py:1106
 msgid ""
 "Directory containing vehicle-specific intermediate parameter files. Default "
 "is the current working directory"
@@ -341,7 +341,7 @@ msgstr ""
 "機体固有の中間パラメータファイルを含むディレクトリ。デフォルトは現在の作業"
 "ディレクトリです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1105
+#: ardupilot_methodic_configurator/backend_filesystem.py:1114
 msgid ""
 "Start directly on the nth intermediate parameter file (skips previous "
 "files). Default is to start on the file next to the last that you wrote to "
@@ -352,7 +352,7 @@ msgstr ""
 "デフォルトでは、フライトコントローラに書き込んだ最後のファイルの次のファイル"
 "から開始します。ファイルが存在しない場合は、最初のファイルから開始します。"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1114
+#: ardupilot_methodic_configurator/backend_filesystem.py:1123
 msgid ""
 "Allow opening and editing template files directly. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -360,7 +360,7 @@ msgstr ""
 "テンプレートファイルを直接開いて編集することを許可します。これは何をしている"
 "かを理解しているソフトウェア開発者のみ対象です。デフォルトは%(default)sです"
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1123
+#: ardupilot_methodic_configurator/backend_filesystem.py:1132
 msgid ""
 "Save the vehicle component to the system templates. Only for software "
 "developers that know what they are doing. Default is %(default)s"
@@ -4713,7 +4713,7 @@ msgstr "{paths_str} の磁気ローター極数は偶数でなければなりま
 msgid "Invalid integer value for {paths_str}"
 msgstr "{paths_str} の整数値が無効です"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:300
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:387
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
@@ -4721,7 +4721,7 @@ msgstr ""
 "現在の作業ディレクトリに\n"
 "中間パラメータファイルが見つかりません。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:301
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:388
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
@@ -4729,15 +4729,15 @@ msgstr ""
 "指定された--vehicle-dirディレクトリに\n"
 "中間パラメータファイルが見つかりません。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project.py:321
+#: ardupilot_methodic_configurator/data_model_vehicle_project.py:408
 msgid "MyVehicleName"
 msgstr "マイ機体名"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:87
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:89
 msgid "Copy vehicle image from template"
 msgstr "テンプレートから機体画像をコピー"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:88
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:90
 msgid ""
 "Copy the vehicle.jpg image file from the template directory to the new "
 "vehicle directory\n"
@@ -4747,11 +4747,11 @@ msgstr ""
 "に\n"
 "存在する場合にコピーします。この画像は機体構成の識別に役立ちます。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:95
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:97
 msgid "Blank component data"
 msgstr "コンポーネントデータが空です"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:96
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:98
 msgid ""
 "Create a new blank vehicle configuration, with no component data from the "
 "template."
@@ -4759,7 +4759,7 @@ msgstr ""
 "テンプレートからコンポーネントデータを含まない新しい空の機体設定を作成しま"
 "す。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:100
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:102
 msgid ""
 "Reset flight controller parameters to their defaults. WARNING: This will "
 "delete all parameters stored on the flight controller."
@@ -4768,7 +4768,7 @@ msgstr ""
 "によりフライトコントローラーに保存されているすべてのパラメータが削除されま"
 "す。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:104
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:106
 msgid ""
 "Reset the flight controller parameters to their default values when creating "
 "a new vehicle configuration.\n"
@@ -4778,7 +4778,7 @@ msgstr ""
 "値にリセットします。\n"
 "不正確または互換性のないパラメータ設定による問題を回避するのに役立ちます。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:111
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:113
 msgid ""
 "Infer component specifications and FC connections from FC parameters, not "
 "from template files"
@@ -4786,7 +4786,7 @@ msgstr ""
 "テンプレートファイルからではなく、FCパラメータからコンポーネントの仕様とFC接"
 "続を推測します"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:112
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:114
 msgid ""
 "When creating a new vehicle configuration, extract component specifications\n"
 "and connection information directly from the connected flight controller\n"
@@ -4804,18 +4804,18 @@ msgstr ""
 "ただし、正しく構成された機体テンプレートの情報は表示されません。\n"
 "\n"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:119
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:129
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:121
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:131
 msgid "This option is only available when a flight controller is connected."
 msgstr ""
 "このオプションは、フライトコントローラーが接続されている場合にのみ使用できま"
 "す。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:123
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:125
 msgid "Use parameter values from connected FC, not from template files"
 msgstr "テンプレートファイルではなく、接続されたFCからパラメータ値を使用する"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:124
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:126
 msgid ""
 "Use the parameter values from the connected flight controller instead of "
 "the\n"
@@ -4829,21 +4829,21 @@ msgstr ""
 "FCがすでに正しく構成されている場合にのみ意味があります。\n"
 "\n"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:133
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:135
 msgid "Blank parameter change reason"
 msgstr "パラメータ変更理由が空です"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:134
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:136
 msgid "Do not use the parameters change reason from the template."
 msgstr "テンプレートからパラメータ変更理由を使用しないでください。"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:146
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:148
 msgid "Cannot reset FC parameters to defaults: no flight controller connected"
 msgstr ""
 "FCパラメータをデフォルト値にリセットできません: フライトコントローラーが接続"
 "されていません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:157
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:159
 msgid ""
 "Cannot infer component specifications from FC parameters: no flight "
 "controller parameters available"
@@ -4851,48 +4851,86 @@ msgstr ""
 "FCパラメータからコンポーネント仕様を推測できません: フライトコントローラパラ"
 "メータが利用できません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:160
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:162
 msgid "Cannot use FC parameters: no flight controller parameters available"
 msgstr ""
 "FCパラメータを使用できません: フライトコントローラパラメータが利用できません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:311
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:313
 #: ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:222
 msgid "Flight Controller Connection"
 msgstr "フライトコントローラ接続"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:314
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:316
 msgid "Flight Controller Parameters"
 msgstr "フライトコントローラパラメータ"
 
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:417
+msgid ""
+"No template found for {vehicle_type} {template_name}.\n"
+"Expected directory: {template_dir}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:420
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:467
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:481
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:187
+msgid ".bin log import"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:440
+msgid ""
+"Could not scan the vehicle directory for imported parameter files: "
+"{vehicle_dir}. {error}"
+msgstr ""
+
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:497
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:447
+msgid "Parameter import"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:446
+msgid ""
+"Could not create an import parameter file because no numbered slot is "
+"available in {vehicle_dir}"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:466
+msgid "Failed to read firmware version from the selected .bin log file"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:480
+msgid "Failed to extract parameters from the selected .bin log file"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:524
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:574
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:578
 msgid "New vehicle directory"
 msgstr "新しい機体ディレクトリ"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:455
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:536
 msgid "Copying template files"
 msgstr "テンプレートファイルをコピーしています"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:472
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:553
 msgid "Vehicle template directory must not be empty"
 msgstr "機体テンプレートディレクトリは空であってはいけません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:472
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:477
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:553
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:558
 msgid "Vehicle template directory"
 msgstr "機体テンプレートディレクトリ"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:478
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:559
 msgid "Vehicle template directory {template_dir} does not exist"
 msgstr "機体テンプレートディレクトリ {template_dir} が存在しません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:574
 msgid "New vehicle name must not be empty"
 msgstr "新しい機体名は空であってはいけません"
 
-#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:498
+#: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:579
 msgid "New vehicle name {new_vehicle_name} must not contain invalid characters"
 msgstr "新しい機体名 {new_vehicle_name} は無効な文字を含んではいけません"
 
@@ -5034,40 +5072,40 @@ msgstr "param_fileコンボボックス要素が選択されていません"
 msgid "Error while checking debugpy connection: %s"
 msgstr "debugpy接続の確認中にエラーが発生しました: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:146
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:147
 msgid "Could not load application icon: %s"
 msgstr "アプリケーションアイコンを読み込めませんでした: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:311
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:312
 msgid "Calculated geometry for width %d and height %d with scaling factor %.2f"
 msgstr "スケーリング係数 %.2f で幅 %d、高さ %d の計算されたジオメトリ"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:477
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:478
 msgid "Image filepath cannot be empty"
 msgstr "画像ファイルパスは空にできません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:481
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:482
 msgid "Image height must be positive"
 msgstr "画像の高さは正の値でなければなりません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:486
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:487
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:436
 msgid "Image file not found: %s"
 msgstr "画像ファイルが見つかりません: %s"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:492
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:493
 msgid "Failed to load image from %s"
 msgstr "%sから画像を読み込めませんでした"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:498
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:499
 msgid "Image has zero height"
 msgstr "画像の高さがゼロです"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:501
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:502
 msgid "Image has zero width"
 msgstr "画像の幅がゼロです"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:544
+#: ardupilot_methodic_configurator/frontend_tkinter_base_window.py:545
 msgid "Error loading image from %s: %s"
 msgstr "%sから画像を読み込む際にエラーが発生しました: %s"
 
@@ -5229,7 +5267,7 @@ msgstr "- 機体コンポーネントエディタ"
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:156
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:254
 #: ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:54
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:53
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:54
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
 msgstr "Amilcar Lucasの - ArduPilot方法論的コンフィギュレータ"
 
@@ -5568,15 +5606,43 @@ msgstr ""
 "このメインはテストと開発専用です。通常、ConnectionSelectionWindowは別のスクリ"
 "プトから呼び出されます"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:112
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:113
 msgid "Select {self.label_text}"
 msgstr "{self.label_text}を選択"
 
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:154
+msgid "Create a vehicle project from a .bin log file"
+msgstr ""
+
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:160
+msgid ""
+"Extract default and current parameters from an ArduPilot .bin log file.\n"
+"The vehicle type and firmware version are read from the log and the "
+"matching\n"
+"empty template is used. The template's 00_default.param is replaced with "
+"the\n"
+"extracted defaults snapshot. Continue with the normal component editor flow."
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:171
+msgid "Select an ArduPilot .bin log file"
+msgstr ""
+
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:825
+msgid "ArduPilot binary log files"
+msgstr "ArduPilotバイナリログファイル"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
+#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1127
+msgid "All files"
+msgstr "すべてのファイル"
+
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:213
 msgid "Vehicle configuration directory:"
 msgstr "機体設定ディレクトリ:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:162
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:215
 msgid ""
 "Vehicle-specific directory containing the intermediate\n"
 "parameter files to be uploaded to the flight controller"
@@ -5584,7 +5650,7 @@ msgstr ""
 "フライトコントローラーにアップロードする中間\n"
 "パラメータファイルを含む機体固有のディレクトリ"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:166
+#: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:219
 msgid ""
 "Select the vehicle-specific configuration directory containing the\n"
 "intermediate parameter files to be uploaded to the flight controller"
@@ -6282,10 +6348,6 @@ msgstr "プラグインの有効化エラー: %s"
 msgid "Error loading plugin {plugin_name}: {error}"
 msgstr "プラグイン{plugin_name}の読み込みエラー: {error}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:825
-msgid "ArduPilot binary log files"
-msgstr "ArduPilotバイナリログファイル"
-
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:832
 msgid "Reading IMU calibration messages"
 msgstr "IMUキャリブレーションメッセージを読み込み中"
@@ -6338,10 +6400,6 @@ msgstr "フライトログを次の名前で保存"
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1126
 msgid "Binary log files"
 msgstr "バイナリログファイル"
-
-#: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1127
-msgid "All files"
-msgstr "すべてのファイル"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1198
 msgid ""
@@ -6720,7 +6778,7 @@ msgid " - Create a new vehicle project directory"
 msgstr "- 新しい車両プロジェクトディレクトリを作成"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:95
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:84
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:85
 msgid "New vehicle"
 msgstr "新しい機体"
 
@@ -6778,7 +6836,7 @@ msgid "Destination new vehicle name:"
 msgstr "宛先の新しい機体名:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:174
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:90
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:91
 msgid "Create a vehicle configuration directory from template"
 msgstr "テンプレートから車両設定ディレクトリを作成する"
 
@@ -6810,23 +6868,21 @@ msgstr ""
 "トから呼び出されます"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:249
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:278
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:290
 msgid "No intermediate parameter files found in %s."
 msgstr "%sに中間パラメータファイルが見つかりません。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:55
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:56
 msgid " - Select vehicle configuration directory"
 msgstr "- 機体設定ディレクトリの選択"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:67
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:68
 msgid ""
 "\n"
-"Choose one of the following three options:"
+"Choose one of the following options:"
 msgstr ""
-"\n"
-"以下の3つのオプションから選択してください:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:96
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:97
 msgid ""
 "Create a new vehicle configuration directory, choose this option when using "
 "the software for the first time"
@@ -6834,11 +6890,11 @@ msgstr ""
 "新しい車両設定ディレクトリを作成する。初めてソフトウェアを使用する場合はこの"
 "オプションを選択してください"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:103
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:115
 msgid "Open vehicle"
 msgstr "機体を開く"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:110
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:122
 msgid ""
 "Use an existing vehicle configuration directory with\n"
 "intermediate parameter files, apm.pdef.xml and vehicle_components.json"
@@ -6846,42 +6902,42 @@ msgstr ""
 "中間パラメータファイル、apm.pdef.xml、\n"
 "vehicle_components.jsonを含む既存の機体設定ディレクトリを使用"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:131
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:143
 msgid "Re-Open vehicle"
 msgstr "機体を再度開く"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:139
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:151
 msgid "Recently opened vehicle directories:"
 msgstr "最近開いた車両ディレクトリ:"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:141
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:158
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:153
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:170
 msgid "Select from recently opened vehicle configuration directories"
 msgstr "最近開いた車両設定ディレクトリから選択"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:166
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:178
 msgid "Open selected vehicle configuration directory"
 msgstr "選択した車両設定ディレクトリを開く"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:173
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:185
 msgid ""
 "Open the selected vehicle configuration directory for configuring and tuning "
 "the vehicle"
 msgstr "車両の設定や調整のために選択した車両設定ディレクトリを開く"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:181
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:193
 msgid "No Directory Selected"
 msgstr "ディレクトリが選択されていません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:181
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:193
 msgid "Please select a vehicle configuration directory from the list."
 msgstr "リストから車両設定ディレクトリを選択してください。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:189
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:201
 msgid "Directory Not Found"
 msgstr "ディレクトリが見つかりません"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:190
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:202
 msgid ""
 "The selected directory no longer exists:\n"
 "\n"
@@ -6895,11 +6951,11 @@ msgstr ""
 "\n"
 "移動や削除された可能性があります。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:198
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:210
 msgid "Invalid Directory"
 msgstr "無効なディレクトリ"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:199
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:211
 msgid ""
 "The selected path is not a directory:\n"
 "\n"
@@ -6909,11 +6965,11 @@ msgstr ""
 "\n"
 "{}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:204
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:216
 msgid "Permission Denied"
 msgstr "アクセス拒否"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:205
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:217
 msgid ""
 "You do not have permission to access the selected directory:\n"
 "\n"
@@ -6927,11 +6983,11 @@ msgstr ""
 "\n"
 "ファイルシステムの権限をご確認ください。"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:213
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:225
 msgid "File System Error"
 msgstr "ファイルシステムエラー"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:214
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:226
 msgid ""
 "An error occurred while accessing the directory:\n"
 "\n"
@@ -6945,7 +7001,7 @@ msgstr ""
 "\n"
 "エラー: {}"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:246
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:258
 msgid ""
 "This main is for testing and development only. Usually, the "
 "VehicleProjectOpenerWindow is called from another script"
@@ -6953,7 +7009,7 @@ msgstr ""
 "このmainはテストと開発専用です。通常、VehicleProjectOpenerWindowは別のスクリ"
 "プトから呼び出されます"
 
-#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:261
+#: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:273
 msgid ""
 "This main is for testing and development only, usually the "
 "VehicleProjectOpenerWindow is called from another script"
@@ -7741,6 +7797,13 @@ msgstr "ハードウェアのバージョンまたはリビジョン"
 #: ardupilot_methodic_configurator/vehicle_components.py:132
 msgid "Web link to the product page or documentation"
 msgstr "製品ページまたはドキュメントへのウェブリンク"
+
+#~ msgid ""
+#~ "\n"
+#~ "Choose one of the following three options:"
+#~ msgstr ""
+#~ "\n"
+#~ "以下の3つのオプションから選択してください:"
 
 #~ msgid ""
 #~ "In file '{self.configuration_steps_filename}': "
