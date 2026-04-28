@@ -5032,39 +5032,39 @@ msgstr "Flugcontroller-Parameter"
 msgid ""
 "No template found for {vehicle_type} {template_name}.\n"
 "Expected directory: {template_dir}"
-msgstr ""
+msgstr "Keine Vorlage gefunden für {vehicle_type} {template_name}.\nErwartetes Verzeichnis: {template_dir}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:420
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:467
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:481
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:187
 msgid ".bin log import"
-msgstr ""
+msgstr ".bin-Log importieren"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:440
 msgid ""
 "Could not scan the vehicle directory for imported parameter files: "
 "{vehicle_dir}. {error}"
-msgstr ""
+msgstr "Konnte das Fahrzeugverzeichnis nicht nach importierten Parameterdateien scannen: {vehicle_dir}. {error}"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:443
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:447
 msgid "Parameter import"
-msgstr ""
+msgstr "Parameterimport"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:446
 msgid ""
 "Could not create an import parameter file because no numbered slot is "
 "available in {vehicle_dir}"
-msgstr ""
+msgstr "Konnte keine Import-Parameterdatei erstellen, da kein nummerierter Slot in {vehicle_dir} verfügbar ist"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:466
 msgid "Failed to read firmware version from the selected .bin log file"
-msgstr ""
+msgstr "Fehler beim Lesen der Firmware-Version aus der ausgewählten .bin-Logdatei"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:480
 msgid "Failed to extract parameters from the selected .bin log file"
-msgstr ""
+msgstr "Fehler beim Extrahieren von Parametern aus der ausgewählten .bin-Logdatei"
 
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:524
 #: ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:574
@@ -5799,7 +5799,7 @@ msgstr "Auswählen {self.label_text}"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:154
 msgid "Create a vehicle project from a .bin log file"
-msgstr ""
+msgstr "Erstelle ein Fahrzeugprojekt aus einer .bin-Logdatei"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:160
 msgid ""
@@ -5809,11 +5809,11 @@ msgid ""
 "empty template is used. The template's 00_default.param is replaced with "
 "the\n"
 "extracted defaults snapshot. Continue with the normal component editor flow."
-msgstr ""
+msgstr "Extrahiere Standard- und aktuelle Parameter aus einer ArduPilot .bin-Logdatei.\nDer Fahrzeugtyp und die Firmware-Version werden aus dem Log gelesen, und die passende\nleere Vorlage wird verwendet. Die Datei 00_default.param der Vorlage wird durch den\nextrahierten Standard-Snapshot ersetzt. Fahre mit dem normalen Komponenten-Editor fort."
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:171
 msgid "Select an ArduPilot .bin log file"
-msgstr ""
+msgstr "Wähle eine ArduPilot .bin-Logdatei aus"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:825
@@ -7105,7 +7105,7 @@ msgstr " - Fahrzeugkonfigurationsverzeichnis auswählen"
 msgid ""
 "\n"
 "Choose one of the following options:"
-msgstr ""
+msgstr "\nWählen Sie eine der folgenden Optionen:"
 
 #: ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:97
 msgid ""
