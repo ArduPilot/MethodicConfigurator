@@ -7700,7 +7700,7 @@ msgstr "Rahmen"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:35
 msgid "Frame class"
-msgstr ""
+msgstr "Rahmenklasse"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:36
 msgid "GNSS Receiver"
@@ -7906,7 +7906,7 @@ msgstr "Flugcontroller, der ArduPilot-Firmware ausführt"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:94
 msgid "Frame class/category (e.g., Quad, Hexa, Octa, etc.)"
-msgstr ""
+msgstr "Rahmenklasse/-kategorie (z. B. Quad, Hexa, Octa, etc.)"
 
 #: ardupilot_methodic_configurator/vehicle_components.py:95
 msgid "Global Navigation Satellite System receiver for positioning"
