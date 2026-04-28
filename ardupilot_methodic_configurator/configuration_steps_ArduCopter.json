@@ -11,6 +11,7 @@
             "external_tool_url": "",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BRD_HEAT_.*", "INS_TCAL_OPTIONS", "TCAL_ENABLED"],
             "forced_parameters": {
                 "INS_TCAL1_ENABLE": { "New Value": 2, "Change Reason": "Activates the temperature calibration for IMU 1 at the next start" },
                 "LOG_BITMASK": { "New Value": 524416, "Change Reason": "Only for IMU and Raw-IMU" },
@@ -35,6 +36,7 @@
             "external_tool_url": "",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["INS_TCAL1_.*", "INS_TCAL2_.*", "INS_TCAL3_.*"],
             "old_filenames": []
         },
         "04_board_orientation.param": {
@@ -68,6 +70,7 @@
             "external_tool_url": "https://edgetx.org/getedgetx/",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["FS_THR_VALUE", "RC_.*"],
             "derived_parameters": {
                 "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" },
                 "RC5_OPTION": { "New Value": "1 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS' else fc_parameters.get('RC5_OPTION', 0)", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" },
@@ -101,6 +104,7 @@
             "external_tool_url": "https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BRD_IO_DSHOT", "SERVO_.*"],
             "forced_parameters": {
                 "MOT_HOVER_LEARN": { "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 20_throttle_controller.param file" }
             },
@@ -170,7 +174,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
-            "autoimport_nondefault_regexp": ["GPS.*", "GNSS.*"],
+            "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "GPS.*", "GNSS.*"],
             "derived_parameters": {
                 "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
                 "GPS1_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
@@ -224,6 +228,7 @@
             "external_tool_url": "https://ardupilot.org/copter/docs/configuring-hardware.html",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner",
+            "autoimport_nondefault_regexp": ["COMPASS_PRIO[0-9]_ID", "RC[0-9]+_.+", "SERVO[0-9]+_.+"],
             "old_filenames": ["11_mp_setup_mandatory_hardware.param"]
         },
         "13_general_configuration.param": {
@@ -254,6 +259,7 @@
             "external_tool_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#613-motorpropeller-order-and-direction-test",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["INS_LOG_BAT_.+", "LOG_FILE_.+"],
             "forced_parameters": {
                 "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
@@ -323,6 +329,7 @@
             "external_tool_url": "https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["FFT_.*", "INS_HNTCH[0-9]*_.*"],
             "forced_parameters": {
                 "INS_HNTCH_ENABLE": { "New Value": 1, "Change Reason": "Use the first notch filter to filter the noise created by the motors/propellers" }
             },
@@ -342,6 +349,7 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["FFT_.*", "INS_GYRO_FILTER"],
             "old_filenames": ["18_notch_filter_results.param"]
         },
         "20_throttle_controller.param": {
@@ -384,6 +392,7 @@
             "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["QUIK_.*"],
             "forced_parameters": {
                 "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
             },
@@ -415,6 +424,7 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["MAGH_.*"],
             "forced_parameters": {
                 "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
             },
@@ -434,6 +444,7 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already",
+            "autoimport_nondefault_regexp": ["COMPASS_DIA[0-9]*_.*", "COMPASS_MOT[0-9]*_.*", "COMPASS_MOTCT", "COMPASS_ODI[0-9]*_.*", "COMPASS_OFS[0-9]*_.*", "COMPASS_ORIENT[0-9]*", "COMPASS_SCALE[0-9]*"],
             "old_filenames": ["23_inflight_magnetometer_fit_results.param"]
         },
         "26_quick_tune_setup.param": {
@@ -447,6 +458,7 @@
             "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
             "mandatory_text": "30% mandatory (70% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["QUIK_.*"],
             "forced_parameters": {
                 "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
             },
