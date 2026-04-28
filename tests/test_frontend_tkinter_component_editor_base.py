@@ -777,6 +777,25 @@ class TestWidgetCreationWorkflows:
         # Assert: Widget addition should be called for both cases
         assert editor_with_realistic_data._add_widget.call_count == 2
 
+    def test_populate_frames_yields_to_event_loop_every_five_components(
+        self, editor_with_realistic_data: ComponentEditorWindowBase
+    ) -> None:
+        """
+        populate_frames yields to the Tk event loop every fifth component to keep the UI responsive.
+
+        GIVEN: An editor with more than five components to display
+        WHEN: populate_frames is called
+        THEN: update_idletasks is called once per complete group of five components
+        """
+        num_components = 15  # expect floor(15 / 5) == 3 yields
+        components = {f"Component_{i}": {"value": i} for i in range(num_components)}
+        editor_with_realistic_data.data_model.get_all_components.return_value = components
+
+        editor_with_realistic_data.populate_frames()
+
+        expected_yields = num_components // 5
+        assert editor_with_realistic_data.scroll_frame.view_port.update_idletasks.call_count == expected_yields
+
 
 class TestComplexityComboboxWorkflows:
     """Test user workflows for GUI complexity management."""
