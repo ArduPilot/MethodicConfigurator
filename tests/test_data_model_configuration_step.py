@@ -265,6 +265,30 @@ class TestConfigurationStepProcessorConnectionRenaming:
         assert ui_errors == []
         assert isinstance(parameters, dict)
 
+    def test_optional_connection_lookup_missing_does_not_crash(self, processor, fc_parameters) -> None:
+        """
+        Connection renaming should be skipped when an optional component lookup is missing.
+
+        GIVEN: A rename_connection expression referring to a missing optional vehicle component
+        WHEN: The configuration step is processed
+        THEN: Processing should complete without raising an exception
+        AND: No rename operations should be applied
+        """
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {
+            selected_file: {"rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']"}
+        }
+
+        parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, _ = processor.process_configuration_step(
+            selected_file, fc_parameters
+        )
+
+        assert ui_errors == []
+        assert ui_infos == []
+        assert duplicates_to_remove == set()
+        assert renames_to_apply == []
+        assert isinstance(parameters, dict)
+
     def test_user_receives_feedback_about_duplicate_parameter_removal(self, processor, fc_parameters) -> None:
         """
         User receives clear feedback when duplicate parameters are removed during renaming.
