@@ -13,13 +13,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
 from logging import info as logging_info
+from logging import warning as logging_warning
 from typing import Any, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
-from ardupilot_methodic_configurator.data_model_safe_evaluator import safe_evaluate
+from ardupilot_methodic_configurator.data_model_safe_evaluator import (
+    ConfigurationStepEvalError,
+    safe_evaluate,
+)
 
 
 class ConfigurationStepProcessor:
@@ -200,9 +204,16 @@ class ConfigurationStepProcessor:
             return [], set(), []
 
         # Calculate rename operations WITHOUT mutating file_parameters
-        duplicated_parameters, renamed_pairs = self._calculate_connection_rename_operations(
-            self.local_filesystem.file_parameters[selected_file], new_connection_prefix, variables
-        )
+        try:
+            duplicated_parameters, renamed_pairs = self._calculate_connection_rename_operations(
+                self.local_filesystem.file_parameters[selected_file], new_connection_prefix, variables
+            )
+        except ConfigurationStepEvalError as exc:
+            logging_warning(
+                _("Skipping connection renaming because evaluation failed: %s"),
+                str(exc),
+            )
+            return [], set(), []
 
         ui_infos: list[tuple[str, str]] = []
 
