@@ -3298,7 +3298,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:213
 msgid "Skipping connection renaming because evaluation failed: %s"
-msgstr ""
+msgstr "Überspringe die Umbenennung der Verbindung, da die Auswertung fehlgeschlagen ist: %s"
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:222
 msgid "Removing duplicate parameter %s"
