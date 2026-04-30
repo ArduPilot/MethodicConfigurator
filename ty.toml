@@ -4,3 +4,14 @@ unresolved-attribute = "ignore"
 invalid-assignment = "ignore"
 # These are mostly ty false positives for now. Revisit this at a later date once ty fixes this upstream.
 too-many-positional-arguments = "ignore"
+
+[src]
+exclude = [
+    "find_exclusive_parameter_names.py",
+    "mavproxy_ftp.py",
+    "mavproxy_param.py",
+    "mavftp.py",
+    "fix_with_statements.py",
+    "param_filter.py",
+    "param_zip.py"
+]
