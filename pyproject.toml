@@ -90,6 +90,7 @@ ci_headless_tests = [
 
 scripts = [
     "bs4==0.0.2",
+    "psutil==7.2.2",
     "selenium==4.36.0",
     "webdriver_manager==4.0.2",
 ]
