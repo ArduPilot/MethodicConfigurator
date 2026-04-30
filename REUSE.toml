@@ -182,6 +182,11 @@ SPDX-FileCopyrightText = "2024-2026 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
+path = ["linux/ardupilot_methodic_configurator*", "linux/AppRun"]
+SPDX-FileCopyrightText = "2024-2026 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
 path = [".dockerignore", "docker-compose.yml", "Dockerfile"]
 SPDX-FileCopyrightText = "2026 ArduPilot methodic configurator developers"
 SPDX-License-Identifier = "GPL-3.0-or-later"
