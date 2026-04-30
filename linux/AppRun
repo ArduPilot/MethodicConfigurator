@@ -1,0 +1,11 @@
+#!/bin/bash
+# AppRun entry point for the ArduPilot Methodic Configurator AppImage
+#
+# SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+SELF=$(readlink -f "$0")
+HERE="${SELF%/*}"
+export PATH="${HERE}/ardupilot_methodic_configurator:${PATH}"
+exec "${HERE}/ardupilot_methodic_configurator/ardupilot_methodic_configurator" "$@"
