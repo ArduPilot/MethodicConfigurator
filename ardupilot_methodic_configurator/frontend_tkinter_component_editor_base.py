@@ -532,8 +532,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         if (not ConfirmationPopupWindow.should_display("component_editor_validation")) or confirm_component_properties(
             cast("tk.Tk", self.root)
         ):
-            self.save_component_json()
-            self.root.destroy()
+            save_error = self.save_component_json()
+            if save_error is False:
+                self.root.destroy()
 
     def save_component_json(self) -> bool:
         """Save component JSON data to file."""
@@ -569,6 +570,8 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         ret = False
         if answer:
             ret = self.save_component_json()
+            if ret:
+                return
         else:
             # If it just created the files from a new template and the user chooses not to save,
             # delete the created files

@@ -637,6 +637,32 @@ class TestSaveOperationWorkflows:
         validation_mock.assert_called_once()
         mock_save.assert_called_once()
 
+    def test_user_stays_in_component_editor_when_save_fails(self, editor_for_save_tests: ComponentEditorWindowBase) -> None:
+        """
+        The editor window remains open when the save operation fails.
+
+        GIVEN: A user attempts to save component configuration
+        WHEN: The save operation fails due to invalid JSON or filesystem error
+        THEN: The component editor window should stay open
+        """
+        # Arrange: Simulate failed save operation
+        editor_for_save_tests.validate_data_and_highlight_errors_in_red = MagicMock(return_value="")
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base."
+                "ConfirmationPopupWindow.should_display",
+                return_value=False,
+            ),
+            patch.object(editor_for_save_tests, "save_component_json", return_value=True) as mock_save,
+            patch.object(editor_for_save_tests.root, "destroy"),
+        ):
+            # Act: Trigger on-save handler
+            editor_for_save_tests.on_save_pressed()
+
+        # Assert: Failed save does not close the window
+        mock_save.assert_called_once()
+        editor_for_save_tests.root.destroy.assert_not_called()
+
 
 class TestWindowClosingWorkflows:
     """Test user workflows for closing the editor window."""
@@ -671,6 +697,34 @@ class TestWindowClosingWorkflows:
         # Assert: Save should be called and application should exit
         editor_for_closing_tests.save_component_json.assert_called_once()
         mock_exit.assert_called_once_with(0)
+
+    def test_user_stays_in_component_editor_when_closing_save_fails(
+        self,
+        editor_for_closing_tests: ComponentEditorWindowBase,
+    ) -> None:
+        """
+        The editor window remains open when closing fails due to a save error.
+
+        GIVEN: A user attempts to close the component editor and chooses to save
+        WHEN: The save operation fails
+        THEN: The component editor window should remain open and no exit should occur
+        """
+        editor_for_closing_tests.save_component_json = MagicMock(return_value=True)
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.messagebox.askyesnocancel",
+                return_value=True,
+            ),
+            patch.object(editor_for_closing_tests.root, "destroy"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_component_editor_base.sys_exit") as mock_exit,
+        ):
+            # Act: Trigger window closing
+            editor_for_closing_tests.on_closing()
+
+        # Assert: Failed save does not close or exit the application
+        editor_for_closing_tests.save_component_json.assert_called_once()
+        editor_for_closing_tests.root.destroy.assert_not_called()
+        mock_exit.assert_not_called()
 
     def test_user_can_close_without_saving_when_prompted(self, editor_for_closing_tests: ComponentEditorWindowBase) -> None:
         """
@@ -1505,7 +1559,7 @@ class TestValidationWorkflows:
         WHEN: The confirmation popup is enabled
         THEN: They should be asked to confirm all properties are correct before saving
         """
-        editor_for_validation_tests.save_component_json = MagicMock()
+        editor_for_validation_tests.save_component_json = MagicMock(return_value=False)
 
         with (
             patch.object(editor_for_validation_tests.root, "destroy") as mock_destroy,
@@ -1530,7 +1584,7 @@ class TestValidationWorkflows:
         self, editor_for_validation_tests: ComponentEditorWindowBase
     ) -> None:
         """If the confirmation popup is disabled, saving should proceed immediately."""
-        editor_for_validation_tests.save_component_json = MagicMock()
+        editor_for_validation_tests.save_component_json = MagicMock(return_value=False)
 
         with (
             patch.object(editor_for_validation_tests.root, "destroy") as mock_destroy,
