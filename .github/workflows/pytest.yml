@@ -392,7 +392,7 @@ jobs:
           name: coverage-ubuntu-latest-3.9-xml
 
       - name: Get Cover
-        uses: orgoro/coverage@3f13a558c5af7376496aa4848bf0224aead366ac # v3.2
+        uses: orgoro/coverage@71cf993a407154ad9d8dd027c88a374b0ed002a9 # v3.3
         with:
             coverageFile: coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
