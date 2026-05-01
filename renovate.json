@@ -109,14 +109,14 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
-      "matchStrings": ["pip install (?<depName>[\\w-]+)(?:\\s|$)"],
+      "matchStrings": ["pip install (?<depName>[A-Za-z][\\w-]*)(?:\\s|$)"],
       "datasourceTemplate": "pypi",
       "currentValueTemplate": "latest"
     },
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.sh$/", "/\\.bash$/"],
-      "matchStrings": ["uv pip install (?<depName>[\\w-]+)(?:\\s|$)"],
+      "matchStrings": ["uv pip install (?<depName>[A-Za-z][\\w-]*)(?:\\s|$)"],
       "datasourceTemplate": "pypi",
       "currentValueTemplate": "latest"
     },
@@ -146,9 +146,8 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/\\.py$/"],
-      "matchStrings": ["required_packages = \\[[^\\]]*\"(?<depName>[^\"=]+)==(?<currentValue>[^\"]+)\""],
-      "datasourceTemplate": "pypi",
-      "currentValueTemplate": "latest"
+      "matchStrings": ["required_packages = \\[\\s*\"(?<depName>[^\"=\\n]+)==(?<currentValue>[^\"\\n]+)\""],
+      "datasourceTemplate": "pypi"
     },
     {
       "customType": "regex",
