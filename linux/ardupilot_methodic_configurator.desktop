@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=ArduPilot Methodic Configurator
+Exec=ardupilot_methodic_configurator
+Icon=ardupilot_methodic_configurator
+Type=Application
+Categories=Utility;Science;
+Comment=Configure ArduPilot flight controller parameters in a methodical, traceable way
