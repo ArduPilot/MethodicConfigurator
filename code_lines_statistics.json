@@ -3,10 +3,10 @@
     "generated_by": "scripts/calculate_code_statistics.py",
     "description": "This file is auto-generated. Do not edit manually - it will be overwritten"
   },
-  "test_lines": 40576,
-  "app_lines": 18579,
-  "generated_lines": 1268,
-  "script_lines": 4470,
-  "documentation_lines": 10002,
-  "configuration_lines": 17618
+  "test_lines": 47954,
+  "app_lines": 20206,
+  "generated_lines": 1315,
+  "script_lines": 6110,
+  "documentation_lines": 10647,
+  "configuration_lines": 17894
 }
