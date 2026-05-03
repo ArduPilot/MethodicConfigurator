@@ -14,7 +14,7 @@ To help yourself, read the extensive documentation:
   [plane](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane.html),
   [rover](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover.html),
   [heli](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Heli.html)
-* [FAQ](https://ardupilot.github.io/MethodicConfigurator/FAQ.html) Frequently asked questions
+* [Frequently Asked Questions (FAQ)](https://ardupilot.github.io/MethodicConfigurator/FAQ.html)
 * [Glossary](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html#glossary)
 * [System requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS.html)
 * [Software architecture](https://ardupilot.github.io/MethodicConfigurator/ARCHITECTURE.html)

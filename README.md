@@ -277,6 +277,15 @@ Need [help or support](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.
 There is also [documentation on other use cases](https://ardupilot.github.io/MethodicConfigurator/USECASES.html)
 and a detailed but generic [Usermanual](https://ardupilot.github.io/MethodicConfigurator/USERMANUAL.html).
 
+**Additional Documentation:**
+
+- [Frequently Asked Questions (FAQ)](https://ardupilot.github.io/MethodicConfigurator/FAQ.html)
+- [Customizing Configuration Steps](https://ardupilot.github.io/MethodicConfigurator/CUSTOMIZING_CONFIGURATION_STEPS.html) - for advanced users and integrators
+- [Project Governance](https://ardupilot.github.io/MethodicConfigurator/GOVERNANCE.html) - how decisions are made
+- [Security Policy](https://ardupilot.github.io/MethodicConfigurator/SECURITY.html) - reporting vulnerabilities
+- [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html) - standards and regulations
+- [Roadmap](https://ardupilot.github.io/MethodicConfigurator/ROADMAP.html) - planned features and improvements
+
 ## Contributing
 
 Want [to help us and contribute](https://github.com/ArduPilot/MethodicConfigurator/blob/master/CONTRIBUTING.md)?

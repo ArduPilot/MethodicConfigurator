@@ -21,6 +21,9 @@ and also:
 
 * [System requirements](https://ardupilot.github.io/MethodicConfigurator/SYSTEM_REQUIREMENTS.html)
 * [Compliance](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html), including our [Coding Standards](https://ardupilot.github.io/MethodicConfigurator/COMPLIANCE.html#coding-standards)
+* [Project Governance](https://ardupilot.github.io/MethodicConfigurator/GOVERNANCE.html) - understand how the project is managed and decisions are made
+* [Customizing Configuration Steps](https://ardupilot.github.io/MethodicConfigurator/CUSTOMIZING_CONFIGURATION_STEPS.html) - extend the configuration workflow
+* [Project Roadmap](https://ardupilot.github.io/MethodicConfigurator/ROADMAP.html) - see what we're planning to work on
 
 ## Setting up developer environment
 

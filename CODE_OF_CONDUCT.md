@@ -99,6 +99,14 @@ In addition, the rules regarding weaponization and manned vehicles using
 ArduPilot apply regardless of whether you are representing the ArduPilot
 project at the time.
 
+Related Documents
+-----------------
+
+For more information about the project governance and security practices, see:
+
+- [Project Governance](https://ardupilot.github.io/MethodicConfigurator/GOVERNANCE.html)
+- [Security Policy](https://ardupilot.github.io/MethodicConfigurator/SECURITY.html)
+
 Enforcement
 -----------
 
