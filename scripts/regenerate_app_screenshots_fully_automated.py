@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import platform
 import re
 import shutil
 import tempfile
@@ -64,6 +65,10 @@ class CaptureTarget:
 
     filename: str
     action: str
+    scale: float = 1.0
+    variant: str | None = None
+    gui_complexity: str | None = None
+    current_file: str | None = None
 
 
 TARGETS: tuple[CaptureTarget, ...] = (
@@ -72,22 +77,83 @@ TARGETS: tuple[CaptureTarget, ...] = (
     CaptureTarget("App_screenshot_FC_info_and_param_download.png", "fc_info"),
     CaptureTarget("App_screenshot_instructions.png", "instructions"),
     CaptureTarget("App_screenshot_motor_test.png", "motor_test"),
-    CaptureTarget("App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png", "param_04_simple"),
-    CaptureTarget("App_screenshot_Parameter_file_editor_and_uploader4_4.png", "param_04_normal"),
-    CaptureTarget("App_screenshot_Parameter_file_editor_and_uploader4.png", "param_20_normal"),
+    CaptureTarget(
+        "App_screenshot_Parameter_file_editor_and_uploader4_4_simple.png",
+        "param_04_simple",
+        scale=0.666,
+        gui_complexity="simple",
+        current_file="04_board_orientation.param",
+    ),
+    CaptureTarget(
+        "App_screenshot_Parameter_file_editor_and_uploader4_4.png",
+        "param_04_normal",
+        scale=0.666,
+        gui_complexity="normal",
+        current_file="04_board_orientation.param",
+    ),
+    CaptureTarget(
+        "App_screenshot_Parameter_file_editor_and_uploader4.png",
+        "param_20_normal",
+        scale=0.666,
+        gui_complexity="normal",
+        current_file="20_throttle_controller.param",
+    ),
     CaptureTarget("App_screenshot_Vehicle_directory.png", "vehicle_opener"),
     CaptureTarget("App_screenshot_Vehicle_directory10.png", "vehicle_opener"),
-    CaptureTarget("App_screenshot_Vehicle_directory4.png", "vehicle_opener_legacy4"),
+    CaptureTarget("App_screenshot_Vehicle_directory_create_from_template.png", "vehicle_opener_from_template", scale=0.8),
+    CaptureTarget("App_screenshot_Vehicle_directory_create_from_bin.png", "vehicle_opener_from_bin", scale=0.8),
+    CaptureTarget("App_screenshot_Vehicle_directory4.png", "vehicle_opener_legacy4", scale=0.8),
     CaptureTarget("App_screenshot_Vehicle_directory11.png", "vehicle_creator"),
-    CaptureTarget("App_screenshot_Vehicle_directory1.png", "vehicle_creator_legacy1"),
-    CaptureTarget("App_screenshot_Vehicle_directory2.png", "vehicle_creator_legacy2"),
-    CaptureTarget("App_screenshot_Vehicle_directory3.png", "vehicle_creator_legacy3"),
-    CaptureTarget("App_screenshot_Vehicle_directory_vehicle_params0.png", "vehicle_creator_params0"),
-    CaptureTarget("App_screenshot_Vehicle_directory_vehicle_params1.png", "vehicle_creator_params1"),
-    CaptureTarget("App_screenshot_Vehicle_directory_vehicle_params2.png", "vehicle_creator_params2"),
-    CaptureTarget("App_screenshot_Vehicle_directory_vehicle_params3.png", "vehicle_creator_params3"),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_template_source.png",
+        "create_from_template_source",
+        scale=0.8,
+        variant="create_from_template_source",
+    ),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_template_name.png",
+        "create_from_template_name",
+        scale=0.8,
+        variant="create_from_template_name",
+    ),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_template_create.png",
+        "create_from_template_create",
+        scale=0.8,
+        variant="create_from_template_create",
+    ),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_vehicle_params0.png",
+        "vehicle_creator_params0",
+        scale=0.8,
+        variant="from_configured_source",
+    ),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_configured_options.png",
+        "vehicle_creator_options",
+        scale=0.8,
+        variant="from_configured_options",
+    ),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_configured_name.png",
+        "vehicle_creator_name",
+        scale=0.8,
+        variant="from_configured_name",
+    ),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_configured_create.png",
+        "vehicle_creator_create",
+        scale=0.8,
+        variant="from_configured_create",
+    ),
     CaptureTarget("App_screenshot_Vehicle_overview.png", "template_overview"),
-    CaptureTarget("App_screenshot1.png", "param_20_normal"),
+    CaptureTarget(
+        "App_screenshot1.png",
+        "param_20_normal",
+        scale=0.666,
+        gui_complexity="normal",
+        current_file="20_throttle_controller.param",
+    ),
 )
 
 
@@ -172,10 +238,19 @@ class FakeFlightControllerForInfoWindow:  # pylint: disable=too-few-public-metho
 class FakeProjectManager:
     """Minimal project manager API for opener/creator windows."""
 
-    def __init__(self, template_dir: Path, base_dir: Path, vehicle_dir: Path) -> None:
+    def __init__(
+        self,
+        template_dir: Path,
+        base_dir: Path,
+        vehicle_dir: Path,
+        fc_connected: bool = False,
+        fc_parameters: dict[str, float] | None = None,
+    ) -> None:
         self._template_dir = str(template_dir)
         self._base_dir = str(base_dir)
         self._vehicle_dir = str(vehicle_dir)
+        self._fc_connected = fc_connected
+        self._fc_parameters = fc_parameters or {}
 
     def get_introduction_message(self) -> str:
         return "No intermediate parameter files found\nin current working directory."
@@ -202,10 +277,10 @@ class FakeProjectManager:
         return str(Path(base_dir) / name)
 
     def is_flight_controller_connected(self) -> bool:
-        return False
+        return self._fc_connected
 
-    def fc_parameters(self) -> None:
-        return None
+    def fc_parameters(self) -> dict[str, float]:
+        return self._fc_parameters
 
     def get_default_vehicle_name(self) -> str:
         return "MyVehicleName"
@@ -405,6 +480,15 @@ def capture_widget(  # pylint: disable=too-many-arguments, too-many-positional-a
             rel_bottom = min(bottom - y, image.height - 1)
             if rel_right > rel_left and rel_bottom > rel_top:
                 draw.rectangle((rel_left, rel_top, rel_right, rel_bottom), outline="red", width=3)
+
+    # Crop superfluous pixels on Windows before resizing
+    if platform.system() == "Windows":
+        crop_left = 15
+        crop_right = 15
+        crop_bottom = 20
+        if image.width > crop_left + crop_right and image.height > crop_bottom:
+            image = image.crop((crop_left, 0, image.width - crop_right, image.height - crop_bottom))
+
     if scale != 1.0:
         new_size = (round(image.width * scale), round(image.height * scale))
         image = image.resize(new_size, Image.Resampling.LANCZOS)
@@ -487,17 +571,9 @@ def _capture_vehicle_opener(output_path: Path, delay: float, padding: int, vehic
             window.root.destroy()
 
 
-def _capture_vehicle_opener_with_highlight(
-    output_path: Path,
-    delay: float,
-    padding: int,
-    vehicle_dir: Path,
-    scale: float = 1.0,
-) -> None:
-    manager = FakeProjectManager(vehicle_dir, vehicle_dir.parent, vehicle_dir)
-    window = VehicleProjectOpenerWindow(manager)  # type: ignore[arg-type]
-    try:
-        settle_tk(window.root, cycles=6, delay=0.05)
+def _vehicle_opener_highlight_box(window: VehicleProjectOpenerWindow, action: str) -> tuple[int, int, int, int]:
+    """Resolve a highlight box for a specific vehicle opener screenshot action."""
+    if action == "vehicle_opener_legacy4":
         browse_button = _find_descendant(
             window.connection_selection_widgets.container_frame,
             lambda w: _widget_text(w) == "...",
@@ -505,7 +581,45 @@ def _capture_vehicle_opener_with_highlight(
         if browse_button is None:
             msg = "Could not find open vehicle browse button"
             raise RuntimeError(msg)
-        box = _widget_screen_box(browse_button, margin=2)
+        return _widget_screen_box(browse_button, margin=2)
+
+    if action == "vehicle_opener_from_template":
+        template_button = _find_descendant(
+            window.main_frame,
+            lambda w: _widget_text(w).startswith("Create a vehicle configuration directory from template"),
+        )
+        if template_button is None:
+            msg = "Could not find create from template button"
+            raise RuntimeError(msg)
+        return _widget_screen_box(template_button, margin=2)
+
+    if action == "vehicle_opener_from_bin":
+        bin_button = _find_descendant(
+            window.main_frame,
+            lambda w: _widget_text(w).startswith("Create a vehicle project from a .bin log file"),
+        )
+        if bin_button is None:
+            msg = "Could not find create from bin button"
+            raise RuntimeError(msg)
+        return _widget_screen_box(bin_button, margin=2)
+
+    msg = f"Unsupported vehicle opener highlight action: {action}"
+    raise RuntimeError(msg)
+
+
+def _capture_vehicle_opener_with_highlight(
+    output_path: Path,
+    delay: float,
+    padding: int,
+    vehicle_dir: Path,
+    action: str = "vehicle_opener_legacy4",
+    scale: float = 1.0,
+) -> None:
+    manager = FakeProjectManager(vehicle_dir, vehicle_dir.parent, vehicle_dir)
+    window = VehicleProjectOpenerWindow(manager)  # type: ignore[arg-type]
+    try:
+        settle_tk(window.root, cycles=6, delay=0.05)
+        box = _vehicle_opener_highlight_box(window, action)
         capture_widget(window.root, output_path, delay, padding, scale=scale, highlight_boxes=[box])
     finally:
         if window.root.winfo_exists():
@@ -522,64 +636,110 @@ def _capture_vehicle_creator(output_path: Path, delay: float, padding: int, vehi
             window.root.destroy()
 
 
-def _create_vehicle_creator_window(vehicle_dir: Path) -> VehicleProjectCreatorWindow:
-    manager = FakeProjectManager(vehicle_dir, vehicle_dir.parent, vehicle_dir)
+def _create_vehicle_creator_window(vehicle_dir: Path, fc_connected: bool = False) -> VehicleProjectCreatorWindow:
+    fc_params = _load_fc_params_from_file(vehicle_dir) if fc_connected else {}
+    manager = FakeProjectManager(
+        vehicle_dir,
+        vehicle_dir.parent,
+        vehicle_dir,
+        fc_connected=fc_connected,
+        fc_parameters=fc_params if fc_connected else None,
+    )
     window = VehicleProjectCreatorWindow(manager)  # type: ignore[arg-type]
     settle_tk(window.root, cycles=6, delay=0.05)
     return window
 
 
+def _find_template_browse_button(window: VehicleProjectCreatorWindow) -> tuple[int, int, int, int]:
+    """Find and return bounding box for template browse button."""
+    browse_button = _find_descendant(
+        window.template_dir.container_frame,
+        lambda w: _widget_text(w) == "...",
+    )
+    if browse_button is None:
+        msg = "Could not find source template browse button"
+        raise RuntimeError(msg)
+    return _widget_screen_box(browse_button, margin=2)
+
+
+def _find_name_entry(window: VehicleProjectCreatorWindow, use_text_box: bool = False) -> tuple[int, int, int, int]:
+    """Find and return bounding box for vehicle name entry."""
+    entry = _find_descendant(
+        window.new_dir.container_frame,
+        lambda w: w.winfo_class() in {"Entry", "TEntry"},
+    )
+    if entry is None:
+        msg = "Could not find destination vehicle name entry"
+        raise RuntimeError(msg)
+    if use_text_box:
+        return _entry_text_screen_box(entry, window.new_dir.get_selected_directory(), margin=2)
+    return _widget_screen_box(entry, margin=2)
+
+
+def _find_create_button(window: VehicleProjectCreatorWindow) -> tuple[int, int, int, int]:
+    """Find and return bounding box for create vehicle directory button."""
+    create_button = _find_descendant(
+        window.main_frame,
+        lambda w: _widget_text(w).startswith("Create a vehicle configuration directory"),
+    )
+    if create_button is None:
+        msg = "Could not find create vehicle directory button"
+        raise RuntimeError(msg)
+    return _widget_screen_box(create_button, margin=2)
+
+
 def _vehicle_creator_highlight_box(window: VehicleProjectCreatorWindow, variant: str) -> tuple[int, int, int, int]:
     """Resolve a highlight box for a specific vehicle creator screenshot variant."""
-    if variant == "params0":
-        browse_button = _find_descendant(
-            window.template_dir.container_frame,
-            lambda w: _widget_text(w) == "...",
-        )
-        if browse_button is None:
-            msg = "Could not find source template browse button"
-            raise RuntimeError(msg)
-        return _widget_screen_box(browse_button, margin=2)
+    result: tuple[int, int, int, int] | None = None
 
-    if variant == "params1":
-        checkbox = window.new_project_settings_widgets.get("use_fc_params")
-        if checkbox is None:
-            msg = "Could not find 'use_fc_params' setting checkbox"
+    # Template source selection
+    if variant in ("from_configured_source", "create_from_template_source"):
+        result = _find_template_browse_button(window)
+    # Vehicle name entry - without FC options
+    elif variant == "create_from_template_name":
+        result = _find_name_entry(window, use_text_box=False)
+    # Vehicle name with text styling
+    elif variant == "legacy2":
+        result = _find_name_entry(window, use_text_box=True)
+    # Create button - without FC options
+    elif variant == "create_from_template_create":
+        result = _find_create_button(window)
+    else:
+        # FC-dependent variants with options
+        checkbox1 = window.new_project_settings_widgets.get("use_fc_params")
+        checkbox2 = window.new_project_settings_widgets.get("infer_comp_specs_and_conn_from_fc_params")
+        if checkbox1 is None or checkbox2 is None:
+            msg = "Could not find 'use_fc_params' or 'infer_comp_specs_and_conn_from_fc_params' setting checkbox"
             raise RuntimeError(msg)
-        return _widget_screen_box(checkbox, margin=2)
 
-    if variant == "params2":
-        entry = _find_descendant(
-            window.new_dir.container_frame,
-            lambda w: w.winfo_class() in {"Entry", "TEntry"},
-        )
-        if entry is None:
-            msg = "Could not find destination vehicle name entry"
+        if variant == "from_configured_options":
+            # Tick both checkboxes
+            checkbox1.invoke()
+            checkbox2.invoke()
+            # Get bounding boxes for both
+            box1_left, box1_top, box1_right, box1_bottom = _widget_screen_box(checkbox1, margin=2)
+            box2_left, box2_top, box2_right, box2_bottom = _widget_screen_box(checkbox2, margin=2)
+            # Return combined bounding box encompassing both
+            combined_left = min(box1_left, box2_left)
+            combined_top = min(box1_top, box2_top)
+            combined_right = max(box1_right, box2_right)
+            combined_bottom = max(box1_bottom, box2_bottom)
+            result = combined_left, combined_top, combined_right, combined_bottom
+        elif variant == "from_configured_name":
+            # Tick both checkboxes
+            checkbox1.invoke()
+            checkbox2.invoke()
+            result = _find_name_entry(window, use_text_box=False)
+        elif variant == "from_configured_create":
+            # Tick both checkboxes
+            checkbox1.invoke()
+            checkbox2.invoke()
+            result = _find_create_button(window)
+        else:
+            msg = f"Unsupported vehicle creator highlight variant: {variant}"
             raise RuntimeError(msg)
-        return _widget_screen_box(entry, margin=2)
 
-    if variant == "legacy2":
-        entry = _find_descendant(
-            window.new_dir.container_frame,
-            lambda w: w.winfo_class() in {"Entry", "TEntry"},
-        )
-        if entry is None:
-            msg = "Could not find destination vehicle name entry"
-            raise RuntimeError(msg)
-        return _entry_text_screen_box(entry, window.new_dir.get_selected_directory(), margin=2)
-
-    if variant == "params3":
-        create_button = _find_descendant(
-            window.main_frame,
-            lambda w: _widget_text(w).startswith("Create a vehicle configuration directory"),
-        )
-        if create_button is None:
-            msg = "Could not find create vehicle directory button"
-            raise RuntimeError(msg)
-        return _widget_screen_box(create_button, margin=2)
-
-    msg = f"Unsupported vehicle creator highlight variant: {variant}"
-    raise RuntimeError(msg)
+    return result
 
 
 def _capture_vehicle_creator_with_highlight(  # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -589,8 +749,9 @@ def _capture_vehicle_creator_with_highlight(  # pylint: disable=too-many-argumen
     vehicle_dir: Path,
     variant: str,
     scale: float = 1.0,
+    fc_connected: bool = False,
 ) -> None:
-    window = _create_vehicle_creator_window(vehicle_dir)
+    window = _create_vehicle_creator_window(vehicle_dir, fc_connected=fc_connected)
     try:
         box = _vehicle_creator_highlight_box(window, variant)
         capture_widget(window.root, output_path, delay, padding, scale=scale, highlight_boxes=[box])
@@ -730,9 +891,7 @@ def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_d
             window.on_close()
 
 
-def capture_target(  # pylint: disable=too-many-branches
-    target: CaptureTarget, output_path: Path, args: argparse.Namespace
-) -> None:
+def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:
     """Capture one screenshot target."""
     action = target.action
     if action == "about":
@@ -745,56 +904,58 @@ def capture_target(  # pylint: disable=too-many-branches
         _capture_instructions(output_path, args.delay, args.padding)
     elif action == "motor_test":
         _capture_motor_test(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "param_04_simple":
+    elif action.startswith("param_"):
+        if target.gui_complexity is None:
+            msg = f"gui_complexity required for {action}"
+            raise RuntimeError(msg)
+        if target.current_file is None:
+            msg = f"current_file required for {action}"
+            raise RuntimeError(msg)
         _capture_parameter_editor(
             output_path,
             args.delay,
             args.padding,
             args.vehicle_dir,
-            current_file="04_board_orientation.param",
-            gui_complexity="simple",
-            scale=0.666,
-        )
-    elif action == "param_04_normal":
-        _capture_parameter_editor(
-            output_path,
-            args.delay,
-            args.padding,
-            args.vehicle_dir,
-            current_file="04_board_orientation.param",
-            gui_complexity="normal",
-            scale=0.666,
-        )
-    elif action == "param_20_normal":
-        _capture_parameter_editor(
-            output_path,
-            args.delay,
-            args.padding,
-            args.vehicle_dir,
-            current_file="20_throttle_controller.param",
-            gui_complexity="normal",
-            scale=0.666,
+            current_file=target.current_file,
+            gui_complexity=target.gui_complexity,
+            scale=target.scale,
         )
     elif action == "vehicle_opener":
         _capture_vehicle_opener(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "vehicle_opener_legacy4":
-        _capture_vehicle_opener_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, scale=0.8)
+    elif action in ("vehicle_opener_from_template", "vehicle_opener_legacy4", "vehicle_opener_from_bin"):
+        _capture_vehicle_opener_with_highlight(
+            output_path, args.delay, args.padding, args.vehicle_dir, action=action, scale=target.scale
+        )
     elif action == "vehicle_creator":
         _capture_vehicle_creator(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action == "vehicle_creator_legacy1":
-        _capture_vehicle_creator_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, "params0", scale=0.8)
-    elif action == "vehicle_creator_legacy2":
-        _capture_vehicle_creator_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, "legacy2", scale=0.8)
-    elif action == "vehicle_creator_legacy3":
-        _capture_vehicle_creator_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, "params3", scale=0.8)
-    elif action == "vehicle_creator_params0":
-        _capture_vehicle_creator_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, "params0", scale=0.8)
-    elif action == "vehicle_creator_params1":
-        _capture_vehicle_creator_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, "params1", scale=0.8)
-    elif action == "vehicle_creator_params2":
-        _capture_vehicle_creator_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, "params2", scale=0.8)
-    elif action == "vehicle_creator_params3":
-        _capture_vehicle_creator_with_highlight(output_path, args.delay, args.padding, args.vehicle_dir, "params3", scale=0.8)
+    elif action.startswith("vehicle_creator_"):
+        if target.variant is None:
+            msg = f"variant required for {action}"
+            raise RuntimeError(msg)
+        # Enable FC connection for all vehicle_creator variants to show FC-dependent options
+        _capture_vehicle_creator_with_highlight(
+            output_path,
+            args.delay,
+            args.padding,
+            args.vehicle_dir,
+            target.variant,
+            scale=target.scale,
+            fc_connected=True,
+        )
+    elif action.startswith("create_from_template_"):
+        if target.variant is None:
+            msg = f"variant required for {action}"
+            raise RuntimeError(msg)
+        # Create from template shows the flow without pre-configured FC options
+        _capture_vehicle_creator_with_highlight(
+            output_path,
+            args.delay,
+            args.padding,
+            args.vehicle_dir,
+            target.variant,
+            scale=target.scale,
+            fc_connected=False,
+        )
     elif action == "template_overview":
         _capture_template_overview(output_path, args.delay, args.padding)
     else:

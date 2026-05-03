@@ -133,7 +133,7 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
 1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).
    ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
 1. Now using [New](USERMANUAL.md#new) subsection
-   ![New vehicle](images/App_screenshot_Vehicle_directory1.png)
+   ![New vehicle](images/App_screenshot_Vehicle_directory_create_from_template_source.png)
 1. From the existing templates, select the one most similar to your vehicle:
    ![New vehicle](images/App_screenshot_Vehicle_overview.png)
 1. select the destination directory, give it a name and press `Create a vehicle configuration directory from template`

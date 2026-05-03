@@ -131,14 +131,29 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
 
 1. Close Mission Planner, if it is open on the PC.
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
-1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).
+1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).<br>
    ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Now using [New](USERMANUAL.md#new) subsection
-   ![New vehicle](images/App_screenshot_Vehicle_directory1.png)
-1. From the existing templates, select the one most similar to your vehicle:
+1. Press the *Create a vehicle configuration directory from template* button.<br>
+   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
+1. Now using [New](USERMANUAL.md#new) subsection<br>
+   ![New vehicle](images/App_screenshot_Vehicle_directory_create_from_template_source.png)
+1. From the existing templates, select the one most similar to your vehicle:<br>
    ![New vehicle](images/App_screenshot_Vehicle_overview.png)
-1. select the destination directory, give it a name and press `Create a vehicle configuration directory from template`
-1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):
+1. Select the options that meet your requirements:
+   - *Copy vehicle image from template* - Use the template vehicle image in your created vehicle configuration directory. This image helps identify the vehicle configuration.
+   - *Blank component data* - Create a new blank vehicle configuration, with no component data from the template.
+   - *Reset flight controller parameters to their defaults* - Reset the flight controller parameters to their default values when creating a new vehicle configuration.
+   Helps avoid issues caused by incorrect or incompatible parameter settings. WARNING: This will delete all parameters stored on the flight controller.
+   - *Infer component specifications and FC connections from FC parameters, not from template files* - When creating a new vehicle configuration, extract component
+   specifications and connection information directly from the connected flight controller instead of using the specifications defined in the template files.
+   This helps ensure the configuration accurately matches your actual hardware.
+   Note: you will not see the information from the correctly configured vehicle template. This option is only available when a flight controller is connected.
+   - *Use parameter values from connected FC, not from template files* - Use the parameter values from the connected flight controller instead of the template files when
+   creating a new vehicle configuration directory from a template.
+   Only makes sense if your FC has already been correctly configured. This option is only available when a flight controller is connected.
+   - *Blank parameter change reason* - Do not use the parameters change reason from the template.
+1. Select the destination directory, give it a name, and press the *Create a vehicle configuration directory from template* button.
+1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):<br>
    ![Component editor window](images/App_screenshot_Component_Editor.png)
 
 Most optional information fields are only visible in `normal` GUI complexity mode.

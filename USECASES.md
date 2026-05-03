@@ -27,54 +27,66 @@ This is especially important for new vehicles or when you've made significant ch
 If your vehicle is already operating correctly and you're just making minor adjustments, you do not need to reset the parameters to their default values
 as this would require reconfiguring everything from scratch.
 
-The ArduPilot documentation explains [how to reset all parameters to their default value](https://ardupilot.org/copter/docs/common-parameter-reset.html)
-if you decide this is the best approach for your situation.
-
-1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc)
-the *ArduPilot Methodic Configurator* needs connection exclusivity.
+1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc).
+   The *ArduPilot Methodic Configurator* needs connection exclusivity.
 1. Connect the flight controller to the computer using a USB cable.
 1. Wait at least 7 seconds.
 1. Open the *ArduPilot Methodic Configurator* software.
-1. The software should now automatically detect and connect to your flight controller.
-![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Select source template directory to use.
-![AMC template selection1](images/App_screenshot_Vehicle_directory1.png)
-1. Select the vehicle template that better resembles your vehicle, it does not need to fully match your vehicle.
-![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
-1. Give a name to your vehicle.
-![AMC new vehicle name](images/App_screenshot_Vehicle_directory2.png)
-1. Press *Create vehicle configuration from template*.
-![AMC new vehicle create](images/App_screenshot_Vehicle_directory3.png)
+1. The software should now automatically detect and connect to your flight controller.<br>
+   ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. Press the *Create a vehicle configuration directory from template* button.<br>
+   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
+1. Select source template directory to use.<br>
+   ![AMC template selection1](images/App_screenshot_Vehicle_directory_create_from_template_source.png)
+1. Select the vehicle template that better resembles your vehicle, it does not need to fully match your vehicle.<br>
+   ![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
+1. Select the options that meet your requirements:
+   - *Copy vehicle image from template* - Use the template vehicle image in your created vehicle configuration directory. This image helps identify the vehicle configuration.
+   - *Blank component data* - Create a new blank vehicle configuration, with no component data from the template.
+   - *Reset flight controller parameters to their defaults* - Reset the flight controller parameters to their default values when creating a new vehicle configuration.
+   Helps avoid issues caused by incorrect or incompatible parameter settings. WARNING: This will delete all parameters stored on the flight controller.
+   - *Infer component specifications and FC connections from FC parameters, not from template files* - When creating a new vehicle configuration, extract component
+   specifications and connection information directly from the connected flight controller instead of using the specifications defined in the template files.
+   This helps ensure the configuration accurately matches your actual hardware.
+   Note: you will not see the information from the correctly configured vehicle template. This option is only available when a flight controller is connected.
+   - *Use parameter values from connected FC, not from template files* - Use the parameter values from the connected flight controller instead of the template files when
+   creating a new vehicle configuration directory from a template.
+   Only makes sense if your FC has already been correctly configured. This option is only available when a flight controller is connected.
+   - *Blank parameter change reason* - Do not use the parameters change reason from the template.
+1. Give a name to your vehicle.<br>
+   ![AMC new vehicle name](images/App_screenshot_Vehicle_directory_create_from_template_name.png)
+1. Press *Create a vehicle configuration directory from template*.<br>
+   ![AMC new vehicle create](images/App_screenshot_Vehicle_directory_create_from_template_create.png)
 1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.
-Please scroll down and make sure you do not miss a property.
-![AMC component editor](images/App_screenshot_Component_Editor.png)
+   Please scroll down and make sure you do not miss a property.<br>
+   ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
 1. The application will validate your input.
-If issues are found the problematic fields' background will be marked in red color.
-Correct those entries and press the `Save data and start configuration` button again.
-1. You should now see the *Parameter file editor and uploader* window.
-![AMC parameter file editor and uploader](images/App_screenshot2.png)
+   If issues are found the problematic fields' background will be marked in red color.
+   Correct those entries and press the `Save data and start configuration` button again.
+1. You should now see the *Parameter file editor and uploader* window.<br>
+   ![AMC parameter file editor and uploader](images/App_screenshot2.png)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
 ## Use the *ArduPilot Methodic Configurator* software after having created a vehicle from a template
 
-1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc)
-the *ArduPilot Methodic Configurator* needs connection exclusivity.
+1. Close all other GCS software (MissionPlanner, QGroundControl, MAVProxy, DroneKit-Python, APM Planner 2.0, UgCS, LOGOS, Tower, AndroPilot, etc).
+   The *ArduPilot Methodic Configurator* needs connection exclusivity.
 1. Connect the flight controller to the computer using a USB cable.
 1. Wait at least 7 seconds.
 1. Open the *ArduPilot Methodic Configurator* software.
-1. The software should now automatically detect and connect to your flight controller.
-![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. The software should now automatically detect and connect to your flight controller.<br>
+   ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
 1. Open the vehicle configuration directory that you created in the [Use the *ArduPilot Methodic Configurator* software for the first time](#use-the-ardupilot-methodic-configurator-software-for-the-first-time).
-![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
-double-click and step inside the directory that you want to use, not just select it
+   double-click and step inside the directory that you want to use, not just select it.<br>
+   ![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
 1. Edit all the components of your vehicle to match your own.
-Please scroll down and make sure you do not miss a property.
-![AMC component editor](images/App_screenshot_Component_Editor.png)
+   Please scroll down and make sure you do not miss a property.<br>
+   ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
-1. You should now see the *Parameter file editor and uploader* window.
-![AMC parameter file editor and uploader](images/App_screenshot2.png)
+1. You should now see the *Parameter file editor and uploader* window.<br>
+   ![AMC parameter file editor and uploader](images/App_screenshot2.png)
 1. Proceed as explained in [parameter editor workflow overview](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
@@ -94,9 +106,10 @@ The software reads the `.bin` file to automatically determine:
 - **Current parameter values** — the values that were actually active when the log was recorded
 
 1. Open the *ArduPilot Methodic Configurator* software.
-1. Select `Skip FC connection, just edit .param files on disk` button.
-![AMC no connection](images/App_screenshot_FC_connection_no_connection.png)
-1. Click the **Create a vehicle project from a .bin log file** button.
+1. Select `Skip FC connection, just edit .param files on disk` button.<br>
+   ![AMC no connection](images/App_screenshot_FC_connection_no_connection.png)
+1. Click the **Create a vehicle project from a .bin log file** button.<br>
+   ![Create a vehicle project from a .bin log file](images/App_screenshot_Vehicle_directory_create_from_bin.png)
 1. In the file-picker that opens, select your `.bin` log file.
    - The software automatically detects the vehicle type and firmware version.
    - A matching template directory (e.g. `ArduCopter/empty_4.6.x`) is selected automatically.
@@ -107,10 +120,12 @@ The software reads the `.bin` file to automatically determine:
      from the template's parameter files — giving you a clear delta to review and tune.
    - `vehicle_components.json` is updated with the detected firmware type and version.
 1. Review and edit the vehicle components in the *Vehicle Component Editor* window.
-   The firmware type and version fields will already be pre-filled from the log.
+   The firmware type and version fields will already be pre-filled from the log.<br>
+   ![AMC component editor](images/App_screenshot_Component_Editor.png)
+
 1. Press *Save data and start configuration*.
 1. You should now see the *Parameter file editor and uploader* window.
-   ![AMC parameter file editor and uploader](images/App_screenshot2.png)
+   ![AMC parameter file editor and uploader](images/App_screenshot2.png)<br>
 1. Follow the procedure to [configure the vehicle parameters](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface).
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
@@ -120,26 +135,36 @@ If something is not clear, read the [ArduPilot Methodic Configurator user manual
 1. Connect the flight controller to the computer using a USB cable.
 1. Wait at least 7 seconds.
 1. Open the *ArduPilot Methodic Configurator* software.
-1. The software should now automatically detect and connect to your flight controller.
-![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Select the vehicle template that better resembles your vehicle.
-![AMC template selection1](images/App_screenshot_Vehicle_directory_vehicle_params0.png)
-![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
+1. The software should now automatically detect and connect to your flight controller.<br>
+   ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. Press the *Create a vehicle configuration directory from template* button.<br>
+   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
+1. Select the vehicle template that better resembles your vehicle.<br>
+   ![AMC template selection1](images/App_screenshot_Vehicle_directory_vehicle_params0.png)
+   ![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
 1. **select the `Infer component specifications and FC connections from FC Parameters, not from template files`
    and the `Use parameter values from connected FC, not from template files` checkboxes**
-![AMC template selection1](images/App_screenshot_Vehicle_directory_vehicle_params1.png)
-1. Give a name to your vehicle.
-![AMC new vehicle name](images/App_screenshot_Vehicle_directory_vehicle_params2.png)
-1. Press *Create vehicle configuration from template*.
-![AMC new vehicle create](images/App_screenshot_Vehicle_directory_vehicle_params3.png)
-1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.
-![AMC component editor](images/App_screenshot_Component_Editor.png)
+   - *Infer component specifications and FC connections from FC parameters, not from template files* - When creating a new vehicle configuration,
+     extract component specifications and connection information directly from the connected flight controller instead of using the specifications
+     defined in the template files.
+     This helps ensure the configuration accurately matches your actual hardware.
+     Note: you will not see the information from the correctly configured vehicle template. This option is only available when a flight controller is connected.
+   - *Use parameter values from connected FC, not from template files* - Use the parameter values from the connected flight controller instead of
+     the template files when creating a new vehicle configuration directory from a template.
+     Only makes sense if your FC has already been correctly configured. This option is only available when a flight controller is connected.<br>
+   ![AMC template options](images/App_screenshot_Vehicle_directory_create_from_configured_options.png)
+1. Give a name to your vehicle.<br>
+   ![AMC new vehicle name](images/App_screenshot_Vehicle_directory_create_from_configured_name.png)
+1. Press *Create a vehicle configuration directory from template*.<br>
+   ![AMC new vehicle create](images/App_screenshot_Vehicle_directory_create_from_configured_create.png)
+1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.<br>
+   ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
 1. The application will validate your input.
-If issues are found the problematic fields' background will be marked in red color.
-Correct those entries and press the `Save data and start configuration` button again.
-1. You should now see the *Parameter file editor and uploader* window.
-![AMC parameter file editor and uploader](images/App_screenshot2.png)
+   If issues are found the problematic fields' background will be marked in red color.
+   Correct those entries and press the `Save data and start configuration` button again.
+1. You should now see the *Parameter file editor and uploader* window.<br>
+   ![AMC parameter file editor and uploader](images/App_screenshot2.png)
 1. Follow the procedure to [configure the vehicle parameters](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
@@ -147,20 +172,20 @@ If something is not clear, read the [ArduPilot Methodic Configurator user manual
 ## Review and or edit configuration files without having the vehicle FC
 
 1. Open the *ArduPilot Methodic Configurator* software.
-1. Select `Skip FC connection, just edit .param files on disk` button.
-![AMC no connection](images/App_screenshot_FC_connection_no_connection.png)
+1. Select `Skip FC connection, just edit .param files on disk` button.<br>
+   ![AMC no connection](images/App_screenshot_FC_connection_no_connection.png)
 1. Open the vehicle configuration directory that you want to edit or review.
-![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
-**double-click and step inside the directory that you want to use, not just select it**
-1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.
-![AMC component editor](images/App_screenshot_Component_Editor.png)
+   **double-click and step inside the directory that you want to use, not just select it**<br>
+   ![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
+1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.<br>
+   ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
 1. The application will validate your input.
-If issues are found the problematic fields' background will be marked in red color.
-Correct those entries and press the `Save data and start configuration` button again.
-1. You should now see the *Parameter file editor and uploader* window.
-![AMC parameter file editor and uploader](images/App_screenshot2.png) the `Upload selected params to FC, and advance to next param file`
-button will be grayed out because there is no FC connected.
+   If issues are found the problematic fields' background will be marked in red color.
+   Correct those entries and press the `Save data and start configuration` button again.
+1. You should now see the *Parameter file editor and uploader* window.<br>
+   ![AMC parameter file editor and uploader](images/App_screenshot2.png)<br> the `Upload selected params to FC, and advance to next param file`
+   button will be grayed out because there is no FC connected.
 1. Follow the procedure to [configure the vehicle parameters](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface)
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
@@ -179,19 +204,19 @@ extract_param_defaults bin_log_file.bin > 00_default.param
 1. Connect the flight controller to the computer using a USB cable.
 1. Wait at least 7 seconds.
 1. Open the *ArduPilot Methodic Configurator* software.
-1. The software should now automatically detect and connect to your flight controller.
-![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
+1. The software should now automatically detect and connect to your flight controller.<br>
+   ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
 1. Open the vehicle configuration directory that you want to edit or review.
-![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
-**double-click and step inside the directory that you want to use, not just select it**
-1. Edit all the components of your vehicle to match the component and/or connections changes you made in the *Vehicle Component Editor* window.
-![AMC component editor](images/App_screenshot_Component_Editor.png)
+   **double-click and step inside the directory that you want to use, not just select it**<br>
+   ![AMC open vehicle configuration](images/App_screenshot_Vehicle_directory4.png)
+1. Edit all the components of your vehicle to match the component and/or connections changes you made in the *Vehicle Component Editor* window.<br>
+   ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
 1. The application will validate your input.
-If issues are found the problematic fields' background will be marked in red color.
-Correct those entries and press the `Save data and start configuration` button again.
-1. You should now see the *Parameter file editor and uploader* window.
-![AMC parameter file editor and uploader](images/App_screenshot2.png)
+   If issues are found the problematic fields' background will be marked in red color.
+   Correct those entries and press the `Save data and start configuration` button again.
+1. You should now see the *Parameter file editor and uploader* window.<br>
+   ![AMC parameter file editor and uploader](images/App_screenshot2.png)
 1. Now depending of the changes you made you will need to re-do some steps and can skip some others:
    - FC changed - Need to redo all steps
    - Frame and/or Take-off-weight - redo steps 19 and above
