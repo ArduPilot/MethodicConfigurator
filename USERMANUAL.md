@@ -12,13 +12,14 @@ There are also [quick start instructions](README.md), [specific use case instruc
 ## Table of Contents
 
 1. [Step-by-Step Workflow](#step-by-step-workflow)
-2. [Configuration Details](#configuration-details)
-3. [Command Line Usage](#command-line-usage)
-4. [Troubleshooting](#troubleshooting)
-5. [Support](SUPPORT.md) (External Document)
-6. [Installation and Security](INSTALL.md) (External Document)
-7. [FAQ](https://ardupilot.github.io/MethodicConfigurator/FAQ.html) (External Document)
-8. [Glossary](#glossary)
+1. [Configuring multiple similar vehicles](#configuring-multiple-similar-vehicles)
+1. [Customizing configuration steps](https://ardupilot.github.io/MethodicConfigurator/CUSTOMIZING_CONFIGURATION_STEPS.html) (external document)
+1. [Command Line Usage](#command-line-usage)
+1. [Troubleshooting](#troubleshooting)
+1. [Support](SUPPORT.md) (external document)
+1. [Installation and Security](INSTALL.md) (external document)
+1. [FAQ](https://ardupilot.github.io/MethodicConfigurator/FAQ.html) (external document)
+1. [Glossary](#glossary)
 
 ## Before You Begin
 
@@ -280,7 +281,7 @@ Do this in a loop until the software tells you the process is finished and autom
 - If the selection changes, the parameter table will update to display the parameters from the selected file.
 - The sequence is defined by the order of the intermediate parameter files in the vehicle configuration directory.
 
-For more details on intermediate parameter files, see [Intermediate Parameter Files](#intermediate-parameter-files).
+For more details on intermediate parameter files, see [Intermediate Parameter Files](CUSTOMIZING_CONFIGURATION_STEPS.md#intermediate-parameter-files).
 
 #### 3. About information and help links (optional)
 
@@ -419,89 +420,19 @@ The files are also automatically zipped into a file with the same name as the ve
 
 Once the summary files are written, the application will close the connection to the flight controller and terminate.
 
-## Configuration Details
+## Configuring multiple similar vehicles
 
-This section provides detailed information about configuration files, customization options, and advanced setup procedures.
+1. Create a separate vehicle configuration directory for each vehicle with a descriptive name
+2. Copy the `*.param`, `*.json`, `*.jpg` files to each directory
+3. Connect the PC to the vehicle flight controller and open the respective vehicle configuration directory in AMC
+4. Edit files to match each vehicle's specific requirements
 
-### Configuration Files
+When manufacturing multiple vehicles of the same model, you can reuse most configuration files across instances.
+If you maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**, only three parameter files are vehicle-specific:
 
-Most users will not need to configure the tool, but if you do want to do it you can.
-
-The ArduPilot Methodic Configurator uses several configuration files to manage and visualize vehicle parameters.
-These files are crucial for the tool's operation and are organized in a specific directory structure.
-
-- **Intermediate Parameter Files**: These files are located in the vehicle-specific directory and are named with two digits followed by an underscore, ending in `.param`.
-  They contain the parameters that need to be configured for the vehicle. Each file corresponds to a specific configuration step or aspect of the vehicle's setup.
-
-- **Documentation File**: This file provides documentation for each intermediate parameter file.
-  It is used to display relevant information about the parameters and their configuration process.
-  The `configuration_steps_ArduCopter.json` documentation file is first searched in the selected vehicle-specific directory,
-  and if not found, in the directory where the script is located.
-
-- **Configuration Steps File**: The `configuration_steps_*.json` files (like `configuration_steps_ArduCopter.json`) define the workflow,
- for each intermediate parameter file. They provide the documentation links, explanations ("why" and "why now"), mandatory/optional percentages,
- and advanced logic rules like `autoimport_nondefault_regexp` to automatically pull specific non-default parameters from the live flight controller into the GUI.
-
-- **Default Parameter Values File**: The `00_defaults.param` file is located in the vehicle-specific directory.
-  If the file does not exist or is invalid, use this command to regenerate it
-
-```bash
-extract_param_defaults bin_log_file.bin > 00_default.param
-```
-
-- **ArduPilot parameter documentation File**: The `apm.pdef.xml` contains documentation and metadata for each ArduPilot parameter in an XML format.
-  The file is first searched in the selected vehicle-specific directory, and if not found, in the directory where the script is located,
-  and if not found automatically downloaded [from the internet](https://autotest.ardupilot.org/Parameters/versioned/).
-  If the vehicle/version combination does not exist you need to generate this file yourself using the ardupilot source code for the firmware version that you want to use:
-
-```bash
-cd ardupilot
-./Tools/autotest/param_metadata/param_parse.py --vehicle ArduCopter --format xml
-cp apm.pdef.xml /path/to/your/vehicle/directory
-```
-
-The tool uses these files to manage the configuration process, allowing users to select and edit parameters, and upload the changes back to the flight controller.
-The intermediate parameter files are the primary focus of the user interface, as they contain the parameters that the user can modify.
-The documentation files provide context and guidance for each parameter.
-
-### Intermediate Parameter Files
-
-Building on the configuration files described above, intermediate parameter files are the primary files you'll interact with during vehicle setup.
-
-For reproducibility and quality purposes, we configure the vehicle with a well-defined sequence of intermediate parameter files.
-
-Each file modifies just a small set of the [over 1200 parameters on the flight controller](https://ardupilot.org/copter/docs/parameters.html).
-By splitting the process into small manageable steps, we reduce the probability of making a mistake or missing a step and allow interleaving parameter changes with test flights.
-Each intermediate parameter file is a text file, editable in any common text editor (excluding MS Word) like [Notepad++](https://notepad-plus-plus.org/),
-[nano](https://www.nano-editor.org/) or [code](https://code.visualstudio.com/).
-It contains the *official ArduPilot parameter documentation* in the form of comments in the lines preceding the parameter.
-By using this you save the time of looking up the online documentation for each parameter.
-It contains the **reason why we changed the parameter** in a comment on the same line as the parameter and is used to
-trace each parameter change to the reason for that parameter change.
-
-Comments start with the '#' character.
-A small example with a single parameter is shown below:
-
-```text
-
-# Arming with Rudder enable/disable
-# Allow arm/disarm by rudder input. When enabled arming can be done with right rudder, disarming with left rudder.
-# 0: Disabled
-# 1: ArmingOnly
-# 2: ArmOrDisarm
-ARMING_RUDDER,0 # We find it safer to use only a switch to arm instead of through rudder inputs
-```
-
-If you are working with multiple vehicles, create a separate directory for each vehicle with a descriptive identifiable name.
-Copy the approx. 50 *intermediate parameter files* into them.
-Edit the files to match the specific requirements of each vehicle.
-Now you have traceable documentation records for every parameter change on each of your vehicles.
-
-If you are in the business of manufacturing multicopters and maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**,
-you can reuse most intermediate parameter files across these vehicles.
-Only three intermediate parameter files: `03_imu_temperature_calibration_results.param`, `12_mp_setup_mandatory_hardware.param` and
-`25_inflight_magnetometer_fit_results.param` are specific to each vehicle instance.
-All other intermediate parameter files can be used without modifications across all instances (or serial numbers) of the same product model.
+- `03_imu_temperature_calibration_results.param`
+- `12_mp_setup_mandatory_hardware.param`
+- `25_inflight_magnetometer_fit_results.param`
 
 ## Command Line Usage
 
