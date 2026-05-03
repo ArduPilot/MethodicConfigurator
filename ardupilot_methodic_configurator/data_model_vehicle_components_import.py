@@ -37,7 +37,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     SERVO_FUNCTION_ESC_CONTROL,
     ComponentDataModelValidation,
     get_esc_connection_sub_dict,
-    get_frame_class_sub_dict,
+    get_frame_class_as_protocol_dict,
 )
 
 
@@ -185,13 +185,18 @@ class ComponentDataModelImport(ComponentDataModelBase):
         self._verify_dict_is_uptodate(doc, get_esc_connection_sub_dict(fw_type), "MOT_PWM_TYPE", "values")
         self._verify_dict_is_uptodate(doc, RC_PROTOCOLS_DICT, "RC_PROTOCOLS", "Bitmask")
 
-        # Process frame information if FRAME_CLASS is present in FC parameters
-        if "FRAME_CLASS" in fc_parameters:
+        # Compute frame class dict once for both verification and label lookup
+        frame_class_dict = get_frame_class_as_protocol_dict(fw_type)
+        # ArduPlane uses Q_FRAME_CLASS in documentation; other types use FRAME_CLASS
+        frame_class_doc_key = "Q_FRAME_CLASS" if fw_type == "ArduPlane" else "FRAME_CLASS"
+        self._verify_dict_is_uptodate(doc, frame_class_dict, frame_class_doc_key, "values")
+
+        # Process frame information if FRAME_CLASS or Q_FRAME_CLASS is present in FC parameters
+        if "FRAME_CLASS" in fc_parameters or "Q_FRAME_CLASS" in fc_parameters:
             frame_class, _ = get_frame_info(fc_parameters)
-            self.set_component_value(
-                ("Frame", "Specifications", "Frame class"),
-                get_frame_class_sub_dict(fw_type).get(frame_class, "Undefined"),
-            )
+            frame_class_entry = frame_class_dict.get(str(frame_class))
+            frame_class_label = frame_class_entry.get("protocol") if isinstance(frame_class_entry, dict) else "Undefined"
+            self.set_component_value(("Frame", "Specifications", "Frame class"), frame_class_label)
 
         # Process parameters in sequence
         self._set_gnss_type_from_fc_parameters(fc_parameters)

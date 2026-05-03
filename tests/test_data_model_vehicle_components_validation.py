@@ -736,6 +736,27 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert len(errors) > 0
         assert "Invalid value" in errors[0]
 
+    def test_validate_all_data_rejects_undefined_frame_class(self, realistic_model) -> None:
+        """
+        Test validate_all_data rejects Undefined frame class selections.
+
+        GIVEN: A realistic model with Frame class choices initialized
+        WHEN: Validating a Frame class value of Undefined
+        THEN: Validation should fail and report an invalid value error
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        invalid_entries = {
+            ("Frame", "Specifications", "Frame class"): "Undefined",
+        }
+
+        is_valid, errors = model.validate_all_data(invalid_entries)
+        assert is_valid is False
+        assert len(errors) == 1
+        assert "Invalid value" in errors[0]
+        assert "Allowed values" in errors[0]
+
     def test_validate_all_data_duplicate_connections(self, realistic_model) -> None:
         """
         Test validate_all_data with duplicate FC connections.
@@ -1537,6 +1558,11 @@ class TestComponentDataModelValidationUncoveredBranches:
     """Tests targeting previously uncovered branches in ComponentDataModelValidation."""
 
     @pytest.fixture
+    def empty_model(self) -> ComponentDataModelValidation:
+        """Create an empty model."""
+        return ComponentDataModelFixtures.create_empty_model(ComponentDataModelValidation)
+
+    @pytest.fixture
     def basic_model(self) -> ComponentDataModelValidation:
         """Create a basic model."""
         return ComponentDataModelFixtures.create_basic_model(ComponentDataModelValidation)
@@ -1609,6 +1635,100 @@ class TestComponentDataModelValidationUncoveredBranches:
         basic_model._update_possible_choices_for_path(("ESC", "FC Connection", "Type"), "None")
 
         assert basic_model._possible_choices[("ESC", "FC Connection", "Protocol")] == ("None",)
+
+    # ------------------------------------------------------------------
+    # Frame class choices - set_component_value firmware type side effect
+    # ------------------------------------------------------------------
+    def test_set_component_value_firmware_type_updates_frame_class_choices(self, empty_model) -> None:
+        """
+        Setting firmware type updates the Frame class possible choices.
+
+        GIVEN: An empty model with no firmware type set
+        WHEN: Setting the firmware type to 'ArduCopter'
+        THEN: Frame class choices must be populated with ArduCopter-specific values
+        AND: 'Undefined' must not be in the valid choices
+        """
+        model = empty_model
+        model.init_possible_choices({})
+
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+
+        frame_choices = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
+        assert len(frame_choices) > 0
+        assert "Quad" in frame_choices
+        assert "Hexa" in frame_choices
+        assert "Undefined" not in frame_choices
+
+    def test_set_component_value_firmware_type_heli_gives_heli_specific_choices(self, empty_model) -> None:
+        """
+        Setting firmware type to Heli populates helicopter-specific frame class choices.
+
+        GIVEN: An empty model
+        WHEN: Setting the firmware type to 'Heli'
+        THEN: Frame class choices contain Heli-specific classes (Heli, Heli_Dual, HeliQuad)
+        AND: Multirotor-only classes (Hexa, Octa) must not be present
+        """
+        model = empty_model
+        model.init_possible_choices({})
+
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), "Heli")
+
+        frame_choices = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
+        assert "Heli" in frame_choices
+        assert "Heli_Dual" in frame_choices
+        assert "HeliQuad" in frame_choices
+        assert "Hexa" not in frame_choices
+        assert "Octa" not in frame_choices
+
+    def test_set_component_value_non_firmware_type_does_not_update_frame_class_choices(self, empty_model) -> None:
+        """
+        Setting a non-firmware-type path does not alter Frame class choices.
+
+        GIVEN: An empty model with frame class choices already initialised
+        WHEN: Setting an unrelated value (TOW min Kg)
+        THEN: Frame class choices remain unchanged
+        """
+        model = empty_model
+        model.init_possible_choices({})
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduCopter")
+        choices_before = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
+
+        model.set_component_value(("Frame", "Specifications", "TOW min Kg"), 0.5)
+
+        choices_after = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
+        assert choices_after == choices_before
+
+    def test_init_possible_choices_includes_frame_class_for_default_firmware_type(self, empty_model) -> None:
+        """
+        init_possible_choices populates Frame class choices based on firmware type.
+
+        GIVEN: An empty model with no data (empty firmware type → fallback to ArduCopter)
+        WHEN: Calling init_possible_choices with an empty doc dict
+        THEN: Frame class choices must be present and non-empty
+        AND: 'Undefined' must not be a valid choice
+        """
+        model = empty_model
+        model.init_possible_choices({})
+
+        frame_choices = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
+        assert isinstance(frame_choices, tuple)
+        assert len(frame_choices) > 0
+        assert "Undefined" not in frame_choices
+
+    def test_init_possible_choices_frame_class_reflects_stored_firmware_type(self, realistic_model) -> None:
+        """
+        init_possible_choices derives Frame class choices from the stored firmware type.
+
+        GIVEN: A realistic model whose firmware type is already set to 'ArduCopter'
+        WHEN: Calling init_possible_choices
+        THEN: Frame class choices match ArduCopter-specific values (Quad, Hexa, etc.)
+        """
+        model = realistic_model
+        model.init_possible_choices({})
+
+        frame_choices = model._possible_choices.get(("Frame", "Specifications", "Frame class"), ())
+        assert "Quad" in frame_choices
+        assert "Undefined" not in frame_choices
 
     def test_system_sets_esc_protocol_to_dronecan_for_can_connection(self, basic_model) -> None:
         """

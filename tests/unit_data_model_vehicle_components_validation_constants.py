@@ -34,7 +34,8 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_validation im
     SERIAL_PROTOCOLS_DICT,
     SPI_PORTS,
     get_connection_type_tuples_with_labels,
-    get_frame_class_sub_dict,
+    get_frame_class_as_protocol_dict,
+    get_frame_class_valid_tuple,
 )
 
 
@@ -552,7 +553,11 @@ class TestValidationConstants:
             f"expected {expected!r}. Update this test and verify SERIAL_PROTOCOLS_DICT 'component' annotations."
         )
         # Verify all protocols in ESC_SERIAL_SAME_PORT_PROTOCOLS are present in every vehicle sub-dict
+        # that supports serial ESC connections. ArduPlane (Q_M_PWM_TYPE) only supports PWM/DShot/CAN.
+        vehicle_types_without_serial_esc = {"ArduPlane"}
         for vtype, sub_dict in ESC_CONNECTION_DICT.items():
+            if vtype in vehicle_types_without_serial_esc:
+                continue
             vehicle_protocols = {entry.get("protocol") for entry in sub_dict.values()}
             for protocol in ESC_SERIAL_SAME_PORT_PROTOCOLS:
                 assert protocol in vehicle_protocols, (
@@ -561,7 +566,7 @@ class TestValidationConstants:
 
 
 class TestFrameClassDict:
-    """Tests for FRAME_CLASS_DICT and get_frame_class_sub_dict."""
+    """Tests for FRAME_CLASS_DICT and get_frame_class_as_protocol_dict."""
 
     def test_frame_class_dict_structure(self) -> None:
         """FRAME_CLASS_DICT is keyed by vehicle type with int->str sub-dicts."""
@@ -601,6 +606,14 @@ class TestFrameClassDict:
         assert 1 not in sub, "Quad should not be in Heli FRAME_CLASS_DICT"
         assert 2 not in sub, "Hexa should not be in Heli FRAME_CLASS_DICT"
 
+    def test_heli_frame_class_includes_coax_and_single_variants(self) -> None:
+        """Heli sub-dict includes newly added helicopter frame variants."""
+        sub = FRAME_CLASS_DICT["Heli"]
+        assert sub[0] == "Undefined"
+        assert sub[8] == "SingleCopter"
+        assert sub[9] == "CoaxCopter"
+        assert sub[10] == "BiCopter"
+
     def test_rover_frame_class_values(self) -> None:
         """Rover sub-dict uses Rover-specific frame class values."""
         sub = FRAME_CLASS_DICT["Rover"]
@@ -610,26 +623,39 @@ class TestFrameClassDict:
         # Multirotor classes must not appear in Rover
         assert 4 not in sub, "OctaQuad should not be in Rover FRAME_CLASS_DICT"
 
-    def test_arduplane_frame_class_is_empty(self) -> None:
-        """ArduPlane has no FRAME_CLASS parameter, so its sub-dict must be empty."""
-        assert not FRAME_CLASS_DICT["ArduPlane"]
+    def test_arduplane_frame_class_values(self) -> None:
+        """ArduPlane sub-dict contains plane-specific hover-capable frame classes."""
+        sub = FRAME_CLASS_DICT["ArduPlane"]
+        assert sub[1] == "Quad"
+        assert sub[2] == "Hexa"
+        assert sub[10] == "Single/Dual"
+        assert sub[12] == "DodecaHexa"
 
-    def test_get_frame_class_sub_dict_known_vehicle_types(self) -> None:
-        """get_frame_class_sub_dict returns the correct sub-dict for known vehicle types."""
-        assert get_frame_class_sub_dict("ArduCopter") is FRAME_CLASS_DICT["ArduCopter"]
-        assert get_frame_class_sub_dict("Heli") is FRAME_CLASS_DICT["Heli"]
-        assert get_frame_class_sub_dict("Rover") is FRAME_CLASS_DICT["Rover"]
-        assert get_frame_class_sub_dict("ArduPlane") is FRAME_CLASS_DICT["ArduPlane"]
+    def test_get_frame_class_as_protocol_dict_known_vehicle_types(self) -> None:
+        """get_frame_class_as_protocol_dict returns the correct protocol-shaped sub-dict for known vehicle types."""
+        result = get_frame_class_as_protocol_dict("ArduCopter")
+        assert result["1"] == {"protocol": "Quad"}
+        assert result["2"] == {"protocol": "Hexa"}
+        assert result["3"] == {"protocol": "Octa"}
 
-    def test_get_frame_class_sub_dict_unknown_type_falls_back_to_arducopter(self) -> None:
-        """get_frame_class_sub_dict falls back to ArduCopter for unknown vehicle types."""
-        result = get_frame_class_sub_dict("UnknownVehicle")
-        assert result is FRAME_CLASS_DICT["ArduCopter"]
+        result = get_frame_class_as_protocol_dict("Heli")
+        assert result["6"] == {"protocol": "Heli"}
 
-    def test_get_frame_class_sub_dict_empty_string_falls_back_to_arducopter(self) -> None:
-        """get_frame_class_sub_dict falls back to ArduCopter when fw_type is empty."""
-        result = get_frame_class_sub_dict("")
-        assert result is FRAME_CLASS_DICT["ArduCopter"]
+        result = get_frame_class_as_protocol_dict("Rover")
+        assert result["1"] == {"protocol": "Rover"}
+
+        result = get_frame_class_as_protocol_dict("ArduPlane")
+        assert result["1"] == {"protocol": "Quad"}
+
+    def test_get_frame_class_as_protocol_dict_unknown_type_falls_back_to_arducopter(self) -> None:
+        """get_frame_class_as_protocol_dict falls back to ArduCopter for unknown vehicle types."""
+        result = get_frame_class_as_protocol_dict("UnknownVehicle")
+        assert result["1"] == {"protocol": "Quad"}
+
+    def test_get_frame_class_as_protocol_dict_empty_string_falls_back_to_arducopter(self) -> None:
+        """get_frame_class_as_protocol_dict falls back to ArduCopter when fw_type is empty."""
+        result = get_frame_class_as_protocol_dict("")
+        assert result["1"] == {"protocol": "Quad"}
 
     def test_frame_class_values_are_unique_per_vehicle_type(self) -> None:
         """Within each vehicle type, frame class names must be unique."""
@@ -638,3 +664,117 @@ class TestFrameClassDict:
                 continue
             names = list(sub_dict.values())
             assert len(names) == len(set(names)), f"Duplicate frame class names found in '{vtype}'"
+
+    def test_get_frame_class_valid_tuple_excludes_undefined_for_all_vehicle_types(self) -> None:
+        """
+        get_frame_class_valid_tuple excludes 'Undefined' for every vehicle type.
+
+        GIVEN: All vehicle types in FRAME_CLASS_DICT
+        WHEN: Calling get_frame_class_valid_tuple for each type
+        THEN: The returned tuple must not contain 'Undefined' (invalid user selection)
+        """
+        for vtype in FRAME_CLASS_DICT:
+            result = get_frame_class_valid_tuple(vtype)
+            assert "Undefined" not in result, (
+                f"'Undefined' must not appear in valid tuple for '{vtype}' (not a valid user selection)"
+            )
+
+    def test_get_frame_class_valid_tuple_returns_tuple_of_strings(self) -> None:
+        """
+        get_frame_class_valid_tuple returns a tuple of non-empty strings.
+
+        GIVEN: A known vehicle type (ArduCopter)
+        WHEN: Calling get_frame_class_valid_tuple
+        THEN: A non-empty tuple of strings is returned, containing expected frame class names
+        """
+        result = get_frame_class_valid_tuple("ArduCopter")
+        assert isinstance(result, tuple)
+        assert len(result) > 0
+        assert all(isinstance(name, str) for name in result)
+        assert "Quad" in result
+        assert "Hexa" in result
+
+    def test_get_frame_class_valid_tuple_falls_back_to_arducopter_for_unknown_type(self) -> None:
+        """
+        get_frame_class_valid_tuple falls back to ArduCopter choices for unknown vehicle types.
+
+        GIVEN: An unrecognised vehicle type string
+        WHEN: Calling get_frame_class_valid_tuple
+        THEN: The same result as for 'ArduCopter' is returned
+        """
+        unknown = get_frame_class_valid_tuple("UnknownVehicle")
+        arducopter = get_frame_class_valid_tuple("ArduCopter")
+        assert unknown == arducopter
+
+    def test_get_frame_class_valid_tuple_heli_contains_heli_classes(self) -> None:
+        """
+        get_frame_class_valid_tuple for Heli contains Heli-specific choices.
+
+        GIVEN: 'Heli' vehicle type
+        WHEN: Calling get_frame_class_valid_tuple
+        THEN: Result contains Heli, Heli_Dual, HeliQuad but not Quad or Hexa
+        """
+        result = get_frame_class_valid_tuple("Heli")
+        assert "Heli" in result
+        assert "Heli_Dual" in result
+        assert "HeliQuad" in result
+        assert "Quad" not in result
+        assert "Hexa" not in result
+
+
+class TestArduPlaneEscConnectionDict:
+    """Tests for the ArduPlane entry in ESC_CONNECTION_DICT."""
+
+    def test_arduplane_esc_connection_dict_exists(self) -> None:
+        """
+        ArduPlane has an entry in ESC_CONNECTION_DICT.
+
+        GIVEN: The ESC_CONNECTION_DICT constant
+        WHEN: Checking for the ArduPlane key
+        THEN: The key must exist and its value must be a non-empty dict
+        """
+        assert "ArduPlane" in ESC_CONNECTION_DICT
+        assert len(ESC_CONNECTION_DICT["ArduPlane"]) > 0
+
+    def test_arduplane_esc_connection_dict_contains_dshot_protocols(self) -> None:
+        """
+        ArduPlane ESC dict includes DShot protocol entries.
+
+        GIVEN: The ArduPlane sub-dict in ESC_CONNECTION_DICT
+        WHEN: Collecting protocol names
+        THEN: DShot600 and DShot300 must be present (VTOL motors support DShot)
+        """
+        protocols = {entry["protocol"] for entry in ESC_CONNECTION_DICT["ArduPlane"].values()}
+        assert "DShot600" in protocols
+        assert "DShot300" in protocols
+        assert "Normal" in protocols
+
+    def test_arduplane_esc_connection_dict_excludes_serial_esc_protocols(self) -> None:
+        """
+        ArduPlane ESC dict does not contain serial-only ESC protocols.
+
+        GIVEN: The ArduPlane sub-dict in ESC_CONNECTION_DICT
+        WHEN: Collecting protocol names
+        THEN: FETtecOneWire, Torqeedo, and CoDevESC must NOT be present
+        (ArduPlane VTOL uses Q_M_PWM_TYPE which does not support these)
+        """
+        protocols = {entry["protocol"] for entry in ESC_CONNECTION_DICT["ArduPlane"].values()}
+        assert "FETtecOneWire" not in protocols
+        assert "Torqeedo" not in protocols
+        assert "CoDevESC" not in protocols
+        # But DroneCAN (CAN protocol) must be present
+        assert "DroneCAN" in protocols
+
+    def test_arduplane_esc_connection_dict_entry_shape_matches_other_vehicles(self) -> None:
+        """
+        Each entry in the ArduPlane ESC dict has the same keys as other vehicle entries.
+
+        GIVEN: The ArduPlane sub-dict and the ArduCopter sub-dict in ESC_CONNECTION_DICT
+        WHEN: Comparing the key sets of individual entries
+        THEN: Every ArduPlane entry must have the same set of keys as ArduCopter entries
+        """
+        arducopter_keys = {frozenset(entry.keys()) for entry in ESC_CONNECTION_DICT["ArduCopter"].values()}
+        for code, entry in ESC_CONNECTION_DICT["ArduPlane"].items():
+            assert frozenset(entry.keys()) in arducopter_keys, (
+                f"ArduPlane ESC entry '{code}' has unexpected keys: {set(entry.keys())}"
+            )

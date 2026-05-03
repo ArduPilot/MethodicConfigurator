@@ -320,6 +320,55 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
         assert frame_class == "Octa"
 
+    def test_user_can_import_frame_class_from_q_frame_class_for_vtol_plane(self, realistic_model) -> None:
+        """
+        ArduPlane VTOL frame class is imported from Q_FRAME_CLASS when FRAME_CLASS is absent.
+
+        GIVEN: FC parameters with Q_FRAME_CLASS set to 2 (Hexa) but no FRAME_CLASS key
+        WHEN: Processing FC parameters for an ArduPlane firmware model
+        THEN: Frame class in the component data should be set to 'Hexa'
+        """
+        realistic_model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        fc_parameters = {"Q_FRAME_CLASS": 2, "Q_FRAME_TYPE": 1}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, {})
+
+        frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
+        assert frame_class == "Hexa"
+
+    def test_frame_class_takes_priority_over_q_frame_class_during_import(self, realistic_model) -> None:
+        """
+        FRAME_CLASS takes precedence over Q_FRAME_CLASS when both are present in FC parameters.
+
+        GIVEN: FC parameters containing both FRAME_CLASS (3=Octa) and Q_FRAME_CLASS (1=Quad)
+        WHEN: Processing FC parameters
+        THEN: Frame class is set from FRAME_CLASS (Octa), not Q_FRAME_CLASS (Quad)
+        """
+        fc_parameters = {"FRAME_CLASS": 3, "Q_FRAME_CLASS": 1}
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, {})
+
+        frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
+        assert frame_class == "Octa"
+
+    def test_frame_class_set_to_undefined_when_code_not_in_dict(self, realistic_model) -> None:
+        """
+        Frame class is set to 'Undefined' when the numeric code is not in the vehicle's dict.
+
+        GIVEN: FC parameters with a FRAME_CLASS code that has no label for the current firmware type
+        WHEN: Processing FC parameters
+        THEN: Frame class component value is set to 'Undefined'
+        """
+        fc_parameters = {"FRAME_CLASS": 999}  # Unknown code
+
+        with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=True):
+            realistic_model.process_fc_parameters(fc_parameters, {})
+
+        frame_class = realistic_model.get_component_value(("Frame", "Specifications", "Frame class"))
+        assert frame_class == "Undefined"
+
     def test_user_can_import_esc_connection_and_telemetry_from_serial_fc(self, realistic_model) -> None:
         """
         Import ESC serial config into FC->ESC Connection and ESC->FC Telemetry.
@@ -1110,7 +1159,7 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
 
         GIVEN: Flight controller parameters and documentation that fails verification
         WHEN: Processing FC parameters
-        THEN: Verification should be attempted for all 5 dictionaries
+        THEN: Verification should be attempted for all 6 dictionaries
         AND: Processing should continue despite verification failures
         """
         fc_parameters = {
@@ -1127,8 +1176,8 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         with patch.object(realistic_model, "_verify_dict_is_uptodate", return_value=False) as mock_verify:
             realistic_model.process_fc_parameters(fc_parameters, doc)
 
-            # Should call verification 5 times (once for each dictionary)
-            assert mock_verify.call_count == 5
+            # Should call verification 6 times (once for each dictionary)
+            assert mock_verify.call_count == 6
 
     def test_system_correctly_validates_rc_protocol_power_of_two(self, realistic_model) -> None:
         """

@@ -85,8 +85,8 @@ def get_frame_info(fc_parameters: dict[str, float]) -> tuple[int, int]:
         (1, 1)
 
     """
-    frame_class = int(fc_parameters.get("FRAME_CLASS", 1))  # Default to QUAD
-    frame_type = int(fc_parameters.get("FRAME_TYPE", 1))  # Default to X
+    frame_class = int(fc_parameters.get("FRAME_CLASS", fc_parameters.get("Q_FRAME_CLASS", 1)))  # Default to QUAD
+    frame_type = int(fc_parameters.get("FRAME_TYPE", fc_parameters.get("Q_FRAME_TYPE", 1)))  # Default to X
     return (frame_class, frame_type)
 
 

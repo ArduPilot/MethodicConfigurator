@@ -131,6 +131,69 @@ class TestFrameInfo:
         assert frame_class == 1  # Default QUAD
         assert frame_type == 1  # Default X
 
+    def test_vtol_plane_uses_q_frame_class_when_frame_class_absent(self) -> None:
+        """
+        ArduPlane VTOL frame class is read from Q_FRAME_CLASS when FRAME_CLASS is absent.
+
+        GIVEN: FC parameters with Q_FRAME_CLASS set (ArduPlane VTOL) but no FRAME_CLASS
+        WHEN: Extracting frame info
+        THEN: Q_FRAME_CLASS value is used as the frame class
+        """
+        params = {"Q_FRAME_CLASS": 2.0, "Q_FRAME_TYPE": 1.0}
+        frame_class, frame_type = get_frame_info(params)
+        assert frame_class == 2  # Hexa from Q_FRAME_CLASS
+        assert frame_type == 1  # X from Q_FRAME_TYPE
+
+    def test_vtol_plane_uses_q_frame_type_when_frame_type_absent(self) -> None:
+        """
+        ArduPlane VTOL frame type is read from Q_FRAME_TYPE when FRAME_TYPE is absent.
+
+        GIVEN: FC parameters with Q_FRAME_TYPE set but no FRAME_TYPE
+        WHEN: Extracting frame info
+        THEN: Q_FRAME_TYPE value is used as the frame type
+        """
+        params = {"FRAME_CLASS": 1.0, "Q_FRAME_TYPE": 3.0}
+        frame_class, frame_type = get_frame_info(params)
+        assert frame_class == 1
+        assert frame_type == 3  # H from Q_FRAME_TYPE fallback
+
+    def test_frame_class_takes_priority_over_q_frame_class_when_both_present(self) -> None:
+        """
+        FRAME_CLASS takes precedence over Q_FRAME_CLASS when both are present.
+
+        GIVEN: FC parameters with both FRAME_CLASS and Q_FRAME_CLASS
+        WHEN: Extracting frame info
+        THEN: FRAME_CLASS is used and Q_FRAME_CLASS is ignored
+        """
+        params = {"FRAME_CLASS": 3.0, "Q_FRAME_CLASS": 1.0, "FRAME_TYPE": 1.0}
+        frame_class, _ = get_frame_info(params)
+        assert frame_class == 3  # Octa from FRAME_CLASS, not Quad from Q_FRAME_CLASS
+
+    def test_frame_type_takes_priority_over_q_frame_type_when_both_present(self) -> None:
+        """
+        FRAME_TYPE takes precedence over Q_FRAME_TYPE when both are present.
+
+        GIVEN: FC parameters with both FRAME_TYPE and Q_FRAME_TYPE
+        WHEN: Extracting frame info
+        THEN: FRAME_TYPE is used and Q_FRAME_TYPE is ignored
+        """
+        params = {"FRAME_CLASS": 1.0, "FRAME_TYPE": 2.0, "Q_FRAME_TYPE": 5.0}
+        _, frame_type = get_frame_info(params)
+        assert frame_type == 2  # V from FRAME_TYPE, not A-Tail from Q_FRAME_TYPE
+
+    def test_defaults_to_1_when_all_frame_params_absent(self) -> None:
+        """
+        Both frame class and type default to 1 when neither standard nor Q parameters exist.
+
+        GIVEN: FC parameters with no FRAME_CLASS, Q_FRAME_CLASS, FRAME_TYPE, or Q_FRAME_TYPE
+        WHEN: Extracting frame info
+        THEN: Both values default to 1 (Quad, X)
+        """
+        params = {"BATT_MONITOR": 4.0}
+        frame_class, frame_type = get_frame_info(params)
+        assert frame_class == 1
+        assert frame_type == 1
+
 
 class TestBatteryVoltageValidation:
     """Test battery voltage validation logic."""

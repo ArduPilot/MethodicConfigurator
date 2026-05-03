@@ -283,6 +283,20 @@ ESC_CONNECTION_DICT: dict[str, dict[str, dict[str, Union[tuple[str, ...], str, E
         "102": {"type": SERIAL_PORTS, "protocol": "CoDevESC", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
         "200": {"type": CAN_PORTS, "protocol": "DroneCAN", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
     },
+    # ArduPlane uses Q_M_PWM_TYPE instead of MOT_PWM_TYPE and supports DroneCAN for ESCs
+    "ArduPlane": {
+        "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SCRIPTING_ONLY},
+        "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "2": {"type": PWM_OUT_PORTS, "protocol": "OneShot125", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
+        "3": {"type": PWM_OUT_PORTS, "protocol": "Brushed", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "4": {"type": PWM_OUT_PORTS, "protocol": "DShot150", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "5": {"type": PWM_OUT_PORTS, "protocol": "DShot300", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "6": {"type": PWM_OUT_PORTS, "protocol": "DShot600", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "7": {"type": PWM_OUT_PORTS, "protocol": "DShot1200", "ESC_to_FC": ESC_TO_FC_TELEMETRY_DSHOT},
+        "8": {"type": PWM_OUT_PORTS, "protocol": "PWMRange", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "9": {"type": PWM_OUT_PORTS, "protocol": "PWMAngle", "ESC_to_FC": ESC_TO_FC_TELEMETRY_NONE},
+        "200": {"type": CAN_PORTS, "protocol": "DroneCAN", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SAME},
+    },
 }
 
 
@@ -316,6 +330,8 @@ RC_PROTOCOLS_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "65536": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "MAVRadio"},  # Bit 16
 }
 
+# When adding new entries here, make sure to also update the self._verify_dict_is_uptodate() calls
+# inside the process_fc_parameters() method in the data_model_vehicle_components_import.py file
 FRAME_CLASS_DICT: dict[str, dict[int, str]] = {
     "ArduCopter": {
         0: "Undefined",
@@ -338,7 +354,11 @@ FRAME_CLASS_DICT: dict[str, dict[int, str]] = {
         17: "Dynamic Scripting Matrix",
     },
     "Heli": {
+        0: "Undefined",
         6: "Heli",
+        8: "SingleCopter",
+        9: "CoaxCopter",
+        10: "BiCopter",
         11: "Heli_Dual",
         13: "HeliQuad",
     },
@@ -348,13 +368,46 @@ FRAME_CLASS_DICT: dict[str, dict[int, str]] = {
         2: "Boat",
         3: "BalanceBot",
     },
-    "ArduPlane": {},
+    # ArduPlane does not have a FRAME_CLASS parameter, it uses Q_FRAME_CLASS instead for the same purpose.
+    # We added it here to unify and simplify the GUI as they serve the same purpose of defining the number of motors users
+    # used in active hover propulsion.
+    "ArduPlane": {
+        0: "Undefined",
+        1: "Quad",
+        2: "Hexa",
+        3: "Octa",
+        4: "OctaQuad",
+        5: "Y6",
+        7: "Tri",
+        10: "Single/Dual",
+        12: "DodecaHexa",
+        14: "Deca",
+        15: "Scripting Matrix",
+        17: "Dynamic Scripting Matrix",
+    },
 }
 
 
-def get_frame_class_sub_dict(vehicle_type: str) -> dict[int, str]:
-    """Return the vehicle-type-specific frame class mapping from FRAME_CLASS_DICT."""
-    return FRAME_CLASS_DICT.get(vehicle_type, FRAME_CLASS_DICT["ArduCopter"])
+def get_frame_class_as_protocol_dict(vehicle_type: str) -> dict[str, dict[str, str]]:
+    """
+    Return the vehicle-type-specific frame class mapping from FRAME_CLASS_DICT.
+
+    Each entry is shaped as a documentation-compatible protocol dictionary so
+    _verify_dict_is_uptodate() can handle FRAME_CLASS metadata unchanged.
+    """
+    return {
+        str(frame_class): {"protocol": frame_class_name}
+        for frame_class, frame_class_name in FRAME_CLASS_DICT.get(vehicle_type, FRAME_CLASS_DICT["ArduCopter"]).items()
+    }
+
+
+def get_frame_class_valid_tuple(vehicle_type: str) -> tuple[str, ...]:
+    """
+    Return the valid frame-class labels for the given vehicle type, excluding "Undefined".
+
+    "Undefined" is not a valid user selection and should not appear in the combobox.
+    """
+    return tuple(v for v in FRAME_CLASS_DICT.get(vehicle_type, FRAME_CLASS_DICT["ArduCopter"]).values() if v != "Undefined")
 
 
 class ComponentDataModelValidation(ComponentDataModelBase):
@@ -386,6 +439,9 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 self.set_component_value(
                     ("Battery", "Specifications", vtype), BatteryCell.recommended_cell_voltage(value, vtype)
                 )
+
+        if path == ("Flight Controller", "Firmware", "Type") and isinstance(value, str):
+            self._possible_choices[("Frame", "Specifications", "Frame class")] = get_frame_class_valid_tuple(value)
 
         # Update possible choices for protocol fields when connection type changes
         self._update_possible_choices_for_path(path, value)
@@ -538,6 +594,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("GNSS Receiver", "FC Connection", "Type"): ("None", *SERIAL_PORTS, *CAN_PORTS),
             ("GNSS Receiver", "FC Connection", "Protocol"): get_all_protocols(GNSS_RECEIVER_CONNECTION),
             ("Battery", "Specifications", "Chemistry"): BatteryCell.chemistries(),
+            ("Frame", "Specifications", "Frame class"): get_frame_class_valid_tuple(fw_type),
         }
         for component in ["RC Receiver", "Telemetry", "Battery Monitor", "ESC", "GNSS Receiver"]:
             if component not in self._data.get("Components", {}):
