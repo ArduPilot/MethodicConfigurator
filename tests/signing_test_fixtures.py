@@ -10,6 +10,9 @@ SPDX-FileCopyrightText: 2024-2025 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
+from unittest.mock import MagicMock
+
 from ardupilot_methodic_configurator.data_model_signing_config import SigningConfig
 
 # Standard test config parameters - reused across multiple tests
@@ -112,3 +115,38 @@ def create_config_with_custom_offsets(timestamp_offset: int, link_id: int) -> Si
         timestamp_offset=timestamp_offset,
         link_id=link_id,
     )
+
+
+def setup_mock_keyring() -> tuple[MagicMock, type[Exception]]:
+    """
+    Set up mock keyring module for tests.
+
+    This function ensures consistent mock keyring behavior across all test files.
+    It creates a mock keyring with proper exception handling.
+
+    Returns:
+        tuple: (mock_keyring, PasswordDeleteError) - the mock keyring module and exception class
+
+    """
+    mock_keyring = MagicMock()
+    mock_backend = MagicMock()
+    mock_keyring.get_keyring.return_value = mock_backend
+    mock_keyring.set_password = MagicMock()
+    mock_keyring.get_password = MagicMock()
+    mock_keyring.delete_password = MagicMock()
+
+    # Create proper exception classes for keyring.errors
+    class PasswordDeleteError(Exception):
+        """Mock keyring.errors.PasswordDeleteError exception."""
+
+    class MockKeyringErrors:  # pylint: disable=too-few-public-methods
+        """Mock keyring.errors module."""
+
+    # Assign exception class to errors module
+    MockKeyringErrors.PasswordDeleteError = PasswordDeleteError
+
+    mock_keyring.errors = MockKeyringErrors()
+    sys.modules["keyring"] = mock_keyring
+    sys.modules["keyring.errors"] = mock_keyring.errors
+
+    return mock_keyring, PasswordDeleteError

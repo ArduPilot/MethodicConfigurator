@@ -22,19 +22,58 @@ FIXTURES:
 - signing_keystore: Signing keystore with temporary storage
 """
 
+import sys
+from collections.abc import Generator
+from typing import Optional
+from unittest.mock import MagicMock
+
 import pytest
+from signing_test_fixtures import setup_mock_keyring
 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_signing_keystore import SigningKeystore
 
+# Mock keyring before importing SigningKeystore to ensure consistent behavior across test environments
+_, PasswordDeleteError = setup_mock_keyring()
+
 # Note: These tests use the sitl_flight_controller fixture from conftest.py
 # which automatically starts and manages SITL via sitl_manager
 
+# Storage for keys - used by the mock keyring
+_stored_keys: dict[str, str] = {}
+
 
 @pytest.fixture
-def signing_keystore() -> SigningKeystore:
-    """Create a signing keystore instance."""
-    return SigningKeystore()
+def signing_keystore() -> Generator[SigningKeystore, None, None]:
+    """Create a signing keystore instance with mocked keyring storage."""
+    _stored_keys.clear()
+
+    # Get the mock keyring from sys.modules
+    mock_keyring_module = sys.modules.get("keyring")
+    if mock_keyring_module is None:
+        pytest.skip("Keyring mock not set up")
+        return
+
+    # Configure mock to use our storage dictionary
+    def mock_set_password(service: str, account: str, password: str) -> None:
+        """Mock set_password to store in our dictionary."""
+        if service == "ArduPilotMethodicConfigurator":
+            _stored_keys[account] = password
+
+    def mock_get_password(service: str, account: str) -> Optional[str]:
+        """Mock get_password to retrieve from our dictionary."""
+        if service == "ArduPilotMethodicConfigurator":
+            return _stored_keys.get(account)
+        return None
+
+    mock_keyring_module.set_password = MagicMock(side_effect=mock_set_password)
+    mock_keyring_module.get_password = MagicMock(side_effect=mock_get_password)
+
+    keystore = SigningKeystore()
+    yield keystore
+
+    # Cleanup
+    _stored_keys.clear()
 
 
 @pytest.mark.integration
@@ -122,6 +161,8 @@ class TestSITLConnectionWithSigning:
             pytest.skip("MAVLink signing not supported by this pymavlink version")
 
 
+@pytest.mark.integration
+@pytest.mark.sitl
 class TestSITLSigningKeyPersistence:  # pylint: disable=too-few-public-methods
     """Test signing key storage and retrieval with SITL."""
 

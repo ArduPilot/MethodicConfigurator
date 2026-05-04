@@ -16,6 +16,7 @@ from collections.abc import Generator
 from unittest.mock import MagicMock
 
 import pytest
+from signing_test_fixtures import setup_mock_keyring
 
 from ardupilot_methodic_configurator.backend_signing_keystore import (
     SIGNING_KEY_LENGTH,
@@ -24,31 +25,39 @@ from ardupilot_methodic_configurator.backend_signing_keystore import (
 
 # pylint: disable=unused-argument, redefined-outer-name
 
+# Save original keyring modules so we can restore them after tests
+_original_keyring = sys.modules.get("keyring")
+_original_keyring_errors = sys.modules.get("keyring.errors")
 
 # Mock keyring before importing SigningKeystore
-mock_keyring = MagicMock()
+mock_keyring, PasswordDeleteError = setup_mock_keyring()
 mock_backend = MagicMock()
 mock_keyring.get_keyring.return_value = mock_backend
-mock_keyring.set_password = MagicMock()
-mock_keyring.get_password = MagicMock()
-mock_keyring.delete_password = MagicMock()
 
 
-# Create proper exception classes for keyring.errors
-class PasswordDeleteError(Exception):
-    """Mock keyring password delete error."""
+@pytest.fixture(autouse=True)
+def _restore_real_keyring_after_tests() -> Generator[None, None, None]:
+    """Restore real keyring after all tests in this module complete."""
+    yield
+    # After each test, ensure we keep the mock for the next test in this module
+    # But we need a session-level cleanup to restore real keyring for other modules
+    mock_keyring.reset_mock()
 
 
-class MockKeyringErrors:  # pylint: disable=too-few-public-methods
-    """Mock keyring.errors module."""
+@pytest.fixture(scope="module", autouse=True)
+def _restore_real_keyring_after_module() -> Generator[None, None, None]:
+    """Restore real keyring after all tests in this module complete."""
+    yield
+    # After all tests in this module, restore real keyring for other test modules
+    if _original_keyring is not None:
+        sys.modules["keyring"] = _original_keyring
+    else:
+        sys.modules.pop("keyring", None)
 
-    PasswordDeleteError = PasswordDeleteError
-
-
-mock_keyring.errors = MockKeyringErrors()
-
-sys.modules["keyring"] = mock_keyring
-sys.modules["keyring.errors"] = mock_keyring.errors
+    if _original_keyring_errors is not None:
+        sys.modules["keyring.errors"] = _original_keyring_errors
+    else:
+        sys.modules.pop("keyring.errors", None)
 
 
 @pytest.fixture
@@ -59,7 +68,7 @@ def reset_keyring_mock() -> Generator[None, None, None]:
     mock_keyring.set_password = MagicMock()
     mock_keyring.get_password = MagicMock()
     mock_keyring.delete_password = MagicMock()
-    mock_keyring.errors = MockKeyringErrors()
+    mock_keyring.errors = sys.modules.get("keyring.errors")
     yield
     mock_keyring.reset_mock()
 
