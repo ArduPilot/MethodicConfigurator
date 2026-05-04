@@ -13,7 +13,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import json
 
 import pytest
-from signing_test_fixtures import STANDARD_CONFIG_PARAMS, create_standard_signing_config
+from signing_test_fixtures import (
+    MAX_LINK_ID_CONFIG_JSON,
+    STANDARD_CONFIG_PARAMS,
+    assert_core_restricted_fields,
+    assert_secure_defaults_config,
+    create_config_with_custom_offsets,
+    create_standard_signing_config,
+)
 
 from ardupilot_methodic_configurator.backend_signing_config import (
     SigningConfigManager,
@@ -53,19 +60,9 @@ class TestSigningConfigCreation:
         WHEN: The user creates a SigningConfig with those values
         THEN: The configuration should reflect the custom values
         """
-        config = SigningConfig(
-            enabled=True,
-            sign_outgoing=True,
-            allow_unsigned_in=False,
-            accept_unsigned_callbacks=False,
-            timestamp_offset=1000,
-            link_id=5,
-        )
+        config = create_config_with_custom_offsets(timestamp_offset=1000, link_id=5)
 
-        assert config.enabled is True
-        assert config.sign_outgoing is True
-        assert config.allow_unsigned_in is False
-        assert config.accept_unsigned_callbacks is False
+        assert_core_restricted_fields(config)
         assert config.timestamp_offset == 1000
         assert config.link_id == 5
 
@@ -79,11 +76,7 @@ class TestSigningConfigCreation:
         AND: Signing should be enabled, unsigned messages rejected
         """
         config = SigningConfig.secure_defaults()
-
-        assert config.enabled is True
-        assert config.sign_outgoing is True
-        assert config.allow_unsigned_in is False
-        assert config.accept_unsigned_callbacks is False
+        assert_secure_defaults_config(config)
 
     def test_user_can_compare_configs_for_equality(self) -> None:
         """
@@ -207,16 +200,7 @@ class TestSigningConfigSerialization:
         WHEN: The user creates a config from the dictionary
         THEN: A SigningConfig instance should be created with those values
         """
-        config_dict = {
-            "enabled": True,
-            "sign_outgoing": True,
-            "allow_unsigned_in": False,
-            "accept_unsigned_callbacks": False,
-            "timestamp_offset": 0,
-            "link_id": 255,
-        }
-
-        config = SigningConfig.from_dict(config_dict)
+        config = SigningConfig.from_dict(MAX_LINK_ID_CONFIG_JSON)
 
         assert config.enabled is True
         assert config.link_id == 255

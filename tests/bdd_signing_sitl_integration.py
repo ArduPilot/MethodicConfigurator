@@ -22,8 +22,6 @@ FIXTURES:
 - signing_keystore: Signing keystore with temporary storage
 """
 
-from unittest.mock import patch
-
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -34,11 +32,9 @@ from ardupilot_methodic_configurator.backend_signing_keystore import SigningKeys
 
 
 @pytest.fixture
-def signing_keystore(tmp_path) -> SigningKeystore:
-    """Create a signing keystore with temporary storage."""
-    with patch("ardupilot_methodic_configurator.backend_signing_keystore.user_data_dir") as mock_dir:
-        mock_dir.return_value = str(tmp_path)
-        return SigningKeystore(use_keyring=False)
+def signing_keystore() -> SigningKeystore:
+    """Create a signing keystore instance."""
+    return SigningKeystore()
 
 
 @pytest.mark.integration
