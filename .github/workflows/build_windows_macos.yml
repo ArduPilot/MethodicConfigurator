@@ -54,11 +54,11 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: installer.exe
-          key: innosetup-6.5.4-exe
+          key: innosetup-6.7.1-exe
 
       - name: Download Inno Setup installer
         if: steps.cache-innosetup.outputs.cache-hit != 'true'
-        run: curl -L -o installer.exe https://files.jrsoftware.org/is/6/innosetup-6.5.4.exe
+        run: curl -L -o installer.exe https://github.com/jrsoftware/issrc/releases/download/is-6_7_1/innosetup-6.7.1.exe
 
       - name: Install Inno Setup
         run: |
