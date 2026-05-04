@@ -6,7 +6,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '**/*.py'  # Watch for changes in any Python files
+      - '**/*.py'        # Watch for changes in any Python files
+      - 'pyproject.toml'
+      - 'windows/**'
+      - 'macos/**'
+      - 'linux/**'
+      - 'workflows/build_windows_macos.yml' # Re-run build if workflow file itself changes
 
 concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}

@@ -10,8 +10,6 @@ on:
       - '**/*.py'        # Watch for changes in any Python files
       - 'pyproject.toml' # Watch for changes in the pyproject.toml file
   workflow_dispatch:
-  release:
-    types: [published]
 
 concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}
