@@ -59,6 +59,9 @@ IMAGES_DIR = ROOT_DIR / "images"
 DEFAULT_VEHICLE_DIR = ROOT_DIR / "ardupilot_methodic_configurator" / "vehicle_templates" / "ArduCopter" / "empty_4.6.x"
 
 
+# pylint: disable=too-many-lines
+
+
 @dataclass(frozen=True)
 class CaptureTarget:
     """A screenshot file and capture callback key."""
@@ -238,7 +241,7 @@ class FakeFlightControllerForInfoWindow:  # pylint: disable=too-few-public-metho
 class FakeProjectManager:
     """Minimal project manager API for opener/creator windows."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         template_dir: Path,
         base_dir: Path,
@@ -607,7 +610,7 @@ def _vehicle_opener_highlight_box(window: VehicleProjectOpenerWindow, action: st
     raise RuntimeError(msg)
 
 
-def _capture_vehicle_opener_with_highlight(
+def _capture_vehicle_opener_with_highlight(  # pylint: disable=too-many-arguments, too-many-positional-arguments
     output_path: Path,
     delay: float,
     padding: int,
@@ -688,7 +691,7 @@ def _find_create_button(window: VehicleProjectCreatorWindow) -> tuple[int, int, 
     return _widget_screen_box(create_button, margin=2)
 
 
-def _vehicle_creator_highlight_box(window: VehicleProjectCreatorWindow, variant: str) -> tuple[int, int, int, int]:
+def _vehicle_creator_highlight_box(window: VehicleProjectCreatorWindow, variant: str) -> tuple[int, int, int, int]:  # pylint: disable=too-many-locals
     """Resolve a highlight box for a specific vehicle creator screenshot variant."""
     result: tuple[int, int, int, int] | None = None
 
@@ -891,7 +894,7 @@ def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_d
             window.on_close()
 
 
-def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:
+def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
     """Capture one screenshot target."""
     action = target.action
     if action == "about":
