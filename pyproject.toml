@@ -46,7 +46,6 @@ classifiers = [
 dependencies = [
     "argcomplete==3.6.3",
     "certifi==2026.4.22",
-    "cryptography==45.0.3",
     "defusedxml==0.7.1",
     "jsonschema==4.25.1",
     "keyring==25.6.0",

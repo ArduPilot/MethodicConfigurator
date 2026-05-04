@@ -587,8 +587,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         try:
             # Set up the signing state on the MAVLink connection
             # pymavlink's mavlink_connection supports signing setup
-            # Type ignore needed because MavlinkConnection is a Union including object fallback
-            self.master.setup_signing(  # type: ignore[union-attr]
+            self.master.setup_signing(
                 key,
                 sign_outgoing=sign_outgoing,
                 allow_unsigned_callback=self._unsigned_callback if allow_unsigned_in else None,
@@ -667,8 +666,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
         try:
             # Disable signing by passing None as key
-            # Type ignore needed because MavlinkConnection is a Union including object fallback
-            self.master.setup_signing(None, sign_outgoing=False, allow_unsigned_callback=None)  # type: ignore[union-attr]
+            self.master.setup_signing(None, sign_outgoing=False, allow_unsigned_callback=None)
             logging_info(_("MAVLink signing disabled"))
             return True
         except AttributeError as exc:
@@ -706,8 +704,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
         try:
             # Check if signing is set up on the MAVLink connection
-            # Type ignore needed because MavlinkConnection is a Union including object fallback
-            mav = self.master.mav  # type: ignore[union-attr]
+            mav = self.master.mav
             if hasattr(mav, "signing") and mav.signing is not None:
                 signing = mav.signing
                 status["enabled"] = True

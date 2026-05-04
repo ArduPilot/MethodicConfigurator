@@ -325,24 +325,10 @@ This security model follows industry best practices and provides the same level 
     id="guru-widget-id">
 </script>
 
-## OS Keyring Setup (Required for Secure MAVLink Signing)
+## OS Keyring Setup (Required for MAVLink Signing)
 
 If you plan to use [MAVLink 2.0 message signing](https://mavlink.io/en/guide/message_signing.html),
-the application can securely store signing keys using your operating system's keyring.
-
-### ⚠️ CRITICAL SECURITY WARNING
-
-**The file-based fallback encryption is WEAK and NOT suitable for production use!**
-
-When OS keyring is unavailable, the application falls back to file-based storage that uses
-**vehicle_id as the encryption key**. This provides only obfuscation:
-
-- ❌ Anyone with filesystem access can decrypt your signing keys
-- ❌ vehicle_id provides only 20-40 bits of entropy (easily brute-forced)
-- ❌ Same vehicle_id = same encryption key everywhere
-- ❌ **NOT cryptographically secure**
-
-**For production/real-world use, you MUST use OS keyring!**
+the application securely stores signing keys using your operating system's native keyring.
 
 ### Windows
 
@@ -354,13 +340,8 @@ When OS keyring is unavailable, the application falls back to file-based storage
 
 ### Linux
 
-Most desktop environments have keyring support pre-installed:
-
-- **GNOME**: Uses GNOME Keyring / Secret Service ✅ Secure
-- **KDE**: Uses KWallet ✅ Secure
-- **Headless/Server**: ⚠️ Falls back to WEAK file storage (development/testing only)
-
-**REQUIRED for production:** Install keyring for your distribution:
+Install keyring support for your distribution.
+Most desktop environments use GNOME Keyring or KDE Wallet:
 
 ```bash
 # Ubuntu/Debian (GNOME)
@@ -372,27 +353,18 @@ sudo dnf install gnome-keyring libsecret
 # Arch Linux
 sudo pacman -S gnome-keyring libsecret
 
-# For headless systems, consider running keyring daemon:
+# For headless systems, install and run keyring daemon:
 gnome-keyring-daemon --start --components=secrets
 ```
 
-### Verifying Keyring Availability
+### Verifying Keyring Setup
 
 ```python
 from ardupilot_methodic_configurator.backend_signing_keystore import SigningKeystore
-keystore = SigningKeystore()
-print(f"Keyring available: {keystore.keyring_available}")
-if not keystore.keyring_available:
-    print("⚠️  WARNING: Using WEAK file-based encryption!")
-    print("   For production, install OS keyring support.")
+
+try:
+    keystore = SigningKeystore()
+    print("✅ Keyring is properly configured and ready for use")
+except ConnectionError as e:
+    print(f"❌ Keyring is not available: {e}")
 ```
-
-### File Storage Security Considerations
-
-If you must use file-based storage (development/testing only):
-
-1. **Restrict filesystem permissions** (automatically set to 0o600 on Unix)
-2. **Use encrypted disk/partition** for additional protection
-3. **Never commit** keystore files to version control
-4. **Consider this temporary** - migrate to keyring for production
-5. **Be aware**: Anyone with root/admin access can decrypt keys

@@ -28,7 +28,6 @@ It directly uses:
 | [pymavlink](https://github.com/ArduPilot/pymavlink) | [GNU Lesser General Public License v3.0](https://github.com/ArduPilot/pymavlink/blob/master/COPYING) |
 | [ArduPilot tempcal_IMU.py](https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/tempcal_IMU.py) | [GNU General Public License v3.0](https://github.com/ArduPilot/ardupilot/blob/master/COPYING.txt) |
 | [argcomplete](https://github.com/kislyuk/argcomplete) | [Apache 2.0 License](https://raw.githubusercontent.com/kislyuk/argcomplete/refs/heads/main/LICENSE.rst) |
-| [cryptography](https://github.com/pyca/cryptography) | [Apache 2.0 / BSD License](https://github.com/pyca/cryptography/blob/main/LICENSE) |
 | [keyring](https://github.com/jaraco/keyring) | [MIT License](https://github.com/jaraco/keyring/blob/main/LICENSE) |
 | [platformdirs](https://platformdirs.readthedocs.io/en/latest/index.html) | [MIT](https://github.com/platformdirs/platformdirs/blob/main/LICENSE) |
 | [pyserial](https://pyserial.readthedocs.io/en/latest/pyserial.html) | [BSD License](https://github.com/pyserial/pyserial/blob/master/LICENSE.txt) |

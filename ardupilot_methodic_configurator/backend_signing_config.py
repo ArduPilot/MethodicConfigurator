@@ -215,15 +215,15 @@ class SigningConfigManager(FilesystemJSONWithSchema):
             # Acquire lock BEFORE any file operations to prevent race conditions
             with open(lock_file, "a+", encoding="utf-8") as lock:
                 if os.name != "nt":
-                    import fcntl  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+                    import fcntl  # noqa: PLC0415 # pylint: disable=import-outside-toplevel # type: ignore[import]
 
-                    fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+                    fcntl.flock(lock.fileno(), fcntl.LOCK_EX)  # type: ignore[attr-defined]
                 else:
                     # Windows file locking using msvcrt
-                    import msvcrt  # noqa: PLC0415 # pylint: disable=import-outside-toplevel,import-error
+                    import msvcrt  # noqa: PLC0415 # pylint: disable=import-outside-toplevel,import-error # type: ignore[import]
 
                     # Lock 1KB region (adequate for lock file)
-                    msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1024)  # type: ignore[attr-defined]
+                    msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1024)
 
                 # Now perform file operations under lock protection
                 with open(temp_file, "w", encoding="utf-8") as f:
