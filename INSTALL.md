@@ -324,3 +324,75 @@ This security model follows industry best practices and provides the same level 
     data-light-mode="true"
     id="guru-widget-id">
 </script>
+
+## OS Keyring Setup (Required for Secure MAVLink Signing)
+
+If you plan to use [MAVLink 2.0 message signing](https://mavlink.io/en/guide/message_signing.html),
+the application can securely store signing keys using your operating system's keyring.
+
+### ⚠️ CRITICAL SECURITY WARNING
+
+**The file-based fallback encryption is WEAK and NOT suitable for production use!**
+
+When OS keyring is unavailable, the application falls back to file-based storage that uses
+**vehicle_id as the encryption key**. This provides only obfuscation:
+
+- ❌ Anyone with filesystem access can decrypt your signing keys
+- ❌ vehicle_id provides only 20-40 bits of entropy (easily brute-forced)
+- ❌ Same vehicle_id = same encryption key everywhere
+- ❌ **NOT cryptographically secure**
+
+**For production/real-world use, you MUST use OS keyring!**
+
+### Windows
+
+**No setup required** - Uses Windows Credential Manager (built-in). ✅ Secure
+
+### macOS
+
+**No setup required** - Uses Keychain (built-in). ✅ Secure
+
+### Linux
+
+Most desktop environments have keyring support pre-installed:
+
+- **GNOME**: Uses GNOME Keyring / Secret Service ✅ Secure
+- **KDE**: Uses KWallet ✅ Secure
+- **Headless/Server**: ⚠️ Falls back to WEAK file storage (development/testing only)
+
+**REQUIRED for production:** Install keyring for your distribution:
+
+```bash
+# Ubuntu/Debian (GNOME)
+sudo apt install gnome-keyring libsecret-1-0
+
+# Fedora (GNOME)
+sudo dnf install gnome-keyring libsecret
+
+# Arch Linux
+sudo pacman -S gnome-keyring libsecret
+
+# For headless systems, consider running keyring daemon:
+gnome-keyring-daemon --start --components=secrets
+```
+
+### Verifying Keyring Availability
+
+```python
+from ardupilot_methodic_configurator.backend_signing_keystore import SigningKeystore
+keystore = SigningKeystore()
+print(f"Keyring available: {keystore.keyring_available}")
+if not keystore.keyring_available:
+    print("⚠️  WARNING: Using WEAK file-based encryption!")
+    print("   For production, install OS keyring support.")
+```
+
+### File Storage Security Considerations
+
+If you must use file-based storage (development/testing only):
+
+1. **Restrict filesystem permissions** (automatically set to 0o600 on Unix)
+2. **Use encrypted disk/partition** for additional protection
+3. **Never commit** keystore files to version control
+4. **Consider this temporary** - migrate to keyring for production
+5. **Be aware**: Anyone with root/admin access can decrypt keys
