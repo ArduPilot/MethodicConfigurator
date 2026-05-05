@@ -44,7 +44,7 @@ old_cwd = os.getcwd()
 
 def ensure_dependencies() -> None:
     """Check for and install required dependencies if they're missing."""
-    required_packages = ["lxml==6.0.2"]
+    required_packages = ["lxml==6.1.0"]
 
     for package in required_packages:
         if importlib.util.find_spec(package) is None:
