@@ -252,7 +252,7 @@ jobs:
           retention-days: 7
 
   build_linux:
-    runs-on: 'ubuntu-20.04'  # Use a consistent Linux environment for building the AppImage
+    runs-on: 'ubuntu-22.04'  # Use a consistent Linux environment for building the AppImage
     strategy:
       matrix:
         python-version: ['3.14']
