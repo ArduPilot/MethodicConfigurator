@@ -267,6 +267,24 @@ They must obey `Volt per cell crit` < `Volt per cell low` < `Volt per cell arm` 
 `Number of cells` is the number of cells connected in series.
 For a 6S battery this is 6.
 
+### Battery Discharge Characteristics
+
+The voltage thresholds depend on multiple factors:
+
+- **Battery Chemistry**: LiPo, LiFe, Li-ion, etc. have different discharge curves
+- **Temperature**: Battery voltage varies significantly across temperature ranges
+- **Load Current (C-rating)**: Higher discharge currents reduce available voltage
+- **Specific Battery**: Each manufacturer's battery has unique characteristics
+
+The following graphs show typical LiPo discharge curves.
+
+![state-of-charge vs. Load Current](images/blog/typical_lipo_discharge_vs_load.png)
+
+![state-of-charge vs. Temperature](images/blog/typical_lipo_discharge_vs_temperature.png)
+
+**Always request these discharge curves from your battery manufacturer** to properly configure the voltage thresholds for your specific battery and operating conditions.
+This ensures your vehicle operates safely and reliably across all expected temperatures and load conditions.
+
 ## ESC
 
 Electronic speed controllers have a `FC->ESC Connection` for control of the motor speed and
