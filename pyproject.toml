@@ -81,7 +81,7 @@ dev = [
     "python-gettext==5.0",
     "ruff==0.15.12",
     "types-requests==2.32.4.20260107",
-    "ty==0.0.32",
+    "ty==0.0.34",
 ]
 
 ci_headless_tests = [
