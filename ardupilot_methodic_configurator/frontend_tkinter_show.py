@@ -484,6 +484,7 @@ class Tooltip:
         else:
             self.widget.bind("<Enter>", self.schedule_show, "+")
             self.widget.bind("<Leave>", self.destroy_hide, "+")
+            self.widget.bind("<ButtonPress>", self.destroy_hide, "+")
 
         self.widget.bind("<Destroy>", self._on_widget_destroy, "+")
 
@@ -497,15 +498,11 @@ class Tooltip:
     def _cancel_show(self) -> None:
         self._cancel_timer("show")
 
-    def _on_widget_destroy(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
+    def _on_widget_destroy(self, event: Optional[tk.Event] = None) -> None:
         """Stop any active timers if the widget is destroyed."""
-        self._cancel_show()
-        self._cancel_timer("alpha")
-
-        if self.tooltip:
-            with contextlib.suppress(tk.TclError):
-                self.tooltip.destroy()
-            self.tooltip = None
+        if event and getattr(event, "widget", None) is not self.widget:
+            return
+        self.force_hide()
 
     def _hide_active_tooltip(self) -> None:
         """Hide another active tooltip before showing this one."""
@@ -539,8 +536,12 @@ class Tooltip:
             return  # Avoid redundant tooltip creation
 
         self.tooltip = cast("tk.Toplevel", self.toplevel_class(self.widget, bg="#ffffe0"))
+
+        # Remove the windows buttons on all OSs
         self.tooltip.wm_overrideredirect(True)  # noqa: FBT003
-        self.tooltip.withdraw()
+
+        if not self._is_aqua:
+            self.tooltip.withdraw()
 
         if self._is_aqua:
             self.tooltip.attributes("-alpha", 0.0)

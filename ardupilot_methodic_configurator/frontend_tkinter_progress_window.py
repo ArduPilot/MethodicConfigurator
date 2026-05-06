@@ -117,9 +117,11 @@ class ProgressWindow:
                 return
 
             if self.only_show_when_update_progress_called and not self._shown:
+                self.progress_window.update_idletasks()  # Calculate widgets first
                 self.progress_window.deiconify()
                 self._center_progress_window()
                 self.progress_window.lift()
+                self.progress_window.update()  # Paint pixels now
                 self._shown = True
             elif not self.only_show_when_update_progress_called:
                 self.progress_window.lift()
@@ -142,6 +144,9 @@ class ProgressWindow:
                 # user events (clicks, keypresses) which can fire callbacks on
                 # other windows while a blocking upload/download is in flight.
                 self.progress_bar.update_idletasks()
+
+                if self.progress_window.tk.call("tk", "windowingsystem") == "aqua":
+                    self.progress_window.update()
 
                 # Close the progress window when the process is complete
                 if current_value == max_value:
