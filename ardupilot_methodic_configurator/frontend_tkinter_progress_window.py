@@ -18,7 +18,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 
 
-class ProgressWindow:
+class ProgressWindow:  # pylint: disable=too-many-instance-attributes
     """
     A class for creating and managing a progress window in the application.
 
@@ -42,6 +42,7 @@ class ProgressWindow:
         self.progress_window = tk.Toplevel(self.parent)
         # Withdraw immediately to prevent flicker while setting up
         self.progress_window.withdraw()
+        self._is_aqua = self.progress_window.tk.call("tk", "windowingsystem") == "aqua"
         self.progress_window.title(title)
         try:
             dpi = self.progress_window.winfo_fpixels("1i")
@@ -121,7 +122,8 @@ class ProgressWindow:
                 self.progress_window.deiconify()
                 self._center_progress_window()
                 self.progress_window.lift()
-                self.progress_window.update()  # Paint pixels now
+                if getattr(self, "_is_aqua", False):
+                    self.progress_window.update()  # macOS needs this to paint pixels NOW
                 self._shown = True
             elif not self.only_show_when_update_progress_called:
                 self.progress_window.lift()
@@ -145,7 +147,7 @@ class ProgressWindow:
                 # other windows while a blocking upload/download is in flight.
                 self.progress_bar.update_idletasks()
 
-                if self.progress_window.tk.call("tk", "windowingsystem") == "aqua":
+                if getattr(self, "_is_aqua", False):
                     self.progress_window.update()
 
                 # Close the progress window when the process is complete

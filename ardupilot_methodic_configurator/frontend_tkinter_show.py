@@ -481,6 +481,7 @@ class Tooltip:
         if tag_name and isinstance(self.widget, tk.Text):
             self.widget.tag_bind(tag_name, "<Enter>", self.schedule_show, "+")
             self.widget.tag_bind(tag_name, "<Leave>", self.destroy_hide, "+")
+            self.widget.tag_bind(tag_name, "<ButtonPress>", self.destroy_hide, "+")
         else:
             self.widget.bind("<Enter>", self.schedule_show, "+")
             self.widget.bind("<Leave>", self.destroy_hide, "+")
@@ -537,7 +538,7 @@ class Tooltip:
 
         self.tooltip = cast("tk.Toplevel", self.toplevel_class(self.widget, bg="#ffffe0"))
 
-        # Remove the windows buttons on all OSs
+        # Remove the window buttons on all OSs
         self.tooltip.wm_overrideredirect(True)  # noqa: FBT003
 
         if not self._is_aqua:
