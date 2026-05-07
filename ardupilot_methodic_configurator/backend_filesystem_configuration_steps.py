@@ -15,12 +15,13 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from math import isfinite
 from os import path as os_path
-from typing import Optional, TypedDict
+from re import search as re_search
+from typing import Any, Optional, TypedDict, Union
 
 # from sys import exit as sys_exit
-# from logging import debug as logging_debug
 from jsonschema import validate as json_validate
 from jsonschema.exceptions import ValidationError
+from simpleeval import NameNotDefined
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
@@ -117,6 +118,8 @@ class ConfigurationSteps:
             for filename, file_info in self.configuration_steps.items():
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "forced")
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "derived")
+                self.__validate_delete_parameters_in_configuration_steps(filename, file_info)
+                self.__validate_no_overlap_between_derived_and_delete(filename, file_info)
         else:
             logging_warning(_("No configuration steps documentation and no forced and derived parameters will be available."))
 
@@ -126,12 +129,41 @@ class ConfigurationSteps:
             logging_warning(_("No configuration phases documentation will be available."))
         self.log_loaded_file = True
 
+    def __validate_no_overlap_between_derived_and_delete(self, filename: str, file_info: dict) -> None:
+        """
+        Warn about unconditional parameter overlap between derived_parameters and delete_parameters.
+
+        Only warn when at least one side carries no 'if' guard. An unconditional overlap
+        is almost certainly a configuration mistake: the derived value would be set and
+        then immediately deleted (or the delete would defeat the derived change), depending
+        on evaluation order.  Overlaps where both sides carry complementary 'if' conditions
+        are a valid pattern and are intentionally not warned about.
+        """
+        derived = file_info.get("derived_parameters", {})
+        delete = file_info.get("delete_parameters", {})
+        overlap = set(derived.keys()) & set(delete.keys())
+        for parameter in sorted(overlap):
+            derived_has_if = "if" in derived.get(parameter, {})
+            delete_has_if = "if" in delete.get(parameter, {})
+            if not derived_has_if or not delete_has_if:
+                logging_warning(
+                    _(
+                        "In file '%s': '%s' parameter '%s' appears in both 'derived_parameters' and "
+                        "'delete_parameters' without complementary 'if' guards. "
+                        "This is likely a configuration mistake."
+                    ),
+                    self.configuration_steps_filename,
+                    filename,
+                    parameter,
+                )
+
     def __validate_parameters_in_configuration_steps(self, filename: str, file_info: dict, parameter_type: str) -> None:
         """
-        Validates the parameters in the configuration steps.
+        Validates the forced or derived parameters in the configuration steps.
 
-        This method checks if the parameters in the configuration steps are correctly formatted.
-        If a parameter is missing the 'New Value' or 'Change Reason' attribute, an error message is logged.
+        Checks that every entry has the required 'New Value' and 'Change Reason' attributes.
+        For derived parameters, the add-from-FC shorthand (entry with only an optional 'if' key
+        and no 'New Value') is accepted and skipped without error.
         """
         if parameter_type + "_parameters" in file_info:
             if not isinstance(file_info[parameter_type + "_parameters"], dict):
@@ -143,6 +175,18 @@ class ConfigurationSteps:
                 )
                 return
             for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
+                # Add-from-FC shorthand: a derived entry with no 'New Value' is valid (optionally conditioned by 'if')
+                if parameter_type == "derived" and "New Value" not in parameter_info:
+                    unknown_keys = set(parameter_info.keys()) - {"if"}
+                    if unknown_keys:
+                        logging_error(
+                            _("Error in file '%s': '%s' derived parameter '%s' has unexpected keys: %s"),
+                            self.configuration_steps_filename,
+                            filename,
+                            parameter,
+                            sorted(unknown_keys),
+                        )
+                    continue
                 if "New Value" not in parameter_info:
                     logging_error(
                         _("Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."),
@@ -160,7 +204,276 @@ class ConfigurationSteps:
                         parameter,
                     )
 
-    def compute_parameters(  # pylint: disable=too-many-branches, too-many-arguments, too-many-positional-arguments, too-many-locals, too-many-nested-blocks
+    def __validate_delete_parameters_in_configuration_steps(self, filename: str, file_info: dict) -> None:
+        """
+        Validates the delete_parameters section in the configuration steps.
+
+        Each entry must be a dictionary with at most one key: the optional 'if' expression.
+        Any unexpected keys are reported as errors.
+        """
+        if "delete_parameters" not in file_info:
+            return
+        if not isinstance(file_info["delete_parameters"], dict):
+            logging_error(
+                _("Error in file '%s': '%s' delete_parameters is not a dictionary"),
+                self.configuration_steps_filename,
+                filename,
+            )
+            return
+        for parameter, parameter_info in file_info["delete_parameters"].items():
+            if not isinstance(parameter_info, dict):
+                logging_error(
+                    _("Error in file '%s': '%s' delete_parameter '%s' is not a dictionary"),
+                    self.configuration_steps_filename,
+                    filename,
+                    parameter,
+                )
+                continue
+            unknown_keys = set(parameter_info.keys()) - {"if"}
+            if unknown_keys:
+                logging_error(
+                    _("Error in file '%s': '%s' delete_parameter '%s' has unexpected keys: %s"),
+                    self.configuration_steps_filename,
+                    filename,
+                    parameter,
+                    sorted(unknown_keys),
+                )
+
+    @staticmethod
+    def _condition_passes(parameter_info: dict, variables: dict) -> bool:
+        """Return True when there is no 'if' guard or the guard evaluates to truthy."""
+        if "if" not in parameter_info:
+            return True
+        try:
+            return bool(safe_evaluate(str(parameter_info["if"]), variables))
+        except ConfigurationStepEvalError as e:
+            cause = e.__cause__
+            if isinstance(cause, SyntaxError):
+                logging_warning(_("Condition '%s' has a syntax error: %s"), parameter_info["if"], e)
+            elif isinstance(cause, (NameNotDefined, NameError)):
+                # A NameNotDefined (simpleeval) or NameError means a variable is missing.
+                # Silently skip only when the missing name is 'fc_parameters' — that is expected
+                # when no FC is connected.  Any other undefined name is almost certainly a typo
+                # in the JSON configuration file and should be surfaced as a warning.
+                if "fc_parameters" not in str(cause):
+                    logging_warning(_("Condition '%s' references an undefined name: %s"), parameter_info["if"], e)
+            else:
+                # Any other runtime error (ZeroDivisionError, KeyError, TypeError, …) is unexpected
+                # and should be surfaced at WARNING so it is not silently lost in production logs.
+                logging_warning(_("Condition '%s' could not be evaluated: %s"), parameter_info["if"], e)
+            return False  # Skip when condition cannot be evaluated
+
+    @staticmethod
+    def _handle_param_error(error_msg: str, parameter_type: str, ignore_fc_derived_param_warnings: bool = False) -> str:
+        """
+        Return the error message so the caller can log and/or raise it appropriately.
+
+        For forced parameters the message is returned as-is; the caller is responsible for
+        logging it (via ValueError propagation to __main__) so it appears exactly once.
+        For derived parameters an optional warning is emitted here and an empty string returned
+        so the caller knows to skip the parameter without treating it as a fatal error.
+        """
+        if parameter_type == "forced":
+            # Do NOT call logging_error here: the returned message is collected by compute_parameters,
+            # raised as ValueError by calculate_derived_and_forced_param_changes, and logged once
+            # by the __main__ error handler.  Logging here would produce a duplicate entry.
+            return error_msg
+        if not ignore_fc_derived_param_warnings:
+            logging_warning("%s", error_msg)
+        return ""
+
+    @staticmethod
+    def _ensure_file_entry(destination: dict[str, ParDict], filename: str) -> None:
+        """Ensure the filename key exists in the destination dictionary."""
+        if filename not in destination:
+            destination[filename] = ParDict()
+
+    def _eval_new_value(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        new_value_expr: Union[str, float, bool],
+        filename: str,
+        parameter: str,
+        parameter_type: str,
+        variables: dict,
+    ) -> tuple[Any, str]:
+        """Evaluate a 'New Value' expression. Returns (result, "") on success or (None, error_msg) on failure."""
+        new_value_str = str(new_value_expr)
+        if re_search(r"\bfc_parameters\b", new_value_str) and "fc_parameters" not in variables:
+            error_msg = _(
+                "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+                "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
+            )
+            return None, error_msg.format(
+                configuration_steps_filename=self.configuration_steps_filename,
+                filename=filename,
+                parameter_type=parameter_type,
+                parameter=parameter,
+            )
+        try:
+            return safe_evaluate(new_value_str, variables), ""
+        except ConfigurationStepEvalError as eval_err:
+            # safe_evaluate wraps the full exception surface (malformed
+            # expression, undefined name, missing dict key, math error,
+            # type mismatch, overflow) into a single domain exception so
+            # the error can be surfaced here with useful diagnostics
+            # without crashing the configuration-step load.
+            error_msg = _(
+                "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+                "parameter '{parameter}' could not be evaluated: {eval_err}"
+            )
+            return None, error_msg.format(
+                configuration_steps_filename=self.configuration_steps_filename,
+                filename=filename,
+                parameter_type=parameter_type,
+                parameter=parameter,
+                eval_err=eval_err,
+            )
+
+    def _resolve_string_result(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        result: str,
+        parameter: str,
+        doc_dict: dict,
+        filename: str,
+        parameter_type: str,
+    ) -> tuple[Any, str]:
+        """
+        Convert a string evaluation result to a numeric value via documentation metadata.
+
+        Returns (resolved_value, "") on success or (None, error_msg) on any failure.
+        """
+        if parameter not in doc_dict:
+            error_msg = _(
+                "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+                "parameter '{parameter}' could not be computed, no documentation metadata available for it"
+            )
+            return None, error_msg.format(
+                configuration_steps_filename=self.configuration_steps_filename,
+                filename=filename,
+                parameter_type=parameter_type,
+                parameter=parameter,
+            )
+        values = doc_dict[parameter]["values"]
+        if values:
+            try:
+                return next(key for key, value in values.items() if value == result), ""
+            except StopIteration:
+                error_msg = _(
+                    "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+                    "parameter '{parameter}' string value '{result}' not found in documentation metadata values"
+                )
+                return None, error_msg.format(
+                    configuration_steps_filename=self.configuration_steps_filename,
+                    filename=filename,
+                    parameter_type=parameter_type,
+                    parameter=parameter,
+                    result=result,
+                )
+        bitmasks = doc_dict[parameter]["Bitmask"]
+        if bitmasks:
+            try:
+                return 2 ** next(key for key, bitmask in bitmasks.items() if bitmask == result), ""
+            except StopIteration:
+                error_msg = _(
+                    "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+                    "parameter '{parameter}' string value '{result}' not found in documentation metadata bitmasks"
+                )
+                return None, error_msg.format(
+                    configuration_steps_filename=self.configuration_steps_filename,
+                    filename=filename,
+                    parameter_type=parameter_type,
+                    parameter=parameter,
+                    result=result,
+                )
+        error_msg = _(
+            "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+            "parameter '{parameter}' string value '{result}' has no documentation metadata values or bitmasks"
+        )
+        return None, error_msg.format(
+            configuration_steps_filename=self.configuration_steps_filename,
+            filename=filename,
+            parameter_type=parameter_type,
+            parameter=parameter,
+            result=result,
+        )
+
+    def _compute_single_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-return-statements  # noqa: PLR0911
+        self,
+        filename: str,
+        parameter: str,
+        parameter_info: dict,
+        parameter_type: str,
+        destination: dict[str, ParDict],
+        variables: dict,
+        ignore_fc_derived_param_warnings: bool,
+    ) -> str:
+        """Process a single parameter entry. Returns "" on success, or an error message on fatal error."""
+        # Add-from-FC shorthand: derived entry with 'if' but no 'New Value'.
+        # This shorthand is only valid for derived parameters; forced parameters require 'New Value'.
+        if "New Value" not in parameter_info:
+            if parameter_type == "forced":
+                logging_warning(
+                    _(
+                        "In file '%s': '%s' forced parameter '%s' has no 'New Value' - "
+                        "add-from-FC shorthand is only valid for derived parameters"
+                    ),
+                    self.configuration_steps_filename,
+                    filename,
+                    parameter,
+                )
+                return ""
+            fc_params = variables.get("fc_parameters", {})
+            if parameter in fc_params:
+                self._ensure_file_entry(destination, filename)
+                destination[filename][parameter] = Par(
+                    float(fc_params[parameter]),
+                    _("Copied from the connected flight controller"),
+                )
+            return ""
+        try:
+            result, error_msg = self._eval_new_value(
+                parameter_info["New Value"], filename, parameter, parameter_type, variables
+            )
+            if error_msg:
+                return self._handle_param_error(error_msg, parameter_type, ignore_fc_derived_param_warnings)
+            if isinstance(result, str):
+                result, error_msg = self._resolve_string_result(
+                    result, parameter, variables["doc_dict"], filename, parameter_type
+                )
+                if error_msg:
+                    return self._handle_param_error(error_msg, parameter_type, ignore_fc_derived_param_warnings)
+
+            if isinstance(result, (int, float)) and not isfinite(result):
+                error_msg = _(
+                    "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+                    "parameter '{parameter}' evaluation produced a non-finite value: {result}"
+                ).format(
+                    configuration_steps_filename=self.configuration_steps_filename,
+                    filename=filename,
+                    parameter_type=parameter_type,
+                    parameter=parameter,
+                    result=result,
+                )
+                return self._handle_param_error(error_msg, parameter_type, ignore_fc_derived_param_warnings)
+
+            self._ensure_file_entry(destination, filename)
+            change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
+            destination[filename][parameter] = Par(float(result), change_reason)
+        except (SyntaxError, NameError, KeyError, ValueError, TypeError) as e:
+            error_msg = _(
+                "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
+                "parameter '{parameter}' could not be computed: {e}"
+            ).format(
+                configuration_steps_filename=self.configuration_steps_filename,
+                filename=filename,
+                parameter_type=parameter_type,
+                parameter=parameter,
+                e=e,
+            )
+            return self._handle_param_error(error_msg, parameter_type, ignore_fc_derived_param_warnings)
+        return ""
+
+    def compute_parameters(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         filename: str,
         file_info: dict,
@@ -169,94 +482,66 @@ class ConfigurationSteps:
         ignore_fc_derived_param_warnings: bool = False,
     ) -> str:
         """
-        Computes the forced or derived parameters for a given configuration file.
+        Compute the forced or derived parameters for a given configuration file.
 
-        If the parameter is forced, it is added to the forced_parameters dictionary.
-        If the parameter is derived, it is added to the derived_parameters dictionary.
+        Entries whose 'if' condition evaluates to False are skipped. Any stale entries
+        from a previous call for this file are cleared first, so that parameters whose
+        condition has since become False are not carried forward.
+
+        Side effect: updates ``self.forced_parameters`` (when *parameter_type* is
+        ``"forced"``) or ``self.derived_parameters`` (when ``"derived"``) in place.
+
+        Returns:
+            A newline-joined string of error messages for any parameter that could not
+            be computed; an empty string when all parameters were resolved successfully.
+
         """
         if parameter_type + "_parameters" not in file_info or not variables:
             return ""
         destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
+        # Clear any stale entries from a previous call for this file so that parameters whose
+        # 'if' condition has since become False are not carried forward into the working copy.
+        destination.pop(filename, None)
         errors: list[str] = []
 
-        def log_parameter_error(
-            parameter_type: str, ignore_fc_derived_param_warnings: bool, errors: list[str], error_msg: str
-        ) -> None:
-            if parameter_type == "forced":
-                logging_error(error_msg)
-                errors.append(error_msg)
-            elif not ignore_fc_derived_param_warnings:
-                logging_warning(error_msg)
-
         for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
-            try:
-                if ("fc_parameters" in str(parameter_info["New Value"])) and (
-                    "fc_parameters" not in variables or variables["fc_parameters"] == {}
-                ):
-                    error_msg = _(
-                        "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-                        "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
-                    )
-                    error_msg = error_msg.format(**locals())
-                    log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
-                    continue
-
-                try:
-                    result = safe_evaluate(str(parameter_info["New Value"]), variables)
-                except ConfigurationStepEvalError as _eval_err:
-                    # safe_evaluate wraps the full exception surface (malformed
-                    # expression, undefined name, missing dict key, math error,
-                    # type mismatch, overflow) into a single domain exception so
-                    # the error can be surfaced here with useful diagnostics
-                    # without crashing the configuration-step load.
-                    error_msg = _(
-                        "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-                        "parameter '{parameter}' could not be evaluated: {_eval_err}"
-                    )
-                    error_msg = error_msg.format(**locals())
-                    log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
-                    continue
-
-                # convert (combobox) string text to (parameter value) string int or float
-                if isinstance(result, str):
-                    if parameter in variables["doc_dict"]:
-                        values = variables["doc_dict"][parameter]["values"]
-                        if values:
-                            result = next(key for key, value in values.items() if value == result)
-                        else:
-                            bitmasks = variables["doc_dict"][parameter]["Bitmask"]
-                            if bitmasks:
-                                result = 2 ** next(key for key, bitmask in bitmasks.items() if bitmask == result)
-                    else:
-                        error_msg = _(
-                            "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-                            "parameter '{parameter}' could not be computed, no documentation metadata available for it"
-                        )
-                        error_msg = error_msg.format(**locals())
-                        log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
-                        continue
-
-                if isinstance(result, (int, float)) and not isfinite(result):
-                    error_msg = _(
-                        "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-                        "parameter '{parameter}' evaluation produced a non-finite value: {result}"
-                    )
-                    error_msg = error_msg.format(**locals())
-                    log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
-                    continue
-
-                if filename not in destination:
-                    destination[filename] = ParDict()
-                change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
-                destination[filename][parameter] = Par(float(result), change_reason)
-            except (SyntaxError, NameError, KeyError, StopIteration, ValueError, TypeError) as _e:
-                error_msg = _(
-                    "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} "
-                    "parameter '{parameter}' could not be computed: {_e}"
-                )
-                error_msg = error_msg.format(**locals())
-                log_parameter_error(parameter_type, ignore_fc_derived_param_warnings, errors, error_msg)
+            if not self._condition_passes(parameter_info, variables):
+                continue
+            error_msg = self._compute_single_parameter(
+                filename, parameter, parameter_info, parameter_type, destination, variables, ignore_fc_derived_param_warnings
+            )
+            if error_msg:
+                errors.append(error_msg)
         return "\n".join(errors)
+
+    def compute_deletions(self, filename: str, file_info: dict, variables: dict) -> set[str]:
+        """
+        Compute parameter names to be deleted from the configuration file.
+
+        Evaluates the optional 'if' condition for each entry in the 'delete_parameters' section.
+        A parameter is deleted when its condition evaluates to True (or when no condition is present).
+
+        Args:
+            filename: The name of the configuration file (used for error logging).
+            file_info: The configuration step dictionary for this file.
+            variables: Variables available for evaluating 'if' expressions.
+
+        Returns:
+            Set of parameter names that should be removed from the file.
+
+        """
+        if "delete_parameters" not in file_info:
+            return set()
+        if not variables:
+            logging_warning(_("Skipping delete_parameters for '%s': no evaluation variables available"), filename)
+            return set()
+        to_delete: set[str] = set()
+        for parameter, parameter_info in file_info["delete_parameters"].items():
+            if self._condition_passes(parameter_info, variables):
+                to_delete.add(parameter)
+        if to_delete:
+            logging_info(_("Deleting parameters %s from '%s'"), sorted(to_delete), filename)
+        return to_delete
 
     def auto_changed_by(self, selected_file: str) -> str:
         if selected_file in self.configuration_steps:

@@ -845,16 +845,19 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def calculate_derived_and_forced_param_changes(
         self,
         fc_param_names: list[str],
+        fc_parameters: Optional[dict[str, float]] = None,
     ) -> dict[str, ParDict]:
         """
-        Compute updated parameter values without mutating the in-memory data model.
+        Compute updated parameter values for all configuration files.
 
-        This method performs a purely read-only computation phase:
-        1. For each parameter file, deep-copies the current in-memory state.
-        2. Applies any values received from the flight controller to the copy.
-        3. Computes forced and derived parameters and merges them into the copy.
-        4. Compares each copy against the unmodified original in ``self.file_parameters``.
-        5. Returns only copies that differ - ``self.file_parameters`` is never mutated.
+        ``self.file_parameters`` is never mutated by this method. The caller
+        decides whether to apply the returned changes via
+        :meth:`apply_computed_changes`.
+
+        Side effects: ``self.forced_parameters`` and ``self.derived_parameters``
+        are updated in place as a result of the internal :meth:`compute_parameters`
+        calls. These side effects are intentional and required by
+        :meth:`merge_forced_or_derived_parameters`.
 
         To apply accepted changes to the data model call
         :meth:`apply_computed_changes` with the returned dict. To persist them to
@@ -863,6 +866,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         Args:
             fc_param_names: List of parameter names that exist in the FC.
                             If empty or None all parameters are assumed to exist.
+            fc_parameters: Optional dictionary mapping parameter names to their current FC values.
+                           When provided, enables evaluation of conditions referencing ``fc_parameters``
+                           and allows add-from-FC shorthand ``derived_parameters`` entries
+                           (those without a ``New Value``) to be populated with current FC values.
 
         Returns:
             dict[str, ParDict]: Mapping of filenames to their fully-computed ``ParDict``
@@ -888,8 +895,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
 
         """
         eval_variables = self.get_eval_variables()
-        # the eval variables do not contain fc_parameter values
-        # and that is intentional, the fc_parameters are not to be used in here
+        if fc_parameters is not None:
+            eval_variables["fc_parameters"] = fc_parameters
+        # fc_parameters are intentionally kept in eval_variables only when provided,
+        # so add-from-FC derived entries without fc_parameters silently skip.
 
         computed_changes: dict[str, ParDict] = {}
 
@@ -915,6 +924,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.merge_forced_or_derived_parameters(
                     param_filename, self.derived_parameters, fc_param_names, target=working
                 )
+
+                # Apply deletions from delete_parameters
+                for param_name in self.compute_deletions(param_filename, step_dict, eval_variables):
+                    working.pop(param_name, None)
 
             # Include in computed_changes if the working copy differs from the loaded in-memory state
             if working.differs_from(param_dict):
