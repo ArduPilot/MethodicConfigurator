@@ -30,11 +30,11 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
 else
     source .venv/bin/activate
 fi
-uv pip install "build==1.4.4" "packaging==26.2" "setuptools==82.0.1"
+uv pip install "build==1.5.0" "packaging==26.2" "setuptools==82.0.1"
 
 python -m build
 
-uv pip install -U dist/ardupilot_methodic_configurator-2.9.6-py3-none-any.whl
+uv pip install -U dist/ardupilot_methodic_configurator-3.0.5-py3-none-any.whl
 
 cd ..
 
