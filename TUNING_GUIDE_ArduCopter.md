@@ -918,7 +918,7 @@ When asked *Update file with values from FC?* select `Close` to close the applic
 # 7. Assemble propellers and perform the first flight
 
 Assemble the propellers in the vehicle ensuring that they are [balanced in order to reduce vibrations](https://www.youtube.com/watch?v=zTDkCZ698uA).
-High vibrations will cause your vehicle to behave eradicaly endangering people and property.
+High vibrations will cause your vehicle to behave erratically endangering people and property.
 
 Now that all mandatory configuration steps are done and the props are on you can perform the first flight.
 
@@ -1015,6 +1015,7 @@ These are the very minimum tuning steps required for a stable flight:
 
 Load the `.bin` log from the first flight onto the [online ArduPilot Filter Review tool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
 Follow the [instructions from Peter Hall on his Blog Post](https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572) to configure the Harmonic Notch filter(s).
+Use as little notch filter bandwidth and attenuation as possible.
 Noise levels below -50dB are considered good enough.
 Do not use notch filters to reduce noise below that level as it introduces unwanted signal lag.
 The graph below is a bode diagram of the gyro signals before and after the low-pass and Harmonic Notch filters.
@@ -1052,12 +1053,69 @@ Now upload the `.bin` log to the [Hardware-Report Tool](https://firmware.ardupil
 
 Use the `.bin` log from the first flight to set the parameters described on the `20_throttle_controller.param` file.
 
-## 8.3 Configure the EKF altitude source weights
+## 8.3 Suppress frame resonance with PID notch filters (advanced/optional)
+
+Frame resonance occurs when the frequency components in the vibration caused by the motors/propellers excite the frame, causing a highly amplified oscillation around the natural frequency of the frame.
+It can remain visible in the rate-controller logs even after the normal `INS_HNTCH_` / `INS_HNTC2_` harmonic notch filters have removed motor and propeller gyro noise.
+PID notch filters suppress this kind of resonance by filtering the rate controller's target or error signal so the controller stops exciting the frame at that frequency.
+Remember, garbage-in, garbage-out.
+We are removing the garbage (the frame resonance) feeding into the PIDs and further exciting the frame.
+
+> [!IMPORTANT]
+> Use PID notch filters only after the standard harmonic notch setup is correct, vibration levels are acceptable, CPU load is healthy, and output oscillation has been ruled out.
+> These parameters are available in ArduCopter 4.5 and newer.
+> If they are not visible in your firmware, do not add them manually.
+
+First, set `FILTn_TYPE` to `1` to enable these filters.
+Set to `0` to disable the filter.
+AMC will automatically reboot the FC if a PID notch filter parameter change requires it.
+
+| Parameter | How to set it |
+| :--- | :--- |
+| `FILTn_NOTCH_FREQ` | Set to the measured frame-resonance frequency in Hz. |
+| `FILTn_NOTCH_Q` | Q-factor defined as the notch centre frequency divided by its bandwidth. Start around `5`. Use a lower value for a wider notch if the resonance moves, or a higher value for a narrower notch if the peak is stable. |
+| `FILTn_NOTCH_ATT` | Sets attenuation in dB. Start around `10` to `20` dB and increase only if the follow-up log still shows the resonance. Higher attenuation adds undesired phase lag. |
+
+The PID notch index parameters select one of the global `FILT1_` to `FILT8_` notch definitions.
+Use `0` to disable a PID notch on an axis.
+Set value from `1` to `8` to select the matching `FILTn_` filter number so that the characteristics of the notch as defined above will be applied.
+
+| Purpose | Roll | Pitch | Yaw |
+| :--- | :--- | :--- | :--- |
+| Target notch index | `ATC_RAT_RLL_NTF` | `ATC_RAT_PIT_NTF` | `ATC_RAT_YAW_NTF` |
+| Error notch index | `ATC_RAT_RLL_NEF` | `ATC_RAT_PIT_NEF` | `ATC_RAT_YAW_NEF` |
+
+Keep `ATC_RAT_*_D_FF` at `0` while tuning PID notch filters.
+This term is for improving the "locked-in" feel of the drone so that the drone reacts with minimal latency.
+After the resonance is under control, `D_FF` can be tuned separately in very small increments to improve aggressive rate tracking, but each change must be validated with logs because it changes actuator demand and pilot feel.
+Check the `Des.ATT*` and `ATT*` plots in the log.
+The below images show how the tune can be made tighter during aggressive maneuvers:
+
+| | |
+| :---: | :---: |
+| ![Without D_FF](images/Without_D_FF.png) | ![With D_FF](images/With_D_FF.png) |
+| Without D_FF | With D_FF |
+
+1. Finish the normal harmonic notch calibration and run a short test flight.
+   Follow the same procedure as given in [Section 9.6](#96-performance-evaluation-flight) but with isolated inputs along roll, pitch and yaw axes, *one axis per log file*.
+   Inspect these .bin log files in the PID Review Tool and check for peaks in the spectrum.
+1. Choose an unused `FILTn_` slot.
+   If the frame resonance is at 46 Hz on roll, for example, configure `FILT1_TYPE = 1`, `FILT1_NOTCH_FREQ = 46`, `FILT1_NOTCH_Q = 5`, and `FILT1_NOTCH_ATT = 25`.
+1. Apply the filter to the affected axis.
+   For a roll resonance, start with `ATC_RAT_RLL_NEF = 1` and leave `ATC_RAT_RLL_NTF = 0`.
+1. Use a target notch only if the command target is exciting the resonance.
+   For example, set `ATC_RAT_RLL_NTF = 1` only when the roll target signal needs filtering.
+1. If the same resonance affects roll and pitch, the same filter can be assigned to both axes.
+   If the axes resonate at different frequencies, use separate `FILTn_` slots.
+1. Fly a short test flight again and inspect the logs in the Filter Review Tool before making a change if necessary.
+1. Disable the PID notch by setting the relevant `ATC_RAT_*_NEF` or `ATC_RAT_*_NTF` parameter back to `0` if the follow-up log does not show a clear improvement.
+
+## 8.4 Configure the EKF altitude source weights
 
 In some situations you will need to configure the expected noise levels of the altitude sources.
 And the weight that EKF should use for each source on the `23_ekf_config.param` file.
 
-## 8.4 Second Flight: PID VTOL-Quiktune lua script or manual PID tune
+## 8.5 Second Flight: PID VTOL-Quiktune lua script or manual PID tune
 
 If your flight controller can run lua scripts perform a [PID lua VTOL-Quiktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
