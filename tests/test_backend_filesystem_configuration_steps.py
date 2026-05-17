@@ -19,7 +19,7 @@ from jsonschema.exceptions import ValidationError
 
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 
-# pylint: disable=protected-access, too-many-lines
+# pylint: disable=protected-access, too-many-lines, redefined-outer-name
 
 
 # ---------------------------------------------------------------------------
@@ -532,7 +532,7 @@ class TestParameterValidation:
 # ---------------------------------------------------------------------------
 
 
-class TestParameterComputation:
+class TestParameterComputation:  # pylint: disable=too-many-public-methods
     """Tests for compute_parameters() behavior with forced and derived parameters."""
 
     def test_forced_parameter_is_computed_and_stored(self, config_steps: ConfigurationSteps) -> None:
@@ -1160,6 +1160,71 @@ class TestParameterComputation:
         config_steps.compute_parameters("test_file", file_info, "derived", variables_false)
         assert "PARAM1" not in config_steps.derived_parameters.get("test_file", {})
 
+    def test_derived_parameter_with_fc_condition_is_skipped_when_fc_unavailable(
+        self, config_steps: ConfigurationSteps
+    ) -> None:
+        """
+        A derived parameter condition referencing fc_parameters is skipped when fc_parameters is unavailable.
+
+        GIVEN: A derived parameter with if='...' referencing fc_parameters, but fc_parameters is not in variables
+        WHEN: compute_parameters is called
+        THEN: The parameter is NOT computed (skipped silently, no error)
+        """
+        file_info = {
+            "derived_parameters": {"PARAM1": {"if": "'PARAM1' in fc_parameters", "New Value": "100", "Change Reason": "test"}}
+        }
+        variables: dict = {"doc_dict": {"PARAM1": {"values": {100: "val"}}}}
+
+        result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+
+        assert result == ""
+        assert "test_file" not in config_steps.derived_parameters
+
+    def test_derived_parameter_without_fc_condition_is_evaluated_when_fc_unavailable(
+        self, config_steps: ConfigurationSteps
+    ) -> None:
+        """
+        A derived parameter condition not referencing fc_parameters is evaluated even when fc_parameters is unavailable.
+
+        GIVEN: A derived parameter with if='...' not referencing fc_parameters, fc_parameters is not in variables
+        WHEN: compute_parameters is called
+        THEN: The parameter is computed normally if the condition is true
+        """
+        file_info = {
+            "derived_parameters": {
+                "PARAM1": {
+                    "if": "'Copter' in 'ArduCopter'",
+                    "New Value": "50 * 2",
+                    "Change Reason": "test",
+                }
+            }
+        }
+        variables: dict = {"doc_dict": {"PARAM1": {"values": {100: "val"}}}}
+
+        result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+
+        assert result == ""
+        assert "PARAM1" in config_steps.derived_parameters.get("test_file", {})
+        assert config_steps.derived_parameters["test_file"]["PARAM1"].value == 100
+
+    def test_forced_parameter_with_fc_condition_is_skipped_when_fc_unavailable(self, config_steps: ConfigurationSteps) -> None:
+        """
+        A forced parameter condition referencing fc_parameters is skipped when fc_parameters is unavailable.
+
+        GIVEN: A forced parameter with if='...' referencing fc_parameters, but fc_parameters is not in variables
+        WHEN: compute_parameters is called
+        THEN: The parameter is NOT computed (skipped silently, no error)
+        """
+        file_info = {
+            "forced_parameters": {"PARAM1": {"if": "'PARAM1' in fc_parameters", "New Value": "100", "Change Reason": "test"}}
+        }
+        variables: dict = {"doc_dict": {"PARAM1": {"values": {100: "val"}}}}
+
+        result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+        assert result == ""
+        assert "test_file" not in config_steps.forced_parameters
+
 
 # ---------------------------------------------------------------------------
 # _condition_passes — conditional guard evaluation
@@ -1331,43 +1396,59 @@ class TestParameterDeletion:
         """
         file_info = {"delete_parameters": {"PARAM1": {}, "PARAM2": {}}}
 
-        result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
+        result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}, "fc_parameters": {}})
 
         assert result == {"PARAM1", "PARAM2"}
+
+    def test_non_fc_condition_is_evaluated_without_fc_parameters(self, config_steps: ConfigurationSteps) -> None:
+        """
+        Conditions not referencing fc_parameters are evaluated even when fc_parameters is unavailable.
+
+        GIVEN: A delete_parameters condition that doesn't reference fc_parameters
+        WHEN: compute_deletions is called without fc_parameters in variables
+        THEN: The condition is evaluated normally and the parameter is deleted if condition is true
+        """
+        file_info = {"delete_parameters": {"PARAM1": {"if": "'Copter' in 'ArduCopter'"}}}
+
+        result = config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
+
+        assert "PARAM1" in result
 
     def test_true_condition_marks_parameter_for_deletion(self, config_steps: ConfigurationSteps) -> None:
         """
         A parameter whose condition evaluates to True is marked for deletion.
 
-        GIVEN: A delete_parameters entry with if='True'
+        GIVEN: A delete_parameters entry with if='True' (not referencing fc_parameters)
         WHEN: compute_deletions is called
-        THEN: That parameter name is in the returned set
+        THEN: That parameter name is in the returned set (evaluated regardless of fc_parameters availability)
         """
         file_info = {"delete_parameters": {"PARAM1": {"if": "True"}}}
 
+        # Condition without fc_parameters reference should be evaluated even without fc_parameters
         assert "PARAM1" in config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
 
     def test_false_condition_keeps_parameter(self, config_steps: ConfigurationSteps) -> None:
         """
         A parameter whose condition evaluates to False is excluded from deletion.
 
-        GIVEN: A delete_parameters entry with if='False'
+        GIVEN: A delete_parameters entry with if='False' (not referencing fc_parameters)
         WHEN: compute_deletions is called
-        THEN: That parameter name is NOT in the returned set
+        THEN: That parameter name is NOT in the returned set (evaluated regardless of fc_parameters availability)
         """
         file_info = {"delete_parameters": {"PARAM1": {"if": "False"}}}
 
+        # Condition without fc_parameters reference should be evaluated even without fc_parameters
         assert "PARAM1" not in config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
 
     def test_fc_not_connected_skips_deletion_silently(self, config_steps: ConfigurationSteps) -> None:
         """
-        A condition referencing fc_parameters silently skips deletion when FC is not connected.
+        All conditional deletions are skipped when FC is not connected.
 
-        GIVEN: A delete_parameters condition referencing fc_parameters, absent from variables
+        GIVEN: A delete_parameters condition referencing fc_parameters, with fc_parameters absent from variables
         WHEN: compute_deletions is called
-        THEN: The parameter is NOT in the returned set
+        THEN: The parameter is NOT in the returned set (conditional deletions are skipped)
         """
-        file_info = {"delete_parameters": {"PARAM1": {"if": "fc_parameters and ('PARAM1' not in fc_parameters)"}}}
+        file_info = {"delete_parameters": {"PARAM1": {"if": "'PARAM1' not in fc_parameters"}}}
 
         assert "PARAM1" not in config_steps.compute_deletions("test_file", file_info, {"doc_dict": {}})
 
@@ -1377,7 +1458,7 @@ class TestParameterDeletion:
         """
         A syntactically invalid deletion condition logs a warning and skips the parameter.
 
-        GIVEN: A delete_parameters condition with invalid Python syntax
+        GIVEN: A delete_parameters condition with invalid Python syntax (not referencing fc_parameters)
         WHEN: compute_deletions is called
         THEN: A warning mentioning 'syntax error' is logged and the parameter is not deleted
         """
@@ -1396,9 +1477,7 @@ class TestParameterDeletion:
         WHEN: compute_deletions is called first without the parameter, then with it
         THEN: The parameter is deleted when absent and kept when present
         """
-        file_info = {
-            "delete_parameters": {"INS_TCAL2_ENABLE": {"if": "fc_parameters and ('INS_TCAL2_ENABLE' not in fc_parameters)"}}
-        }
+        file_info = {"delete_parameters": {"INS_TCAL2_ENABLE": {"if": "'INS_TCAL2_ENABLE' not in fc_parameters"}}}
 
         result_absent = config_steps.compute_deletions("test_file", file_info, {"fc_parameters": {"OTHER": 1.0}})
         result_present = config_steps.compute_deletions("test_file", file_info, {"fc_parameters": {"INS_TCAL2_ENABLE": 2.0}})
