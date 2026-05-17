@@ -488,6 +488,9 @@ class ConfigurationSteps:
         from a previous call for this file are cleared first, so that parameters whose
         condition has since become False are not carried forward.
 
+        For parameters with conditions referencing ``fc_parameters``, automatically skips
+        evaluation when ``fc_parameters`` is not available (e.g., when no FC is connected).
+
         Side effect: updates ``self.forced_parameters`` (when *parameter_type* is
         ``"forced"``) or ``self.derived_parameters`` (when ``"derived"``) in place.
 
@@ -505,6 +508,9 @@ class ConfigurationSteps:
         errors: list[str] = []
 
         for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
+            # Skip parameters with conditions referencing fc_parameters if fc_parameters is unavailable
+            if "if" in parameter_info and "fc_parameters" in str(parameter_info["if"]) and "fc_parameters" not in variables:
+                continue
             if not self._condition_passes(parameter_info, variables):
                 continue
             error_msg = self._compute_single_parameter(
@@ -520,6 +526,11 @@ class ConfigurationSteps:
 
         Evaluates the optional 'if' condition for each entry in the 'delete_parameters' section.
         A parameter is deleted when its condition evaluates to True (or when no condition is present).
+
+        For conditions referencing ``fc_parameters``, automatically skips evaluation when ``fc_parameters``
+        is not available (e.g., when no FC is connected). This allows users to write conditions like
+        ``'PARAM' not in fc_parameters`` without needing a defensive ``fc_parameters and`` guard.
+        Conditions not referencing ``fc_parameters`` are always evaluated.
 
         Args:
             filename: The name of the configuration file (used for error logging).
@@ -537,6 +548,9 @@ class ConfigurationSteps:
             return set()
         to_delete: set[str] = set()
         for parameter, parameter_info in file_info["delete_parameters"].items():
+            # Skip parameters with conditions referencing fc_parameters if fc_parameters is unavailable
+            if "if" in parameter_info and "fc_parameters" in str(parameter_info["if"]) and "fc_parameters" not in variables:
+                continue
             if self._condition_passes(parameter_info, variables):
                 to_delete.add(parameter)
         if to_delete:

@@ -1758,7 +1758,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         step_info = self._local_filesystem.configuration_steps.get(self.current_file, {})
         if step_info:
             variables = self._config_step_processor.variables.copy()
-            variables["fc_parameters"] = self.fc_parameters
+            if self.fc_parameters:
+                variables["fc_parameters"] = self.fc_parameters
 
             # Apply add-from-FC: derived entries whose condition passed are already stored in derived_parameters;
             # add any that are not yet in current_step_parameters
