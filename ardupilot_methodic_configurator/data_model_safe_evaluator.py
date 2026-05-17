@@ -15,7 +15,7 @@ from math import log
 from types import MappingProxyType
 from typing import Union, cast
 
-from simpleeval import InvalidExpression, simple_eval
+from simpleeval import EvalWithCompoundTypes, InvalidExpression
 
 SAFE_FUNCTIONS = MappingProxyType(
     {
@@ -68,7 +68,8 @@ def safe_evaluate(expression: str, variables: dict) -> Union[int, float, str]:
 
     """
     try:
-        return cast("Union[int, float, str]", simple_eval(expression, names=variables, functions=SAFE_FUNCTIONS))
+        evaluator = EvalWithCompoundTypes(names=variables, functions=dict(SAFE_FUNCTIONS))
+        return cast("Union[int, float, str]", evaluator.eval(expression))
     except (
         InvalidExpression,
         SyntaxError,
