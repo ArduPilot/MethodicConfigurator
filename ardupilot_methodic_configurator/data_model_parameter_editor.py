@@ -1774,7 +1774,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # Apply deletions - remove parameters from domain model and track them.
             # Note: compute_deletions is also called in calculate_derived_and_forced_param_changes to
             # update the pre-computed filesystem working copy; this separate call updates the live UI domain model.
-            for param_name in self._local_filesystem.compute_deletions(self.current_file, step_info, variables):
+            to_delete = self._local_filesystem.compute_deletions(self.current_file, step_info, variables)
+            actually_deleted = [p for p in sorted(to_delete) if p in self.current_step_parameters]
+            if actually_deleted:
+                logging_info(_("Deleting parameters %s from '%s'"), actually_deleted, self.current_file)
+            for param_name in to_delete:
                 if param_name in self.current_step_parameters:
                     self._deleted_parameters.add(param_name)
                     del self.current_step_parameters[param_name]

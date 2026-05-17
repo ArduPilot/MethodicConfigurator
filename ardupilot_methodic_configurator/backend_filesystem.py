@@ -926,7 +926,11 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 )
 
                 # Apply deletions from delete_parameters
-                for param_name in self.compute_deletions(param_filename, step_dict, eval_variables):
+                to_delete = self.compute_deletions(param_filename, step_dict, eval_variables)
+                actually_deleted = [p for p in sorted(to_delete) if p in working]
+                if actually_deleted:
+                    logging_info(_("Deleting parameters %s from '%s'"), actually_deleted, param_filename)
+                for param_name in to_delete:
                     working.pop(param_name, None)
 
             # Include in computed_changes if the working copy differs from the loaded in-memory state

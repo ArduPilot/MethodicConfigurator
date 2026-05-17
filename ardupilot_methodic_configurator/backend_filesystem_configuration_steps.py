@@ -553,8 +553,6 @@ class ConfigurationSteps:
                 continue
             if self._condition_passes(parameter_info, variables):
                 to_delete.add(parameter)
-        if to_delete:
-            logging_info(_("Deleting parameters %s from '%s'"), sorted(to_delete), filename)
         return to_delete
 
     def auto_changed_by(self, selected_file: str) -> str:
