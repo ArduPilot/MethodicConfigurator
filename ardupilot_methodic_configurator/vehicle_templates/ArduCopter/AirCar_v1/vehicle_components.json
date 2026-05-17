@@ -56,7 +56,7 @@
                 "URL": ""
             },
             "Specifications": {
-                "Chemistry": "LipoHV",
+                "Chemistry": "Lipo",
                 "Volt per cell max": 4.2,
                 "Volt per cell arm": 3.9455,
                 "Volt per cell low": 3.6,
