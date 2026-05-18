@@ -337,7 +337,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/backend_filesystem.py:932
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1780
 msgid "Deleting parameters %s from '%s'"
-msgstr ""
+msgstr "Parameter %s werden aus '%s' gelöscht"
 
 #: ardupilot_methodic_configurator/backend_filesystem.py:1117
 msgid "The type of the vehicle. Default is ArduCopter"
@@ -424,7 +424,7 @@ msgid ""
 "In file '%s': '%s' parameter '%s' appears in both 'derived_parameters' and "
 "'delete_parameters' without complementary 'if' guards. This is likely a "
 "configuration mistake."
-msgstr ""
+msgstr "In Datei '%s': Parameter '%s' mit dem Namen '%s' erscheint sowohl in 'derived_parameters' als auch in 'delete_parameters' ohne ergänzende 'if'-Bedingungen. Dies ist wahrscheinlich ein Konfigurationsfehler."
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:171
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
@@ -432,7 +432,7 @@ msgstr "Fehler in Datei '%s': '%s' %s-Parameter ist kein Wörterbuch"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:183
 msgid "Error in file '%s': '%s' derived parameter '%s' has unexpected keys: %s"
-msgstr ""
+msgstr "Fehler in Datei '%s': '%s' abgeleiteter Parameter '%s' hat unerwartete Schlüssel: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:192
 msgid ""
@@ -451,94 +451,94 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:218
 msgid "Error in file '%s': '%s' delete_parameters is not a dictionary"
-msgstr ""
+msgstr "Fehler in Datei '%s': '%s' delete_parameters ist kein Dictionary"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:226
 msgid "Error in file '%s': '%s' delete_parameter '%s' is not a dictionary"
-msgstr ""
+msgstr "Fehler in Datei '%s': '%s' delete_parameter '%s' ist kein Dictionary"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:235
 msgid "Error in file '%s': '%s' delete_parameter '%s' has unexpected keys: %s"
-msgstr ""
+msgstr "Fehler in Datei '%s': '%s' delete_parameter '%s' hat unerwartete Schlüssel: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:252
 msgid "Condition '%s' has a syntax error: %s"
-msgstr ""
+msgstr "Bedingung '%s' enthält einen Syntaxfehler: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:259
 msgid "Condition '%s' references an undefined name: %s"
-msgstr ""
+msgstr "Bedingung '%s' verweist auf einen undefinierten Namen: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:263
 msgid "Condition '%s' could not be evaluated: %s"
-msgstr ""
+msgstr "Bedingung '%s' konnte nicht ausgewertet werden: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:302
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: 'fc_parameters' not found, is "
 "an FC connected?"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' konnte nicht berechnet werden: 'fc_parameters' nicht gefunden, ist ein FC verbunden?"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:320
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be evaluated: {eval_err}"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' konnte nicht ausgewertet werden: {eval_err}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:346
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed, no documentation metadata "
 "available for it"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' konnte nicht berechnet werden, keine Dokumentations-Metadaten dafür verfügbar"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:361
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' string value '{result}' not found in documentation "
 "metadata values"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' Zeichenkettenwert '{result}' nicht in Dokumentations-Metadatenwerten gefunden"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:377
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' string value '{result}' not found in documentation "
 "metadata bitmasks"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' Zeichenkettenwert '{result}' nicht in Dokumentations-Metadaten-Bitmasken gefunden"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:388
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' string value '{result}' has no documentation "
 "metadata values or bitmasks"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' Zeichenkettenwert '{result}' hat keine Dokumentations-Metadatenwerte oder Bitmasken"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:416
 msgid ""
 "In file '%s': '%s' forced parameter '%s' has no 'New Value' - add-from-FC "
 "shorthand is only valid for derived parameters"
-msgstr ""
+msgstr "In Datei '%s': '%s' erzwungener Parameter '%s' hat keinen 'New Value' - Add-from-FC-Kurzform ist nur für abgeleitete Parameter gültig"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:430
 msgid "Copied from the connected flight controller"
-msgstr ""
+msgstr "Von dem verbundenen Flugcontroller kopiert"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:447
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' evaluation produced a non-finite value: {result}"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' Auswertung ergab einen nicht-endlichen Wert: {result}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:463
 msgid ""
 "In file '{configuration_steps_filename}': '{filename}' {parameter_type} "
 "parameter '{parameter}' could not be computed: {e}"
-msgstr ""
+msgstr "In Datei '{configuration_steps_filename}': '{filename}' {parameter_type} Parameter '{parameter}' konnte nicht berechnet werden: {e}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:547
 msgid "Skipping delete_parameters for '%s': no evaluation variables available"
-msgstr ""
+msgstr "delete_parameters für '%s' wird übersprungen: keine Auswertungsvariablen verfügbar"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:571
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:585
@@ -2718,7 +2718,7 @@ msgstr "Autotune Yaw-Achse"
 msgid ""
 "Because ALTHOLD flight mode was used for more than 30 seconds to correctly "
 "learn the MOT_THST_HOVER value"
-msgstr ""
+msgstr "Weil der ALTHOLD-Flugmodus mehr als 30 Sekunden lang benutzt wurde, um den Wert für MOT_THST_HOVER korrekt zu lernen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:253
 msgid "Critical failsafe voltage x nr. of cells"
@@ -2824,7 +2824,7 @@ msgstr ""
 msgid ""
 "Log relevant data for attitude PID and notch filter tuning. Later on we'll "
 "change this to other subsystems"
-msgstr ""
+msgstr "Relevante Daten für Attitude-PID und Notch-Filter-Tuning protokollieren. Später werden wir dies auf andere Teilsysteme umstellen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:274
 msgid ""
@@ -3114,11 +3114,11 @@ msgstr ""
 msgid ""
 "Add-from-FC: include this parameter at its current FC value when the "
 "condition holds"
-msgstr ""
+msgstr "Add-from-FC: diesen Parameter mit seinem aktuellen FC-Wert übernehmen, wenn die Bedingung erfüllt ist"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:353
 msgid "Computed value: evaluate New Value expression and set the parameter"
-msgstr ""
+msgstr "Berechneter Wert: Ausdruck für New Value auswerten und Parameter setzen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:354
 msgid "Description of the phase"
@@ -3161,13 +3161,13 @@ msgstr "Neuer Wert für den Parameter"
 msgid ""
 "Optional Python expression; if present, the parameter is only applied when "
 "this expression evaluates to true"
-msgstr ""
+msgstr "Optionaler Python-Ausdruck; falls vorhanden, wird der Parameter nur angewendet, wenn dieser Ausdruck zu true ausgewertet wird"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:366
 msgid ""
 "Optional Python expression; if present, the parameter is only deleted when "
 "this expression evaluates to true"
-msgstr ""
+msgstr "Optionale Python-Ausdruck; wenn vorhanden, wird der Parameter nur gelöscht, wenn dieser Ausdruck wahr ist"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:369
 msgid "Optional instructions to display as a popup when entering this step"
@@ -3179,14 +3179,14 @@ msgstr ""
 msgid ""
 "Parameters to remove from the configuration file, optionally conditioned on "
 "a Python expression"
-msgstr ""
+msgstr "Parameter, die aus der Konfigurationsdatei entfernt werden sollen, optional abhängig von einem Python-Ausdruck"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:373
 msgid ""
 "Parameters whose values are derived from vehicle component data or FC state. "
 "An entry with only 'if' means: add the parameter from the FC at its current "
 "value when the condition is true."
-msgstr ""
+msgstr "Parameter, deren Werte von Fahrzeugsystem-Komponentendaten oder FC-Zustand abgeleitet werden. Ein Eintrag mit nur 'if' bedeutet: den Parameter vom FC mit seinem aktuellen Wert hinzufügen, wenn die Bedingung erfüllt ist."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:376
 msgid "Phases of the configuration process"
@@ -3200,7 +3200,7 @@ msgstr "Frühere Dateinamen für diesen Schritt"
 msgid ""
 "Python expression; the parameter is added from the FC only when this "
 "evaluates to true"
-msgstr ""
+msgstr "Python-Ausdruck; der Parameter wird vom FC nur hinzugefügt, wenn dieser wahr ist"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:379
 msgid "Reason for changing the parameter"
