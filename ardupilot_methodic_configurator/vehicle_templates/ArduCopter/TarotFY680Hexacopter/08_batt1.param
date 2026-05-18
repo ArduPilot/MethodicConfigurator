@@ -6,7 +6,6 @@ BATT_CRT_VOLT,20.7  # Critical failsafe voltage x nr. of cells
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,0
-BATT_I2C_BUS,0  # Selected in component editor window
 BATT_LOW_MAH,100  # Fail-safe needs to be responsive at 1000 mAh, no risk taking
 BATT_LOW_VOLT,21  # Low failsafe voltage x nr. of cells
 BATT_MONITOR,4  # Selected in component editor window
