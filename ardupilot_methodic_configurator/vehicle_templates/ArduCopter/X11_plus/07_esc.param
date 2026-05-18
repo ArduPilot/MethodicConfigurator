@@ -14,6 +14,8 @@ PSC_ACCZ_SMAX,2500  # limit the slew rate to prevent possible ESC desync - https
 SCR_ENABLE,1  # Scripting Enable to run Hobbywing_DataLink.lua
 SERIAL2_BAUD,115  # Baud rate of data link
 SERIAL2_PROTOCOL,28  # Serial port setup for data link
+SERVO_BLH_POLES,14  # Specified in component editor window
+SERVO_FTW_POLES,14  # Specified in component editor window
 SERVO1_MAX,1950  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 SERVO1_MIN,1050  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
 SERVO1_TRIM,1500  # Operating Pulse Width:1050-1950us(Fixed or cannot be Programmed)
