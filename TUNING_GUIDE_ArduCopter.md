@@ -1080,10 +1080,10 @@ The PID notch index parameters select one of the global `FILT1_` to `FILT8_` not
 Use `0` to disable a PID notch on an axis.
 Set value from `1` to `8` to select the matching `FILTn_` filter number so that the characteristics of the notch as defined above will be applied.
 
-| Purpose | Roll | Pitch | Yaw |
-| :--- | :--- | :--- | :--- |
-| Target notch index | `ATC_RAT_RLL_NTF` | `ATC_RAT_PIT_NTF` | `ATC_RAT_YAW_NTF` |
-| Error notch index | `ATC_RAT_RLL_NEF` | `ATC_RAT_PIT_NEF` | `ATC_RAT_YAW_NEF` |
+| Purpose | Roll | Pitch | Yaw | Altitude |
+| :--- | :--- | :--- | :--- | :--- |
+| Target notch index | `ATC_RAT_RLL_NTF` | `ATC_RAT_PIT_NTF` | `ATC_RAT_YAW_NTF` | `PSC_ACCZ_NTF` |
+| Error notch index | `ATC_RAT_RLL_NEF` | `ATC_RAT_PIT_NEF` | `ATC_RAT_YAW_NEF` | `PSC_ACCZ_NEF` |
 
 Keep `ATC_RAT_*_D_FF` at `0` while tuning PID notch filters.
 This term is for improving the "locked-in" feel of the drone so that the drone reacts with minimal latency.

@@ -379,7 +379,7 @@
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["INS_LOG_BAT_.+", "LOG_FILE_.+"],
             "forced_parameters": {
-                "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
+                "LOG_BITMASK": { "New Value": 2242525, "Change Reason": "Log relevant data for attitude PID and notch filter tuning. Later on we'll change this to other subsystems" },
                 "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
             },
             "derived_parameters": {
