@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-04-30 15:10+0000\n"
+"POT-Creation-Date: 2026-05-18 21:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -75,68 +75,68 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:585
+#: ardupilot_methodic_configurator/__main__.py:586
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:104
 msgid "Error in derived parameters"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:592
+#: ardupilot_methodic_configurator/__main__.py:593
 msgid ""
 "The component or connection changes you just did will have repercussions on the following parameter files:\n"
 "\n"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:594
+#: ardupilot_methodic_configurator/__main__.py:595
 msgid ""
 "Please review the changes, and upload the updated parameter files to the flight controller.\n"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:596
+#: ardupilot_methodic_configurator/__main__.py:597
 msgid ""
 "If you already uploaded said parameters to the FC, switch to the normal GUI complexity mode\n"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:600
+#: ardupilot_methodic_configurator/__main__.py:601
 msgid "in order to be able to jump to those specific parameter files"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:603
+#: ardupilot_methodic_configurator/__main__.py:604
 msgid "Component derived param changes"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:649
+#: ardupilot_methodic_configurator/__main__.py:650
 msgid "Created backup file autobackup_%02d.param"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:651
+#: ardupilot_methodic_configurator/__main__.py:652
 msgid "Permission denied when creating backup files: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:652
+#: ardupilot_methodic_configurator/__main__.py:653
 msgid "Please check file permissions and ensure you have write access to the vehicle directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:655
+#: ardupilot_methodic_configurator/__main__.py:656
 msgid "Insufficient disk space to create backup files: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:656
+#: ardupilot_methodic_configurator/__main__.py:657
 msgid "Please free up disk space and try again"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:658
+#: ardupilot_methodic_configurator/__main__.py:659
 msgid "Failed to create backup files: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:660
+#: ardupilot_methodic_configurator/__main__.py:661
 msgid "Unexpected error creating backup files: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:775
+#: ardupilot_methodic_configurator/__main__.py:776
 msgid "Incompatible parameter definition file detected"
 msgstr ""
 
-#: ardupilot_methodic_configurator/__main__.py:776
+#: ardupilot_methodic_configurator/__main__.py:777
 msgid "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot 4.6.x firmware. It appears to be from the master branch. The file will be deleted. Please restart the ArduPilot Methodic Configurator."
 msgstr ""
 
@@ -264,115 +264,190 @@ msgstr ""
 msgid "Cannot restart configuration: 00_default.param is the only available file and is not editable."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1100
+#: ardupilot_methodic_configurator/backend_filesystem.py:932
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1780
+msgid "Deleting parameters %s from '%s'"
+msgstr ""
+
+#: ardupilot_methodic_configurator/backend_filesystem.py:1117
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1106
+#: ardupilot_methodic_configurator/backend_filesystem.py:1123
 msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1114
+#: ardupilot_methodic_configurator/backend_filesystem.py:1131
 msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1123
+#: ardupilot_methodic_configurator/backend_filesystem.py:1140
 msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1132
+#: ardupilot_methodic_configurator/backend_filesystem.py:1149
 msgid "Save the vehicle component to the system templates. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:87
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:88
 msgid "Configuration steps '%s' loaded from %s (overwriting default configuration steps)."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:93
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:94
 msgid "Configuration steps '%s' loaded from %s."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:99
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:100
 msgid "Error in file '%s': %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:109
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:110
 msgid "Schema file '%s' not found"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:111
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:112
 msgid "Configuration steps validation error: %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:113
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:114
 msgid "Error in schema file '%s': %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:121
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:124
 msgid "No configuration steps documentation and no forced and derived parameters will be available."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:126
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:129
 msgid "No configuration phases documentation will be available."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:139
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:150
+msgid "In file '%s': '%s' parameter '%s' appears in both 'derived_parameters' and 'delete_parameters' without complementary 'if' guards. This is likely a configuration mistake."
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:171
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:148
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:183
+msgid "Error in file '%s': '%s' derived parameter '%s' has unexpected keys: %s"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:192
 msgid "Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:156
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:200
 msgid "Error in file '%s': '%s' %s parameter '%s' 'Change Reason' attribute not found."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:196
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:218
+msgid "Error in file '%s': '%s' delete_parameters is not a dictionary"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:212
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be evaluated: {_eval_err}"
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:226
+msgid "Error in file '%s': '%s' delete_parameter '%s' is not a dictionary"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:231
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed, no documentation metadata available for it"
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:235
+msgid "Error in file '%s': '%s' delete_parameter '%s' has unexpected keys: %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:240
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' evaluation produced a non-finite value: {result}"
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:252
+msgid "Condition '%s' has a syntax error: %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:253
-msgid "In file '{self.configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed: {_e}"
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:259
+msgid "Condition '%s' references an undefined name: %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:274
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:288
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:263
+msgid "Condition '%s' could not be evaluated: %s"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:302
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed: 'fc_parameters' not found, is an FC connected?"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:320
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be evaluated: {eval_err}"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:346
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed, no documentation metadata available for it"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:361
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' string value '{result}' not found in documentation metadata values"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:377
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' string value '{result}' not found in documentation metadata bitmasks"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:388
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' string value '{result}' has no documentation metadata values or bitmasks"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:416
+msgid "In file '%s': '%s' forced parameter '%s' has no 'New Value' - add-from-FC shorthand is only valid for derived parameters"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:430
+msgid "Copied from the connected flight controller"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:447
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' evaluation produced a non-finite value: {result}"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:463
+msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed: {e}"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:547
+msgid "Skipping delete_parameters for '%s': no evaluation variables available"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:571
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:585
 msgid "File '{self.configuration_steps_filename}' not found. No intermediate parameter configuration steps available"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:280
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:293
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:577
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:590
 msgid "No documentation available for {selected_file} in the {self.configuration_steps_filename} file"
 msgstr ""
 
@@ -2072,417 +2147,453 @@ msgid "Autotune yaw axis"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:252
-msgid "Critical failsafe voltage x nr. of cells"
+msgid "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:253
-msgid "Defined in component editor"
+msgid "Critical failsafe voltage x nr. of cells"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:254
-msgid "Derived from vehicle component editor propeller size"
+msgid "Defined in component editor"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:255
-msgid "Disable fast harmonic notch logging"
+msgid "Derived from vehicle component editor propeller size"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:256
-msgid "Do not allow arming below this voltage"
+msgid "Disable fast harmonic notch logging"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:257
-msgid "ExpressLRS requires FLTMODE_CH != 5"
+msgid "Do not allow arming below this voltage"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:258
-msgid "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)"
+msgid "ExpressLRS requires FLTMODE_CH != 5"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:259
-msgid "Gather data for the offline IMU temperature calibration while the FC is disarmed"
+msgid "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:260
-msgid "Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
+msgid "Gather data for the offline IMU temperature calibration while the FC is disarmed"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:261
-msgid "Hover learn will improve this initial guess"
+msgid "Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:262
-msgid "IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
+msgid "Hover learn will improve this initial guess"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:263
-msgid "INS_GYRO_FILTER / 2"
+msgid "IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:264
-msgid "Initial value, will be improved at a later step"
+msgid "INS_GYRO_FILTER / 2"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:265
-msgid "Inject chip on the mixer pitch signal"
+msgid "Initial value, will be improved at a later step"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:266
-msgid "Inject chip on the mixer roll signal"
+msgid "Inject chip on the mixer pitch signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:267
-msgid "Inject chip on the mixer thrust signal"
+msgid "Inject chip on the mixer roll signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:268
-msgid "Inject chip on the mixer yaw signal"
+msgid "Inject chip on the mixer thrust signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:269
-msgid "Land ASAP"
+msgid "Inject chip on the mixer yaw signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:270
-msgid "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now"
+msgid "Land ASAP"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:271
-msgid "Log disarmed was only required for offline IMU temperature calibration"
+msgid "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:272
-msgid "Logs measured data both before and after the filters for Filter Review Webtool usage"
+msgid "Log disarmed was only required for offline IMU temperature calibration"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:273
-msgid "Low failsafe voltage x nr. of cells"
+msgid "Log relevant data for attitude PID and notch filter tuning. Later on we'll change this to other subsystems"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:274
-msgid "No more system identification chip injections"
+msgid "Logs measured data both before and after the filters for Filter Review Webtool usage"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:275
-msgid "Normal state for everyday use"
+msgid "Low failsafe voltage x nr. of cells"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:276
-msgid "One .bin log file per flight, not per battery/reboot"
+msgid "No more system identification chip injections"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:277
-msgid "Only arm above this voltage, to avoid taking off with insufficient battery capacity"
+msgid "Normal state for everyday use"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:278
-msgid "Only for IMU and Raw-IMU"
+msgid "One .bin log file per flight, not per battery/reboot"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:279
-msgid "Perform all arming checks. If you have a problem fix its source. Do NOT change this"
+msgid "Only arm above this voltage, to avoid taking off with insufficient battery capacity"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:280
-msgid "Reasonable for most places on this planet"
+msgid "Only for IMU and Raw-IMU"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:281
-msgid "Reset to default after offline IMU temperature calibration"
+msgid "Perform all arming checks. If you have a problem fix its source. Do NOT change this"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:282
-msgid "Restore value now that system identification is done"
+msgid "Reasonable for most places on this planet"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:283
-msgid "Return and land at home or rally point"
+msgid "Reset to default after offline IMU temperature calibration"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:284
-msgid "Scale the PIDs up when battery voltage is above this threshold"
+msgid "Restore value now that system identification is done"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:285
-msgid "Scale the PIDs up when battery voltage is below this threshold"
+msgid "Return and land at home or rally point"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:286
-msgid "Selected in component editor window"
+msgid "Scale the PIDs up when battery voltage is above this threshold"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:287
-msgid "Selected in the component editor"
+msgid "Scale the PIDs up when battery voltage is below this threshold"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:288
-msgid "So that it can tune the throttle controller on 20_throttle_controller.param file"
+msgid "Selected in component editor window"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:289
-msgid "Specified in component editor window"
+msgid "Selected in the component editor"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:290
-msgid "The default is 20Hz but that is too high in most situations"
+msgid "So that it can tune the throttle controller on 20_throttle_controller.param file"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:291
-msgid "Total battery capacity specified in the component editor"
+msgid "Specified in component editor window"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:292
-msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
+msgid "The default is 20Hz but that is too high in most situations"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:293
-msgid "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
+msgid "Total battery capacity specified in the component editor"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:294
-msgid "Use INS_GYRO_FILTER / 4 as a first guess"
+msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:295
-msgid "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
+msgid "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:296
-msgid "Use VTOL-Quicktune lua script to estimate a good PID starting values"
+msgid "Use INS_GYRO_FILTER / 4 as a first guess"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:297
-msgid "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others"
+msgid "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:298
-msgid "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation"
+msgid "Use VTOL-Quicktune lua script to estimate a good PID starting values"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:299
-msgid "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others"
+msgid "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
-msgid "Use the first notch filter to filter the noise created by the motors/propellers"
+msgid "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:301
-msgid "Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned"
+msgid "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:302
-msgid "allow post flight tuning with Replay"
+msgid "Use the first notch filter to filter the noise created by the motors/propellers"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:303
-msgid "re-enable normal operation, activate input shaping"
+msgid "Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:304
-msgid "test the stabilization loops independent of the input shaping"
+msgid "allow post flight tuning with Replay"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:305
+msgid "re-enable normal operation, activate input shaping"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:306
+msgid "test the stabilization loops independent of the input shaping"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid "was only needed for wind speed estimation"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:308
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:310
 msgid "Analytical PID optimization"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:309
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:323
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:311
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:325
 msgid "Assemble all components except the propellers"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:310
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:324
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:312
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:326
 msgid "Assemble the propellers and perform the first flight"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:311
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:313
 msgid "Basic mandatory configuration"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:312
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:314
 msgid "Everyday use"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:313
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:326
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:315
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:328
 msgid "Guided operation"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:314
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:316
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:202
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:213
 msgid "IMU temperature calibration"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:315
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid "Improve altitude control"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:316
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:318
 msgid "Minimalistic mandatory tuning"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:317
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:319
 msgid "Optical flow calibration"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:318
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:331
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:320
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:333
 msgid "Position controller tuning"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:319
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:332
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:321
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:334
 msgid "Precision landing"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:320
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:322
 msgid "Standard tuning"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:325
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:327
 msgid "Calibrate the IMU sensors for at different temperatures"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:327
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:329
 msgid "Improve altitude under windy conditions"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:328
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:330
 msgid "Improve tuning with more test flight data"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:329
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:331
 msgid "Minimalistic mandatory tuning using test flight data"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:330
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid "Optical flow sensor calibration"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:333
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:335
 msgid "Set up the basic parameters for the vehicle"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:334
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid "Switch tests off, configure for productive work"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:335
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:337
 msgid "System identification and analytical PID optimization"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:347
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:349
 msgid "A list of regular expressions to match parameters for automatic import if they have non-default values."
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:350
-msgid "Description of the phase"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:351
-msgid "Explanation of why this step is needed"
-msgstr ""
-
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:352
-msgid "Explanation of why this step needs to be done at this point"
+msgid "Add-from-FC: include this parameter at its current FC value when the condition holds"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:353
-msgid "Expression to derive new parameter value"
+msgid "Computed value: evaluate New Value expression and set the parameter"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:354
-msgid "Expression to rename connection"
+msgid "Description of the phase"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:355
-msgid "Message about possible jump to another step"
+msgid "Explanation of why this step is needed"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:356
-msgid "Name of tool/process that automatically changes these parameters"
+msgid "Explanation of why this step needs to be done at this point"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:357
-msgid "Name/description of external tool needed"
+msgid "Expression to derive new parameter value"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:358
-msgid "New value for the parameter"
+msgid "Expression to rename connection"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:359
-msgid "Optional instructions to display as a popup when entering this step"
+msgid "Message about possible jump to another step"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:360
-msgid "Phases of the configuration process"
+msgid "Name of tool/process that automatically changes these parameters"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:361
-msgid "Previous filenames for this step"
+msgid "Name/description of external tool needed"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:362
-msgid "Reason for changing the parameter"
+msgid "New value for the parameter"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:363
-msgid "Reason for the derived parameter"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:364
-msgid "Short description for blog reference"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:365
-msgid "Short description for wiki reference"
+msgid "Optional Python expression; if present, the parameter is only applied when this expression evaluates to true"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:366
-msgid "Starting step number of this phase"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:367
-msgid "Text indicating if step is mandatory or optional with percentages"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:368
-msgid "The instruction message to display to the user"
+msgid "Optional Python expression; if present, the parameter is only deleted when this expression evaluates to true"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:369
-msgid "The name of the plugin to load"
+msgid "Optional instructions to display as a popup when entering this step"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:370
-msgid "The type of popup dialog to display (info or warning)"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:371
-msgid "URL to blog documentation"
-msgstr ""
-
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:372
-msgid "URL to external tool"
+msgid "Parameters to remove from the configuration file, optionally conditioned on a Python expression"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:373
+msgid "Parameters whose values are derived from vehicle component data or FC state. An entry with only 'if' means: add the parameter from the FC at its current value when the condition is true."
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:376
+msgid "Phases of the configuration process"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:377
+msgid "Previous filenames for this step"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:378
+msgid "Python expression; the parameter is added from the FC only when this evaluates to true"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:379
+msgid "Reason for changing the parameter"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:380
+msgid "Reason for the derived parameter"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:381
+msgid "Short description for blog reference"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:382
+msgid "Short description for wiki reference"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:383
+msgid "Starting step number of this phase"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:384
+msgid "Text indicating if step is mandatory or optional with percentages"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:385
+msgid "The instruction message to display to the user"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:386
+msgid "The name of the plugin to load"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:387
+msgid "The type of popup dialog to display (info or warning)"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:388
+msgid "URL to blog documentation"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:389
+msgid "URL to external tool"
+msgstr ""
+
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:390
 msgid "URL to wiki documentation"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:374
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:391
 msgid "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents"
 msgstr ""
 
-#: ardupilot_methodic_configurator/configuration_steps_strings.py:375
+#: ardupilot_methodic_configurator/configuration_steps_strings.py:392
 msgid "Whether this phase is optional"
 msgstr ""
 
@@ -2603,44 +2714,44 @@ msgstr ""
 msgid "Battery monitoring stopped"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:142
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:147
 msgid "ExpressLRS Configuration Warning"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:143
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:148
 msgid ""
 "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
 "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
 "to avoid conflicts with the required RC5 arming channel."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:213
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:218
 msgid "Skipping connection renaming because evaluation failed: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:222
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:227
 msgid "Removing duplicate parameter %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:223
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:228
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:224
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:229
 msgid "Parameter Removed"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:228
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:233
 msgid "Renaming parameter %s to %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:229
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:234
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
 "to obey the flight controller connection defined in the component editor window."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:233
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:238
 msgid "Parameter Renamed"
 msgstr ""
 
@@ -3334,8 +3445,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1214
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1218
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1229
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1976
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1989
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2005
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2018
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:192
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:201
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:208
@@ -3347,8 +3458,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:458
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:485
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:530
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:554
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:579
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:555
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:582
 #: ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 #: ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:180
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:594
@@ -3371,7 +3482,7 @@ msgid ""
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1227
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1959
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1988
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:334
 msgid "Success"
 msgstr ""
@@ -3470,120 +3581,120 @@ msgstr ""
 msgid "Derived parameter %s not found in current parameters, skipping"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1771
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1800
 msgid "Parameter not found"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1772
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1801
 msgid "Parameter {param_name} could not be located."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1784
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1790
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1813
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1819
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:404
 msgid "Out-of-range value"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1787
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1816
 msgid "Parameter %s out of range: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1794
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1823
 msgid "Invalid value for %s: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1797
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1826
 msgid "Invalid value"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1835
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1864
 msgid "No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1856
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1885
 msgid "Parameter name can not be empty."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1865
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1894
 msgid "Parameter already exists, edit it instead"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1883
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1912
 msgid "Parameter name not found in the flight controller."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1901
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1930
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1906
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1935
 msgid "Can not add parameter when no FC is connected and no apm.pdef.xml file exists."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1959
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1988
 msgid "Successfully added %d parameter(s)."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1963
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1992
 msgid "Added %d parameter(s)."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1965
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1982
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1994
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2011
 msgid "Skipped %d parameter(s): %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1967
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1984
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1996
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2013
 msgid "Failed %d parameter(s): %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1968
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1997
 msgid "Partial Success"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1972
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2001
 msgid "All %d parameter(s) already exist in the file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1972
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2001
 msgid "No Changes"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1976
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2005
 msgid "Failed to add all %d parameter(s): %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1985
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2014
 msgid "No Parameters Added"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1989
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2018
 msgid "Unexpected result during bulk parameter addition."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2130
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2159
 msgid "Why: "
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2132
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2161
 msgid "Why now: "
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2137
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2166
 msgid "{current_file} Documentation"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2139
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2168
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:62
 msgid "Documentation"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2159
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2188
 msgid "This configuration step ({current_file} intermediate parameter file) is {percentage}% mandatory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2163
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2192
 msgid "Mandatory level not available for this configuration step ({current_file})"
 msgstr ""
 
@@ -3741,7 +3852,7 @@ msgid "Length of values %u and fallbacks %u differ for %s"
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:108
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:488
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:544
 msgid "No values found for %s in the metadata"
 msgstr ""
 
@@ -3757,96 +3868,96 @@ msgstr ""
 msgid "Protocol %s (%s) not found in %s code dictionary (firmware may be newer)"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:213
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:218
 msgid "Invalid non-integer value for %s: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:246
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:251
 msgid "Invalid CAN_Dx_PROTOCOL %s and CAN_Px_DRIVER %s for GNSS Receiver"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:270
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:275
 msgid "Invalid non-integer value for RC_PROTOCOLS %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:291
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:296
 msgid "RC_PROTOCOLS has multiple protocols enabled (%d). Cannot determine active protocol."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:310
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:315
 msgid "Invalid non-integer value for {serial}_PROTOCOL {serial_protocol_nr}"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:370
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:375
 msgid "Invalid non-integer value for MOT_PWM_TYPE %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:419
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:424
 msgid "BATT_MONITOR value %s not found in BATT_MONITOR_CONNECTION"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:438
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:443
 msgid "BATT_I2C_BUS value %d out of range (0-%d), defaulting to first bus"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:444
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:449
 msgid "Invalid BATT_I2C_BUS value, defaulting to first bus"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:459
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:464
 msgid "Error processing BATT_MONITOR parameter: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:461
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:466
 msgid "BATT_MONITOR parameter not found in fc_parameters"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:493
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:498
 msgid "BATT_CAPACITY is zero or negative: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:495
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:500
 msgid "Error processing BATT_CAPACITY parameter: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:497
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:502
 msgid "BATT_CAPACITY parameter not found in fc_parameters"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:516
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:521
 msgid "Invalid voltage type %s for battery voltage import"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:523
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:528
 msgid "Calculated  %s voltage %.2f V is out of expected range for %s chemistry (%.2f - %.2f V)"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:531
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:632
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:536
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:637
 msgid "Error processing %s parameter: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:583
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:588
 msgid "Current chemistry %s does not have valid volt per cell for %s, ignoring current chemistry"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:618
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:623
 msgid "No recommended voltage for %s %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:624
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:629
 msgid "Voltage value for %s is zero or invalid: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:630
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:635
 msgid "Estimated cell count %d from %s seems unreasonable"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:679
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:684
 msgid "All volt per cell values are zero or invalid; cannot estimate battery cell count"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:690
+#: ardupilot_methodic_configurator/data_model_vehicle_components_import.py:695
 msgid "Estimated battery cell count %s is out of valid range (%d to %d)"
 msgstr ""
 
@@ -3876,67 +3987,67 @@ msgid "Exception occurred in get_component_property_description: {}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:491
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:547
 msgid "No fallback values found for %s"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:831
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:888
 msgid "Takeoff Weight max must be a float"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:839
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:896
 msgid "Takeoff Weight min must be a float"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:856
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:913
 msgid "{name} must be a {data_type_name} between {min} and {max}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:861
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:918
 msgid "Invalid {data_type_name} value for {name}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:886
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:943
 msgid "is below the {chemistry} minimum limit of {volt_limit}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:891
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:948
 msgid "is above the {chemistry} maximum limit of {volt_limit}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:895
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:952
 msgid "Invalid value. Will be set to the recommended value."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:947
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1004
 msgid "{limit_name} is not a float nor string"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:951
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1008
 msgid "{limit_name} is not convertible to float"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:955
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1012
 msgid "is below the {limit_name} of {limit_value}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:960
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1017
 msgid "is above the {limit_name} of {limit_value}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1001
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1058
 #: ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:457
 msgid ""
 "Invalid value '{value}' for {paths_str}\n"
@@ -3944,17 +4055,17 @@ msgid ""
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1029
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1086
 msgid "Duplicate FC connection type '{value}' for {paths_str}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1046
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1103
 msgid "Number of magnetic rotor poles must be even for {paths_str}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1049
+#: ardupilot_methodic_configurator/data_model_vehicle_components_validation.py:1106
 msgid "Invalid integer value for {paths_str}"
 msgstr ""
 
@@ -4475,32 +4586,32 @@ msgid "Validation failed. Please correct the errors before saving."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:554
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:555
 msgid "Failed to save data to file."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:557
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:558
 msgid "Vehicle component data saved successfully."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:564
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:565
 msgid "Do you want to save the changes before closing?"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:564
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:565
 msgid "Save Changes?"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:581
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:584
 msgid "Changes discarded. No data saved."
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:605
+#: ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:608
 msgid "Skip the component editor window. Only use this if all components have been configured. Default is %(default)s"
 msgstr ""
 
@@ -5853,11 +5964,11 @@ msgstr ""
 msgid "Operation not possible"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:98
+#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:99
 msgid "Please be patient, {:.1f}% of {}% complete"
 msgstr ""
 
-#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:150
+#: ardupilot_methodic_configurator/frontend_tkinter_progress_window.py:157
 msgid "Updating progress widgets: {_e}"
 msgstr ""
 
