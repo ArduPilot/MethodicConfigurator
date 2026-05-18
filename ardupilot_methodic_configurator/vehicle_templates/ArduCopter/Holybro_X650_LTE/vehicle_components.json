@@ -44,7 +44,7 @@
             },
             "FC Connection": {
                 "Type": "Analog",
-                "Protocol": "Analog Voltage Only"
+                "Protocol": "Analog Voltage and Current"
             },
             "Notes": "Supplies 5.2V to FC, providing current consumption and battery voltage measurements"
         },
