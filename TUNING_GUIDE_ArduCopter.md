@@ -1087,14 +1087,6 @@ Set value from `1` to `8` to select the matching `FILTn_` filter number so that 
 
 Keep `ATC_RAT_*_D_FF` at `0` while tuning PID notch filters.
 This term is for improving the "locked-in" feel of the drone so that the drone reacts with minimal latency.
-After the resonance is under control, `D_FF` can be tuned separately in very small increments to improve aggressive rate tracking, but each change must be validated with logs because it changes actuator demand and pilot feel.
-Check the `Des.ATT*` and `ATT*` plots in the log.
-The below images show how the tune can be made tighter during aggressive maneuvers:
-
-| | |
-| :---: | :---: |
-| ![Without D_FF](images/Without_D_FF.png) | ![With D_FF](images/With_D_FF.png) |
-| Without D_FF | With D_FF |
 
 1. Finish the normal harmonic notch calibration and run a short test flight.
    Follow the same procedure as given in [Section 9.6](#96-performance-evaluation-flight) but with isolated inputs along roll, pitch and yaw axes, *one axis per log file*.
@@ -1109,6 +1101,8 @@ The below images show how the tune can be made tighter during aggressive maneuve
    If the axes resonate at different frequencies, use separate `FILTn_` slots.
 1. Fly a short test flight again and inspect the logs in the Filter Review Tool before making a change if necessary.
 1. Disable the PID notch by setting the relevant `ATC_RAT_*_NEF` or `ATC_RAT_*_NTF` parameter back to `0` if the follow-up log does not show a clear improvement.
+
+![Andy Piper - Setting PID Notches](https://www.youtube.com/watch?v=-Qua1HXFTLg)
 
 ## 8.4 Configure the EKF altitude source weights
 
@@ -1479,6 +1473,19 @@ This can reduce the pitch overshoot sometimes seen (especially on copters with l
 Take a look at the `RATE.*out` values in the `.bin` log file, they all should be below 0.1.
 
 Now the standard tuning is complete you can skip to [Section 13 Productive Configuration](#13-productive-configuration)
+
+## 9.7 Angle rate derivative feed-forward calculation
+
+After the resonance is under control, and autotune is done, `D_FF` can be calculated to improve aggressive rate tracking.
+But must be validated with logs because it changes actuator demand and pilot feel.
+The below images show how the tune can be made tighter during aggressive maneuvers:
+
+| | |
+| :---: | :---: |
+| ![Without D_FF](images/Without_D_FF.png) | ![With D_FF](images/With_D_FF.png) |
+| Without D_FF | With D_FF |
+
+![Andy Piper - Calculating D feed-forward](https://www.youtube.com/watch?v=4qxzsCOu8Qw)
 
 # 10. Improve altitude under windy conditions (optional)
 
