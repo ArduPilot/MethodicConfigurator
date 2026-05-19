@@ -4,7 +4,7 @@
 
 ![Cinewhoop Diatone Taycan MX-C](images/blog/blog_title.png)
 
-For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
+For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence will work on any other multicopter.
 Parts of Section 1 and Sections 2 to 6 apply to **all ArduPilot vehicles**: ArduPlane, ArduRover, ArduBoat, ArduSub, ArduBlimp ...
 
 This method uses the latest available [ArduPilot WebTools](https://firmware.ardupilot.org/Tools/WebTools/), some of the new features of ArduCopter 4.3 and above and best practices from the [ArduPilot Community](https://discuss.ardupilot.org/).
@@ -1086,7 +1086,6 @@ Set value from `1` to `8` to select the matching `FILTn_` filter number so that 
 | Error notch index | `ATC_RAT_RLL_NEF` | `ATC_RAT_PIT_NEF` | `ATC_RAT_YAW_NEF` | `PSC_ACCZ_NEF` |
 
 Keep `ATC_RAT_*_D_FF` at `0` while tuning PID notch filters.
-This term is for improving the "locked-in" feel of the drone so that the drone reacts with minimal latency.
 
 1. Finish the normal harmonic notch calibration and run a short test flight.
    Follow the same procedure as given in [Section 9.6](#96-performance-evaluation-flight) but with isolated inputs along roll, pitch and yaw axes, *one axis per log file*.
@@ -1102,7 +1101,7 @@ This term is for improving the "locked-in" feel of the drone so that the drone r
 1. Fly a short test flight again and inspect the logs in the Filter Review Tool before making a change if necessary.
 1. Disable the PID notch by setting the relevant `ATC_RAT_*_NEF` or `ATC_RAT_*_NTF` parameter back to `0` if the follow-up log does not show a clear improvement.
 
-![Andy Piper - Setting PID Notches](https://www.youtube.com/watch?v=-Qua1HXFTLg)
+[![Andy Piper - Setting PID error and target notch filters](images/blog/AndyPiper_setting_PID_error_and_target_notch_filters.jpg)](https://www.youtube.com/watch?v=-Qua1HXFTLg)
 
 ## 8.4 Configure the EKF altitude source weights
 
@@ -1476,8 +1475,20 @@ Now the standard tuning is complete you can skip to [Section 13 Productive Confi
 
 ## 9.7 Angle rate derivative feed-forward calculation
 
-After the resonance is under control, and autotune is done, `D_FF` can be calculated to improve aggressive rate tracking.
-But must be validated with logs because it changes actuator demand and pilot feel.
+After the frame resonance is under control and autotune is done, calculate `ATC_RAT_*_D_FF` and `PSC_ACCZ_D_FF` to improve aggressive rate tracking.
+This term is for improving the "locked-in" feel of the drone so that the drone reacts with minimal latency.
+
+Angular velocity is one of `RATE.P`, `RATE.R`, `RATE.Y` in deg/s
+
+Angular velocity setpoint is one of `RATE.POut`, `RATE.ROut`, `RATE.YOut`
+
+Time is in seconds
+
+Angular acceleration = |ang_vel_end - ang_vel_start| x pi / (180 x (time_end - time_start))  in rad/s/s
+
+ATC_RAT_*_D_FF = RATE.*Out / Angular acceleration
+
+It must be validated with logs because it changes actuator demand and pilot feel.
 The below images show how the tune can be made tighter during aggressive maneuvers:
 
 | | |
@@ -1485,7 +1496,7 @@ The below images show how the tune can be made tighter during aggressive maneuve
 | ![Without D_FF](images/Without_D_FF.png) | ![With D_FF](images/With_D_FF.png) |
 | Without D_FF | With D_FF |
 
-![Andy Piper - Calculating D feed-forward](https://www.youtube.com/watch?v=4qxzsCOu8Qw)
+[![Andy Piper - Calculating D feed-forward PID gains](images/blog/AndyPiper_calculating_D_feed-forward_PID_gains.jpg)](https://www.youtube.com/watch?v=4qxzsCOu8Qw)
 
 # 10. Improve altitude under windy conditions (optional)
 
