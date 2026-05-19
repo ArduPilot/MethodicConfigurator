@@ -23,7 +23,7 @@ import tkinter as tk
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any, NamedTuple, Optional
-from unittest.mock import patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pyautogui
 import pytest
@@ -35,6 +35,26 @@ from ardupilot_methodic_configurator.backend_flightcontroller import FlightContr
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import NEW_VALUE_DIFFERENT_STR
+
+# ==================== SHARED FLIGHT CONTROLLER FIXTURES ====================
+
+
+@pytest.fixture
+def mock_connected_master() -> tuple[MagicMock, Mock]:
+    """
+    Provide a connected mock master and connection manager for flight controller tests.
+
+    Returns (mock_master, mock_conn_mgr) where mock_master has target_system=1 and
+    target_component=1 pre-configured. Tests that require different system/component IDs
+    should override those attributes directly after unpacking.
+    """
+    mock_master = MagicMock()
+    mock_master.target_system = 1
+    mock_master.target_component = 1
+    mock_conn_mgr = Mock()
+    mock_conn_mgr.master = mock_master
+    return mock_master, mock_conn_mgr
+
 
 # ==================== SHARED TKINTER TESTING CONFIGURATION ====================
 

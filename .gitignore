@@ -23,3 +23,5 @@ test.xml
 sitl/arducopter
 sitl/firmware-version.txt
 sitl/git-version.txt
+
+tuning_report.csv

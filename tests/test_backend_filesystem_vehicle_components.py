@@ -15,9 +15,9 @@ from json.decoder import JSONDecodeError as RealJSONDecodeError
 from unittest.mock import mock_open, patch
 
 import pytest
+from test_backend_safe_file_io_write_capture import make_capture_safe_write
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
-from ardupilot_methodic_configurator.backend_safe_file_io import make_capture_safe_write
 from ardupilot_methodic_configurator.data_model_template_overview import TemplateOverview
 
 # pylint: disable=too-many-lines,too-many-public-methods,attribute-defined-outside-init
