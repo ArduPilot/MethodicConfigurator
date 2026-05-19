@@ -1058,5 +1058,188 @@ class TestParameterEdgeCases:
         assert isinstance(result3[0], bool)
 
 
+class TestDownloadParamsViaMavlink:
+    """Tests for the _download_params_via_mavlink method."""
+
+    def test_download_params_returns_empty_when_master_is_none(self) -> None:
+        """
+        _download_params_via_mavlink returns empty dict when master is None.
+
+        GIVEN: No flight controller connection (master is None)
+        WHEN: _download_params_via_mavlink is called
+        THEN: An empty dictionary should be returned
+        AND: No exceptions should be raised
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.comport_device = ""
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        result = params_mgr._download_params_via_mavlink()
+
+        assert result == {}
+
+    def test_download_params_handles_none_message(self) -> None:
+        """
+        _download_params_via_mavlink handles None message (timeout) gracefully.
+
+        GIVEN: Connected FC but recv_match returns None (timeout)
+        WHEN: _download_params_via_mavlink is called
+        THEN: An empty dictionary should be returned
+        AND: No exceptions should be raised
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_master.recv_match.return_value = None  # Simulate timeout
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.comport_device = "COM1"
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        result = params_mgr._download_params_via_mavlink()
+
+        assert result == {}
+
+    def test_download_params_receives_parameters_with_progress_callback(self) -> None:
+        """
+        _download_params_via_mavlink calls progress callback while receiving parameters.
+
+        GIVEN: Connected FC that returns parameter messages
+        WHEN: _download_params_via_mavlink is called with a progress callback
+        THEN: The callback should be called with current count and total
+        AND: The parameters should be returned in the result dict
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        # Create two parameter messages
+        param1_msg = MagicMock()
+        param1_msg.to_dict.return_value = {"param_id": "PARAM1", "param_value": 1.0}
+        param1_msg.param_count = 2
+
+        param2_msg = MagicMock()
+        param2_msg.to_dict.return_value = {"param_id": "PARAM2", "param_value": 2.0}
+        param2_msg.param_count = 2
+
+        mock_master.recv_match.side_effect = [param1_msg, param2_msg, None]
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.comport_device = "COM1"
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        progress_calls = []
+
+        def progress_callback(current: int, total: int) -> None:
+            progress_calls.append((current, total))
+
+        result = params_mgr._download_params_via_mavlink(progress_callback=progress_callback)
+
+        assert "PARAM1" in result
+        assert "PARAM2" in result
+        assert result["PARAM1"] == 1.0
+        assert result["PARAM2"] == 2.0
+        assert len(progress_calls) >= 1
+
+    def test_download_params_handles_exception_from_recv_match(self) -> None:
+        """
+        _download_params_via_mavlink handles exceptions from recv_match gracefully.
+
+        GIVEN: Connected FC where recv_match raises an exception
+        WHEN: _download_params_via_mavlink is called
+        THEN: The exception should be caught
+        AND: Any parameters received before the error should be returned
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_master.recv_match.side_effect = Exception("Serial port disconnected")
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.comport_device = "COM1"
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        # Should not raise an exception
+        result = params_mgr._download_params_via_mavlink()
+
+        assert isinstance(result, dict)
+
+
+class TestDownloadParamsViaMavftp:
+    """Tests for the _download_params_via_mavftp method."""
+
+    def test_download_via_mavftp_returns_empty_when_master_is_none(self) -> None:
+        """
+        _download_params_via_mavftp returns empty dicts when master is None.
+
+        GIVEN: No flight controller connection (master is None)
+        WHEN: _download_params_via_mavftp is called
+        THEN: An empty dict and empty ParDict should be returned
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.comport_device = ""
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        result_params, result_defaults = params_mgr._download_params_via_mavftp()
+
+        assert result_params == {}
+        assert len(result_defaults) == 0
+
+    def test_download_via_mavftp_calls_progress_callback(self) -> None:
+        """
+        _download_params_via_mavftp calls progress callback with correct arguments.
+
+        GIVEN: Connected FC with MAVFTP support
+        WHEN: _download_params_via_mavftp is called with a progress callback
+        THEN: The callback should be called with percentage values (0-100)
+        """
+        mock_master = MagicMock()
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.comport_device = "COM1"
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        progress_calls = []
+
+        def progress_callback(current: int, total: int) -> None:
+            progress_calls.append((current, total))
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_params.create_mavftp") as mock_mavftp_factory:
+            mock_mavftp = MagicMock()
+            # process_ftp_reply returns an object with error_code attribute
+            mock_ftp_reply = MagicMock()
+            mock_ftp_reply.error_code = 1  # Simulate failure so we don't need real files
+            mock_mavftp.process_ftp_reply.return_value = mock_ftp_reply
+            mock_mavftp_factory.return_value = mock_mavftp
+
+            _result_params, _result_defaults = params_mgr._download_params_via_mavftp(progress_callback=progress_callback)
+
+            # The inner callback should be set up to call the outer progress_callback
+            # We verify by calling cmd_getparams with the inner callback
+            call_args = mock_mavftp.cmd_getparams.call_args
+            inner_callback = call_args[1].get("progress_callback") or call_args[0][-1]
+            if callable(inner_callback):
+                inner_callback(0.5)  # 50% completion
+                assert len(progress_calls) >= 1
+                assert (50, 100) in progress_calls
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

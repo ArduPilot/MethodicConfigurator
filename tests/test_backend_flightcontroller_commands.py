@@ -954,3 +954,221 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         # Then
         assert success is False
         assert "failed to send command" in error.lower()
+
+
+class TestFlightControllerCommandsMissingConnectionBranches:
+    """Tests for commands that need a connection but master is None."""
+
+    def test_send_command_and_wait_ack_fails_without_connection(self) -> None:
+        """
+        send_command_and_wait_ack fails gracefully when master is None.
+
+        GIVEN: No flight controller connection (master is None)
+        WHEN: send_command_and_wait_ack is called
+        THEN: False should be returned with appropriate error message
+        AND: No exceptions should be raised
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
+
+        assert success is False
+        assert "connection" in error.lower()
+
+    def test_stop_all_motors_fails_without_connection(self) -> None:
+        """
+        stop_all_motors fails gracefully when master is None.
+
+        GIVEN: No flight controller connection
+        WHEN: stop_all_motors is called
+        THEN: False should be returned with error message
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.stop_all_motors()
+
+        assert success is False
+        assert "connection" in error.lower()
+
+    def test_request_periodic_battery_status_fails_without_connection(self) -> None:
+        """
+        request_periodic_battery_status fails gracefully when master is None.
+
+        GIVEN: No flight controller connection
+        WHEN: request_periodic_battery_status is called
+        THEN: False should be returned with error message
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.request_periodic_battery_status()
+
+        assert success is False
+        assert "connection" in error.lower()
+
+
+class TestFlightControllerCommandsFailureBranches:
+    """Tests for failure branches in command methods."""
+
+    def _make_commands_mgr_with_ack(self, result_code: int) -> "FlightControllerCommands":
+        """Create a commands manager that returns a given ACK result code."""
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
+        mock_ack.result = result_code
+
+        mock_master.recv_match.return_value = mock_ack
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+        mock_params_mgr.fc_parameters = {}
+
+        return FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+    def test_reset_all_parameters_handles_command_failure(self) -> None:
+        """
+        reset_all_parameters_to_default handles command failure correctly.
+
+        GIVEN: Connected flight controller that rejects the parameter reset command
+        WHEN: User calls reset_all_parameters_to_default
+        THEN: False should be returned with error description
+        AND: fc_parameters should NOT be cleared on failure
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_STORAGE
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_DENIED
+
+        mock_master.recv_match.return_value = mock_ack
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+        mock_params_mgr.fc_parameters = {"PARAM1": 1.0}
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.reset_all_parameters_to_default()
+
+        assert success is False
+        assert "failed" in error.lower() or "denied" in error.lower()
+        # fc_parameters should NOT be cleared on failure
+        assert len(mock_params_mgr.fc_parameters) > 0
+
+    def test_test_motors_in_sequence_handles_command_failure(self) -> None:
+        """
+        test_motors_in_sequence handles command failure correctly.
+
+        GIVEN: Connected flight controller that rejects the sequential motor test command
+        WHEN: User calls test_motors_in_sequence
+        THEN: False should be returned with error description
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_FAILED
+
+        mock_master.recv_match.return_value = mock_ack
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.test_motors_in_sequence(
+            start_motor=1, motor_count=4, throttle_percent=10, timeout_seconds=2
+        )
+
+        assert success is False
+        assert "failed" in error.lower()
+
+    def test_stop_all_motors_handles_command_failure(self) -> None:
+        """
+        stop_all_motors handles command failure correctly.
+
+        GIVEN: Connected flight controller that rejects the stop command
+        WHEN: User calls stop_all_motors
+        THEN: False should be returned with error description
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_UNSUPPORTED
+
+        mock_master.recv_match.return_value = mock_ack
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.stop_all_motors()
+
+        assert success is False
+        assert error  # Non-empty error message
+
+    def test_send_command_handles_in_progress_with_zero_progress(self) -> None:
+        """
+        send_command_and_wait_ack handles MAV_RESULT_IN_PROGRESS with zero progress.
+
+        GIVEN: Flight controller sends IN_PROGRESS with progress=0
+        WHEN: send_command_and_wait_ack receives an IN_PROGRESS ACK
+        THEN: Processing continues waiting without logging (progress <= 0)
+        AND: Eventually times out and returns False
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        # Return IN_PROGRESS ACK with progress=0 (should NOT log) then timeout
+        mock_ack = MagicMock()
+        mock_ack.command = 999
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_IN_PROGRESS
+        mock_ack.progress = 0  # <= 0, so debug logging is skipped
+
+        call_count = [0]
+
+        def side_effect_recv_match(*_args, **_kwargs) -> object:
+            call_count[0] += 1
+            if call_count[0] <= 2:
+                return mock_ack
+            return None  # Stop returning ACK after a couple of calls
+
+        mock_master.recv_match.side_effect = side_effect_recv_match
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_params_mgr = Mock()
+
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        # Short timeout so test doesn't hang
+        success, _error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.3)
+
+        # Should timeout after IN_PROGRESS messages
+        assert success is False

@@ -1006,3 +1006,152 @@ class TestConfigurationStepProcessorErrorHandling:
         assert len(ui_infos) == 1
         assert ui_infos[0][0] == "ExpressLRS Configuration Warning"
         assert ui_errors == []
+
+
+class TestDerivedParametersFiltering:
+    """Tests for derived parameters filtering logic."""
+
+    def test_derived_parameters_filtered_by_fc_keys_when_fc_provided(self, processor, mock_local_filesystem) -> None:
+        """
+        Derived parameters are filtered by FC keys when fc_parameters is provided.
+
+        GIVEN: A configuration step with derived parameters and FC parameters
+        WHEN: Processing produces derived parameters, some existing in FC and some not
+        THEN: Only derived parameters that exist in FC should be collected for application
+        AND: Parameters not in FC keys should be excluded from derived_params_to_apply
+        """
+        selected_file = "test_file.param"
+        # Set up derived parameters that will be returned
+        derived_params = {
+            "SERIAL1_PROTOCOL": Par(value=5.0, comment="derived"),  # in file AND in FC
+            "CAN_P1_DRIVER": Par(value=2.0, comment="derived"),  # in file, NOT in FC
+        }
+        mock_local_filesystem.configuration_steps = {selected_file: {"derived": {}}}
+        mock_local_filesystem.compute_parameters.return_value = None
+        mock_local_filesystem.derived_parameters = {selected_file: derived_params}
+        mock_local_filesystem.file_parameters = {
+            selected_file: {
+                "SERIAL1_PROTOCOL": Par(value=4.0, comment="original"),
+                "CAN_P1_DRIVER": Par(value=1.0, comment="original"),
+            }
+        }
+
+        # FC only has SERIAL1_PROTOCOL (not CAN_P1_DRIVER)
+        limited_fc_params = {"SERIAL1_PROTOCOL": 4.0}
+
+        _, ui_errors, _, _, _, derived_to_apply = processor.process_configuration_step(selected_file, limited_fc_params)
+
+        assert ui_errors == []
+        # SERIAL1_PROTOCOL is in both file and FC, so it should be in derived_to_apply
+        assert "SERIAL1_PROTOCOL" in derived_to_apply
+        # CAN_P1_DRIVER is in file but NOT in FC, so it should be excluded
+        assert "CAN_P1_DRIVER" not in derived_to_apply
+
+    def test_derived_parameters_not_in_file_are_excluded(self, processor, mock_local_filesystem) -> None:
+        """
+        Derived parameters not currently in the file are excluded from derived_params_to_apply.
+
+        GIVEN: A configuration step with derived parameters where some are add-from-FC shorthands
+        WHEN: Processing produces derived parameters
+        THEN: Parameters that don't yet exist in the file should be excluded
+        AND: Only parameters already in the file should be in derived_params_to_apply
+        """
+        selected_file = "test_file.param"
+        derived_params = {
+            "SERIAL1_PROTOCOL": Par(value=5.0, comment="derived"),  # in file
+            "NEW_PARAM": Par(value=99.0, comment="derived"),  # NOT in file (add-from-FC shorthand)
+        }
+        mock_local_filesystem.configuration_steps = {selected_file: {"derived": {}}}
+        mock_local_filesystem.compute_parameters.return_value = None
+        mock_local_filesystem.derived_parameters = {selected_file: derived_params}
+        mock_local_filesystem.file_parameters = {
+            selected_file: {
+                "SERIAL1_PROTOCOL": Par(value=4.0, comment="original"),
+                # NEW_PARAM not in file
+            }
+        }
+
+        fc_params = {"SERIAL1_PROTOCOL": 4.0, "NEW_PARAM": 99.0}
+
+        _, ui_errors, _, _, _, derived_to_apply = processor.process_configuration_step(selected_file, fc_params)
+
+        assert ui_errors == []
+        assert "SERIAL1_PROTOCOL" in derived_to_apply
+        assert "NEW_PARAM" not in derived_to_apply
+
+    def test_derived_parameters_all_included_when_no_fc_parameters(self, processor, mock_local_filesystem) -> None:
+        """
+        All file-matching derived parameters are included when no FC parameters provided.
+
+        GIVEN: A configuration step with derived parameters but no FC connection
+        WHEN: Processing produces derived parameters with empty fc_parameters
+        THEN: All derived parameters that exist in the file should be in derived_params_to_apply
+        """
+        selected_file = "test_file.param"
+        derived_params = {
+            "SERIAL1_PROTOCOL": Par(value=5.0, comment="derived"),
+            "CAN_P1_DRIVER": Par(value=2.0, comment="derived"),
+        }
+        mock_local_filesystem.configuration_steps = {selected_file: {"derived": {}}}
+        mock_local_filesystem.compute_parameters.return_value = None
+        mock_local_filesystem.derived_parameters = {selected_file: derived_params}
+        mock_local_filesystem.file_parameters = {
+            selected_file: {
+                "SERIAL1_PROTOCOL": Par(value=4.0, comment="original"),
+                "CAN_P1_DRIVER": Par(value=1.0, comment="original"),
+            }
+        }
+
+        # No FC parameters (empty dict simulates offline mode)
+        _, ui_errors, _, _, _, derived_to_apply = processor.process_configuration_step(selected_file, {})
+
+        assert ui_errors == []
+        # Both should be included since fc_param_keys is empty (no FC filter)
+        assert "SERIAL1_PROTOCOL" in derived_to_apply
+        assert "CAN_P1_DRIVER" in derived_to_apply
+
+
+class TestConnectionRenamingWithSameNameSkip:
+    """Tests for connection renaming edge case where rename results in same name."""
+
+    def test_rename_operation_skips_when_new_name_equals_old_name(self, processor) -> None:
+        """
+        Rename operations are skipped when the new name equals the old name.
+
+        GIVEN: A parameter that would be renamed to itself (no-op rename)
+        WHEN: The rename operation is calculated
+        THEN: No rename should be in the result list for that parameter
+        AND: No duplicates should be tracked for it
+        """
+        # Use a parameter set where CAN1 → CAN1 (same) would be a no-op
+        # by using CAN1 as the new_connection_prefix
+        parameters = {
+            "CAN_P1_DRIVER": Par(value=1.0),
+        }
+
+        # Rename to CAN1 - same connection, which means CAN_P1 → CAN_P1 (no-op)
+        _duplicates, renamed_pairs = processor._calculate_connection_rename_operations(parameters, "CAN1", None)
+
+        # CAN_P1_DRIVER → CAN_P1_DRIVER (no change), should not be in renamed_pairs
+        assert all(old != new or old != "CAN_P1_DRIVER" for old, new in renamed_pairs)
+
+    def test_rename_operation_detects_conflict_with_existing_parameter(self, processor) -> None:
+        """
+        Rename operation handles conflict when target name already exists.
+
+        GIVEN: Parameters where a rename would create a conflict with an existing parameter
+        WHEN: The rename operation is calculated
+        THEN: The conflicting rename should not be added to renamed_pairs
+        AND: No exception should be raised
+        """
+        parameters = {
+            "CAN_P1_DRIVER": Par(value=1.0),
+            "CAN_P2_DRIVER": Par(value=2.0),  # Would be the target of CAN_P1 rename to CAN2
+        }
+
+        # Renaming to CAN2 would conflict with existing CAN_P2_DRIVER
+        _duplicates, renamed_pairs = processor._calculate_connection_rename_operations(parameters, "CAN2", None)
+
+        # CAN_P1_DRIVER → CAN_P2_DRIVER but CAN_P2_DRIVER already exists
+        # The conflicting rename should be silently skipped
+        assert ("CAN_P1_DRIVER", "CAN_P2_DRIVER") not in renamed_pairs

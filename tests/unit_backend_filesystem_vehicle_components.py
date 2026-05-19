@@ -335,3 +335,271 @@ class TestVehicleComponentsInternals:
         none_input = None
         self.vehicle_components._recursively_clear_dict(none_input)
         assert none_input is None
+
+
+class TestVehicleComponentsTemplateLoadingErrors:
+    """Unit tests for VehicleComponents template loading error handling."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
+        """Set up test fixtures."""
+        self.vehicle_components = VehicleComponents()
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
+    def test_load_system_templates_file_not_found(self, mock_json_load, mock_file, mock_get_base_dir) -> None:
+        """
+        _load_system_templates handles FileNotFoundError gracefully.
+
+        GIVEN: System templates file doesn't exist
+        WHEN: Loading system templates
+        THEN: Should return empty dict without crashing
+        """
+        mock_get_base_dir.return_value = "/app/path"
+        mock_file.side_effect = FileNotFoundError("File not found")
+
+        result = self.vehicle_components._load_system_templates()
+
+        assert result == {}
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
+    def test_load_system_templates_os_error(self, mock_json_load, mock_file, mock_get_base_dir) -> None:
+        """
+        _load_system_templates handles OSError gracefully.
+
+        GIVEN: OS error occurs while reading system templates file
+        WHEN: Loading system templates
+        THEN: Should return empty dict without crashing
+        """
+        mock_get_base_dir.return_value = "/app/path"
+        mock_file.side_effect = OSError("Permission denied")
+
+        result = self.vehicle_components._load_system_templates()
+
+        assert result == {}
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
+    def test_load_system_templates_unexpected_exception(self, mock_json_load, mock_file, mock_get_base_dir) -> None:
+        """
+        _load_system_templates handles unexpected exceptions gracefully.
+
+        GIVEN: An unexpected exception occurs while reading system templates
+        WHEN: Loading system templates
+        THEN: Should return empty dict without crashing
+        """
+        mock_get_base_dir.return_value = "/app/path"
+        mock_file.side_effect = RuntimeError("Unexpected error")
+
+        result = self.vehicle_components._load_system_templates()
+
+        assert result == {}
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
+    def test_load_user_templates_file_not_found(self, mock_json_load, mock_file, mock_get_base_dir) -> None:
+        """
+        _load_user_templates handles FileNotFoundError gracefully.
+
+        GIVEN: User templates file doesn't exist
+        WHEN: Loading user templates
+        THEN: Should return empty dict without crashing (debug message only)
+        """
+        mock_get_base_dir.return_value = "/user/templates"
+        mock_file.side_effect = FileNotFoundError("File not found")
+
+        result = self.vehicle_components._load_user_templates()
+
+        assert result == {}
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
+    def test_load_user_templates_os_error(self, mock_json_load, mock_file, mock_get_base_dir) -> None:
+        """
+        _load_user_templates handles OSError gracefully.
+
+        GIVEN: OS error occurs while reading user templates file
+        WHEN: Loading user templates
+        THEN: Should return empty dict without crashing
+        """
+        mock_get_base_dir.return_value = "/user/templates"
+        mock_file.side_effect = OSError("Disk I/O error")
+
+        result = self.vehicle_components._load_user_templates()
+
+        assert result == {}
+
+    @patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.json_load")
+    def test_load_user_templates_unexpected_exception(self, mock_json_load, mock_file, mock_get_base_dir) -> None:
+        """
+        _load_user_templates handles unexpected exceptions gracefully.
+
+        GIVEN: An unexpected exception occurs while reading user templates
+        WHEN: Loading user templates
+        THEN: Should return empty dict without crashing
+        """
+        mock_get_base_dir.return_value = "/user/templates"
+        mock_file.side_effect = RuntimeError("Unexpected error")
+
+        result = self.vehicle_components._load_user_templates()
+
+        assert result == {}
+
+
+class TestVehicleComponentsTemplateMerging:
+    """Tests for template merging behavior."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
+        """Set up test fixtures."""
+        self.vehicle_components = VehicleComponents()
+
+    def test_load_component_templates_handles_user_template_without_name(self) -> None:
+        """
+        load_component_templates skips user templates without a name.
+
+        GIVEN: User templates containing entries without a 'name' field
+        WHEN: Loading component templates
+        THEN: Templates without names should be skipped silently
+        AND: Named templates should still be loaded correctly
+        """
+        system_templates = {"Motor": [{"name": "Standard 2205", "data": {"kv": 2300}}]}
+        user_templates = {
+            "Motor": [
+                {"data": {"kv": 1500}},  # No 'name' field - should be skipped
+                {"name": "", "data": {"kv": 1800}},  # Empty name - should be skipped
+                {"name": "Custom Motor", "data": {"kv": 2000}},  # Valid - should be added
+            ]
+        }
+
+        with (
+            patch.object(self.vehicle_components, "_load_system_templates", return_value=system_templates),
+            patch.object(self.vehicle_components, "_load_user_templates", return_value=user_templates),
+        ):
+            result = self.vehicle_components.load_component_templates()
+
+        # Valid user template should be present
+        assert "Motor" in result
+        motor_names = [t.get("name") for t in result["Motor"]]
+        assert "Custom Motor" in motor_names
+        # Unnamed templates should NOT be present
+        assert None not in motor_names
+        assert "" not in motor_names
+
+    def test_save_component_templates_to_file_fallback_when_system_file_not_found(self) -> None:
+        """
+        save_component_templates_to_file uses package path when system path doesn't exist.
+
+        GIVEN: Saving to system templates and system path doesn't exist on filesystem
+        WHEN: save_component_templates_to_file is called
+        THEN: Should fall back to package path
+        AND: Should not raise an exception
+        """
+        vehicle_components_system = VehicleComponents(save_component_to_system_templates=True)
+        templates_to_save = {"Component1": [{"name": "Test", "data": {}}]}
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir"
+            ) as mock_get_base_dir,
+            patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_path.exists") as mock_exists,
+            patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs"),
+            patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write"),
+        ):
+            mock_get_base_dir.return_value = "/nonexistent/path"
+            mock_exists.return_value = False  # System file does NOT exist at primary location
+
+            result = vehicle_components_system.save_component_templates_to_file(templates_to_save)
+            assert isinstance(result, tuple)
+            assert len(result) == 2
+
+    def test_save_component_templates_to_file_handles_oserror_in_makedirs_for_system_path(self) -> None:
+        """
+        save_component_templates_to_file handles OSError when checking system path.
+
+        GIVEN: An OSError occurs when checking for the system template path
+        WHEN: save_component_templates_to_file is called for system templates
+        THEN: Should handle the error gracefully and continue
+        AND: Should fall back to default templates_dir
+        """
+        vehicle_components_system = VehicleComponents(save_component_to_system_templates=True)
+        templates_to_save = {"Component1": [{"name": "Test", "data": {}}]}
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.get_templates_base_dir"
+            ) as mock_get_base_dir,
+            patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_path.exists") as mock_exists,
+            patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.os_makedirs") as mock_makedirs,
+            patch("ardupilot_methodic_configurator.backend_filesystem_vehicle_components.safe_write"),
+        ):
+            mock_get_base_dir.return_value = "/test/templates"
+            mock_exists.side_effect = OSError("Permission denied")
+            mock_makedirs.return_value = None
+
+            # Should not raise, should return a result
+            result = vehicle_components_system.save_component_templates_to_file(templates_to_save)
+            assert isinstance(result, tuple)
+
+
+class TestVehicleComponentsWipeInfo:
+    """Tests for wipe_component_info behavior."""
+
+    def test_wipe_component_info_handles_none_data(self) -> None:
+        """
+        wipe_component_info does nothing when vehicle_components_fs.data is None.
+
+        GIVEN: vehicle_components_fs has no data (data is None)
+        WHEN: wipe_component_info is called
+        THEN: No exception should be raised
+        AND: Nothing should be modified
+        """
+        vehicle_components = VehicleComponents()
+        vehicle_components.vehicle_components_fs.data = None
+
+        # Should not raise any exception
+        vehicle_components.wipe_component_info()
+
+        assert vehicle_components.vehicle_components_fs.data is None
+
+    def test_merge_defaults_applies_default_when_key_missing(self) -> None:
+        """
+        merge_defaults sets default when key is not in target.
+
+        GIVEN: A target dict missing a key that has a default value
+        WHEN: wipe_component_info is called to reset to defaults
+        THEN: The missing key should be set to its default value
+        """
+        vehicle_components = VehicleComponents()
+        # Provide minimal data structure that wipe_component_info can work with
+        data = {
+            "Components": {
+                "RC Receiver": {},  # Missing FC Connection
+                "Battery": {
+                    "Specifications": {}  # Missing Chemistry and other defaults
+                },
+                "Motors": {
+                    "Specifications": {}  # Missing Poles
+                },
+                "GNSS Receiver": {},
+                "Telemetry": {},
+                "Battery Monitor": {},
+                "ESC": {},
+            }
+        }
+        vehicle_components.vehicle_components_fs.data = data
+
+        vehicle_components.wipe_component_info()
+
+        # After wipe, defaults should have been applied
+        components = vehicle_components.vehicle_components_fs.data["Components"]
+        assert "FC Connection" in components["RC Receiver"]
+        assert "FC Connection" in components["GNSS Receiver"]
