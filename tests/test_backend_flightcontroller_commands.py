@@ -67,7 +67,7 @@ class TestFlightControllerCommandsInitialization:
 class TestFlightControllerCommandsMotorTest:
     """Test motor testing command functionality."""
 
-    def test_user_can_test_individual_motor(self) -> None:
+    def test_user_can_test_individual_motor(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can test individual motor at specified throttle.
 
@@ -77,17 +77,13 @@ class TestFlightControllerCommandsMotorTest:
         AND: Command acknowledgment should be received
         """
         # Given: Connected FC with ACK response
-        mock_master = MagicMock()
-        mock_master.target_system = 1
-        mock_master.target_component = 1
+        mock_master, mock_conn_mgr = mock_connected_master
 
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -129,7 +125,7 @@ class TestFlightControllerCommandsMotorTest:
 class TestFlightControllerCommandsBatteryStatus:
     """Test battery status request functionality."""
 
-    def test_user_can_request_battery_status(self) -> None:
+    def test_user_can_request_battery_status(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can request periodic battery status updates.
 
@@ -139,14 +135,12 @@ class TestFlightControllerCommandsBatteryStatus:
         AND: Command should be acknowledged
         """
         # Given: Connected FC
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -160,7 +154,7 @@ class TestFlightControllerCommandsBatteryStatus:
         assert success is True
         assert error == ""
 
-    def test_user_can_get_battery_status(self) -> None:
+    def test_user_can_get_battery_status(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can get current battery status from flight controller.
 
@@ -170,14 +164,12 @@ class TestFlightControllerCommandsBatteryStatus:
         AND: Values should be in expected ranges
         """
         # Given: FC with battery data
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_battery_msg = MagicMock()
         mock_battery_msg.voltages = [4200, 4180, 4190]  # mV
         mock_battery_msg.current_battery = 2500  # centi-amps
         mock_master.recv_match.return_value = mock_battery_msg
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
 
@@ -189,16 +181,15 @@ class TestFlightControllerCommandsBatteryStatus:
         # Then: Status retrieved
         assert battery_data is not None
         assert message == ""
-        if battery_data:
-            voltage, current = battery_data
-            assert voltage > 0
-            assert current >= 0
+        voltage, current = battery_data
+        assert voltage > 0
+        assert current >= 0
 
 
 class TestFlightControllerCommandsParameterReset:  # pylint: disable=too-few-public-methods
     """Test parameter reset command functionality."""
 
-    def test_user_can_reset_all_parameters_to_defaults(self) -> None:
+    def test_user_can_reset_all_parameters_to_defaults(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can reset all parameters to factory defaults.
 
@@ -208,14 +199,12 @@ class TestFlightControllerCommandsParameterReset:  # pylint: disable=too-few-pub
         AND: Command should be acknowledged
         """
         # Given: Connected FC
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_STORAGE
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -231,7 +220,7 @@ class TestFlightControllerCommandsParameterReset:  # pylint: disable=too-few-pub
 class TestFlightControllerCommandsSendCommandAndWaitAck:
     """Test low-level command sending with ACK waiting."""
 
-    def test_command_waits_for_acknowledgment(self) -> None:
+    def test_command_waits_for_acknowledgment(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Command sending waits for proper acknowledgment.
 
@@ -241,14 +230,12 @@ class TestFlightControllerCommandsSendCommandAndWaitAck:
         AND: Return success when ACK received
         """
         # Given: FC that sends ACK
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_ack = MagicMock()
         mock_ack.command = 123
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -262,7 +249,7 @@ class TestFlightControllerCommandsSendCommandAndWaitAck:
         assert success is True
         assert error == ""
 
-    def test_command_timeout_returns_error(self) -> None:
+    def test_command_timeout_returns_error(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Command timeout returns appropriate error.
 
@@ -272,11 +259,9 @@ class TestFlightControllerCommandsSendCommandAndWaitAck:
         AND: Error message should indicate timeout
         """
         # Given: FC that doesn't respond
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_master.recv_match.return_value = None
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -294,7 +279,7 @@ class TestFlightControllerCommandsSendCommandAndWaitAck:
 class TestFlightControllerCommandsPropertyDelegation:  # pylint: disable=too-few-public-methods
     """Test property delegation to connection manager."""
 
-    def test_master_property_delegates_to_connection_manager(self) -> None:
+    def test_master_property_delegates_to_connection_manager(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Master property correctly delegates to connection manager.
 
@@ -303,9 +288,7 @@ class TestFlightControllerCommandsPropertyDelegation:  # pylint: disable=too-few
         THEN: Connection manager's master should be returned
         """
         # Given: Connection with master
-        mock_master = MagicMock()
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -320,16 +303,14 @@ class TestFlightControllerCommandsPropertyDelegation:  # pylint: disable=too-few
 class TestFlightControllerCommandsEdgeCases:
     """Additional edge-case tests for battery and command handling."""
 
-    def test_request_periodic_battery_status_denied(self) -> None:
+    def test_request_periodic_battery_status_denied(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """Battery status request should propagate NACK/denied responses."""
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
         mock_ack.result = mavutil.mavlink.MAV_RESULT_DENIED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -339,14 +320,12 @@ class TestFlightControllerCommandsEdgeCases:
         assert success is False
         assert "denied" in error.lower() or "failed" in error.lower()
 
-    def test_get_battery_status_returns_recent_cache(self) -> None:
+    def test_get_battery_status_returns_recent_cache(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """Return cached battery data when no new telemetry is available but a recent value exists."""
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         # Simulate no new telemetry
         mock_master.recv_match.return_value = None
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
 
@@ -360,16 +339,14 @@ class TestFlightControllerCommandsEdgeCases:
 
         assert data == (11.1, 2.2)
 
-    def test_get_battery_status_handles_invalid_readings(self) -> None:
+    def test_get_battery_status_handles_invalid_readings(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """BATTERY_STATUS messages with invalid sentinel values (-1) should be converted to zeros."""
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_battery_msg = MagicMock()
         mock_battery_msg.voltages = [-1]
         mock_battery_msg.current_battery = -1
         mock_master.recv_match.return_value = mock_battery_msg
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
 
@@ -378,24 +355,19 @@ class TestFlightControllerCommandsEdgeCases:
         battery_data, _ = commands_mgr.get_battery_status()
 
         assert battery_data is not None
-        if battery_data:
-            voltage, current = battery_data
-            assert voltage == 0.0
-            assert current == 0.0
+        voltage, current = battery_data
+        assert voltage == 0.0
+        assert current == 0.0
 
-    def test_motor_test_denied_ack(self) -> None:
+    def test_motor_test_denied_ack(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """Motor test should fail when FC returns a DENIED acknowledgment."""
-        mock_master = MagicMock()
-        mock_master.target_system = 1
-        mock_master.target_component = 1
+        mock_master, mock_conn_mgr = mock_connected_master
 
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
         mock_ack.result = mavutil.mavlink.MAV_RESULT_DENIED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -405,16 +377,14 @@ class TestFlightControllerCommandsEdgeCases:
         assert success is False
         assert "denied" in error.lower() or "failed" in error.lower()
 
-    def test_send_command_unknown_result(self) -> None:
+    def test_send_command_unknown_result(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """send_command_and_wait_ack should return an error for unknown result codes."""
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_ack = MagicMock()
         mock_ack.command = 999
         mock_ack.result = 9999  # unknown result
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -424,9 +394,9 @@ class TestFlightControllerCommandsEdgeCases:
         assert success is False
         assert "unknown result" in error.lower()
 
-    def test_send_command_in_progress_then_accepted(self) -> None:
+    def test_send_command_in_progress_then_accepted(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """send_command_and_wait_ack should handle IN_PROGRESS followed by ACCEPTED."""
-        mock_master = MagicMock()
+        mock_master, mock_conn_mgr = mock_connected_master
 
         in_progress = MagicMock()
         in_progress.command = 555
@@ -440,8 +410,6 @@ class TestFlightControllerCommandsEdgeCases:
         # First return in-progress, then accepted
         mock_master.recv_match.side_effect = [in_progress, accepted]
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -455,7 +423,7 @@ class TestFlightControllerCommandsEdgeCases:
 class TestFlightControllerCommandsAllMotors:
     """Test test_all_motors functionality."""
 
-    def test_user_can_test_all_motors(self) -> None:
+    def test_user_can_test_all_motors(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can test all motors simultaneously.
 
@@ -465,12 +433,7 @@ class TestFlightControllerCommandsAllMotors:
         AND: Method should return success
         """
         # Given: Connected FC
-        mock_master = MagicMock()
-        mock_master.target_system = 1
-        mock_master.target_component = 1
-
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
+        mock_master, mock_conn_mgr = mock_connected_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -509,7 +472,7 @@ class TestFlightControllerCommandsAllMotors:
 class TestFlightControllerCommandsSequencedMotors:
     """Test test_motors_in_sequence functionality."""
 
-    def test_user_can_test_motors_in_sequence(self) -> None:
+    def test_user_can_test_motors_in_sequence(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can test motors in sequence.
 
@@ -519,17 +482,13 @@ class TestFlightControllerCommandsSequencedMotors:
         AND: Method should return success
         """
         # Given: Connected FC with ACK response
-        mock_master = MagicMock()
-        mock_master.target_system = 1
-        mock_master.target_component = 1
+        mock_master, mock_conn_mgr = mock_connected_master
 
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
@@ -571,7 +530,7 @@ class TestFlightControllerCommandsSequencedMotors:
 class TestFlightControllerCommandsStopMotors:  # pylint: disable=too-few-public-methods
     """Test stop_all_motors functionality."""
 
-    def test_user_can_stop_all_motors(self) -> None:
+    def test_user_can_stop_all_motors(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can stop all motors with emergency stop command.
 
@@ -581,17 +540,13 @@ class TestFlightControllerCommandsStopMotors:  # pylint: disable=too-few-public-
         AND: Command should be acknowledged
         """
         # Given: Connected FC with ACK response
-        mock_master = MagicMock()
-        mock_master.target_system = 1
-        mock_master.target_component = 1
+        mock_master, mock_conn_mgr = mock_connected_master
 
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
 
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
         mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
