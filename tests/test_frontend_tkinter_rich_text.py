@@ -16,7 +16,11 @@ from platform import system as platform_system
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
-from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import (
+    RichText,
+    _get_ttk_label_color,
+    get_widget_font_family_and_size,
+)
 
 
 class TestRichText(unittest.TestCase):
@@ -200,3 +204,102 @@ class TestGetWidgetFontFamilyAndSize(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRichTextColorAndFontFallbacks(unittest.TestCase):
+    """Tests for color and font fallback behavior in RichText."""
+
+    def setUp(self) -> None:
+        self.root = tk.Tk()
+        self.root.withdraw()
+
+    def tearDown(self) -> None:
+        self.root.update_idletasks()
+        self.root.destroy()
+
+    def test_user_can_create_rich_text_with_explicit_background_color(self) -> None:
+        """
+        User can create RichText with an explicit background color.
+
+        GIVEN: User wants a custom background color for the text widget
+        WHEN: RichText is created with a background kwarg
+        THEN: The background kwarg should skip the auto-detection
+        AND: Widget should use the provided background color
+        """
+        rich_text = RichText(self.root, background="red")
+        assert rich_text.cget("background") == "red"
+
+    def test_user_can_create_rich_text_with_bg_shorthand(self) -> None:
+        """
+        User can create RichText with bg shorthand.
+
+        GIVEN: User wants a custom background color using 'bg' alias
+        WHEN: RichText is created with bg kwarg
+        THEN: The bg kwarg should skip the auto-detection
+        AND: Widget should use the provided background color
+        """
+        rich_text = RichText(self.root, bg="blue")
+        # Color may be returned as RGB by Tk on some platforms
+        assert rich_text.cget("background")
+
+    def test_user_can_create_rich_text_with_explicit_foreground_color(self) -> None:
+        """
+        User can create RichText with an explicit foreground color.
+
+        GIVEN: User wants a custom foreground color
+        WHEN: RichText is created with foreground kwarg
+        THEN: The foreground kwarg should skip auto-detection
+        AND: Widget should use provided foreground color
+        """
+        rich_text = RichText(self.root, foreground="green")
+        assert rich_text.cget("foreground")
+
+    def test_user_can_create_rich_text_with_fg_shorthand(self) -> None:
+        """
+        User can create RichText with fg shorthand.
+
+        GIVEN: User wants a custom foreground color using 'fg' alias
+        WHEN: RichText is created with fg kwarg
+        THEN: Widget should be created successfully
+        """
+        rich_text = RichText(self.root, fg="purple")
+        assert rich_text.cget("foreground")
+
+    def test_user_can_create_rich_text_when_safe_font_nametofont_returns_none(self) -> None:
+        """
+        User can create RichText even when safe_font_nametofont returns None.
+
+        GIVEN: The font lookup fails (returns None)
+        WHEN: RichText is created without an explicit font
+        THEN: Should fall back to get_safe_font_config for font configuration
+        AND: Widget should be created successfully
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_rich_text.safe_font_nametofont", return_value=None):
+            rich_text = RichText(self.root)
+
+        assert rich_text is not None
+        assert "bold" in rich_text.tag_names()
+        assert "italic" in rich_text.tag_names()
+        assert "h1" in rich_text.tag_names()
+
+    def test_get_ttk_label_color_handles_cget_tclerror(self) -> None:
+        """
+        _get_ttk_label_color handles TclError from widget.cget gracefully.
+
+        GIVEN: A widget where cget raises TclError for the requested option
+        WHEN: _get_ttk_label_color is called
+        THEN: TclError should be caught and fallback color should be used
+        """
+        mock_widget = MagicMock()
+        mock_widget.cget.side_effect = tk.TclError("Unknown option")
+
+        # Mock style lookup to return empty so we enter the fallback branch
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_rich_text.ttk.Style") as mock_style_class:
+            mock_style = MagicMock()
+            mock_style.lookup.return_value = ""  # Empty = no style found
+            mock_style_class.return_value = mock_style
+
+            result = _get_ttk_label_color(mock_widget, "background", "white")
+
+        # Should use fallback since cget raised TclError
+        assert result == "white"
