@@ -16,7 +16,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import VehicleProjectCreationError
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import (
+    BinLogSelectionWidgets,
     DirectorySelectionWidgets,
     PathEntryWidget,
     VehicleDirectorySelectionWidgets,
@@ -757,3 +760,241 @@ class TestWidgetStringMethods:
             # Assert: Returns the initial name
             assert isinstance(result, str)
             assert result == "TestVehicle"
+
+
+# ==================== BIN LOG SELECTION WIDGET TESTS ====================
+
+
+class TestBinLogSelectionWidgets:
+    """Tests for BinLogSelectionWidgets component behavior."""
+
+    @staticmethod
+    def _make_widget(root: tk.Tk, callback: MagicMock) -> BinLogSelectionWidgets:
+        """Create a BinLogSelectionWidgets with mocked tooltip for use in tests."""
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"):
+            parent = MagicMock()
+            parent.root = root
+            parent_frame = ttk.Frame(root)
+            return BinLogSelectionWidgets(parent=parent, parent_frame=parent_frame, on_select_file_callback=callback)
+
+    def test_user_can_select_bin_log_file_successfully(self, root) -> None:
+        """
+        User can select a .bin log file successfully.
+
+        GIVEN: A BinLogSelectionWidgets instance with a callback
+        WHEN: User clicks the select file button and picks a file
+        THEN: The callback should be called with the selected file path
+        AND: True should be returned
+        """
+        mock_callback = MagicMock()
+        widget = self._make_widget(root, mock_callback)
+
+        selected_file = "/path/to/flight.bin"
+        with patch("tkinter.filedialog.askopenfilename", return_value=selected_file):
+            result = widget.on_select_file()
+
+        assert result is True
+        mock_callback.assert_called_once_with(selected_file)
+
+    def test_user_can_cancel_bin_log_file_selection(self, root) -> None:
+        """
+        User can cancel .bin log file selection.
+
+        GIVEN: A BinLogSelectionWidgets instance
+        WHEN: User opens the file dialog but cancels
+        THEN: False should be returned
+        AND: The callback should not be called
+        """
+        mock_callback = MagicMock()
+        widget = self._make_widget(root, mock_callback)
+
+        with patch("tkinter.filedialog.askopenfilename", return_value=""):
+            result = widget.on_select_file()
+
+        assert result is False
+        mock_callback.assert_not_called()
+
+    def test_bin_log_selection_handles_vehicle_creation_error(self, root) -> None:
+        """
+        BinLog selection handles VehicleProjectCreationError gracefully.
+
+        GIVEN: A BinLogSelectionWidgets instance with a callback that raises VehicleProjectCreationError
+        WHEN: User selects a file and the callback fails with VehicleProjectCreationError
+        THEN: An error dialog should be shown
+        AND: False should be returned
+        """
+        error = VehicleProjectCreationError(title="Creation Failed", message="Cannot create project")
+        widget = self._make_widget(root, MagicMock(side_effect=error))
+
+        with (
+            patch("tkinter.filedialog.askopenfilename", return_value="/path/to/flight.bin"),
+            patch("tkinter.messagebox.showerror") as mock_error,
+        ):
+            result = widget.on_select_file()
+
+        assert result is False
+        mock_error.assert_called_once()
+
+    def test_bin_log_selection_handles_vehicle_open_error(self, root) -> None:
+        """
+        BinLog selection handles VehicleProjectOpenError gracefully.
+
+        GIVEN: A BinLogSelectionWidgets instance with a callback that raises VehicleProjectOpenError
+        WHEN: User selects a file and the callback fails with VehicleProjectOpenError
+        THEN: An error dialog should be shown
+        AND: False should be returned
+        """
+        error = VehicleProjectOpenError(title="Open Failed", message="Cannot open project")
+        widget = self._make_widget(root, MagicMock(side_effect=error))
+
+        with (
+            patch("tkinter.filedialog.askopenfilename", return_value="/path/to/flight.bin"),
+            patch("tkinter.messagebox.showerror") as mock_error,
+        ):
+            result = widget.on_select_file()
+
+        assert result is False
+        mock_error.assert_called_once()
+
+    def test_bin_log_selection_handles_os_error(self, root) -> None:
+        """
+        BinLog selection handles OSError gracefully.
+
+        GIVEN: A BinLogSelectionWidgets instance with a callback that raises OSError
+        WHEN: User selects a file and an OS error occurs
+        THEN: An error dialog should be shown
+        AND: False should be returned
+        """
+        widget = self._make_widget(root, MagicMock(side_effect=OSError("Permission denied")))
+
+        with (
+            patch("tkinter.filedialog.askopenfilename", return_value="/path/to/flight.bin"),
+            patch("tkinter.messagebox.showerror") as mock_error,
+        ):
+            result = widget.on_select_file()
+
+        assert result is False
+        mock_error.assert_called_once()
+        # Verify the error message contains useful information
+        error_message = str(mock_error.call_args[0][1]) if mock_error.call_args and mock_error.call_args[0] else ""
+        assert len(error_message) > 0, "Error message should not be empty"
+
+
+# ==================== TARGETED COVERAGE TESTS ====================
+
+
+class TestDirectorySelectionEdgeCases:
+    """Tests targeting specific uncovered edge cases in directory selection."""
+
+    def test_update_directory_display_with_parent_without_root(self, root) -> None:
+        """
+        update_directory_display works when parent lacks a root attribute.
+
+        GIVEN: A DirectorySelectionWidgets with a parent that has no 'root' attribute
+        WHEN: update_directory_display is called
+        THEN: Directory should still be updated without calling update_idletasks
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"):
+            parent_no_root = MagicMock(spec=[])  # No 'root' attribute
+            parent_frame = ttk.Frame(root)
+
+            widget = DirectorySelectionWidgets(
+                parent=parent_no_root,
+                parent_frame=parent_frame,
+                initialdir="/initial/dir",
+                label_text="Test:",
+                autoresize_width=False,
+                dir_tooltip="tooltip",
+                button_tooltip="Browse",
+            )
+
+            # Directly call update_directory_display
+            widget.update_directory_display("/new/directory")
+
+        assert widget.directory == "/new/directory"
+
+    def test_vehicle_directory_widget_destroys_parent_on_open(self, root) -> None:
+        """
+        VehicleDirectorySelectionWidgets destroys parent when destroy_parent_on_open is True.
+
+        GIVEN: A VehicleDirectorySelectionWidgets with destroy_parent_on_open=True
+        WHEN: User successfully selects a directory
+        THEN: The parent's root.destroy() should be called
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"):
+            mock_parent = MagicMock()
+            mock_parent_root = MagicMock()
+            mock_parent.root = mock_parent_root
+            parent_frame = ttk.Frame(root)
+
+            widget = VehicleDirectorySelectionWidgets(
+                parent=mock_parent,
+                parent_frame=parent_frame,
+                initial_dir="/initial/dir",
+                destroy_parent_on_open=True,
+                on_select_directory_callback=None,
+            )
+
+        with patch("tkinter.filedialog.askdirectory", return_value="/new/vehicle/dir"):
+            result = widget.on_select_directory()
+
+        assert result is True
+        mock_parent_root.destroy.assert_called_once()
+
+    def test_vehicle_directory_widget_no_callback_with_destroy(self, root) -> None:
+        """
+        VehicleDirectorySelectionWidgets works without callback but with destroy.
+
+        GIVEN: A VehicleDirectorySelectionWidgets with destroy_parent_on_open=True but no callback
+        WHEN: User selects a directory
+        THEN: Parent should be destroyed and True should be returned
+        """
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"):
+            mock_parent = MagicMock()
+            parent_frame = ttk.Frame(root)
+
+            widget = VehicleDirectorySelectionWidgets(
+                parent=mock_parent,
+                parent_frame=parent_frame,
+                initial_dir="/initial",
+                destroy_parent_on_open=True,
+                on_select_directory_callback=None,
+            )
+
+        with patch("tkinter.filedialog.askdirectory", return_value="/selected/dir"):
+            result = widget.on_select_directory()
+
+        assert result is True
+        mock_parent.root.destroy.assert_called_once()
+
+    def test_vehicle_directory_widget_handles_open_error_in_callback(self, root) -> None:
+        """
+        VehicleDirectorySelectionWidgets handles VehicleProjectOpenError in callback.
+
+        GIVEN: A VehicleDirectorySelectionWidgets with a callback that raises VehicleProjectOpenError
+        WHEN: User selects a directory and the callback fails
+        THEN: Error dialog should be shown and False should be returned
+        """
+        error = VehicleProjectOpenError(title="Error", message="Cannot open vehicle directory")
+        mock_callback = MagicMock(side_effect=error)
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_directory_selection.show_tooltip"):
+            mock_parent = MagicMock()
+            parent_frame = ttk.Frame(root)
+
+            widget = VehicleDirectorySelectionWidgets(
+                parent=mock_parent,
+                parent_frame=parent_frame,
+                initial_dir="/initial",
+                destroy_parent_on_open=False,
+                on_select_directory_callback=mock_callback,
+            )
+
+        with (
+            patch("tkinter.filedialog.askdirectory", return_value="/selected/dir"),
+            patch("tkinter.messagebox.showerror") as mock_error_dialog,
+        ):
+            result = widget.on_select_directory()
+
+        assert result is False
+        mock_error_dialog.assert_called_once_with("Error", "Cannot open vehicle directory")
