@@ -324,3 +324,47 @@ This security model follows industry best practices and provides the same level 
     data-light-mode="true"
     id="guru-widget-id">
 </script>
+
+## OS Keyring Setup (Required for MAVLink Signing)
+
+If you plan to use [MAVLink 2.0 message signing](https://mavlink.io/en/guide/message_signing.html),
+the application securely stores signing keys using your operating system's native keyring.
+
+### Windows
+
+**No setup required** - Uses Windows Credential Manager (built-in). ✅ Secure
+
+### macOS
+
+**No setup required** - Uses Keychain (built-in). ✅ Secure
+
+### Linux
+
+Install keyring support for your distribution.
+Most desktop environments use GNOME Keyring or KDE Wallet:
+
+```bash
+# Ubuntu/Debian (GNOME)
+sudo apt install gnome-keyring libsecret-1-0
+
+# Fedora (GNOME)
+sudo dnf install gnome-keyring libsecret
+
+# Arch Linux
+sudo pacman -S gnome-keyring libsecret
+
+# For headless systems, install and run keyring daemon:
+gnome-keyring-daemon --start --components=secrets
+```
+
+### Verifying Keyring Setup
+
+```python
+from ardupilot_methodic_configurator.backend_signing_keystore import SigningKeystore
+
+try:
+    keystore = SigningKeystore()
+    print("✅ Keyring is properly configured and ready for use")
+except ConnectionError as e:
+    print(f"❌ Keyring is not available: {e}")
+```

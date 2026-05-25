@@ -66,15 +66,16 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          # Only install system Tcl/Tk for Python < 3.13 (newer versions bundle their own)
+          # Install system Tcl/Tk and keyring dependencies
           if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
             echo "Installing system Tcl/Tk 8.6 for Python ${{ matrix.python-version }}"
             sudo apt-get install -y python3-tk tcl8.6 tk8.6 libtcl8.6 libtk8.6
           else
             echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, skipping system packages"
-            # Only install tools, not Tcl/Tk libraries
             sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
           fi
+          # Install keyring dependencies for real keyring testing
+          sudo apt-get install -y python3-keyring secretstorage libsecret-1-0 libsecret-1-dev
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
 
       - name: Cache Homebrew packages (macOS)
@@ -88,7 +89,10 @@ jobs:
 
       - name: Install system dependencies for GUI testing on macOS
         if: matrix.os == 'macos-latest'
-        run: brew list python-tk &>/dev/null || brew install python-tk
+        run: |
+          brew list python-tk &>/dev/null || brew install python-tk
+          # Install keyring dependencies for real keyring testing
+          brew install python-keyring
 
       - name: Ensure Tcl/Tk search paths
         if: matrix.os == 'ubuntu-latest'
