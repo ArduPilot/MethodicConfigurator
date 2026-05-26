@@ -1,0 +1,9 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+ATC_RAT_PIT_SMAX,25  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,25  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,25  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+FENCE_TYPE,3  # RANGE AND max altitude
+FS_EKF_ACTION,2  # I WOULD WANT IT TO BE STABILIZED IN ALT MODE AND NOT LAND IN NO MAN LAND
+LAND_ALT_LOW,500  # I WANT IT TO SLOW DOWN LATER ENOUGH SPACE AND DUAL GPS
+PSC_ACCZ_SMAX,1000  # want to keep it default and then check with developers to limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+RTL_ALT,10000  # This vehicle WILL FLY IN TERRAIN AREA AT TIMES

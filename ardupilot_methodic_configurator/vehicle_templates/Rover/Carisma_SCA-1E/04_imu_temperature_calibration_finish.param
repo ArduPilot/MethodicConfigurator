@@ -1,0 +1,2 @@
+BRD_HEAT_TARG,45
+LOG_DISARMED,0  # IMU temperature calibration is finished, we no longer need to log data when disarmed

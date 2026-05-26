@@ -1,4 +1,30 @@
+MOT_PWM_MAX,2000  # Digital ESC protocol maximum is per definition 2000
+MOT_PWM_MIN,1000  # Digital ESC protocol minimum is per definition 1000
 MOT_SPIN_ARM,0.03  # this works
 MOT_SPIN_MAX,0.95  # this works
 MOT_SPIN_MIN,0.04  # this works
 MOT_THST_EXPO,0.66  # init params
+NTF_BUZZ_TYPES,3  # the 4-in-1 ESC uses this
+NTF_LED_TYPES,1057  # Built-in, DroneCAN, Scripting
+SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
+SERVO_BLH_BDMASK,3840  # All four of our ESC support bi-directional DShot
+SERVO_BLH_RVMASK,256  # Ch9
+SERVO_DSHOT_ESC,1  # BLHeli32
+SERVO_DSHOT_RATE,2  # Sends DShot control signals to the ESC twice per control loop
+SERVO10_FUNCTION,34
+SERVO10_MAX,2000  # Use the full available 1000-2000 DShot range
+SERVO10_MIN,1000  # Use the full available 1000-2000 DShot range
+SERVO10_TRIM,1000  # Use the full available 1000-2000 DShot range
+SERVO11_FUNCTION,35
+SERVO11_MAX,2000  # Use the full available 1000-2000 DShot range
+SERVO11_MIN,1000  # Use the full available 1000-2000 DShot range
+SERVO11_TRIM,1000  # Use the full available 1000-2000 DShot range
+SERVO12_FUNCTION,36
+SERVO12_MAX,2000  # Use the full available 1000-2000 DShot range
+SERVO12_MIN,1000  # Use the full available 1000-2000 DShot range
+SERVO12_TRIM,1000  # Use the full available 1000-2000 DShot range
+SERVO9_FUNCTION,33
+SERVO9_MAX,2000  # Use the full available 1000-2000 DShot range
+SERVO9_MIN,1000  # Use the full available 1000-2000 DShot range
+SERVO9_TRIM,1000  # Use the full available 1000-2000 DShot range
+TKOFF_RPM_MIN,600  # idle RPM https://ardupilot.org/copter/docs/tkoff-rpm-min.html

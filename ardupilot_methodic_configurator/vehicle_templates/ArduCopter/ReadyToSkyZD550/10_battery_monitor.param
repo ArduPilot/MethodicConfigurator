@@ -1,0 +1,3 @@
+BATT_AMP_PERVLT,29.87824  # measured/calibrated
+BATT_MONITOR,4  # Selected in component editor window
+BATT_VOLT_MULT,18.97948  # measured/calibrated

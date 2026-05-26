@@ -1,0 +1,2 @@
+BATT_I2C_BUS,2  # Selected in component editor window
+BATT_MONITOR,21  # Selected in component editor window

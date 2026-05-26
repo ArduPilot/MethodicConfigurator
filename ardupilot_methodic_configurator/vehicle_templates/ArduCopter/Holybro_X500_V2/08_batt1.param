@@ -1,4 +1,3 @@
-BATT_AMP_PERVLT,36.363998
 BATT_ARM_VOLT,14.7  # Only arm above this voltage, to avoid taking off with insufficient battery capacity
 BATT_CAPACITY,5000  # Total battery capacity specified in the component editor
 BATT_CRT_MAH,0  # No capacity based failsafes, too unreliable
@@ -8,7 +7,5 @@ BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,0
 BATT_LOW_MAH,1000  # Fail-safe needs to be responsive at 1000 mAh, no risk taking
 BATT_LOW_VOLT,13.6  # Low failsafe voltage x nr. of cells
-BATT_MONITOR,4  # Selected in component editor window
-BATT_VOLT_MULT,18.181999
 MOT_BAT_VOLT_MAX,16.8  # Scale the PIDs up when battery voltage is below this threshold
 MOT_BAT_VOLT_MIN,13.2  # Scale the PIDs up when battery voltage is above this threshold

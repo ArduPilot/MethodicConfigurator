@@ -1,0 +1,5 @@
+ARMING_RUDDER,2
+RC6_OPTION,0
+RC7_OPTION,0
+RC8_OPTION,4
+RC9_OPTION,31  # To stop all motors immediately if the vehicle starts moving dangerously

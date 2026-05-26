@@ -1,6 +1,4 @@
-ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
 BRD_RTC_TZ_MIN,0  # UTC
-FENCE_TYPE,4
 INS_ACCEL_FILTER,20
 INS_POS1_X,0
 INS_POS1_Y,0

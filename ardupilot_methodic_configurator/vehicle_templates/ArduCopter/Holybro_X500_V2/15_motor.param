@@ -1,4 +1,21 @@
+MOT_PWM_MAX,1900
+MOT_PWM_MIN,1100
 MOT_SPIN_ARM,0.1  # From current 0.07A the motors start spinning.
 MOT_SPIN_MAX,0.95
 MOT_SPIN_MIN,0.15  # This should be 0.10A.
 MOT_THST_EXPO,0.65  # I don't have thrust stand so use Ardupilot suggestion.
+NTF_BUZZ_TYPES,5  # Our FC has a buzzer.
+NTF_LED_TYPES,123079
+SERVO1_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO1_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO1_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO2_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO2_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO2_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO3_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO3_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO3_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO4_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO4_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO4_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+TKOFF_RPM_MIN,0  # No ESC telemetry available, so no way to measure RPM

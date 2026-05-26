@@ -1,4 +1,21 @@
+MOT_PWM_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+MOT_PWM_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
 MOT_SPIN_ARM,0.08  # X11 plus dead zone is 0.05
 MOT_SPIN_MAX,0.95
 MOT_SPIN_MIN,0.11  # MOT_SPIN_ARM + 0.03
 MOT_THST_EXPO,0.6
+NTF_BUZZ_TYPES,5  # Our CubeOrange have it self buzzer.
+NTF_LED_TYPES,231
+SERVO1_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO1_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO1_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO2_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO2_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO2_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO3_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO3_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO3_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO4_MAX,1900  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO4_MIN,1100  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+SERVO4_TRIM,1500  # Operating Pulse Width:1100-1900us(Fixed or cannot be Programmed)
+TKOFF_RPM_MIN,0  # No esc telemetry to measure this

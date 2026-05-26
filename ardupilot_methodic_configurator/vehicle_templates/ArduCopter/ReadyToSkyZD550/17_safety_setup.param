@@ -1,0 +1,8 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+ATC_RAT_PIT_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+FENCE_TYPE,7  # cylinder and max altitude, to obey local regulations and safety measures
+LAND_ALT_LOW,1000
+PSC_ACCZ_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+RTL_ALT,1500
