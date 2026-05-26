@@ -1,3 +1,5 @@
 ATC_THR_MIX_MAN,0.5  # Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value
+MOT_SPOOL_TIME,0.5
 PSC_ACCZ_I,0.4  # Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
 PSC_ACCZ_P,0.2  # Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
+TKOFF_SLEW_TIME,2

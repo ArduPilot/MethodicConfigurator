@@ -1,0 +1,7 @@
+ARMING_RUDDER,2
+FS_THR_VALUE,970  # A bit lower to be on the safe side
+RC10_OPTION,0
+RC6_OPTION,17  # To control PID autotune, after quicktune is done
+RC7_OPTION,300  # To trigger PID quicktune
+RC8_OPTION,31  # To stop all motors immediately if the vehicle starts moving dangerously
+RC9_OPTION,0

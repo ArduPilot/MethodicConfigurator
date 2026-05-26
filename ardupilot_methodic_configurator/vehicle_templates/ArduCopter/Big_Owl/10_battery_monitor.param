@@ -1,0 +1,2 @@
+BATT_MONITOR,3  # Selected in component editor window
+BATT_VOLT_MULT,18.55167  # calibrated using a battery tester device

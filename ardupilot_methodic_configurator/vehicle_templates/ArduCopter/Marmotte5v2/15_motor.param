@@ -1,4 +1,14 @@
+MOT_PWM_MAX,2000  # Digital ESC protocol maximum is per definition 2000
+MOT_PWM_MIN,1000  # Digital ESC protocol minimum is per definition 1000
 MOT_SPIN_ARM,0.03  # The Mamba F45_128K ESCs reliably start spinning with this value
 MOT_SPIN_MAX,0.95  # Upper dead zone of the Mamba F45_128K ESC
 MOT_SPIN_MIN,0.05  # MOT_SPIN_ARM + 0.02
 MOT_THST_EXPO,0.55  # Measured with the motor test stand RCBenchmark Series 1780 from Tyto Robotics
+NTF_BUZZ_TYPES,3  # the 4-in-1 ESC uses this
+NTF_LED_TYPES,2305  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (Matek H743 slim v3), and DShot (4-in-1 ESC)
+SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
+SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
+SERVO_DSHOT_ESC,1  # BLHeli32
+SERVO_DSHOT_RATE,3  # Sends DShot control signals to the ESC twice per control loop
+SERVO13_FUNCTION,0
+TKOFF_RPM_MIN,1000  # Our motors should idle at around 1000 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html

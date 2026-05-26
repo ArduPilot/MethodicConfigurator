@@ -1,0 +1,3 @@
+BATT_AMP_PERVLT,0.02
+BATT_MONITOR,4  # Selected in component editor window
+BATT_VOLT_MULT,12.17

@@ -1,4 +1,3 @@
-BATT_AMP_PERVLT,17
 BATT_ARM_VOLT,15.7  # Only arm above this voltage, to avoid taking off with insufficient battery capacity
 BATT_CAPACITY,5200  # Total battery capacity specified in the component editor
 BATT_CRT_MAH,0
@@ -6,10 +5,16 @@ BATT_CRT_VOLT,14.2  # Critical failsafe voltage x nr. of cells
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,1  # Let the firmware handle the nasty business of variable and battery dependent internal resistance
-BATT_I2C_BUS,0  # Selected in component editor window
 BATT_LOW_MAH,0
 BATT_LOW_VOLT,14.4  # Low failsafe voltage x nr. of cells
-BATT_MONITOR,5  # Selected in component editor window
-BATT_VOLT_MULT,10.1  # Use a power source with a voltage close to BATT_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it
+BATT2_ARM_VOLT,15  # In our build this is a redundant monitor for batt1 so == BATT_ARM_VOLT
+BATT2_CAPACITY,1800  # In our build this is a redundant monitor for batt1 so == BATT_CAPACITY
+BATT2_CRT_MAH,450  # In our build this is a redundant monitor for batt1 so == BATT_CRT_MAH
+BATT2_CRT_VOLT,14  # In our build this is a redundant monitor for batt1 so == BATT_CRT_VOLT
+BATT2_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
+BATT2_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
+BATT2_FS_VOLTSRC,1  # In our build this is a redundant monitor for batt1 so == BATT_FS_VOLTSRC
+BATT2_LOW_MAH,600  # In our build this is a redundant monitor for batt1 so == BATT_LOW_MAH
+BATT2_LOW_VOLT,14.4  # In our build this is a redundant monitor for batt1 so == BATT_LOW_VOLT
 MOT_BAT_VOLT_MAX,16.8  # (Max voltage + 0.0) x no. of cells
 MOT_BAT_VOLT_MIN,14.2  # (Critical voltage + 0.0) x no. of cells

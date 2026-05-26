@@ -1,0 +1,5 @@
+ARMING_RUDDER,2  # We find it safer to use only a switch to arm instead of through rudder inputs
+RC6_OPTION,212
+RC7_OPTION,213
+RC8_OPTION,214
+RC9_OPTION,0

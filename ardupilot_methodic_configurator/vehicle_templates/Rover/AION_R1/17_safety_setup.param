@@ -1,0 +1,2 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+FENCE_TYPE,6  # circle to obey local regulations and safety measures

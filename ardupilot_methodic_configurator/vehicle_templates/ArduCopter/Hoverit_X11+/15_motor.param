@@ -1,4 +1,22 @@
+MOT_PWM_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+MOT_PWM_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
 MOT_SPIN_ARM,0.105  # Below this value the UAV arms vibrate a lot
 MOT_SPIN_MAX,0.9  # Acorning to the manufacturer thrust is mostly linear up-to 90%
 MOT_SPIN_MIN,0.125  # Must be at least a bit above the MOT_SPIN_ARM
 MOT_THST_EXPO,0.75  # As per previous drone setup similar specs
+NTF_BUZZ_TYPES,5  # Our CubeOrangePlus have it self buzzer.
+NTF_LED_TYPES,231
+SERVO1_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO1_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO1_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO2_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO2_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO2_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO3_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO3_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO3_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO4_MAX,1950  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO4_MIN,1050  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+SERVO4_TRIM,1500  # HOBBYWING X11 Plus operating pulse width: 1050-1950us (fixed and cannot be programmed)
+TKOFF_RPM_MIN,250  # Abort takeoff if one of the motors fails to spool
+TKOFF_THR_MAX,0.3  # Our hover throttle is ~0.2 and we do not want to overshoot the takeoff

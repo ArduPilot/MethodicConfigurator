@@ -5,9 +5,7 @@ BATT_CRT_VOLT,16.5  # Critical failsafe voltage x nr. of cells
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,0  # Using only RAW voltage
-BATT_I2C_BUS,2  # Selected in component editor window
 BATT_LOW_MAH,0  # Energy consumption not measured
 BATT_LOW_VOLT,18.6  # Low failsafe voltage x nr. of cells
-BATT_MONITOR,21  # Selected in component editor window
 MOT_BAT_VOLT_MAX,24.6  # Scale the PIDs up when battery voltage is below this threshold
 MOT_BAT_VOLT_MIN,16.5  # Scale the PIDs up when battery voltage is above this threshold

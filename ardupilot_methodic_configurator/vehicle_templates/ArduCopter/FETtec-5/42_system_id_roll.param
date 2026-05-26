@@ -7,8 +7,6 @@ ATC_RAT_RLL_I,0.043044  # prevent the rate controllers from compensating too muc
 ATC_RATE_FF_ENAB,1  # prevent the rate controllers from compensating too much of the frequency-sweep signal
 FLTMODE5,0  # Activate sysid instead of autotune
 LOG_BITMASK,178175  # attitude sample rate at loop rate
-LOG_DISARMED,0  # was only needed for wind speed estimation
-LOG_REPLAY,0  # was only needed for wind speed estimation
 SID_AXIS,10  # Inject chip on the mixer roll signal
 SID_F_START_HZ,0.05
 SID_F_STOP_HZ,5

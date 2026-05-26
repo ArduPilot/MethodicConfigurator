@@ -1,0 +1,9 @@
+ARMING_CHECK,1  # Perform all arming checks. If you have a problem fix its source. Do NOT change this
+ATC_RAT_PIT_SMAX,0
+ATC_RAT_RLL_SMAX,0
+ATC_RAT_YAW_SMAX,0
+FENCE_TYPE,4
+FS_EKF_ACTION,1
+LAND_ALT_LOW,1000
+PSC_ACCZ_SMAX,0
+RTL_ALT,1500

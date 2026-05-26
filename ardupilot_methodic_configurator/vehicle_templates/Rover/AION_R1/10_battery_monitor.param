@@ -1,0 +1,7 @@
+BATT_I2C_BUS,0  # Selected in component editor window
+BATT_MONITOR,5  # Selected in component editor window
+BATT2_AMP_PERVLT,17.73  # calibrated using batt charger
+BATT2_CURR_PIN,7
+BATT2_MONITOR,0
+BATT2_VOLT_MULT,228.342  # Use a power source with a voltage close to BATT2_LOW_VOLT measure with a calibrated voltimeter and adapt this parameter so that the telemetry voltage reading matches it
+BATT2_VOLT_PIN,18

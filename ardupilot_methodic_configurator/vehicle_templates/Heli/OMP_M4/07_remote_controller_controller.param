@@ -1,0 +1,6 @@
+ARMING_RUDDER,2  # Use Rudder Arming/disarming
+RC10_OPTION,0
+RC6_OPTION,0
+RC7_OPTION,32  # Motor Interlock required to get blades turning.
+RC8_OPTION,0
+RC9_OPTION,0

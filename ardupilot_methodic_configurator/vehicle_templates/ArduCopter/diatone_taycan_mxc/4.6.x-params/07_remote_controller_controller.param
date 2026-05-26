@@ -1,0 +1,5 @@
+ARMING_RUDDER,0  # We find it safer to use only a switch to arm instead of through rudder inputs
+RC6_OPTION,153  # "Arm/Disarm", to use an arming switch (here Channel 6)
+RC7_OPTION,31  # To stop all motors immediately if the vehicle starts moving dangerously
+RC8_OPTION,30  # "Lost Copter Sound", generates a loud tone from the buzzer at a high signal to locate a lost multicopter
+RC9_OPTION,300  # Used to jump to the next waypoint

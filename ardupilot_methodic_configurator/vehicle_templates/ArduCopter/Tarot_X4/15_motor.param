@@ -1,4 +1,25 @@
+MOT_PWM_MAX,1940  # 1940 as recommended by T-Motor
+MOT_PWM_MIN,1100  # 1100 as recommended by T-Motor
 MOT_SPIN_ARM,0.1  # The T-Motor iESCs reliably start spinning with this value (based on motor test)
 MOT_SPIN_MAX,0.95  # Upper dead zone of the ESC
 MOT_SPIN_MIN,0.13  # MOT_SPIN_ARM + 0.03
 MOT_THST_EXPO,0.5  # According to discussions about T-Motor Alpha / Flame / Star ESCs
+NTF_BUZZ_TYPES,5  # left default - don't know, if the T-Motor STAR ESCs provide options
+NTF_LED_TYPES,123079  # Left default
+SERVO_BLH_AUTO,0  # BLHeli passthrough not available with T-Motor ESCs
+SERVO_BLH_BDMASK,0  # no bidirectional DShot available
+SERVO_DSHOT_ESC,0  # using PWM
+SERVO_DSHOT_RATE,0  # Default
+SERVO1_MAX,1940  # Recommended by T-Motor
+SERVO1_MIN,1100  # Recommended by T-Motor
+SERVO1_TRIM,1500
+SERVO2_MAX,1940  # Recommended by T-Motor
+SERVO2_MIN,1100  # Recommended by T-Motor
+SERVO2_TRIM,1500
+SERVO3_MAX,1940  # Recommended by T-Motor
+SERVO3_MIN,1100  # Recommended by T-Motor
+SERVO3_TRIM,1500
+SERVO4_MAX,1940  # Recommended by T-Motor
+SERVO4_MIN,1100  # Recommended by T-Motor
+SERVO4_TRIM,1500
+TKOFF_RPM_MIN,0  # no RPM feedback

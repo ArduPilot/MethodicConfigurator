@@ -7,6 +7,5 @@ BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,0
 BATT_LOW_MAH,0  # Datalink V2 ESC telemetry does provide current measurement, but we do not want to use it
 BATT_LOW_VOLT,50.4  # Low failsafe voltage x nr. of cells
-BATT_MONITOR,9  # Selected in component editor window
 MOT_BAT_VOLT_MAX,58.8  # Scale the PIDs up when battery voltage is below this threshold
 MOT_BAT_VOLT_MIN,46.2  # Scale the PIDs up when battery voltage is above this threshold

@@ -9,8 +9,6 @@ ATC_RAT_YAW_I,0.099616
 ATC_RATE_FF_ENAB,1  # normal operation
 FLTMODE6,25  # Activate sysid instead of loiter
 LOG_BITMASK,145119  # attitude sample rate at 400Hz rate
-LOG_DISARMED,0  # was only needed for wind speed estimation
-LOG_REPLAY,0  # was only needed for wind speed estimation
 SID_AXIS,3  # Inject chip on the input yaw signal
 SID_F_START_HZ,0.05
 SID_F_STOP_HZ,11

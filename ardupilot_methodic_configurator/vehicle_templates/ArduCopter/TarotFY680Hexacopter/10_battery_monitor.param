@@ -1,0 +1,3 @@
+BATT_AMP_PERVLT,117.6  # 6 motors, but only 4 on the current sensing ESC, so 1.5*(1/((12.5mV/A)) = 117.6 A/V https://discuss.ardupilot.org/t/battery-monitoring-from-two-current-sensors-two-4-in-1-escs/133971/10
+BATT_MONITOR,4  # Selected in component editor window
+BATT_VOLT_MULT,21.35235  # measured with multimeter

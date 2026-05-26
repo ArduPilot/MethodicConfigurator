@@ -1,5 +1,7 @@
 ATC_THR_MIX_MAN,0.5  # Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value
 MOT_HOVER_LEARN,0  # Disabled because hover thrust is < 0.125
+MOT_SPOOL_TIME,0.5
 MOT_THST_HOVER,0.08
 PSC_ACCZ_I,0.16  # Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
 PSC_ACCZ_P,0.08  # Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned
+TKOFF_SLEW_TIME,3  # increased by 50% (by 1 second) because it would "pop" up in auto mode

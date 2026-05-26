@@ -1,7 +1,6 @@
 AFS_GCS_TIMEOUT,0
 AFS_RC,0
 AFS_RC_FAIL_TIME,0
-ATC_THR_MIX_MAX,0.6  # according to autotune documentation this should be raised up-to 0.9 after the tune
 BATT_FS_LOW_ACT,2  # outdoors we want the drone to come back
 BATT2_FS_LOW_ACT,0  # outdoors we want the drone to come back
 FS_GCS_ENABLE,1

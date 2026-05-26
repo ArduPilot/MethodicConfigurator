@@ -1,5 +1,5 @@
 {
-    "Format version": 0,
+    "Format version": 1,
     "Components": {
         "Flight Controller": {
             "Product": {
@@ -190,6 +190,6 @@
             "Notes": ""
         }
     },
-    "Program version": "3.0.4",
+    "Program version": "3.0.5",
     "Configuration template": "AION_R1"
 }

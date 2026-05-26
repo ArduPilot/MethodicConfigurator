@@ -1,4 +1,26 @@
+MOT_PWM_MAX,2000
+MOT_PWM_MIN,1000
 MOT_SPIN_ARM,0.1  # The Mamba F45_128K ESCs reliably start spinning with this value
 MOT_SPIN_MAX,0.95  # Upper dead zone of the Mamba F45_128K ESC
 MOT_SPIN_MIN,0.15  # MOT_SPIN_ARM + 0.03
 MOT_THST_EXPO,0.65  # Measured with the motor test stand RCBenchmark Series 1780 from Tyto Robotics
+NTF_BUZZ_TYPES,5  # the 4-in-1 ESC uses this
+NTF_LED_TYPES,123079  # Built-in LED, NCP5623 External (Holybro F9P), Neopixel (Matek H743 slim v3), and DShot (4-in-1 ESC)
+SERVO_BLH_AUTO,1  # Enables BLHeli passthrough
+SERVO_BLH_BDMASK,15  # All four of our ESC support bi-directional DShot
+SERVO_DSHOT_ESC,0  # BLHeli32
+SERVO_DSHOT_RATE,0  # Sends DShot control signals to the ESC twice per control loop
+SERVO1_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO1_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO1_TRIM,1500  # Use the full available 1000-2000 DShot range
+SERVO13_FUNCTION,0  # For matek H743Slim v3 board
+SERVO2_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO2_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO2_TRIM,1500  # Use the full available 1000-2000 DShot range
+SERVO3_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO3_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO3_TRIM,1500  # Use the full available 1000-2000 DShot range
+SERVO4_MAX,1900  # Use the full available 1000-2000 DShot range
+SERVO4_MIN,1100  # Use the full available 1000-2000 DShot range
+SERVO4_TRIM,1500  # Use the full available 1000-2000 DShot range
+TKOFF_RPM_MIN,0  # Our motors should idle at around 1400 RPM, see https://ardupilot.org/copter/docs/tkoff-rpm-min.html
