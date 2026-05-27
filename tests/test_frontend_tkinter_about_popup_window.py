@@ -12,25 +12,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import tkinter as tk
-from collections.abc import Generator
 from unittest.mock import patch
 from urllib.parse import urlparse
 
-import pytest
-
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
-
-# pylint: disable=redefined-outer-name
-
-
-@pytest.fixture
-def root() -> Generator[tk.Tk, None, None]:
-    """Provide a hidden Tk root window for tests."""
-    root = tk.Tk()
-    root.withdraw()
-    yield root
-    root.update_idletasks()
-    root.destroy()
 
 
 def _create_about_window(root: tk.Tk, version: str = "1.2.3") -> AboutWindow:
@@ -43,6 +28,10 @@ def _create_about_window(root: tk.Tk, version: str = "1.2.3") -> AboutWindow:
             return_value=1.0,
         ),
         patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"),
+        patch(
+            "ardupilot_methodic_configurator.backend_filesystem_program_settings.ProgramSettings.display_usage_popup",
+            return_value=True,
+        ),
     ):
         return AboutWindow(root, version)
 
@@ -279,10 +268,12 @@ class TestAboutWindowButtonInteractions:
             mock_open.assert_called_once()
             call_args = mock_open.call_args[0][0]
             assert isinstance(call_args, str), f"Expected URL string but got {type(call_args)}"
-            assert "github.com/ArduPilot/MethodicConfigurator" in call_args, (
-                f"Expected repository URL not found in {call_args}"
-            )
             assert call_args.startswith("http"), f"URL should start with http but got {call_args}"
+            parsed_url = urlparse(call_args)
+            host = parsed_url.hostname
+            assert host is not None, f"GitHub URL host not found in {call_args}"
+            assert host == "github.com" or host.endswith(".github.com"), f"GitHub URL not found in {call_args}"
+            assert "ArduPilot/MethodicConfigurator" in parsed_url.path, f"Expected repository path not found in {call_args}"
 
 
 class TestAboutWindowUsagePopupPreferences:

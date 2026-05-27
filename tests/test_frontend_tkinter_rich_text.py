@@ -206,18 +206,10 @@ if __name__ == "__main__":
     unittest.main()
 
 
-class TestRichTextColorAndFontFallbacks(unittest.TestCase):
+class TestRichTextColorAndFontFallbacks:
     """Tests for color and font fallback behavior in RichText."""
 
-    def setUp(self) -> None:
-        self.root = tk.Tk()
-        self.root.withdraw()
-
-    def tearDown(self) -> None:
-        self.root.update_idletasks()
-        self.root.destroy()
-
-    def test_user_can_create_rich_text_with_explicit_background_color(self) -> None:
+    def test_user_can_create_rich_text_with_explicit_background_color(self, root: tk.Tk) -> None:
         """
         User can create RichText with an explicit background color.
 
@@ -226,10 +218,10 @@ class TestRichTextColorAndFontFallbacks(unittest.TestCase):
         THEN: The background kwarg should skip the auto-detection
         AND: Widget should use the provided background color
         """
-        rich_text = RichText(self.root, background="red")
+        rich_text = RichText(root, background="red")
         assert rich_text.cget("background") == "red"
 
-    def test_user_can_create_rich_text_with_bg_shorthand(self) -> None:
+    def test_user_can_create_rich_text_with_bg_shorthand(self, root: tk.Tk) -> None:
         """
         User can create RichText with bg shorthand.
 
@@ -238,11 +230,11 @@ class TestRichTextColorAndFontFallbacks(unittest.TestCase):
         THEN: The bg kwarg should skip the auto-detection
         AND: Widget should use the provided background color
         """
-        rich_text = RichText(self.root, bg="blue")
+        rich_text = RichText(root, bg="blue")
         # Color may be returned as RGB by Tk on some platforms
         assert rich_text.cget("background")
 
-    def test_user_can_create_rich_text_with_explicit_foreground_color(self) -> None:
+    def test_user_can_create_rich_text_with_explicit_foreground_color(self, root: tk.Tk) -> None:
         """
         User can create RichText with an explicit foreground color.
 
@@ -251,10 +243,10 @@ class TestRichTextColorAndFontFallbacks(unittest.TestCase):
         THEN: The foreground kwarg should skip auto-detection
         AND: Widget should use provided foreground color
         """
-        rich_text = RichText(self.root, foreground="green")
+        rich_text = RichText(root, foreground="green")
         assert rich_text.cget("foreground")
 
-    def test_user_can_create_rich_text_with_fg_shorthand(self) -> None:
+    def test_user_can_create_rich_text_with_fg_shorthand(self, root: tk.Tk) -> None:
         """
         User can create RichText with fg shorthand.
 
@@ -262,10 +254,10 @@ class TestRichTextColorAndFontFallbacks(unittest.TestCase):
         WHEN: RichText is created with fg kwarg
         THEN: Widget should be created successfully
         """
-        rich_text = RichText(self.root, fg="purple")
+        rich_text = RichText(root, fg="purple")
         assert rich_text.cget("foreground")
 
-    def test_user_can_create_rich_text_when_safe_font_nametofont_returns_none(self) -> None:
+    def test_user_can_create_rich_text_when_safe_font_nametofont_returns_none(self, root: tk.Tk) -> None:
         """
         User can create RichText even when safe_font_nametofont returns None.
 
@@ -275,7 +267,7 @@ class TestRichTextColorAndFontFallbacks(unittest.TestCase):
         AND: Widget should be created successfully
         """
         with patch("ardupilot_methodic_configurator.frontend_tkinter_rich_text.safe_font_nametofont", return_value=None):
-            rich_text = RichText(self.root)
+            rich_text = RichText(root)
 
         assert rich_text is not None
         assert "bold" in rich_text.tag_names()
