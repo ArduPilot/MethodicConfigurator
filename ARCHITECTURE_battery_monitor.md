@@ -8,7 +8,7 @@ It reuses existing flight controller backend methods and follows the Model-View 
 **Key Features:**
 
 - 500ms periodic updates
-- Integrated at configuration step 08_batt1.param
+- Integrated at configuration step 11_battery.param
 - Real-time monitoring with color-coded status display
 - Parameter upload capability for immediate tuning validation
 
@@ -90,7 +90,7 @@ It reuses existing flight controller backend methods and follows the Model-View 
 
 ## Integration
 
-- **Configuration Step:** 08_batt1.param (all vehicle types)
+- **Configuration Step:** 11_battery.param (all vehicle types)
 - **Plugin Registration:** `@plugin_factory(PLUGIN_BATTERY_MONITOR)` decorator
 - **Backend Reuse:** Leverages existing `backend_flightcontroller.py` methods (no new backend code required)
 - **Parameter Editor Integration:** Optional injection for upload capability

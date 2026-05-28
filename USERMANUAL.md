@@ -431,8 +431,8 @@ When manufacturing multiple vehicles of the same model, you can reuse most confi
 If you maintain **high-quality standards that result in the production of multiple, nearly identical vehicles**, only three parameter files are vehicle-specific:
 
 - `03_imu_temperature_calibration_results.param`
-- `12_mp_setup_mandatory_hardware.param`
-- `25_inflight_magnetometer_fit_results.param`
+- `14_mp_setup_mandatory_hardware.param`
+- `32_inflight_magnetometer_fit_results.param`
 
 ## Command Line Usage
 

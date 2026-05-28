@@ -49,7 +49,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import (
 BASE_URL = "https://autotest.ardupilot.org/Parameters/"
 
 PARAM_DEFINITION_XML_FILE = "apm.pdef.xml"
-LUA_PARAM_DEFINITION_XML_FILE = "24_inflight_magnetometer_fit_setup.pdef.xml"
+LUA_PARAM_DEFINITION_XML_FILE = "31_inflight_magnetometer_fit_setup.pdef.xml"
 
 VERSION = "1.0"
 
@@ -457,7 +457,7 @@ def update_parameter_documentation(
 
     # Iterate over all the target ArduPilot parameter files
     for param_file in param_files:
-        if os_path.basename(param_file).endswith("24_inflight_magnetometer_fit_setup.param") and "MAGH_ALT_DELTA" not in doc:
+        if os_path.basename(param_file).endswith("31_inflight_magnetometer_fit_setup.param") and "MAGH_ALT_DELTA" not in doc:
             continue
 
         # Read the entire file contents
@@ -619,7 +619,7 @@ def main() -> None:
 
         # Annotate lua MAGfit XML documentation into the respective parameter file
         xml_file = LUA_PARAM_DEFINITION_XML_FILE
-        target = os_path.join(os_path.dirname(args.target), "24_inflight_magnetometer_fit_setup.param")
+        target = os_path.join(os_path.dirname(args.target), "31_inflight_magnetometer_fit_setup.param")
         if os_path.isfile(os_path.join(os_path.dirname(args.target), xml_file)):
             doc_dict = parse_parameter_metadata(xml_url, xml_dir, xml_file, args.vehicle_type, args.max_line_length)
             param_default_dict = load_default_param_file(xml_dir)

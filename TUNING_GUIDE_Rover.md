@@ -4,7 +4,7 @@
 
 ![Cinewhoop Diatone Taycan MX-C](images/blog/blog_title.png)
 
-For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence we developed at [IAV GmbH](https://www.iav.com/) will work on almost any other multicopter.
+For illustrative purposes, we will use the small 3'' multicopter depicted above, but the tuning sequence will work on any other multicopter.
 Parts of Section 1 and Sections 2 to 6 apply to **all ArduPilot vehicles**: ArduPlane, ArduRover, ArduBoat, ArduSub, ArduBlimp ...
 
 This method uses the latest available [ArduPilot WebTools](https://firmware.ardupilot.org/Tools/WebTools/), some of the new features of ArduCopter 4.3 and above and best practices from the [ArduPilot Community](https://discuss.ardupilot.org/).
@@ -118,7 +118,7 @@ The table below summarizes the software used in this guide. Download and install
 | [ArduPilot Filter Analysis](https://firmware.ardupilot.org/Tools/WebTools/FilterTool/) | online | Bode plot tool to give insight into gyro low-pass and notch filter attenuation and phase lag |
 | [ArduPilot PID Review Tool](https://firmware.ardupilot.org/Tools/WebTools/PIDReview/) | online | Review PID tune in the frequency domain. Step response estimate is generated. |
 | [ArduPilot MAGFit in flight compass calibration](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) | online | Do [compass calibration using a flight log](https://discuss.ardupilot.org/t/new-magfit-compass-calibration-webtool/110192) |
-| [Ardupilot Log Viewer](https://plotbeta.ardupilot.org/) | online | Log viewer, analyzer and plotter. Can also do MagFit |
+| [ArduPilot Log Viewer](https://plotbeta.ardupilot.org/) | online | Log viewer, analyzer and plotter. Can also do MagFit |
 | [Add grid to image](https://yomotherboard.com/add-grid-to-image/) | online | Add a grid overlay to any image |
 | [SketchAndCalc](https://www.sketchandcalc.com/) | online | Calculate areas |
 
@@ -131,18 +131,273 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
 
 1. Close Mission Planner, if it is open on the PC.
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
-1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).
+1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).<br>
    ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Now using [New](USERMANUAL.md#new) subsection
+1. Press the *Create a vehicle configuration directory from template* button.<br>
+   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
+1. Now using [New](USERMANUAL.md#new) subsection<br>
    ![New vehicle](images/App_screenshot_Vehicle_directory_create_from_template_source.png)
-1. From the existing templates, select the one most similar to your vehicle:
+1. From the existing templates, select the one most similar to your vehicle:<br>
    ![New vehicle](images/App_screenshot_Vehicle_overview.png)
-1. select the destination directory, give it a name and press `Create a vehicle configuration directory from template`
-1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):
+1. Select the options that meet your requirements:
+   - *Copy vehicle image from template* - Use the template vehicle image in your created vehicle configuration directory. This image helps identify the vehicle configuration.
+   - *Blank component data* - Create a new blank vehicle configuration, with no component data from the template.
+   - *Reset flight controller parameters to their defaults* - Reset the flight controller parameters to their default values when creating a new vehicle configuration.
+   Helps avoid issues caused by incorrect or incompatible parameter settings. WARNING: This will delete all parameters stored on the flight controller.
+   - *Infer component specifications and FC connections from FC parameters, not from template files* - When creating a new vehicle configuration, extract component
+   specifications and connection information directly from the connected flight controller instead of using the specifications defined in the template files.
+   This helps ensure the configuration accurately matches your actual hardware.
+   Note: you will not see the information from the correctly configured vehicle template. This option is only available when a flight controller is connected.
+   - *Use parameter values from connected FC, not from template files* - Use the parameter values from the connected flight controller instead of the template files when
+   creating a new vehicle configuration directory from a template.
+   Only makes sense if your FC has already been correctly configured. This option is only available when a flight controller is connected.
+   - *Blank parameter change reason* - Do not use the parameters change reason from the template.
+1. Select the destination directory, give it a name, and press the *Create a vehicle configuration directory from template* button.
+1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):<br>
    ![Component editor window](images/App_screenshot_Component_Editor.png)
-1. Make sure to **scroll all the way down and enter all the information requested**, even if it does not seam important to you.
-1. Click the `Save data and start configuration` button on the bottom
-1. You now have a vehicle configuration directory with the name that you selected. But the files are just templates, you need to edit them in the next steps.
+
+Most optional information fields are only visible in `normal` GUI complexity mode.
+
+All components have **optional** information about the product itself:
+
+![product](images/blog/component_editor_product.png)
+
+The URL can be used to store a link to a datasheet or a link to a shop product page.
+
+Some components have **optional** information about their firmware:
+
+![firmware](images/blog/component_editor_firmware.png)
+
+All components have an **optional** notes field.
+
+## Flight Controller
+
+![flight controller](images/blog/component_editor_flight_controller.png)
+
+Some information, if available, is automatically filed in by the software as seen in the example above.
+
+## Frame
+
+![frame](images/blog/component_editor_frame.png)
+
+The minimum take off weight and the maximum take off weight in Kilo are entered here.
+If you have variable payload configure the vehicle at the minimum take off weight.
+Only after completely tuned can you add the additional payload.
+
+## Battery Monitor
+
+All supported connection types and their corresponding protocols are:
+
+| Connection Type | Protocol |
+| --------------- | -------- |
+| `None` | `Disabled` |
+| `Analog` | `Analog Voltage Only` |
+| `Analog` | `Analog Voltage and Current` |
+| `Analog` | `FuelLevelAnalog` |
+| `Analog` | `Synthetic Current and Analog Voltage` |
+| `I2C1`–`I2C4` | `Solo` |
+| `I2C1`–`I2C4` | `Bebop` |
+| `I2C1`–`I2C4` | `SMBus-Generic` |
+| `I2C1`–`I2C4` | `FuelFlow` |
+| `I2C1`–`I2C4` | `SMBUS-SUI3` |
+| `I2C1`–`I2C4` | `SMBUS-SUI6` |
+| `I2C1`–`I2C4` | `NeoDesign` |
+| `I2C1`–`I2C4` | `SMBus-Maxell` |
+| `I2C1`–`I2C4` | `Generator-Elec` |
+| `I2C1`–`I2C4` | `Generator-Fuel` |
+| `I2C1`–`I2C4` | `Rotoye` |
+| `I2C1`–`I2C4` | `MPPT` |
+| `I2C1`–`I2C4` | `INA2XX` |
+| `I2C1`–`I2C4` | `LTC2946` |
+| `I2C1`–`I2C4` | `EFI` |
+| `I2C1`–`I2C4` | `AD7091R5` |
+| `CAN1`–`CAN2` | `DroneCAN-BatteryInfo` |
+| `PWM` | `FuelLevelPWM` |
+| `SPI` | `INA239_SPI` |
+| `other` | `ESC` |
+| `other` | `Sum Of Selected Monitors` |
+| `other` | `Torqeedo` |
+| `other` | `Scripting` |
+
+It is strongly recommended to use a battery monitor.
+But if you do not have one select `none` in the flight controller connection:
+
+![battery monitor none](images/blog/component_editor_battery_monitor_none.png)
+
+If your battery monitor has an analog connection to the FC, select `analog` and one of the possible protocols:
+
+![battery monitor analog](images/blog/component_editor_battery_monitor_analog.png)
+
+If your battery monitor has an I2C connection to the FC, select the I2C bus and one of the possible protocols:
+
+![battery monitor i2c](images/blog/component_editor_battery_monitor_i2c.png)
+
+If your battery monitor has a CAN connection to the FC, select the CAN bus:
+
+![battery monitor can](images/blog/component_editor_battery_monitor_can.png)
+
+If your battery monitor has a SPI connection to the FC, select the SPI bus:
+
+![battery monitor spi](images/blog/component_editor_battery_monitor_spi.png)
+
+If your battery monitor has a PWM connection to the FC, select the PWM:
+
+![battery monitor pwm](images/blog/component_editor_battery_monitor_pwm.png)
+
+Otherwise select `other` and one of the possible protocols:
+
+![battery monitor other](images/blog/component_editor_battery_monitor_other.png)
+
+## Battery
+
+![battery](images/blog/component_editor_battery.png)
+
+Select the correct battery chemistry, doing so will automatically set typical voltage thresholds for that battery chemistry.
+
+Afterwards you should tweak the voltage thresholds to meet your requirements.
+
+- `Volt per cell max` - PID values will only scale when below this voltage
+- `Volt per cell arm` - vehicle will only arm if battery voltage is above this threshold
+- `Volt per cell low` - first failsafe level gets triggered when below this value
+- `Volt per cell crit` - second failsafe level gets triggered when below this value
+- `Volt per cell min` - PID values will only scale when above this voltage
+
+They must obey `Volt per cell crit` < `Volt per cell low` < `Volt per cell arm` < `Volt per cell max`
+
+`Number of cells` is the number of cells connected in series.
+For a 6S battery this is 6.
+
+### Battery Discharge Characteristics
+
+The voltage thresholds depend on multiple factors:
+
+- **Battery Chemistry**: LiPo, LiFe, Li-ion, etc. have different discharge curves
+- **Temperature**: Battery voltage varies significantly across temperature ranges
+- **Load Current (C-rating)**: Higher discharge currents reduce available voltage
+- **Specific Battery**: Each manufacturer's battery has unique characteristics
+
+The following graphs show typical LiPo discharge curves.
+
+![state-of-charge vs. Load Current](images/blog/typical_lipo_discharge_vs_load.png)
+
+![state-of-charge vs. Temperature](images/blog/typical_lipo_discharge_vs_temperature.png)
+
+**Always request these discharge curves from your battery manufacturer** to properly configure the voltage thresholds for your specific battery and operating conditions.
+This ensures your vehicle operates safely and reliably across all expected temperatures and load conditions.
+
+## ESC
+
+Electronic speed controllers have a `FC->ESC Connection` for control of the motor speed and
+an optional `ESC->FC Telemetry` for telemetry feedback from the ESC to the flight controller.
+
+![esc main out](images/blog/component_editor_esc_main_out.png)
+
+The `FC->ESC Connection` type can be `Main Out`, an `AIO` integrated output, a serial port, or a CAN bus.
+The protocol is determined by the `MOT_PWM_TYPE` parameter (e.g. `Normal`, `DShot600`) for PWM outputs,
+or the serial/CAN protocol (e.g. `FETtecOneWire`, `DroneCAN`) for digital connections.
+
+The `ESC->FC Telemetry` type and protocol describe the return path:
+
+| Connection Type | Protocol | Notes |
+| --------------- | -------- | ----- |
+| `None` | `None` | No ESC telemetry |
+| same as FC->ESC | `BDShotOnly` | BDShot only on Main Out and/or AIO, without serial port backup channel |
+| serial port | `ESC Telemetry` | DShot or BDShot serial telemetry backup channel |
+| serial port | `FETtecOneWire` | Bidirectional FETtec protocol on the same wire |
+| serial port | `Scripting` | For T-Motor/Hobbywing Datalink v2 serial telemetry |
+| serial port | `Torqeedo` | For Torqeedo telemetry |
+| serial port | `CoDevESC` | For CoDevESC serial telemetry |
+| CAN port | `DroneCAN` | Telemetry over CAN bus |
+
+When using BDShot only on `Main Out` (1-8) and/or `Aux I/O` (9-14) connection, without serial port backup channel:
+
+![ESC telemetry BDShotOnly](images/blog/component_editor_esc_telem_main_out_aio.png)
+
+When using DShot or BDShot with a serial port backup channel:
+
+![ESC telemetry serial](images/blog/component_editor_esc_telem_serial.png)
+
+## Motors
+
+![Motor configuration interface showing pole count input](images/blog/component_editor_motors.png)
+
+Enter the number of magnetic **poles** of the motor rotor.
+This is the **P** number in the common `nNmP` motor winding notation (e.g. `12N14P` → 14 poles).
+The value must be an even integer.
+It is used by ArduPilot to calculate the actual motor RPM from the ESC telemetry electrical frequency.
+
+## Propellers
+
+![Propeller configuration interface showing diameter input](images/blog/component_editor_propellers.png)
+
+Enter the propeller **diameter in inches**.
+This value affects many initial PID values.
+
+## GNSS Receiver
+
+![GNSS receiver configuration interface](images/blog/component_editor_gnss.png)
+
+Select the FC connection **type** (serial port or CAN bus) and the matching **protocol**:
+
+| Connection Type | Protocol |
+| --------------- | -------- |
+| None | `None` |
+| CAN bus | `DroneCAN` |
+| serial port — auto-detect | `AUTO` |
+| serial port — vendor-specific | other |
+
+If you do not have a GNSS receiver, select `None` as the connection type.
+
+## RC Controller
+
+The hand-held controller used by the pilot.
+Enter the manufacturer and model for documentation purposes.
+This component has no FC connection — it communicates wirelessly via the RC Transmitter and RC Receiver pair.
+
+## RC Transmitter
+
+The RF transmitter module (may be integrated in the RC Controller or a separate module).
+Enter the manufacturer and model for documentation purposes.
+This component has no FC connection.
+
+## RC Receiver
+
+Select the FC connection **type** and **protocol** that match how the receiver is wired to the flight controller:
+
+| Connection Type | Protocol |
+| --------------- | -------- |
+| RCin/SBUS — auto-detect all protocols | `All` |
+| RCin/SBUS | `PPM` |
+| RCin/SBUS or serial | `SBUS` / `SBUS_NI` |
+| serial port | `DSM` |
+| serial port | `CRSF` |
+| serial port | `FPORT` |
+| serial port | `MAVRadio` |
+| serial port — vendor-specific | other |
+
+If your receiver is connected to a dedicated RC input pin, choose `RCin/SBUS` as the type.
+If it is connected to a UART (e.g. CRSF, FPORT, DSM), choose the corresponding serial port.
+
+## Telemetry
+
+Select the FC connection **type** (serial port or CAN bus) and the matching **protocol**:
+
+| Connection Type | Protocol | Notes |
+| --------------- | -------- | ----- |
+| None | `None` | when not present |
+| serial | `MAVLink2` | recommended for most ground stations |
+| serial | `MAVLink1` | legacy ground stations |
+| serial | `MAVLink High Latency` | satellite / low-bandwidth links |
+| serial | `DDS XRCE` | ROS 2 micro-XRCE-DDS bridge |
+| serial | other | vendor-specific |
+
+If you do not have a telemetry radio, select `None` as the connection type.
+
+Make sure to **scroll all the way down and enter all the information requested**, even if it does not seem important to you.
+Click the `Save data and start configuration` button on the bottom
+
+You now have a vehicle configuration directory with the name that you selected.
+But the files are just templates, you need to edit them in the next steps.
 
 # 4. Perform IMU temperature calibration before assembling the autopilot into the vehicle (optional)
 
@@ -159,17 +414,41 @@ That is harder to do once the autopilot is assembled inside the vehicle, hence i
 1. When *ArduPilot Methodic Configurator* asks you *Do you want to provide a .bin log file and run the IMU temperature calibration using it?* select `No` and close the program.
 1. Power off the flight controller and remove the battery.
 1. Place the flight controller **without battery** in a freezer capable of reaching your vehicle's minimum expected operation temperature (-18°C in our case).
-1. Once the flight controller is completely cooled down to its minimum expected operation temperature, take it out and power it. **Do not move the flight controller** for one or two hours.
-1. If you have a buzzer connected, you will hear a short periodic beep while the calibration is in progress. When the calibration is complete, a completion tune will play. If you have [notification LEDs](https://ardupilot.org/copter/docs/common-leds-pixhawk.html) on your flight controller they will cyclically flash red, blue and green while calibrating. If you do not have a buzzer connected nor notification LEDs, monitor the `INS_TCALn_ENABLE` parameters. On completion, the `INS_TCALn_ENABLE` parameters will change to 1 (*enable*) for each calibrated IMU.
+1. Once the flight controller is completely cooled down to its minimum expected operation temperature, take it out and power it.
+   **Do not move the flight controller** for one or two hours.
+   If the flight controller does not have a heater, place it in a warm place to make sure the target temperature gets reached fast enough.
+   The data collection process will automatically stop once the temperature increase is less than 0.5 °C in 10 minutes.
+1. Monitor the data collection process:
+   - If you have a buzzer connected, you will hear a short periodic beep while the calibration is in progress.
+     When the calibration is complete, a completion tune will play.
+   - If you have [notification LEDs](https://ardupilot.org/copter/docs/common-leds-pixhawk.html) on your flight controller they will cyclically flash red, blue and green while calibrating.
+   - If you do not have a buzzer connected nor notification LEDs, monitor the parameters using Mission Planner.
+     Use Mission Planner's Live Tuning Screen found on the Data Screen:
+        1. Connect the flight controller to Mission Planner
+        1. Check the *Tuning* checkbox on the bottom of the Data Screen.
+        1. Double-click in the screen and select `IMUx` from the Sensor fields, where `x` represents the IMUs you have configured to collect data.
+        1. Monitor the progress in the *Tuning* screen as well as the *Messages* screen under the HUD.
+        1. The images below show an example of the Start of the process and the Completion.
+        1. You can also periodically refresh (re-read) the parameters from the flight controller.
+           On completion, the `INS_TCALn_ENABLE` parameters will change to 1 (*enable*) for each calibrated IMU.
 1. Power it off, and remove the micro SDCard
 1. Copy the latest `.bin` log file in the micro SDcard from `/APM/LOGS` to your PC
 1. Insert the micro SDcard back into the flight controller
+
+![MP IMU temperature calibration started](images/blog/MP_IMU_temperature_calibration_started.jpeg)
+
+The Figure above depicts the Mission Planner tuning screen showing IMU temperature calibration start (low temperatures) and messages window
+
+![MP IMU temperature calibration completed](images/blog/MP_IMU_temperature_calibration_completed.jpeg)
+
+The Figure above depicts the Mission Planner tuning screen showing IMU temperature calibration completed (high temperatures) and messages window
 
 ## 4.2 Calculate IMU temperature calibration
 
 1. Connect a USB cable to the FC and open *ArduPilot Methodic Configurator*. It will ask you again *Do you want to provide a .bin log file and run the IMU temperature calibration using it?* Select `Yes` and point it to the `.bin` file that you just downloaded.
 1. Wait until finished It can take 10 Minutes or more look at the produced graphs they are also automatically saved to disk on the vehicle directory
 1. Press `Upload selected params to FC, and advance to next file`.
+   This stores the calibration polynomial coefficients in the `03_imu_temperature_calibration_results.param` file.
 
 The graphic below depicts the accelerometer drift versus time and the board temperature versus time.
 The temperature curve, depicted in black, is logarithmic as expected.
@@ -179,9 +458,14 @@ After the calibration, temperature changes will cause no significant acceleromet
 
 ![MatekH743Slim IMU temperature calibration](images/blog/matekh743slim_accel.png)
 
+## 4.3 Finish IMU temperature calibration
+
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `04_imu_temperature_calibration_finish.param` file.
+This disables disarmed logging (no longer needed after calibration) and sets the board target temperature, so that future steps run at a stable, drift-compensated temperature and only log when armed.
+
 # 5. Assemble all components except the wheels
 
-Now that the optional IMU temperature calibration is done we must [assemble and connect all components](https://ardupilot.org/rover/docs/rover-autopilot-assembly-instructions.html) except the wheels.
+Now that the optional IMU temperature calibration is done we must [assemble and connect all components](https://ardupilot.org/copter/docs/autopilot-assembly-instructions.html) except the propellers.
 
 Read the [Multicopter hardware best-practices](#11-multicopter-hardware-best-practices) section again before assembling the vehicle.
 
@@ -212,10 +496,10 @@ Follow [mounting the autopilot](https://ardupilot.org/copter/docs/common-mountin
 
 ### 6.1.1 Use ArduPilot Methodic Configurator to edit the parameter file and upload it to the flight controller
 
-1. The parameter file for this particular step is `04_board_orientation.param` other steps will use other parameter files
+1. The parameter file for this particular step is `05_board_orientation.param` other steps will use other parameter files
   ![parameter file editor window](images/App_screenshot_Parameter_file_editor_and_uploader4_4.png)
-1. On *ArduPilot Methodic Configurator* select `04_board_orientation.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `04_board_orientation.param documentation`
+1. On *ArduPilot Methodic Configurator* select `05_board_orientation.param` on the *Current intermediate parameter file:* Combobox.
+1. Read the documentation links inside the `05_board_orientation.param documentation`
 1. **Add** or **Del**ete parameters if necessary, using the respective GUI buttons
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements.
 The `Change Reason` field is extremely important because:
@@ -225,7 +509,15 @@ The `Change Reason` field is extremely important because:
     - allows for someone else (or yourself after a few weeks) to understand your rationale
 1. Press `Upload selected params to FC, and advance to next file` button.
 
-## 6.2 Configure the RC receiver
+## 6.2 Configure the Remote Controller
+
+### 6.2.1 Configure the RC receiver
+
+In our setup, we used an advanced RC receiver that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Radio Calibration` menu.
+
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `06_remote_controller_receiver.param` file
+
+### 6.2.2 Configure the RC controller
 
 In our setup, we use EdgeTX firmware on the RC transmitter.
 
@@ -238,9 +530,7 @@ After that, use a micro SDcard to update the firmware on the Radiomaster TX16S a
 Once the RC transmitter is running EdgeTx you can load the [Taycan MX-C EdgeTX configuration file](images/blog/TaycanMX-C.etx) into EdgeTX companion and upload it to the radio.
 Or simply copy only the settings that you require, EdgeTX companion is very flexible.
 
-In our setup, we used an advanced RC receiver that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Radio Calibration` menu.
-
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `05_remote_controller.param` file
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `07_remote_controller_controller.param` file to configure RC controller-specific options, including the arming method and RC channel option assignments (e.g. arming via RC5 for ExpressLRS systems).
 
 After that test the [RC failsafe](https://ardupilot.org/copter/docs/radio-failsafe.html)
 
@@ -248,7 +538,7 @@ After that test the [RC failsafe](https://ardupilot.org/copter/docs/radio-failsa
 
 The RC transmitter we used has a big color display where telemetry data is displayed, nevertheless, we use telemetry data for real-time flight monitoring with Mission Planner or QGroundControl.
 
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `06_telemetry.param` file
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `08_telemetry.param` file
 
 Once this is operating we no longer need the USB connection to the vehicle. We can now use the telemetry connection instead.
 
@@ -256,7 +546,7 @@ Once this is operating we no longer need the USB connection to the vehicle. We c
 
 In our setup, we used a [Bi-directional Dshot ESC](https://ardupilot.org/copter/docs/common-dshot-escs.html) that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Servo Output` menu.
 
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `07_esc.param` file
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `09_esc_telemetry.param` file
 
 The step above configured ESC communication passthrough.
 In our vehicle, we use *BLHeli_32 ARM* ESC firmware.
@@ -274,30 +564,32 @@ https://youtu.be/7WeHTb7aBrE?si=gW9YbcQkZYK3DoNE
 
 In our setup, the battery voltage is measured directly at the flight controller `Vbat` pin and the current is measured at the 4-in1 ESC `Curr` pin.
 
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `08_batt1.param` file
+### 6.5.1 When using an analog voltage and current monitor
 
-## 6.6 Configure the redundant (secondary) battery monitor (optional)
+To calibrate the `BATT_VOLT_MULT` voltage multiplier parameter, note the reported voltage from the flight controller and
+measure the actual battery voltage with a multimeter.
+`New BATT_VOLT_MULT` = (`old BATT_VOLT_MULT` x `Multimeter reading`) / `Reported voltage`
 
-To be on the safe side we used a Holybro PM02 as a redundant secondary voltage and current monitor.
-One other option would be the [CBU 2-8s DroneCAN Battery Monitor and Current Sensor](https://www.cbunmanned.com/store).
+To set the `BATT_AMP_PERVLT` parameter value, fly a fully charged battery and from the flight log note the consumed mAh (BAT[0].CurrTot).
+Then re-charge the battery and note the charged mAh (you need to have a battery charger that displays this information).
+Then calculate a new `BATT_AMP_PERVLT` value by:
+`New BATT_AMP_PERVLT` = (`old BATT_AMP_PERVLT` x `charged mAh`) / `Flight logged mAh`
 
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `09_batt2.param` file
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `10_battery_monitor.param` file to configure the battery monitor hardware connection type, protocol and calibration values so the autopilot correctly reads battery voltage and current.
 
-## 6.7 Configure the GNSS receiver(s)
+Your vehicle is not ready to fly yet, so you will need to come back to this step later to perform the `BATT_AMP_PERVLT` calibration.
+
+### 6.5.2 Configure the battery(es)
+
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `11_battery.param` file
+
+## 6.6 Configure the GNSS receiver(s)
 
 GNSS receivers very often contain a magnetometer (compass) sensor. So they need to be configured before proceeding to the next step.
 
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `10_gnss.param` file
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `12_gnss.param` file
 
-## 6.8 Initial attitude PID gains (vehicle size dependent)
-
-Propeller size has a big influence on the vehicle dynamics, this adapts controller response to it.
-
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `11_initial_atc.param` file
-
-When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
-
-## 6.9 Configure "Mandatory Hardware" Parameters
+## 6.8 Configure "Mandatory Hardware" Parameters
 
 Open Mission Planner, connect to the flight controller and select `SETUP >> Mandatory Hardware` and work yourself through all the submenus as described below. **DO NOT SKIP ANY STEP**.
 
@@ -374,28 +666,39 @@ The changes you did in the steps above have been stored in your vehicle.
 Most of the changed parameters are vehicle-instance specific and can not be reused between two vehicles, no matter how similar they are.
 Close Mission Planner.
 
-## 6.10 General configuration
+## 6.9 General configuration
 
 Now do some general configuration
 
 1. Connect the flight controller to the PC
 1. Start *ArduPilot Methodic Configurator* and select the vehicle directory where you previously stored your *intermediate parameter files*.
-1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `12_mp_setup_mandatory_hardware.param` file because you've completed the experiment.
+1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `14_mp_setup_mandatory_hardware.param` file because you've completed the experiment.
 1. Press `Upload selected params to FC, and advance to next file` button.
-1. Read the documentation links inside the `13_general_configuration.param documentation`
+1. Read the documentation links inside the `15_general_configuration.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
 
-Close *ArduPilot Methodic Configurator*.
-Using [Mission Planner, manually download](https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html#downloading-logs-via-mavlink)
-the latest `.bin` file from the flight controller to your PC.
-Remember where you stored it, you will need it later.
+### 6.9.1 Safety setup
 
-## 6.11 ArduPilot Hardware Report
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `16_safety_setup.param` file to configure safety parameters including arming checks, geofence, failsafe actions and ESC slew rate limits.
+These protect the vehicle and its surroundings and must be configured before the first flight.
+
+### 6.9.2 Remote ID (aka Drone ID), optional
+
+Read and follow [ArduPilot's Remote ID setup instructions](https://ardupilot.org/copter/docs/common-remoteid.html). You might have to [build OpenDroneID firmware for production](https://ardupilot.org/dev/docs/opendroneid.html).
+
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `17_remote_id.param` file
+
+### 6.9.3 On Screen display (optional)
+
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `18_osd.param` file to configure the On Screen Display (OSD) to show relevant flight data on the FPV video feed (optional, only applicable if your vehicle has an OSD).
+
+## 6.10 ArduPilot Hardware Report
 
 For this test, you need to:
 
-1. Visit the [ArduPilot Hardware report](https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/) on your PC and upload the `.bin` file you got in the previous section.
+1. Press "Download last .bin file" button on the bottom of the parameter editor window.
+1. Visit the [ArduPilot Hardware report](https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/) on your PC and upload the `.bin` file you got in the previous step.
 1. Take a look at the results
 
 It should look like the following picture.
@@ -403,7 +706,7 @@ If it doesn't, go back and perform the missing calibration(s).
 
 ![Hardware-Report after IMU temperature compensation](images/blog/hardware_report_tempcal.png)
 
-## 6.12 Configure Logging
+## 6.14 Configure Logging
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `14_Logging.param` file
 
@@ -569,103 +872,35 @@ We imported the data into the spreadsheet and created this graph:
 
 <img width="690" height="389" src="images/blog/motor_thrust_chart.PNG" alt="motor_thrust_chart" />
 
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `15_motor.param` file
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `20_esc.param` file
 
-## 6.14 Optional PID adjustment
-
-If you have a very small, or a very large vehicle that requires non-default PID values for a safe flight.
-Usually, smaller vehicles require lower than default PID rate values. Larger vehicles usually require higher than default PID rate values.
-
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `16_pid_adjustment.param` file
-
-## 6.15 Remote ID (aka Drone ID)
-
-Read and follow [ArduPilot's Remote ID setup instructions](https://ardupilot.org/copter/docs/common-remoteid.html). You might have to [build OpenDroneID firmware for production](https://ardupilot.org/dev/docs/opendroneid.html).
-
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `17_remote_id.param` file
-
-## 6.16 Notch filters setup
-
-Configure the gyro noise reduction notch filters with an estimation of the operation parameters.
-The estimation will be improved after the first flight.
-
-Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `18_notch_filter_setup.param` file
-
-When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `23_optional_pid_adjustment.param` file
 
 # 7. Assemble propellers and perform the first flight
 
-Assemble the propellors in the vehicle ensuring that they are [balanced in order to reduce vibrations](https://www.youtube.com/watch?v=zTDkCZ698uA).
-High vibrations will cause your vehicle to behave eradicaly endangering people and property.
+Assemble the weels in the vehicle ensuring that they are [balanced in order to reduce vibrations](https://www.youtube.com/watch?v=zTDkCZ698uA).
+High vibrations will cause your vehicle to behave erratically endangering people and property.
 
 Now that all mandatory configuration steps are done and the props are on you can perform the first flight.
 
 ## 7.1 First flight: Motor Thrust Hover and Harmonic Notch data collection
 
-For more detailed information visit the [First flight](https://ardupilot.org/copter/docs/flying-arducopter.html)
-
-Test the initial setup on the ground in [stabilize flight mode](https://ardupilot.org/copter/docs/stabilize-mode.html) by using as little RC transmitter throttle as possible without taking off.
-At this sweet spot, inspect all axes (roll, pitch and yaw) by providing small RC transmitter stick inputs.
-If the multicopter behaves correspondingly, the setup is good to go.
-
-After some careful test maneuvers switch to `ALTHOLD` and hover for 30 to 40 seconds one to two meters above the ground. Land and disarm.
-
-Immediately check for hot motors.
-If the motors are too hot, check the `.bin` dataflash log, high or oscillating `RATE.*out` values indicate which PID gain you should reduce to remove the output oscillations causing the motors to heat up.
-
 # 8. Minimalistic mandatory tuning
 
-These are the very minimum tuning steps required for a stable flight:
-
-## 8.1 [Notch filter calibration](https://ardupilot.org/copter/docs/common-imu-notch-filtering.html)
-
-Load the `.bin` log from the first flight onto the [online Ardupilot Filter Review tool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
-Follow the [instructions from Peter Hall on his Blog Post](https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572) to configure the Harmonic Notch filter(s).
-Noise levels below -50dB are considered good enough.
-Do not use notch filters to reduce noise below that level as it introduces unwanted signal lag.
-The graph below is a bode diagram of the gyro signals before and after the low-pass and Harmonic Notch filters.
-As you can see, the filters remove most of the vibration noise from the gyro sensors.
-
-![Filter IMU1](images/blog/filter_imu.png)
-
-Below is the configuration we used.
-
-![Filter Configuration](images/blog/filter_konfiguration.png)
-
-1. On *ArduPilot Methodic Configurator* select `19_notch_filter_results.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked *Should the FC values now be copied to the 19_notch_filter_results.param file?* select `No`.
-1. Read the documentation links inside the `19_notch_filter_results.param documentation`
-1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
-1. Press `Upload selected params to FC, and advance to next file` button.
-
-Load the `.bin` log from the first flight onto the [online Ardupilot Log Viewer](https://plotbeta.ardupilot.org/) or into Mission Planner.
-Take a look at the `VIBE.VibeX`, `VIBE.VibeY`, `VIBE.VibeZ` graphs they [all should be below 15](https://ardupilot.org/copter/docs/common-measuring-vibration.html)
-
-According to common ArduPilot forum knowledge, and quoting @xfacta:
-
-- Vibrations over 30 are very bad
-- Vibrations over 20 are causing issues even if you don't know it yet
-- Vibrations over 15 are in a grey area - it could go either way - check clipping, it must be zero
-- Vibrations below 10 are good
-
-Now upload the `.bin` log to the [Hardware-Report Tool](https://firmware.ardupilot.org/Tools/WebTools/HardwareReport/) once again to check CPU load and loop times, which in our case look like this:
-
-![Hardware-Report CPU load](images/blog/hardware_report_cpu_load.png)
-
-![Hardware-Report CPU loop times](images/blog/hardware_report_loop_times.png)
+These are the very minimum tuning steps required for a stable operation:
 
 ## 8.2 Configure the throttle controller
 
-Use the `.bin` log from the first flight to set the parameters described on the `20_throttle_controller.param` file.
+Use the `.bin` log from the first flight to set the parameters described on the `24_throttle_controller.param` file.
 
 ## 8.3 Configure the EKF altitude source weights
 
 In some situations you will need to configure the expected noise levels of the altitude sources.
-And the weight that EKF should use for each source on the `23_ekf_config.param` file.
+And the weight that EKF should use for each source on the `26_ekf_config.param` file.
 
-## 8.4 Second Flight: PID VTOL-Quiktune lua script or manual PID tune
+## 8.5 Second Flight: PID VTOL-Quiktune lua script or manual PID tune
 
-If your flight controller can run lua scripts perform a [PID lua VTOL-Quicktune](https://ardupilot.org/copter/docs/quiktune.html).
+If your flight controller can run lua scripts perform a [PID lua VTOL-Quiktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
 
 Setup the lua script using:
@@ -673,10 +908,10 @@ Setup the lua script using:
 1. Connect your flight controller to the PC
 1. Close mission planner, open *ArduPilot Methodic Configurator* and select your vehicle's directory
 1. Make sure your PC has internet connection
-1. On *ArduPilot Methodic Configurator* select `22_quicktune_setup.param` on the *Current intermediate parameter file:* Combobox.
+1. On *ArduPilot Methodic Configurator* select `29_quick_tune_setup.param` on the *Current intermediate parameter file:* Combobox.
 1. When asked if you want to download the .lua script from internet answer yes.
 1. When asked if you want to upload the .lua script to the FC answer yes.
-1. Read the documentation links inside the `22_quicktune_setup.param documentation`
+1. Read the documentation links inside the `29_quick_tune_setup.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
@@ -684,8 +919,8 @@ Setup the lua script using:
 Perform the flight and afterward:
 
 1. Connect the flight controller to the PC
-1. On *ArduPilot Methodic Configurator* select `23_quicktune_results.param` on the *Current intermediate parameter file:* Combobox.
-1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `23_quicktune_results.param` file because you've completed the experiment.
+1. On *ArduPilot Methodic Configurator* select `30_quick_tune_results.param` on the *Current intermediate parameter file:* Combobox.
+1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `30_quick_tune_results.param` file because you've completed the experiment.
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
@@ -697,43 +932,59 @@ These are the standard tuning steps required for an optimized flight:
 
 ## 9.1 Third flight: MagFit
 
-Now that the Harmonic Notch filter, the throttle controller and PIDs are configured, the third flight will be safer.
-This flight will be used to [calibrate the compass during a realistic operation scenario in the air](https://ardupilot.org/copter/docs/common-magfit.html#using-mavexplorer-s-integrated-magfit-utility).
+This test will be used to [calibrate the compass during a realistic operation scenario in the air](https://ardupilot.org/copter/docs/common-magfit.html#using-mavexplorer-s-integrated-magfit-utility).
 
-### 9.1.1 Setup inflight MagFit calibration
+### 9.1.1 Setup MagFit calibration
 
-Follow these steps before the flight:
+Follow these steps before the test:
 
-1. On Ardupilot versions < 4.6.0 download the `advance-wp.lua` scripts from [ardupilot github repository](https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/advance-wp.lua), follow [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder.
-1. On Ardupilot versions >= 4.6.0 the script is already included.
+1. On ArduPilot versions < 4.6.0 download the `advance-wp.lua` scripts from [ardupilot github repository](https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/advance-wp.lua), follow [Scripted MagFit flightpath generation](https://discuss.ardupilot.org/t/scripted-magfit-flightpath-generation/97536) and put it on the micro SDCard's `APM/scripts` folder.
+1. On ArduPilot versions >= 4.6.0 the script is already included.
 1. Insert the SD-Card on the flight controller
 1. Connect your flight controller to the PC
 1. Make sure your PC has internet connection
-1. On *ArduPilot Methodic Configurator* select `24_inflight_magnetometer_fit_setup.param` on the *Current intermediate parameter file:* Combobox.
+1. On *ArduPilot Methodic Configurator* select `31_inflight_magnetometer_fit_setup.param` on the *Current intermediate parameter file:* Combobox.
 1. When asked if you want to download the .lua script from internet answer yes.
 1. When asked if you want to upload the .lua script to the FC answer yes.
-1. Read the documentation links inside the `24_inflight_magnetometer_fit_setup.param documentation`
+1. Read the documentation links inside the `31_inflight_magnetometer_fit_setup.param documentation`
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements
 1. Press `Upload selected params to FC, and advance to next file` button.
-1. When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
+1. When prompted *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
+1. Connect the FC to mission planner via USB cable
+1. Create a flight plan that uses it, like this one.
+   The figure-8 will be inserted between the points on either side of the `SCRIPT_TIME` command.
+   ![MagFit MissionPlanner mission definition](images/blog/MagFit_MissionPlanner_mission.png)
+   The `SCRIPT_TIME` command can be given two arguments for min speed and altitude delta, respectively, if you want to
+   override `MAGH_MIN_SPEED` and `MAGH_ALT_DELTA`.
+   Zero values (as shown) will let the parameter values remain in use.
+   ![MagFit MissionPlanner mission map](images/blog/MagFit_MissionPlanner_mission_map.jpeg)
+1. Upon execution of the mission, several messages will be displayed via telemetry:
+   ![MagFit MissionPlanner mission messages](images/blog/MagFit_MissionPlanner_mission_messages.png)
+   At this point, the figure-8 has been created, and the script is awaiting the user to set the waypoint beyond the loiter to commence the pattern.
+   Download the mission to confirm obstacle clearance before proceeding, and then use the GCS to set the indicated waypoint to continue (or use the additional helper script `advance-wp.lua` above to use an RC switch for advancing the waypoint).
+   ![MagFit MissionPlanner mission map figure8](images/blog/MagFit_MissionPlanner_mission_map_figure8.jpeg)
+1. The figure-8 will then repeat `MAGH_COUNT` times, occasionally climbing and descending by `MAGH_ALT_DELTA` meters and
+   incrementing speed toward `WPNAV_SPEED`.
+   The ~200m long pattern consisting of 24 points depicted here should be more than adequate.
+   @Yuri_Rage has achieved good success with patterns as small as ~50m and only 16 waypoints.
 
-Perform the MagFit figure-eight flight and land
+Perform the MagFit figure-eight test in AUTO mode.
 
 ### 9.1.2 Calculate inflight MagFit calibration
 
 1. Download the latest `.bin` dataflash log file from the micro SDcard's `/APM/LOGS` folder
 1. Load it into MAVExplorer using the command line: `MAVExplorer.py filename.bin` or into the [ArduPilot MAGFit in flight compass calibration](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) using an internet browser.
 1. Select the area where the multicopter performed the Figure eight (exclude the takeoff and landing flight sections)
-1. Perform the MagFit calculations. Save the tool-generated file as `25_inflight_magnetometer_fit_results.param` in your vehicle's intermediate parameter file directory.
+1. Perform the MagFit calculations. Save the tool-generated file as `32_inflight_magnetometer_fit_results.param` in your vehicle's intermediate parameter file directory.
 1. Connect your flight controller to the PC
-1. On *ArduPilot Methodic Configurator* select `25_inflight_magnetometer_fit_results.param` on the *Current intermediate parameter file:* Combobox.
+1. On *ArduPilot Methodic Configurator* select `32_inflight_magnetometer_fit_results.param` on the *Current intermediate parameter file:* Combobox.
 1. When asked *Update file with values from FC?* select `No`.
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
 ![MagFit results](images/blog/magfit_1.png)
 
-After that repeat the steps described in [Section 6.11 ArduPilot Hardware Report](#611-ardupilot-hardware-report).
+After that repeat the steps described in [Section 6.10 ArduPilot Hardware Report](#610-ardupilot-hardware-report).
 
 The report should now look like this:
 
@@ -741,10 +992,10 @@ The report should now look like this:
 
 ## 9.2 Fourth Flight: PID VTOL-Quiktune lua script or manual PID tune (optional)
 
-If your flight controller can run lua scripts perform a [PID lua VTOL-Quicktune](https://ardupilot.org/copter/docs/quiktune.html).
+If your flight controller can run lua scripts perform a [PID lua VTOL-Quiktune](https://ardupilot.org/copter/docs/quiktune.html).
 If you have an STM32 F4 or F7 processor that can not run lua scripts perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) instead.
 
-### 9.2.1 Setup quicktune
+### 9.2.1 Setup Quiktune
 
 Setup the lua script using:
 
@@ -758,9 +1009,16 @@ Setup the lua script using:
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
 
+WARNING: Quiktune requires moderate wind disturbances to calibrate properly.
+Flying in completely calm conditions or perfectly steady wind can cause Quiktune to calculate overly aggressive PID values.
+These excessive settings may cause dangerous oscillations and potential crashes when your vehicle later encounters normal wind conditions.
+
+- Quiktune relies on external disturbance to tune against. Run it outdoors in light wind conditions.
+- Autotune provides its own, known disturbance (twitch) against which to tune. Run it in the calmest environment practical.
+
 Perform the flight and afterward:
 
-### 9.2.2 Store quicktune results to file
+### 9.2.2 Store Quiktune results to file
 
 1. Connect the flight controller to the PC
 1. On *ArduPilot Methodic Configurator* select `25_quicktune_results.param` on the *Current intermediate parameter file:* Combobox.
@@ -774,21 +1032,21 @@ If you are impatient and do not want a fully optimized flight controller jump to
 
 Follow the first part of [evaluating the aircraft tune](https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune).
 
-1. On *ArduPilot Methodic Configurator* select `28_evaluate_the_aircraft_tune_ff_disable.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `28_evaluate_the_aircraft_tune_ff_disable.param documentation`
+1. On *ArduPilot Methodic Configurator* select `33_evaluate_the_aircraft_tune_ff_disable.param` on the *Current intermediate parameter file:* Combobox.
+1. Read the documentation links inside the `33_evaluate_the_aircraft_tune_ff_disable.param documentation`
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
 After landing take a look at the `RATE.*out` values in the `.bin` log file, they all should be below 0.1.
 
-If the vehicle is not behaving well, perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) or a [lua Quicktune](https://ardupilot.org/copter/docs/quiktune.html) before proceeding.
+If the vehicle is not behaving well, perform a [manual PID tune](https://ardupilot.org/copter/docs/ac_rollpitchtuning.html) or a [lua Quiktune](https://ardupilot.org/copter/docs/quiktune.html) before proceeding.
 
 ## 9.4 Sixth flight: Evaluate the aircraft tune - part 2
 
 Follow the second part of [evaluating the aircraft tune](https://ardupilot.org/copter/docs/evaluating-the-aircraft-tune.html#evaluating-the-aircraft-tune).
 
-1. On *ArduPilot Methodic Configurator* select `29_evaluate_the_aircraft_tune_ff_enable.param` on the *Current intermediate parameter file:* Combobox.
-1. Read the documentation links inside the `29_evaluate_the_aircraft_tune_ff_enable.param documentation`
+1. On *ArduPilot Methodic Configurator* select `34_evaluate_the_aircraft_tune_ff_enable.param` on the *Current intermediate parameter file:* Combobox.
+1. Read the documentation links inside the `34_evaluate_the_aircraft_tune_ff_enable.param documentation`
 1. Press `Upload selected params to FC, and advance to next file` button.
 1. Close *ArduPilot Methodic Configurator*
 
@@ -831,15 +1089,15 @@ Follow the sequence below for tuning each axis as that particular order improves
 
 ### 9.5.1 Roll axis autotune
 
-1. On *ArduPilot Methodic Configurator* select `30_autotune_roll_setup.param` and upload it to the FC. It will activate the roll axis Autotune.
+1. On *ArduPilot Methodic Configurator* select `35_autotune_roll_setup.param` and upload it to the FC. It will activate the roll axis Autotune.
 1. When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
 1. Outdoors on a non-windy day (or indoors in a big warehouse like we at IAV do) take off and fly in either [`AltHold`](https://ardupilot.org/copter/docs/altholdmode.html) or `Loiter` flight mode.
 1. At about 2 meters high, select `Autotune` flight mode in the RC transmitter to engage Autotune.
 1. Use the RC transmitter sticks to correct the vehicle position if it gets too high, too low or too close to obstacles.
 1. Once the Autotune is completed, land and disarm the vehicle without changing the flight mode.
 1. connect the flight controller to the PC
-1. On *ArduPilot Methodic Configurator* select `31_autotune_roll_results.param`.
-1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `31_autotune_roll_results.param` file because you've completed the experiment.
+1. On *ArduPilot Methodic Configurator* select `36_autotune_roll_results.param`.
+1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `36_autotune_roll_results.param` file because you've completed the experiment.
 
 The autotune might have found a poor solution, here are some indicators of a poor tune:
 
@@ -859,15 +1117,15 @@ If the battery got depleted before Autotune completion, change the initial PID p
 
 ### 9.5.2 Pitch axis autotune
 
-1. On *ArduPilot Methodic Configurator* select `32_autotune_pitch_setup.param` and upload it to the FC. It will activate the pitch axis Autotune.
+1. On *ArduPilot Methodic Configurator* select `37_autotune_pitch_setup.param` and upload it to the FC. It will activate the pitch axis Autotune.
 1. When asked *Update file with values from FC?* select `Close` to close the application and go perform the experiment.
 1. Outdoors on a non-windy day (or indoors in a big warehouse like we at IAV do) take off and fly in either `AltHold` or `Loiter` flight mode.
 1. At about 2 meters high, select `Autotune` flight mode in the RC Transmitter to engage Autotune.
 1. Use the RC transmitter sticks to correct the vehicle position if it gets too high, too low or too close to obstacles.
 1. Once the autotune is completed, land and disarm the vehicle without changing the flight mode.
 1. connect the flight controller to the PC
-1. On *ArduPilot Methodic Configurator* select `33_autotune_pitch_results.param`.
-1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `33_autotune_pitch_results.param` file because you've completed the experiment.
+1. On *ArduPilot Methodic Configurator* select `38_autotune_pitch_results.param`.
+1. When asked *Update file with values from FC?* select `Yes` to copy current FC values to the `38_autotune_pitch_results.param` file because you've completed the experiment.
 
 The autotune might have found a poor solution, here are some indicators of a poor tune:
 
@@ -887,13 +1145,13 @@ If the battery got depleted before Autotune completion, change the initial PID p
 
 ### 9.5.3 Yaw axis autotune
 
-1. Use *ArduPilot Methodic Configurator* to edit and upload the `34_autotune_yaw_setup.param` file to the FC. It will activate the yaw axis Autotune.
+1. Use *ArduPilot Methodic Configurator* to edit and upload the `39_autotune_yaw_setup.param` file to the FC. It will activate the yaw axis Autotune.
 1. Outdoors on a non-windy day (or indoors in a big warehouse like we at IAV do) take off and fly in either `AltHold` or `Loiter` flight mode.
 1. At about 2 meters high, select `Autotune` flight mode in the RC transmitter to engage Autotune.
 1. Use the RC transmitter sticks to correct the vehicle position if it gets too high, too low, or too close to obstacles.
 1. Once the Autotune is completed, land and disarm the vehicle without changing the flight mode.
 
-You should get something like the `35_autotune_yaw_results.param` file.
+You should get something like the `40_autotune_yaw_results.param` file.
 
 The autotune might have found a poor solution, here are some indicators of a poor tune:
 
@@ -914,13 +1172,13 @@ If the battery got depleted before Autotune completion, change the initial PID p
 
 This particular `YawD` Autotune axis is [only relevant for small, agile vehicles](https://www.youtube.com/watch?v=b76bPEeRCEk&t=963s).
 
-1. Use *ArduPilot Methodic Configurator* to edit and upload the `36_autotune_yawd_setup.param` file to the FC.
+1. Use *ArduPilot Methodic Configurator* to edit and upload the `41_autotune_yawd_setup.param` file to the FC.
 2. Outdoors on a non-windy day (or indoors in a big warehouse like we at IAV do) take-off and fly in either `AltHold` or `Loiter` flight mode.
 3. At about 2 meters high, select `Autotune` flight mode in the RC transmitter to engage Autotune.
 4. Use the RC transmitter sticks to correct the vehicle position if it gets too high, too low or too close to obstacles.
 5. Once the Autotune is completed, land and disarm the vehicle without changing the flight mode.
 
-You should get something like the `37_autotune_yawd_results.param` file.
+You should get something like the `42_autotune_yawd_results.param` file.
 
 Make sure that your resulting `ATC_RAT_YAW_D` parameter value is different from `AUTOTUNE_MIN_D` value.
 If that is not the case then the autotune failed to find a proper `ATC_RAT_YAW_D`.
@@ -940,13 +1198,13 @@ If the battery got depleted before Autotune completion, change the initial PID p
 
 Now that the yaw axis is tuned, the [autotune should be able to improve the roll and pitch axis tune](https://youtu.be/jK0I97dMsK0?si=F1lyl2iq8gUUencl&t=2535).
 
-1. Use *ArduPilot Methodic Configurator* to edit and upload the `38_autotune_roll_pitch_retune_setup.param` file to the FC.
+1. Use *ArduPilot Methodic Configurator* to edit and upload the `43_autotune_roll_pitch_retune_setup.param` file to the FC.
 2. Outdoors on a non-windy day (or indoors in a big warehouse like we at IAV do) take off and fly in either `AltHold` or `Loiter` flight mode.
 3. At about 2 meters high, select `Autotune` flight mode in the RC transmitter to engage Autotune.
 4. Use the RC transmitter sticks to correct the vehicle position if it gets too high, too low or too close to obstacles.
 5. Once the Autotune is completed, land and disarm the vehicle without changing the flight mode.
 
-You should get something like the `39_autotune_roll_pitch_retune_results.param` file.
+You should get something like the `44_autotune_roll_pitch_retune_results.param` file.
 
 ## 9.6 Performance evaluation flight
 
@@ -959,16 +1217,16 @@ After using Autotune to find proper PID parameters, it is time to evaluate the p
 Follow these steps:
 
 1. Power on the vehicle and connect it to the PC
-1. Use *ArduPilot Methodic Configurator* to upload the `28_evaluate_the_aircraft_tune_ff_disable.param` file to the FC.
+1. Use *ArduPilot Methodic Configurator* to upload the `33_evaluate_the_aircraft_tune_ff_disable.param` file to the FC.
 1. Switch to `ALTHOLD` flight mode and wait for home location acquisition.
 1. Take-off at around 10m above the ground.
 1. Perform smooth maneuvers using the RC transmitter roll stick.
 1. Perform smooth maneuvers using the RC transmitter pitch stick.
 1. Perform smooth maneuvers using the RC transmitter yaw stick.
-1. Repeat the maneuvers with increasing aggressivity making sure you stay inside the stable envelope of the vehicle.
+1. Repeat the maneuvers with increasing aggressiveness making sure you stay inside the stable envelope of the vehicle.
 1. Land and download the latest `.bin` log file from `/APM/LOGS` to your PC
 1. Use [ArduPilot's PID Review Tool](https://firmware.ardupilot.org/Tools/WebTools/PIDReview/) to review the PID step response of each PID.
-1. Use *ArduPilot Methodic Configurator* to upload the `29_evaluate_the_aircraft_tune_ff_enable.param` file to the FC.
+1. Use *ArduPilot Methodic Configurator* to upload the `34_evaluate_the_aircraft_tune_ff_enable.param` file to the FC.
 
 In our vehicle, we got a transient response of around 60ms in roll and pitch and around 110ms in yaw.
 
@@ -1010,7 +1268,7 @@ The weight of our drone is 560g, therefore the ballistic coefficients are
 > [EK3_DRAG_BCOEF_X](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-x) = 0.56 kg / 0.01097 m² = 51.0399 <br>
 > [EK3_DRAG_BCOEF_Y](https://ardupilot.org/copter/docs/parameters.html#ek3-drag-bcoef-y) = 0.56 kg / 0.01455 m² = 38.4798 <br>
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `40_windspeed_estimation.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `47_windspeed_estimation.param` file to the FC.
 
 Now do the flight to collect the data to [Calculate the Propeller Drag Coefficient](https://ardupilot.org/copter/docs/airspeed-estimation.html#calculate-the-propeller-drag-coefficient).
 After that, open the logs with MAVExplorer to get the needed values.
@@ -1078,13 +1336,13 @@ After it is set, do another flight and [check that the windspeed and direction a
 
 Follow [ArduCopter's baro compensation Wiki](https://ardupilot.org/copter/docs/airspeed-estimation.html#barometer-position-error-compensation) and/or use the [Lua script provided by Yuri in the forum](https://discuss.ardupilot.org/t/scripting-copter-wind-estimation-baro-compensation-tuning/98470/).
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `41_barometer_compensation.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `48_barometer_compensation.param` file to the FC.
 
 Now do the flight to collect the data and analyze the logs to see if the barometer is correctly compensated and insensitive to wind.
 
 # 11. System identification for analytical PID optimization (optional)
 
-This uses [Ardupilot's system identification flight mode](https://ardupilot.org/copter/docs/common-systemid-mode-operation.html) to collect data to [build a mathematical model of the vehicle](https://ardupilot.org/copter/docs/systemid-model-development.html#identification-of-a-multicopter) that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
+This uses [ArduPilot's system identification flight mode](https://ardupilot.org/copter/docs/common-systemid-mode-operation.html) to collect data to [build a mathematical model of the vehicle](https://ardupilot.org/copter/docs/systemid-model-development.html#identification-of-a-multicopter) that can later be used to further [optimize the control loops of the vehicle according to a set of constraints (requirements)](https://discuss.ardupilot.org/t/analitical-multicopter-flight-controller-pid-optimization/109759).
 
 ## 11.1 System Identification Flights
 
@@ -1093,25 +1351,25 @@ The vehicle PIDs need to be a bit detuned in order to not fully cancel out the i
 
 ### 11.1.1 Roll rate mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `42_system_id_roll.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `53_system_id_mixer_roll.param` file to the FC.
 
 Now do the flight to collect the data for the roll rate system identification.
 
 ### 11.1.2 Pitch rate mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `43_system_id_pitch.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `54_system_id_mixer_pitch.param` file to the FC.
 
 Now do the flight to collect the data for the pitch rate system identification.
 
 ### 11.1.3 Yaw rate mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `44_system_id_yaw.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `55_system_id_mixer_yaw.param` file to the FC.
 
 Now do the flight to collect the data for the yaw rate system identification.
 
 ### 11.1.4 Thrust mathematical model
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `45_system_id_thrust.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `56_system_id_mixer_thrust.param` file to the FC.
 
 Now do the flight to collect the data for the thrust system identification.
 
@@ -1121,7 +1379,7 @@ This describes how to use [IAV's multi-objective optimization](https://discuss.a
 
 One other approach is described by Bill Geyer in his Blog post: [Predicting Closed Loop Response For Faster Autotune](https://discuss.ardupilot.org/t/predicting-closed-loop-response-for-faster-autotune/75096).
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `46_analytical_pid_optimization.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `57_analytical_pid_optimization.param` file to the FC.
 
 # 12. Position controller tuning (optional)
 
@@ -1129,25 +1387,35 @@ Use *ArduPilot Methodic Configurator* to edit and upload the `46_analytical_pid_
 
 The most inner *angle rate* and *angle* control loops have been tuned. Now let's tune the position controller.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `47_position_controller.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `60_position_controller.param` file to the FC.
 
 ## 12.2 Guided operation without RC transmitter
 
 These are **optional**, and only make sense if you do beyond visual line-of-sight (BVLOS) autonomous flights using a companion computer.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `48_guided_operation.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `61_guided_operation.param` file to the FC.
 
 ## 12.3 Precision land
 
 These are **optional**, and only make sense if you have extra hardware on your vehicle to support it.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `49_precision_land.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `62_precision_land.param` file to the FC.
+
+## 12.4 Optical flow calibration (optional)
+
+These are **optional**, and only make sense if you have an [optical flow sensor](https://ardupilot.org/copter/docs/common-optical-flow-sensors-landingpage.html) on your vehicle.
+
+Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `63_optical_flow_setup.param` file to configure the optical flow sensor calibration parameters before the calibration flight.
+
+After performing the calibration flight, repeat the steps to edit and upload the `64_optical_flow_results.param` file to store the optical flow sensor calibration results computed by [FlowCal](https://ardupilot.org/copter/docs/common-optical-flow-sensor-setup.html).
+
+If you want to use the optical flow sensor instead of GNSS for positioning, repeat the steps to edit and upload the `65_use_optical_flow_instead_of_gnss.param` file to switch the position source from GNSS to optical flow.
 
 # 13. Productive configuration
 
 Some changes should be made for everyday productive operation.
 
-Use *ArduPilot Methodic Configurator* to edit and upload the `53_everyday_use.param` file to the FC.
+Use *ArduPilot Methodic Configurator* to edit and upload the `66_everyday_use.param` file to the FC.
 
 # 14. Conclusion
 
@@ -1160,14 +1428,14 @@ This process was developed for our specific multicopter, but **it can be tailore
 
 | PID controller | Intermediate parameter file(s) used to configure and tune it |
 | ---- | ---- |
-| Position Z acceleration | `20_throttle_controller.param` |
-| Roll rate | `31_autotune_roll_results.param`, `39_autotune_roll_pitch_retune_results.param` |
-| Pitch rate | `33_autotune_pitch_results.param`, `39_autotune_roll_pitch_retune_results.param` |
-| Yaw rate | `35_autotune_yaw_results.param`, `37_autotune_yawd_results.param` |
-| Roll | `31_autotune_roll_results.param`, `39_autotune_roll_pitch_retune_results.param` |
-| Pitch | `33_autotune_pitch_results.param`, `39_autotune_roll_pitch_retune_results.param` |
-| Yaw | `35_autotune_yaw_results.param`, `37_autotune_yawd_results.param` |
-| Position XY velocity | `47_position_controller.param` |
+| Position Z acceleration | `24_throttle_controller.param` |
+| Roll rate | `36_autotune_roll_results.param`, `44_autotune_roll_pitch_retune_results.param` |
+| Pitch rate | `38_autotune_pitch_results.param`, `44_autotune_roll_pitch_retune_results.param` |
+| Yaw rate | `40_autotune_yaw_results.param`, `42_autotune_yawd_results.param` |
+| Roll | `36_autotune_roll_results.param`, `44_autotune_roll_pitch_retune_results.param` |
+| Pitch | `38_autotune_pitch_results.param`, `44_autotune_roll_pitch_retune_results.param` |
+| Yaw | `40_autotune_yaw_results.param`, `42_autotune_yawd_results.param` |
+| Position XY velocity | `60_position_controller.param` |
 
 Many thanks to the ArduPilot's developers and community.
 

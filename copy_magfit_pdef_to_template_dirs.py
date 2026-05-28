@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Copy 24_inflight_magnetometer_fit_setup.pdef.xml file to all vehicle template subdirectories.
+Copy 31_inflight_magnetometer_fit_setup.pdef.xml file to all vehicle template subdirectories.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -17,7 +17,7 @@ import sys
 
 # Define the source directory and the file to be copied
 BASE_TARGET_DIR = os.path.join("ardupilot_methodic_configurator", "vehicle_templates")
-FILE_TO_COPY = "24_inflight_magnetometer_fit_setup.pdef.xml"
+FILE_TO_COPY = "31_inflight_magnetometer_fit_setup.pdef.xml"
 
 logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 

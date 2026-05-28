@@ -1,10 +1,10 @@
-name: Update 24_inflight_magnetometer_fit_setup.pdef.xml
+name: Update 31_inflight_magnetometer_fit_setup.pdef.xml
 
 on:
   workflow_dispatch:
   push:
     paths:
-    - '24_inflight_magnetometer_fit_setup.pdef.xml'
+    - '31_inflight_magnetometer_fit_setup.pdef.xml'
     - 'ardupilot_methodic_configurator/vehicle_templates/**'
 
 permissions:
@@ -33,13 +33,13 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Update 24_inflight_magnetometer_fit_setup.pdef.xml file in all vehicle templates
+      - name: Update 31_inflight_magnetometer_fit_setup.pdef.xml file in all vehicle templates
         run: python copy_magfit_pdef_to_template_dirs.py
 
       - name: Stage changes and check if PR needed
         id: check_changes
         run: |
-          git add ardupilot_methodic_configurator/vehicle_templates/**/24_inflight_magnetometer_fit_setup.pdef.xml
+          git add ardupilot_methodic_configurator/vehicle_templates/**/31_inflight_magnetometer_fit_setup.pdef.xml
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
             echo "CHANGED_LINES=$CHANGED_LINES" >> $GITHUB_OUTPUT
@@ -62,7 +62,7 @@ jobs:
           labels: templates, automated-pr
           branch: update/magfit-pdef-xml
           title: "Update magfit pdef XML files"
-          commit-message: "chore(parameter_metadata): Updated 24_inflight_magnetometer_fit_setup.pdef.xml files in the vehicle templates"
+          commit-message: "chore(parameter_metadata): Updated 31_inflight_magnetometer_fit_setup.pdef.xml files in the vehicle templates"
           body: |
-            This PR updates the 24_inflight_magnetometer_fit_setup.pdef.xml files in all vehicle templates.
+            This PR updates the 31_inflight_magnetometer_fit_setup.pdef.xml files in all vehicle templates.
           delete-branch: true
