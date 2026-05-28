@@ -236,7 +236,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         os.mkdir(self.test_dir)
         # Create a default, adjustment and optimized parameter file for testing
         self.default_param_file = os.path.join(self.test_dir, "00_default.param")
-        self.adjustment_param_file = os.path.join(self.test_dir, "16_pid_adjustment.param")
+        self.adjustment_param_file = os.path.join(self.test_dir, "23_optional_pid_adjustment.param")
         self.optimized_param_file = os.path.join(self.test_dir, "optimized_parameter_file.param")
         with open(self.default_param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.0\nPARAM2,2.0\nPARAM3,3.0\n")
@@ -315,10 +315,8 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        assert (
-            cm.value.args[0]
-            == f"Failed to load PID adjustment parameters from {os.path.join('test_directory', '16_pid_adjustment.param')}"
-        )
+        expected_path = os.path.join("test_directory", "23_optional_pid_adjustment.param")
+        assert cm.value.args[0] == f"Failed to load PID adjustment parameters from {expected_path}"
 
     def test_zero_default_value(self) -> None:
         # Set a parameter in the default parameter file to zero

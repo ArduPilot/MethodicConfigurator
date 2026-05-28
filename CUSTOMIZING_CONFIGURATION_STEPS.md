@@ -311,7 +311,7 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 
   ```json
   "jump_possible": {
-    "04_board_orientation.param": "IMU temperature calibration reduces the number of possible 'Accel inconsistent' and 'Gyro inconsistent' errors.\nIMU temperature calibration is optional.\n\nDo you want to skip it?"
+    "05_board_orientation.param": "IMU temperature calibration reduces the number of possible 'Accel inconsistent' and 'Gyro inconsistent' errors.\nIMU temperature calibration is optional.\n\nDo you want to skip it?"
   }
   ```
 

@@ -36,9 +36,9 @@ Updates PID adjustment parameters values based on the given ADJUSTMENT_FACTOR ar
 It loads three sets of parameters from files in the DIRECTORY directory:
     00_default.param - the (complete) default parameters,
     optimized_param_file - the (complete) optimized parameters, and
-    16_pid_adjustment.param - the (intermediate) PID adjustment parameters.
+    23_optional_pid_adjustment.param - the (intermediate) PID adjustment parameters.
 It calculates the PID adjustment parameter values based on the ADJUSTMENT_FACTOR argument.
-It updates the intermediate parameter file 16_pid_adjustment.param with parameter comments
+It updates the intermediate parameter file 23_optional_pid_adjustment.param with parameter comments
 explaining how their new value relates to the default parameter value.
 """,
     )
@@ -177,7 +177,7 @@ def update_pid_adjustment_params(
     """
     default_param_file_path = os.path.join(directory, "00_default.param")
     optimized_param_file_path = os.path.join(directory, optimized_param_file)
-    pid_adjustment_file_path = os.path.join(directory, "16_pid_adjustment.param")
+    pid_adjustment_file_path = os.path.join(directory, "23_optional_pid_adjustment.param")
 
     # Load the default parameter file into a dictionary (comment source)
     default_params_dict = ParDict.from_file(default_param_file_path)
