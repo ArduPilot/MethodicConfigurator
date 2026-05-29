@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_migration import migrate_vehicle_project_if_needed
 from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
 
 
@@ -68,6 +69,11 @@ class VehicleProjectOpener:
 
         # Update the filesystem with the vehicle directory
         self.local_filesystem.vehicle_dir = last_vehicle_dir
+
+        # Migrate the vehicle project to the latest format version if needed.
+        # This must run before re_init() so that parameter files are in their new
+        # locations when rename_parameter_files() runs inside re_init().
+        migrate_vehicle_project_if_needed(last_vehicle_dir)
 
         # Initialize the filesystem with the directory
         try:
@@ -131,6 +137,11 @@ class VehicleProjectOpener:
 
         # Update the filesystem with the vehicle directory
         self.local_filesystem.vehicle_dir = vehicle_dir
+
+        # Migrate the vehicle project to the latest format version if needed.
+        # This must run before re_init() so that parameter files are in their new
+        # locations when rename_parameter_files() runs inside re_init().
+        migrate_vehicle_project_if_needed(vehicle_dir)
 
         # Initialize the filesystem with the directory
         try:

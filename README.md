@@ -185,13 +185,13 @@ And continue with the [*ArduPilot Methodic configurator* software GUI](https://a
 
 - [13_general_configuration.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#610-general-configuration) general misc configuration
 - [Test if the hardware diagnostics are OK](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#611-ardupilot-hardware-report)
-- [14_logging.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#612-configure-logging) configure Dataflash/SDCard logging (black box data)
+- [17_remote_id.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#615-remote-id-aka-drone-id) required by law in many countries
 - [15_motor.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#613-motorpropeller-order-and-direction-test) motor order and direction tests.
   ESC linearization.
-- [16_pid_adjustment.parm](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#614-optional-pid-adjustment) attitude PID gains (vehicle size dependent)
-- [17_remote_id.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#615-remote-id-aka-drone-id) required by law in many countries
 - [18_notch_filter_setup.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#616-notch-filters-setup) to remove motor noise,
   reduce power consumption and increase flight stability
+- [14_logging.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#612-configure-logging) configure Dataflash/SDCard logging (black box data)
+- [16_pid_adjustment.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#614-optional-pid-adjustment) attitude PID gains (vehicle size dependent)
 
 ### 1.7 Assemble propellers and perform the first flight
 
@@ -203,10 +203,10 @@ These are the very [minimum tuning steps](https://ardupilot.github.io/MethodicCo
 required for a stable flight:
 
 - Load the `.bin` log file from the first flight into [Notch filter webtool](https://firmware.ardupilot.org/Tools/WebTools/FilterReview/)
-- [19_notch_filter_results.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#81-notch-filter-calibration) use the webtool information to
-  configure the notch filter(s)
 - [20_throttle_controller.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#82-configure-the-throttle-controller) the altitude controller
   depends on the power-to-thrust ratio found in the first flight
+- [19_notch_filter_results.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#81-notch-filter-calibration) use the webtool information to
+  configure the notch filter(s)
 - [21_ekf_config.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#83-configure-the-ekf-altitude-source-weights) sometimes
   the EKF3 needs a tune to maintain altitude
 - [22_quick_tune_setup.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#84-second-flight-pid-vtol-quiktune-lua-script-or-manual-pid-tune) and
@@ -223,9 +223,6 @@ These are the [standard tuning steps](https://ardupilot.github.io/MethodicConfig
   flight path or fly manually, store the results using
   [25_inflight_magnetometer_fit_results.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#912-calculate-inflight-magfit-calibration), use the
   [magfit webtool](https://firmware.ardupilot.org/Tools/WebTools/MAGFit/) to calculate a file that the ardupilot methodic configurator can use
-- [26_quick_tune_setup.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#921-setup-quicktune) and
-  [27_quick_tune_results.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#922-store-quicktune-results-to-file) Redo quick-tune now that
-  the compass magnetic interference is fully calibrated
 - [28_evaluate_the_aircraft_tune_ff_disable.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#93-fifth-flight-evaluate-the-aircraft-tune---part-1)
   and
   [29_evaluate_the_aircraft_tune_ff_enable.param](https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#94-sixth-flight-evaluate-the-aircraft-tune---part-2)

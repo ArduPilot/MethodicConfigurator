@@ -24,6 +24,9 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem  # pylint: disable=wrong-import-position
+from ardupilot_methodic_configurator.backend_filesystem_migration import (  # pylint: disable=wrong-import-position
+    migrate_vehicle_project_if_needed,
+)
 from ardupilot_methodic_configurator.data_model_vehicle_components import (  # pylint: disable=wrong-import-position
     ComponentDataModel,
 )
@@ -81,6 +84,11 @@ def process_template_directory(template_dir: Path) -> None:
                 fw_version = firmware["Version"]
 
         logging.info("Using firmware version: %s", fw_version)
+
+        # Migrate the vehicle project to the latest format version if needed.
+        # This must run before LocalFilesystem is created so that parameter files are
+        # in their new locations when rename_parameter_files() runs inside re_init().
+        migrate_vehicle_project_if_needed(str(template_dir))
 
         # Initialize LocalFilesystem with the correct firmware version
         local_fs = LocalFilesystem(

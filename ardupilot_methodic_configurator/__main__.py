@@ -36,6 +36,10 @@ import argcomplete
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
+from ardupilot_methodic_configurator.backend_filesystem_migration import (
+    VEHICLE_COMPONENTS_FORMAT_VERSION,
+    migrate_vehicle_project_if_needed,
+)
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE, FlightController
 from ardupilot_methodic_configurator.backend_internet import verify_and_open_url, webbrowser_open_url
@@ -356,6 +360,12 @@ def initialize_filesystem(state: ApplicationState) -> None:
         SystemExit: If there's a fatal error reading parameter files
 
     """
+    # Migrate the vehicle project to the latest format version if needed.
+    # This must run before LocalFilesystem is created so that parameter files are
+    # in their new locations when rename_parameter_files() runs inside re_init().
+    if migrate_vehicle_project_if_needed(state.args.vehicle_dir):
+        logging_debug(_("Vehicle project migration to format version %d completed"), VEHICLE_COMPONENTS_FORMAT_VERSION)
+
     # Initialize local filesystem
     try:
         state.local_filesystem = LocalFilesystem(
