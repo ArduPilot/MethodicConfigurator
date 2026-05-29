@@ -43,7 +43,8 @@ def process_configuration_steps(text_fields: list[str], extracted_strings: dict[
                 for param_data in step_data[param_type].values():
                     if "Change Reason" in param_data and isinstance(param_data["Change Reason"], str):
                         extracted_strings["change_reasons"] = extracted_strings.get("change_reasons", set())
-                        extracted_strings["change_reasons"].add(param_data["Change Reason"])
+                        if param_data["Change Reason"].strip():
+                            extracted_strings["change_reasons"].add(param_data["Change Reason"])
 
 
 def extract_strings_from_config_steps(config_file: str) -> dict[str, set[str]]:

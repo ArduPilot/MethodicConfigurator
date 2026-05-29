@@ -11,15 +11,21 @@
             "external_tool_url": "",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BRD_HEAT_.*", "INS_TCAL_OPTIONS", "TCAL_ENABLED"],
             "forced_parameters": {
                 "INS_TCAL1_ENABLE": { "New Value": 2, "Change Reason": "Activates the temperature calibration for IMU 1 at the next start" },
                 "LOG_BITMASK": { "New Value": 524416, "Change Reason": "Only for IMU and Raw-IMU" },
                 "LOG_DISARMED": { "New Value": 1, "Change Reason": "Gather data for the offline IMU temperature calibration while the FC is disarmed" }
             },
             "derived_parameters": {
-                "INS_TCAL2_ENABLE": { "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 2 at the next start" },
-                "INS_TCAL3_ENABLE": { "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 3 at the next start" },
-                "BRD_HEAT_TARG": { "New Value": "65", "Change Reason": "Reasonable for most places on this planet" }
+                "INS_TCAL2_ENABLE": { "if": "'INS_TCAL2_ENABLE' in fc_parameters", "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 2 at the next start" },
+                "INS_TCAL3_ENABLE": { "if": "'INS_TCAL3_ENABLE' in fc_parameters", "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 3 at the next start" },
+                "BRD_HEAT_TARG": { "if": "'BRD_HEAT_TARG' in fc_parameters", "New Value": "65", "Change Reason": "Reasonable for most places on this planet" }
+            },
+            "delete_parameters": {
+                "INS_TCAL2_ENABLE": { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ENABLE": { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "BRD_HEAT_TARG": { "if": "'BRD_HEAT_TARG' not in fc_parameters" }
             },
             "jump_possible": {"04_board_orientation.param": "IMU temperature calibration reduces the number of possible 'Accel inconsistent' and 'Gyro inconsistent' errors.\nIMU temperature calibration is optional.\n\nDo you want to skip it?"},
             "old_filenames": []
@@ -35,6 +41,117 @@
             "external_tool_url": "",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["INS_TCAL1_.*", "INS_TCAL2_.*", "INS_TCAL3_.*"],
+            "derived_parameters": {
+                "INS_TCAL2_ENABLE":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_TMIN":    { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_TMAX":    { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC1_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC1_Y":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC1_Z":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC2_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC2_Y":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC2_Z":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC3_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC3_Y":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ACC3_Z":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR1_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR1_Y":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR1_Z":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR2_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR2_Y":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR2_Z":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR3_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR3_Y":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_GYR3_Z":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ENABLE":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_TMIN":    { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_TMAX":    { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC1_X":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC1_Y":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC1_Z":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC2_X":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC2_Y":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC2_Z":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC3_X":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC3_Y":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ACC3_Z":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR1_X":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR1_Y":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR1_Z":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR2_X":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR2_Y":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR2_Z":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR3_X":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR3_Y":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_GYR3_Z":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" }
+            },
+            "delete_parameters": {
+                "INS_TCAL2_ENABLE":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_TMIN":    { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_TMAX":    { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC1_X":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC1_Y":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC1_Z":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC2_X":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC2_Y":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC2_Z":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC3_X":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC3_Y":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_ACC3_Z":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR1_X":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR1_Y":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR1_Z":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR2_X":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR2_Y":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR2_Z":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR3_X":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR3_Y":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL2_GYR3_Z":  { "if": "'INS_TCAL2_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ENABLE":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_TMIN":    { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_TMAX":    { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC1_X":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC1_Y":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC1_Z":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC2_X":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC2_Y":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC2_Z":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC3_X":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC3_Y":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_ACC3_Z":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR1_X":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR1_Y":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR1_Z":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR2_X":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR2_Y":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR2_Z":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR3_X":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR3_Y":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" },
+                "INS_TCAL3_GYR3_Z":  { "if": "'INS_TCAL3_ENABLE' not in fc_parameters" }
+            },
+            "old_filenames": []
+        },
+        "04_imu_temperature_calibration_finish.param": {
+            "why": "After calibrating the IMU temperature bias, disable disarmed logging (no longer needed) and set board target temperature.",
+            "why_now": "Can only be done after IMU temperature compensation results are available. Future steps will use a drift-compensated, constant temperature and only log when armed.",
+            "blog_text": "Finish IMU (Inertial Measurement Unit) temperature calibration",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#42-calculate-imu-temperature-calibration",
+            "wiki_text": "IMU Temperature Calibration",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-imutempcal.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "80% mandatory (20% optional)",
+            "auto_changed_by": "",
+            "forced_parameters": {
+                "LOG_DISARMED": { "New Value": 0, "Change Reason": "IMU temperature calibration is finished, we no longer need to log data when disarmed" }
+            },
+            "derived_parameters": {
+                "BRD_HEAT_TARG": { "if": "'BRD_HEAT_TARG' in fc_parameters", "New Value": "45", "Change Reason": "Reset to default after offline IMU temperature calibration" }
+            },
+            "delete_parameters": {
+                "BRD_HEAT_TARG":  { "if": "'BRD_HEAT_TARG' not in fc_parameters" }
+            },
             "old_filenames": []
         },
         "04_board_orientation.param": {
@@ -48,12 +165,8 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
-            "forced_parameters": {
-                "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
-                "LOG_DISARMED": { "New Value": 0, "Change Reason": "Log disarmed was only required for offline IMU temperature calibration" }
-            },
             "derived_parameters": {
-                "BRD_HEAT_TARG": { "New Value": "45", "Change Reason": "Reset to default after offline IMU temperature calibration" }
+                "FRAME_CLASS": { "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
             },
             "old_filenames": []
         },
@@ -68,12 +181,28 @@
             "external_tool_url": "https://edgetx.org/getedgetx/",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["FS_THR_VALUE", "RC_.*"],
             "derived_parameters": {
                 "RC_PROTOCOLS": { "New Value": "vehicle_components['RC Receiver']['FC Connection']['Protocol']", "Change Reason": "Selected in the component editor" },
-                "RC5_OPTION": { "New Value": "1 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS' else fc_parameters.get('RC5_OPTION', 0)", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" },
-                "FLTMODE_CH": { "New Value": "6 if vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS' else fc_parameters.get('FLTMODE_CH', 5)", "Change Reason": "ExpressLRS requires FLTMODE_CH != 5" }
+                "FLTMODE_CH": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "6", "Change Reason": "ExpressLRS requires FLTMODE_CH != 5" }
             },
             "rename_connection": "vehicle_components['RC Receiver']['FC Connection']['Type']",
+            "old_filenames": []
+        },
+        "07_remote_controller_controller.param": {
+            "why": "Configuring RC controller options ensures correct arming behavior and channel function assignments for the specific RC system in use",
+            "why_now": "After the RC receiver protocol is configured, the controller-specific options such as arming method and channel function can be set",
+            "blog_text": "Configure RC controller options including the arming method and RC channel option assignments",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#62-configure-the-rc-receiver",
+            "wiki_text": "Radio Control Systems",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-rc-systems.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "derived_parameters": {
+                "RC5_OPTION": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "1", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" }
+            },
             "old_filenames": []
         },
         "06_telemetry.param": {
@@ -101,16 +230,42 @@
             "external_tool_url": "https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
-            "forced_parameters": {
-                "MOT_HOVER_LEARN": { "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 20_throttle_controller.param file" }
-            },
+            "autoimport_nondefault_regexp": ["BRD_IO_DSHOT", "SERVO_.*"],
             "derived_parameters": {
-                "ESC_HW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
-                "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC->ESC Connection']['Protocol']", "Change Reason": "Specified in component editor window" },
-                "SERVO_BLH_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
-                "SERVO_FTW_POLES": { "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
+                "SCR_ENABLE": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'", "New Value": "1", "Change Reason": "ESC RPM telemetry requires lua scripting" },
+                "MOT_PWM_TYPE": { "New Value": "vehicle_components['ESC']['FC->ESC Connection']['Protocol']", "Change Reason": "Specified in component editor window" }
+            },
+            "delete_parameters": {
+                "SERVO_BLH_POLES": {},
+                "SERVO_FTW_POLES": {}
             },
             "rename_connection": "vehicle_components['ESC']['FC->ESC Connection']['Type']",
+            "old_filenames": []
+        },
+        "10_battery_monitor.param": {
+            "why": "The battery monitor must be configured to match the hardware connection type so that the autopilot correctly reads battery voltage and current",
+            "why_now": "After the battery voltage and failsafe thresholds are set, the monitor hardware connection parameters can be configured",
+            "blog_text": "Configure the battery monitor hardware connection type, protocol and calibration values",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#65-configure-the-primary-battery-monitor",
+            "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "derived_parameters": {
+                "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
+                "BATT_I2C_BUS": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] in ['I2C1', 'I2C2', 'I2C3', 'I2C4']", "New Value": "1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 3 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C4' else 0", "Change Reason": "Selected in component editor window" },
+                "BATT_AMP_OFFSET": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'Analog'" },
+                "BATT_AMP_PERVLT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'Analog'" },
+                "BATT_VOLT_MULT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'Analog'" }
+            },
+            "delete_parameters": {
+                "BATT_I2C_BUS": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] not in ['I2C1', 'I2C2', 'I2C3', 'I2C4']" },
+                "BATT_AMP_OFFSET": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] != 'Analog' or vehicle_components['Battery Monitor']['FC Connection']['Protocol'] in ['Analog Voltage Only', 'FuelLevelAnalog']" },
+                "BATT_AMP_PERVLT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] != 'Analog' or vehicle_components['Battery Monitor']['FC Connection']['Protocol'] in ['Analog Voltage Only', 'FuelLevelAnalog']" },
+                "BATT_VOLT_MULT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] != 'Analog'" }
+            },
             "old_filenames": []
         },
         "08_batt1.param": {
@@ -124,6 +279,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BATT.*"],
             "forced_parameters": {
                 "BATT_FS_CRT_ACT": { "New Value": 1, "Change Reason": "Land ASAP" },
                 "BATT_FS_LOW_ACT": { "New Value": 2, "Change Reason": "Return and land at home or rally point" }
@@ -133,10 +289,15 @@
                 "BATT_CAPACITY": { "New Value": "vehicle_components['Battery']['Specifications']['Capacity mAh']", "Change Reason": "Total battery capacity specified in the component editor" },
                 "BATT_CRT_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell crit']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Critical failsafe voltage x nr. of cells" },
                 "BATT_LOW_VOLT": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell low']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Low failsafe voltage x nr. of cells" },
-                "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
-                "BATT_I2C_BUS": { "New Value": "1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 3 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C4' else 0", "Change Reason": "Selected in component editor window" },
                 "MOT_BAT_VOLT_MAX": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell max']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Scale the PIDs up when battery voltage is below this threshold" },
                 "MOT_BAT_VOLT_MIN": { "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell min']*vehicle_components['Battery']['Specifications']['Number of cells']", "Change Reason": "Scale the PIDs up when battery voltage is above this threshold" }
+            },
+            "delete_parameters": {
+                "BATT_AMP_OFFSET": {},
+                "BATT_AMP_PERVLT": {},
+                "BATT_I2C_BUS": {},
+                "BATT_MONITOR": {},
+                "BATT_VOLT_MULT": {}
             },
             "rename_connection": "vehicle_components['Battery Monitor']['FC Connection']['Type']",
             "old_filenames": [],
@@ -144,19 +305,6 @@
                 "name": "battery_monitor",
                 "placement": "left"
             }
-        },
-        "09_batt2.param": {
-            "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
-            "why_now": "The failsafe configuration step requires this. Controller PID scaling depends on the battery voltage",
-            "blog_text": "Configure parameters for the second battery, including health monitoring thresholds and failsafe behavior",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#66-configure-the-redundant-secondary-battery-monitor-optional",
-            "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT2_* parameters",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
-            "mandatory_text": "0% mandatory (100% optional)",
-            "auto_changed_by": "",
-            "old_filenames": []
         },
         "10_gnss.param": {
             "why": "GNSS positioning is required to compensate for the IMU drift. This is required by the configuration and tuning steps. After configuration and tuning are complete the GNSS can be replaced by other positioning system",
@@ -169,6 +317,7 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "GPS.*", "GNSS.*"],
             "derived_parameters": {
                 "GPS_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
                 "GPS1_TYPE": { "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
@@ -222,6 +371,23 @@
             "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/latest/TUNING_GUIDE_Rover.md#212-configure-mandatory-hardware-parameters-17",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner",
+            "autoimport_nondefault_regexp": ["COMPASS_PRIO[0-9]_ID", "RC[0-9]+_.+", "SERVO[0-9]+_.+"],
+            "derived_parameters": {
+                "INS_ACC2SCAL_X": { "if": "'INS_ACC2SCAL_X' in fc_parameters" },
+                "INS_ACC2SCAL_Y": { "if": "'INS_ACC2SCAL_X' in fc_parameters" },
+                "INS_ACC2SCAL_Z": { "if": "'INS_ACC2SCAL_X' in fc_parameters" },
+                "INS_ACC3SCAL_X": { "if": "'INS_ACC3SCAL_X' in fc_parameters" },
+                "INS_ACC3SCAL_Y": { "if": "'INS_ACC3SCAL_X' in fc_parameters" },
+                "INS_ACC3SCAL_Z": { "if": "'INS_ACC3SCAL_X' in fc_parameters" }
+            },
+            "delete_parameters": {
+                "INS_ACC2SCAL_X": { "if": "'INS_ACC2SCAL_X' not in fc_parameters" },
+                "INS_ACC2SCAL_Y": { "if": "'INS_ACC2SCAL_X' not in fc_parameters" },
+                "INS_ACC2SCAL_Z": { "if": "'INS_ACC2SCAL_X' not in fc_parameters" },
+                "INS_ACC3SCAL_X": { "if": "'INS_ACC3SCAL_X' not in fc_parameters" },
+                "INS_ACC3SCAL_Y": { "if": "'INS_ACC3SCAL_X' not in fc_parameters" },
+                "INS_ACC3SCAL_Z": { "if": "'INS_ACC3SCAL_X' not in fc_parameters" }
+            },
             "old_filenames": ["11_mp_setup_mandatory_hardware.param"]
         },
         "13_general_configuration.param": {
@@ -236,28 +402,12 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "ARMING_CHECK": { "New Value": 1, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" },
                 "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed estimation automation" }
             },
-            "old_filenames": ["12_general_configuration.param"]
-        },
-        "14_logging.param": {
-            "why": "parameter values at later steps depend on data that is gathered by means of logging",
-            "why_now": "All the previous steps did not require logging, but the following ones do",
-            "blog_text": "Configure logging parameters, including what data is logged and how it's stored",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#612-configure-logging",
-            "wiki_text": "Downloading and Analyzing Data Logs in Mission Planner",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html",
-            "external_tool_text": "Motor/Propeller order and direction test",
-            "external_tool_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#613-motorpropeller-order-and-direction-test",
-            "mandatory_text": "100% mandatory (0% optional)",
-            "auto_changed_by": "",
-            "forced_parameters": {
-                "INS_LOG_BAT_OPT": { "New Value": 4, "Change Reason": "Logs measured data both before and after the filters for Filter Review Webtool usage" },
-                "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Log all but fast att, Nav, Mission, OF, camera, fast IMU, raw, IMU, video stabilization. These are not needed now" },
-                "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" }
+            "delete_parameters": {
+                "ARMING_CHECK": {}
             },
-            "old_filenames": ["13_logging.param"]
+            "old_filenames": ["12_general_configuration.param"]
         },
         "15_motor.param": {
             "why": "The motor thrust linearization is crucial for the throttle controller tuning, and throttle-based notch filter operation",
@@ -266,28 +416,38 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#motor-thrust-scaling-mot_thst_expo-mot_spin_min-and-mot_spin_max",
             "wiki_text": "Motor Thrust Scaling",
             "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot Thrust Expo",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/ThrustExpo/",
             "mandatory_text": "40% mandatory (60% optional)",
             "auto_changed_by": "",
+            "derived_parameters": {
+                "MOT_PWM_MAX": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "2000", "Change Reason": "Digital ESC protocol maximum is per definition 2000" },
+                "MOT_PWM_MIN": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "1000", "Change Reason": "Digital ESC protocol minimum is per definition 1000" },
+                "ESC_HW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
+                "SERVO_BLH_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] in ['ESC Telemetry', 'BDShotOnly']", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },
+                "SERVO_FTW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'FETtecOneWire'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" }
+            },
             "old_filenames": ["14_motor.param"],
             "plugin": {
                 "name": "motor_test",
                 "placement": "left"
             }
         },
-        "16_pid_adjustment.param": {
-            "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",
-            "why_now": "Most other parameters are done and these need to be corrected (depending on the vehicle size) before the first flight",
-            "blog_text": "Adjust the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#614-optional-pid-adjustment",
-            "wiki_text": "Manual tuning of Roll and Pitch",
-            "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
-            "external_tool_text": "param_pid_adjustment_update.py",
-            "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/param_pid_adjustment_update.py",
-            "mandatory_text": "20% mandatory (80% optional)",
+        "17_safety_setup.param": {
+            "why": "Safety parameters protect the vehicle and its surroundings by enabling arming checks, geofencing and failsafe actions. ESC slew rate limits protect the ESCs from desync events.",
+            "why_now": "Before the first flight so that arming checks are enforced and the vehicle responds safely to abnormal conditions",
+            "blog_text": "Configure safety parameters including arming checks, geofence, failsafe actions and ESC slew rate limits",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#610-general-configuration",
+            "wiki_text": "Arming Checks",
+            "wiki_url": "https://ardupilot.org/copter/docs/prearm_safety_check.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
-            "old_filenames": ["15_pid_adjustment.param"]
+            "forced_parameters": {
+                "ARMING_CHECK": { "New Value": 1, "Change Reason": "Perform all arming checks. If you have a problem fix its source. Do NOT change this" }
+            },
+            "old_filenames": []
         },
         "17_remote_id.param": {
             "why": "Some countries require a remote ID for drones to be flown legally.",
@@ -302,17 +462,31 @@
             "auto_changed_by": "",
             "old_filenames": ["16_remote_id.param"]
         },
-        "18_notch_filter_setup.param": {
+        "19_optional_osd.param": {
+            "why": "An OSD (On Screen Display) overlays flight data on the FPV video feed, giving the pilot situational awareness without looking away from the aircraft",
+            "why_now": "OSD configuration depends on the telemetry and battery monitor being configured in the preceding steps, and it must be set up before the first flight",
+            "blog_text": "Configure the On Screen Display (OSD) to show relevant flight data on the FPV video feed",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter",
+            "wiki_text": "OSD (On Screen Display)",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-osd-overview.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "0% mandatory (100% optional)",
+            "auto_changed_by": "",
+            "old_filenames": []
+        },
+        "20_motor_notch_filter_setup.param": {
             "why": "When the gyroscope signal is less noisy the PID gains can be higher without causing motor output oscillations",
             "why_now": "Before the first flight so that it can gather data and safeguard the vehicle from some of the noise",
             "blog_text": "Configure the notch filter settings, used to reduce gyroscope signal noise caused by the motors rotation",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#616-notch-filters-setup",
             "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
             "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "New FFT Filter setup and review web tool",
+            "external_tool_url": "https://discuss.ardupilot.org/t/new-fft-filter-setup-and-review-web-tool/102572",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["FFT_.*", "INS_HNTCH[0-9]*_.*"],
             "forced_parameters": {
                 "INS_HNTCH_ENABLE": { "New Value": 1, "Change Reason": "Use the first notch filter to filter the noise created by the motors/propellers" }
             },
@@ -321,18 +495,46 @@
             },
             "old_filenames": ["17_notch_filter_setup.param"]
         },
-        "19_notch_filter_results.param": {
-            "why": "The notch filter(s) configuration depends on real-flight data.",
-            "why_now": "real-flight data is only available after the first flight",
-            "blog_text": "Configure the notch filter(s) based on the data collected from the first flight",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#81-notch-filter-calibration",
-            "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
-            "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
-            "external_tool_text": "Ardupilot Filter Review tool",
-            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
+        "14_logging.param": {
+            "why": "parameter values at later steps depend on data that is gathered by means of logging",
+            "why_now": "All the previous steps did not require logging, but the following ones do",
+            "blog_text": "Configure logging parameters, including what data is logged and how it's stored",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#612-configure-logging",
+            "wiki_text": "Downloading and Analyzing Data Logs in Mission Planner",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html",
+            "external_tool_text": "Motor/Propeller order and direction test",
+            "external_tool_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#613-motorpropeller-order-and-direction-test",
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
-            "old_filenames": ["18_notch_filter_results.param"]
+            "autoimport_nondefault_regexp": ["INS_LOG_BAT_.+", "LOG_FILE_.+"],
+            "forced_parameters": {
+                "LOG_BITMASK": { "New Value": 407517, "Change Reason": "Log relevant data for attitude PID and notch filter tuning. Later on we'll change this to other subsystems" },
+                "LOG_FILE_DSRMROT": { "New Value": 1, "Change Reason": "One .bin log file per flight, not per battery/reboot" },
+                "MOT_HOVER_LEARN": { "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 20_throttle_controller.param file" }
+            },
+            "derived_parameters": {
+                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others" },
+                "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" },
+                "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" }
+            },
+            "old_filenames": ["13_logging.param"]
+        },
+        "16_pid_adjustment.param": {
+            "instructions_popup": {
+              "type": "info",
+              "msg": "This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate"
+            },
+            "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",
+            "why_now": "Most other parameters are done and these need to be corrected (depending on the vehicle size) before the first flight",
+            "blog_text": "Adjust the Proportional-Integral-Derivative (PID) controllers based on the vehicle size before the first flight",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#614-optional-pid-adjustment",
+            "wiki_text": "Manual tuning of Roll and Pitch",
+            "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
+            "external_tool_text": "param_pid_adjustment_update.py",
+            "external_tool_url": "https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/param_pid_adjustment_update.py",
+            "mandatory_text": "20% mandatory (80% optional)",
+            "auto_changed_by": "",
+            "old_filenames": ["15_pid_adjustment.param"]
         },
         "20_throttle_controller.param": {
             "why": "The throttle controller is crucial for maintaining altitude and controlling the vehicle's vertical movement.",
@@ -346,10 +548,25 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "derived_parameters": {
+                "ATC_THR_MIX_MAN": { "New Value": "0.5", "Change Reason": "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value" },
                 "PSC_ACCZ_I": { "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
                 "PSC_ACCZ_P": { "New Value": "fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
             },
             "old_filenames": ["19_throttle_controller.param"]
+        },
+        "19_notch_filter_results.param": {
+            "why": "The notch filter(s) configuration depends on real-flight data.",
+            "why_now": "real-flight data is only available after the first flight",
+            "blog_text": "Configure the notch filter(s) based on the data collected from the first flight",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#81-notch-filter-calibration",
+            "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
+            "external_tool_text": "Ardupilot Filter Review tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["FFT_.*", "INS_GYRO_FILTER"],
+            "old_filenames": ["18_notch_filter_results.param"]
         },
         "21_ekf_config.param": {
             "why": "Sometimes the weights of the barometer vs. GNSS altitude need to be adjusted.",
@@ -363,6 +580,40 @@
             "mandatory_text": "0% mandatory (100% optional)",
             "old_filenames": ["20_ekf_config.param"]
         },
+        "26_pid_notch_filter_logging.param": {
+            "why": "parameter values at later steps depend on data that is gathered by means of logging",
+            "why_now": "PID notch filters require different logging parameters from motor notch filters",
+            "blog_text": "Configure PID notch filters logging",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#612-configure-logging",
+            "wiki_text": "Downloading and Analyzing Data Logs in Mission Planner",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-downloading-and-analyzing-data-logs-in-mission-planner.html",
+            "external_tool_text": "Motor/Propeller order and direction test",
+            "external_tool_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#613-motorpropeller-order-and-direction-test",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["INS_LOG_BAT_.+", "LOG_FILE_.+"],
+            "forced_parameters": {
+                "LOG_BITMASK": { "New Value": 407517, "Change Reason": "Log relevant data for PID notch filters tuning. Later on we'll change this to other subsystems" },
+                "INS_LOG_BAT_MASK": { "New Value": "1", "Change Reason": "PID notch filters require batch logging, not raw logging" },
+                "INS_LOG_BAT_OPT": { "New Value": "4", "Change Reason": "PID notch filters require batch pre- and post- filters logging" },
+                "INS_RAW_LOG_OPT": { "New Value": "0", "Change Reason": "PID notch filters require batch logging, not raw logging" }
+            },
+            "old_filenames": []
+        },
+        "27_pid_notch_filter_results.param": {
+            "why": "The PID notch filter(s) configuration depends on real-flight data collected with the logging enabled in the previous step",
+            "why_now": "Real-flight data with PID notch filter batch logging is only available after the dedicated logging flight",
+            "blog_text": "Configure the PID notch filter(s) based on the data collected from the logging flight",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#81-notch-filter-calibration",
+            "wiki_text": "Managing Gyro Noise with the Dynamic Harmonic Notch Filters",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-imu-notch-filtering.html",
+            "external_tool_text": "Ardupilot Filter Review tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/FilterReview/",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["FILT.+", "ATC_RAT_.+_N[ET]F", "PSC_ACCZ_N[ET]F"],
+            "old_filenames": []
+        },
         "22_quick_tune_setup.param": {
             "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
             "why_now": "Before the second flight so that the vehicle can be safely tuned.",
@@ -374,6 +625,7 @@
             "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["QUIK_.*"],
             "forced_parameters": {
                 "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
             },
@@ -405,6 +657,7 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["MAGH_.*"],
             "forced_parameters": {
                 "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" }
             },
@@ -424,36 +677,68 @@
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/MAGFit/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already",
-            "old_filenames": ["23_inflight_magnetometer_fit_results.param"]
-        },
-        "26_quick_tune_setup.param": {
-            "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
-            "why_now": "Now that MagFit has been performed the quicktune will work even better",
-            "blog_text": "Set up the in-flight VTOL-quicktune lua script to tune the PIDs after the MAGFit flight",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#921-setup-quicktune",
-            "wiki_text": "If lua scripting is not possible, do a manual tune instead",
-            "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
-            "external_tool_text": "VTOL-quicktune lua script",
-            "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
-            "mandatory_text": "30% mandatory (70% optional)",
-            "auto_changed_by": "",
-            "forced_parameters": {
-                "QUIK_ENABLE": { "New Value": 1, "Change Reason": "Use VTOL-Quicktune lua script to estimate a good PID starting values" }
+            "autoimport_nondefault_regexp": ["COMPASS_DIA[0-9]*_.*", "COMPASS_MOT[0-9]*_.*", "COMPASS_MOTCT", "COMPASS_ODI[0-9]*_.*", "COMPASS_OFS[0-9]*_.*", "COMPASS_ORIENT[0-9]*", "COMPASS_SCALE[0-9]*"],
+            "derived_parameters": {
+                "COMPASS_DIA2_X":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_DIA2_Y":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_DIA2_Z":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_MOT2_X":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_MOT2_Y":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_MOT2_Z":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_ODI2_X":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_ODI2_Y":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_ODI2_Z":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_OFS2_X":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_OFS2_Y":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_OFS2_Z":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_ORIENT2": { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_SCALE2":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
+                "COMPASS_DIA3_X":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_DIA3_Y":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_DIA3_Z":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_MOT3_X":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_MOT3_Y":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_MOT3_Z":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_ODI3_X":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_ODI3_Y":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_ODI3_Z":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_OFS3_X":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_OFS3_Y":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_OFS3_Z":  { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_ORIENT3": { "if": "'COMPASS_ORIENT3' in fc_parameters" },
+                "COMPASS_SCALE3":  { "if": "'COMPASS_ORIENT3' in fc_parameters" }
             },
-            "old_filenames": ["24_quick_tune_setup.param"]
-        },
-        "27_quick_tune_results.param": {
-            "why": "The VTOL-quicktune lua script can safely estimate good PID starting values for the vehicle.",
-            "why_now": "We need a good tune before autotune.",
-            "blog_text": "Results of the in-flight VTOL-quicktune lua script PIDs after the MAGFit flight",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#922-store-quicktune-results-to-file",
-            "wiki_text": "If lua scripting is not possible, do a manual tune instead",
-            "wiki_url": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
-            "external_tool_text": "VTOL-quicktune lua script",
-            "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
-            "mandatory_text": "30% mandatory (70% optional)",
-            "auto_changed_by": "VTOL-quicktune lua script",
-            "old_filenames": ["25_quick_tune_results.param"]
+            "delete_parameters": {
+                "COMPASS_DIA2_X":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_DIA2_Y":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_DIA2_Z":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_MOT2_X":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_MOT2_Y":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_MOT2_Z":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_ODI2_X":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_ODI2_Y":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_ODI2_Z":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_OFS2_X":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_OFS2_Y":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_OFS2_Z":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_ORIENT2": { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_SCALE2":  { "if": "'COMPASS_ORIENT2' not in fc_parameters" },
+                "COMPASS_DIA3_X":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_DIA3_Y":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_DIA3_Z":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_MOT3_X":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_MOT3_Y":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_MOT3_Z":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_ODI3_X":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_ODI3_Y":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_ODI3_Z":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_OFS3_X":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_OFS3_Y":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_OFS3_Z":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_ORIENT3": { "if": "'COMPASS_ORIENT3' not in fc_parameters" },
+                "COMPASS_SCALE3":  { "if": "'COMPASS_ORIENT3' not in fc_parameters" }
+            },
+            "old_filenames": ["23_inflight_magnetometer_fit_results.param"]
         },
         "28_evaluate_the_aircraft_tune_ff_disable.param": {
             "why": "Evaluating the aircraft's PID tuning and flight characteristics is best done with feed-forward disabled",
@@ -469,6 +754,7 @@
             "forced_parameters": {
                 "ATC_RATE_FF_ENAB": { "New Value": 0, "Change Reason": "test the stabilization loops independent of the input shaping" },
                 "INS_LOG_BAT_MASK": { "New Value": 0, "Change Reason": "IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size" },
+                "INS_RAW_LOG_OPT": { "New Value": 0, "Change Reason": "Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size" },
                 "LOG_BITMASK": { "New Value": 145118, "Change Reason": "Disable fast harmonic notch logging" }
             },
             "old_filenames": ["26_evaluate_the_aircraft_tune_ff_disable.param"]
@@ -512,8 +798,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#951-roll-axis-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["29_autotune_roll_results.param"]
@@ -541,8 +827,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#952-pitch-axis-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["31_autotune_pitch_results.param"]
@@ -573,8 +859,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#953-yaw-axis-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["33_autotune_yaw_results.param"]
@@ -602,8 +888,8 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#954-yaw-d-axis-autotune-optional",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["35_autotune_yawd_results.param"]
@@ -631,11 +917,41 @@
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_Rover#955-roll-and-pitch-axis-re-autotune",
             "wiki_text": "AutoTune",
             "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
-            "external_tool_text": "",
-            "external_tool_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "ArduPilot autotune",
             "old_filenames": ["37_autotune_roll_pitch_retune_results.param"]
+        },
+        "45_autotune_finish.param": {
+            "why": "ATC_THR_MIX_MAX should be increased after autotune to maximize attitude control authority at high throttle",
+            "why_now": "After all autotune flights are complete and the PIDs are finalized",
+            "blog_text": "Finalize autotune by setting the maximum throttle mix parameter",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#955-roll-and-pitch-axis-re-autotune",
+            "wiki_text": "AutoTune",
+            "wiki_url": "https://ardupilot.org/copter/docs/autotune.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "forced_parameters": {
+                "ATC_THR_MIX_MAX": { "New Value": 0.9, "Change Reason": "Maximize attitude control authority at high throttle" }
+            },
+            "old_filenames": []
+        },
+        "46_pid_d_ff.param": {
+            "why": "The D feed-forward term improves aggressive rate tracking and gives the drone a 'locked-in' feel with minimal control latency",
+            "why_now": "After all autotune axes are complete and PID values are finalized, since D_FF is calculated from the final tuned PID response",
+            "blog_text": "Calculate angle rate derivative feed-forward gains (ATC_RAT_*_D_FF and PSC_ACCZ_D_FF) to improve aggressive maneuver tracking",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#97-angle-rate-derivative-feed-forward-calculation",
+            "wiki_text": "",
+            "wiki_url": "",
+            "external_tool_text": "ArduPilot PID Review Tool",
+            "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/PIDReview/",
+            "mandatory_text": "0% mandatory (100% optional)",
+            "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["ATC_RAT_.+_D_FF", "PSC_ACCZ_D_FF"],
+            "old_filenames": []
         },
         "40_windspeed_estimation.param": {
             "why": "For accurate navigation and stabilization at high speeds and/or in windy conditions",
@@ -668,6 +984,71 @@
             "jump_possible": {"47_position_controller.param": "If you do not want an analytical PID optimization\nyou can skip some steps now.\n\nJump to '47_position_controller.param' file?"},
             "old_filenames": ["39_barometer_compensation.param"]
         },
+        "49_windspeed_estimation_finish.param": {
+            "why": "Disarmed and replay logging must be disabled after windspeed estimation flights to avoid filling the storage with unnecessary logs",
+            "why_now": "Because LOG_DISARMED and LOG_REPLAY were enabled for windspeed estimation and barometer compensation flights and are no longer needed",
+            "blog_text": "Restore logging parameters to normal after windspeed estimation flights",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#101-windspeed-estimation-flights",
+            "wiki_text": "Wind speed estimation",
+            "wiki_url": "https://ardupilot.org/copter/docs/airspeed-estimation.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "auto_changed_by": "",
+            "forced_parameters": {
+                "LOG_DISARMED": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
+                "LOG_REPLAY": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" }
+            },
+            "old_filenames": []
+        },
+        "50_system_id_input_roll.param": {
+            "why": "System identification is required to create a mathematical model of the vehicle",
+            "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
+            "blog_text": "Configure parameters for the roll axis input system identification to create a mathematical model of the vehicle",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#11-system-identification-for-analytical-pid-optimization-optional",
+            "wiki_text": "Matlab and Simulink IAV scripts for system identification",
+            "wiki_url": "https://ardupilot.org/copter/docs/systemid-model-development.html#identification-of-a-multicopter",
+            "external_tool_text": "ArduCopter Simulink Model",
+            "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
+            "mandatory_text": "20% mandatory (80% optional)",
+            "auto_changed_by": "",
+            "forced_parameters": {
+                "SID_AXIS": { "New Value": 1, "Change Reason": "Inject chip on the input roll signal" }
+            },
+            "old_filenames": []
+        },
+        "51_system_id_input_pitch.param": {
+            "why": "System identification is required to create a mathematical model of the vehicle",
+            "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
+            "blog_text": "Configure parameters for the pitch axis input system identification to create a mathematical model of the vehicle",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#1112-pitch-rate-mathematical-model",
+            "wiki_text": "Matlab and Simulink IAV scripts for system identification",
+            "wiki_url": "https://ardupilot.org/copter/docs/systemid-model-development.html#identification-of-a-multicopter",
+            "external_tool_text": "ArduCopter Simulink Model",
+            "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
+            "mandatory_text": "20% mandatory (80% optional)",
+            "auto_changed_by": "",
+            "forced_parameters": {
+                "SID_AXIS": { "New Value": 2, "Change Reason": "Inject chip on the input pitch signal" }
+            },
+            "old_filenames": []
+        },
+        "52_system_id_input_yaw.param": {
+            "why": "System identification is required to create a mathematical model of the vehicle",
+            "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
+            "blog_text": "Configure parameters for the yaw axis input system identification to create a mathematical model of the vehicle",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#1113-yaw-rate-mathematical-model",
+            "wiki_text": "Matlab and Simulink IAV scripts for system identification",
+            "wiki_url": "https://ardupilot.org/copter/docs/systemid-model-development.html#identification-of-a-multicopter",
+            "external_tool_text": "ArduCopter Simulink Model",
+            "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/Tools/simulink/arducopter/README.md",
+            "mandatory_text": "20% mandatory (80% optional)",
+            "auto_changed_by": "",
+            "forced_parameters": {
+                "SID_AXIS": { "New Value": 3, "Change Reason": "Inject chip on the input yaw signal" }
+            },
+            "old_filenames": []
+        },
         "42_system_id_roll.param": {
             "why": "System identification is required to create a mathematical model of the vehicle",
             "why_now": "Because the vehicle should be fully tuned (no more PID changes) before a model gets created (that depends on said PID values)",
@@ -680,8 +1061,6 @@
             "mandatory_text": "20% mandatory (80% optional)",
             "auto_changed_by": "",
             "forced_parameters": {
-                "LOG_DISARMED": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
-                "LOG_REPLAY": { "New Value": 0, "Change Reason": "was only needed for wind speed estimation" },
                 "SID_AXIS": { "New Value": 10, "Change Reason": "Inject chip on the mixer roll signal" }
             },
             "old_filenames": ["40_system_id_roll.param"]
