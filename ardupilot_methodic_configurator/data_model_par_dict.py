@@ -13,7 +13,7 @@ import logging
 import re
 from math import isfinite as math_isfinite
 from os import path as os_path
-from os import popen as os_popen
+from shutil import get_terminal_size
 from sys import exc_info as sys_exc_info
 from types import TracebackType
 from typing import IO, Callable, Optional, Union
@@ -331,7 +331,7 @@ class ParDict(dict[str, Par]):
 
         # Get the size of the terminal
         if __name__ == "__main__":
-            rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa: S605, S607
+            rows_str = str(get_terminal_size().lines)
 
         # Convert rows to integer
         rows = int(rows_str) - 2  # -2 for the next print and the input line
@@ -343,7 +343,7 @@ class ParDict(dict[str, Par]):
         for i, line in enumerate(formatted_params):
             if i % rows == 0 and __name__ == "__main__":
                 input(_("\n{name} list is long hit enter to continue").format(name=name))
-                rows_str, _columns = os_popen("stty size", "r").read().split()  # noqa: S605, S607
+                rows_str = str(get_terminal_size().lines)
                 rows = int(rows_str) - 2  # -2 for the next print and the input line
             print(line)  # noqa: T201
 

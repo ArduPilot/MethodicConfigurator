@@ -1011,8 +1011,7 @@ class TestParameterUtilities:
         assert annotated["GPS_TYPE"].comment == "GPS receiver type selection"
         assert annotated["PILOT_SPEED_UP"].comment == "Pilot controlled climb rate"  # Original preserved
 
-    @patch("ardupilot_methodic_configurator.data_model_par_dict.os_popen")
-    def test_user_can_print_parameter_list_with_pagination(self, mock_popen) -> None:
+    def test_user_can_print_parameter_list_with_pagination(self) -> None:
         """
         User can print long parameter lists with automatic pagination.
 
@@ -1020,8 +1019,7 @@ class TestParameterUtilities:
         WHEN: They use print_out static method
         THEN: Parameters should be printed with pagination control
         """
-        # Arrange: Mock terminal size and formatted parameters
-        mock_popen.return_value.read.return_value = "25 80"  # 25 rows, 80 columns
+        # Arrange: Formatted parameters (terminal size irrelevant outside __main__)
         formatted_params = [f"PARAM_{i},1.0" for i in range(50)]  # Long list
 
         # Act: Print with pagination (capture in StringIO since we can't easily test print)
@@ -1053,9 +1051,9 @@ class TestParameterUtilities:
         THEN: The user should be prompted to continue and terminal size should refresh
         """
         terminal_result = MagicMock()
-        terminal_result.read.return_value = "5 80"  # Terminal with 5 rows for this test
-        mock_popen = MagicMock(return_value=terminal_result)
-        monkeypatch.setattr(par_dict_module, "os_popen", mock_popen)
+        terminal_result.lines = 5  # Terminal with 5 rows for this test
+        mock_get_terminal_size = MagicMock(return_value=terminal_result)
+        monkeypatch.setattr("ardupilot_methodic_configurator.data_model_par_dict.get_terminal_size", mock_get_terminal_size)
         monkeypatch.setattr(par_dict_module, "__name__", "__main__")
         mock_input = MagicMock(return_value="")
         monkeypatch.setattr("builtins.input", mock_input)
@@ -1064,7 +1062,7 @@ class TestParameterUtilities:
             ParDict.print_out([f"PARAM_{i},1.0" for i in range(6)], "CLI Parameters")
 
         assert mock_input.call_count >= 1
-        assert mock_popen.call_count >= 2  # Initial size read and refresh after pagination pause
+        assert mock_get_terminal_size.call_count >= 2  # Initial size read and refresh after pagination pause
         mock_print.assert_any_call("\nCLI Parameters has 6 parameters:")
 
 
