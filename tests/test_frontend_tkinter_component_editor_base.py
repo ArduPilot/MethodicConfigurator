@@ -44,6 +44,9 @@ def setup_common_editor_mocks(editor) -> ComponentEditorWindowBase:
     editor.scroll_frame = MagicMock()
     editor.scroll_frame.view_port = MagicMock()
     editor.version = "1.0.0"
+    editor._embedded_parent_frame = None
+    editor._on_component_change = None
+    editor._populating = False
 
     # Mock filesystem and methods with proper schema loading
     editor.local_filesystem = MagicMock(spec=LocalFilesystem)

@@ -48,6 +48,7 @@ def mock_local_filesystem() -> MagicMock:
     mock_fs.forced_parameters = {}
     mock_fs.derived_parameters = {}
     mock_fs.export_to_param = MagicMock()
+    mock_fs.vehicle_components_fs.has_unsaved_changes.return_value = False
 
     # Mock compound_params to compute first config filename based on file_parameters
     def mock_compound_params(last_filename=None, skip_default=True) -> tuple[ParDict, Optional[str]]:
@@ -4207,3 +4208,189 @@ class TestParameterManagementBehavior:
         # Assert
         assert level == expected_level
         assert expect_tooltip_contains in tooltip
+
+
+class TestComponentEditorIntegration:
+    """Tests for the embedded component editor data-sync methods added by the inline component editor feature."""
+
+    def test_system_returns_component_name_for_current_step(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System returns the component name associated with the current configuration step.
+
+        GIVEN: The current step has a "component" field of "Battery"
+        WHEN: get_current_component() is called
+        THEN: "Battery" is returned
+        """
+        # Arrange
+        parameter_editor._local_filesystem.get_component.return_value = "Battery"
+        parameter_editor.current_file = "11_battery.param"
+
+        # Act
+        result = parameter_editor.get_current_component()
+
+        # Assert
+        assert result == "Battery"
+        parameter_editor._local_filesystem.get_component.assert_called_once_with("11_battery.param")
+
+    def test_system_returns_none_when_step_has_no_component(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System returns None when the current step has no associated component.
+
+        GIVEN: The current step has no "component" field
+        WHEN: get_current_component() is called
+        THEN: None is returned
+        """
+        parameter_editor._local_filesystem.get_component.return_value = None
+        parameter_editor.current_file = "01_safety.param"
+
+        assert parameter_editor.get_current_component() is None
+
+    def test_system_detects_unsaved_component_changes(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System correctly delegates unsaved-changes detection to the vehicle_components_fs layer.
+
+        GIVEN: vehicle_components_fs.has_unsaved_changes() returns True
+        WHEN: _has_component_unsaved_changes() is called
+        THEN: True is returned
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = True
+
+        assert parameter_editor._has_component_unsaved_changes() is True
+
+    def test_system_reports_no_unsaved_changes_when_in_sync_with_disk(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System correctly reports no unsaved changes when in-memory data matches disk.
+
+        GIVEN: vehicle_components_fs.has_unsaved_changes() returns False
+        WHEN: _has_component_unsaved_changes() is called
+        THEN: False is returned
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = False
+
+        assert parameter_editor._has_component_unsaved_changes() is False
+
+    def test_system_skips_derived_refresh_when_no_current_file(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System does nothing when there is no current configuration file loaded.
+
+        GIVEN: current_file is empty
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: No computation is performed
+        """
+        parameter_editor.current_file = ""
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        parameter_editor._local_filesystem.compute_parameters.assert_not_called()
+
+    def test_system_skips_derived_refresh_when_step_has_no_derived_section(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System does nothing when the current step has no "derived_parameters" key.
+
+        GIVEN: The step info dict has no "derived_parameters" entry
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: compute_parameters is not called
+        """
+        parameter_editor.current_file = "05_no_derived.param"
+        parameter_editor._local_filesystem.configuration_steps = {"05_no_derived.param": {"component": "Frame"}}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        parameter_editor._local_filesystem.compute_parameters.assert_not_called()
+
+    def test_system_patches_existing_derived_parameters_in_place(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System updates only the derived values in the existing parameter dict without rebuilding it.
+
+        GIVEN: A step with derived_parameters and a matching entry in current_step_parameters
+        WHEN: refresh_current_step_computed_parameters() is called after component data changes
+        THEN: set_forced_or_derived_value is called on the existing parameter object
+        AND: compute_parameters is called exactly once
+        AND: parameters not listed as derived are left untouched
+        """
+        step_file = "11_battery.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {
+            step_file: {"derived_parameters": {"MOT_BAT_VOLT_MAX": {"expr": "cells * 4.2", "comment": "Max volts"}}}
+        }
+
+        # Derived param returned by compute_parameters (stored in derived_parameters)
+        derived_par = MagicMock()
+        derived_par.value = "25.2"
+        derived_par.comment = "Max volts"
+        parameter_editor._local_filesystem.derived_parameters = {step_file: {"MOT_BAT_VOLT_MAX": derived_par}}
+
+        # Existing parameter objects in the domain model
+        existing_derived = MagicMock()
+        untouched_param = MagicMock()
+        parameter_editor.current_step_parameters = {
+            "MOT_BAT_VOLT_MAX": existing_derived,
+            "OTHER_PARAM": untouched_param,
+        }
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        parameter_editor._local_filesystem.compute_parameters.assert_called_once()
+        existing_derived.set_forced_or_derived_value.assert_called_once_with(25.2)
+        existing_derived.set_forced_or_derived_change_reason.assert_called_once_with("Max volts")
+        untouched_param.set_forced_or_derived_value.assert_not_called()
+
+    def test_system_ignores_derived_param_absent_from_current_step(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System silently skips derived parameters that are not present in current_step_parameters.
+
+        GIVEN: A derived parameter that was removed by the delete_parameters logic
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: No AttributeError is raised and the absent parameter is ignored
+        """
+        step_file = "11_battery.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {
+            step_file: {"derived_parameters": {"DELETED_PARAM": {"expr": "1.0"}}}
+        }
+        deleted_par = MagicMock()
+        deleted_par.value = "1.0"
+        deleted_par.comment = ""
+        parameter_editor._local_filesystem.derived_parameters = {step_file: {"DELETED_PARAM": deleted_par}}
+        parameter_editor.current_step_parameters = {}  # param was deleted
+
+        # Should not raise
+        parameter_editor.refresh_current_step_computed_parameters()
+
+    def test_system_saves_vehicle_components_with_current_in_memory_data(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System passes the current in-memory vehicle-components dict to the filesystem save call.
+
+        GIVEN: vehicle_components_fs.data holds a non-empty dict
+        WHEN: save_vehicle_components() is called
+        THEN: save_vehicle_components_json_data is called with that exact dict
+        AND: the return value signals no error (is_error is False, message is empty)
+        """
+        in_memory_data = {"Components": {"Battery": {"Specifications": {"Volt per cell max": 4.2}}}}
+        parameter_editor._local_filesystem.vehicle_components_fs.data = in_memory_data
+        parameter_editor._local_filesystem.save_vehicle_components_json_data.return_value = (False, "")
+
+        is_error, msg = parameter_editor.save_vehicle_components()
+
+        parameter_editor._local_filesystem.save_vehicle_components_json_data.assert_called_once_with(
+            in_memory_data, parameter_editor._local_filesystem.vehicle_dir
+        )
+        assert is_error is False
+        assert msg == ""
+
+    def test_system_aborts_save_when_vehicle_components_data_is_none(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System returns an error and does NOT write to disk when vehicle_components_fs.data is None.
+
+        GIVEN: vehicle_components_fs.data is None (file was never loaded)
+        WHEN: save_vehicle_components() is called
+        THEN: save_vehicle_components_json_data is NOT called (no overwrite with empty data)
+        AND: the return value signals an error
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.data = None
+
+        is_error, msg = parameter_editor.save_vehicle_components()
+
+        parameter_editor._local_filesystem.save_vehicle_components_json_data.assert_not_called()
+        assert is_error is True
+        assert msg  # non-empty error message

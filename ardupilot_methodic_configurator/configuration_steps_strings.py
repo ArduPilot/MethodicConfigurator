@@ -395,6 +395,7 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _("Expression to derive new parameter value")
     _config_steps_descriptions = _("Expression to rename connection")
     _config_steps_descriptions = _("Message about possible jump to another step")
+    _config_steps_descriptions = _("Name of the vehicle component edited inline for this configuration step")
     _config_steps_descriptions = _("Name of tool/process that automatically changes these parameters")
     _config_steps_descriptions = _("Name/description of external tool needed")
     _config_steps_descriptions = _("New value for the parameter")

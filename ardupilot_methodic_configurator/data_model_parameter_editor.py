@@ -43,6 +43,21 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileEr
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR, PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
+
+@dataclass(frozen=True)
+class ComponentEditorDeps:
+    """
+    Minimal set of collaborators required to construct an embedded component editor.
+
+    Returned by :meth:`ParameterEditor.get_component_editor_deps` so that the GUI
+    layer can build a ``ComponentEditorWindow`` without the data model exposing its
+    full ``LocalFilesystem`` object as a general-purpose property.
+    """
+
+    local_filesystem: LocalFilesystem
+    fc_parameters: dict[str, float]
+
+
 # Type aliases for callback functions used in workflow methods
 AskConfirmationCallback = Callable[[str, str], bool]  # (title, message) -> bool
 SelectFileCallback = Callable[[str, list[str]], Optional[str]]  # (title, filetypes) -> Optional[filename]
@@ -409,17 +424,40 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Always check elapsed time to prevent duplicate prompts within 1 second
         # If annotate parameters into files is true, we always need to write to file, because
         # the parameter metadata might have changed, or not be present in the file.
-        if (self._has_unsaved_changes() or annotate_params_into_files) and elapsed_since_last_ask > 1.0:
+        has_param_changes = self._has_unsaved_changes() or annotate_params_into_files
+        if has_param_changes and elapsed_since_last_ask > 1.0:
             msg = _("Do you want to write the changes to the {current_filename} file?").format(
                 current_filename=self.current_file
             )
             should_save = ask_user_confirmation(_("One or more parameters have been edited"), msg)
             if should_save:
                 self._export_current_file(annotate_doc=annotate_params_into_files)
+                # Permission already granted — save component data silently alongside params
+                if self._has_component_unsaved_changes():
+                    self.save_vehicle_components()
+            elif self._has_component_unsaved_changes():
+                # User declined to save param changes; still ask about component changes
+                comp_msg = _("Do you want to save the component data changes to vehicle_components.json?")
+                if ask_user_confirmation(_("Component data has been edited"), comp_msg):
+                    self.save_vehicle_components()
+                else:
+                    self.revert_vehicle_components()
 
             # Update timestamp regardless of user's answer to prevent duplicate prompts
             self._last_time_asked_to_save = time()
             return should_save
+
+        if self._has_component_unsaved_changes() and elapsed_since_last_ask > 1.0:
+            msg = _("Do you want to save the component data changes to vehicle_components.json?")
+            should_save = ask_user_confirmation(_("Component data has been edited"), msg)
+            if should_save:
+                self.save_vehicle_components()
+            else:
+                self.revert_vehicle_components()
+
+            self._last_time_asked_to_save = time()
+            return should_save
+
         return False
 
     def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913
@@ -2198,6 +2236,117 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def get_plugin(self, filename: str) -> Optional[dict]:
         return self._local_filesystem.get_plugin(filename)
+
+    def get_component_editor_deps(self) -> ComponentEditorDeps:
+        """
+        Return the collaborators needed to construct an embedded component editor.
+
+        Prefer this over accessing ``_local_filesystem`` directly from the GUI layer.
+        Only ``ComponentEditorWindow`` should consume these deps.
+        """
+        return ComponentEditorDeps(
+            local_filesystem=self._local_filesystem,
+            fc_parameters=self.fc_parameters,
+        )
+
+    def get_current_component(self) -> Optional[str]:
+        """Get the component name associated with the current configuration step, or None."""
+        return self._local_filesystem.get_component(self.current_file)
+
+    def _has_component_unsaved_changes(self) -> bool:
+        """Return True if the in-memory component data differs from what was last saved to disk."""
+        return self._local_filesystem.vehicle_components_fs.has_unsaved_changes("Components")
+
+    def refresh_current_step_computed_parameters(self) -> None:
+        """
+        Recompute derived parameters for the current step after component data changed.
+
+        Unlike _repopulate_configuration_step_parameters(), this performs a lightweight
+        in-place update: only the derived parameter *values* are recalculated and patched
+        into the existing current_step_parameters dict.  The full parameter set is NOT
+        rebuilt from file_parameters and the delete_parameters logic is NOT re-run, so:
+          - parameters that were already removed by the delete logic stay removed
+          - user edits to non-derived parameters are preserved
+          - the 'show only differences' filter does not cause derived params to disappear
+        """
+        if not self.current_file or self.current_file not in self._local_filesystem.configuration_steps:
+            return
+        step_info = self._local_filesystem.configuration_steps[self.current_file]
+        if "derived_parameters" not in step_info:
+            return
+
+        variables = self._config_step_processor.variables.copy()
+        if self.fc_parameters:
+            variables["fc_parameters"] = self.fc_parameters
+
+        # Recompute derived params with the updated vehicle_components dict
+        self._local_filesystem.compute_parameters(self.current_file, step_info, "derived", variables)
+
+        # Patch only the derived values in the existing domain model — no rebuild, no deletions
+        for param_name, derived_par in self._local_filesystem.derived_parameters.get(self.current_file, ParDict()).items():
+            if param_name in self.current_step_parameters:
+                existing = self.current_step_parameters[param_name]
+                if not (existing.is_forced or existing.is_derived):
+                    # The parameter was created before its derived value could be evaluated (e.g. the
+                    # vehicle_components dict was incomplete at step-load time).  Now that evaluation
+                    # succeeded, re-create it so it carries the derived flag and the correct value.
+                    original_par = self._local_filesystem.file_parameters.get(self.current_file, ParDict()).get(param_name)
+                    if original_par is not None:
+                        self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                            param_name, original_par, self.current_file, self.fc_parameters or {}
+                        )
+                    continue
+                try:
+                    self.current_step_parameters[param_name].set_forced_or_derived_value(float(derived_par.value))
+                    if derived_par.comment:
+                        self.current_step_parameters[param_name].set_forced_or_derived_change_reason(derived_par.comment)
+                except (ValueError, TypeError) as e:
+                    logging_error(_("Failed to patch derived parameter %s: %s"), param_name, str(e))
+
+    def revert_vehicle_components(self) -> None:
+        """
+        Revert in-memory component data to the last version saved to (or loaded from) disk.
+
+        Delegates to ``vehicle_components_fs.revert_key_in_place()`` so that the
+        restored dict is the same object already referenced by expression evaluators.
+        """
+        self._local_filesystem.vehicle_components_fs.revert_key_in_place("Components")
+
+    def update_vehicle_components(self, components: dict) -> None:
+        """
+        Sync updated component data back into the filesystem's in-memory store.
+
+        The update **must** be done in-place on the existing ``data["Components"]`` dict
+        object.  ``_config_step_processor.variables["vehicle_components"]`` holds a
+        direct reference to that object (assigned once by ``get_eval_variables()``).
+        Replacing it with a new dict object would leave the evaluator pointing at the
+        old, stale dict and silently break derived-parameter expressions.
+        """
+        fs_data = self._local_filesystem.vehicle_components_fs.data
+        if fs_data is None:
+            return
+        if "Components" in fs_data:
+            # Verify that the evaluator's reference is the same object we are updating.
+            # Only check when the variable is already populated; before first load it is absent.
+            evaluator_ref = self._config_step_processor.variables.get("vehicle_components")
+            if evaluator_ref is not None and fs_data["Components"] is not evaluator_ref:
+                # The evaluator is pointing at a different dict object than the one we are about to
+                # update, so an in-place update would not be seen by derived-parameter expressions.
+                # This is an internal invariant violation; log it and fall back to re-pointing the
+                # evaluator at the live object rather than crashing the GUI event loop.
+                logging_error(_("vehicle_components evaluator reference is stale; re-syncing to the live object"))
+                self._config_step_processor.variables["vehicle_components"] = fs_data["Components"]
+            fs_data["Components"].clear()
+            fs_data["Components"].update(components)
+        else:
+            fs_data["Components"] = dict(components)
+
+    def save_vehicle_components(self) -> tuple[bool, str]:
+        """Save the vehicle components data to disk."""
+        data = self._local_filesystem.vehicle_components_fs.data
+        if data is None:
+            return True, _("No vehicle component data loaded; save aborted.")
+        return self._local_filesystem.save_vehicle_components_json_data(data, self._local_filesystem.vehicle_dir)
 
     def get_instructions_popup(self, filename: str) -> Optional[dict]:
         """Get the optional instructions popup data for a given configuration step."""

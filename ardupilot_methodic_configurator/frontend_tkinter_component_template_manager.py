@@ -53,7 +53,7 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
         self.update_data_callback = update_data_callback
         self.derive_template_name_callback = derive_template_name_callback
 
-    def add_template_controls(self, parent_frame: ttk.LabelFrame, component_name: str) -> None:
+    def add_template_controls(self, parent_frame: tk.Widget, component_name: str) -> None:
         """Add "template dropdown" and "save" buttons for a component."""
         label_frame = ttk.Frame(parent_frame)
         label_frame.pack(side=tk.TOP, fill=tk.X)
