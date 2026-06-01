@@ -21,7 +21,7 @@ from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Any, Optional, Union, cast
+from typing import Any, Callable, Optional, Union, cast
 from unittest.mock import patch
 
 from ardupilot_methodic_configurator import _, __version__
@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_base import C
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_component_template_manager import ComponentTemplateManager
+from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_size
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_error_message, show_tooltip
@@ -74,6 +75,23 @@ VEHICLE_IMAGE_WIDTH_PIX = 100
 VEHICLE_IMAGE_HEIGHT_PIX = 100
 
 
+class _EmbeddedScrollFrameStub:  # pylint: disable=too-few-public-methods
+    """
+    Minimal stand-in for ScrollFrame used in embedded component editor mode.
+
+    Provides the ``view_port`` attribute and a no-op ``scroll_to_top()`` method so
+    that callers can use duck typing instead of ``isinstance`` checks.  Without a
+    canvas there is nothing to scroll, hence the no-op.
+    """
+
+    def __init__(self, parent: tk.Widget) -> None:
+        self.view_port: ttk.Frame = ttk.Frame(parent)
+        self.view_port.pack(side="top", fill="both", expand=True)
+
+    def scroll_to_top(self) -> None:
+        """No-op: the embedded stub has no canvas to scroll."""
+
+
 class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """
     A class for editing JSON files in the ArduPilot methodic configurator.
@@ -90,6 +108,8 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         fc_parameters: dict[str, float],
         data_model: Optional[ComponentDataModel] = None,
         root_tk: Optional[tk.Tk] = None,
+        embedded_parent_frame: Optional[tk.Widget] = None,
+        on_component_change: Optional[Callable[[], None]] = None,
     ) -> None:
         """
         Initialize the ComponentEditorWindowBase.
@@ -100,9 +120,29 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             fc_parameters: Flight controller parameters
             data_model: Optional pre-configured data model (for testing)
             root_tk: Optional parent Tk window (for testing)
+            embedded_parent_frame: If provided, embed the editor into this frame instead of
+                creating a standalone window. The scroll frame is placed inside this parent.
+            on_component_change: Callback invoked whenever a component field value changes.
+                Only used when embedded_parent_frame is set.
 
         """
-        super().__init__(root_tk)
+        self._embedded_parent_frame = embedded_parent_frame
+        self._on_component_change = on_component_change
+
+        if embedded_parent_frame is None:
+            # Standalone window mode — full BaseWindow initialisation
+            super().__init__(root_tk)
+        else:
+            # Embedded mode — set the same attributes that BaseWindow.__init__ would set,
+            # but reuse the parent frame's top-level window instead of creating a new one.
+            # A future refactor should extract ComponentEditorPanel(ttk.Frame) so that
+            # this class can inherit from BaseWindow unconditionally.
+            self._init_from_parent_frame(embedded_parent_frame)
+
+        # complexity_var must be created after the Tk root exists (either via super().__init__ or embedded_parent_frame)
+        complexity_setting = ProgramSettings.get_setting("gui_complexity")
+        self.complexity_var = tk.StringVar(value=str(complexity_setting) if complexity_setting is not None else "simple")
+
         self.local_filesystem = local_filesystem
         self.version = version
 
@@ -111,21 +151,46 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
         # UI elements dictionary for easier access and testing
         self.entry_widgets: dict[ComponentPath, EntryWidget] = {}
-        self.scroll_frame: ScrollFrame
+        self.scroll_frame: Union[ScrollFrame, _EmbeddedScrollFrameStub]
         self.save_button: ttk.Button
         self.template_manager: ComponentTemplateManager
-        self.complexity_var = tk.StringVar()
+        self._populating: bool = False  # True while populate_frames/populate_single_component is running
 
         # Initialize UI if there's data to work with
         if self._check_data():
-            self._initialize_ui()
+            if embedded_parent_frame is None:
+                self._initialize_ui()
+            else:
+                self._initialize_embedded_ui()
             self._finalize_initialization(fc_parameters)
+
+    def _init_from_parent_frame(self, parent: tk.Widget) -> None:
+        """
+        Initialize the minimum set of BaseWindow attributes from an existing parent frame.
+
+        Called instead of ``super().__init__()`` in embedded mode so that the editor
+        piggybacks on the parent window's root rather than creating a new top-level window.
+        Sets the same attributes (``root``, ``main_frame``, ``dpi_scaling_factor``,
+        ``default_font_size``) that ``BaseWindow.__init__`` would set.
+        """
+        self.root = parent.winfo_toplevel()
+        self.main_frame = parent  # type: ignore[assignment]  # intentionally tk.Widget subtype
+        try:
+            self.dpi_scaling_factor: float = max(1.0, self.root.winfo_fpixels("1i") / 96.0)
+        except (tk.TclError, AttributeError, TypeError):
+            self.dpi_scaling_factor = 1.0
+        self.default_font_size: int = get_safe_font_size()
 
     def _create_data_model(self) -> ComponentDataModel:
         """Create the data model. Extracted for better testability."""
-        raw_data = self.local_filesystem.load_vehicle_components_json_data(self.local_filesystem.vehicle_dir)
         schema = VehicleComponentsJsonSchema(self.local_filesystem.load_schema())
         component_datatypes = schema.get_all_value_datatypes()
+        if self._embedded_parent_frame is not None:
+            # In embedded mode reuse the already-loaded in-memory data to avoid re-reading from disk,
+            # which would overwrite vehicle_components_fs.data and lose unsaved changes.
+            raw_data = self.local_filesystem.vehicle_components_fs.data or {}
+        else:
+            raw_data = self.local_filesystem.load_vehicle_components_json_data(self.local_filesystem.vehicle_dir)
         return ComponentDataModel(raw_data, component_datatypes, schema)
 
     def _initialize_ui(self) -> None:
@@ -145,8 +210,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def _check_data(self) -> bool:
         """Check if we have data to work with and prepare for UI setup."""
         if not self.data_model.is_valid_component_data() or not self.data_model.has_components():
-            # Schedule the window to be destroyed after the mainloop has started
-            self.root.after(100, self.root.destroy)
+            if getattr(self, "_embedded_parent_frame", None) is None:
+                # Standalone mode — schedule the window to be destroyed after the mainloop has started
+                self.root.after(100, self.root.destroy)
             return False
         return True
 
@@ -217,8 +283,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             ),
         )
 
-        explanation_text = _("Please configure properties of the vehicle components.\n")
-        explanation_text += _("Labels for optional properties are displayed in gray text.\n")
+        explanation_text = _("Labels for optional properties are displayed in gray text.\n")
         explanation_text += _("Scroll down to ensure that you do not overlook any properties.\n")
 
         explanation_label = ttk.Label(
@@ -262,10 +327,21 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             image_label = ttk.Label(parent, text=_("Add a 'vehicle.jpg' image file to the vehicle directory."))
             image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
 
-    def _create_scroll_frame(self) -> None:
+    def _initialize_embedded_ui(self) -> None:
+        """Initialize a lightweight UI for embedded (non-standalone) mode."""
+        self._setup_styles()
+        self._create_scroll_frame(embedded=True)
+        self._setup_template_manager()
+
+    def _create_scroll_frame(self, embedded: bool = False) -> None:
         """Create the scrollable frame for component widgets."""
-        self.scroll_frame = ScrollFrame(self.main_frame)
-        self.scroll_frame.pack(side="top", fill="both", expand=True)
+        if embedded:
+            # In embedded mode use a plain stub — no canvas, no scrolling.
+            # scroll_to_top() is a no-op on the stub so callers need no isinstance guard.
+            self.scroll_frame = _EmbeddedScrollFrameStub(self.main_frame)
+        else:
+            self.scroll_frame = ScrollFrame(self.main_frame)
+            self.scroll_frame.pack(side="top", fill="both", expand=True)
 
     def _create_save_frame(self) -> None:
         """Create the frame with save button."""
@@ -349,14 +425,56 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     def populate_frames(self) -> None:
         """Populates the ScrollFrame with widgets based on the JSON data."""
-        components = self.data_model.get_all_components()
-        for i, (key, value) in enumerate(components.items(), 1):
-            self.add_widget(self.scroll_frame.view_port, key, value, [])
-            if i % 5 == 0:  # yield to the event loop periodically to keep the UI responsive
-                self.scroll_frame.view_port.update_idletasks()
+        self._populating = True
+        try:
+            components = self.data_model.get_all_components()
+            for i, (key, value) in enumerate(components.items(), 1):
+                self.add_widget(self.scroll_frame.view_port, key, value, [])
+                if i % 5 == 0:  # yield to the event loop periodically to keep the UI responsive
+                    self.scroll_frame.view_port.update_idletasks()
+        finally:
+            self._populating = False
 
         # Scroll to the top after (re-)populating
-        self.scroll_frame.canvas.yview("moveto", 0)
+        self.scroll_frame.scroll_to_top()
+
+    def populate_single_component(self, component_name: str) -> None:
+        """
+        Populate the scroll frame with widgets for a single named component.
+
+        Used in embedded mode to display only the component relevant to the current
+        configuration step without showing all components. The outer container already
+        carries the component label, so child properties are rendered directly into the
+        viewport to avoid a duplicate labelled frame.
+        """
+        self._populating = True
+        try:
+            components = self.data_model.get_all_components()
+            if component_name not in components:
+                return
+            component_data = components[component_name]
+            if isinstance(component_data, dict):
+                # Add template controls directly into the viewport (no outer LabelFrame)
+                self._add_template_controls(self.scroll_frame.view_port, component_name)
+                for sub_key, sub_value in component_data.items():
+                    self._add_widget(self.scroll_frame.view_port, sub_key, sub_value, [component_name])
+            else:
+                self.add_widget(self.scroll_frame.view_port, component_name, component_data, [])
+            self.scroll_frame.view_port.update_idletasks()
+        finally:
+            self._populating = False
+        self.scroll_frame.scroll_to_top()
+
+    def _trigger_change_callback(self) -> None:
+        """Invoke the on_component_change callback if one was registered (embedded mode only)."""
+        if self._populating:
+            return  # suppress events fired during programmatic widget population
+        if self._on_component_change is not None:
+            self._on_component_change()
+
+    def get_component_data(self) -> "ComponentData":
+        """Return the current in-memory component data from the data model."""
+        return self.data_model.get_component_data()
 
     def add_widget(self, parent: tk.Widget, key: str, value: ComponentValue, path: list[str]) -> None:
         """
@@ -461,7 +579,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             show_tooltip(label, config["description"])
             show_tooltip(entry, config["description"])
 
-    def _add_template_controls(self, parent_frame: ttk.LabelFrame, component_name: str) -> None:
+    def _add_template_controls(self, parent_frame: tk.Widget, component_name: str) -> None:
         """Add template controls for a component."""
         if self.complexity_var.get() != "simple":
             self.template_manager.add_template_controls(parent_frame, component_name)
@@ -654,6 +772,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             # Manually initialize the essential attributes without calling BaseWindow.__init__
             instance.local_filesystem = local_filesystem
             instance.version = version
+            instance._embedded_parent_frame = None  # noqa: SLF001
+            instance._on_component_change = None  # noqa: SLF001
+            instance._populating = False  # noqa: SLF001
 
             # Create mock UI elements to avoid Tkinter dependencies
             instance.root = MagicMock()

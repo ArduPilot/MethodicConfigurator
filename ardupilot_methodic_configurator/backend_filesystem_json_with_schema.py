@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from copy import deepcopy
 from json import JSONDecodeError
 from json import dumps as json_dumps
 from json import load as json_load
@@ -33,6 +34,7 @@ class FilesystemJSONWithSchema:
         self.schema_filename = schema_filename
         self.data: Union[None, dict[str, Any]] = None
         self.schema: Union[None, dict[Any, Any]] = None
+        self._data_on_disk: dict[str, Any] = {}
 
     def load_schema(self) -> dict:
         """
@@ -105,6 +107,7 @@ class FilesystemJSONWithSchema:
         except JSONDecodeError:
             logging_error(_("Error decoding JSON data from file '%s'."), filepath)
         self.data = data
+        self._data_on_disk = deepcopy(data)
         return data
 
     def save_json_data(self, data: dict, data_dir: str) -> tuple[bool, str]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
@@ -162,5 +165,36 @@ class FilesystemJSONWithSchema:
 
         # Update the in-memory data after successful save
         self.data = data
+        self._data_on_disk = deepcopy(data)
 
         return False, ""
+
+    def has_unsaved_changes(self, key: Union[str, None] = None) -> bool:
+        """
+        Return True if in-memory data differs from what was last loaded or saved to disk.
+
+        :param key: If provided, only compare ``data[key]`` against the disk snapshot so that
+            the comparison is symmetric with :meth:`revert_key_in_place`. If ``None``, the
+            whole data dict is compared.
+        """
+        current = self.data if self.data is not None else {}
+        if key is not None:
+            return bool(current.get(key, {}) != self._data_on_disk.get(key, {}))
+        return bool(current != self._data_on_disk)
+
+    def revert_key_in_place(self, key: str) -> None:
+        """
+        Restore ``data[key]`` in-place from the last disk snapshot.
+
+        Operates on the existing dict object so that any live references held by
+        expression evaluators continue to point at the same object and immediately
+        see the reverted values.  Safe to call when ``data`` is ``None`` (no-op).
+        """
+        if self.data is None:
+            return
+        disk_value: dict = self._data_on_disk.get(key, {})
+        if key in self.data:
+            self.data[key].clear()
+            self.data[key].update(disk_value)
+        else:
+            self.data[key] = dict(disk_value)

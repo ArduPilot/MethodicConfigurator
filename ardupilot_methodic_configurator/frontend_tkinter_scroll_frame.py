@@ -127,5 +127,9 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         else:
             self.canvas.unbind_all("<MouseWheel>")
 
+    def scroll_to_top(self) -> None:
+        """Scroll the canvas to the top."""
+        self.canvas.yview("moveto", 0)
+
 
 # SPDX-SnippetEnd

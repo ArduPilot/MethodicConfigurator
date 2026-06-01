@@ -114,6 +114,10 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:
     editor.parameter_area_container = parameter_area_container
     editor.parameter_container = parameter_area_container
     editor.parameter_area_paned = None
+    editor.inline_component_editor = None
+    editor._inline_component_name = None
+    editor._updating_inline_editor = False
+    editor.inline_component_container = MagicMock()
     return editor
 
 
@@ -516,6 +520,23 @@ class TestWidgetFactoryMethods:
         for call in mock_tooltip.call_args_list:
             assert call.args[0] is not only_changed_checkbox
             assert call.args[0] is not annotate_checkbox
+
+    def test_update_inline_component_editor_hides_container_when_component_is_removed(
+        self, parameter_editor: MagicMock
+    ) -> None:
+        editor = _create_editor(parameter_editor)
+        editor.inline_component_container = MagicMock(
+            pack=MagicMock(), pack_forget=MagicMock(), winfo_children=MagicMock(return_value=[]), configure=MagicMock()
+        )
+        editor._inline_component_name = "Motor"
+        editor.inline_component_editor = MagicMock()
+
+        editor._update_inline_component_editor(None)
+
+        editor.inline_component_container.pack_forget.assert_called_once()
+        editor.inline_component_container.configure.assert_called_once_with(text="")
+        assert editor.inline_component_editor is None
+        assert editor._inline_component_name is None
 
     def test_create_parameter_area_widgets_sets_skip_button_state(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
@@ -2041,3 +2062,95 @@ class TestStepInstructionsPopupWorkflows:
         ui_mock = cast("MagicMock", parameter_editor_window.ui)
         ui_mock.show_warning.assert_called_once_with("Step Instructions", "Test warning message")
         ui_mock.show_info.assert_not_called()
+
+
+class TestInlineComponentEditorCallbacks:
+    """Tests for the inline component editor data-sync and table-refresh callback."""
+
+    def test_component_data_change_calls_update_and_refresh(self, parameter_editor: MagicMock) -> None:
+        """
+        Callback delegates sync to update_vehicle_components() and triggers a refresh.
+
+        GIVEN: An inline component editor whose data_model contains updated component data
+        WHEN: _on_component_data_changed() is called
+        THEN: update_vehicle_components() is called with the editor's component dict
+        AND: refresh_current_step_computed_parameters() is called on the data model
+        AND: The parameter table is repopulated
+        """
+        editor = _create_editor(parameter_editor)
+        editor.repopulate_parameter_table = MagicMock()
+
+        updated_components = {"Battery": {"Specifications": {"Volt per cell max": 4.2}}}
+        mock_inline_editor = MagicMock()
+        mock_inline_editor.get_component_data.return_value = {"Components": updated_components}
+        editor.inline_component_editor = mock_inline_editor
+
+        editor._on_component_data_changed()
+
+        parameter_editor.update_vehicle_components.assert_called_once_with(updated_components)
+        parameter_editor.refresh_current_step_computed_parameters.assert_called_once()
+        editor.repopulate_parameter_table.assert_called_once()
+
+    def test_component_data_change_returns_early_when_no_inline_editor(self, parameter_editor: MagicMock) -> None:
+        """
+        Callback returns immediately when the inline editor is absent.
+
+        GIVEN: inline_component_editor is None (no inline editor active for this step)
+        WHEN: _on_component_data_changed() is called
+        THEN: No AttributeError is raised
+        AND: refresh_current_step_computed_parameters() is NOT called (no data to sync)
+        AND: The parameter table is NOT repopulated
+        """
+        editor = _create_editor(parameter_editor)
+        editor.repopulate_parameter_table = MagicMock()
+        editor.inline_component_editor = None
+
+        editor._on_component_data_changed()
+
+        parameter_editor.refresh_current_step_computed_parameters.assert_not_called()
+        editor.repopulate_parameter_table.assert_not_called()
+
+    def test_component_data_change_delegates_none_fs_data_to_update_method(self, parameter_editor: MagicMock) -> None:
+        """
+        Callback delegates the None-data guard to update_vehicle_components(), then refreshes.
+
+        GIVEN: vehicle_components_fs.data is None (file was never loaded)
+        WHEN: _on_component_data_changed() is called
+        THEN: No AttributeError is raised
+        AND: update_vehicle_components() is called (it handles None internally)
+        AND: refresh_current_step_computed_parameters() is called
+        """
+        editor = _create_editor(parameter_editor)
+        editor.repopulate_parameter_table = MagicMock()
+
+        mock_inline_editor = MagicMock()
+        mock_inline_editor.get_component_data.return_value = {"Components": {"Battery": {}}}
+        editor.inline_component_editor = mock_inline_editor
+
+        editor._on_component_data_changed()
+
+        parameter_editor.update_vehicle_components.assert_called_once()
+        parameter_editor.refresh_current_step_computed_parameters.assert_called_once()
+
+    def test_component_data_change_is_skipped_when_already_updating(self, parameter_editor: MagicMock) -> None:
+        """
+        Callback exits immediately when re-entered (e.g. widget event during repopulate).
+
+        GIVEN: _updating_inline_editor is True (callback is already executing)
+        WHEN: _on_component_data_changed() is called again
+        THEN: update_vehicle_components() is NOT called a second time
+        AND: refresh_current_step_computed_parameters() is NOT called a second time
+        """
+        editor = _create_editor(parameter_editor)
+        editor.repopulate_parameter_table = MagicMock()
+
+        mock_inline_editor = MagicMock()
+        mock_inline_editor.get_component_data.return_value = {"Components": {"Battery": {}}}
+        editor.inline_component_editor = mock_inline_editor
+        editor._updating_inline_editor = True  # simulate re-entry
+
+        editor._on_component_data_changed()
+
+        parameter_editor.update_vehicle_components.assert_not_called()
+        parameter_editor.refresh_current_step_computed_parameters.assert_not_called()
+        editor.repopulate_parameter_table.assert_not_called()

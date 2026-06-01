@@ -34,7 +34,7 @@ from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeD
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_parameter_editor import ExperimentChoice, ParameterEditor
+from ardupilot_methodic_configurator.data_model_parameter_editor import ComponentEditorDeps, ExperimentChoice, ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
@@ -45,6 +45,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     show_info_popup,
     show_warning_popup,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
@@ -249,6 +250,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._tempcal_imu_progress_window: ProgressWindow | None = None
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
+        self.inline_component_editor: ComponentEditorWindow | None = None
+        self._inline_component_name: str | None = None
+        self._updating_inline_editor: bool = False
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -274,13 +278,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.documentation_frame = DocumentationFrame(self.main_frame, self.parameter_editor)
         self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
 
+        # Placeholder frame for the optional inline component editor.
+        # It lives between the documentation frame and the parameter table.
+        # Content is populated/cleared by _update_inline_component_editor().
+        # Not packed initially; _update_inline_component_editor() will pack/unpack as needed.
+        self.inline_component_container = ttk.LabelFrame(self.main_frame)
+
         self._create_parameter_area_widgets()
 
         # Resize window height to ensure all widgets, including the skip button, are fully visible
         # as some Linux Window managers like KDE, like to change font sizes and padding.
         # So we need to dynamically accommodate for that after placing the widgets
         self.root.update_idletasks()
-        req_height = self.root.winfo_reqheight()
+        req_height = max(self.root.winfo_reqheight(), round(820 * self.dpi_scaling_factor))
         self.root.geometry(f"{round(990 * self.dpi_scaling_factor)}x{req_height}")
 
         # Set up startup notification for the main application window
@@ -1028,6 +1038,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.repopulate_parameter_table()
             self._update_skip_button_state()
 
+            # Update inline component editor for the current step
+            self._update_inline_component_editor(self.parameter_editor.get_current_component())
+
             # Display optional instruction step
             popup_data = self.parameter_editor.get_instructions_popup(final_file)
             if popup_data:
@@ -1081,6 +1094,65 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return  # no file was yet selected, so skip it
         # Re-populate the table with the new parameters
         self.parameter_editor_table.repopulate_table(self.show_only_differences.get(), self.gui_complexity)
+
+    def _on_component_data_changed(self) -> None:
+        """Called when a field in the inline component editor is changed by the user."""
+        if self._updating_inline_editor:
+            return  # prevent re-entrancy when repopulate_parameter_table triggers widget events
+        if self.inline_component_editor is None:
+            return  # callback fired without an active editor; nothing to sync
+        editor_data = self.inline_component_editor.get_component_data()
+        if "Components" not in editor_data:
+            return  # no component data to sync
+        self._updating_inline_editor = True
+        try:
+            # Atomically replace the in-memory components so derived-parameter expressions
+            # see the updated values when refresh_current_step_computed_parameters() runs.
+            self.parameter_editor.update_vehicle_components(editor_data["Components"])
+            self.parameter_editor.refresh_current_step_computed_parameters()
+            self.repopulate_parameter_table()
+        finally:
+            self._updating_inline_editor = False
+
+    def _update_inline_component_editor(self, component_name: str | None) -> None:
+        """Show or hide the inline component editor based on the current step's component attribute."""
+        # Do NOT short-circuit when component_name == self._inline_component_name.
+        # The in-memory component dict may have been reverted or saved since the last build
+        # (e.g. user declines to save Battery edits, then navigates to another step that also
+        # shows Battery).  Widget StringVars are populated once during populate_single_component
+        # and have no live binding to the dict, so a revert leaves them showing stale values
+        # unless we always rebuild.  The single-component rebuild is cheap (~10-20 widgets).
+
+        # Destroy any existing inline editor content.
+        for child in self.inline_component_container.winfo_children():
+            child.destroy()
+        self.inline_component_editor = None
+        self._inline_component_name = None
+
+        if component_name is None:
+            # Hide the container when no inline component editor is required.
+            self.inline_component_container.configure(text="")
+            self.inline_component_container.pack_forget()
+            return
+
+        # Show (or re-show) the container with the new component name.
+        self.inline_component_container.configure(text=_(component_name))
+        if not self.inline_component_container.winfo_ismapped():
+            self.inline_component_container.pack(
+                side=tk.TOP, fill="x", expand=False, padx=(4, 4), before=self.parameter_area_container
+            )
+
+        deps: ComponentEditorDeps = self.parameter_editor.get_component_editor_deps()
+        editor = ComponentEditorWindow(
+            __version__,
+            deps.local_filesystem,
+            deps.fc_parameters,
+            embedded_parent_frame=self.inline_component_container,
+            on_component_change=self._on_component_data_changed,
+        )
+        editor.populate_single_component(component_name)
+        self.inline_component_editor = editor
+        self._inline_component_name = component_name
 
     def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table()
