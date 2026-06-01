@@ -24,7 +24,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
 from time import time
-from typing import Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -2198,6 +2198,21 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def get_plugin(self, filename: str) -> Optional[dict]:
         return self._local_filesystem.get_plugin(filename)
+
+    def get_current_component(self) -> Optional[str]:
+        """Get the component name associated with the current configuration step, or None."""
+        return self._local_filesystem.get_component(self.current_file)
+
+    def refresh_current_step_derived_parameters(self) -> None:
+        """Recompute derived parameters for the current step (e.g., after component data changed)."""
+        self._repopulate_configuration_step_parameters()
+
+    def save_vehicle_components(self) -> tuple[bool, str]:
+        """Save the vehicle components data to disk."""
+        vehicle_components_data = self._local_filesystem.vehicle_components_fs.data or {}
+        return self._local_filesystem.save_vehicle_components_json_data(
+            cast("dict[Any, Any]", vehicle_components_data), self._local_filesystem.vehicle_dir
+        )
 
     def get_instructions_popup(self, filename: str) -> Optional[dict]:
         """Get the optional instructions popup data for a given configuration step."""

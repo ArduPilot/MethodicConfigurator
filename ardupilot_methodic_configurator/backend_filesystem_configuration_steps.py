@@ -618,6 +618,21 @@ class ConfigurationSteps:
 
         return sorted_phases
 
+    def get_component(self, selected_file: str) -> Optional[str]:
+        """
+        Get the component name for the selected file.
+
+        Args:
+            selected_file: The filename to get component info for
+
+        Returns:
+            The component name string if the step has a 'component' attribute, None otherwise
+
+        """
+        if selected_file in self.configuration_steps:
+            return self.configuration_steps[selected_file].get("component")
+        return None
+
     def get_plugin(self, selected_file: str) -> Optional[dict]:
         """
         Get the plugin configuration for the selected file.

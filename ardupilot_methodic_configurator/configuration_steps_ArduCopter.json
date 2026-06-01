@@ -164,6 +164,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "Frame",
             "auto_changed_by": "",
             "derived_parameters": {
                 "FRAME_CLASS": { "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
@@ -180,6 +181,7 @@
             "external_tool_text": "EdgeTX Companion",
             "external_tool_url": "https://edgetx.org/getedgetx/",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "RC Receiver",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["FS_THR_VALUE", "RC_.*"],
             "derived_parameters": {
@@ -199,6 +201,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "RC Controller",
             "auto_changed_by": "",
             "derived_parameters": {
                 "RC5_OPTION": { "if": "vehicle_components['RC Receiver']['FC Connection']['Protocol'] == 'ExpressLRS'", "New Value": "1", "Change Reason": "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)" }
@@ -215,6 +218,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "Telemetry",
             "auto_changed_by": "",
             "rename_connection": "vehicle_components['Telemetry']['FC Connection']['Type']",
             "old_filenames": ["06_telemetry.param"]
@@ -229,6 +233,7 @@
             "external_tool_text": "BLHeliSuite32",
             "external_tool_url": "https://www.mediafire.com/file/fj1p9qlbzo5bl5g/BLHeliSuite32_32.9.0.6.zip/file",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "ESC",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["SERVO_BLH_TRATE"],
             "derived_parameters": {
@@ -253,6 +258,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "Battery Monitor",
             "auto_changed_by": "",
             "derived_parameters": {
                 "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
@@ -283,6 +289,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "Battery",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BATT.*"],
             "forced_parameters": {
@@ -317,6 +324,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "GNSS Receiver",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "GPS.*", "GNSS.*"],
             "derived_parameters": {
@@ -336,6 +344,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
+            "component": "Propellers",
             "auto_changed_by": "",
             "forced_parameters": {
                 "ATC_RAT_PIT_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
@@ -463,6 +472,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "40% mandatory (60% optional)",
+            "component": "Motors",
             "auto_changed_by": "",
             "derived_parameters": {
                 "ESC_HW_POLES": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'", "New Value": "vehicle_components['Motors']['Specifications']['Poles']", "Change Reason": "Specified in component editor window" },

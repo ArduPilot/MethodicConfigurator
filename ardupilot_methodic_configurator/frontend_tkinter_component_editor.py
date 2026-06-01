@@ -18,7 +18,7 @@ from argparse import ArgumentParser, Namespace
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
-from typing import Union
+from typing import Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -62,8 +62,22 @@ def argument_parser() -> Namespace:
 class ComponentEditorWindow(ComponentEditorWindowBase):
     """Validates the user input and handles user interactions for editing component configurations."""
 
-    def __init__(self, version: str, local_filesystem: LocalFilesystem, fc_parameters: dict[str, float]) -> None:
-        ComponentEditorWindowBase.__init__(self, version, local_filesystem, fc_parameters)
+    def __init__(
+        self,
+        version: str,
+        local_filesystem: LocalFilesystem,
+        fc_parameters: dict[str, float],
+        embedded_parent_frame: Optional[tk.Widget] = None,
+        on_component_change: Optional[Callable] = None,
+    ) -> None:
+        ComponentEditorWindowBase.__init__(
+            self,
+            version,
+            local_filesystem,
+            fc_parameters,
+            embedded_parent_frame=embedded_parent_frame,
+            on_component_change=on_component_change,
+        )
         # when only read from file and no FC is connected
         mcu = self.data_model.get_component_value(("Flight Controller", "Specifications", "MCU Series"))
         if mcu and isinstance(mcu, str):
@@ -446,6 +460,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if should_update_data_model and value in allowed_values:
             self.data_model.set_component_value(path, value)
+            self._trigger_change_callback()
 
         if value not in allowed_values:
             if (  # this is complicated because we only want to issue error messages in particular cases
@@ -488,6 +503,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
 
         if is_focusout_event:
             self.data_model.set_component_value(path, value)
+            self._trigger_change_callback()
         entry.configure(style="entry_input_valid.TEntry")
         return True
 

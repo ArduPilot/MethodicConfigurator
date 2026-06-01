@@ -45,6 +45,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     show_info_popup,
     show_warning_popup,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
@@ -249,6 +250,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._tempcal_imu_progress_window: ProgressWindow | None = None
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
+        self.inline_component_editor: ComponentEditorWindow | None = None
+        self._inline_component_name: str | None = None
 
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator ") + __version__ + _(" - Parameter file editor and uploader")
@@ -273,6 +276,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Create a DocumentationFrame object for the Documentation Content
         self.documentation_frame = DocumentationFrame(self.main_frame, self.parameter_editor)
         self.documentation_frame.documentation_frame.pack(side=tk.TOP, fill="x", expand=False, pady=(2, 2), padx=(4, 4))
+
+        # Placeholder frame for the optional inline component editor.
+        # It lives between the documentation frame and the parameter table.
+        # Content is populated/cleared by _update_inline_component_editor().
+        self.inline_component_container = ttk.LabelFrame(self.main_frame)
+        self.inline_component_container.pack(side=tk.TOP, fill="x", expand=False, padx=(4, 4))
 
         self._create_parameter_area_widgets()
 
@@ -1028,6 +1037,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.repopulate_parameter_table()
             self._update_skip_button_state()
 
+            # Update inline component editor for the current step
+            self._update_inline_component_editor(self.parameter_editor.get_current_component())
+
             # Display optional instruction step
             popup_data = self.parameter_editor.get_instructions_popup(final_file)
             if popup_data:
@@ -1082,6 +1094,45 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         # Re-populate the table with the new parameters
         self.parameter_editor_table.repopulate_table(self.show_only_differences.get(), self.gui_complexity)
 
+    def _on_component_data_changed(self) -> None:
+        """Called when a field in the inline component editor is changed by the user."""
+        self.parameter_editor.refresh_current_step_derived_parameters()
+        self.repopulate_parameter_table()
+
+    def _update_inline_component_editor(self, component_name: Optional[str]) -> None:  # noqa: UP045
+        """Show or hide the inline component editor based on the current step's component attribute."""
+        if component_name == getattr(self, "_inline_component_name", None):
+            # Already showing the correct component (or None); nothing to do.
+            return
+
+        # Destroy any existing inline editor content.
+        container = getattr(self, "inline_component_container", None)
+        if container is None:
+            return
+        for child in container.winfo_children():
+            child.destroy()
+        self.inline_component_editor = None
+        self._inline_component_name = None
+
+        if component_name is None:
+            # Hide the label frame border when there is no component to show.
+            container.configure(text="")
+            return
+
+        # Create the embedded component editor inside the container frame.
+        container.configure(text=_(component_name))
+        self.inline_component_container = container
+        editor = ComponentEditorWindow(
+            __version__,
+            self.parameter_editor._local_filesystem,  # noqa: SLF001
+            self.parameter_editor.fc_parameters,
+            embedded_parent_frame=self.inline_component_container,
+            on_component_change=self._on_component_data_changed,
+        )
+        editor.populate_single_component(component_name)
+        self.inline_component_editor = editor
+        self._inline_component_name = component_name
+
     def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table()
 
@@ -1089,6 +1140,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
             only_upload_changed_parameters_usage_popup(self.root)
         self.write_changes_to_intermediate_parameter_file()
+        # Save vehicle components if the inline component editor is active
+        if getattr(self, "inline_component_editor", None) is not None:
+            self.parameter_editor.save_vehicle_components()
         selected_params: ParDict = self.parameter_editor_table.get_upload_selected_params(self.gui_complexity)
         precondition_payload: dict[str, object] = dict(selected_params)
         if not self.parameter_editor.ensure_upload_preconditions(precondition_payload, self.ui.show_warning):
