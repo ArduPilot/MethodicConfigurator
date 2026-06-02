@@ -1107,24 +1107,43 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Destroy any existing inline editor content.
         container = getattr(self, "inline_component_container", None)
-        if container is None:
-            return
-        for child in container.winfo_children():
-            child.destroy()
+        if container is not None:
+            for child in container.winfo_children():
+                child.destroy()
         self.inline_component_editor = None
         self._inline_component_name = None
 
         if component_name is None:
-            # Hide the label frame border when there is no component to show.
-            container.configure(text="")
+            # Hide the container when no inline component editor is required.
+            if container is not None:
+                if container.winfo_children():
+                    for child in container.winfo_children():
+                        child.destroy()
+                container.configure(text="")
+                container.pack_forget()
+            self._inline_component_name = None
+            self.inline_component_editor = None
             return
 
-        # Create the embedded component editor inside the container frame.
-        container.configure(text=_(component_name))
-        self.inline_component_container = container
+        # Reuse the existing container if present, otherwise create it anew.
+        if container is None:
+            container = ttk.LabelFrame(self.main_frame, text=_(component_name))
+            if getattr(self, "parameter_area_container", None) is not None:
+                container.pack(side=tk.TOP, fill="x", expand=False, padx=(4, 4), before=self.parameter_area_container)
+            else:
+                container.pack(side=tk.TOP, fill="x", expand=False, padx=(4, 4))
+            self.inline_component_container = container
+        else:
+            container.configure(text=_(component_name))
+            if not container.winfo_ismapped():
+                if getattr(self, "parameter_area_container", None) is not None:
+                    container.pack(side=tk.TOP, fill="x", expand=False, padx=(4, 4), before=self.parameter_area_container)
+                else:
+                    container.pack(side=tk.TOP, fill="x", expand=False, padx=(4, 4))
+
         editor = ComponentEditorWindow(
             __version__,
-            self.parameter_editor._local_filesystem,  # noqa: SLF001
+            self.parameter_editor._local_filesystem,  # noqa: SLF001 # pylint: disable=protected-access
             self.parameter_editor.fc_parameters,
             embedded_parent_frame=self.inline_component_container,
             on_component_change=self._on_component_data_changed,

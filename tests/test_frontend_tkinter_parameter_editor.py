@@ -516,6 +516,23 @@ class TestWidgetFactoryMethods:
             assert call.args[0] is not only_changed_checkbox
             assert call.args[0] is not annotate_checkbox
 
+    def test_update_inline_component_editor_hides_container_when_component_is_removed(
+        self, parameter_editor: MagicMock
+    ) -> None:
+        editor = _create_editor(parameter_editor)
+        editor.inline_component_container = MagicMock(
+            pack=MagicMock(), pack_forget=MagicMock(), winfo_children=MagicMock(return_value=[]), configure=MagicMock()
+        )
+        editor._inline_component_name = "Motor"
+        editor.inline_component_editor = MagicMock()
+
+        editor._update_inline_component_editor(None)
+
+        editor.inline_component_container.pack_forget.assert_called_once()
+        editor.inline_component_container.configure.assert_called_once_with(text="")
+        assert editor.inline_component_editor is None
+        assert editor._inline_component_name is None
+
     def test_create_parameter_area_widgets_sets_skip_button_state(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
         editor.main_frame = MagicMock()
