@@ -237,6 +237,7 @@
             },
             "delete_parameters": {
                 "ESC_HW_POLES": {},
+                "KDE_NPOLE": {},
                 "SERVO_BLH_POLES": {},
                 "SERVO_FTW_POLES": {}
             },
@@ -256,10 +257,7 @@
             "auto_changed_by": "",
             "derived_parameters": {
                 "BATT_MONITOR": { "New Value": "vehicle_components['Battery Monitor']['FC Connection']['Protocol']", "Change Reason": "Selected in component editor window" },
-                "BATT_I2C_BUS": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] in ['I2C1', 'I2C2', 'I2C3', 'I2C4']", "New Value": "1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 3 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C4' else 0", "Change Reason": "Selected in component editor window" },
-                "BATT_AMP_OFFSET": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'Analog'" },
-                "BATT_AMP_PERVLT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'Analog'" },
-                "BATT_VOLT_MULT": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'Analog'" }
+                "BATT_I2C_BUS": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] in ['I2C1', 'I2C2', 'I2C3', 'I2C4']", "New Value": "1 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C2' else 2 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C3' else 3 if vehicle_components['Battery Monitor']['FC Connection']['Type'] == 'I2C4' else 0", "Change Reason": "Selected in component editor window" }
             },
             "delete_parameters": {
                 "BATT_I2C_BUS": { "if": "vehicle_components['Battery Monitor']['FC Connection']['Type'] not in ['I2C1', 'I2C2', 'I2C3', 'I2C4']" },
@@ -486,6 +484,13 @@
             "derived_parameters": {
                 "MOT_PWM_MAX": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "2000", "Change Reason": "Digital ESC protocol maximum is per definition 2000" },
                 "MOT_PWM_MIN": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "1000", "Change Reason": "Digital ESC protocol minimum is per definition 1000" }
+            },
+            "delete_parameters": {
+                "ESC_HW_POLES": {},
+                "KDE_NPOLE": {},
+                "SERVO_BLH_POLES": {},
+                "SERVO_BLH_TRATE": {},
+                "SERVO_FTW_POLES": {}
             },
             "old_filenames": ["14_motor.param", "15_motor.param"],
             "plugin": {
