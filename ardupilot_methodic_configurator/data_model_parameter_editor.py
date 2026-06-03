@@ -1255,12 +1255,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return percentage <= threshold_pct
 
-    def get_next_non_optional_file(self, current_file: Optional[str] = None) -> Optional[str]:
+    def get_next_non_optional_file(self, current_file: Optional[str] = None, gui_complexity: str = "simple") -> Optional[str]:
         """
         Get the next non-optional configuration file in sequence.
 
         Args:
             current_file: The current parameter file being processed, defaults to self.current_file.
+            gui_complexity: The GUI complexity setting ("simple" or other).
 
         Returns:
             Optional[str]: Next non-optional file name, or None if at the end.
@@ -1276,10 +1277,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         try:
             next_file_index = files.index(current_file) + 1
 
-            # Skip files with mandatory_level == 0 (completely optional)
             while next_file_index < len(files):
                 next_file = files[next_file_index]
-                if not self.is_configuration_step_optional(next_file, threshold_pct=0):
+                if not self.is_configuration_step_optional(next_file, threshold_pct=20 if gui_complexity == "simple" else -1):
                     return next_file
                 next_file_index += 1
 

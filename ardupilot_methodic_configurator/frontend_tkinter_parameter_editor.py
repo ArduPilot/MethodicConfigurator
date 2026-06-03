@@ -1159,7 +1159,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.write_changes_to_intermediate_parameter_file()
 
         # Use ParameterEditor to get the next non-optional file
-        next_file = self.parameter_editor.get_next_non_optional_file()
+        next_file = self.parameter_editor.get_next_non_optional_file(current_file=None, gui_complexity=self.gui_complexity)
 
         if next_file is None:
             # No more files to process, write summary and close
