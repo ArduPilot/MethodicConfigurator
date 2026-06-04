@@ -67,6 +67,7 @@ class MockConfiguration(NamedTuple):
     patch_theme_setup: bool = True
     patch_dpi_detection: bool = True
     dpi_scaling_factor: float = 1.0
+    patch_monitor_bounds: bool = True
 
 
 # ==================== SHARED TKINTER FIXTURES ====================
@@ -157,6 +158,13 @@ def mock_tkinter_context() -> Callable[[Optional[MockConfiguration]], tuple[cont
         if config.patch_tkinter:
             patches.extend([patch("tkinter.Tk"), patch("tkinter.Toplevel")])
             patches.append(patch.object(BaseWindow, "center_window_on_screen"))
+            if config.patch_monitor_bounds:
+                patches.append(
+                    patch(
+                        "ardupilot_methodic_configurator.frontend_tkinter_base_window.get_last_known_monitor_bounds",
+                        return_value=None,
+                    )
+                )
 
         if config.patch_icon_setup:
             patches.append(patch.object(BaseWindow, "_setup_application_icon"))
