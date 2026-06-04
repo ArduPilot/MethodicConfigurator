@@ -216,7 +216,7 @@ class ConfigurationStepProcessor:
 
         # Calculate rename operations WITHOUT mutating file_parameters
         try:
-            duplicated_parameters, renamed_pairs = self._calculate_connection_rename_operations(
+            duplicated_parameters, renamed_pairs = self.calculate_connection_rename_operations(
                 self.local_filesystem.file_parameters[selected_file], new_connection_prefix, variables
             )
         except ConfigurationStepEvalError as exc:
@@ -331,7 +331,7 @@ class ConfigurationStepProcessor:
         return renames
 
     @staticmethod
-    def _calculate_connection_rename_operations(
+    def calculate_connection_rename_operations(
         parameters: ParDict, new_connection_prefix: str, variables: Optional[dict[str, Any]] = None
     ) -> tuple[set[str], list[tuple[str, str]]]:
         """
