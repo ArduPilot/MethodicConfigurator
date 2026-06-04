@@ -15,6 +15,7 @@ from math import log
 from types import MappingProxyType
 from typing import Union, cast
 
+from packaging.version import Version
 from simpleeval import EvalWithCompoundTypes, InvalidExpression
 
 SAFE_FUNCTIONS = MappingProxyType(
@@ -25,6 +26,7 @@ SAFE_FUNCTIONS = MappingProxyType(
         "abs": abs,
         "len": len,
         "log": log,
+        "Version": Version,
     }
 )
 
@@ -47,7 +49,8 @@ def safe_evaluate(expression: str, variables: dict) -> Union[int, float, str]:
     Evaluate a parameter expression safely using simpleeval.
 
     Only arithmetic, comparisons, ternary conditionals, dict lookups,
-    and whitelisted functions (max, min, round, abs, len, log) are allowed.
+    and whitelisted functions (max, min, round, abs, len, log, Version) are allowed.
+    Use Version() for robust firmware version comparisons (e.g. Version('4.10') > Version('4.6')).
     Any attempt to call __import__, access dunder attributes, or use
     disallowed constructs will raise an exception.
 
