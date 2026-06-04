@@ -38,6 +38,32 @@ class MonitorBounds(NamedTuple):
 # Uses WeakKeyDictionary so cache entries are automatically removed when toplevel is garbage collected.
 _monitor_bounds_cache: WeakKeyDictionary[tk.Misc, MonitorBounds] = WeakKeyDictionary()
 
+# Last monitor bounds recorded from a live Tk window (e.g. just before it closes).
+# Used as a positioning fallback for parentless dialogs shown after the main window is gone.
+_last_known_monitor_bounds: Optional[MonitorBounds] = None
+
+
+def get_last_known_monitor_bounds() -> Optional[MonitorBounds]:
+    """Return the last monitor bounds recorded from a live Tk window, or None."""
+    return _last_known_monitor_bounds
+
+
+def remember_monitor_bounds(widget: tk.Misc) -> None:
+    """
+    Snapshot the monitor that hosts *widget* for use by later parentless dialogs.
+
+    Typically bound to the root window's <Configure> event so the active monitor
+    is always up-to-date. Skips the update when the bounds haven't changed to
+    avoid redundant work on every resize/move event.
+    """
+    global _last_known_monitor_bounds  # noqa: PLW0603 # pylint: disable=global-statement
+    try:
+        bounds = get_monitor_bounds(widget)
+    except tk.TclError:
+        return
+    if _is_valid_monitor_bounds(bounds) and bounds != _last_known_monitor_bounds:
+        _last_known_monitor_bounds = bounds
+
 
 def _is_valid_monitor_bounds(bounds: Optional[MonitorBounds]) -> bool:
     """
@@ -297,6 +323,44 @@ def _monitor_bounds_macos(widget: tk.Misc) -> Optional[MonitorBounds]:
     return _find_screen_containing_point(screens, center_x, center_y, primary_height)
 
 
+def _monitor_bounds_linux(widget: tk.Misc) -> Optional[MonitorBounds]:
+    """Use screeninfo + pointer position to find the monitor containing the widget on Linux."""
+    try:
+        from screeninfo import get_monitors  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+    except ImportError:
+        return None
+
+    try:
+        # Prefer widget position; fall back to mouse pointer for unmapped (withdrawn) widgets
+        try:
+            toplevel = widget.winfo_toplevel()
+            x = toplevel.winfo_rootx() + toplevel.winfo_width() // 2
+            y = toplevel.winfo_rooty() + toplevel.winfo_height() // 2
+            # Unmapped windows report 0,0 — use pointer instead
+            if x == 0 and y == 0:
+                x = widget.winfo_pointerx()
+                y = widget.winfo_pointery()
+        except tk.TclError:
+            x = widget.winfo_pointerx()
+            y = widget.winfo_pointery()
+
+        monitors = get_monitors()
+    except Exception:  # pylint: disable=broad-exception-caught
+        return None
+
+    # Find monitor containing the point
+    for monitor in monitors:
+        if monitor.x <= x < monitor.x + monitor.width and monitor.y <= y < monitor.y + monitor.height:
+            return MonitorBounds(monitor.x, monitor.y, monitor.x + monitor.width, monitor.y + monitor.height)
+
+    # Fall back to primary monitor
+    if monitors:
+        m = monitors[0]
+        return MonitorBounds(m.x, m.y, m.x + m.width, m.y + m.height)
+
+    return None
+
+
 def get_monitor_bounds(widget: tk.Misc) -> MonitorBounds:
     """
     Return validated cached monitor bounds using platform APIs with Tk fallback.
@@ -348,6 +412,9 @@ def get_monitor_bounds(widget: tk.Misc) -> MonitorBounds:
         bounds = _get_validated_bounds(_monitor_bounds_windows(widget))
     elif platform_system() == "Darwin":
         bounds = _get_validated_bounds(_monitor_bounds_macos(widget))
+    else:
+        # Linux: use screeninfo + pointer position to find the correct monitor
+        bounds = _get_validated_bounds(_monitor_bounds_linux(widget))
 
     # Fallback to Tk virtual root if platform API failed
     if bounds is None:
@@ -365,13 +432,21 @@ def get_monitor_bounds(widget: tk.Misc) -> MonitorBounds:
     return bounds
 
 
+def _make_dialog_root() -> tk.Tk:
+    """Create a hidden Tk root positioned on the last known monitor for dialog centering."""
+    root = tk.Tk(className="ArduPilotMethodicConfigurator")
+    ttk.Style().theme_use("alt")
+    if _last_known_monitor_bounds is not None:
+        b = _last_known_monitor_bounds
+        root.geometry(f"+{(b.left + b.right) // 2}+{(b.top + b.bottom) // 2}")
+        root.update_idletasks()  # commit geometry to X11 before withdrawing
+    root.withdraw()
+    return root
+
+
 def show_error_message(title: str, message: str, root: Optional[tk.Tk] = None) -> None:
     if root is None:
-        root = tk.Tk(className="ArduPilotMethodicConfigurator")
-        # Set the theme to 'alt'
-        style = ttk.Style()
-        style.theme_use("alt")
-        root.withdraw()  # Hide the main window
+        root = _make_dialog_root()
         messagebox.showerror(title, message)
         root.destroy()
     else:
@@ -380,11 +455,7 @@ def show_error_message(title: str, message: str, root: Optional[tk.Tk] = None) -
 
 def show_warning_message(title: str, message: str, root: Optional[tk.Tk] = None) -> None:
     if root is None:
-        root = tk.Tk(className="ArduPilotMethodicConfigurator")
-        # Set the theme to 'alt'
-        style = ttk.Style()
-        style.theme_use("alt")
-        root.withdraw()  # Hide the main window
+        root = _make_dialog_root()
         messagebox.showwarning(title, message)
         root.destroy()
     else:
@@ -393,11 +464,7 @@ def show_warning_message(title: str, message: str, root: Optional[tk.Tk] = None)
 
 def ask_yesno_message(title: str, message: str, root: Optional[tk.Tk] = None) -> bool:
     if root is None:
-        root = tk.Tk(className="ArduPilotMethodicConfigurator")
-        # Set the theme to 'alt'
-        style = ttk.Style()
-        style.theme_use("alt")
-        root.withdraw()  # Hide the main window
+        root = _make_dialog_root()
         result = messagebox.askyesno(title, message)
         root.destroy()
         return result

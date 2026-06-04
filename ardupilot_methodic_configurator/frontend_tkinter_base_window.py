@@ -35,6 +35,7 @@ from screeninfo import get_monitors
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_size
+from ardupilot_methodic_configurator.frontend_tkinter_show import get_last_known_monitor_bounds, remember_monitor_bounds
 
 
 def is_debugging() -> bool:
@@ -104,6 +105,20 @@ class BaseWindow:
             self.root = tk.Tk(className="ArduPilotMethodicConfigurator")
             # Only set icon for main windows, and only outside test environments
             self._setup_application_icon()
+            # Position on the last used monitor so successive sub-applications
+            # open on the same screen the user last worked on.
+            b = get_last_known_monitor_bounds()
+            if b is not None:
+                self.root.geometry(f"+{(b.left + b.right) // 2}+{(b.top + b.bottom) // 2}")
+            # Track the active monitor as the window moves so the next sub-application
+            # opens on the same screen. <Configure> fires while the window is alive
+            # (unlike <Destroy> which fires during teardown when widget state is unreliable).
+            # Child <Configure> events propagate to the toplevel bind tag but e.widget
+            # refers to the originating child, so the guard correctly filters them out.
+            self.root.bind(
+                "<Configure>",
+                lambda e: remember_monitor_bounds(self.root) if e.widget is self.root else None,
+            )
 
         # Detect DPI scaling for HiDPI support
         self.dpi_scaling_factor = self._get_dpi_scaling_factor()
