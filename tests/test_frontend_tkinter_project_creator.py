@@ -49,6 +49,10 @@ def configured_creator_window(mock_project_manager) -> VehicleProjectCreatorWind
         patch.object(BaseWindow, "_setup_theme_and_styling"),
         patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0),
         patch.object(BaseWindow, "center_window_on_screen"),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_base_window.get_last_known_monitor_bounds",
+            return_value=None,
+        ),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Label"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.LabelFrame"),
         patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Button"),
@@ -270,6 +274,10 @@ class TestVehicleProjectCreatorWindow:
             patch.object(BaseWindow, "_setup_theme_and_styling"),
             patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0),
             patch.object(BaseWindow, "center_window_on_screen"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_base_window.get_last_known_monitor_bounds",
+                return_value=None,
+            ),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Label"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.LabelFrame"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Button"),

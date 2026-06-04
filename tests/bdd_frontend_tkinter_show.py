@@ -26,8 +26,11 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
     TOOLTIP_SHOW_DELAY_MS,
     MonitorBounds,
     Tooltip,
+    _make_dialog_root,
     calculate_tooltip_position,
+    get_last_known_monitor_bounds,
     get_monitor_bounds,
+    remember_monitor_bounds,
     show_error_message,
     show_no_connection_error,
     show_no_param_files_error,
@@ -415,7 +418,7 @@ class TestMonitorBoundsDetection:
             ("Darwin", MonitorBounds(-100, 0, 1180, 900), MonitorBounds(0, 0, 1920, 1080), MonitorBounds(-100, 0, 1180, 900)),
             # macOS with failed native API falls back to Tk
             ("Darwin", None, MonitorBounds(0, 0, 1920, 1080), MonitorBounds(0, 0, 1920, 1080)),
-            # Linux always uses Tk fallback
+            # Linux: _monitor_bounds_linux returns None (simulated), falls back to Tk
             ("Linux", None, MonitorBounds(0, 0, 1920, 1080), MonitorBounds(0, 0, 1920, 1080)),
         ],
     )
@@ -449,6 +452,10 @@ class TestMonitorBoundsDetection:
                 return_value=platform_api_returns if platform == "Darwin" else None,
             ),
             patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_linux",
+                return_value=platform_api_returns if platform == "Linux" else None,
+            ),
+            patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_tk",
                 return_value=fallback_returns,
             ),
@@ -476,6 +483,10 @@ class TestMonitorBoundsDetection:
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_linux",
+                return_value=None,
+            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_tk",
                 return_value=expected_bounds,
@@ -510,6 +521,10 @@ class TestMonitorBoundsDetection:
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_linux",
+                return_value=None,
+            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_tk",
                 side_effect=[primary_bounds, secondary_bounds],
@@ -548,6 +563,10 @@ class TestMonitorBoundsDetection:
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
             patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_linux",
+                return_value=None,
+            ),
+            patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_tk",
                 side_effect=[top_monitor_bounds, bottom_monitor_bounds],
             ) as mock_tk,
@@ -578,6 +597,10 @@ class TestMonitorBoundsDetection:
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_show.platform_system", return_value="Linux"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_linux",
+                return_value=None,
+            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_show._monitor_bounds_tk",
                 return_value=fallback_bounds,
@@ -652,6 +675,344 @@ class TestMonitorBoundsDetection:
 
         # Assert: Large bounds accepted
         assert result == large_bounds
+
+
+class TestLinuxMonitorBoundsDetection:
+    """Test _monitor_bounds_linux(), the screeninfo-based Linux helper."""
+
+    def _make_monitor(self, x: int, y: int, width: int, height: int) -> MagicMock:
+        m = MagicMock()
+        m.x = x
+        m.y = y
+        m.width = width
+        m.height = height
+        return m
+
+    def test_system_returns_monitor_containing_widget_position(self) -> None:
+        """
+        System returns bounds of the monitor that contains the widget's centre point.
+
+        GIVEN: Two monitors and a widget centred on the second monitor
+        WHEN: _monitor_bounds_linux is called
+        THEN: The bounds of the second monitor are returned
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_show import (  # pylint: disable=C0415 # noqa: PLC0415
+            _monitor_bounds_linux,
+        )
+
+        primary = self._make_monitor(0, 0, 1920, 1080)
+        secondary = self._make_monitor(1920, 0, 1920, 1080)
+        widget = MagicMock()
+        toplevel = MagicMock()
+        toplevel.winfo_rootx.return_value = 2100  # inside secondary
+        toplevel.winfo_rooty.return_value = 300
+        toplevel.winfo_width.return_value = 200
+        toplevel.winfo_height.return_value = 100
+        widget.winfo_toplevel.return_value = toplevel
+
+        with patch("screeninfo.get_monitors", return_value=[primary, secondary]):
+            result = _monitor_bounds_linux(widget)
+
+        assert result == MonitorBounds(1920, 0, 3840, 1080)
+
+    def test_system_falls_back_to_pointer_when_widget_is_at_origin(self) -> None:
+        """
+        System uses pointer coordinates when the widget reports (0, 0) (unmapped/withdrawn).
+
+        GIVEN: A widget whose toplevel reports centre (0, 0)
+        WHEN: _monitor_bounds_linux is called
+        THEN: Pointer coordinates are used to find the monitor instead
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_show import (  # pylint: disable=C0415 # noqa: PLC0415
+            _monitor_bounds_linux,
+        )
+
+        monitor = self._make_monitor(0, 0, 1920, 1080)
+        widget = MagicMock()
+        toplevel = MagicMock()
+        toplevel.winfo_rootx.return_value = 0
+        toplevel.winfo_rooty.return_value = 0
+        toplevel.winfo_width.return_value = 0
+        toplevel.winfo_height.return_value = 0
+        widget.winfo_toplevel.return_value = toplevel
+        widget.winfo_pointerx.return_value = 500
+        widget.winfo_pointery.return_value = 400
+
+        with patch("screeninfo.get_monitors", return_value=[monitor]):
+            result = _monitor_bounds_linux(widget)
+
+        assert result == MonitorBounds(0, 0, 1920, 1080)
+
+    def test_system_falls_back_to_primary_monitor_when_point_outside_all_monitors(self) -> None:
+        """
+        System returns the primary monitor bounds when the point falls outside every monitor.
+
+        GIVEN: A widget positioned outside all known monitor rectangles
+        WHEN: _monitor_bounds_linux is called
+        THEN: The first monitor's bounds are returned as a safe fallback
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_show import (  # pylint: disable=C0415 # noqa: PLC0415
+            _monitor_bounds_linux,
+        )
+
+        monitor = self._make_monitor(0, 0, 1920, 1080)
+        widget = MagicMock()
+        toplevel = MagicMock()
+        toplevel.winfo_rootx.return_value = 9999  # outside every monitor
+        toplevel.winfo_rooty.return_value = 9999
+        toplevel.winfo_width.return_value = 100
+        toplevel.winfo_height.return_value = 100
+        widget.winfo_toplevel.return_value = toplevel
+
+        with patch("screeninfo.get_monitors", return_value=[monitor]):
+            result = _monitor_bounds_linux(widget)
+
+        assert result == MonitorBounds(0, 0, 1920, 1080)
+
+    def test_system_returns_none_when_screeninfo_unavailable(self) -> None:
+        """
+        System returns None gracefully when screeninfo is not installed.
+
+        GIVEN: The screeninfo package is not available
+        WHEN: _monitor_bounds_linux is called
+        THEN: None is returned without raising
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_show import (  # pylint: disable=C0415 # noqa: PLC0415
+            _monitor_bounds_linux,
+        )
+
+        widget = MagicMock()
+        with patch.dict("sys.modules", {"screeninfo": None}):
+            result = _monitor_bounds_linux(widget)
+
+        assert result is None
+
+    def test_system_returns_none_when_widget_raises_tclerror(self) -> None:
+        """
+        System returns None gracefully when the widget's Tk calls raise TclError.
+
+        GIVEN: A destroyed widget that raises TclError on winfo_pointerx()
+        WHEN: _monitor_bounds_linux is called
+        THEN: None is returned without raising
+        """
+        from ardupilot_methodic_configurator.frontend_tkinter_show import (  # pylint: disable=C0415 # noqa: PLC0415
+            _monitor_bounds_linux,
+        )
+
+        monitor = self._make_monitor(0, 0, 1920, 1080)
+        widget = MagicMock()
+        widget.winfo_toplevel.side_effect = TclError("invalid command name")
+        widget.winfo_pointerx.side_effect = TclError("invalid command name")
+        widget.winfo_pointery.side_effect = TclError("invalid command name")
+
+        with patch("screeninfo.get_monitors", return_value=[monitor]):
+            result = _monitor_bounds_linux(widget)
+
+        assert result is None
+
+
+class TestMonitorStateTracking:
+    """Test the module-level last-known-monitor state used to position parentless dialogs."""
+
+    def setup_method(self) -> None:
+        """Reset module-level state before each test."""
+        import ardupilot_methodic_configurator.frontend_tkinter_show as m  # noqa: PLC0415 # pylint: disable=C0415
+
+        m._last_known_monitor_bounds = None  # pylint: disable=protected-access
+
+    def test_system_returns_none_before_any_window_is_tracked(self) -> None:
+        """
+        System returns None when no window has been tracked yet.
+
+        GIVEN: The application has just started and no window has been positioned
+        WHEN: get_last_known_monitor_bounds() is called
+        THEN: None is returned because no monitor has been recorded yet
+        """
+        assert get_last_known_monitor_bounds() is None
+
+    def test_system_records_monitor_bounds_when_widget_moves(self) -> None:
+        """
+        System records monitor bounds when remember_monitor_bounds is called with a live widget.
+
+        GIVEN: A widget that lives on a 1920x1080 monitor
+        WHEN: remember_monitor_bounds() is called
+        THEN: get_last_known_monitor_bounds() returns the monitor's bounds
+        """
+        expected = MonitorBounds(0, 0, 1920, 1080)
+        widget = MagicMock()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+            return_value=expected,
+        ):
+            remember_monitor_bounds(widget)
+
+        assert get_last_known_monitor_bounds() == expected
+
+    def test_system_does_not_update_state_when_bounds_are_unchanged(self) -> None:
+        """
+        System skips the update when bounds have not changed (avoids redundant work on <Configure>).
+
+        GIVEN: The last known bounds are already MonitorBounds(0, 0, 1920, 1080)
+        WHEN: remember_monitor_bounds() is called with the same bounds
+        THEN: The state object identity is unchanged (no redundant assignment)
+        """
+        first = MonitorBounds(0, 0, 1920, 1080)
+        widget = MagicMock()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+            return_value=first,
+        ):
+            remember_monitor_bounds(widget)
+
+        stored_after_first = get_last_known_monitor_bounds()
+
+        # Call again with identical bounds — should not re-assign
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+            return_value=MonitorBounds(0, 0, 1920, 1080),
+        ):
+            remember_monitor_bounds(widget)
+
+        assert get_last_known_monitor_bounds() is stored_after_first  # same object
+
+    def test_system_ignores_tclerror_from_destroyed_widget(self) -> None:
+        """
+        System silently ignores TclError when the widget is destroyed mid-flight.
+
+        GIVEN: A widget that raises TclError during get_monitor_bounds
+        WHEN: remember_monitor_bounds() is called
+        THEN: No exception propagates and the state is unchanged
+        """
+        widget = MagicMock()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+            side_effect=tk.TclError("invalid command name"),
+        ):
+            remember_monitor_bounds(widget)  # must not raise
+
+        assert get_last_known_monitor_bounds() is None
+
+    def test_system_ignores_degenerate_bounds_from_platform_api(self) -> None:
+        """
+        System does not store invalid bounds (e.g. 0x0 from a withdrawn window).
+
+        GIVEN: The platform API returns degenerate bounds with zero dimensions
+        WHEN: remember_monitor_bounds() is called
+        THEN: The state remains None because invalid bounds are rejected
+        """
+        degenerate = MonitorBounds(0, 0, 0, 0)
+        widget = MagicMock()
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+            return_value=degenerate,
+        ):
+            remember_monitor_bounds(widget)
+
+        assert get_last_known_monitor_bounds() is None
+
+    def test_system_updates_state_when_user_moves_window_to_another_monitor(self) -> None:
+        """
+        System updates the stored bounds when the user drags the window to a different monitor.
+
+        GIVEN: Bounds from monitor A were previously stored
+        WHEN: remember_monitor_bounds() is called with bounds from monitor B
+        THEN: The stored value reflects the new monitor
+        """
+        monitor_a = MonitorBounds(0, 0, 1920, 1080)
+        monitor_b = MonitorBounds(1920, 0, 3840, 1080)
+        widget = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+            return_value=monitor_a,
+        ):
+            remember_monitor_bounds(widget)
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_show.get_monitor_bounds",
+            return_value=monitor_b,
+        ):
+            remember_monitor_bounds(widget)
+
+        assert get_last_known_monitor_bounds() == monitor_b
+
+
+class TestDialogRootPositioning:
+    """Test _make_dialog_root() positions parentless dialogs on the last known monitor."""
+
+    def setup_method(self) -> None:
+        """Reset module-level state before each test."""
+        import ardupilot_methodic_configurator.frontend_tkinter_show as m  # noqa: PLC0415 # pylint: disable=C0415
+
+        m._last_known_monitor_bounds = None  # pylint: disable=protected-access
+
+    def test_system_creates_withdrawn_root_without_last_known_bounds(self, mock_tk: MagicMock) -> None:
+        """
+        System creates a withdrawn root even when no last-known bounds exist.
+
+        GIVEN: No monitor has been tracked yet (_last_known_monitor_bounds is None)
+        WHEN: _make_dialog_root() is called
+        THEN: A Tk root is created, the theme is applied, and the window is withdrawn
+        AND: No geometry call is made (we have no position hint)
+        """
+        mock_root = mock_tk.return_value
+        with patch("tkinter.ttk.Style"):
+            result = _make_dialog_root()
+
+        mock_root.withdraw.assert_called_once()
+        mock_root.geometry.assert_not_called()
+        assert result is mock_root
+
+    def test_system_positions_dialog_at_centre_of_last_known_monitor(self, mock_tk: MagicMock) -> None:
+        """
+        System positions the dialog root at the centre of the last known monitor.
+
+        GIVEN: The last known monitor bounds are (left=1920, top=0, right=3840, bottom=1080)
+        WHEN: _make_dialog_root() is called
+        THEN: geometry is set to place the window at the monitor centre (+2880+540)
+        """
+        import ardupilot_methodic_configurator.frontend_tkinter_show as m  # noqa: PLC0415 # pylint: disable=C0415
+
+        m._last_known_monitor_bounds = MonitorBounds(1920, 0, 3840, 1080)  # pylint: disable=protected-access
+
+        mock_root = mock_tk.return_value
+        with patch("tkinter.ttk.Style"):
+            _make_dialog_root()
+
+        # Centre: x=(1920+3840)//2=2880, y=(0+1080)//2=540
+        mock_root.geometry.assert_called_once_with("+2880+540")
+
+    def test_show_error_message_uses_make_dialog_root_when_no_root_provided(self, mock_tk: MagicMock) -> None:
+        """
+        show_error_message uses _make_dialog_root when no root is provided.
+
+        GIVEN: No existing Tk root is passed
+        WHEN: show_error_message() is called without a root argument
+        THEN: A new hidden root is created, the error dialog is shown, and the root is destroyed
+        """
+        with (
+            patch("tkinter.messagebox.showerror"),
+            patch("tkinter.ttk.Style"),
+        ):
+            show_error_message("Title", "Body")
+
+        mock_tk.return_value.destroy.assert_called_once()
+
+    def test_show_warning_message_uses_make_dialog_root_when_no_root_provided(self, mock_tk: MagicMock) -> None:
+        """
+        show_warning_message uses _make_dialog_root when no root is provided.
+
+        GIVEN: No existing Tk root is passed
+        WHEN: show_warning_message() is called without a root argument
+        THEN: A new hidden root is created, the warning dialog is shown, and the root is destroyed
+        """
+        with (
+            patch("tkinter.messagebox.showwarning"),
+            patch("tkinter.ttk.Style"),
+        ):
+            show_warning_message("Title", "Body")
+
+        mock_tk.return_value.destroy.assert_called_once()
 
 
 class TestTooltipFunctionality:  # pylint: disable=too-many-public-methods

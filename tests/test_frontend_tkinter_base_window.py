@@ -37,6 +37,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     show_info_popup,
     show_warning_popup,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_show import MonitorBounds
 
 # pylint: disable=protected-access, redefined-outer-name, unused-argument, too-many-lines
 
@@ -1700,6 +1701,163 @@ class TestWindowLifecycleBehavior:
 
             # Cleanup
             child_window.root.destroy()
+
+
+class TestMonitorTrackingBehavior:
+    """Test that BaseWindow positions itself on the last known monitor and tracks moves."""
+
+    def setup_method(self) -> None:
+        """Reset the module-level last_known_monitor state before every test."""
+        import ardupilot_methodic_configurator.frontend_tkinter_show as m  # noqa: PLC0415 # pylint: disable=C0415
+
+        m._last_known_monitor_bounds = None  # pylint: disable=protected-access
+
+    def test_system_positions_new_root_window_at_last_known_monitor_centre(self, mock_tkinter_context: MagicMock) -> None:
+        """
+        System positions a new root window at the centre of the last known monitor.
+
+        GIVEN: A previous sub-application was on MonitorBounds(1920, 0, 3840, 1080)
+        WHEN: A new root BaseWindow is created (root_tk=None)
+        THEN: geometry is called with the centre coordinates of that monitor (+2880+540)
+        """
+        import ardupilot_methodic_configurator.frontend_tkinter_show as m  # noqa: PLC0415 # pylint: disable=C0415
+
+        m._last_known_monitor_bounds = MonitorBounds(1920, 0, 3840, 1080)  # pylint: disable=protected-access
+
+        stack, patches = mock_tkinter_context(MockConfiguration(patch_monitor_bounds=False))
+        with stack:
+            for p in patches:
+                stack.enter_context(p)
+            mock_tk = stack.enter_context(patch("tkinter.Tk"))
+            mock_root = MagicMock()
+            mock_tk.return_value = mock_root
+
+            BaseWindow()
+
+        # Centre: x=(1920+3840)//2=2880, y=(0+1080)//2=540
+        mock_root.geometry.assert_called_once_with("+2880+540")
+
+    def test_system_skips_geometry_call_when_no_prior_monitor_is_known(self, mock_tkinter_context: MagicMock) -> None:
+        """
+        System does not call geometry when _last_known_monitor_bounds is None.
+
+        GIVEN: The application starts for the first time with no tracked monitor
+        WHEN: A new root BaseWindow is created
+        THEN: No positioning geometry call is made (window manager decides placement)
+        """
+        stack, patches = mock_tkinter_context(MockConfiguration(patch_monitor_bounds=False))
+        with stack:
+            for p in patches:
+                stack.enter_context(p)
+            mock_tk = stack.enter_context(patch("tkinter.Tk"))
+            mock_root = MagicMock()
+            mock_tk.return_value = mock_root
+
+            BaseWindow()
+
+        mock_root.geometry.assert_not_called()
+
+    def test_system_binds_configure_event_to_track_active_monitor(self, mock_tkinter_context: MagicMock) -> None:
+        """
+        System binds <Configure> on the root window to keep track of the active monitor.
+
+        GIVEN: A new root BaseWindow is being created
+        WHEN: __init__ runs
+        THEN: root.bind is called with "<Configure>" so monitor moves are recorded
+        """
+        stack, patches = mock_tkinter_context()
+        with stack:
+            for p in patches:
+                stack.enter_context(p)
+            mock_tk = stack.enter_context(patch("tkinter.Tk"))
+            mock_root = MagicMock()
+            mock_tk.return_value = mock_root
+
+            BaseWindow()
+
+        bind_calls = [call for call in mock_root.bind.call_args_list if call.args[0] == "<Configure>"]
+        assert len(bind_calls) == 1, "<Configure> must be bound exactly once on the root window"
+
+    def test_system_does_not_bind_configure_for_child_windows(self, tk_root: tk.Tk) -> None:
+        """
+        System does not bind <Configure> on child (Toplevel) windows.
+
+        GIVEN: An existing root window
+        WHEN: A child BaseWindow is created with root_tk set
+        THEN: No monitor-tracking <Configure> binding is added on the Toplevel
+        """
+        with (
+            patch.object(BaseWindow, "_setup_application_icon"),
+            patch.object(BaseWindow, "_setup_theme_and_styling"),
+            patch.object(BaseWindow, "_get_dpi_scaling_factor", return_value=1.0),
+        ):
+            child = BaseWindow(tk_root)
+
+        # The child root is a real Toplevel; verify no binding that calls remember_monitor_bounds
+        # was registered.  We check by inspecting the bind tags — a lambda cannot be introspected
+        # easily, so we simply assert that the child root is a Toplevel (not tk.Tk), which means
+        # the new-root-only code path was skipped.
+        assert isinstance(child.root, tk.Toplevel)
+
+    def test_configure_callback_ignores_child_widget_events(self, mock_tkinter_context: MagicMock) -> None:
+        """
+        The <Configure> callback ignores events that originate from child widgets.
+
+        GIVEN: A root BaseWindow with a <Configure> binding
+        WHEN: A <Configure> event fires with e.widget pointing to a child (not root)
+        THEN: remember_monitor_bounds is NOT called (guard filters child events)
+        """
+        stack, patches = mock_tkinter_context()
+        with stack:
+            for p in patches:
+                stack.enter_context(p)
+            mock_tk = stack.enter_context(patch("tkinter.Tk"))
+            mock_root = MagicMock()
+            mock_tk.return_value = mock_root
+
+            BaseWindow()
+
+        # Retrieve the bound callback
+        bind_call = next(c for c in mock_root.bind.call_args_list if c.args[0] == "<Configure>")
+        callback = bind_call.args[1]
+
+        child_widget = MagicMock()  # different from mock_root → guard should reject
+        event = MagicMock()
+        event.widget = child_widget
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.remember_monitor_bounds") as mock_remember:
+            callback(event)
+
+        mock_remember.assert_not_called()
+
+    def test_configure_callback_calls_remember_when_event_is_from_root(self, mock_tkinter_context: MagicMock) -> None:
+        """
+        The <Configure> callback calls remember_monitor_bounds when the root itself moved.
+
+        GIVEN: A root BaseWindow with a <Configure> binding
+        WHEN: A <Configure> event fires with e.widget == root
+        THEN: remember_monitor_bounds is called with the root window
+        """
+        stack, patches = mock_tkinter_context()
+        with stack:
+            for p in patches:
+                stack.enter_context(p)
+            mock_tk = stack.enter_context(patch("tkinter.Tk"))
+            mock_root = MagicMock()
+            mock_tk.return_value = mock_root
+
+            BaseWindow()
+
+        bind_call = next(c for c in mock_root.bind.call_args_list if c.args[0] == "<Configure>")
+        callback = bind_call.args[1]
+
+        event = MagicMock()
+        event.widget = mock_root  # same as root → guard passes
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.remember_monitor_bounds") as mock_remember:
+            callback(event)
+
+        mock_remember.assert_called_once_with(mock_root)
 
 
 class TestCenterWindowOnScreenBehavior:

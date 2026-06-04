@@ -191,6 +191,7 @@ class _DummyTkRoot:  # pylint: disable=too-many-instance-attributes, too-few-pub
         self.winfo_screenwidth = MagicMock(return_value=1920)
         self.winfo_screenheight = MagicMock(return_value=1080)
         self.update = MagicMock()
+        self.bind = MagicMock()
 
 
 @pytest.fixture
