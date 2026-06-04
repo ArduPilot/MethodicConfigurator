@@ -304,7 +304,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         processor.local_filesystem.file_parameters[selected_file]["CAN_P2_DRIVER"] = Par(value=1.0, comment="Exists")
 
         # Act: Process configuration step with potential duplicates
-        with patch.object(processor, "_calculate_connection_rename_operations") as mock_apply:
+        with patch.object(processor, "calculate_connection_rename_operations") as mock_apply:
             mock_apply.return_value = ({"CAN_P2_DRIVER"}, [("CAN_P1_DRIVER", "CAN_P2_DRIVER")])
             _parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
                 selected_file, fc_parameters
@@ -637,7 +637,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         original_keys = set(params.keys())
 
         # Act: Calculate renames for CAN1 to CAN2 (does NOT mutate params)
-        duplicated_names, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
+        duplicated_names, renamed_pairs = ConfigurationStepProcessor.calculate_connection_rename_operations(params, "CAN2")
 
         # Assert: Rename operations calculated correctly
         assert not duplicated_names  # No duplicates expected
@@ -678,7 +678,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         original_keys = set(params.keys())
 
         # Act: Calculate renames for CAN1 to CAN2
-        duplicated_params, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
+        duplicated_params, renamed_pairs = ConfigurationStepProcessor.calculate_connection_rename_operations(params, "CAN2")
 
         # Assert: No duplicates are marked when individual conflicts occur
         assert len(duplicated_params) == 0
@@ -713,7 +713,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         original_keys = set(params.keys())
 
         # Act: Calculate renames with variables (does NOT mutate params)
-        _duplicated_params, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(
+        _duplicated_params, renamed_pairs = ConfigurationStepProcessor.calculate_connection_rename_operations(
             params, "selected_can", variables
         )
 
@@ -746,7 +746,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         original_keys = set(params.keys())
 
         # Act: Calculate renames for CAN2 (should only calculate CAN operations)
-        duplicated_params, renamed_pairs = ConfigurationStepProcessor._calculate_connection_rename_operations(params, "CAN2")
+        duplicated_params, renamed_pairs = ConfigurationStepProcessor.calculate_connection_rename_operations(params, "CAN2")
 
         # Assert: Only CAN parameters in rename operations
         renamed_dict = dict(renamed_pairs)
@@ -1149,7 +1149,7 @@ class TestConnectionRenamingWithSameNameSkip:
         }
 
         # Rename to CAN1 - same connection, which means CAN_P1 → CAN_P1 (no-op)
-        _duplicates, renamed_pairs = processor._calculate_connection_rename_operations(parameters, "CAN1", None)
+        _duplicates, renamed_pairs = processor.calculate_connection_rename_operations(parameters, "CAN1", None)
 
         # CAN_P1_DRIVER → CAN_P1_DRIVER (no change), should not be in renamed_pairs
         assert ("CAN_P1_DRIVER", "CAN_P1_DRIVER") not in renamed_pairs
@@ -1173,7 +1173,7 @@ class TestConnectionRenamingWithSameNameSkip:
         }
 
         # Renaming to CAN2 would conflict with existing CAN_P2_DRIVER
-        _duplicates, renamed_pairs = processor._calculate_connection_rename_operations(parameters, "CAN2", None)
+        _duplicates, renamed_pairs = processor.calculate_connection_rename_operations(parameters, "CAN2", None)
 
         # CAN_P1_DRIVER → CAN_P2_DRIVER but CAN_P2_DRIVER already exists
         # The conflicting rename should be silently skipped

@@ -43,6 +43,11 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileEr
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR, PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
+# GNSS MAVLink protocol default value (ArduPilot GPS_TYPE value 5 = MAVLink GPS)
+_GNSS_MAVLINK_PROTOCOL_VALUE = "5"
+# The rename_connection expression that identifies a GNSS-via-MAVLink step
+_GNSS_FC_CONNECTION_RENAME_EXPR = "vehicle_components['GNSS Receiver']['FC Connection']['Type']"
+
 
 @dataclass(frozen=True)
 class ComponentEditorDeps:
@@ -137,6 +142,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Track parameters deleted by user (were in original file) or renamed by the system in the current configuration step
         self._deleted_parameters: set[str] = set()
+
+        # Track connection renames applied for the current step: maps original_file_param_name → current renamed name.
+        # Used by refresh_current_step_connection_renames() to undo/redo renames without a full rebuild.
+        self._connection_renames: dict[str, str] = {}
 
         self._at_least_one_changed = False
 
@@ -1735,6 +1744,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Reset tracking sets when navigating to new file
         self._added_parameters.clear()
         self._deleted_parameters.clear()
+        self._connection_renames.clear()
 
         # Process configuration step and get operations to apply
         self.current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params = (
@@ -1791,6 +1801,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 # Remove old parameter from domain model
                 if old_name in self.current_step_parameters:
                     del self.current_step_parameters[old_name]
+
+                # Track the rename so refresh_current_step_connection_renames() can undo/redo it
+                self._connection_renames[old_name] = new_name
 
         # Process delete_parameters and add-from-FC derived entries from configuration steps
         step_info = self._local_filesystem.configuration_steps.get(self.current_file, {})
@@ -2259,12 +2272,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def refresh_current_step_computed_parameters(self) -> None:
         """
-        Recompute derived parameters for the current step after component data changed.
+        Recompute derived parameters and connection renames for the current step after component data changed.
 
         Unlike _repopulate_configuration_step_parameters(), this performs a lightweight
         in-place update: only the derived parameter *values* are recalculated and patched
-        into the existing current_step_parameters dict.  The full parameter set is NOT
-        rebuilt from file_parameters and the delete_parameters logic is NOT re-run, so:
+        into the existing current_step_parameters dict, and any rename_connection renames
+        are re-evaluated and applied.  The full parameter set is NOT rebuilt from
+        file_parameters and the delete_parameters logic is NOT re-run, so:
           - parameters that were already removed by the delete logic stay removed
           - user edits to non-derived parameters are preserved
           - the 'show only differences' filter does not cause derived params to disappear
@@ -2272,17 +2286,19 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if not self.current_file or self.current_file not in self._local_filesystem.configuration_steps:
             return
         step_info = self._local_filesystem.configuration_steps[self.current_file]
-        if "derived_parameters" not in step_info:
+
+        if "derived_parameters" not in step_info and "rename_connection" not in step_info:
             return
 
         variables = self._config_step_processor.variables.copy()
         if self.fc_parameters:
             variables["fc_parameters"] = self.fc_parameters
 
-        # Recompute derived params with the updated vehicle_components dict
-        self._local_filesystem.compute_parameters(self.current_file, step_info, "derived", variables)
+        if "derived_parameters" in step_info:
+            # Recompute derived params with the updated vehicle_components dict
+            self._local_filesystem.compute_parameters(self.current_file, step_info, "derived", variables)
 
-        # Patch only the derived values in the existing domain model — no rebuild, no deletions
+        # Patch only the derived values in the existing domain model - no rebuild, no deletions
         for param_name, derived_par in self._local_filesystem.derived_parameters.get(self.current_file, ParDict()).items():
             if param_name in self.current_step_parameters:
                 existing = self.current_step_parameters[param_name]
@@ -2302,6 +2318,89 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         self.current_step_parameters[param_name].set_forced_or_derived_change_reason(derived_par.comment)
                 except (ValueError, TypeError) as e:
                     logging_error(_("Failed to patch derived parameter %s: %s"), param_name, str(e))
+
+        if "rename_connection" in step_info:
+            self._refresh_current_step_connection_renames(step_info, variables)
+
+    def _refresh_current_step_connection_renames(self, step_info: dict, variables: dict) -> None:  # pylint: disable=too-many-branches
+        """
+        Re-evaluate the rename_connection expression and apply any changed renames in-place.
+
+        Called by refresh_current_step_computed_parameters() after the user edits a component
+        field that affects the FC Connection Type.  Only the *delta* is applied:
+          - Previously renamed parameters whose new target name changed are moved.
+          - Parameters that are now targeted for rename but were not before are renamed.
+          - Parameters whose rename is no longer applicable are restored to their original name.
+        """
+        rename_expr = step_info.get("rename_connection")
+        if not rename_expr:
+            return
+        is_gnss = "gnss" in self.current_file.lower() and rename_expr == _GNSS_FC_CONNECTION_RENAME_EXPR
+
+        variables["new_connection_prefix"] = rename_expr
+        original_params = self._local_filesystem.file_parameters.get(self.current_file, ParDict())
+
+        # Calculate what the renames SHOULD be with the updated component data
+        try:
+            _duplicates, new_renamed_pairs = self._config_step_processor.calculate_connection_rename_operations(
+                original_params, rename_expr, variables
+            )
+        except Exception as exc:  # pylint: disable=broad-except
+            logging_warning(_("rename_connection eval failed for %s: %s"), self.current_file, exc)
+            return  # evaluation failed — leave current state unchanged
+
+        new_rename_map: dict[str, str] = dict(new_renamed_pairs)
+
+        # Process renames that already exist: update if the target changed
+        for orig_name, current_target in list(self._connection_renames.items()):
+            new_target = new_rename_map.get(orig_name)
+            if new_target is None:
+                # Rename no longer applicable — restore original name
+                if current_target in self.current_step_parameters:
+                    self._added_parameters.discard(current_target)
+                    del self.current_step_parameters[current_target]
+                if orig_name in original_params:
+                    self.current_step_parameters[orig_name] = self._config_step_processor.create_ardupilot_parameter(
+                        orig_name, original_params[orig_name], self.current_file, self.fc_parameters
+                    )
+                    self._deleted_parameters.discard(orig_name)
+                del self._connection_renames[orig_name]
+            elif new_target != current_target:
+                # Target changed — move the parameter to the new name
+                if current_target in self.current_step_parameters:
+                    self._added_parameters.discard(current_target)
+                    del self.current_step_parameters[current_target]
+                if orig_name in original_params:
+                    self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
+                        new_target, original_params[orig_name], self.current_file, self.fc_parameters
+                    )
+                    if is_gnss and new_target.endswith("_PROTOCOL"):
+                        self.current_step_parameters[new_target].set_new_value(
+                            _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
+                        )
+                    self._added_parameters.add(new_target)
+                self._connection_renames[orig_name] = new_target
+                logging_info(_("Renamed connection parameter %s → %s"), current_target, new_target)
+
+        # Apply renames that are new (not previously tracked)
+        for orig_name, new_target in new_rename_map.items():
+            if orig_name in self._connection_renames:
+                continue  # already handled above
+            if orig_name in original_params:
+                # Remove the original (un-renamed) parameter if it is still present
+                if orig_name in self.current_step_parameters:
+                    del self.current_step_parameters[orig_name]
+                    self._deleted_parameters.add(orig_name)
+                self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
+                    new_target, original_params[orig_name], self.current_file, self.fc_parameters
+                )
+                if is_gnss and new_target.endswith("_PROTOCOL"):
+                    self.current_step_parameters[new_target].set_new_value(
+                        _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
+                    )
+                self._added_parameters.add(new_target)
+                self._connection_renames[orig_name] = new_target
+                logging_info(_("Renamed connection parameter %s → %s"), orig_name, new_target)
 
     def revert_vehicle_components(self) -> None:
         """
