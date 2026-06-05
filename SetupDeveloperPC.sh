@@ -105,6 +105,17 @@ ConfigureGit() {
     git config --local sequence.editor "code --wait"
     echo Git configuration applied successfully.
 }
+InstallVSCodeExtension() {
+    local ext="$1"
+    local name="$2"
+
+    echo "Installing the $name VSCode extension..."
+    if code --install-extension "$ext"; then
+        echo "$name installed"
+    else
+        echo "Failed to install $name. Continuing setup.."
+    fi
+}
 
 ConfigureVSCode() {
     # Check for VSCode installation
@@ -113,54 +124,21 @@ ConfigureVSCode() {
         echo "VSCode is not installed. Please install VSCode before running this script."
         exit 1
     else
-        echo "Installing the markdownlint VSCode extension..."
-        if ! code --install-extension davidanson.vscode-markdownlint; then
-            echo "Failed to install markdownlint extension."
-            exit 1
-        fi
+        InstallVSCodeExtension davidanson.vscode-markdownlint "Markdownlint"
 
-        echo "Installing the Markdown Preview Enhanced extension..."
-        if ! code --install-extension shd101wyy.markdown-preview-enhanced; then
-            echo "Failed to install Markdown Preview Enhanced extension."
-            exit 1
-        fi
+        InstallVSCodeExtension shd101wyy.markdown-preview-enhanced "Markdown Preview Enhanced"
 
-        echo "Installing GitHub Copilot..."
-        if ! code --install-extension GitHub.copilot; then
-            echo "Failed to install GitHub Copilot extension."
-            exit 1
-        fi
+        InstallVSCodeExtension GitHub.copilot "GitHub Copilot"
 
-        echo "Installing the Conventional Commits VSCode extension..."
-        if ! code --install-extension vivaxy.vscode-conventional-commits; then
-            echo "Failed to install Conventional Commits VSCode extension."
-            exit 1
-        fi
+        InstallVSCodeExtension vivaxy.vscode-conventional-commits "Conventional Commits"
 
-        echo "Installing the GitLens VSCode extension..."
-        if ! code --install-extension eamodio.gitlens; then
-            echo "Failed to install GitLens VSCode extension."
-            exit 1
-        fi
+        InstallVSCodeExtension eamodio.gitlens "GitLens"
 
-        echo "Installing code spellcheker extension..."
-        if ! code --install-extension streetsidesoftware.code-spell-checker; then
-            echo "Failed to install code spellcheker extension."
-            exit 1
-        fi
+        InstallVSCodeExtension streetsidesoftware.code-spell-checker "Code Spell Checker"
 
-        echo "Installing the Python VSCode extension..."
-        if ! code --install-extension ms-python.python; then
-            echo "Failed to install Python VSCode extension."
-            exit 1
-        fi
+        InstallVSCodeExtension ms-python.python "Python VSCode"
 
-        echo "Installing ruff extension..."
-        if ! code --install-extension charliermarsh.ruff; then
-            echo "Failed to install ruff extension."
-            exit 1
-        fi
-
+        InstallVSCodeExtension charliermarsh.ruff "Ruff"
     fi
 }
 
