@@ -327,8 +327,8 @@
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BRD_BOOT_DELAY", "GPS.*", "GNSS.*"],
             "derived_parameters": {
-                "GPS_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) < Version('4.6')", "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
-                "GPS1_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.6')","New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
+                "GPS_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.6')", "New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" },
+                "GPS1_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6')","New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
             },
             "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
             "old_filenames": ["10_gnss.param"]
@@ -581,10 +581,10 @@
             "auto_changed_by": "",
             "derived_parameters": {
                 "ATC_THR_MIX_MAN": { "New Value": "0.5", "Change Reason": "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value" },
-                "PSC_ACCZ_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) < Version('4.7')", "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
-                "PSC_D_ACC_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.7')", "New Value": "0.2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
-                "PSC_ACCZ_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) < Version('4.7')", "New Value": "1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
-                "PSC_D_ACC_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.7')", "New Value": "0.1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
+                "PSC_ACCZ_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
+                "PSC_D_ACC_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
+                "PSC_ACCZ_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
+                "PSC_D_ACC_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.7')", "New Value": "0.1*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" }
             },
             "old_filenames": ["19_throttle_controller.param", "20_throttle_controller.param"]
         },
@@ -647,14 +647,14 @@
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["FILT.+", "ATC_RAT_.+_N[ET]F", "PSC_ACCZ_N[ET]F"],
             "derived_parameters": {
-                "ATC_RAT_RLL_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
-                "ATC_RAT_RLL_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
-                "ATC_RAT_PIT_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
-                "ATC_RAT_PIT_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
-                "ATC_RAT_YAW_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
-                "ATC_RAT_YAW_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
-                "PSC_ACCZ_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
-                "PSC_ACCZ_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version']) >= Version('4.5')", "New Value": "0", "Change Reason": "" }
+                "ATC_RAT_RLL_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
+                "ATC_RAT_RLL_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
+                "ATC_RAT_PIT_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
+                "ATC_RAT_PIT_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
+                "ATC_RAT_YAW_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
+                "ATC_RAT_YAW_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
+                "PSC_ACCZ_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
+                "PSC_ACCZ_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" }
             },
             "old_filenames": []
         },
