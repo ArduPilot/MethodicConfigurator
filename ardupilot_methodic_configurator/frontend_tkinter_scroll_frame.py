@@ -79,7 +79,10 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
     def on_mouse_wheel(self, event: tk.Event) -> None:  # cross platform scroll wheel event
-        canvas_height = self.canvas.winfo_height()
+        try:
+            canvas_height = self.canvas.winfo_height()
+        except tk.TclError:
+            return  # canvas has been destroyed; ignore stale mouse-wheel events
         bbox = self.canvas.bbox("all")
         rows_height = bbox[3] if bbox is not None else 0
 
