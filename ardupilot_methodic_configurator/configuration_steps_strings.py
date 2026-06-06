@@ -387,13 +387,15 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _(
         "A list of regular expressions to match parameters for automatic import if they have non-default values."
     )
-    _config_steps_descriptions = _("Add-from-FC: include this parameter at its current FC value when the condition holds")
     _config_steps_descriptions = _("Computed value: evaluate New Value expression and set the parameter")
     _config_steps_descriptions = _("Description of the phase")
     _config_steps_descriptions = _("Explanation of why this step is needed")
     _config_steps_descriptions = _("Explanation of why this step needs to be done at this point")
     _config_steps_descriptions = _("Expression to derive new parameter value")
     _config_steps_descriptions = _("Expression to rename connection")
+    _config_steps_descriptions = _(
+        "If not already present, add parameter to the file: use 'New Value' if provided, otherwise copy the current FC value. Optionally conditioned on a Python expression."
+    )
     _config_steps_descriptions = _("Message about possible jump to another step")
     _config_steps_descriptions = _("Name of tool/process that automatically changes these parameters")
     _config_steps_descriptions = _("Name/description of external tool needed")
@@ -404,16 +406,19 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _(
         "Optional Python expression; if present, the parameter is only deleted when this expression evaluates to true"
     )
+    _config_steps_descriptions = _("Optional Python expression; the parameter is only added when this evaluates to true")
+    _config_steps_descriptions = _("Optional expression for the parameter value; if absent, the current FC value is used")
     _config_steps_descriptions = _("Optional instructions to display as a popup when entering this step")
+    _config_steps_descriptions = _("Optional reason for the parameter value")
+    _config_steps_descriptions = _(
+        "Parameters to add to the configuration file, if not already present, editable in the UI. Value comes from 'New Value' expression if given, otherwise copied from the FC."
+    )
     _config_steps_descriptions = _(
         "Parameters to remove from the configuration file, optionally conditioned on a Python expression"
     )
-    _config_steps_descriptions = _(
-        "Parameters whose values are derived from vehicle component data or FC state. An entry with only 'if' means: add the parameter from the FC at its current value when the condition is true."
-    )
+    _config_steps_descriptions = _("Parameters whose values are derived from vehicle component data or FC state.")
     _config_steps_descriptions = _("Phases of the configuration process")
     _config_steps_descriptions = _("Previous filenames for this step")
-    _config_steps_descriptions = _("Python expression; the parameter is added from the FC only when this evaluates to true")
     _config_steps_descriptions = _("Reason for changing the parameter")
     _config_steps_descriptions = _("Reason for the derived parameter")
     _config_steps_descriptions = _("Short description for blog reference")
