@@ -376,11 +376,12 @@ class TestParameterValidation:
 
     def test_add_from_fc_shorthand_derived_parameter_is_silently_skipped(self, config_steps: ConfigurationSteps) -> None:
         """
-        A derived parameter with only an 'if' key and no 'New Value' is silently skipped.
+        A derived parameter with only an 'if' key and no 'New Value' now logs an error.
 
+        Use add_parameters section instead.
         GIVEN: A file_info with a derived parameter entry containing only 'if' (no 'New Value')
         WHEN: __validate_parameters_in_configuration_steps is called for derived parameters
-        THEN: No error is logged and execution completes normally (add-from-FC shorthand)
+        THEN: An error is logged because derived parameters require 'New Value' and 'Change Reason'
         """
         file_info = {"derived_parameters": {"PARAM1": {"if": "some_condition"}}}
         with patch("ardupilot_methodic_configurator.backend_filesystem_configuration_steps.logging_error") as mock_error:
@@ -388,7 +389,7 @@ class TestParameterValidation:
                 "test_file", file_info, "derived"
             )
 
-        mock_error.assert_not_called()
+        assert mock_error.called
 
     def test_non_dict_parameter_section_is_logged_as_error(self, config_steps: ConfigurationSteps) -> None:
         """
@@ -502,15 +503,13 @@ class TestParameterValidation:
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
     ) -> None:
         """
-        A derived add-from-FC shorthand entry (no 'New Value') that contains keys other than 'if' should log an ERROR.
+        An add_parameters entry that contains keys other than 'if' should log an ERROR.
 
-        GIVEN: A derived parameter with no 'New Value' but with an unrecognised key 'Typo'
+        GIVEN: An add_parameters entry with an unrecognised key 'Typo'
         WHEN: re_init processes the file
         THEN: An ERROR-level message mentioning the unexpected key is logged
-
-        REGRESSION: Line 175 — the logging_error branch for unexpected keys on shorthand entries.
         """
-        read_data = '{"steps": {"test_file": {"derived_parameters": {"INS_TCAL2_ENABLE": {"Typo": "oops"}}}}}'
+        read_data = '{"steps": {"test_file": {"add_parameters": {"INS_TCAL2_ENABLE": {"Typo": "oops"}}}}}'
         with (
             patch("builtins.open", new_callable=mock_open, read_data=read_data),
             patch("os.path.join", side_effect=lambda *args: "/".join(args)),
@@ -1487,67 +1486,64 @@ class TestParameterDeletion:
 
 
 # ---------------------------------------------------------------------------
-# add-from-FC shorthand — derived entries with only an 'if' guard
+# add_parameters — dedicated section for add-from-FC parameters
 # ---------------------------------------------------------------------------
 
 
 class TestAddFromFCShorthand:
-    """Tests for the add-from-FC shorthand: derived entries with only an 'if' key and no 'New Value'."""
+    """Tests for the add_parameters section: entries with only an optional 'if' key that copy values from the FC."""
 
     def test_derived_parameter_is_populated_from_fc_when_present(self, config_steps: ConfigurationSteps) -> None:
         """
-        A derived entry with only 'if' copies the parameter value from fc_parameters.
+        An add_parameters entry copies the parameter value from fc_parameters.
 
-        GIVEN: A derived parameter with only an 'if' guard and the parameter exists in fc_parameters
-        WHEN: compute_parameters is called
-        THEN: The parameter is stored in derived_parameters with the FC value and an empty comment
+        GIVEN: An add_parameters entry with an 'if' guard and the parameter exists in fc_parameters
+        WHEN: compute_add_parameters is called
+        THEN: The parameter is stored in add_parameters with the FC value and a non-empty comment
         """
-        file_info = {"derived_parameters": {"INS_TCAL2_ENABLE": {"if": "'INS_TCAL2_ENABLE' in fc_parameters"}}}
+        file_info = {"add_parameters": {"INS_TCAL2_ENABLE": {"if": "'INS_TCAL2_ENABLE' in fc_parameters"}}}
         variables: dict = {"doc_dict": {}, "fc_parameters": {"INS_TCAL2_ENABLE": 2.0}}
 
-        result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+        config_steps.compute_add_parameters("test_file", file_info, variables)
 
-        assert result == ""
-        assert config_steps.derived_parameters["test_file"]["INS_TCAL2_ENABLE"].value == 2.0
-        assert config_steps.derived_parameters["test_file"]["INS_TCAL2_ENABLE"].comment != ""
+        assert config_steps.add_parameters["test_file"]["INS_TCAL2_ENABLE"].value == 2.0
+        assert config_steps.add_parameters["test_file"]["INS_TCAL2_ENABLE"].comment != ""
 
     def test_shorthand_is_silently_skipped_when_fc_not_connected(self, config_steps: ConfigurationSteps) -> None:
         """
-        The add-from-FC shorthand is silently skipped when fc_parameters is absent.
+        The add_parameters entry is silently skipped when fc_parameters is absent.
 
-        GIVEN: A derived parameter with only 'if' and no fc_parameters in variables
-        WHEN: compute_parameters is called
-        THEN: No error is returned and no parameter is stored
+        GIVEN: An add_parameters entry with 'if' and no fc_parameters in variables
+        WHEN: compute_add_parameters is called
+        THEN: No parameter is stored
         """
-        file_info = {"derived_parameters": {"INS_TCAL2_ENABLE": {"if": "'INS_TCAL2_ENABLE' in fc_parameters"}}}
+        file_info = {"add_parameters": {"INS_TCAL2_ENABLE": {"if": "'INS_TCAL2_ENABLE' in fc_parameters"}}}
         variables: dict = {"doc_dict": {}}
 
-        result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+        config_steps.compute_add_parameters("test_file", file_info, variables)
 
-        assert result == ""
-        assert "test_file" not in config_steps.derived_parameters
+        assert "test_file" not in config_steps.add_parameters
 
     def test_shorthand_is_skipped_when_param_absent_from_fc(self, config_steps: ConfigurationSteps) -> None:
         """
-        The add-from-FC shorthand skips a parameter not present in the FC's parameter set.
+        An add_parameters entry is skipped when the parameter is not present in the FC's parameter set.
 
-        GIVEN: A derived entry with if='True' and fc_parameters that does not contain that parameter
-        WHEN: compute_parameters is called
-        THEN: The parameter is not stored in derived_parameters
+        GIVEN: An add_parameters entry with if='True' and fc_parameters that does not contain that parameter
+        WHEN: compute_add_parameters is called
+        THEN: The parameter is not stored in add_parameters
         """
-        file_info = {"derived_parameters": {"INS_TCAL2_ENABLE": {"if": "True"}}}
+        file_info = {"add_parameters": {"INS_TCAL2_ENABLE": {"if": "True"}}}
         variables: dict = {"doc_dict": {}, "fc_parameters": {"OTHER_PARAM": 1.0}}
 
-        result = config_steps.compute_parameters("test_file", file_info, "derived", variables)
+        config_steps.compute_add_parameters("test_file", file_info, variables)
 
-        assert result == ""
-        assert "INS_TCAL2_ENABLE" not in config_steps.derived_parameters.get("test_file", {})
+        assert "INS_TCAL2_ENABLE" not in config_steps.add_parameters.get("test_file", {})
 
     def test_forced_parameter_without_new_value_logs_warning_and_is_skipped(
         self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
     ) -> None:
         """
-        A forced entry without 'New Value' logs a warning explaining the shorthand restriction.
+        A forced entry without 'New Value' logs a warning and is skipped.
 
         GIVEN: A forced parameter entry with only an 'if' key (no 'New Value')
         WHEN: compute_parameters is called
@@ -1561,24 +1557,22 @@ class TestAddFromFCShorthand:
 
         assert result == ""
         assert "PARAM1" not in config_steps.forced_parameters.get("test_file", {})
-        assert any("add-from-FC shorthand is only valid for derived parameters" in r.message for r in caplog.records)
+        assert any("has no 'New Value'" in r.message for r in caplog.records)
 
     def test_add_from_fc_shorthand_uses_informative_change_reason(self, config_steps: ConfigurationSteps) -> None:
         """
-        The add-from-FC shorthand must store a non-empty change reason so the user understands where the value came from.
+        The add_parameters entry must store a non-empty change reason.
 
-        GIVEN: A derived parameter with no 'New Value' and the parameter is present in fc_parameters
-        WHEN: compute_parameters is called
+        GIVEN: An add_parameters entry (no 'if') and the parameter is present in fc_parameters
+        WHEN: compute_add_parameters is called
         THEN: The stored change reason is not an empty string
-
-        REGRESSION: Previously the shorthand set Par(..., "") leaving users with no explanation.
         """
-        file_info = {"derived_parameters": {"INS_TCAL2_ENABLE": {}}}
+        file_info = {"add_parameters": {"INS_TCAL2_ENABLE": {}}}
         variables: dict = {"doc_dict": {}, "fc_parameters": {"INS_TCAL2_ENABLE": 2.0}}
 
-        config_steps.compute_parameters("test_file", file_info, "derived", variables)
+        config_steps.compute_add_parameters("test_file", file_info, variables)
 
-        assert config_steps.derived_parameters["test_file"]["INS_TCAL2_ENABLE"].comment != ""
+        assert config_steps.add_parameters["test_file"]["INS_TCAL2_ENABLE"].comment != ""
 
 
 # ---------------------------------------------------------------------------

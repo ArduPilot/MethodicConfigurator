@@ -67,6 +67,7 @@ class ConfigurationSteps:
         self.configuration_phases: dict[str, PhaseData] = {}
         self.forced_parameters: dict[str, ParDict] = {}
         self.derived_parameters: dict[str, ParDict] = {}
+        self.add_parameters: dict[str, ParDict] = {}
         self.log_loaded_file = False
 
     def re_init(self, vehicle_dir: str, vehicle_type: str) -> None:  # pylint: disable=too-many-branches
@@ -118,6 +119,7 @@ class ConfigurationSteps:
             for filename, file_info in self.configuration_steps.items():
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "forced")
                 self.__validate_parameters_in_configuration_steps(filename, file_info, "derived")
+                self.__validate_add_parameters_in_configuration_steps(filename, file_info)
                 self.__validate_delete_parameters_in_configuration_steps(filename, file_info)
                 self.__validate_no_overlap_between_derived_and_delete(filename, file_info)
         else:
@@ -131,7 +133,7 @@ class ConfigurationSteps:
 
     def __validate_no_overlap_between_derived_and_delete(self, filename: str, file_info: dict) -> None:
         """
-        Warn about unconditional parameter overlap between derived_parameters and delete_parameters.
+        Warn about unconditional parameter overlap between derived_parameters/add_parameters and delete_parameters.
 
         Only warn when at least one side carries no 'if' guard. An unconditional overlap
         is almost certainly a configuration mistake: the derived value would be set and
@@ -140,15 +142,17 @@ class ConfigurationSteps:
         are a valid pattern and are intentionally not warned about.
         """
         derived = file_info.get("derived_parameters", {})
+        add = file_info.get("add_parameters", {})
         delete = file_info.get("delete_parameters", {})
-        overlap = set(derived.keys()) & set(delete.keys())
+        overlap = (set(derived.keys()) | set(add.keys())) & set(delete.keys())
         for parameter in sorted(overlap):
-            derived_has_if = "if" in derived.get(parameter, {})
+            source = derived if parameter in derived else add
+            derived_has_if = "if" in source.get(parameter, {})
             delete_has_if = "if" in delete.get(parameter, {})
             if not derived_has_if or not delete_has_if:
                 logging_warning(
                     _(
-                        "In file '%s': '%s' parameter '%s' appears in both 'derived_parameters' and "
+                        "In file '%s': '%s' parameter '%s' appears in both 'derived_parameters'/'add_parameters' and "
                         "'delete_parameters' without complementary 'if' guards. "
                         "This is likely a configuration mistake."
                     ),
@@ -162,8 +166,6 @@ class ConfigurationSteps:
         Validates the forced or derived parameters in the configuration steps.
 
         Checks that every entry has the required 'New Value' and 'Change Reason' attributes.
-        For derived parameters, the add-from-FC shorthand (entry with only an optional 'if' key
-        and no 'New Value') is accepted and skipped without error.
         """
         if parameter_type + "_parameters" in file_info:
             if not isinstance(file_info[parameter_type + "_parameters"], dict):
@@ -175,18 +177,6 @@ class ConfigurationSteps:
                 )
                 return
             for parameter, parameter_info in file_info[parameter_type + "_parameters"].items():
-                # Add-from-FC shorthand: a derived entry with no 'New Value' is valid (optionally conditioned by 'if')
-                if parameter_type == "derived" and "New Value" not in parameter_info:
-                    unknown_keys = set(parameter_info.keys()) - {"if"}
-                    if unknown_keys:
-                        logging_error(
-                            _("Error in file '%s': '%s' derived parameter '%s' has unexpected keys: %s"),
-                            self.configuration_steps_filename,
-                            filename,
-                            parameter,
-                            sorted(unknown_keys),
-                        )
-                    continue
                 if "New Value" not in parameter_info:
                     logging_error(
                         _("Error in file '%s': '%s' %s parameter '%s' 'New Value' attribute not found."),
@@ -203,6 +193,36 @@ class ConfigurationSteps:
                         parameter_type,
                         parameter,
                     )
+
+    def __validate_add_parameters_in_configuration_steps(self, filename: str, file_info: dict) -> None:
+        """Validates the add_parameters section: each entry may only have optional 'if', 'New Value', and 'Change Reason'."""
+        if "add_parameters" not in file_info:
+            return
+        if not isinstance(file_info["add_parameters"], dict):
+            logging_error(
+                _("Error in file '%s': '%s' add_parameters is not a dictionary"),
+                self.configuration_steps_filename,
+                filename,
+            )
+            return
+        for parameter, parameter_info in file_info["add_parameters"].items():
+            if not isinstance(parameter_info, dict):
+                logging_error(
+                    _("Error in file '%s': '%s' add_parameter '%s' is not a dictionary"),
+                    self.configuration_steps_filename,
+                    filename,
+                    parameter,
+                )
+                continue
+            unknown_keys = set(parameter_info.keys()) - {"if", "New Value", "Change Reason"}
+            if unknown_keys:
+                logging_error(
+                    _("Error in file '%s': '%s' add_parameter '%s' has unexpected keys: %s"),
+                    self.configuration_steps_filename,
+                    filename,
+                    parameter,
+                    sorted(unknown_keys),
+                )
 
     def __validate_delete_parameters_in_configuration_steps(self, filename: str, file_info: dict) -> None:
         """
@@ -397,7 +417,7 @@ class ConfigurationSteps:
             result=result,
         )
 
-    def _compute_single_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-return-statements  # noqa: PLR0911
+    def _compute_single_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         filename: str,
         parameter: str,
@@ -408,26 +428,13 @@ class ConfigurationSteps:
         ignore_fc_derived_param_warnings: bool,
     ) -> str:
         """Process a single parameter entry. Returns "" on success, or an error message on fatal error."""
-        # Add-from-FC shorthand: derived entry with 'if' but no 'New Value'.
-        # This shorthand is only valid for derived parameters; forced parameters require 'New Value'.
         if "New Value" not in parameter_info:
             if parameter_type == "forced":
                 logging_warning(
-                    _(
-                        "In file '%s': '%s' forced parameter '%s' has no 'New Value' - "
-                        "add-from-FC shorthand is only valid for derived parameters"
-                    ),
+                    _("In file '%s': '%s' forced parameter '%s' has no 'New Value'"),
                     self.configuration_steps_filename,
                     filename,
                     parameter,
-                )
-                return ""
-            fc_params = variables.get("fc_parameters", {})
-            if parameter in fc_params:
-                self._ensure_file_entry(destination, filename)
-                destination[filename][parameter] = Par(
-                    float(fc_params[parameter]),
-                    _("Copied from the connected flight controller"),
                 )
             return ""
         try:
@@ -519,6 +526,50 @@ class ConfigurationSteps:
             if error_msg:
                 errors.append(error_msg)
         return "\n".join(errors)
+
+    def compute_add_parameters(
+        self, filename: str, file_info: dict, variables: dict, existing_params: Optional[ParDict] = None
+    ) -> None:
+        """
+        Compute the add_parameters for a given configuration file.
+
+        Entries whose 'if' condition evaluates to False are skipped. Any stale entries
+        from a previous call for this file are cleared first.
+
+        For parameters with conditions referencing ``fc_parameters``, automatically skips
+        evaluation when ``fc_parameters`` is not available (e.g., when no FC is connected).
+
+        Side effect: updates ``self.add_parameters`` in place.
+
+        """
+        self.add_parameters.pop(filename, None)
+        if "add_parameters" not in file_info or not variables:
+            return
+        fc_params = variables.get("fc_parameters", {})
+        for parameter, parameter_info in file_info["add_parameters"].items():
+            # Skip parameters with conditions referencing fc_parameters if fc_parameters is unavailable
+            if "if" in parameter_info and "fc_parameters" in str(parameter_info["if"]) and "fc_parameters" not in variables:
+                continue
+            if not self._condition_passes(parameter_info, variables):
+                continue
+            if existing_params is not None and parameter in existing_params:
+                continue
+            if "New Value" in parameter_info:
+                result, error_msg = self._eval_new_value(parameter_info["New Value"], filename, parameter, "add", variables)
+                if error_msg:
+                    logging_error("%s", error_msg)
+                    continue
+                self._ensure_file_entry(self.add_parameters, filename)
+                self.add_parameters[filename][parameter] = Par(
+                    float(result),
+                    parameter_info.get("Change Reason", ""),
+                )
+            elif parameter in fc_params:
+                self._ensure_file_entry(self.add_parameters, filename)
+                self.add_parameters[filename][parameter] = Par(
+                    float(fc_params[parameter]),
+                    _("Copied from the connected flight controller"),
+                )
 
     def compute_deletions(self, filename: str, file_info: dict, variables: dict) -> set[str]:
         """

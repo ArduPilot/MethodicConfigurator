@@ -92,41 +92,51 @@
               "patternProperties": {
                 "^[A-Z0-9_]+$": {
                   "type": "object",
-                  "oneOf": [
-                    {
-                      "description": "Add-from-FC: include this parameter at its current FC value when the condition holds",
-                      "required": ["if"],
-                      "properties": {
-                        "if": {
-                          "type": "string",
-                          "description": "Python expression; the parameter is added from the FC only when this evaluates to true"
-                        }
-                      },
-                      "additionalProperties": false
+                  "description": "Computed value: evaluate New Value expression and set the parameter",
+                  "required": ["New Value", "Change Reason"],
+                  "properties": {
+                    "if": {
+                      "type": "string",
+                      "description": "Optional Python expression; if present, the parameter is only applied when this expression evaluates to true"
                     },
-                    {
-                      "description": "Computed value: evaluate New Value expression and set the parameter",
-                      "required": ["New Value", "Change Reason"],
-                      "properties": {
-                        "if": {
-                          "type": "string",
-                          "description": "Optional Python expression; if present, the parameter is only applied when this expression evaluates to true"
-                        },
-                        "New Value": {
-                          "type": "string",
-                          "description": "Expression to derive new parameter value"
-                        },
-                        "Change Reason": {
-                          "type": "string",
-                          "description": "Reason for the derived parameter"
-                        }
-                      },
-                      "additionalProperties": false
+                    "New Value": {
+                      "type": "string",
+                      "description": "Expression to derive new parameter value"
+                    },
+                    "Change Reason": {
+                      "type": "string",
+                      "description": "Reason for the derived parameter"
                     }
-                  ]
+                  },
+                  "additionalProperties": false
                 }
               },
-              "description": "Parameters whose values are derived from vehicle component data or FC state. An entry with only 'if' means: add the parameter from the FC at its current value when the condition is true."
+              "description": "Parameters whose values are derived from vehicle component data or FC state."
+            },
+            "add_parameters": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Z0-9_]+$": {
+                  "type": "object",
+                  "description": "If not already present, add parameter to the file: use 'New Value' if provided, otherwise copy the current FC value. Optionally conditioned on a Python expression.",
+                  "properties": {
+                    "if": {
+                      "type": "string",
+                      "description": "Optional Python expression; the parameter is only added when this evaluates to true"
+                    },
+                    "New Value": {
+                      "type": "string",
+                      "description": "Optional expression for the parameter value; if absent, the current FC value is used"
+                    },
+                    "Change Reason": {
+                      "type": "string",
+                      "description": "Optional reason for the parameter value"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "description": "Parameters to add to the configuration file, if not already present, editable in the UI. Value comes from 'New Value' expression if given, otherwise copied from the FC."
             },
             "delete_parameters": {
               "type": "object",
