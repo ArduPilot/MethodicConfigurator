@@ -1761,11 +1761,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if self.fc_parameters:
                 variables["fc_parameters"] = self.fc_parameters
 
-            # Apply add-from-FC: derived entries whose condition passed are already stored in derived_parameters;
+            # Apply add_parameters: entries whose condition passed are stored in add_parameters;
             # add any that are not yet in current_step_parameters
             fc_parameters = self.fc_parameters
-            for param_name, param in self._local_filesystem.derived_parameters.get(self.current_file, ParDict()).items():
-                if param_name not in self.current_step_parameters and param_name in fc_parameters:
+            for param_name, param in self._local_filesystem.add_parameters.get(self.current_file, ParDict()).items():
+                if param_name not in self.current_step_parameters:
                     self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
                         param_name, param, self.current_file, fc_parameters
                     )

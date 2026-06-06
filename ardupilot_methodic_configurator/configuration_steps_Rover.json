@@ -42,7 +42,7 @@
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["INS_TCAL1_.*", "INS_TCAL2_.*", "INS_TCAL3_.*"],
-            "derived_parameters": {
+            "add_parameters": {
                 "INS_TCAL2_ENABLE":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
                 "INS_TCAL2_TMIN":    { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
                 "INS_TCAL2_TMAX":    { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
@@ -380,7 +380,7 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "Mission Planner. If you have not done this step in Mission Planner yet, close this application and use Mission Planner",
             "autoimport_nondefault_regexp": ["COMPASS_PRIO[0-9]_ID", "RC[0-9]+_.+", "SERVO[0-9]+_.+"],
-            "derived_parameters": {
+            "add_parameters": {
                 "INS_ACC2SCAL_X": { "if": "'INS_ACC2SCAL_X' in fc_parameters" },
                 "INS_ACC2SCAL_Y": { "if": "'INS_ACC2SCAL_X' in fc_parameters" },
                 "INS_ACC2SCAL_Z": { "if": "'INS_ACC2SCAL_X' in fc_parameters" },
@@ -646,7 +646,7 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["FILT.+", "ATC_RAT_.+_N[ET]F", "PSC_ACCZ_N[ET]F"],
-            "derived_parameters": {
+            "add_parameters": {
                 "ATC_RAT_RLL_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
                 "ATC_RAT_RLL_NTF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
                 "ATC_RAT_PIT_NEF": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.5')", "New Value": "0", "Change Reason": "" },
@@ -722,7 +722,7 @@
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "MAGFit Webtool and YOU manually uploaded the result to the FC already",
             "autoimport_nondefault_regexp": ["COMPASS_DIA[0-9]*_.*", "COMPASS_MOT[0-9]*_.*", "COMPASS_MOTCT", "COMPASS_ODI[0-9]*_.*", "COMPASS_OFS[0-9]*_.*", "COMPASS_ORIENT[0-9]*", "COMPASS_SCALE[0-9]*"],
-            "derived_parameters": {
+            "add_parameters": {
                 "COMPASS_DIA2_X":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
                 "COMPASS_DIA2_Y":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },
                 "COMPASS_DIA2_Z":  { "if": "'COMPASS_ORIENT2' in fc_parameters" },

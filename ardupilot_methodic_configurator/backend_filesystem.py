@@ -924,6 +924,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.merge_forced_or_derived_parameters(
                     param_filename, self.derived_parameters, fc_param_names, target=working
                 )
+                self.compute_add_parameters(param_filename, step_dict, eval_variables, existing_params=working)
+                self.merge_forced_or_derived_parameters(param_filename, self.add_parameters, None, target=working)
 
                 # Apply deletions from delete_parameters
                 to_delete = self.compute_deletions(param_filename, step_dict, eval_variables)
