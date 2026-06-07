@@ -4834,17 +4834,17 @@ msgstr "派生パラメータ%sのパッチに失敗しました: %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2350
 msgid "rename_connection eval failed for %s: %s"
-msgstr ""
+msgstr "%sの接続名変更の評価に失敗しました: %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2372
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2395
 msgid "Skipping connection rename %s → %s: target already exists"
-msgstr ""
+msgstr "接続名変更をスキップしました %s → %s: 既に対象が存在します"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2387
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2410
 msgid "Renamed connection parameter %s → %s"
-msgstr ""
+msgstr "接続パラメータをリネームしました %s → %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2443
 msgid ""

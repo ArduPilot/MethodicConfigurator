@@ -5019,17 +5019,17 @@ msgstr "Falha ao atualizar o parâmetro derivado %s: %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2350
 msgid "rename_connection eval failed for %s: %s"
-msgstr ""
+msgstr "falha ao avaliar o comando de renomear ligação para %s: %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2372
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2395
 msgid "Skipping connection rename %s → %s: target already exists"
-msgstr ""
+msgstr "A renomeação da ligação de %s para %s foi ignorada: o destino já existe"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2387
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2410
 msgid "Renamed connection parameter %s → %s"
-msgstr ""
+msgstr "Parâmetro de ligação renomeado de %s para %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2443
 msgid ""

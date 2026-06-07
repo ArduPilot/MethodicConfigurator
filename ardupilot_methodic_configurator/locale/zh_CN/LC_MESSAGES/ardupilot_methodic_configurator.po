@@ -4532,17 +4532,17 @@ msgstr "无法修补派生参数 %s：%s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2350
 msgid "rename_connection eval failed for %s: %s"
-msgstr ""
+msgstr "重命名连接时对%s的eval失败：%s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2372
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2395
 msgid "Skipping connection rename %s → %s: target already exists"
-msgstr ""
+msgstr "跳过连接重命名 %s → %s：目标已存在"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2387
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2410
 msgid "Renamed connection parameter %s → %s"
-msgstr ""
+msgstr "已重命名连接参数 %s → %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2443
 msgid ""
