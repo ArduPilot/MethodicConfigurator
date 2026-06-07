@@ -4394,3 +4394,267 @@ class TestComponentEditorIntegration:
         parameter_editor._local_filesystem.save_vehicle_components_json_data.assert_not_called()
         assert is_error is True
         assert msg  # non-empty error message
+
+
+class TestRefreshConnectionRenames:
+    """
+    Test Refresh Connection Renames logic in the ParameterEditor.
+
+    Tests for _refresh_current_step_connection_renames() and the rename_connection branch of
+    refresh_current_step_computed_parameters().
+    """
+
+    # ------------------------------------------------------------------ helpers
+
+    def _setup_rename_step(self, parameter_editor: ParameterEditor, step_file: str, rename_expr: str) -> None:
+        """Configure the editor so the given step file has a rename_connection entry."""
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"rename_connection": rename_expr}}
+        parameter_editor._local_filesystem.derived_parameters = {}
+
+    # ------------------------------------------------------------------ tests: no-op paths
+
+    def test_system_skips_rename_refresh_when_rename_connection_eval_fails(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System leaves parameter state unchanged when rename_connection expression evaluation raises.
+
+        GIVEN: A step with rename_connection whose expression raises an exception
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: current_step_parameters is not modified
+        """
+        step_file = "10_gnss.param"
+        self._setup_rename_step(parameter_editor, step_file, "bad_expr")
+
+        original_par = MagicMock()
+        parameter_editor.current_step_parameters = {"ORIG_PARAM": original_par}
+        parameter_editor._local_filesystem.file_parameters = {step_file: {"ORIG_PARAM": Par(1.0)}}
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "calculate_connection_rename_operations",
+            side_effect=RuntimeError("eval failed"),
+        ):
+            parameter_editor.refresh_current_step_computed_parameters()
+
+        # State must be unchanged
+        assert "ORIG_PARAM" in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["ORIG_PARAM"] is original_par
+
+    # ------------------------------------------------------------------ tests: apply new rename
+
+    def test_system_applies_new_connection_rename_when_expression_first_matches(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        System renames orig_name to new_target when a new rename_connection rule becomes applicable.
+
+        GIVEN: A step with rename_connection and an original parameter ORIG_PARAM in file_parameters
+        AND: calculate_connection_rename_operations returns [("ORIG_PARAM", "NEW_PARAM")]
+        AND: _connection_renames is empty (no prior rename tracked)
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: ORIG_PARAM is removed from current_step_parameters
+        AND: NEW_PARAM is added to current_step_parameters
+        AND: "ORIG_PARAM" is in _deleted_parameters
+        AND: "NEW_PARAM" is in _added_parameters
+        AND: _connection_renames maps "ORIG_PARAM" -> "NEW_PARAM"
+        """
+        step_file = "10_gnss.param"
+        self._setup_rename_step(parameter_editor, step_file, "some_expr")
+
+        orig_par = Par(1.0, "original")
+        parameter_editor._local_filesystem.file_parameters = {step_file: {"ORIG_PARAM": orig_par}}
+        parameter_editor.current_step_parameters = {"ORIG_PARAM": MagicMock()}
+        parameter_editor._connection_renames = {}
+        parameter_editor._added_parameters = set()
+        parameter_editor._deleted_parameters = set()
+
+        mock_new_param = MagicMock()
+        with (
+            patch.object(
+                parameter_editor._config_step_processor,
+                "calculate_connection_rename_operations",
+                return_value=([], [("ORIG_PARAM", "NEW_PARAM")]),
+            ),
+            patch.object(
+                parameter_editor._config_step_processor,
+                "create_ardupilot_parameter",
+                return_value=mock_new_param,
+            ),
+        ):
+            parameter_editor.refresh_current_step_computed_parameters()
+
+        assert "ORIG_PARAM" not in parameter_editor.current_step_parameters
+        assert "NEW_PARAM" in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["NEW_PARAM"] is mock_new_param
+        assert "ORIG_PARAM" in parameter_editor._deleted_parameters
+        assert "NEW_PARAM" in parameter_editor._added_parameters
+        assert parameter_editor._connection_renames.get("ORIG_PARAM") == "NEW_PARAM"
+
+    def test_system_skips_new_rename_when_target_already_exists(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System does not overwrite an existing parameter when the rename target is already present.
+
+        GIVEN: A new rename rule maps ORIG_PARAM -> EXISTING_PARAM
+        AND: EXISTING_PARAM already exists in current_step_parameters
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: EXISTING_PARAM retains its original object (no overwrite)
+        AND: no rename is tracked in _connection_renames
+        """
+        step_file = "10_gnss.param"
+        self._setup_rename_step(parameter_editor, step_file, "some_expr")
+
+        orig_par = Par(1.0, "original")
+        parameter_editor._local_filesystem.file_parameters = {step_file: {"ORIG_PARAM": orig_par}}
+
+        existing_param = MagicMock()
+        parameter_editor.current_step_parameters = {
+            "ORIG_PARAM": MagicMock(),
+            "EXISTING_PARAM": existing_param,
+        }
+        parameter_editor._connection_renames = {}
+        parameter_editor._added_parameters = set()
+        parameter_editor._deleted_parameters = set()
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "calculate_connection_rename_operations",
+            return_value=([], [("ORIG_PARAM", "EXISTING_PARAM")]),
+        ):
+            parameter_editor.refresh_current_step_computed_parameters()
+
+        # The existing parameter must NOT have been replaced
+        assert parameter_editor.current_step_parameters["EXISTING_PARAM"] is existing_param
+        # No rename should be tracked
+        assert "ORIG_PARAM" not in parameter_editor._connection_renames
+
+    # ------------------------------------------------------------------ tests: undo rename
+
+    def test_system_restores_original_name_when_rename_no_longer_applicable(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System restores the original parameter name when a previously-applied rename becomes invalid.
+
+        GIVEN: _connection_renames tracks "ORIG_PARAM" -> "OLD_TARGET"
+        AND: calculate_connection_rename_operations no longer returns a rename for ORIG_PARAM
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: OLD_TARGET is removed from current_step_parameters
+        AND: ORIG_PARAM is restored to current_step_parameters
+        AND: "ORIG_PARAM" is removed from _deleted_parameters
+        AND: the rename is cleared from _connection_renames
+        """
+        step_file = "10_gnss.param"
+        self._setup_rename_step(parameter_editor, step_file, "some_expr")
+
+        orig_par = Par(1.0, "original")
+        parameter_editor._local_filesystem.file_parameters = {step_file: {"ORIG_PARAM": orig_par}}
+        parameter_editor.current_step_parameters = {"OLD_TARGET": MagicMock()}
+        parameter_editor._connection_renames = {"ORIG_PARAM": "OLD_TARGET"}
+        parameter_editor._added_parameters = {"OLD_TARGET"}
+        parameter_editor._deleted_parameters = {"ORIG_PARAM"}
+
+        mock_restored_param = MagicMock()
+        with (
+            patch.object(
+                parameter_editor._config_step_processor,
+                "calculate_connection_rename_operations",
+                return_value=([], []),  # no renames applicable any more
+            ),
+            patch.object(
+                parameter_editor._config_step_processor,
+                "create_ardupilot_parameter",
+                return_value=mock_restored_param,
+            ),
+        ):
+            parameter_editor.refresh_current_step_computed_parameters()
+
+        assert "OLD_TARGET" not in parameter_editor.current_step_parameters
+        assert "ORIG_PARAM" in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["ORIG_PARAM"] is mock_restored_param
+        assert "ORIG_PARAM" not in parameter_editor._deleted_parameters
+        assert "ORIG_PARAM" not in parameter_editor._connection_renames
+
+    # ------------------------------------------------------------------ tests: retarget rename
+
+    def test_system_moves_parameter_when_rename_target_changes(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System moves the parameter to the new target when the rename destination changes.
+
+        GIVEN: _connection_renames tracks "ORIG_PARAM" -> "OLD_TARGET"
+        AND: calculate_connection_rename_operations now returns ("ORIG_PARAM", "NEW_TARGET")
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: OLD_TARGET is removed from current_step_parameters
+        AND: NEW_TARGET is added to current_step_parameters
+        AND: "NEW_TARGET" is in _added_parameters
+        AND: _connection_renames maps "ORIG_PARAM" -> "NEW_TARGET"
+        """
+        step_file = "10_gnss.param"
+        self._setup_rename_step(parameter_editor, step_file, "some_expr")
+
+        orig_par = Par(1.0, "original")
+        parameter_editor._local_filesystem.file_parameters = {step_file: {"ORIG_PARAM": orig_par}}
+        parameter_editor.current_step_parameters = {"OLD_TARGET": MagicMock()}
+        parameter_editor._connection_renames = {"ORIG_PARAM": "OLD_TARGET"}
+        parameter_editor._added_parameters = {"OLD_TARGET"}
+        parameter_editor._deleted_parameters = {"ORIG_PARAM"}
+
+        mock_new_param = MagicMock()
+        with (
+            patch.object(
+                parameter_editor._config_step_processor,
+                "calculate_connection_rename_operations",
+                return_value=([], [("ORIG_PARAM", "NEW_TARGET")]),
+            ),
+            patch.object(
+                parameter_editor._config_step_processor,
+                "create_ardupilot_parameter",
+                return_value=mock_new_param,
+            ),
+        ):
+            parameter_editor.refresh_current_step_computed_parameters()
+
+        assert "OLD_TARGET" not in parameter_editor.current_step_parameters
+        assert "NEW_TARGET" in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["NEW_TARGET"] is mock_new_param
+        assert "NEW_TARGET" in parameter_editor._added_parameters
+        assert parameter_editor._connection_renames.get("ORIG_PARAM") == "NEW_TARGET"
+
+    def test_system_skips_retarget_when_new_target_already_exists(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System does not overwrite an unrelated existing parameter when the rename target changes.
+
+        GIVEN: _connection_renames tracks "ORIG_PARAM" -> "OLD_TARGET"
+        AND: calculate_connection_rename_operations returns ("ORIG_PARAM", "CONFLICT_PARAM")
+        AND: CONFLICT_PARAM already exists in current_step_parameters (not from any rename)
+        WHEN: refresh_current_step_computed_parameters() is called
+        THEN: CONFLICT_PARAM retains its original object
+        AND: OLD_TARGET is still present (not deleted)
+        AND: the rename target remains OLD_TARGET in _connection_renames
+        """
+        step_file = "10_gnss.param"
+        self._setup_rename_step(parameter_editor, step_file, "some_expr")
+
+        orig_par = Par(1.0, "original")
+        parameter_editor._local_filesystem.file_parameters = {step_file: {"ORIG_PARAM": orig_par}}
+
+        old_target_param = MagicMock()
+        conflict_param = MagicMock()
+        parameter_editor.current_step_parameters = {
+            "OLD_TARGET": old_target_param,
+            "CONFLICT_PARAM": conflict_param,
+        }
+        parameter_editor._connection_renames = {"ORIG_PARAM": "OLD_TARGET"}
+        parameter_editor._added_parameters = {"OLD_TARGET"}
+        parameter_editor._deleted_parameters = {"ORIG_PARAM"}
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "calculate_connection_rename_operations",
+            return_value=([], [("ORIG_PARAM", "CONFLICT_PARAM")]),
+        ):
+            parameter_editor.refresh_current_step_computed_parameters()
+
+        # Conflict param must not have been replaced
+        assert parameter_editor.current_step_parameters["CONFLICT_PARAM"] is conflict_param
+        # Old target should remain (rename was skipped)
+        assert "OLD_TARGET" in parameter_editor.current_step_parameters
+        # Rename tracking should be unchanged
+        assert parameter_editor._connection_renames.get("ORIG_PARAM") == "OLD_TARGET"
