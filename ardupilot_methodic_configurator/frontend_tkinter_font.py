@@ -23,10 +23,9 @@ import tkinter.font as tkfont
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from platform import system as platform_system
-from typing import Optional, Union
 
 
-def safe_font_nametofont(font_name: str = "TkDefaultFont") -> Optional[tkfont.Font]:
+def safe_font_nametofont(font_name: str = "TkDefaultFont") -> tkfont.Font | None:
     """
     Safely retrieve a named font object with error handling.
 
@@ -63,7 +62,7 @@ def safe_font_nametofont(font_name: str = "TkDefaultFont") -> Optional[tkfont.Fo
         return None
 
 
-def get_safe_font_config(font_name: str = "TkDefaultFont") -> dict[str, Union[str, int]]:
+def get_safe_font_config(font_name: str = "TkDefaultFont") -> dict[str, str | int]:
     """
     Get a complete font configuration with platform-appropriate fallbacks.
 
@@ -174,7 +173,7 @@ def get_safe_font_size(font_name: str = "TkDefaultFont") -> int:
         return 0
 
 
-def create_scaled_font(font_config: dict[str, Union[str, int]], scale_factor: float = 1.0) -> tkfont.Font:
+def create_scaled_font(font_config: dict[str, str | int], scale_factor: float = 1.0) -> tkfont.Font:
     """
     Create a tkinter Font object from a font configuration dictionary with optional scaling.
 

@@ -11,8 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import tempfile
+from collections.abc import Callable
 from contextlib import suppress
-from typing import IO, Callable
+from typing import IO
 
 
 def safe_write(filepath: str, write_func: Callable[[IO[str]], object]) -> None:

@@ -24,7 +24,6 @@ from os import name as os_name
 from os import path as os_path
 from shutil import which as shutil_which
 from sys import platform as sys_platform
-from typing import Optional, Union
 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 
@@ -57,7 +56,7 @@ class FreeDesktop:
         return os_path.exists(desktop_file_path)
 
     @staticmethod
-    def _get_virtual_env_path() -> Optional[str]:
+    def _get_virtual_env_path() -> str | None:
         """Get the virtual environment path from environment variables."""
         return os_environ.get("VIRTUAL_ENV")
 
@@ -157,7 +156,7 @@ StartupNotify=true
             logging_error("Failed to create application launch desktop icon")
 
     @staticmethod
-    def _get_desktop_startup_id() -> Union[str, None]:
+    def _get_desktop_startup_id() -> str | None:
         """
         Get the DESKTOP_STARTUP_ID environment variable.
 

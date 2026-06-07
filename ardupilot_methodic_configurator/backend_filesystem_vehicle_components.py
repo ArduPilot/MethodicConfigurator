@@ -22,7 +22,7 @@ from os import makedirs as os_makedirs
 from os import path as os_path
 from os import walk as os_walk
 from re import match as re_match
-from typing import Any, Union
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import FilesystemJSONWithSchema
@@ -445,7 +445,7 @@ class VehicleComponents:
 
             merge_defaults(data["Components"], default_data)
 
-    def _recursively_clear_dict(self, data: Union[dict, list, float, bool, str]) -> None:
+    def _recursively_clear_dict(self, data: dict | list | float | bool | str) -> None:
         """
         Recursively clear leaf values in a nested dictionary while preserving structure.
 

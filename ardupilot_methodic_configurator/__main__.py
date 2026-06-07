@@ -29,7 +29,6 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
 from sys import exit as sys_exit
-from typing import Union
 
 import argcomplete
 
@@ -121,7 +120,7 @@ class ApplicationState:  # pylint: disable=too-few-public-methods
         self.vehicle_type: str = ""
         self.param_default_values: ParDict = ParDict()
         self.local_filesystem: LocalFilesystem = None  # type: ignore[assignment]
-        self.vehicle_project_manager: Union[VehicleProjectManager, None] = None
+        self.vehicle_project_manager: VehicleProjectManager | None = None
         self.param_default_values_dirty: bool = False
 
 
@@ -401,7 +400,7 @@ def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None
     initialize_filesystem(state)
 
 
-def vehicle_directory_selection(state: ApplicationState) -> Union[VehicleProjectOpenerWindow, None]:
+def vehicle_directory_selection(state: ApplicationState) -> VehicleProjectOpenerWindow | None:
     """
     Handle vehicle directory selection if no parameter files are found in the current working directory.
 
@@ -444,7 +443,7 @@ def create_and_configure_component_editor(
     local_filesystem: LocalFilesystem,
     flight_controller: FlightController,
     vehicle_type: str,
-    vehicle_project_manager: Union[None, VehicleProjectManager],
+    vehicle_project_manager: None | VehicleProjectManager,
 ) -> ComponentEditorWindow:
     """
     Create and configure the component editor window.

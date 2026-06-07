@@ -14,7 +14,6 @@ import io  # Import io for StringIO
 import logging
 import os
 import sys
-from typing import Union
 
 # Define the base directory to crawl
 BASE_DIR = "../ardupilot/libraries/AP_HAL_ChibiOS/hwdef/"
@@ -218,7 +217,7 @@ def create_dicts(  # pylint: disable=too-many-locals
 
 
 def pretty_print_dict(
-    d: dict, indent: int = 4, format_int_in_hex: bool = True, board_name: Union[None, dict[int, list[str]]] = None
+    d: dict, indent: int = 4, format_int_in_hex: bool = True, board_name: None | dict[int, list[str]] = None
 ) -> str:
     """Pretty prints a dictionary, formatting integers in hexadecimal to a string."""
     output = io.StringIO()

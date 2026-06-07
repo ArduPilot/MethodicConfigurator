@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import copy
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 from unittest.mock import MagicMock
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
@@ -165,7 +165,7 @@ SAMPLE_DOC_DICT = {
 }
 
 
-def make_fc_schema(fc_body: dict[str, Any], *, definitions: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+def make_fc_schema(fc_body: dict[str, Any], *, definitions: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build a minimal schema dict wrapping a single Flight Controller component body."""
     schema: dict[str, Any] = {"properties": {"Components": {"properties": {"Flight Controller": fc_body}}}}
     if definitions is not None:
@@ -241,7 +241,7 @@ class ComponentDataModelFixtures:
         return model
 
     @staticmethod
-    def create_basic_model(model_class: type[T], data: Optional[dict[str, Any]] = None) -> T:
+    def create_basic_model(model_class: type[T], data: dict[str, Any] | None = None) -> T:
         """Create a basic component data model with simple data."""
         data = copy.deepcopy(data or BASIC_COMPONENT_DATA)
         component_datatypes = ComponentDataModelFixtures.create_component_datatypes()

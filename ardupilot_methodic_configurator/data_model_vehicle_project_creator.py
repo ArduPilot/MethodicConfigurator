@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import MISSING, dataclass, fields
 from pathlib import Path
-from typing import ClassVar, NamedTuple, Optional
+from typing import ClassVar, NamedTuple
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -58,7 +58,7 @@ class NewVehicleProjectSettings:
     blank_change_reason: bool = False
 
     @staticmethod
-    def has_fc_parameters(fc_parameters: Optional[dict[str, float]]) -> bool:
+    def has_fc_parameters(fc_parameters: dict[str, float] | None) -> bool:
         """
         Check if FC parameters are available and non-empty.
 
@@ -167,7 +167,7 @@ class NewVehicleProjectSettings:
         cls,
         setting_name: str,
         fc_connected: bool,
-        fc_parameters: Optional[dict[str, float]] = None,
+        fc_parameters: dict[str, float] | None = None,
     ) -> NewVehicleProjectSetting:
         """
         Get metadata for a specific setting with enabled state based on FC connection.
@@ -197,7 +197,7 @@ class NewVehicleProjectSettings:
 
     @classmethod
     def get_all_settings_metadata(
-        cls, fc_connected: bool, fc_parameters: Optional[dict[str, float]] = None
+        cls, fc_connected: bool, fc_parameters: dict[str, float] | None = None
     ) -> dict[str, NewVehicleProjectSetting]:
         """
         Get metadata for all settings with enabled states based on FC connection.
@@ -213,9 +213,7 @@ class NewVehicleProjectSettings:
         return {name: cls.get_setting_metadata(name, fc_connected, fc_parameters) for name in cls._BASE_SETTINGS_METADATA}
 
     @classmethod
-    def is_setting_enabled(
-        cls, setting_name: str, fc_connected: bool, fc_parameters: Optional[dict[str, float]] = None
-    ) -> bool:
+    def is_setting_enabled(cls, setting_name: str, fc_connected: bool, fc_parameters: dict[str, float] | None = None) -> bool:
         """
         Check if a setting should be enabled based on FC connection state.
 
@@ -236,7 +234,7 @@ class NewVehicleProjectSettings:
         return cls._BASE_SETTINGS_METADATA[setting_name].enabled
 
     @classmethod
-    def get_settings_state(cls, fc_connected: bool, fc_parameters: Optional[dict[str, float]] = None) -> dict[str, bool]:
+    def get_settings_state(cls, fc_connected: bool, fc_parameters: dict[str, float] | None = None) -> dict[str, bool]:
         """
         Get the enabled state for all settings based on FC connection.
 
@@ -293,7 +291,7 @@ class NewVehicleProjectSettings:
         setting_name: str,
         setting_value: bool,
         fc_connected: bool,
-        fc_parameters: Optional[dict[str, float]],
+        fc_parameters: dict[str, float] | None,
     ) -> None:
         """
         Validate a single FC-dependent setting.
@@ -343,7 +341,7 @@ class NewVehicleProjectSettings:
         """
         return setting_name in cls._FC_PARAM_DEPENDENT_SETTINGS
 
-    def validate_fc_dependent_settings(self, fc_connected: bool, fc_parameters: Optional[dict[str, float]] = None) -> None:
+    def validate_fc_dependent_settings(self, fc_connected: bool, fc_parameters: dict[str, float] | None = None) -> None:
         """
         Validate settings that depend on flight controller connectivity.
 
@@ -360,7 +358,7 @@ class NewVehicleProjectSettings:
             self.__class__.validate_fc_dependent_setting(setting_name, setting_value, fc_connected, fc_parameters)
 
     def adjust_for_fc_connection(
-        self, fc_connected: bool, fc_parameters: Optional[dict[str, float]]
+        self, fc_connected: bool, fc_parameters: dict[str, float] | None
     ) -> "NewVehicleProjectSettings":
         """
         Return a copy of settings adjusted for flight controller connection state.
@@ -488,7 +486,7 @@ class VehicleProjectCreator:
         new_vehicle_name: str,
         settings: NewVehicleProjectSettings,
         fc_connected: bool = False,
-        fc_parameters: Optional[dict[str, float]] = None,
+        fc_parameters: dict[str, float] | None = None,
     ) -> str:
         """
         Create a new vehicle configuration directory from a template.

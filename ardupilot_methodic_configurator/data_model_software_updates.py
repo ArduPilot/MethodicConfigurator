@@ -13,12 +13,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import platform
 import re
 from argparse import ArgumentParser
+from collections.abc import Callable
 from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from logging import warning as logging_warning
-from typing import Any, Callable, Optional
+from typing import Any
 
 from packaging import version
 from requests import RequestException as requests_RequestException
@@ -57,7 +58,7 @@ def format_version_info(_current_version: str, _latest_release: str, changes: st
     ).format(**locals())
 
 
-def _find_asset(assets: list[dict[str, Any]], extension: str, allow_fallback: bool = False) -> Optional[dict[str, Any]]:
+def _find_asset(assets: list[dict[str, Any]], extension: str, allow_fallback: bool = False) -> dict[str, Any] | None:
     """Return the first asset whose name ends with *extension*, falling back to the first asset when requested."""
     preferred = [a for a in assets if a.get("name", "").lower().endswith(extension)]
     if preferred:
@@ -71,7 +72,7 @@ def _install_from_asset(
     asset: dict[str, Any],
     latest_release: dict[str, Any],
     install_fn: Callable[..., bool],
-    progress_callback: Optional[Callable[[float, str], None]],
+    progress_callback: Callable[[float, str], None] | None,
 ) -> bool:
     """Fetch SHA256 for *asset* and invoke the platform-specific *install_fn*."""
     expected_sha256 = get_expected_sha256_from_release(latest_release, asset["name"])
@@ -87,12 +88,12 @@ class UpdateManager:
     """Manages the software update process including user interaction and installation."""
 
     def __init__(self) -> None:
-        self.dialog: Optional[UpdateDialog] = None
+        self.dialog: UpdateDialog | None = None
 
     def _install_windows(
         self,
         latest_release: dict[str, Any],
-        progress_callback: Optional[Callable[[float, str], None]],
+        progress_callback: Callable[[float, str], None] | None,
     ) -> bool:
         """Select the best Windows asset (.exe preferred) and install it."""
         asset = _find_asset(latest_release.get("assets", []), ".exe", allow_fallback=True)
@@ -104,7 +105,7 @@ class UpdateManager:
     def _install_macos(
         self,
         latest_release: dict[str, Any],
-        progress_callback: Optional[Callable[[float, str], None]],
+        progress_callback: Callable[[float, str], None] | None,
     ) -> bool:
         """Select the best macOS asset (.dmg preferred) and install it, falling back to pip."""
         asset = _find_asset(latest_release.get("assets", []), ".dmg")

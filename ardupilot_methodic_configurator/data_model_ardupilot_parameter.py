@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from math import inf, isfinite, isnan, nan
-from typing import Any, Optional
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import Par, is_within_tolerance
@@ -41,11 +41,11 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         self,
         name: str,
         par_obj: Par,
-        metadata: Optional[dict[str, Any]] = None,
-        default_par: Optional[Par] = None,
-        fc_value: Optional[float] = None,
-        forced_par: Optional[Par] = None,
-        derived_par: Optional[Par] = None,
+        metadata: dict[str, Any] | None = None,
+        default_par: Par | None = None,
+        fc_value: float | None = None,
+        forced_par: Par | None = None,
+        derived_par: Par | None = None,
     ) -> None:
         """
         Initialize the parameter with all its attributes.
@@ -200,13 +200,13 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         return dict[int, str](self._metadata.get("Bitmask", {}))
 
     @property
-    def min_value(self) -> Optional[float]:
+    def min_value(self) -> float | None:
         """Return the minimum allowed value for this parameter."""
         min_val = self._metadata.get("min", None)
         return float(min_val) if min_val is not None else None
 
     @property
-    def max_value(self) -> Optional[float]:
+    def max_value(self) -> float | None:
         """Return the maximum allowed value for this parameter."""
         max_val = self._metadata.get("max", None)
         return float(max_val) if max_val is not None else None
@@ -263,7 +263,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         """Return the new value for this parameter (to be saved to file or uploaded to FC)."""
         return self._new_value
 
-    def get_selected_value_from_dict(self) -> Optional[str]:
+    def get_selected_value_from_dict(self) -> str | None:
         """Return the string representation from the values dictionary for the new value."""
         if self.is_in_values_dict:
             return self.choices_dict.get(self.value_as_string)
@@ -275,7 +275,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             return _("The value for {param_name} must be a finite number.").format(param_name=self._name)
         return ""
 
-    def is_above_limit(self, value: Optional[float] = None) -> str:
+    def is_above_limit(self, value: float | None = None) -> str:
         """Return an error message if the value is above the limit for this parameter."""
         new_value = self._new_value if value is None else value
         if self.max_value is not None and new_value > self.max_value:
@@ -284,7 +284,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             )
         return ""
 
-    def is_below_limit(self, value: Optional[float] = None) -> str:
+    def is_below_limit(self, value: float | None = None) -> str:
         """Return an error message if the value is below the limit for this parameter."""
         new_value = self._new_value if value is None else value
         if self.min_value is not None and new_value < self.min_value:
@@ -293,7 +293,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             )
         return ""
 
-    def has_unknown_bits_set(self, value: Optional[int] = None) -> str:
+    def has_unknown_bits_set(self, value: int | None = None) -> str:
         """Check if the given value has unknown bits set."""
         if self.is_bitmask:
             allowed_mask = 0

@@ -11,10 +11,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+import types
 from argparse import ArgumentParser
 from collections.abc import Generator
 from tkinter import ttk
-from typing import Union, cast, get_args, get_origin
+from typing import cast, get_args, get_origin
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -937,7 +938,7 @@ class TestModuleConstantsAndTypes:
         origin = get_origin(EntryWidget)
         args = get_args(EntryWidget)
 
-        assert origin is Union
+        assert origin is types.UnionType
         assert len(args) >= 2  # Should include at least Entry and Combobox
 
     def test_argparse_arguments_include_component_editor_options(self) -> None:

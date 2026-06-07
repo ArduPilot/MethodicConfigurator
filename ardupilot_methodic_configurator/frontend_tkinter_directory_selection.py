@@ -9,9 +9,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from copy import deepcopy
 from tkinter import filedialog, messagebox, ttk
-from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import VehicleProjectCreationError
@@ -64,7 +64,7 @@ class DirectorySelectionWidgets:
         autoresize_width: bool,
         dir_tooltip: str,
         button_tooltip: str,
-        on_directory_selected_callback: Optional[Callable[["DirectorySelectionWidgets"], str]] = None,
+        on_directory_selected_callback: Callable[["DirectorySelectionWidgets"], str] | None = None,
     ) -> None:
         self.parent = parent
         self.directory: str = deepcopy(initialdir)
@@ -203,7 +203,7 @@ class VehicleDirectorySelectionWidgets(DirectorySelectionWidgets):
         parent_frame: ttk.Widget,
         initial_dir: str,
         destroy_parent_on_open: bool,
-        on_select_directory_callback: Optional[Callable[[str], None]] = None,
+        on_select_directory_callback: Callable[[str], None] | None = None,
     ) -> None:
         # Call the parent constructor with the necessary arguments
         super().__init__(

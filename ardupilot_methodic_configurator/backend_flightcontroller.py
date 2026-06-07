@@ -9,13 +9,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from argparse import ArgumentParser
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
 from pathlib import Path
 from time import sleep as time_sleep
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pymavlink import mavutil
 from serial.tools.list_ports_common import ListPortInfo
@@ -95,13 +95,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
         self,
         reboot_time: int = DEFAULT_REBOOT_TIME,
         baudrate: int = DEFAULT_BAUDRATE,
-        network_ports: Optional[list[str]] = None,
-        info: Optional[FlightControllerInfo] = None,
-        connection_manager: Optional[FlightControllerConnectionProtocol] = None,
-        params_manager: Optional[FlightControllerParamsProtocol] = None,
-        commands_manager: Optional[FlightControllerCommandsProtocol] = None,
-        files_manager: Optional[FlightControllerFilesProtocol] = None,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        network_ports: list[str] | None = None,
+        info: FlightControllerInfo | None = None,
+        connection_manager: FlightControllerConnectionProtocol | None = None,
+        params_manager: FlightControllerParamsProtocol | None = None,
+        commands_manager: FlightControllerCommandsProtocol | None = None,
+        files_manager: FlightControllerFilesProtocol | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> None:
         """
         Initialize the FlightController communication object.
@@ -185,11 +185,11 @@ class FlightController:  # pylint: disable=too-many-public-methods
         self.discover_connections(progress_callback=progress_callback)
 
     @property
-    def master(self) -> Optional[MavlinkConnection]:
+    def master(self) -> MavlinkConnection | None:
         """Get the MAVLink connection - delegates to connection manager."""
         return self._connection_manager.master
 
-    def set_master_for_testing(self, value: Optional[MavlinkConnection]) -> None:
+    def set_master_for_testing(self, value: MavlinkConnection | None) -> None:
         """
         Set the MAVLink connection - FOR TESTING PURPOSES ONLY.
 
@@ -213,7 +213,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         self._connection_manager.set_master_for_testing(value)
 
     @property
-    def comport(self) -> Union[mavutil.SerialPort, ListPortInfo, None]:
+    def comport(self) -> mavutil.SerialPort | ListPortInfo | None:
         """Get the current comport - delegates to connection manager."""
         return self._connection_manager.comport
 
@@ -273,9 +273,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def reset_and_reconnect(
         self,
-        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        extra_sleep_time: Optional[int] = None,
+        reset_progress_callback: None | Callable[[int, int], None] = None,
+        connection_progress_callback: None | Callable[[int, int], None] = None,
+        extra_sleep_time: int | None = None,
     ) -> str:
         """
         Reset the flight controller and reconnect.
@@ -321,8 +321,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def discover_connections(
         self,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-        preserved_connections: Optional[Sequence[str]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
+        preserved_connections: Sequence[str] | None = None,
     ) -> None:
         """Discover available connections - delegates to connection manager."""
         self._connection_manager.discover_connections(
@@ -344,13 +344,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Detect vehicles from heartbeats - delegates to connection manager (testing only)."""
         return self._connection_manager._detect_vehicles_from_heartbeats(timeout)  # noqa: SLF001 # pylint: disable=protected-access
 
-    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: Optional[int]) -> str:
+    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: int | None) -> str:
         """Extract firmware type from banner - delegates to connection manager (testing only)."""
         return self._connection_manager._extract_firmware_type_from_banner(  # noqa: SLF001 # pylint: disable=protected-access
             banner_msgs, os_custom_version_index
         )
 
-    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, Optional[int]]:
+    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, int | None]:
         """Extract ChibiOS version from banner - delegates to connection manager (testing only)."""
         return self._connection_manager._extract_chibios_version_from_banner(banner_msgs)  # noqa: SLF001 # pylint: disable=protected-access
 
@@ -369,9 +369,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
     def connect(
         self,
         device: str,
-        progress_callback: Union[None, Callable[[int, int], None]] = None,
+        progress_callback: None | Callable[[int, int], None] = None,
         log_errors: bool = True,
-        baudrate: Optional[int] = None,
+        baudrate: int | None = None,
     ) -> str:
         """
         Establishes a connection to the FlightController - delegates to connection manager.
@@ -399,7 +399,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        progress_callback: Union[None, Callable[[int, int], None]],
+        progress_callback: None | Callable[[int, int], None],
         retries: int = 3,
         timeout: int = 5,
         baudrate: int = DEFAULT_BAUDRATE,
@@ -444,9 +444,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def download_params(
         self,
-        progress_callback: Union[None, Callable[[int, int], None]] = None,
-        parameter_values_filename: Optional[Path] = None,
-        parameter_defaults_filename: Optional[Path] = None,
+        progress_callback: None | Callable[[int, int], None] = None,
+        parameter_values_filename: Path | None = None,
+        parameter_defaults_filename: Path | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """Download all parameters from flight controller - delegates to params manager."""
         params, defaults = self._params_manager.download_params(
@@ -459,7 +459,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Set a parameter on the flight controller - delegates to params manager."""
         return self._params_manager.set_param(param_name, param_value)
 
-    def fetch_param(self, param_name: str, timeout: int = 5) -> Optional[float]:
+    def fetch_param(self, param_name: str, timeout: int = 5) -> float | None:
         """Fetch a parameter from the flight controller - delegates to params manager."""
         return self._params_manager.fetch_param(param_name, timeout)
 
@@ -495,7 +495,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Request periodic BATTERY_STATUS messages - delegates to commands manager."""
         return self._commands_manager.request_periodic_battery_status(interval_microseconds)
 
-    def get_battery_status(self) -> tuple[Union[tuple[float, float], None], str]:
+    def get_battery_status(self) -> tuple[tuple[float, float] | None, str]:
         """Get current battery voltage and current - delegates to commands manager."""
         return self._commands_manager.get_battery_status()
 
@@ -514,13 +514,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
     # File operations - Delegated to files manager
 
     def upload_file(
-        self, local_filename: str, remote_filename: str, progress_callback: Union[None, Callable[[int, int], None]] = None
+        self, local_filename: str, remote_filename: str, progress_callback: None | Callable[[int, int], None] = None
     ) -> bool:
         """Upload a file to the flight controller - delegates to files manager."""
         return self._files_manager.upload_file(local_filename, remote_filename, progress_callback)
 
     def download_last_flight_log(
-        self, local_filename: str, progress_callback: Union[None, Callable[[int, int], None]] = None
+        self, local_filename: str, progress_callback: None | Callable[[int, int], None] = None
     ) -> bool:
         """Download the last flight log from the flight controller - delegates to files manager."""
         return self._files_manager.download_last_flight_log(local_filename, progress_callback)

@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from logging import error as logging_error
 from logging import warning as logging_warning
 from tkinter import ttk
-from typing import Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
@@ -46,12 +45,12 @@ class AutoResizeCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
     """
 
     def __init__(
-        self, master: ttk.Frame, values: list[str], selected_element: str, tooltip: Union[None, str], *args, **kwargs
+        self, master: ttk.Frame, values: list[str], selected_element: str, tooltip: None | str, *args, **kwargs
     ) -> None:
         super().__init__(master, *args, **kwargs)
         self.set_entries_tuple(values, selected_element, tooltip)
 
-    def set_entries_tuple(self, values: list[str], selected_element: str, tooltip: Union[None, str] = None) -> None:
+    def set_entries_tuple(self, values: list[str], selected_element: str, tooltip: None | str = None) -> None:
         self["values"] = tuple(values)
         if selected_element:
             if selected_element in values:

@@ -16,7 +16,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import contextlib
 import re
-from typing import Union
 
 import argcomplete
 from argcomplete.completers import FilesCompleter
@@ -83,7 +82,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_arguments(args: Union[None, argparse.Namespace] = None) -> argparse.Namespace:
+def parse_arguments(args: None | argparse.Namespace = None) -> argparse.Namespace:
     """
     Parses command line arguments for the script.
 
@@ -197,7 +196,7 @@ def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, i
         raise SystemExit(msg) from e
 
     try:
-        msg_fallback_result: Union[tuple[str, int, int, int], None] = None
+        msg_fallback_result: tuple[str, int, int, int] | None = None
         while True:
             m = mlog.recv_match(type=["VER", "MSG"])
             if m is None:
@@ -326,7 +325,7 @@ def output_params(
 
     for param_name, param_value in params.items():
         if format_type == "missionplanner":
-            param_value_conv: Union[float, str] = param_value
+            param_value_conv: float | str = param_value
             # preserve non-floating point strings, if present
             with contextlib.suppress(ValueError):
                 param_value_conv = format(param_value, ".6f").rstrip("0").rstrip(".")

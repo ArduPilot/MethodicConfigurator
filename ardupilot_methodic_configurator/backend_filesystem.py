@@ -30,7 +30,7 @@ from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 from shutil import rmtree as shutil_rmtree
 from subprocess import SubprocessError, run
-from typing import Any, Optional, Union
+from typing import Any
 from zipfile import ZipFile
 
 from argcomplete.completers import DirectoriesCompleter
@@ -201,7 +201,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return []
 
         # Sort values numerically by key
-        def sort_key(item: tuple[str, Any]) -> tuple[int, Union[int, float, str]]:
+        def sort_key(item: tuple[str, Any]) -> tuple[int, int | float | str]:
             key = item[0]
             try:
                 return (0, int(key))  # sort integers and floats together
@@ -358,7 +358,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             logging_error(_("Error: %s is not a directory."), self.vehicle_dir)
         return parameters
 
-    def compound_params(self, last_filename: Optional[str] = None, skip_default: bool = True) -> tuple[ParDict, Optional[str]]:
+    def compound_params(self, last_filename: str | None = None, skip_default: bool = True) -> tuple[ParDict, str | None]:
         """
         Compound parameters from multiple .param files into a single ParDict.
 
@@ -399,7 +399,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return compound, first_config_step_filename
 
     @staticmethod
-    def str_to_bool(s: str) -> Optional[bool]:
+    def str_to_bool(s: str) -> bool | None:
         """
         Converts a string representation of a boolean value to a boolean.
 
@@ -606,7 +606,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         blank_change_reason: bool,
         copy_vehicle_image: bool,
         use_fc_params: bool = False,
-        fc_parameters: Optional[dict[str, float]] = None,
+        fc_parameters: dict[str, float] | None = None,
     ) -> str:
         # Copy the template files to the new vehicle directory
         try:
@@ -662,7 +662,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         params: ParDict,
         blank_change_reason: bool,
         use_fc_params: bool,
-        fc_parameters: Optional[dict[str, float]],
+        fc_parameters: dict[str, float] | None,
     ) -> None:
         """
         Apply in-place transformations to a parameter dict during template copy.
@@ -845,7 +845,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def calculate_derived_and_forced_param_changes(
         self,
         fc_param_names: list[str],
-        fc_parameters: Optional[dict[str, float]] = None,
+        fc_parameters: dict[str, float] | None = None,
     ) -> dict[str, ParDict]:
         """
         Compute updated parameter values for all configuration files.
@@ -968,8 +968,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self,
         filename: str,
         new_parameters: dict[str, ParDict],
-        fc_param_names: Optional[list[str]],
-        target: Optional[ParDict] = None,
+        fc_param_names: list[str] | None,
+        target: ParDict | None = None,
     ) -> bool:
         """
         Merge forced or derived parameter values into a target parameter dict.

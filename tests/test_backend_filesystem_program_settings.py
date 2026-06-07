@@ -99,12 +99,12 @@ class TestApplicationResourcePaths:
         """
         User can retrieve icon filepath using modern importlib.resources method.
 
-        GIVEN: Python 3.9+ with importlib.resources.files available
+        GIVEN: Python 3.10+ with importlib.resources.files available
         WHEN: User requests the application icon filepath
         THEN: The path should be retrieved using importlib.resources
         AND: The path should exist and end with ArduPilot_icon.png
         """
-        # Act: Get application icon filepath (uses importlib.resources in Python 3.9+)
+        # Act: Get application icon filepath (uses importlib.resources in Python 3.10+)
         result = ProgramSettings.application_icon_filepath()
 
         # Assert: Path is valid and ends with expected filename
@@ -117,12 +117,12 @@ class TestApplicationResourcePaths:
         """
         User can retrieve logo filepath using modern importlib.resources method.
 
-        GIVEN: Python 3.9+ with importlib.resources.files available
+        GIVEN: Python 3.10+ with importlib.resources.files available
         WHEN: User requests the application logo filepath
         THEN: The path should be retrieved using importlib.resources
         AND: The path should exist and end with ArduPilot_logo.png
         """
-        # Act: Get application logo filepath (uses importlib.resources in Python 3.9+)
+        # Act: Get application logo filepath (uses importlib.resources in Python 3.10+)
         result = ProgramSettings.application_logo_filepath()
 
         # Assert: Path is valid and ends with expected filename
@@ -135,12 +135,12 @@ class TestApplicationResourcePaths:
         """
         User can retrieve workflow image filepath using modern importlib.resources method.
 
-        GIVEN: Python 3.9+ with importlib.resources.files available
+        GIVEN: Python 3.10+ with importlib.resources.files available
         WHEN: User requests the workflow image filepath for popup display
         THEN: The path should be retrieved using importlib.resources
         AND: The path should exist and end with AMC_general_workflow.png
         """
-        # Act: Get workflow image filepath (uses importlib.resources in Python 3.9+)
+        # Act: Get workflow image filepath (uses importlib.resources in Python 3.10+)
         result = ProgramSettings.workflow_image_filepath()
 
         # Assert: Path is valid and ends with expected filename

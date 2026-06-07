@@ -22,7 +22,6 @@ import time
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
-from typing import Optional
 
 from batch_convert_motor_diagrams import crop_whitespace
 from PIL import Image
@@ -60,7 +59,7 @@ class SVGViewerApp:  # pylint: disable=too-many-instance-attributes
 
         # Initialize variables
         self.svg_files: list[Path] = []
-        self.current_image: Optional[tk.PhotoImage] = None
+        self.current_image: tk.PhotoImage | None = None
         self.temp_dir = tempfile.mkdtemp()
         self.image_width = image_width
         self.image_height = image_height

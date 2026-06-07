@@ -40,10 +40,10 @@ _monitor_bounds_cache: WeakKeyDictionary[tk.Misc, MonitorBounds] = WeakKeyDictio
 
 # Last monitor bounds recorded from a live Tk window (e.g. just before it closes).
 # Used as a positioning fallback for parentless dialogs shown after the main window is gone.
-_last_known_monitor_bounds: Optional[MonitorBounds] = None
+_last_known_monitor_bounds: MonitorBounds | None = None
 
 
-def get_last_known_monitor_bounds() -> Optional[MonitorBounds]:
+def get_last_known_monitor_bounds() -> MonitorBounds | None:
     """Return the last monitor bounds recorded from a live Tk window, or None."""
     return _last_known_monitor_bounds
 
@@ -65,7 +65,7 @@ def remember_monitor_bounds(widget: tk.Misc) -> None:
         _last_known_monitor_bounds = bounds
 
 
-def _is_valid_monitor_bounds(bounds: Optional[MonitorBounds]) -> bool:
+def _is_valid_monitor_bounds(bounds: MonitorBounds | None) -> bool:
     """
     Validate monitor bounds have positive dimensions between 100x100 and 65535x65535.
 
@@ -95,7 +95,7 @@ def _is_valid_monitor_bounds(bounds: Optional[MonitorBounds]) -> bool:
     return 100 <= width <= 65535 and 100 <= height <= 65535
 
 
-def _get_validated_bounds(bounds: Optional[MonitorBounds]) -> Optional[MonitorBounds]:
+def _get_validated_bounds(bounds: MonitorBounds | None) -> MonitorBounds | None:
     """Return bounds if valid, otherwise None."""
     return bounds if _is_valid_monitor_bounds(bounds) else None
 
@@ -138,7 +138,7 @@ def _monitor_bounds_tk(widget: tk.Misc) -> MonitorBounds:
     return MonitorBounds(vroot_x, vroot_y, vroot_x + width, vroot_y + height)
 
 
-def _monitor_bounds_windows(widget: tk.Misc) -> Optional[MonitorBounds]:  # pylint: disable=too-many-return-statements # noqa: PLR0911
+def _monitor_bounds_windows(widget: tk.Misc) -> MonitorBounds | None:  # pylint: disable=too-many-return-statements # noqa: PLR0911
     """Use the Win32 API to determine the monitor that hosts the widget."""
     try:
         import ctypes  # pylint: disable=import-outside-toplevel # noqa: PLC0415 # type: ignore[import-outside-toplevel]
@@ -190,7 +190,7 @@ def _monitor_bounds_windows(widget: tk.Misc) -> Optional[MonitorBounds]:  # pyli
     return bounds
 
 
-def _get_appkit_screens() -> Optional[Any]:  # noqa: ANN401
+def _get_appkit_screens() -> Any | None:  # noqa: ANN401
     """
     Get NSScreen object from AppKit, return None if unavailable.
 
@@ -262,7 +262,7 @@ def _find_screen_containing_point(
     center_x: int,
     center_y: int,
     primary_height: int,
-) -> Optional[MonitorBounds]:
+) -> MonitorBounds | None:
     """
     Find which screen contains the given point and return its bounds.
 
@@ -296,7 +296,7 @@ def _find_screen_containing_point(
     return None
 
 
-def _monitor_bounds_macos(widget: tk.Misc) -> Optional[MonitorBounds]:
+def _monitor_bounds_macos(widget: tk.Misc) -> MonitorBounds | None:
     """Use AppKit to detect monitor bounds, converting from Cocoa (bottom-left) to Tk (top-left) coordinates."""
     ns_screen = _get_appkit_screens()
     if ns_screen is None:
@@ -323,7 +323,7 @@ def _monitor_bounds_macos(widget: tk.Misc) -> Optional[MonitorBounds]:
     return _find_screen_containing_point(screens, center_x, center_y, primary_height)
 
 
-def _monitor_bounds_linux(widget: tk.Misc) -> Optional[MonitorBounds]:
+def _monitor_bounds_linux(widget: tk.Misc) -> MonitorBounds | None:
     """Use screeninfo + pointer position to find the monitor containing the widget on Linux."""
     try:
         from screeninfo import get_monitors  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
@@ -444,7 +444,7 @@ def _make_dialog_root() -> tk.Tk:
     return root
 
 
-def show_error_message(title: str, message: str, root: Optional[tk.Tk] = None) -> None:
+def show_error_message(title: str, message: str, root: tk.Tk | None = None) -> None:
     if root is None:
         root = _make_dialog_root()
         messagebox.showerror(title, message)
@@ -453,7 +453,7 @@ def show_error_message(title: str, message: str, root: Optional[tk.Tk] = None) -
         messagebox.showerror(title, message)
 
 
-def show_warning_message(title: str, message: str, root: Optional[tk.Tk] = None) -> None:
+def show_warning_message(title: str, message: str, root: tk.Tk | None = None) -> None:
     if root is None:
         root = _make_dialog_root()
         messagebox.showwarning(title, message)
@@ -462,7 +462,7 @@ def show_warning_message(title: str, message: str, root: Optional[tk.Tk] = None)
         messagebox.showwarning(title, message)
 
 
-def ask_yesno_message(title: str, message: str, root: Optional[tk.Tk] = None) -> bool:
+def ask_yesno_message(title: str, message: str, root: tk.Tk | None = None) -> bool:
     if root is None:
         root = _make_dialog_root()
         result = messagebox.askyesno(title, message)
@@ -533,14 +533,14 @@ class Tooltip:
         text: str,
         position_below: bool = True,
         tag_name: str = "",
-        toplevel_class: Optional[type] = None,
+        toplevel_class: type | None = None,
     ) -> None:
         self.widget: tk.Widget = widget
         self.text: str = text
-        self.tooltip: Optional[tk.Toplevel] = None
+        self.tooltip: tk.Toplevel | None = None
         self.position_below: bool = position_below
         self.toplevel_class = toplevel_class or tk.Toplevel
-        self.timers: dict[str, Optional[str]] = {}
+        self.timers: dict[str, str | None] = {}
         self._is_aqua: bool = widget.tk.call("tk", "windowingsystem") == "aqua"
 
         # Bind the <Enter> and <Leave> events to show and hide the tooltip
@@ -566,7 +566,7 @@ class Tooltip:
     def _cancel_show(self) -> None:
         self._cancel_timer("show")
 
-    def _on_widget_destroy(self, event: Optional[tk.Event] = None) -> None:
+    def _on_widget_destroy(self, event: tk.Event | None = None) -> None:
         """Stop any active timers if the widget is destroyed."""
         if event and getattr(event, "widget", None) is not self.widget:
             return
@@ -579,12 +579,12 @@ class Tooltip:
                 Tooltip._active_tooltip.force_hide()
             Tooltip._active_tooltip = None
 
-    def schedule_show(self, _event: Optional[tk.Event] = None) -> None:
+    def schedule_show(self, _event: tk.Event | None = None) -> None:
         """Delay tooltip creation slightly to avoid flicker during pointer movement."""
         self._cancel_show()
         self.timers["show"] = self.widget.after(TOOLTIP_SHOW_DELAY_MS, self.create_show)
 
-    def create_show(self, _event: Optional[tk.Event] = None) -> None:
+    def create_show(self, _event: tk.Event | None = None) -> None:
         """Create and show the tooltip when the pointer is still over the widget after the delay."""
         self._cancel_show()
 
@@ -696,7 +696,7 @@ class Tooltip:
         if Tooltip._active_tooltip is self:
             Tooltip._active_tooltip = None
 
-    def destroy_hide(self, event: Optional[tk.Event] = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
+    def destroy_hide(self, event: tk.Event | None = None) -> None:  # noqa: ARG002 # pylint: disable=unused-argument
         """Immediately destroy the tooltip when the mouse leaves the widget, on all platforms."""
         self.force_hide()
 

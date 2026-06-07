@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from logging import error as logging_error
 from logging import warning as logging_warning
 from math import isnan
-from typing import Any, Optional
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_business_logic import get_frame_info
@@ -536,8 +536,8 @@ class ComponentDataModelImport(ComponentDataModelBase):
                 logging_error(_("Error processing %s parameter: %s"), param_name, str(e))
 
     def _detect_battery_chemistry_from_voltages(
-        self, fc_parameters: dict[str, float], current_chemistry: Optional[str] = None
-    ) -> Optional[str]:
+        self, fc_parameters: dict[str, float], current_chemistry: str | None = None
+    ) -> str | None:
         """
         Detect battery chemistry from voltage parameter ratios.
 
@@ -603,7 +603,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
     def _estimate_cells_from_voltage_param_default(
         self, param_name: str, param_value: float, volt_per_cell_spec: str, chemistry: str
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Estimate cell count from a voltage parameter using the chemistry-specific default per-cell voltages.
 

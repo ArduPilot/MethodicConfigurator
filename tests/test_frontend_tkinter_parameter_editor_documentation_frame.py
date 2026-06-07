@@ -16,7 +16,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -35,7 +34,7 @@ def mock_parameter_editor() -> MagicMock:
     manager.current_file = "01_initial_setup.param"
 
     # Mock documentation data retrieval
-    def mock_get_documentation_text_and_url(key: str) -> tuple[str, Optional[str]]:
+    def mock_get_documentation_text_and_url(key: str) -> tuple[str, str | None]:
         return {
             "blog": ("ArduPilot Forum Blog Post", "https://discuss.ardupilot.org/t/methodic-configurator/"),
             "wiki": ("Configuration Wiki Page", "https://ardupilot.org/copter/docs/configuring-hardware.html"),

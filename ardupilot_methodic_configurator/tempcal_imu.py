@@ -18,7 +18,7 @@ import os
 import re
 import sys
 from argparse import ArgumentParser
-from typing import Callable, Union
+from collections.abc import Callable
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -282,7 +282,7 @@ class IMUData:
         return float(self.gyro[imu][axis][-1])
 
 
-def constrain(value: float, minv: float, maxv: float) -> Union[float, int]:
+def constrain(value: float, minv: float, maxv: float) -> float | int:
     """Constrain a value to a range."""
     value = max(minv, value)
     return min(maxv, value)
@@ -295,8 +295,8 @@ def IMUfit(  # noqa: C901, PLR0912, PLR0915, N802, pylint: disable=too-many-loca
     log_parm: bool,
     online: bool,
     tclr: bool,
-    figpath: Union[str, None],
-    progress_callback: Union[Callable[[int], None], None],
+    figpath: str | None,
+    progress_callback: Callable[[int], None] | None,
 ) -> None:
     """Find IMU calibration parameters from a log file."""
     logging.info("Processing log %s", logfile)
@@ -492,7 +492,7 @@ def IMUfit(  # noqa: C901, PLR0912, PLR0915, N802, pylint: disable=too-many-loca
 
 
 def generate_calibration_file(  # pylint: disable=too-many-locals
-    outfile: str, progress_callback: Union[Callable[[int], None], None], data: IMUData, c: Coefficients, online: bool
+    outfile: str, progress_callback: Callable[[int], None] | None, data: IMUData, c: Coefficients, online: bool
 ) -> tuple[Coefficients, Coefficients]:
     clog = c
     c = Coefficients()
@@ -545,7 +545,7 @@ def generate_calibration_file(  # pylint: disable=too-many-locals
 
 
 def generate_tempcal_gyro_figures(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-    figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int, log_parm: bool
+    figpath: str | None, data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int, log_parm: bool
 ) -> None:
     _fig, axs = plt.subplots(len(data.IMUs()), 1, sharex=True)
     if num_imus == 1:
@@ -581,7 +581,7 @@ def generate_tempcal_gyro_figures(  # pylint: disable=too-many-arguments, too-ma
 
 
 def generate_tempcal_accel_figures(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-    figpath: Union[str, None], data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int, log_parm: bool
+    figpath: str | None, data: IMUData, c: Coefficients, clog: Coefficients, num_imus: int, log_parm: bool
 ) -> None:
     _fig, axs = plt.subplots(num_imus, 1, sharex=True)
     if num_imus == 1:

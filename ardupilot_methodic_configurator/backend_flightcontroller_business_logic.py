@@ -11,8 +11,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Optional
-
 
 def calculate_voltage_thresholds(fc_parameters: dict[str, float]) -> tuple[float, float]:
     """
@@ -94,7 +92,7 @@ def validate_battery_voltage(
     voltage: float,
     min_voltage: float,
     max_voltage: float,
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     """
     Validate if battery voltage is within safe operating range for motor testing.
 
@@ -155,7 +153,7 @@ def convert_battery_telemetry_units(
     return (voltage, current)
 
 
-def validate_throttle_percentage(throttle_percent: int) -> tuple[bool, Optional[str]]:
+def validate_throttle_percentage(throttle_percent: int) -> tuple[bool, str | None]:
     """
     Validate throttle percentage is within safe range for motor testing.
 
@@ -188,7 +186,7 @@ def validate_throttle_percentage(throttle_percent: int) -> tuple[bool, Optional[
     return True, None
 
 
-def validate_motor_test_duration(timeout_seconds: int) -> tuple[bool, Optional[str]]:
+def validate_motor_test_duration(timeout_seconds: int) -> tuple[bool, str | None]:
     """
     Validate motor test duration is within safe limits.
 

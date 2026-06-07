@@ -12,13 +12,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from collections.abc import Callable
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
-from typing import Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -67,8 +67,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         version: str,
         local_filesystem: LocalFilesystem,
         fc_parameters: dict[str, float],
-        embedded_parent_frame: Optional[tk.Widget] = None,
-        on_component_change: Optional[Callable] = None,
+        embedded_parent_frame: tk.Widget | None = None,
+        on_component_change: Callable[..., None] | None = None,
     ) -> None:
         ComponentEditorWindowBase.__init__(
             self,
@@ -357,7 +357,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         return err_msg
 
     def add_entry_or_combobox(
-        self, value: Union[str, float], entry_frame: ttk.Frame, _path: ComponentPath, is_optional: bool = False
+        self, value: str | float, entry_frame: ttk.Frame, _path: ComponentPath, is_optional: bool = False
     ) -> EntryWidget:
         path = _path  # _path is used in the signature to not violate the Liskov Substitution Principle according to ty
 
@@ -478,7 +478,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def _validate_entry_limits_ui(self, event: Union[None, tk.Event], entry: ttk.Entry, path: ComponentPath) -> bool:
+    def _validate_entry_limits_ui(self, event: None | tk.Event, entry: ttk.Entry, path: ComponentPath) -> bool:
         """UI wrapper for entry limits validation."""
         is_focusout_event = event and event.type in {
             tk.EventType.FocusOut,

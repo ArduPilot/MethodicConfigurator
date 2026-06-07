@@ -23,7 +23,7 @@ from logging import error as logging_error
 from logging import warning as logging_warning
 from tkinter import Frame, ttk
 from tkinter.messagebox import showerror
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
@@ -53,7 +53,7 @@ class BatteryMonitorView(Frame):
 
     def __init__(
         self,
-        parent: Union[tk.Frame, ttk.Frame],
+        parent: tk.Frame | ttk.Frame,
         model: BatteryMonitorDataModel,
         base_window: BaseWindow,
         ui_services: Optional["ParameterEditorUiServices"] = None,
@@ -73,7 +73,7 @@ class BatteryMonitorView(Frame):
         self.base_window = base_window
         # Reuse UI services from base window if not explicitly provided
         self.ui = ui_services if ui_services is not None else getattr(base_window, "ui", None)
-        self._timer_id: Optional[str] = None
+        self._timer_id: str | None = None
         self.voltage_value_label: ttk.Label
         self.current_value_label: ttk.Label
         self.upload_button: ttk.Button
@@ -301,7 +301,7 @@ class BatteryMonitorView(Frame):
 
 
 def _create_battery_monitor_view(
-    parent: Union[tk.Frame, ttk.Frame],
+    parent: tk.Frame | ttk.Frame,
     model: object,
     base_window: object,
 ) -> "BatteryMonitorView":

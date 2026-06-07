@@ -13,14 +13,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from logging import error as logging_error
 from tkinter import ttk
-from typing import Callable, Optional, Union
 
 # Note: PluginView is defined in plugin_protocol for documentation purposes
 # Type alias for plugin creator functions
 # Note: We use object types to allow plugin creators to be more specific with their types
-PluginCreator = Callable[[Union[tk.Frame, ttk.Frame], object, object], object]
+PluginCreator = Callable[[tk.Frame | ttk.Frame, object, object], object]
 
 
 class PluginFactory:
@@ -53,10 +53,10 @@ class PluginFactory:
     def create(
         self,
         plugin_name: str,
-        parent: Union[tk.Frame, ttk.Frame],
+        parent: tk.Frame | ttk.Frame,
         model: object,
         base_window: object,
-    ) -> Optional[object]:
+    ) -> object | None:
         """
         Create a plugin instance.
 

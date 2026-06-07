@@ -25,7 +25,7 @@ class MavlinkConnectionFactory(Protocol):  # pylint: disable=too-few-public-meth
         baudrate: int,
         timeout: float = 5.0,
         retries: int = 3,
-        progress_callback: Optional[object] = None,
+        progress_callback: object | None = None,
     ) -> Optional["MavlinkConnection"]:
         """Create a MAVLink connection."""
         ...  # pylint: disable=unnecessary-ellipsis
@@ -40,7 +40,7 @@ class SystemMavlinkConnectionFactory:  # pylint: disable=too-few-public-methods
         baudrate: int,
         timeout: float = 5.0,
         retries: int = 3,
-        progress_callback: Optional[object] = None,
+        progress_callback: object | None = None,
     ) -> Optional["MavlinkConnection"]:
         """Create connection using actual PyMAVLink library."""
         try:
@@ -71,7 +71,7 @@ class FakeMavlinkConnectionFactory:
         baudrate: int,
         timeout: float = 5.0,  # noqa: ARG002 # pylint: disable=unused-argument
         retries: int = 3,
-        progress_callback: Optional[object] = None,
+        progress_callback: object | None = None,
     ) -> Optional["FakeMavlinkConnection"]:
         """Create a fake MAVLink connection for testing."""
         conn = FakeMavlinkConnection(device, baudrate)
@@ -88,7 +88,7 @@ class FakeMavlinkConnection:
     """Fake MAVLink connection for testing."""
 
     retries: int
-    progress_callback: Optional[object]
+    progress_callback: object | None
 
     def __init__(self, device: str, baudrate: int) -> None:
         """Initialize fake connection."""
@@ -100,8 +100,8 @@ class FakeMavlinkConnection:
     def recv_match(
         self,
         blocking: bool = True,  # noqa: ARG002  # pylint: disable=unused-argument
-        timeout: Optional[float] = None,  # noqa: ARG002  # pylint: disable=unused-argument
-    ) -> Optional[object]:
+        timeout: float | None = None,  # noqa: ARG002  # pylint: disable=unused-argument
+    ) -> object | None:
         """Receive a matched message from queue."""
         # Note: blocking and timeout parameters are accepted for API compatibility
         # but not used in fake implementation

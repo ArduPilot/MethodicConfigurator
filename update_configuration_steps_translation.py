@@ -18,7 +18,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
 # Set up a proper logger
 logger = logging.getLogger(__name__)
@@ -140,7 +140,7 @@ def extract_descriptions_from_schema(schema_file: str) -> list[str]:
             schema = json.load(f)
 
         # Recursive function to extract all descriptions
-        def extract_descriptions_recursively(obj: Union[dict, list]) -> None:
+        def extract_descriptions_recursively(obj: dict | list) -> None:
             if isinstance(obj, dict):
                 # Extract description if it exists
                 if "description" in obj and isinstance(obj["description"], str):

@@ -24,9 +24,9 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 import serial.tools.list_ports_common
 
@@ -42,20 +42,20 @@ if TYPE_CHECKING:
 
     # Use a union of known connection types for better type safety
     # Note: mavutil.mavlink_connection() returns different types based on the connection string
-    MavlinkConnection = Union[
-        mavutil.mavserial,  # a serial mavlink port
-        mavutil.mavudp,  # a UDP mavlink socket
-        mavutil.mavtcp,  # a TCP mavlink socket
-        mavutil.mavtcpin,  # a TCP input mavlink socket
-        mavutil.mavmcast,  # a UDP multicast mavlink socket
-        mavutil.mavwebsocket,  # Mavlink WebSocket server, single client only
-        mavutil.mavwebsocket_client,  # client using WebSocket over TCP with WS and WSS support
-    ]
+    MavlinkConnection: TypeAlias = (
+        mavutil.mavserial  # a serial mavlink port
+        | mavutil.mavudp  # a UDP mavlink socket
+        | mavutil.mavtcp  # a TCP mavlink socket
+        | mavutil.mavtcpin  # a TCP input mavlink socket
+        | mavutil.mavmcast  # a UDP multicast mavlink socket
+        | mavutil.mavwebsocket  # Mavlink WebSocket server, single client only
+        | mavutil.mavwebsocket_client  # client using WebSocket over TCP with WS and WSS support
+    )
 else:
     # At runtime, we don't need the actual types
     from pymavlink import mavutil
 
-    MavlinkConnection = object
+    MavlinkConnection: TypeAlias = object
 
 
 class FlightControllerConnectionProtocol(Protocol):
@@ -75,7 +75,7 @@ class FlightControllerConnectionProtocol(Protocol):
     """
 
     @property
-    def master(self) -> Optional[MavlinkConnection]:
+    def master(self) -> MavlinkConnection | None:
         """Get the current MAVLink connection object."""
 
     @property
@@ -84,7 +84,7 @@ class FlightControllerConnectionProtocol(Protocol):
         ...  # pylint: disable=unnecessary-ellipsis
 
     @property
-    def comport(self) -> Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo, None]:
+    def comport(self) -> mavutil.SerialPort | serial.tools.list_ports_common.ListPortInfo | None:
         """Get the current communication port."""
 
     @property
@@ -97,8 +97,8 @@ class FlightControllerConnectionProtocol(Protocol):
 
     def discover_connections(
         self,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-        preserved_connections: Optional[Sequence[str]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
+        preserved_connections: Sequence[str] | None = None,
     ) -> None: ...
 
     def disconnect(self) -> None: ...
@@ -108,14 +108,14 @@ class FlightControllerConnectionProtocol(Protocol):
     def connect(
         self,
         device: str,
-        progress_callback: Union[None, Callable[[int, int], None]],
+        progress_callback: None | Callable[[int, int], None],
         log_errors: bool,
-        baudrate: Optional[int],
+        baudrate: int | None,
     ) -> str: ...
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        progress_callback: Union[None, Callable[[int, int], None]],
+        progress_callback: None | Callable[[int, int], None],
         retries: int,
         timeout: int,
         baudrate: int,
@@ -132,7 +132,7 @@ class FlightControllerConnectionProtocol(Protocol):
 
     def get_connection_tuples(self) -> list[tuple[str, str]]: ...
 
-    def set_master_for_testing(self, master: Optional[MavlinkConnection]) -> None:
+    def set_master_for_testing(self, master: MavlinkConnection | None) -> None:
         """
         Set the MAVLink connection for testing purposes.
 
@@ -146,9 +146,9 @@ class FlightControllerConnectionProtocol(Protocol):
 
     def _detect_vehicles_from_heartbeats(self, timeout: int) -> dict[tuple[int, int], Any]: ...
 
-    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: Optional[int]) -> str: ...
+    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: int | None) -> str: ...
 
-    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, Optional[int]]: ...
+    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, int | None]: ...
 
     def _select_supported_autopilot(self, detected_vehicles: dict[tuple[int, int], Any]) -> str: ...
 
@@ -182,14 +182,14 @@ class FlightControllerParamsProtocol(Protocol):
 
     def download_params(
         self,
-        progress_callback: Union[None, Callable[[int, int], None]],
-        parameter_values_filename: Optional[Path],
-        parameter_defaults_filename: Optional[Path],
+        progress_callback: None | Callable[[int, int], None],
+        parameter_values_filename: Path | None,
+        parameter_defaults_filename: Path | None,
     ) -> tuple[dict[str, float], ParDict]: ...
 
     def set_param(self, param_name: str, param_value: float) -> tuple[bool, str]: ...
 
-    def fetch_param(self, param_name: str, timeout: int) -> Optional[float]: ...
+    def fetch_param(self, param_name: str, timeout: int) -> float | None: ...
 
     def get_param(self, param_name: str, default: float = 0.0) -> float: ...
 
@@ -243,7 +243,7 @@ class FlightControllerCommandsProtocol(Protocol):
 
     def request_periodic_battery_status(self, interval_microseconds: int) -> tuple[bool, str]: ...
 
-    def get_battery_status(self) -> tuple[Union[tuple[float, float], None], str]: ...
+    def get_battery_status(self) -> tuple[tuple[float, float] | None, str]: ...
 
     def get_voltage_thresholds(self) -> tuple[float, float]: ...
 
@@ -262,9 +262,7 @@ class FlightControllerFilesProtocol(Protocol):
     """
 
     def upload_file(
-        self, local_filename: str, remote_filename: str, progress_callback: Union[None, Callable[[int, int], None]]
+        self, local_filename: str, remote_filename: str, progress_callback: None | Callable[[int, int], None]
     ) -> bool: ...
 
-    def download_last_flight_log(
-        self, local_filename: str, progress_callback: Union[None, Callable[[int, int], None]]
-    ) -> bool: ...
+    def download_last_flight_log(self, local_filename: str, progress_callback: None | Callable[[int, int], None]) -> bool: ...

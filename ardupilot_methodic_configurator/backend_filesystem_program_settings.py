@@ -28,7 +28,7 @@ from pathlib import Path
 from platform import system as platform_system
 from posixpath import normpath as posixpath_normpath
 from re import match as re_match
-from typing import Any, Optional, Union
+from typing import Any
 
 from platformdirs import site_config_dir, user_config_dir
 
@@ -150,7 +150,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         pass
 
     @classmethod
-    def _get_settings_defaults(cls) -> dict[str, Union[int, bool, str, float, dict, list]]:
+    def _get_settings_defaults(cls) -> dict[str, int | bool | str | float | dict | list]:
         """
         Get the default settings dictionary with dynamically computed paths.
 
@@ -541,7 +541,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
             logging_error(_("Usage popup type '%s' not found in settings dictionary"), ptype)
 
     @staticmethod
-    def get_setting(setting: str) -> Optional[Union[int, bool, str, float]]:
+    def get_setting(setting: str) -> int | bool | str | float | None:
         settings = ProgramSettings._get_settings_as_dict()
         setting_parts = setting.split("/")
         for part in setting_parts:
@@ -555,7 +555,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         return None
 
     @staticmethod
-    def set_setting(setting: str, value: Union[bool, str, float]) -> None:
+    def set_setting(setting: str, value: bool | str | float) -> None:
         settings = ProgramSettings._get_settings_as_dict()
         setting_parts = setting.split("/")
 
@@ -672,7 +672,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
         return ProgramSettings._connection_history.get_items(settings)
 
     @staticmethod
-    def store_connection(connection_string: str) -> Optional[str]:
+    def store_connection(connection_string: str) -> str | None:
         """
         Save a new connection string to history.
 

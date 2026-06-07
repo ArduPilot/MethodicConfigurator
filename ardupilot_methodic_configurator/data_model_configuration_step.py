@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import re
 from logging import info as logging_info
 from logging import warning as logging_warning
-from typing import Any, Optional
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -332,7 +332,7 @@ class ConfigurationStepProcessor:
 
     @staticmethod
     def calculate_connection_rename_operations(
-        parameters: ParDict, new_connection_prefix: str, variables: Optional[dict[str, Any]] = None
+        parameters: ParDict, new_connection_prefix: str, variables: dict[str, Any] | None = None
     ) -> tuple[set[str], list[tuple[str, str]]]:
         """
         Calculate connection prefix rename operations without mutating the parameters dictionary.
