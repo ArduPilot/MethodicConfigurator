@@ -81,7 +81,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:367
 msgid "Vehicle project migration to format version %d completed"
-msgstr ""
+msgstr "La migrazione del progetto veicolo alla versione di formato %d è stata completata"
 
 #: ardupilot_methodic_configurator/__main__.py:379
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:252
@@ -429,7 +429,7 @@ msgid ""
 "In file '%s': '%s' parameter '%s' appears in both "
 "'derived_parameters'/'add_parameters' and 'delete_parameters' without "
 "complementary 'if' guards. This is likely a configuration mistake."
-msgstr ""
+msgstr "Nel file '%s': il parametro '%s' di '%s' appare sia in 'derived_parameters'/'add_parameters' che in 'delete_parameters' senza condizioni 'if' complementari. Probabilmente si tratta di un errore di configurazione."
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:173
 msgid "Error in file '%s': '%s' %s parameter is not a dictionary"
@@ -452,15 +452,15 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:203
 msgid "Error in file '%s': '%s' add_parameters is not a dictionary"
-msgstr ""
+msgstr "Errore nel file '%s': '%s' add_parameters non è un dizionario"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:211
 msgid "Error in file '%s': '%s' add_parameter '%s' is not a dictionary"
-msgstr ""
+msgstr "Errore nel file '%s': '%s' add_parameter '%s' non è un dizionario"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:220
 msgid "Error in file '%s': '%s' add_parameter '%s' has unexpected keys: %s"
-msgstr ""
+msgstr "Errore nel file '%s': '%s' add_parameter '%s' ha chiavi inaspettate: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:238
 msgid "Error in file '%s': '%s' delete_parameters is not a dictionary"
@@ -547,7 +547,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:434
 msgid "In file '%s': '%s' forced parameter '%s' has no 'New Value'"
-msgstr ""
+msgstr "Nel file '%s': il parametro forzato '%s' di '%s' non ha 'Nuovo Valore'"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:454
 msgid ""
@@ -666,62 +666,62 @@ msgstr "Errore imprevisto durante il salvataggio dei dati nel file '{}': {}"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:349
 msgid "Skipping malformed regex pattern %r: not a valid regular expression"
-msgstr ""
+msgstr "Saltato pattern regex malformato %r: espressione regolare non valida"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:402
 msgid ""
 "Unknown vehicle type %r; no type-specific migrations will run. Known types: "
 "%s"
-msgstr ""
+msgstr "Tipo di veicolo sconosciuto %r; nessuna migrazione specifica per tipo verrà eseguita. Tipi conosciuti: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:413
 msgid "Migration source file not found, skipping extraction: %s"
-msgstr ""
+msgstr "File sorgente di migrazione non trovato, estrazione saltata: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:422
 msgid "Extracted %d parameter line(s) from %s for %s"
-msgstr ""
+msgstr "Estratte %d riga(e) di parametri da %s per %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:434
 msgid "%s parameter migration file: %s"
-msgstr ""
+msgstr "File di migrazione parametri %s: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:434
 msgid "Created"
-msgstr ""
+msgstr "Creato"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:434
 msgid "Updated"
-msgstr ""
+msgstr "Aggiornato"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:443
 msgid "Created new file: %s"
-msgstr ""
+msgstr "Creato nuovo file: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:455
 msgid ""
 "Deleting obsolete file %s which still contains %d unmigrated parameter(s): %s"
-msgstr ""
+msgstr "Eliminazione del file obsoleto %s che contiene ancora %d parametro(i) non migrati: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:461
 msgid "Deleted obsolete file: %s"
-msgstr ""
+msgstr "File obsoleto eliminato: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:497
 msgid "Failed to load %s: %s"
-msgstr ""
+msgstr "Impossibile caricare %s: %s"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:510
 msgid "Migrating %s vehicle project in '%s' from format version %d to %d"
-msgstr ""
+msgstr "In corso la migrazione del progetto veicolo %s in '%s' dalla versione di formato %d alla %d"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:511
 msgid "unknown"
-msgstr ""
+msgstr "sconosciuto"
 
 #: ardupilot_methodic_configurator/backend_filesystem_migration.py:526
 msgid "Migration to format version %d complete"
-msgstr ""
+msgstr "Migrazione alla versione di formato %d completata"
 
 #: ardupilot_methodic_configurator/backend_filesystem_program_settings.py:63
 msgid "General AMC workflow"
@@ -1603,19 +1603,19 @@ msgstr "Lingua dell'interfaccia utente. Predefinito è %(default)s."
 msgid ""
 "ATC_THR_MIX_MAX should be increased after autotune to maximize attitude "
 "control authority at high throttle"
-msgstr ""
+msgstr "ATC_THR_MIX_MAX dovrebbe essere aumentato dopo l'autotune per massimizzare l'autorità di controllo dell’assetto all’alto regime del motore"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:26
 msgid ""
 "After calibrating the IMU temperature bias, disable disarmed logging (no "
 "longer needed) and set board target temperature."
-msgstr ""
+msgstr "Dopo la calibrazione della deriva termica dell’IMU, disattivare la registrazione a motori disarmati (non più necessaria) e impostare la temperatura target della scheda."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:27
 msgid ""
 "An OSD (On Screen Display) overlays flight data on the FPV video feed, "
 "giving the pilot situational awareness without looking away from the aircraft"
-msgstr ""
+msgstr "Un OSD (On Screen Display) sovrappone i dati di volo sul video FPV, offrendo al pilota consapevolezza della situazione senza distogliere lo sguardo dal velivolo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:28
 msgid ""
@@ -1637,7 +1637,7 @@ msgstr ""
 msgid ""
 "Configuring RC controller options ensures correct arming behavior and "
 "channel function assignments for the specific RC system in use"
-msgstr ""
+msgstr "Configurare le opzioni del radiocomando RC garantisce il comportamento corretto dell'armamento e l’assegnazione delle funzioni ai canali per il sistema RC specifico in uso"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:31
 msgid ""
@@ -1653,7 +1653,7 @@ msgstr ""
 msgid ""
 "Disarmed and replay logging must be disabled after windspeed estimation "
 "flights to avoid filling the storage with unnecessary logs"
-msgstr ""
+msgstr "La registrazione con motori disarmati e la modalità replay devono essere disabilitate dopo i voli di stima del vento per evitare di riempire la memoria con log non necessari"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:33
 msgid ""
@@ -1772,7 +1772,7 @@ msgid ""
 "Safety parameters protect the vehicle and its surroundings by enabling "
 "arming checks, geofencing and failsafe actions. ESC slew rate limits protect "
 "the ESCs from desync events."
-msgstr ""
+msgstr "I parametri di sicurezza proteggono il veicolo e l’ambiente circostante abilitando controlli di armamento, geofencing e azioni failsafe. I limiti di variazione (slew rate) dell’ESC proteggono gli ESC da eventi di perdita di sincronizzazione."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:48
 msgid "Sensors need to be calibrated once, before they can be used"
@@ -1812,7 +1812,7 @@ msgstr ""
 msgid ""
 "The D feed-forward term improves aggressive rate tracking and gives the "
 "drone a 'locked-in' feel with minimal control latency"
-msgstr ""
+msgstr "Il termine di feed-forward D migliora la risposta aggressiva al tracking della velocità angolare e conferisce al drone una sensazione di “locked-in” con minima latenza di controllo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:54
 msgid ""
@@ -1826,7 +1826,7 @@ msgstr ""
 msgid ""
 "The PID notch filter(s) configuration depends on real-flight data collected "
 "with the logging enabled in the previous step"
-msgstr ""
+msgstr "La configurazione dei filtri notch PID dipende dai dati di volo reale raccolti con la registrazione abilitata nello step precedente"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:56
 msgid ""
@@ -1840,7 +1840,7 @@ msgstr ""
 msgid ""
 "The battery monitor must be configured to match the hardware connection type "
 "so that the autopilot correctly reads battery voltage and current"
-msgstr ""
+msgstr "Il monitor della batteria deve essere configurato in base al tipo di connessione hardware affinché l’autopilota legga correttamente tensione e corrente della batteria"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:58
 msgid ""
@@ -1882,7 +1882,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:63
 msgid "To determine motor RPM the number of electrical poles must be known"
-msgstr ""
+msgstr "Per determinare i giri al minuto del motore (RPM) è necessario conoscere il numero di poli elettrici"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:64
 msgid "To ensure the vehicle is safe and stable for routine flying"
@@ -1960,23 +1960,23 @@ msgstr ""
 msgid ""
 "After all autotune axes are complete and PID values are finalized, since "
 "D_FF is calculated from the final tuned PID response"
-msgstr ""
+msgstr "Dopo che tutti gli assi dell’autotune sono stati completati e i valori PID sono stati finalizzati, poiché D_FF viene calcolato dalla risposta PID finale"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:80
 msgid "After all autotune flights are complete and the PIDs are finalized"
-msgstr ""
+msgstr "Dopo che tutti i voli di autotune sono stati completati e i PID sono stati finalizzati"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:81
 msgid ""
 "After the RC receiver protocol is configured, the controller-specific "
 "options such as arming method and channel function can be set"
-msgstr ""
+msgstr "Dopo aver configurato il protocollo del ricevitore RC, è possibile impostare le opzioni specifiche del controller come il metodo di armamento e la funzione dei canali"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:82
 msgid ""
 "After the battery voltage and failsafe thresholds are set, the monitor "
 "hardware connection parameters can be configured"
-msgstr ""
+msgstr "Dopo aver impostato la tensione di batteria e le soglie di failsafe, è possibile configurare i parametri di connessione hardware del monitor"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:83
 msgid ""
@@ -1996,7 +1996,7 @@ msgstr "Tutti i passaggi precedenti non richiedevano logging, ma i seguenti sì"
 msgid ""
 "Because LOG_DISARMED and LOG_REPLAY were enabled for windspeed estimation "
 "and barometer compensation flights and are no longer needed"
-msgstr ""
+msgstr "Perché LOG_DISARMED e LOG_REPLAY sono stati abilitati per la stima della velocità del vento e i voli di compensazione del barometro e non sono più necessari"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:86
 msgid "Because guided mode requires a tuned position controller"
@@ -2096,7 +2096,7 @@ msgstr ""
 msgid ""
 "Before the first flight so that arming checks are enforced and the vehicle "
 "responds safely to abnormal conditions"
-msgstr ""
+msgstr "Prima del primo volo così che i controlli di armamento siano applicati e il veicolo risponda in modo sicuro a condizioni anomale"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:102
 msgid ""
@@ -2125,7 +2125,7 @@ msgid ""
 "Can only be done after IMU temperature compensation results are available. "
 "Future steps will use a drift-compensated, constant temperature and only log "
 "when armed."
-msgstr ""
+msgstr "Può essere fatto solo dopo che i risultati della compensazione della temperatura dell’IMU sono disponibili. I passaggi successivi utilizzeranno una temperatura costante e compensata dalla deriva e registreranno solo quando armato."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:106
 msgid ""
@@ -2175,7 +2175,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:112
 msgid ""
 "Needs to be done after setting ESC telemetry, but before testing the motor"
-msgstr ""
+msgstr "Deve essere fatto dopo aver impostato la telemetria ESC, ma prima del test del motore"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:113
 msgid "Needs to be done before compass calibration"
@@ -2186,13 +2186,13 @@ msgid ""
 "OSD configuration depends on the telemetry and battery monitor being "
 "configured in the preceding steps, and it must be set up before the first "
 "flight"
-msgstr ""
+msgstr "La configurazione dell’OSD dipende dalla telemetria e dal monitor batteria configurati nei passaggi precedenti, e deve essere completata prima del primo volo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:115
 msgid ""
 "PID notch filters require different logging parameters from motor notch "
 "filters"
-msgstr ""
+msgstr "I filtri notch PID richiedono parametri di registrazione diversi rispetto ai filtri notch motore"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:116
 msgid ""
@@ -2210,7 +2210,7 @@ msgstr ""
 msgid ""
 "Real-flight data with PID notch filter batch logging is only available after "
 "the dedicated logging flight"
-msgstr ""
+msgstr "I dati di volo reale con la registrazione batch del filtro notch PID sono disponibili solo dopo il volo di registrazione dedicato"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:118
 msgid ""
@@ -2303,7 +2303,7 @@ msgstr ""
 msgid ""
 "Calculate angle rate derivative feed-forward gains (ATC_RAT_*_D_FF and "
 "PSC_ACCZ_D_FF) to improve aggressive maneuver tracking"
-msgstr ""
+msgstr "Calcolare i guadagni del feed-forward derivato della velocità angolare (ATC_RAT_*_D_FF e PSC_ACCZ_D_FF) per migliorare la risposta alle manovre aggressive"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:133
 msgid "Configure Extended Kalman Filter (EKF) noise weights"
@@ -2311,13 +2311,13 @@ msgstr "Configurare i pesi del rumore del Filtro di Kalman Esteso (EKF)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:134
 msgid "Configure PID notch filters logging"
-msgstr ""
+msgstr "Configura la registrazione dei filtri notch PID"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:135
 msgid ""
 "Configure RC controller options including the arming method and RC channel "
 "option assignments"
-msgstr ""
+msgstr "Configura le opzioni del controller RC incluse il metodo di armamento e l’assegnazione delle opzioni dei canali RC"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:136
 msgid ""
@@ -2347,7 +2347,7 @@ msgstr ""
 msgid ""
 "Configure parameters for the pitch axis input system identification to "
 "create a mathematical model of the vehicle"
-msgstr ""
+msgstr "Configura i parametri per l’identificazione del sistema di input sull’asse pitch per creare un modello matematico del veicolo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:141
 msgid ""
@@ -2361,7 +2361,7 @@ msgstr ""
 msgid ""
 "Configure parameters for the roll axis input system identification to create "
 "a mathematical model of the vehicle"
-msgstr ""
+msgstr "Configura i parametri per l’identificazione del sistema di input sull’asse roll per creare un modello matematico del veicolo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:143
 msgid ""
@@ -2383,7 +2383,7 @@ msgstr ""
 msgid ""
 "Configure parameters for the yaw axis input system identification to create "
 "a mathematical model of the vehicle"
-msgstr ""
+msgstr "Configura i parametri per l’identificazione del sistema di input sull’asse yaw per creare un modello matematico del veicolo"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:146
 msgid ""
@@ -2409,7 +2409,7 @@ msgstr ""
 msgid ""
 "Configure safety parameters including arming checks, geofence, failsafe "
 "actions and ESC slew rate limits"
-msgstr ""
+msgstr "Configura i parametri di sicurezza incluse le verifiche di armamento, geofence, azioni di failsafe e limiti di variazione dell’ESC"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:150
 msgid ""
@@ -2441,19 +2441,19 @@ msgstr ""
 msgid ""
 "Configure the On Screen Display (OSD) to show relevant flight data on the "
 "FPV video feed"
-msgstr ""
+msgstr "Configura l’On Screen Display (OSD) per mostrare i dati di volo rilevanti sul feed video FPV"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:154
 msgid ""
 "Configure the PID notch filter(s) based on the data collected from the "
 "logging flight"
-msgstr ""
+msgstr "Configura i filtri notch PID in base ai dati raccolti dal volo di registrazione"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:155
 msgid ""
 "Configure the battery monitor hardware connection type, protocol and "
 "calibration values"
-msgstr ""
+msgstr "Configura il tipo di connessione hardware del monitor della batteria, il protocollo e i valori di calibrazione"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:156
 msgid ""
@@ -2500,11 +2500,11 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:163
 msgid "Finalize autotune by setting the maximum throttle mix parameter"
-msgstr ""
+msgstr "Finalizza l'autotune impostando il parametro massimo del mix di throttle"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:164
 msgid "Finish IMU (Inertial Measurement Unit) temperature calibration"
-msgstr ""
+msgstr "Completa la calibrazione della temperatura dell'IMU (Unità di Misura Inerziale)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:165
 msgid ""
@@ -2537,7 +2537,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:169
 msgid "Motor specifications"
-msgstr ""
+msgstr "Specifiche del motore"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:170
 msgid "Parameters for analytical PID optimization"
@@ -2581,7 +2581,7 @@ msgstr "Registrare i risultati dell'autotuning della velocità di imbardata"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:177
 msgid "Restore logging parameters to normal after windspeed estimation flights"
-msgstr ""
+msgstr "Ripristina i parametri di logging alla normalità dopo i voli di stima della velocità del vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:178
 msgid ""
@@ -2679,7 +2679,7 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:196
 msgid "Arming Checks"
-msgstr ""
+msgstr "Controlli di armamento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:197
 msgid "AutoTune"
@@ -2772,7 +2772,7 @@ msgstr "Montaggio dell'Autopilota - parametro AHRS_ORIENTATION"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:217
 msgid "OSD (On Screen Display)"
-msgstr ""
+msgstr "OSD (On Screen Display)"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:218
 msgid "Precision Landing and Loiter"
@@ -2796,7 +2796,7 @@ msgstr "Test della modalità AltHold"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:223
 msgid "Wind speed estimation"
-msgstr ""
+msgstr "Stima della velocità del vento"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:224
 msgid "optical flow sensor setup"
@@ -2914,7 +2914,7 @@ msgid ""
 "You can skip some steps now.\n"
 "\n"
 "Jump to '66_everyday_use.param' file?"
-msgstr ""
+msgstr "Se sei impaziente e non vuoi un flight controller completamente ottimizzato\nPuoi saltare alcuni passaggi ora.\n\nPassare al file '66_everyday_use.param'?"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:260
 msgid ""
@@ -2922,7 +2922,7 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '66_everyday_use.param' file?"
-msgstr ""
+msgstr "Se non usi il flusso ottico\npuoi saltare alcuni passaggi ora.\n\nPassare al file '66_everyday_use.param'?"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:264
 msgid ""
@@ -2930,7 +2930,7 @@ msgid ""
 "you can skip some steps now.\n"
 "\n"
 "Jump to '60_position_controller.param' file?"
-msgstr ""
+msgstr "Se non vuoi un'ottimizzazione PID analitica\npuoi saltare alcuni passaggi ora.\n\nPassare al file '60_position_controller.param'?"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:270
 msgid "Activates the logging of the MAGH.Active message"
@@ -2986,7 +2986,7 @@ msgstr "Tensione di sicurezza critica x numero di celle"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:282
 msgid "Defined in ESC specifications above"
-msgstr ""
+msgstr "Definito nelle specifiche ESC sopra"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:283
 msgid "Defined in component editor"
@@ -2999,11 +2999,11 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:285
 msgid "Digital ESC protocol maximum is per definition 2000"
-msgstr ""
+msgstr "Il massimo del protocollo ESC digitale è per definizione 2000"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:286
 msgid "Digital ESC protocol minimum is per definition 1000"
-msgstr ""
+msgstr "Il minimo del protocollo ESC digitale è per definizione 1000"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:287
 msgid "Disable fast harmonic notch logging"
@@ -3011,7 +3011,7 @@ msgstr "Disabilita la registrazione rapida del filtro notch armonico"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:288
 msgid "ESC RPM telemetry requires lua scripting"
-msgstr ""
+msgstr "La telemetria RPM ESC richiede script lua"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:289
 msgid "ExpressLRS requires FLTMODE_CH != 5"
@@ -3057,7 +3057,7 @@ msgstr ""
 msgid ""
 "IMU temperature calibration is finished, we no longer need to log data when "
 "disarmed"
-msgstr ""
+msgstr "La calibrazione della temperatura dell'IMU è terminata, non è più necessario registrare dati quando disarmato"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:296
 msgid "INS_GYRO_FILTER / 2"
@@ -3069,15 +3069,15 @@ msgstr "Valore iniziale, sarà migliorato in una fase successiva"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:298
 msgid "Inject chip on the input pitch signal"
-msgstr ""
+msgstr "Inietta chip sul segnale di pitch in ingresso"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:299
 msgid "Inject chip on the input roll signal"
-msgstr ""
+msgstr "Inietta chip sul segnale di roll in ingresso"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid "Inject chip on the input yaw signal"
-msgstr ""
+msgstr "Inietta chip sul segnale di yaw in ingresso"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:301
 msgid "Inject chip on the mixer pitch signal"
@@ -3103,7 +3103,7 @@ msgstr "Atterrare il prima possibile"
 msgid ""
 "Log relevant data for PID notch filters tuning. Later on we'll change this "
 "to other subsystems"
-msgstr ""
+msgstr "Registra i dati rilevanti per la regolazione dei filtri notch PID. Successivamente li cambieremo per altri sottosistemi"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid ""
@@ -3119,7 +3119,7 @@ msgstr "Tensione di sicurezza bassa x numero di celle"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Maximize attitude control authority at high throttle"
-msgstr ""
+msgstr "Massimizza l'autorità di controllo dell'assetto ad alto throttle"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:310
 msgid "No more system identification chip injections"
@@ -3147,11 +3147,11 @@ msgstr "Solo per IMU e Raw-IMU"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:315
 msgid "PID notch filters require batch logging, not raw logging"
-msgstr ""
+msgstr "I filtri notch PID richiedono il logging batch, non il logging raw"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:316
 msgid "PID notch filters require batch pre- and post- filters logging"
-msgstr ""
+msgstr "I filtri notch PID richiedono il logging batch dei filtri pre e post"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid ""
@@ -3204,7 +3204,7 @@ msgstr "Selezionato nell'editor dei componenti"
 msgid ""
 "So that it can tune the throttle controller on 24_throttle_controller.param "
 "file"
-msgstr ""
+msgstr "Così potrà regolare il controller del throttle nel file 24_throttle_controller.param"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:327
 msgid "Specified in component editor window"
@@ -3223,12 +3223,12 @@ msgstr "Capacità totale della batteria specificata nell'editor dei componenti"
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:330
 msgid ""
 "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Utilizza 0.1 * MOT_THST_HOVER assumendo che MOT_THST_HOVER sia stato appreso correttamente"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:331
 msgid ""
 "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
-msgstr ""
+msgstr "Usa 0.2 * MOT_THST_HOVER assumendo che MOT_THST_HOVER sia stato appreso correttamente"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
@@ -3443,7 +3443,7 @@ msgid ""
 "If not already present, add parameter to the file: use 'New Value' if "
 "provided, otherwise copy the current FC value. Optionally conditioned on a "
 "Python expression."
-msgstr ""
+msgstr "Se non già presente, aggiungi il parametro al file: usa 'Nuovo Valore' se fornito, altrimenti copia il valore attuale del FC. Facoltativamente condizionato da un'espressione Python."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:399
 msgid "Message about possible jump to another step"
@@ -3451,7 +3451,7 @@ msgstr "Messaggio sulla possibilità di passare a un altro step"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:400
 msgid "Name of the vehicle component edited inline for this configuration step"
-msgstr ""
+msgstr "Nome del componente del veicolo modificato direttamente per questa fase di configurazione"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:401
 msgid "Name of tool/process that automatically changes these parameters"
@@ -3486,13 +3486,13 @@ msgstr ""
 msgid ""
 "Optional Python expression; the parameter is only added when this evaluates "
 "to true"
-msgstr ""
+msgstr "Espressione Python facoltativa; il parametro viene aggiunto solo quando questa risulta vera"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:411
 msgid ""
 "Optional expression for the parameter value; if absent, the current FC value "
 "is used"
-msgstr ""
+msgstr "Espressione opzionale per il valore del parametro; se assente, si usa il valore attuale del FC"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:412
 msgid "Optional instructions to display as a popup when entering this step"
@@ -3502,14 +3502,14 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:413
 msgid "Optional reason for the parameter value"
-msgstr ""
+msgstr "Motivo opzionale per il valore del parametro"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:414
 msgid ""
 "Parameters to add to the configuration file, if not already present, "
 "editable in the UI. Value comes from 'New Value' expression if given, "
 "otherwise copied from the FC."
-msgstr ""
+msgstr "Parametri da aggiungere al file di configurazione, se non già presenti, modificabili nella UI. Il valore deriva dall'espressione 'Nuovo Valore' se fornita, altrimenti copiato dal FC."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:417
 msgid ""
@@ -3522,7 +3522,7 @@ msgstr ""
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:420
 msgid ""
 "Parameters whose values are derived from vehicle component data or FC state."
-msgstr ""
+msgstr "Parametri i cui valori derivano dai dati del componente veicolo o dallo stato del FC."
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:421
 msgid "Phases of the configuration process"
@@ -4409,12 +4409,12 @@ msgstr "Uno o più parametri sono stati modificati"
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:451
 msgid ""
 "Do you want to save the component data changes to vehicle_components.json?"
-msgstr ""
+msgstr "Vuoi salvare le modifiche ai dati dei componenti in vehicle_components.json?"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:441
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:452
 msgid "Component data has been edited"
-msgstr ""
+msgstr "I dati del componente sono stati modificati"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:570
 msgid ""
@@ -4933,17 +4933,17 @@ msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2304
 msgid "Failed to patch derived parameter %s: %s"
-msgstr ""
+msgstr "Impossibile modificare il parametro derivato %s: %s"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2337
 msgid ""
 "vehicle_components evaluator reference is stale; re-syncing to the live "
 "object"
-msgstr ""
+msgstr "Il riferimento dell’evaluator vehicle_components non è aggiornato; nuova sincronizzazione con l’oggetto live"
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:2348
 msgid "No vehicle component data loaded; save aborted."
-msgstr ""
+msgstr "Nessun dato del componente veicolo caricato; salvataggio annullato."
 
 #: ardupilot_methodic_configurator/data_model_recent_items_history_list.py:92
 msgid "Cannot store empty string in history"
