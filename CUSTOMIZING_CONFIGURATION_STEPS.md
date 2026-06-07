@@ -270,6 +270,7 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 
 - **Type**: Object with parameter names as keys
 - **Structure**: Each parameter must have:
+  - `if` (optional): A Python expression that must evaluate to `True` for the parameter to be applied
   - `New Value`: An expression or formula to calculate the value (as a string)
   - `Change Reason`: Explanation of the derivation
 - **Purpose**: Automatically calculates parameter values based on vehicle components or complex logic
@@ -290,6 +291,7 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
       "Change Reason": "Total battery capacity specified in the component editor"
     },
     "ATC_ACCEL_P_MAX": {
+      "if": "vehicle_components.get('Propellers', {}).get('Specifications', {}).get('Diameter_inches', 0) > 0",
       "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))",
       "Change Reason": "Derived from vehicle component editor propeller size"
     }
@@ -301,6 +303,51 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
   - Flight controller parameters: `fc_parameters['PARAM_NAME']` or `fc_parameters.get('PARAM_NAME', default_value)`
   - Conditional logic: `if...else` expressions
   - Mathematical functions: `max()`, `min()`, `round()`, `log()`, conditional expressions with `if...else`
+- **`if` expressions** use the same variable access as `New Value` and short-circuit evaluation: the parameter is skipped entirely when the expression evaluates to `False`.
+
+**`add_parameters`**: Parameters added to the configuration file if they are not already present.
+
+- **Type**: Object with parameter names as keys
+- **Structure**: Each parameter may have:
+  - `if` (optional): A Python expression; the parameter is only added when this evaluates to `True`
+  - `New Value` (optional): An expression for the parameter value; if absent, the current flight controller value is used
+  - `Change Reason` (optional): Explanation of why the parameter is added
+- **Purpose**: Ensures certain parameters appear in the file so users can review and edit them. Does not overwrite existing parameters
+- **Example**:
+
+  ```json
+  "add_parameters": {
+    "BATT_ARM_VOLT": {
+      "New Value": "vehicle_components['Battery']['Specifications']['Volt per cell max'] * vehicle_components['Battery']['Specifications']['Number of cells in series'] * 0.95",
+      "Change Reason": "95% of fully charged voltage as arm threshold"
+    },
+    "LOG_BITMASK": {
+      "Change Reason": "Copy current FC value so the user can review it"
+    },
+    "SCR_ENABLE": {
+      "if": "fc_parameters.get('SCR_ENABLE', 0) == 0",
+      "New Value": "1",
+      "Change Reason": "Enable scripting only if not already enabled"
+    }
+  }
+  ```
+
+**`delete_parameters`**: Parameters removed from the configuration file, optionally conditioned on a Python expression.
+
+- **Type**: Object with parameter names as keys
+- **Structure**: Each parameter may have:
+  - `if` (optional): A Python expression; the parameter is only deleted when this evaluates to `True`
+- **Purpose**: Removes parameters that are no longer relevant for this step
+- **Example**:
+
+  ```json
+  "delete_parameters": {
+    "LOG_DISARMED": {},
+    "INS_TCAL1_ENABLE": {
+      "if": "fc_parameters.get('INS_TCAL1_ENABLE', 0) == 2"
+    }
+  }
+  ```
 
 **`jump_possible`**: Allows users to skip ahead to another step under certain conditions.
 
