@@ -2367,10 +2367,36 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 del self._connection_renames[orig_name]
             elif new_target != current_target:
                 # Target changed — move the parameter to the new name
-                if current_target in self.current_step_parameters:
-                    self._added_parameters.discard(current_target)
-                    del self.current_step_parameters[current_target]
-                if orig_name in original_params:
+                if new_target in self.current_step_parameters and new_target not in self._connection_renames.values():
+                    logging_warning(_("Skipping connection rename %s → %s: target already exists"), current_target, new_target)
+                else:
+                    if current_target in self.current_step_parameters:
+                        self._added_parameters.discard(current_target)
+                        del self.current_step_parameters[current_target]
+                    if orig_name in original_params:
+                        self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
+                            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+                        )
+                        if is_gnss and new_target.endswith("_PROTOCOL"):
+                            self.current_step_parameters[new_target].set_new_value(
+                                _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
+                            )
+                        self._added_parameters.add(new_target)
+                    self._connection_renames[orig_name] = new_target
+                    logging_info(_("Renamed connection parameter %s → %s"), current_target, new_target)
+
+        # Apply renames that are new (not previously tracked)
+        for orig_name, new_target in new_rename_map.items():
+            if orig_name in self._connection_renames:
+                continue  # already handled above
+            if orig_name in original_params:
+                if new_target in self.current_step_parameters:
+                    logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
+                else:
+                    # Remove the original (un-renamed) parameter if it is still present
+                    if orig_name in self.current_step_parameters:
+                        del self.current_step_parameters[orig_name]
+                        self._deleted_parameters.add(orig_name)
                     self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
                         new_target, original_params[orig_name], self.current_file, self.fc_parameters
                     )
@@ -2379,28 +2405,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                             _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
                         )
                     self._added_parameters.add(new_target)
-                self._connection_renames[orig_name] = new_target
-                logging_info(_("Renamed connection parameter %s → %s"), current_target, new_target)
-
-        # Apply renames that are new (not previously tracked)
-        for orig_name, new_target in new_rename_map.items():
-            if orig_name in self._connection_renames:
-                continue  # already handled above
-            if orig_name in original_params:
-                # Remove the original (un-renamed) parameter if it is still present
-                if orig_name in self.current_step_parameters:
-                    del self.current_step_parameters[orig_name]
-                    self._deleted_parameters.add(orig_name)
-                self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-                    new_target, original_params[orig_name], self.current_file, self.fc_parameters
-                )
-                if is_gnss and new_target.endswith("_PROTOCOL"):
-                    self.current_step_parameters[new_target].set_new_value(
-                        _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
-                    )
-                self._added_parameters.add(new_target)
-                self._connection_renames[orig_name] = new_target
-                logging_info(_("Renamed connection parameter %s → %s"), orig_name, new_target)
+                    self._connection_renames[orig_name] = new_target
+                    logging_info(_("Renamed connection parameter %s → %s"), orig_name, new_target)
 
     def revert_vehicle_components(self) -> None:
         """
