@@ -12,4 +12,4 @@ from ardupilot_methodic_configurator.internationalization import load_translatio
 
 _ = load_translation()
 
-__version__ = "4.0.2"
+__version__ = "4.0.3"
