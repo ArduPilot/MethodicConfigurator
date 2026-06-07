@@ -871,7 +871,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
     def __send_more_writes(self) -> None:
         """Send some more writes."""
-        if len(self.write_list) == 0 or self.write_list is None:
+        if self.write_list is None or len(self.write_list) == 0:
             # all done
             self.__put_finished(self.write_file_size)
             self.__terminate_session()
@@ -882,6 +882,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             # we seem to have lost a block of replies
             self.write_pending = max(0, self.write_pending - 1)
 
+        if self.write_list is None:
+            return
         n = min(self.ftp_settings.write_qsize - self.write_pending, len(self.write_list))
         for _i in range(n):
             # send in round-robin, skipping any that have been acked
@@ -910,6 +912,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         # assume the FTP server processes the blocks sequentially. This means
         # when we receive an ack that any blocks between the last ack and this
         # one have been lost
+        if self.write_total == 0:
+            self.__terminate_session()
+            return MAVFTPReturn("WriteFile", ERR_None)
         idx = op.offset // self.write_block_size
         count = (idx - self.write_recv_idx) % self.write_total
 
