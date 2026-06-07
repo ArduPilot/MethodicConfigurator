@@ -82,7 +82,7 @@ MAX_Payload = 239
 # pylint: enable=invalid-name
 
 
-class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
+class FTP_OP:  # noqa: N801 pylint: disable=invalid-name, too-many-instance-attributes
     """
     Represents an operation in the MAVLink File Transfer Protocol (FTP).
 
@@ -176,11 +176,11 @@ class ParamData:
 class MAVFTPSetting:  # pylint: disable=too-few-public-methods
     """A single MAVFTP setting with a name, type, value and default value."""
 
-    def __init__(self, name, s_type, default) -> None:
-        self.name = name
+    def __init__(self, name: str, s_type: type, default: float) -> None:
+        self.name: str = name
         self.type = s_type
-        self.default = default
-        self.value = default
+        self.default: int | float = default
+        self.value: int | float = default
 
 
 class MAVFTPSettings:
@@ -199,20 +199,21 @@ class MAVFTPSettings:
             setting = MAVFTPSetting(name, s_type, default)
         self._vars[setting.name] = setting
 
-    def __getattr__(self, name) -> int | float:
+    def __getattr__(self, name: str) -> int | float:
         """Get attribute."""
         try:
-            return self._vars[name].value  # type: ignore[no-any-return]
+            result: int | float = self._vars[name].type(self._vars[name].value)
+            return result
         except Exception as exc:
             raise AttributeError from exc
 
-    def __setattr__(self, name, value) -> None:
+    def __setattr__(self, name: str, value: float) -> None:
         """Set attribute."""
         if name[0] == "_":
             self.__dict__[name] = value
             return
         if name in self._vars:
-            self._vars[name].value = value
+            self._vars[name].value = self._vars[name].type(value)
             return
         raise AttributeError
 
@@ -353,9 +354,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         master,
-        target_system,
-        target_component,
-        settings=None,
+        target_system: int,
+        target_component: int,
+        settings: MAVFTPSettings | None = None,
     ) -> None:
         if settings is None:
             settings = MAVFTPSettings(
@@ -400,16 +401,16 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.rtt = 0.5
         self.reached_eof = False
         self.backlog = 0
-        self.burst_size = self.ftp_settings.burst_read_size
-        self.write_list: None | set[int] = None
-        self.write_block_size = 0
+        self.burst_size: int = int(self.ftp_settings.burst_read_size)
+        self.write_list: set[int] | None = None
+        self.write_block_size: int = 0
         self.write_acks = 0
         self.write_total = 0
         self.write_file_size = 0
         self.write_idx = 0
         self.write_recv_idx = -1
         self.write_pending = 0
-        self.write_last_send: None | float = None
+        self.write_last_send: float | None = None
         self.open_retries = 0
         self.directory_listing: dict[str, int] = {}
 
@@ -421,7 +422,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(FTP_OP(self.seq, self.session, OP_ResetSessions, 0, 0, 0, 0, None))
         self.process_ftp_reply("ResetSessions")
 
-    def cmd_ftp(self, args) -> MAVFTPReturn:  # noqa PRL0911, pylint: disable=too-many-return-statements, too-many-branches
+    def cmd_ftp(self, args) -> MAVFTPReturn:  # noqa: PLR0911 pylint: disable=too-many-return-statements, too-many-branches
         """FTP operations."""
         usage = "Usage: ftp <list|set|get|getparams|put|rm|rmdir|rename|mkdir|status|cancel|crc>"
         if len(args) < 1:
@@ -455,7 +456,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         logging.error(usage)
         return MAVFTPReturn("FTP command", ERR_InvalidArguments)
 
-    def __send(self, op) -> None:
+    def __send(self, op: FTP_OP) -> None:
         """Send a request."""
         op.seq = self.seq
         payload = op.pack()
@@ -511,7 +512,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.process_ftp_reply("TerminateSession")
         self.session = (self.session + 1) % 256
 
-    def cmd_list(self, args) -> MAVFTPReturn:
+    def cmd_list(self, args: list[str]) -> MAVFTPReturn:
         """List files."""
         if len(args) == 0:
             dname = "/"
@@ -529,9 +530,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.directory_listing = {}
         return self.process_ftp_reply("ListDirectory")
 
-    def __handle_list_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_list_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle OP_ListDirectory reply."""
-        if op.opcode == OP_Ack:
+        if op.opcode == OP_Ack and op.payload is not None:
             dentries = sorted(op.payload.split(b"\x00"))
             # logging.info(dentries)
             for d in dentries:
@@ -587,7 +588,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.read_retries = 0
         self.duplicates = 0
         self.reached_eof = False
-        self.burst_size = self.ftp_settings.burst_read_size
+        self.burst_size = int(self.ftp_settings.burst_read_size)
         if self.burst_size < 1 or self.burst_size > 239:
             self.burst_size = 239
         self.remote_file_size = None
@@ -597,7 +598,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return MAVFTPReturn("OpenFileRO", ERR_None)
 
-    def __handle_open_ro_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_open_ro_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle OP_OpenFileRO reply."""
         if op.opcode == OP_Ack:
             if self.filename is None:
@@ -649,7 +650,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             return True
         return False
 
-    def __write_payload(self, op) -> None:
+    def __write_payload(self, op: FTP_OP) -> None:
         """Write payload from a read op."""
         self.fh.seek(op.offset)
         self.fh.write(op.payload)
@@ -657,7 +658,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         if self.callback_progress is not None and self.remote_file_size:
             self.callback_progress(self.read_total / self.remote_file_size)
 
-    def __handle_burst_read(self, op, _m) -> MAVFTPReturn:  # noqa PRL0911, PGH004, pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
+    def __handle_burst_read(self, op: FTP_OP, _m) -> MAVFTPReturn:  # noqa: C901, PLR0911, PLR0912, PLR0915 pylint: disable=too-many-branches, too-many-statements, too-many-return-statements
         """Handle OP_BurstReadFile reply."""
         if self.ftp_settings.pkt_loss_tx > 0 and random.uniform(0, 100) < self.ftp_settings.pkt_loss_tx:  # noqa: S311
             if self.ftp_settings.debug > 0:
@@ -671,7 +672,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             logging.info(op)
             return MAVFTPReturn("BurstReadFile", ERR_Fail)
         self.last_burst_read = time.time()
-        size = len(op.payload)
+        size = len(op.payload) if op.payload is not None else 0
         if size > self.burst_size:
             # this server doesn't handle the burst size argument
             self.burst_size = MAX_Payload
@@ -790,7 +791,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__check_read_send()
         return MAVFTPReturn("ReadFile", ERR_None)
 
-    def cmd_put(self, args, fh=None, callback=None, progress_callback=None) -> MAVFTPReturn:
+    def cmd_put(self, args: list[str], fh=None, callback=None, progress_callback=None) -> MAVFTPReturn:
         """Put file."""
         if len(args) == 0 or len(args) > 2:
             logging.error("Usage: put [FILENAME <REMOTENAME>]")
@@ -819,7 +820,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.fh.seek(0)
 
         # setup write list
-        self.write_block_size = self.ftp_settings.write_size
+        self.write_block_size = int(self.ftp_settings.write_size)
         self.write_file_size = file_size
 
         write_blockcount = file_size // self.write_block_size
@@ -843,7 +844,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return MAVFTPReturn("CreateFile", ERR_None)
 
-    def __put_finished(self, flen) -> None:
+    def __put_finished(self, flen: int) -> None:
         """Finish a put."""
         if self.put_callback_progress:
             self.put_callback_progress(1.0)
@@ -856,7 +857,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             rate = (flen / dt) / 1024.0
             logging.info("Put %u bytes to %s file in %.2fs %.1fkByte/s", flen, self.filename, dt, rate)
 
-    def __handle_create_file_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_create_file_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle OP_CreateFile reply."""
         if self.fh is None:
             self.__terminate_session()
@@ -899,7 +900,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             self.write_pending += 1
             self.write_last_send = now
 
-    def __handle_write_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_write_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle OP_WriteFile reply."""
         if self.fh is None:
             self.__terminate_session()
@@ -927,7 +928,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send_more_writes()
         return MAVFTPReturn("WriteFile", ERR_None)
 
-    def cmd_rm(self, args) -> MAVFTPReturn:
+    def cmd_rm(self, args: list[str]) -> MAVFTPReturn:
         """Remove file."""
         if len(args) != 1:
             logging.error("Usage: rm [FILENAME]")
@@ -939,7 +940,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("RemoveFile")
 
-    def cmd_rmdir(self, args) -> MAVFTPReturn:
+    def cmd_rmdir(self, args: list[str]) -> MAVFTPReturn:
         """Remove directory."""
         if len(args) != 1:
             logging.error("Usage: rmdir [DIRECTORYNAME]")
@@ -951,11 +952,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("RemoveDirectory")
 
-    def __handle_remove_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_remove_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle remove reply."""
         return self.__decode_ftp_ack_and_nack(op)
 
-    def cmd_rename(self, args) -> MAVFTPReturn:
+    def cmd_rename(self, args: list[str]) -> MAVFTPReturn:
         """Rename file or directory."""
         if len(args) < 2:
             logging.error("Usage: rename [OLDNAME NEWNAME]")
@@ -970,11 +971,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("Rename")
 
-    def __handle_rename_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_rename_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle rename reply."""
         return self.__decode_ftp_ack_and_nack(op)
 
-    def cmd_mkdir(self, args) -> MAVFTPReturn:
+    def cmd_mkdir(self, args: list[str]) -> MAVFTPReturn:
         """Make directory."""
         if len(args) != 1:
             logging.error("Usage: mkdir NAME")
@@ -986,11 +987,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("CreateDirectory")
 
-    def __handle_mkdir_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_mkdir_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle mkdir reply."""
         return self.__decode_ftp_ack_and_nack(op)
 
-    def cmd_crc(self, args) -> MAVFTPReturn:
+    def cmd_crc(self, args: list[str]) -> MAVFTPReturn:
         """Get file crc."""
         if len(args) != 1:
             logging.error("Usage: crc [NAME]")
@@ -1004,7 +1005,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.__send(op)
         return self.process_ftp_reply("CalcFileCRC32")
 
-    def __handle_crc_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_crc_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle crc reply."""
         if op.opcode == OP_Ack and op.size == 4:
             (crc,) = struct.unpack("<I", op.payload)
@@ -1024,15 +1025,16 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             logging.info("No transfer in progress")
         else:
             ofs = self.fh.tell()
-            dt = time.time() - self.op_start
-            rate = (ofs / dt) / 1024.0
-            logging.info(
-                "Transfer at offset %u with %u gaps %u retries %.1f kByte/sec",
-                ofs,
-                len(self.read_gaps),
-                self.read_retries,
-                rate,
-            )
+            if self.op_start:
+                dt = time.time() - self.op_start
+                rate = (ofs / dt) / 1024.0
+                logging.info(
+                    "Transfer at offset %u with %u gaps %u retries %.1f kByte/sec",
+                    ofs,
+                    len(self.read_gaps),
+                    self.read_retries,
+                    rate,
+                )
         return MAVFTPReturn("Status", ERR_None)
 
     def __op_parse(self, m) -> FTP_OP:
@@ -1042,7 +1044,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         payload = bytearray(m.payload[12:])[:size]
         return FTP_OP(seq, session, opcode, size, req_opcode, burst_complete, offset, payload)
 
-    def __mavlink_packet(self, m) -> MAVFTPReturn:  # noqa PRL0911, PGH004, pylint: disable=too-many-branches, too-many-return-statements
+    def __mavlink_packet(self, m) -> MAVFTPReturn:  # noqa: PLR0911 pylint: disable=too-many-branches, too-many-return-statements
         """Handle a mavlink packet."""
         operation_name = "mavlink_packet"
         mtype = m.get_type()
@@ -1202,7 +1204,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
     def __last_send_time_was_more_than_idle_detection_time_ago(self, now: float) -> bool:
         return self.last_send_time is not None and now - self.last_send_time > float(self.ftp_settings.idle_detection_time)
 
-    def __handle_reset_sessions_reply(self, op, _m) -> MAVFTPReturn:
+    def __handle_reset_sessions_reply(self, op: FTP_OP, _m) -> MAVFTPReturn:
         """Handle reset sessions reply."""
         return self.__decode_ftp_ack_and_nack(op)
 
@@ -1402,7 +1404,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         add_timestamp_comment: bool,
     ) -> None:
         """Save Ardupilot parameter information to a local file."""
-        if not pdict:
+        if not pdict or not filename:
             return
         with open(filename, "w", encoding="utf-8") as f:
             parameter_data_types = {
@@ -1426,7 +1428,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
     def cmd_getparams(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        args,
+        args: list[str],
         progress_callback=None,
         sort_type: str = "missionplanner",
         add_datatype_comments: bool = False,
