@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from collections.abc import Callable as CollectionsCallable
 from tkinter import Menu, messagebox, simpledialog, ttk
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
@@ -25,8 +25,8 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        root: Union[tk.Tk, tk.Toplevel],
-        entry_widgets: dict[tuple, Union[ttk.Entry, ttk.Combobox]],
+        root: tk.Tk | tk.Toplevel,
+        entry_widgets: dict[tuple, ttk.Entry | ttk.Combobox],
         get_component_data_callback: CollectionsCallable[[str], dict[str, Any]],
         update_data_callback: CollectionsCallable[[str, dict[str, Any]], None],
         derive_template_name_callback: CollectionsCallable[[dict[str, Any]], str],
@@ -47,7 +47,7 @@ class ComponentTemplateManager:  # pylint: disable=too-many-instance-attributes
         self.root = root
         self.entry_widgets = entry_widgets
         self.buttons: dict[str, ttk.Button] = {}
-        self.current_menu: Union[Menu, None] = None
+        self.current_menu: Menu | None = None
         self.template_manager = VehicleComponents(save_component_to_system_templates)
         self.get_component_data_callback = get_component_data_callback
         self.update_data_callback = update_data_callback

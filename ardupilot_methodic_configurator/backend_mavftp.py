@@ -24,7 +24,6 @@ from collections.abc import Generator
 from datetime import datetime
 from io import BufferedReader, BufferedWriter
 from io import BytesIO as SIO  # noqa: N814
-from typing import Union
 
 import argcomplete
 from argcomplete.completers import FilesCompleter
@@ -133,7 +132,7 @@ class FTP_OP:  # pylint: disable=invalid-name, too-many-instance-attributes
             ret += f" [{self.payload[0]}]"
         return ret
 
-    def items(self) -> Generator[tuple[str, Union[int, bool, bytes]]]:
+    def items(self) -> Generator[tuple[str, int | bool | bytes]]:
         """Yield each attribute and its value for the FTP_OP instance. For debugging purposes."""
         yield "seq", self.seq
         yield "session", self.session
@@ -163,7 +162,7 @@ class ParamData:
 
     def __init__(self) -> None:
         self.params: list[tuple[bytes, float, type]] = []  # params as (name, value, ptype)
-        self.defaults: Union[None, list[tuple[bytes, float, type]]] = None  # defaults as (name, value, ptype)
+        self.defaults: None | list[tuple[bytes, float, type]] = None  # defaults as (name, value, ptype)
 
     def add_param(self, name: bytes, value: float, ptype: type) -> None:
         self.params.append((name, value, ptype))
@@ -200,7 +199,7 @@ class MAVFTPSettings:
             setting = MAVFTPSetting(name, s_type, default)
         self._vars[setting.name] = setting
 
-    def __getattr__(self, name) -> Union[int, float]:
+    def __getattr__(self, name) -> int | float:
         """Get attribute."""
         try:
             return self._vars[name].value  # type: ignore[no-any-return]
@@ -272,7 +271,7 @@ class MAVFTPReturn:
         invalid_error_code: int = 0,
         invalid_opcode: int = 0,
         invalid_payload_size: int = 0,
-        directory_listing: Union[dict[str, int], None] = None,
+        directory_listing: dict[str, int] | None = None,
     ) -> None:
         self.operation_name = operation_name
         self.error_code = error_code
@@ -377,9 +376,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.seq = 0
         self.session = 0
         self.network = 0
-        self.last_op: Union[None, FTP_OP] = None
-        self.fh: Union[None, SIO, BufferedReader, BufferedWriter] = None
-        self.filename: Union[None, str] = None
+        self.last_op: None | FTP_OP = None
+        self.fh: None | SIO | BufferedReader | BufferedWriter = None
+        self.filename: None | str = None
         self.callback = None
         self.callback_progress = None
         self.put_callback = None
@@ -393,8 +392,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.remote_file_size = None
         self.duplicates = 0
         self.last_read = None
-        self.last_burst_read: Union[None, float] = None
-        self.op_start: Union[None, float] = None
+        self.last_burst_read: None | float = None
+        self.op_start: None | float = None
         self.dir_offset = 0
         self.last_op_time = time.time()
         self.last_send_time = time.time()
@@ -402,7 +401,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.reached_eof = False
         self.backlog = 0
         self.burst_size = self.ftp_settings.burst_read_size
-        self.write_list: Union[None, set[int]] = None
+        self.write_list: None | set[int] = None
         self.write_block_size = 0
         self.write_acks = 0
         self.write_total = 0
@@ -410,7 +409,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.write_idx = 0
         self.write_recv_idx = -1
         self.write_pending = 0
-        self.write_last_send: Union[None, float] = None
+        self.write_last_send: None | float = None
         self.open_retries = 0
         self.directory_listing: dict[str, int] = {}
 
@@ -1293,7 +1292,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def ftp_param_decode(data: bytes) -> Union[None, ParamData]:  # pylint: disable=too-many-locals
+    def ftp_param_decode(data: bytes) -> None | ParamData:  # pylint: disable=too-many-locals
         """Decode parameter data, returning ParamData."""
         pdata = ParamData()
 

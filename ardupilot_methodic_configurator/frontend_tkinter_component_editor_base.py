@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from collections.abc import Callable
 from contextlib import suppress
 
 # from logging import debug as logging_debug
@@ -21,7 +22,7 @@ from logging import info as logging_info
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Any, Callable, Optional, Union, cast
+from typing import Any, cast
 from unittest.mock import patch
 
 from ardupilot_methodic_configurator import _, __version__
@@ -68,7 +69,7 @@ def argument_parser() -> Namespace:
 
 
 # Type aliases to improve code readability
-EntryWidget = Union[ttk.Entry, PairTupleCombobox]
+EntryWidget = ttk.Entry | PairTupleCombobox
 
 WINDOW_WIDTH_PIX = 880
 VEHICLE_IMAGE_WIDTH_PIX = 100
@@ -106,10 +107,10 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         version: str,
         local_filesystem: LocalFilesystem,
         fc_parameters: dict[str, float],
-        data_model: Optional[ComponentDataModel] = None,
-        root_tk: Optional[tk.Tk] = None,
-        embedded_parent_frame: Optional[tk.Widget] = None,
-        on_component_change: Optional[Callable[[], None]] = None,
+        data_model: ComponentDataModel | None = None,
+        root_tk: tk.Tk | None = None,
+        embedded_parent_frame: tk.Widget | None = None,
+        on_component_change: Callable[[], None] | None = None,
     ) -> None:
         """
         Initialize the ComponentEditorWindowBase.
@@ -151,7 +152,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
         # UI elements dictionary for easier access and testing
         self.entry_widgets: dict[ComponentPath, EntryWidget] = {}
-        self.scroll_frame: Union[ScrollFrame, _EmbeddedScrollFrameStub]
+        self.scroll_frame: ScrollFrame | _EmbeddedScrollFrameStub
         self.save_button: ttk.Button
         self.template_manager: ComponentTemplateManager
         self._populating: bool = False  # True while populate_frames/populate_single_component is running
@@ -292,7 +293,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
         explanation_label.configure(style="bigger.TLabel")
         explanation_label.pack(side=tk.TOP, anchor=tk.NW, pady=self.calculate_scaled_padding_tuple(10, 0))
 
-    def _on_complexity_changed(self, _event: Optional[tk.Event] = None) -> None:
+    def _on_complexity_changed(self, _event: tk.Event | None = None) -> None:
         """Handle complexity combobox change."""
         old_gui_complexity = ProgramSettings.get_setting("gui_complexity")
         new_gui_complexity = self.complexity_var.get()
@@ -409,10 +410,10 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
 
     @staticmethod
     def set_combobox_entries_preserving_width(
-        combobox: PairTupleCombobox, entries: list[tuple[str, str]], selection: Optional[str]
+        combobox: PairTupleCombobox, entries: list[tuple[str, str]], selection: str | None
     ) -> None:
         """Set combobox entries while preserving the currently configured widget width."""
-        width: Optional[int] = None
+        width: int | None = None
         try:
             width = int(combobox.cget("width"))
         except (AttributeError, TypeError, ValueError, tk.TclError):
@@ -550,13 +551,13 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
             # recursively add child elements
             self._add_widget(frame, sub_key, sub_value, [*path, key])
 
-    def _add_leaf_widget(self, parent: tk.Widget, key: str, value: Union[str, float], path: list[str]) -> None:
+    def _add_leaf_widget(self, parent: tk.Widget, key: str, value: str | float, path: list[str]) -> None:
         """Add a leaf widget (containing input controls) to the UI."""
         # Extract business logic to separate method for better testability
         widget_config = self._prepare_leaf_widget_config(key, value, path)
         self._create_leaf_widget_ui(parent, widget_config)
 
-    def _prepare_leaf_widget_config(self, key: str, value: Union[str, float], path: list[str]) -> dict:
+    def _prepare_leaf_widget_config(self, key: str, value: str | float, path: list[str]) -> dict:
         """Prepare configuration for leaf widget creation. Delegates to display logic."""
         return self.data_model.prepare_leaf_widget_config(key, value, path)
 
@@ -707,7 +708,7 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     # This function will be overwritten in child classes
     def add_entry_or_combobox(
         self,
-        value: Union[str, float],
+        value: str | float,
         entry_frame: ttk.Frame,
         _path: ComponentPath,
         is_optional: bool = False,  # pylint: disable=unused-argument # noqa: ARG002
@@ -734,9 +735,9 @@ class ComponentEditorWindowBase(BaseWindow):  # pylint: disable=too-many-instanc
     def create_for_testing(
         cls,
         version: str = "test",
-        local_filesystem: Optional[LocalFilesystem] = None,
-        data_model: Optional[ComponentDataModel] = None,
-        root_tk: Optional[tk.Tk] = None,  # pylint: disable=unused-argument # noqa: ARG003
+        local_filesystem: LocalFilesystem | None = None,
+        data_model: ComponentDataModel | None = None,
+        root_tk: tk.Tk | None = None,  # pylint: disable=unused-argument # noqa: ARG003
     ) -> "ComponentEditorWindowBase":
         """
         Factory method for creating instances suitable for testing.

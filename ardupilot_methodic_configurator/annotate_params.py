@@ -30,7 +30,7 @@ import logging
 import re
 from os import path as os_path
 from sys import exit as sys_exit
-from typing import Any, Optional
+from typing import Any
 from xml.etree import ElementTree as ET  # no parsing, just data-structure manipulation
 
 import argcomplete
@@ -139,7 +139,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def get_xml_data(
-    base_url: str, directory: str, filename: str, vehicle_type: str, fallback_xml_url: Optional[str] = None
+    base_url: str, directory: str, filename: str, vehicle_type: str, fallback_xml_url: str | None = None
 ) -> ET.Element:
     """
     Fetch XML data from a local file or a URL.
@@ -418,7 +418,7 @@ def update_parameter_documentation(
     doc: dict[str, Any],
     target: str = ".",
     sort_type: str = "none",
-    param_default_dict: Optional[ParDict] = None,
+    param_default_dict: ParDict | None = None,
     delete_documentation_annotations: bool = False,
 ) -> None:
     """
@@ -595,7 +595,7 @@ def get_fallback_xml_url(vehicle_type: str, firmware_version: str) -> str:
 
 
 def parse_parameter_metadata(  # pylint: disable=too-many-arguments, too-many-positional-arguments
-    xml_url: str, xml_dir: str, xml_file: str, vehicle_type: str, max_line_length: int, fallback_xml_url: Optional[str] = None
+    xml_url: str, xml_dir: str, xml_file: str, vehicle_type: str, max_line_length: int, fallback_xml_url: str | None = None
 ) -> dict[str, Any]:
     xml_root = get_xml_data(xml_url, xml_dir, xml_file, vehicle_type, fallback_xml_url)
     return create_doc_dict(xml_root, vehicle_type, max_line_length)

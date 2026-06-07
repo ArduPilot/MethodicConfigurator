@@ -23,6 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -30,7 +31,7 @@ from logging import warning as logging_warning
 from tkinter import Event, Frame, Label, ttk
 from tkinter.messagebox import askyesno, showerror, showinfo, showwarning
 from tkinter.simpledialog import askfloat
-from typing import Callable, Optional, Union, cast
+from typing import cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
@@ -76,7 +77,7 @@ class DelayedProgressCallback:  # pylint: disable=too-few-public-methods
         """
         self.original_callback = original_callback
         self.delay_seconds = delay_seconds
-        self.first_call_time: Optional[float] = None
+        self.first_call_time: float | None = None
 
     def __call__(self, current: int, total: int) -> None:
         """Execute the callback with delay logic."""
@@ -94,7 +95,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,
-        parent: Union[tk.Frame, ttk.Frame],
+        parent: tk.Frame | ttk.Frame,
         model: MotorTestDataModel,
         base_window: BaseWindow,
     ) -> None:
@@ -115,13 +116,13 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self.batt_voltage_label: ttk.Label
         self.batt_current_label: ttk.Label
         # Store image reference (PNG or other format)
-        self._current_diagram_image: Optional[tk.PhotoImage] = None
+        self._current_diagram_image: tk.PhotoImage | None = None
         self._frame_options_loaded = False  # Track if frame options have been loaded
         self._diagrams_path = ""  # Cache diagram path for performance
         self._diagram_needs_update = True  # Track if diagram needs to be updated
-        self._content_frame: Optional[ttk.Frame] = None  # Store reference to content frame for widget searches
-        self._motor_grid_frame: Optional[ttk.Frame] = None  # Direct handle for motor grid frame
-        self._timer_id: Optional[str] = None  # Track scheduled update timer for cleanup
+        self._content_frame: ttk.Frame | None = None  # Store reference to content frame for widget searches
+        self._motor_grid_frame: ttk.Frame | None = None  # Direct handle for motor grid frame
+        self._timer_id: str | None = None  # Track scheduled update timer for cleanup
 
         self._create_widgets()
 
@@ -243,7 +244,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             command=self._set_motor_spin_min,
         ).pack(side="left", padx=5)
 
-    def _create_motor_buttons(self, parent: Union[Frame, ttk.Frame]) -> None:
+    def _create_motor_buttons(self, parent: Frame | ttk.Frame) -> None:
         """
         Create per-motor test controls and configure detection selection handling.
 
@@ -897,7 +898,7 @@ def main() -> None:  # pragma: no cover
 
 # Register this plugin with the factory for dependency injection
 def _create_motor_test_view(
-    parent: Union[tk.Frame, ttk.Frame],
+    parent: tk.Frame | ttk.Frame,
     model: object,
     base_window: object,
 ) -> MotorTestView:

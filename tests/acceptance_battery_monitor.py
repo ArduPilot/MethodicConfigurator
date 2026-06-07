@@ -14,8 +14,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from math import nan
-from typing import Callable
 from unittest.mock import MagicMock
 
 import pytest

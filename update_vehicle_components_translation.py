@@ -17,13 +17,12 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Optional, Union
 
 # Set up a proper logger
 logger = logging.getLogger(__name__)
 
 
-def extract_keys_recursively(data: Union[dict, list], keys: Optional[set] = None) -> set[str]:
+def extract_keys_recursively(data: dict | list, keys: set | None = None) -> set[str]:
     """Recursively extract all keys from a nested JSON object."""
     if keys is None:
         keys = set()
@@ -92,7 +91,7 @@ def extract_descriptions_from_schema(schema_file: str) -> list[str]:
             schema = json.load(f)
 
         # Recursive function to extract all descriptions
-        def extract_descriptions_recursively(obj: Union[dict, list]) -> None:
+        def extract_descriptions_recursively(obj: dict | list) -> None:
             if isinstance(obj, dict):
                 # Extract description if it exists
                 if "description" in obj and isinstance(obj["description"], str):

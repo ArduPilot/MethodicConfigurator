@@ -20,7 +20,6 @@ from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from tkinter import messagebox, simpledialog, ttk
-from typing import Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -54,13 +53,13 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         self.destroy_parent_on_connect = destroy_parent_on_connect
         self.download_params_on_connect = download_params_on_connect
         self.default_baudrate = default_baudrate
-        self.previous_selection: Union[None, str] = (
+        self.previous_selection: None | str = (
             flight_controller.comport.device
             if flight_controller.comport and hasattr(flight_controller.comport, "device")
             else None
         )
         self.connection_progress_window: ProgressWindow
-        self._refresh_timer_id: Union[None, str] = None
+        self._refresh_timer_id: None | str = None
         self._is_refreshing = False
 
         # Create a new frame for the flight controller connection selection label and combobox

@@ -13,7 +13,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import ClassVar, Optional, Union
+from typing import ClassVar
 
 from pymavlink import mavutil
 
@@ -57,8 +57,8 @@ class FlightControllerCommands:
 
     def __init__(
         self,
-        params_manager: Optional[FlightControllerParamsProtocol] = None,
-        connection_manager: Optional[FlightControllerConnectionProtocol] = None,
+        params_manager: FlightControllerParamsProtocol | None = None,
+        connection_manager: FlightControllerConnectionProtocol | None = None,
     ) -> None:
         """
         Initialize the command manager.
@@ -76,11 +76,11 @@ class FlightControllerCommands:
             raise ValueError(msg)
         self._params_manager: FlightControllerParamsProtocol = params_manager
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager
-        self._last_battery_status: Optional[tuple[float, float]] = None
+        self._last_battery_status: tuple[float, float] | None = None
         self._last_battery_message_time: float = 0.0
 
     @property
-    def master(self) -> Optional[MavlinkConnection]:
+    def master(self) -> MavlinkConnection | None:
         """Get master connection - delegates to connection manager."""
         return self._connection_manager.master
 
@@ -461,7 +461,7 @@ class FlightControllerCommands:
         time_sleep(self.BATTERY_STATUS_ACTIVATION_WAIT)
         return True, ""
 
-    def get_battery_status(self) -> tuple[Union[tuple[float, float], None], str]:
+    def get_battery_status(self) -> tuple[tuple[float, float] | None, str]:
         """
         Get current battery voltage and current.
 

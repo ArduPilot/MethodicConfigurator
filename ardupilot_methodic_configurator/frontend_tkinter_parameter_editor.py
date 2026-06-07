@@ -25,7 +25,7 @@ from logging import warning as logging_warning
 from sys import exit as sys_exit
 from sys import platform as sys_platform
 from tkinter import filedialog, ttk
-from typing import TYPE_CHECKING, Callable, Optional, Protocol, Union, cast
+from typing import TYPE_CHECKING, Optional, Protocol, Union, cast
 
 # from logging import critical as logging_critical
 from ardupilot_methodic_configurator import _, __version__
@@ -62,6 +62,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from ardupilot_methodic_configurator.data_model_par_dict import ParDict
     from ardupilot_methodic_configurator.plugin_protocol import PluginView
 

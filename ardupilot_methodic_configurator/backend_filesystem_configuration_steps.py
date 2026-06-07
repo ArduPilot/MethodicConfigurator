@@ -16,7 +16,7 @@ from logging import warning as logging_warning
 from math import isfinite
 from os import path as os_path
 from re import search as re_search
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, TypedDict
 
 # from sys import exit as sys_exit
 from jsonschema import validate as json_validate
@@ -310,7 +310,7 @@ class ConfigurationSteps:
 
     def _eval_new_value(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        new_value_expr: Union[str, float, bool],
+        new_value_expr: str | float | bool,
         filename: str,
         parameter: str,
         parameter_type: str,
@@ -528,7 +528,7 @@ class ConfigurationSteps:
         return "\n".join(errors)
 
     def compute_add_parameters(
-        self, filename: str, file_info: dict, variables: dict, existing_params: Optional[ParDict] = None
+        self, filename: str, file_info: dict, variables: dict, existing_params: ParDict | None = None
     ) -> None:
         """
         Compute the add_parameters for a given configuration file.
@@ -669,7 +669,7 @@ class ConfigurationSteps:
 
         return sorted_phases
 
-    def get_component(self, selected_file: str) -> Optional[str]:
+    def get_component(self, selected_file: str) -> str | None:
         """
         Get the component name for the selected file.
 
@@ -684,7 +684,7 @@ class ConfigurationSteps:
             return self.configuration_steps[selected_file].get("component")
         return None
 
-    def get_plugin(self, selected_file: str) -> Optional[dict]:
+    def get_plugin(self, selected_file: str) -> dict | None:
         """
         Get the plugin configuration for the selected file.
 
@@ -699,7 +699,7 @@ class ConfigurationSteps:
             return self.configuration_steps[selected_file].get("plugin")
         return None
 
-    def get_instructions_popup(self, selected_file: str) -> Optional[dict]:
+    def get_instructions_popup(self, selected_file: str) -> dict | None:
         """Get the instructions popup configuration for the selected file."""
         if selected_file in self.configuration_steps:
             return self.configuration_steps[selected_file].get("instructions_popup")

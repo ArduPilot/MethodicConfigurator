@@ -17,7 +17,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from tkinter import font as tkfont
 from tkinter import ttk
-from typing import Optional, Protocol
+from typing import Protocol
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -75,10 +75,10 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
     def __init__(
         self,
-        parent: Optional[tk.Tk] = None,
-        vehicle_components_provider: Optional[VehicleComponentsProviderProtocol] = None,
-        program_settings_provider: Optional[ProgramSettingsProviderProtocol] = None,
-        connected_fc_vehicle_type: Optional[str] = None,
+        parent: tk.Tk | None = None,
+        vehicle_components_provider: VehicleComponentsProviderProtocol | None = None,
+        program_settings_provider: ProgramSettingsProviderProtocol | None = None,
+        connected_fc_vehicle_type: str | None = None,
     ) -> None:
         """
         Initialize the TemplateOverviewWindow.

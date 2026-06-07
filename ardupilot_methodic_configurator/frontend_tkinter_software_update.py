@@ -9,8 +9,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import ttk
-from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -20,7 +20,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import Scroll
 class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Dialog for displaying software update information and handling user interaction."""
 
-    def __init__(self, version_info: str, download_callback: Optional[Callable[[], bool]] = None) -> None:
+    def __init__(self, version_info: str, download_callback: Callable[[], bool] | None = None) -> None:
         super().__init__()
         self.root.title(
             _("Amilcar Lucas's - ArduPilot methodic configurator {version} - New version available").format(
@@ -57,7 +57,7 @@ class UpdateDialog(BaseWindow):  # pylint: disable=too-many-instance-attributes
         self.status_label = ttk.Label(self.frame, text="")
         self.status_label.grid(row=2, column=0, columnspan=2, sticky="ew")
 
-        self.result: Optional[bool] = None
+        self.result: bool | None = None
         self._setup_buttons()
 
         self.root.bind("<Configure>", self._on_window_resize)

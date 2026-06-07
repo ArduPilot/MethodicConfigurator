@@ -10,7 +10,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -51,7 +50,7 @@ def mock_local_filesystem() -> MagicMock:
     mock_fs.vehicle_components_fs.has_unsaved_changes.return_value = False
 
     # Mock compound_params to compute first config filename based on file_parameters
-    def mock_compound_params(last_filename=None, skip_default=True) -> tuple[ParDict, Optional[str]]:
+    def mock_compound_params(last_filename=None, skip_default=True) -> tuple[ParDict, str | None]:
         """Mock compound_params that mimics the real behavior."""
         compound = ParDict()
         first_config_step_filename = None
@@ -3660,7 +3659,7 @@ class TestWorkflowEdgeCases:
         ],
     )
     def test_system_navigates_to_destination_based_on_gui_complexity_and_user_choice(  # pylint: disable= too-many-arguments, too-many-positional-arguments
-        self, parameter_editor, jump_choice: Optional[bool], gui_complexity: str, expected_file: str, expect_asked: bool
+        self, parameter_editor, jump_choice: bool | None, gui_complexity: str, expected_file: str, expect_asked: bool
     ) -> None:
         """
         System navigates the user to a destination file based on GUI mode and user confirmation.
@@ -3814,7 +3813,7 @@ class TestParameterUploadNavigation:
         ],
     )
     def test_system_accurately_validates_uploaded_parameters_against_fc(
-        self, parameter_editor, fc_val: Optional[float], upload_val: float, expect_mismatch: bool
+        self, parameter_editor, fc_val: float | None, upload_val: float, expect_mismatch: bool
     ) -> None:
         """
         System identifies mismatches between uploaded values and actual FC values.

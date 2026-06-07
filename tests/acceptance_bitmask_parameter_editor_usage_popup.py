@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 from unittest.mock import MagicMock
 
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import USAGE_POPUP_WINDOWS
@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
 
 if TYPE_CHECKING:  # pragma: no cover - import for typing only
     import tkinter as tk
+    from collections.abc import Callable
 
     from pytest_mock import MockerFixture
 

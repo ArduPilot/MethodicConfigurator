@@ -17,7 +17,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import TclError
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -426,7 +425,7 @@ class TestMonitorBoundsDetection:
         self,
         mock_widget: MagicMock,
         platform: str,
-        platform_api_returns: Optional[MonitorBounds],
+        platform_api_returns: MonitorBounds | None,
         fallback_returns: MonitorBounds,
         expected_bounds: MonitorBounds,
     ) -> None:

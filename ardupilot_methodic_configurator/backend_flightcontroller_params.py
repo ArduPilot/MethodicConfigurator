@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -16,7 +17,7 @@ from math import nan
 from pathlib import Path
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
@@ -53,7 +54,7 @@ class FlightControllerParams:
     def __init__(
         self,
         connection_manager: Optional["FlightControllerConnectionProtocol"] = None,
-        fc_parameters: Optional[dict[str, float]] = None,  # to simplify testing/mocking
+        fc_parameters: dict[str, float] | None = None,  # to simplify testing/mocking
     ) -> None:
         """
         Initialize the parameter manager.
@@ -87,9 +88,9 @@ class FlightControllerParams:
 
     def download_params(
         self,
-        progress_callback: Union[None, Callable[[int, int], None]] = None,
-        parameter_values_filename: Optional[Path] = None,
-        parameter_defaults_filename: Optional[Path] = None,
+        progress_callback: None | Callable[[int, int], None] = None,
+        parameter_values_filename: Path | None = None,
+        parameter_defaults_filename: Path | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters from a MAVLink connection.
@@ -132,9 +133,7 @@ class FlightControllerParams:
         self.fc_parameters = param_dict
         return param_dict, ParDict()
 
-    def _download_params_via_mavlink(
-        self, progress_callback: Union[None, Callable[[int, int], None]] = None
-    ) -> dict[str, float]:
+    def _download_params_via_mavlink(self, progress_callback: None | Callable[[int, int], None] = None) -> dict[str, float]:
         """
         Requests all flight controller parameters via MAVLink PARAM_REQUEST_LIST.
 
@@ -184,9 +183,9 @@ class FlightControllerParams:
 
     def _download_params_via_mavftp(
         self,
-        progress_callback: Union[None, Callable[[int, int], None]] = None,
-        parameter_values_filename: Optional[Path] = None,
-        parameter_defaults_filename: Optional[Path] = None,
+        progress_callback: None | Callable[[int, int], None] = None,
+        parameter_values_filename: Path | None = None,
+        parameter_defaults_filename: Path | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters via MAVFTP protocol.
@@ -285,7 +284,7 @@ class FlightControllerParams:
         """
         return self.fc_parameters.get(param_name, default)
 
-    def fetch_param(self, param_name: str, timeout: int = 5) -> Optional[float]:
+    def fetch_param(self, param_name: str, timeout: int = 5) -> float | None:
         """
         Fetch a parameter from the flight controller using MAVLink PARAM_REQUEST_READ message.
 

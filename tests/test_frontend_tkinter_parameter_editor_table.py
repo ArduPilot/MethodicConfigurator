@@ -14,7 +14,7 @@ import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
 from types import SimpleNamespace
-from typing import Any, Optional, cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -48,8 +48,8 @@ def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-argu
     name: str = "TEST_PARAM",
     value: float = 1.0,
     comment: str = "test comment",
-    metadata: Optional[dict[str, Any]] = None,
-    fc_value: Optional[float] = None,
+    metadata: dict[str, Any] | None = None,
+    fc_value: float | None = None,
     is_forced: bool = False,
     is_derived: bool = False,
     is_calibration: bool = False,

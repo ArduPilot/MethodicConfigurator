@@ -78,7 +78,7 @@ class BatteryMonitorDataModel:
             return False
         return self.flight_controller.is_battery_monitoring_enabled()
 
-    def get_battery_status(self) -> Optional[tuple[float, float]]:
+    def get_battery_status(self) -> tuple[float, float] | None:
         """
         Get the current battery voltage and current.
 

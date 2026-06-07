@@ -13,8 +13,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -505,9 +505,9 @@ class TestFlightControllerFilesLogDiscovery:
         files_mgr = _create_files_manager()
         mock_mavftp = MagicMock()
         highest = 37
-        state: dict[str, Optional[int]] = {"last": None}
+        state: dict[str, int | None] = {"last": None}
 
-        def record_request(args: list[str], progress_callback: Optional[Callable[[int, int], None]] = None) -> None:
+        def record_request(args: list[str], progress_callback: Callable[[int, int], None] | None = None) -> None:
             del progress_callback
             remote_filename = args[0]
             state["last"] = int(remote_filename.split("/")[-1].split(".")[0])
@@ -539,7 +539,7 @@ class TestFlightControllerFilesLogDiscovery:
         files_mgr = _create_files_manager()
         mock_mavftp = MagicMock()
         highest = 2
-        state: dict[str, Optional[int]] = {"last": None}
+        state: dict[str, int | None] = {"last": None}
 
         def record_request(args: list[str], *_: object, **__: object) -> None:
             remote_filename = args[0]

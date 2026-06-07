@@ -24,7 +24,6 @@ import os
 import shutil
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 
 from PIL import Image
 from selenium import webdriver
@@ -76,7 +75,7 @@ def crop_whitespace(image: Image.Image, margin: int = 5) -> Image.Image:
     return image.crop((left, top, right, bottom))
 
 
-def setup_firefox_service() -> tuple[Union[FirefoxService, None], str]:
+def setup_firefox_service() -> tuple[FirefoxService | None, str]:
     """Set up Firefox service with geckodriver fallback logic."""
     # Create Firefox driver with fallback for geckodriver
     try:

@@ -17,7 +17,7 @@ import contextlib
 import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
-from typing import Union, cast
+from typing import cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -38,15 +38,15 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table imp
 def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-arguments,too-many-positional-arguments  # noqa: PLR0913
     name: str = "TEST_PARAM",
     value: float = 1.0,
-    default_value: Union[float, None] = None,
+    default_value: float | None = None,
     comment: str = "test comment",
-    metadata: Union[dict, None] = None,
-    fc_value: Union[float, None] = None,
+    metadata: dict | None = None,
+    fc_value: float | None = None,
     is_forced: bool = False,
     is_calibration: bool = False,
     is_readonly: bool = False,
-    min_value: Union[float, None] = None,
-    max_value: Union[float, None] = None,
+    min_value: float | None = None,
+    max_value: float | None = None,
 ) -> ArduPilotParameter:
     """Create a mock ArduPilotParameter for testing in GUI workflows."""
     metadata = metadata or {}

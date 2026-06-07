@@ -18,7 +18,6 @@ import subprocess
 import tempfile
 from pathlib import Path
 from platform import system as platform_system
-from typing import Optional
 
 
 def process_locale_directory(locale_dir: Path, pot_file: Path, logger: logging.Logger) -> bool:
@@ -51,7 +50,7 @@ def process_locale_directory(locale_dir: Path, pot_file: Path, logger: logging.L
     return False
 
 
-def validate_and_get_tools(pot_file: Path, po_file: Path, logger: logging.Logger) -> tuple[bool, Optional[str], Optional[str]]:
+def validate_and_get_tools(pot_file: Path, po_file: Path, logger: logging.Logger) -> tuple[bool, str | None, str | None]:
     """
     Validate inputs and determine msgmerge/msgattrib executable paths.
 

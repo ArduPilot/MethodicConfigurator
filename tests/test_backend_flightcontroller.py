@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tempfile
 from argparse import ArgumentParser
-from typing import Any, Union, cast  # pylint: disable=unused-import
+from typing import Any, cast  # pylint: disable=unused-import
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -306,7 +306,7 @@ class TestFlightControllerMotorTestingWorkflow:
             mock_ack.progress = 100
             mock_ack.result_param2 = 0
 
-            def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> Union[MagicMock, None]:
+            def recv_match_side_effect(*_args: tuple, **kwargs: dict) -> MagicMock | None:
                 type_arg = kwargs.get("type")
                 if isinstance(type_arg, str) and type_arg == "COMMAND_ACK":
                     return mock_ack

@@ -22,7 +22,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import json
 import sys
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 try:
     from pycloc import CLOC  # ty: ignore[unresolved-import]
@@ -49,8 +49,8 @@ GENERATED_SCRIPT_FILES = [
 
 def get_cloc_stats(
     path: str,
-    include_patterns: Union[list[str], None] = None,
-    exclude_patterns: Union[list[str], None] = None,
+    include_patterns: list[str] | None = None,
+    exclude_patterns: list[str] | None = None,
 ) -> dict[str, Any]:
     """Get cloc statistics for a given path with optional include/exclude patterns."""
     cloc_cmd = CLOC().add_flag("--json")

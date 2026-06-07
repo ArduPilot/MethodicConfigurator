@@ -12,7 +12,6 @@ import tkinter as tk
 
 # from logging import debug as logging_debug
 from tkinter import ttk
-from typing import Union
 
 # from logging import critical as logging_critical
 from ardupilot_methodic_configurator import _
@@ -26,7 +25,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
 class AboutWindow(BaseWindow):
     """About popup window for the ArduPilot Methodic Configurator."""
 
-    def __init__(self, root_tk: Union[tk.Tk, tk.Toplevel], version: str) -> None:
+    def __init__(self, root_tk: tk.Tk | tk.Toplevel, version: str) -> None:
         super().__init__(root_tk)
         self.root.title(_("About"))
         self.root.geometry(self.calculate_scaled_geometry(650, 340))

@@ -12,7 +12,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Union
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -694,7 +693,7 @@ class TestFlightcontrollerInfoFormatting:
 
     @pytest.mark.parametrize("empty_value", [None, "", {}])
     def test_user_sees_na_for_empty_values(
-        self, flight_controller_info: FlightControllerInfo, empty_value: Union[None, str, dict]
+        self, flight_controller_info: FlightControllerInfo, empty_value: None | str | dict
     ) -> None:
         """
         Test that empty values are displayed as "N/A".

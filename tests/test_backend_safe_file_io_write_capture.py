@@ -12,7 +12,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import io
 import json
-from typing import IO, Any, Callable
+from collections.abc import Callable
+from typing import IO, Any
 
 
 def make_capture_safe_write() -> tuple[dict[str, Any], list[bool], Callable[[str, Callable[[IO[str]], object]], None]]:

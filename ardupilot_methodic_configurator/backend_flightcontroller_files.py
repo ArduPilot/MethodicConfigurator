@@ -9,11 +9,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
+from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import warning as logging_warning
-from typing import TYPE_CHECKING, Callable, ClassVar, Optional, Union
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp_safe
@@ -77,7 +78,7 @@ class FlightControllerFiles:
         return self._connection_manager.info
 
     def upload_file(
-        self, local_filename: str, remote_filename: str, progress_callback: Union[None, Callable[[int, int], None]] = None
+        self, local_filename: str, remote_filename: str, progress_callback: None | Callable[[int, int], None] = None
     ) -> bool:
         """
         Upload a file to the flight controller.
@@ -119,7 +120,7 @@ class FlightControllerFiles:
             return False
 
     def download_last_flight_log(
-        self, local_filename: str, progress_callback: Union[None, Callable[[int, int], None]] = None
+        self, local_filename: str, progress_callback: None | Callable[[int, int], None] = None
     ) -> bool:
         """
         Download the last flight log from the flight controller.
@@ -162,7 +163,7 @@ class FlightControllerFiles:
             logging_error(_("Error during flight log download: %(error)s"), {"error": str(e)})
             return False
 
-    def _get_last_log_number(self, mavftp_instance: "MAVFTP") -> Optional[int]:  # pyright: ignore[reportInvalidTypeForm]
+    def _get_last_log_number(self, mavftp_instance: "MAVFTP") -> int | None:  # pyright: ignore[reportInvalidTypeForm]
         """
         Get the last log number using multiple fallback methods.
 
@@ -194,7 +195,7 @@ class FlightControllerFiles:
     def _get_log_number_from_lastlog_txt(
         self,
         mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Try to get the log number from LASTLOG.TXT file.
 
@@ -222,7 +223,7 @@ class FlightControllerFiles:
     def _get_log_number_from_directory_listing(
         self,
         mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Try to get the highest log number by listing the logs directory using MAVFTP.
 
@@ -260,7 +261,7 @@ class FlightControllerFiles:
     def _get_log_number_by_scanning(
         self,
         mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Try to find the last log using binary search for efficiency.
 
@@ -351,7 +352,7 @@ class FlightControllerFiles:
             logging_error(_("Failed to download log file: %(error)s"), {"error": str(e)})
             return False
 
-    def _extract_log_number_from_file(self, temp_lastlog_file: str) -> Optional[int]:
+    def _extract_log_number_from_file(self, temp_lastlog_file: str) -> int | None:
         """
         Extract log number from LASTLOG.TXT file and clean up the temporary file.
 
