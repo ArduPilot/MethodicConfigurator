@@ -56,7 +56,7 @@ dependencies = [
     "platformdirs==4.4.0",
     "pymavlink==2.4.49",
     "pyserial==3.5",
-    "requests==2.32.5",
+    "requests==2.33.0",
     "screeninfo==0.8.1",
     "simpleeval==1.0.7",
 ]
