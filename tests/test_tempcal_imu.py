@@ -231,6 +231,43 @@ class TestIMUData(unittest.TestCase):
         # Test above maximum temperature
         value = self.data.accel_at_temp(0, "X", 40.0)
         assert value == 2.0  # Should return last value
+        # Test above maximum temperature
+        value = self.data.accel_at_temp(0, "X", 40.0)
+        assert value == 2.0  # Should return last value
+
+    def test_accel_at_temp_duplicate_temperature_does_not_crash(self) -> None:
+        """
+        Bug fix: ZeroDivisionError when two consecutive temperature readings are identical.
+
+        If IMU sensor stalls, T[i] == T[i+1], causing division by zero in interpolation.
+        Fixed by checking delta_t == 0.0 and returning the current value instead.
+        """
+        self.data.add_accel(0, 25.0, 1.0, Vector3(1.0, 2.0, 3.0))
+        self.data.add_accel(0, 25.0, 2.0, Vector3(1.5, 2.5, 3.5))  # duplicate temperature
+        self.data.add_accel(0, 30.0, 3.0, Vector3(2.0, 3.0, 4.0))
+
+        try:
+            value = self.data.accel_at_temp(0, "X", 25.0)
+            assert isinstance(value, float)
+        except ZeroDivisionError as e:
+            self.fail(f"accel_at_temp raised ZeroDivisionError with duplicate temperatures: {e}")
+
+    def test_gyro_at_temp_duplicate_temperature_does_not_crash(self) -> None:
+        """
+        Bug fix: ZeroDivisionError when two consecutive temperature readings are identical.
+
+        If IMU sensor stalls, T[i] == T[i+1], causing division by zero in interpolation.
+        Fixed by checking delta_t == 0.0 and returning the current value instead.
+        """
+        self.data.add_gyro(0, 25.0, 1.0, Vector3(0.1, 0.2, 0.3))
+        self.data.add_gyro(0, 25.0, 2.0, Vector3(0.15, 0.25, 0.35))  # duplicate temperature
+        self.data.add_gyro(0, 30.0, 3.0, Vector3(0.2, 0.3, 0.4))
+
+        try:
+            value = self.data.gyro_at_temp(0, "X", 25.0)
+            assert isinstance(value, float)
+        except ZeroDivisionError as e:
+            self.fail(f"gyro_at_temp raised ZeroDivisionError with duplicate temperatures: {e}")
 
 
 class TestUtilityFunctions(unittest.TestCase):
