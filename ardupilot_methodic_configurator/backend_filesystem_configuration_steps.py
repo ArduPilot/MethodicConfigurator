@@ -464,7 +464,27 @@ class ConfigurationSteps:
                 return self._handle_param_error(error_msg, parameter_type, ignore_fc_derived_param_warnings)
 
             self._ensure_file_entry(destination, filename)
-            change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
+            change_reason_expr = parameter_info["Change Reason"]
+            if change_reason_expr:
+                # Only evaluate as an expression when it looks like a conditional (contains 'if'/'else')
+                # to avoid the overhead of safe_evaluate for plain literal strings (~99% of cases)
+                if " if " in change_reason_expr and " else " in change_reason_expr:
+                    try:
+                        evaluated_reason = safe_evaluate(str(change_reason_expr), variables)
+                        change_reason = _(str(evaluated_reason)) if evaluated_reason else ""
+                    except ConfigurationStepEvalError:
+                        logging_warning(
+                            _("In file '%s': '%s' %s parameter '%s' 'Change Reason' could not be evaluated, using raw string"),
+                            self.configuration_steps_filename,
+                            filename,
+                            parameter_type,
+                            parameter,
+                        )
+                        change_reason = _(change_reason_expr)
+                else:
+                    change_reason = _(change_reason_expr)
+            else:
+                change_reason = ""
             destination[filename][parameter] = Par(float(result), change_reason)
         except (SyntaxError, NameError, KeyError, ValueError, TypeError) as e:
             error_msg = _(
