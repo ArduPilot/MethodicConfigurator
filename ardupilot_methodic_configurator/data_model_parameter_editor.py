@@ -1768,11 +1768,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         str(e),
                     )
             else:
-                # Parameter in derived_params but not in self.parameters - this is unexpected
-                logging_error(
-                    _("Derived parameter %s not found in current parameters, skipping"),
-                    param_name,
+                # Parameter not yet in file - add it to the GUI and track as added
+                self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                    param_name, derived_par, self.current_file, self.fc_parameters
                 )
+                self._added_parameters.add(param_name)
 
         # Apply rename operations to domain model using add/delete tracking
         for old_name in duplicates_to_remove:
@@ -1805,6 +1805,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
                 # Track the rename so refresh_current_step_connection_renames() can undo/redo it
                 self._connection_renames[old_name] = new_name
+
+        # Add forced parameters not yet in the file to both the GUI and the saved-changes tracker.
+        # This runs unconditionally because forced_parameters are pre-computed before this method is called.
+        for param_name, forced_par in self._local_filesystem.forced_parameters.get(self.current_file, ParDict()).items():
+            if param_name not in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+                if param_name not in self.current_step_parameters:
+                    self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                        param_name, forced_par, self.current_file, self.fc_parameters
+                    )
+                self._added_parameters.add(param_name)
 
         # Process delete_parameters and add-from-FC derived entries from configuration steps
         step_info = self._local_filesystem.configuration_steps.get(self.current_file, {})

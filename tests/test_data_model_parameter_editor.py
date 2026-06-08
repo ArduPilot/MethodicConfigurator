@@ -3281,13 +3281,13 @@ class TestDerivedParameterApplication:
             "This method is only for forced or derived parameters.",
         )
 
-    def test_user_receives_error_when_derived_param_not_in_parameters(self, parameter_editor) -> None:
+    def test_user_can_see_derived_param_added_when_not_in_file(self, parameter_editor) -> None:
         """
-        Test that derived parameters not in self.current_step_parameters are logged as errors.
+        Test that derived parameters not yet in the file are added to the GUI and tracked for saving.
 
-        GIVEN: A derived parameter that doesn't exist in self.current_step_parameters
+        GIVEN: A derived parameter that doesn't exist in self.current_step_parameters (not in file)
         WHEN: _repopulate_configuration_step_parameters attempts to apply it
-        THEN: An error should be logged about the missing parameter
+        THEN: The parameter should be added to current_step_parameters and tracked in _added_parameters
         """
         parameter_editor._local_filesystem.file_parameters = {
             "test_file.param": ParDict({}),
@@ -3297,28 +3297,58 @@ class TestDerivedParameterApplication:
         # Setup derived parameters with a parameter that won't be in self.current_step_parameters
         derived_params = ParDict({"NONEXISTENT_PARAM": Par(999.0, "comment")})
 
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "process_configuration_step",
+            return_value=(
+                {},  # Empty parameters dict
+                [],
+                [],
+                [],
+                [],
+                derived_params,
+            ),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters()
+
+        # Verify parameter was added to the GUI and tracked for saving
+        assert "NONEXISTENT_PARAM" in parameter_editor.current_step_parameters
+        assert "NONEXISTENT_PARAM" in parameter_editor._added_parameters
+
+    def test_user_can_see_forced_param_added_when_not_in_file(self, parameter_editor) -> None:
+        """
+        Test that forced parameters not yet in the file are added to the GUI and tracked for saving.
+
+        GIVEN: A forced parameter that doesn't exist in file_parameters
+        WHEN: _repopulate_configuration_step_parameters runs
+        THEN: The parameter appears in current_step_parameters and _added_parameters
+        """
+        parameter_editor._local_filesystem.file_parameters = {
+            "test_file.param": ParDict({}),
+        }
+        parameter_editor.current_file = "test_file.param"
+        forced_par = Par(1.0, "Force-set reason")
+        parameter_editor._local_filesystem.forced_parameters = {"test_file.param": ParDict({"NEW_FORCED": forced_par})}
+        parameter_editor._local_filesystem.configuration_steps = {"test_file.param": {}}
+        mock_ap_param = MagicMock()
+
         with (
             patch.object(
                 parameter_editor._config_step_processor,
                 "process_configuration_step",
-                return_value=(
-                    {},  # Empty parameters dict
-                    [],
-                    [],
-                    [],
-                    [],
-                    derived_params,
-                ),
+                return_value=({}, [], [], set(), [], ParDict()),
             ),
-            patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
+            patch.object(
+                parameter_editor._config_step_processor,
+                "create_ardupilot_parameter",
+                return_value=mock_ap_param,
+            ),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
-        # Verify error was logged
-        mock_log_error.assert_any_call(
-            "Derived parameter %s not found in current parameters, skipping",
-            "NONEXISTENT_PARAM",
-        )
+        assert "NEW_FORCED" in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["NEW_FORCED"] is mock_ap_param
+        assert "NEW_FORCED" in parameter_editor._added_parameters
 
     def test_create_plugin_data_model_returns_motor_test_data_model_when_fc_connected(self, parameter_editor) -> None:
         """

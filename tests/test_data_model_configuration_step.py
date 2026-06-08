@@ -156,7 +156,8 @@ class TestConfigurationStepProcessorWorkflows:
         parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Derived parameters were processed
-        processor.local_filesystem.compute_parameters.assert_called_once()
+        # compute_parameters is now called twice: once for "forced", once for "derived"
+        assert processor.local_filesystem.compute_parameters.call_count == 2
         # Note: merge_forced_or_derived_parameters is no longer called - derived params are returned instead
         assert isinstance(parameters, dict)
         assert ui_errors == []
@@ -183,8 +184,10 @@ class TestConfigurationStepProcessorWorkflows:
         parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Error feedback provided to UI layer
-        assert len(ui_errors) == 1
-        assert ui_errors[0][0] == "Error in derived parameters"  # Title
+        # Both forced and derived computation report errors since compute_parameters always returns error
+        assert len(ui_errors) == 2
+        assert any(e[0] == "Error in forced parameters" for e in ui_errors)
+        assert any(e[0] == "Error in derived parameters" for e in ui_errors)
         assert "Computation error: Invalid expression" in ui_errors[0][1]  # Message
         assert isinstance(parameters, dict)
         # Should have info messages about parameter renaming since configuration includes rename_connection
@@ -336,7 +339,8 @@ class TestConfigurationStepProcessorConnectionRenaming:
         parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Only derived parameters processed, no connection renaming
-        processor.local_filesystem.compute_parameters.assert_called_once()
+        # compute_parameters is now called twice: once for "forced", once for "derived"
+        assert processor.local_filesystem.compute_parameters.call_count == 2
         assert isinstance(parameters, dict)
         assert ui_errors == []
         assert ui_infos == []  # No connection renaming means no info messages
@@ -1053,19 +1057,19 @@ class TestDerivedParametersFiltering:
         # Should have exactly 1 parameter (only the one in FC)
         assert len(derived_to_apply) == 1
 
-    def test_derived_parameters_not_in_file_are_excluded(self, processor, mock_local_filesystem) -> None:
+    def test_derived_parameters_not_in_file_are_included_for_adding_to_gui(self, processor, mock_local_filesystem) -> None:
         """
-        Derived parameters not currently in the file are excluded from derived_params_to_apply.
+        Derived parameters not currently in the file are included in derived_params_to_apply for GUI addition.
 
-        GIVEN: A configuration step with derived parameters where some are add-from-FC shorthands
+        GIVEN: A configuration step with derived parameters where some are not yet in the file
         WHEN: Processing produces derived parameters
-        THEN: Parameters that don't yet exist in the file should be excluded
-        AND: Only parameters already in the file should be in derived_params_to_apply
+        THEN: Parameters not in the file should be included in derived_params_to_apply
+        AND: The caller (repopulate) will add them to the GUI and track them for saving
         """
         selected_file = "test_file.param"
         derived_params = {
             "SERIAL1_PROTOCOL": Par(value=5.0, comment="derived"),  # in file
-            "NEW_PARAM": Par(value=99.0, comment="derived"),  # NOT in file (add-from-FC shorthand)
+            "NEW_PARAM": Par(value=99.0, comment="derived"),  # NOT in file — new, to be added
         }
         mock_local_filesystem.configuration_steps = {selected_file: {"derived": {}}}
         mock_local_filesystem.compute_parameters.return_value = None
@@ -1073,7 +1077,7 @@ class TestDerivedParametersFiltering:
         mock_local_filesystem.file_parameters = {
             selected_file: {
                 "SERIAL1_PROTOCOL": Par(value=4.0, comment="original"),
-                # NEW_PARAM not in file
+                # NEW_PARAM not in file yet
             }
         }
 
@@ -1084,13 +1088,13 @@ class TestDerivedParametersFiltering:
         )
 
         assert ui_errors == []
-        # Only parameters already in the file should be included
+        # Parameters in file should be included
         assert "SERIAL1_PROTOCOL" in derived_to_apply
         assert derived_to_apply["SERIAL1_PROTOCOL"].value == 5.0
-        # NEW_PARAM not in file, so should be excluded even though it's in FC and derived_params
-        assert "NEW_PARAM" not in derived_to_apply
-        # Should have exactly 1 parameter (only the one in file)
-        assert len(derived_to_apply) == 1
+        # NEW_PARAM not in file but should now be included so the caller can add it
+        assert "NEW_PARAM" in derived_to_apply
+        assert derived_to_apply["NEW_PARAM"].value == 99.0
+        assert len(derived_to_apply) == 2
 
     def test_derived_parameters_all_included_when_no_fc_parameters(self, processor, mock_local_filesystem) -> None:
         """

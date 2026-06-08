@@ -249,8 +249,9 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 - **Type**: Object with parameter names as keys
 - **Structure**: Each parameter must have:
   - `New Value`: The value to set (number or string)
-  - `Change Reason`: Explanation of why this value is forced
+  - `Change Reason`: Explanation of why this value is forced. Supports conditional Python expressions (see below)
 - **Purpose**: Enforces critical parameter values that should not be changed by users
+- **Behaviour**: If the parameter does not yet exist in the `.param` file it is automatically **added** to the GUI and saved to the file, so users can review it before uploading
 - **Example**:
 
   ```json
@@ -262,6 +263,10 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
     "LOG_DISARMED": {
       "New Value": 1,
       "Change Reason": "Gather data for offline IMU temperature calibration while the FC is disarmed"
+    },
+    "INS_HNTCH_MODE": {
+      "New Value": "1 if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 3",
+      "Change Reason": "'Throttle-based notch filter' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'ESC telemetry RPM notch filter'"
     }
   }
   ```
@@ -272,8 +277,9 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 - **Structure**: Each parameter must have:
   - `if` (optional): A Python expression that must evaluate to `True` for the parameter to be applied
   - `New Value`: An expression or formula to calculate the value (as a string)
-  - `Change Reason`: Explanation of the derivation
+  - `Change Reason`: Explanation of the derivation. Supports conditional Python expressions (see below)
 - **Purpose**: Automatically calculates parameter values based on vehicle components or complex logic
+- **Behaviour**: If the parameter does not yet exist in the `.param` file it is automatically **added** to the GUI and saved to the file, so users can review it before uploading
 - **Example**:
 
   ```json
@@ -294,6 +300,10 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
       "if": "vehicle_components.get('Propellers', {}).get('Specifications', {}).get('Diameter_inches', 0) > 0",
       "New Value": "max(10000,(round(-2.613267*vehicle_components['Propellers']['Specifications']['Diameter_inches']**3+343.39216*vehicle_components['Propellers']['Specifications']['Diameter_inches']**2-15083.7121*vehicle_components['Propellers']['Specifications']['Diameter_inches']+235771, -2)))",
       "Change Reason": "Derived from vehicle component editor propeller size"
+    },
+    "INS_HNTCH_MODE": {
+      "New Value": "1 if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 3",
+      "Change Reason": "'Throttle-based notch filter' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'ESC telemetry RPM notch filter'"
     }
   }
   ```
@@ -304,6 +314,9 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
   - Conditional logic: `if...else` expressions
   - Mathematical functions: `max()`, `min()`, `round()`, `log()`, conditional expressions with `if...else`
 - **`if` expressions** use the same variable access as `New Value` and short-circuit evaluation: the parameter is skipped entirely when the expression evaluates to `False`.
+- **`Change Reason` expressions**: When the field contains a Python `if...else` conditional expression it is evaluated at runtime
+  and the appropriate branch is used as the displayed reason.
+  If evaluation fails the raw string is used as a fallback and a warning is logged.
 
 **`add_parameters`**: Parameters added to the configuration file if they are not already present.
 
@@ -311,8 +324,9 @@ Start with the **Required Fields** for every step, then add **Optional Fields** 
 - **Structure**: Each parameter may have:
   - `if` (optional): A Python expression; the parameter is only added when this evaluates to `True`
   - `New Value` (optional): An expression for the parameter value; if absent, the current flight controller value is used
-  - `Change Reason` (optional): Explanation of why the parameter is added
+  - `Change Reason` (optional): Explanation of why the parameter is added. Supports conditional Python expressions (see `derived_parameters` above)
 - **Purpose**: Ensures certain parameters appear in the file so users can review and edit them. Does not overwrite existing parameters
+- **Behaviour**: If the parameter is not yet in the `.param` file it is automatically **added** to the GUI and saved to the file after the user navigates past the step
 - **Example**:
 
   ```json
