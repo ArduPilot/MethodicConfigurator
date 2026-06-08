@@ -726,7 +726,83 @@ class TestParameterComputation:  # pylint: disable=too-many-public-methods
         assert config_steps.derived_parameters["test_file"]["PARAM1"].value == 20
         assert config_steps.derived_parameters["test_file"]["PARAM1"].comment == "Test derived"
 
-    def test_fc_parameters_values_are_used_when_provided(self, config_steps: ConfigurationSteps) -> None:
+    def test_conditional_change_reason_is_evaluated_as_expression(self, config_steps: ConfigurationSteps) -> None:
+        """
+        A 'Change Reason' using a Python conditional expression is evaluated to the correct branch.
+
+        GIVEN: A forced parameter whose 'Change Reason' is a conditional expression
+        WHEN: compute_parameters is called with variables that make the condition True
+        THEN: The comment stored on the parameter reflects the True branch of the conditional
+        """
+        file_info = {
+            "forced_parameters": {
+                "PARAM1": {
+                    "New Value": "1",
+                    "Change Reason": "'Throttle-based filter' if mode == 'None' else 'ESC telemetry RPM filter'",
+                }
+            }
+        }
+        variables: dict = {"doc_dict": {"PARAM1": {"values": {1: "val"}}}, "mode": "None"}
+
+        result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+        assert result == ""
+        assert config_steps.forced_parameters["test_file"]["PARAM1"].comment == "Throttle-based filter"
+
+    def test_conditional_change_reason_evaluates_false_branch(self, config_steps: ConfigurationSteps) -> None:
+        """
+        A conditional 'Change Reason' resolves to the False branch when the condition is False.
+
+        GIVEN: A forced parameter with a conditional 'Change Reason' and condition evaluating to False
+        WHEN: compute_parameters is called
+        THEN: The comment stored reflects the False branch
+        """
+        file_info = {
+            "forced_parameters": {
+                "PARAM1": {
+                    "New Value": "3",
+                    "Change Reason": "'Throttle-based filter' if mode == 'None' else 'ESC telemetry RPM filter'",
+                }
+            }
+        }
+        variables: dict = {"doc_dict": {"PARAM1": {"values": {3: "val"}}}, "mode": "ESCTelemetry"}
+
+        result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+        assert result == ""
+        assert config_steps.forced_parameters["test_file"]["PARAM1"].comment == "ESC telemetry RPM filter"
+
+    def test_invalid_conditional_change_reason_falls_back_to_raw_string_with_warning(
+        self, config_steps: ConfigurationSteps, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """
+        An invalid conditional 'Change Reason' expression falls back to the raw string and logs a warning.
+
+        GIVEN: A forced parameter whose 'Change Reason' looks conditional but references an undefined variable
+        WHEN: compute_parameters is called
+        THEN: The raw expression string is used as the comment
+        AND: A warning is logged mentioning the evaluation failure
+        """
+        file_info = {
+            "forced_parameters": {
+                "PARAM1": {
+                    "New Value": "1",
+                    "Change Reason": "'ok' if undefined_variable == 'x' else 'fallback'",
+                }
+            }
+        }
+        variables: dict = {"doc_dict": {"PARAM1": {"values": {1: "val"}}}}
+
+        with caplog.at_level(logging.WARNING):
+            result = config_steps.compute_parameters("test_file", file_info, "forced", variables)
+
+        assert result == ""
+        # Raw expression string used as comment
+        assert config_steps.forced_parameters["test_file"]["PARAM1"].comment == (
+            "'ok' if undefined_variable == 'x' else 'fallback'"
+        )
+        assert any("Change Reason" in msg or "could not be evaluated" in msg for msg in caplog.messages)
+
         """
         An expression referencing fc_parameters is evaluated using the provided FC values.
 

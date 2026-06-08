@@ -96,6 +96,13 @@ class ConfigurationStepProcessor:
             variables = self.variables.copy()
             variables["fc_parameters"] = fc_parameters
 
+            # Compute forced parameters (does NOT mutate filesystem.file_parameters)
+            error_msg = self.local_filesystem.compute_parameters(
+                selected_file, self.local_filesystem.configuration_steps[selected_file], "forced", variables
+            )
+            if error_msg:
+                ui_errors.append((_("Error in forced parameters"), error_msg))
+
             # Compute derived parameters (does NOT mutate filesystem.file_parameters)
             error_msg = self.local_filesystem.compute_parameters(
                 selected_file, self.local_filesystem.configuration_steps[selected_file], "derived", variables
@@ -106,10 +113,7 @@ class ConfigurationStepProcessor:
             elif selected_file in self.local_filesystem.derived_parameters:
                 # Filter derived parameters that exist in FC (if fc_parameters provided)
                 fc_param_keys = set(fc_parameters.keys()) if fc_parameters else set()
-                existing_param_names = set(self.local_filesystem.file_parameters.get(selected_file, ParDict()).keys())
                 for param_name, param in self.local_filesystem.derived_parameters[selected_file].items():
-                    if param_name not in existing_param_names:
-                        continue
                     # Only include if no FC filter OR parameter exists in FC
                     if not fc_param_keys or param_name in fc_param_keys:
                         derived_params_to_apply[param_name] = param
