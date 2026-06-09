@@ -14,7 +14,10 @@ import logging
 import os
 import subprocess
 import sys
+from pathlib import Path
 from platform import system as platform_system
+
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 
 def process_locale_directory(locale_dir: str) -> bool:
@@ -45,7 +48,7 @@ def main() -> None:
 
     errors = 0
     # Walk through all locale directories
-    for root, dirs, _files in os.walk(os.path.join("ardupilot_methodic_configurator", "locale")):
+    for root, dirs, _files in os.walk(str(PROJECT_ROOT / "ardupilot_methodic_configurator" / "locale")):
         if "LC_MESSAGES" in dirs:
             locale_dir = os.path.join(root, "LC_MESSAGES")
             if not process_locale_directory(locale_dir):

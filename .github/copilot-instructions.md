@@ -67,6 +67,6 @@ Clean architecture with separation of concerns:
 When needed for specific tasks, refer to:
 
 - Architecture details: ARCHITECTURE*.md files in project root
-- Testing guidelines: .github/instructions/pytest_testing_instructions.md
-- Translation workflow: .github/instructions/gui_translation_instructions.md
-- Other specialized instructions: .github/instructions/ directory
+- Testing guidelines: .github/skills/pytest-testing/SKILL.md
+- Translation workflow: .github/skills/update-gui-translations/SKILL.md
+- Other specialized skills: .github/skills/ directory

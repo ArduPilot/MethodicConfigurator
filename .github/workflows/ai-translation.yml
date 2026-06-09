@@ -100,7 +100,7 @@ jobs:
 
       - name: Extract strings
         run: |
-          python create_pot_file.py
+          python .github/skills/update-gui-translations/scripts/create_pot_file.py
 
       - name: Stage changes and check for updates
         id: check-changes
@@ -109,7 +109,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             CHANGED_LINES=$(git diff --staged | grep -E "^[\+\-]" | wc -l)
             if [ $CHANGED_LINES -gt 4 ]; then
-              python merge_pot_file.py
+              python .github/skills/update-gui-translations/scripts/merge_pot_file.py
               # Check if any .po files were modified
               git add $PYGETTEXT_LOCALEDIR/**/$PYGETTEXT_DOMAIN.po
               PO_CHANGES=$(git status --porcelain | grep -E "\.po$" | wc -l)
@@ -133,7 +133,7 @@ jobs:
         id: prepare-translations
         if: steps.check-changes.outputs.po-files-changed == 'true'
         run: |
-          python extract_missing_translations.py --lang-code all --max-translations 25 --max-characters 4500
+          python .github/skills/update-gui-translations/scripts/extract_missing_translations.py --lang-code all --max-translations 25 --max-characters 4500
 
           # Check if any missing translation files were created
           if ls missing_translations_*.txt 1> /dev/null 2>&1; then
@@ -451,8 +451,8 @@ jobs:
         run: |
           # Re-run the extraction and merge steps to ensure .po files have the new msgid entries
           # This is necessary because the extract_strings job's changes are not persisted
-          python create_pot_file.py
-          python merge_pot_file.py
+          python .github/skills/update-gui-translations/scripts/create_pot_file.py
+          python .github/skills/update-gui-translations/scripts/merge_pot_file.py
           echo "✅ POT extracted and merged into .po files"
 
       - name: Configure git for commits
@@ -538,7 +538,7 @@ jobs:
 
               # Run with full error output captured
               echo "Running insert_missing_translations.py..."
-              if python insert_missing_translations.py 2>&1; then
+              if python .github/skills/update-gui-translations/scripts/insert_missing_translations.py 2>&1; then
                 echo "✅ AI translations inserted into .po files"
               else
                 exit_code=$?
@@ -558,7 +558,7 @@ jobs:
 
       - name: Compile .mo files
         run: |
-          if ! python create_mo_files.py; then
+          if ! python .github/skills/update-gui-translations/scripts/create_mo_files.py; then
             echo "❌ Failed to compile .mo files"
             exit 1
           fi

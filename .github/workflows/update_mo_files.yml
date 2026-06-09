@@ -56,7 +56,7 @@ jobs:
           sudo apt-get install -y gettext=0.21-14ubuntu2
 
       - name: Compile translation .mo files from the .po files
-        run: python create_mo_files.py
+        run: python .github/skills/update-gui-translations/scripts/create_mo_files.py
 
       - name: Stage changes
         run: |

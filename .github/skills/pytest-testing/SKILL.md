@@ -1,6 +1,11 @@
+---
+name: pytest-testing
+description: 'Write high-quality BDD pytest tests for the ArduPilot Methodic Configurator. Use when writing new unit tests, creating test fixtures, applying Given-When-Then pattern, testing tkinter frontends, or following the minimal-mocking strategy for backend and business logic.'
+---
+
 # Pytest Testing Guidelines
 
-> **Note**: This is a comprehensive developer documentation file. For GitHub Copilot repository instructions, see [`.github/copilot-instructions.md`](../copilot-instructions.md).
+> **Note**: This is a comprehensive developer documentation file. For GitHub Copilot repository instructions, see [`.github/copilot-instructions.md`](../../copilot-instructions.md).
 
 ## For AI Agents and Senior Developers
 

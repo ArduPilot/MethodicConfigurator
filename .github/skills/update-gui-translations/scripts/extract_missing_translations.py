@@ -15,8 +15,12 @@ import gettext
 import glob
 import logging
 import os
+from pathlib import Path
 
-from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+os.chdir(PROJECT_ROOT)
+
+from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES  # noqa: E402 # isort:skip  # pylint: disable=wrong-import-position
 
 TRANSLATED_LANGUAGES = set(LANGUAGE_CHOICES) - {LANGUAGE_CHOICES[0]}  # Remove the default language (en) from the set
 
@@ -79,12 +83,19 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:  # no
 
     """
     # Set up the translation catalog
-    po_file = os.path.join(
-        "ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", "ardupilot_methodic_configurator.po"
+    # pylint: disable=duplicate-code
+    po_file = str(
+        PROJECT_ROOT
+        / "ardupilot_methodic_configurator"
+        / "locale"
+        / lang_code
+        / "LC_MESSAGES"
+        / "ardupilot_methodic_configurator.po"
     )
+    # pylint: enable=duplicate-code
     gettext.translation(
         "ardupilot_methodic_configurator",
-        localedir=os.path.join("ardupilot_methodic_configurator", "locale"),
+        localedir=str(PROJECT_ROOT / "ardupilot_methodic_configurator" / "locale"),
         languages=[lang_code],
         fallback=True,
     )
@@ -194,27 +205,12 @@ def extract_missing_translations(lang_code: str) -> list[tuple[int, str]]:  # no
     return missing_translations
 
 
-def output_to_files(
+def _split_into_chunks(
     missing_translations: list[tuple[int, str]],
-    output_file_base_name: str,
     max_translations: int,
-    max_characters: int = 6000,
-) -> None:
-    # Remove any existing output files with the same base name
-    existing_files = glob.glob(f"{output_file_base_name}.txt")
-    existing_files += glob.glob(f"{output_file_base_name}_*.txt")
-
-    for existing_file in existing_files:
-        os.remove(existing_file)
-
-    if max_translations <= 0:
-        msg = "max_translations must be greater than zero"
-        raise ValueError(msg)
-
-    if max_characters <= 0:
-        msg = "max_characters must be greater than zero"
-        raise ValueError(msg)
-
+    max_characters: int,
+) -> list[list[tuple[int, str]]]:
+    """Split missing translations into chunks respecting max_translations and max_characters limits."""
     chunks: list[list[tuple[int, str]]] = []
     current_chunk: list[tuple[int, str]] = []
     current_length = 0
@@ -241,6 +237,31 @@ def output_to_files(
     if current_chunk:
         chunks.append(current_chunk)
 
+    return chunks
+
+
+def output_to_files(
+    missing_translations: list[tuple[int, str]],
+    output_file_base_name: str,
+    max_translations: int,
+    max_characters: int = 6000,
+) -> None:
+    # Remove any existing output files with the same base name
+    existing_files = glob.glob(f"{output_file_base_name}.txt")
+    existing_files += glob.glob(f"{output_file_base_name}_*.txt")
+
+    for existing_file in existing_files:
+        os.remove(existing_file)
+
+    if max_translations <= 0:
+        msg = "max_translations must be greater than zero"
+        raise ValueError(msg)
+
+    if max_characters <= 0:
+        msg = "max_characters must be greater than zero"
+        raise ValueError(msg)
+
+    chunks = _split_into_chunks(missing_translations, max_translations, max_characters)
     num_files = len(chunks)
 
     for file_index, chunk in enumerate(chunks, start=1):

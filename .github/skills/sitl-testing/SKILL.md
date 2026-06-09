@@ -1,3 +1,8 @@
+---
+name: sitl-testing
+description: 'Set up and run SITL integration tests for backend_flightcontroller.py. Use when testing real MAVLink communication, downloading pre-built SITL binaries from firmware.ardupilot.org, running sitl-marked pytest tests, or debugging connection failures on TCP port 5760.'
+---
+
 # SITL Testing Setup
 
 This document describes how to set up and run integration tests using ArduPilot SITL (Software In The Loop) for testing the `backend_flightcontroller.py` module.

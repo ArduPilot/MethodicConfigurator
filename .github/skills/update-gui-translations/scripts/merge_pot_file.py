@@ -19,6 +19,8 @@ import tempfile
 from pathlib import Path
 from platform import system as platform_system
 
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+
 
 def process_locale_directory(locale_dir: Path, pot_file: Path, logger: logging.Logger) -> bool:
     """
@@ -145,13 +147,13 @@ def main() -> int:
     parser.add_argument(
         "--pot-file",
         type=Path,
-        default=Path("ardupilot_methodic_configurator") / "locale" / "ardupilot_methodic_configurator.pot",
+        default=PROJECT_ROOT / "ardupilot_methodic_configurator" / "locale" / "ardupilot_methodic_configurator.pot",
         help="Path to the .pot file",
     )
     parser.add_argument(
         "--locale-root",
         type=Path,
-        default=Path("ardupilot_methodic_configurator") / "locale",
+        default=PROJECT_ROOT / "ardupilot_methodic_configurator" / "locale",
         help="Root locale directory to scan",
     )
     args = parser.parse_args()

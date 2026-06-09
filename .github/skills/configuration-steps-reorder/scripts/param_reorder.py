@@ -19,6 +19,9 @@ import logging
 import os
 import shutil
 import subprocess
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 SEQUENCE_FILENAME = "configuration_steps_ArduCopter.json"
 # Extra files (Python scripts, YAML workflows, etc.) whose content references
@@ -165,7 +168,7 @@ def _format_old_filenames_line(indent: str, values: list[str], trailing_comma: b
     return f'{indent}"old_filenames": [{values_str}]{"," if trailing_comma else ""}\n'
 
 
-def update_old_filenames_in_json_file(json_path: str) -> None:
+def update_old_filenames_in_json_file(json_path: str) -> None:  # pylint: disable=too-many-locals,too-many-branches
     """
     Update old_filenames fields in the JSON file using targeted text replacement.
 
@@ -304,6 +307,7 @@ def reorder_actual_files(renames: dict[str, str], param_dirs: list[str]) -> None
 
 def main() -> None:
     logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
+    os.chdir(PROJECT_ROOT)
     json_path = os.path.join("ardupilot_methodic_configurator", SEQUENCE_FILENAME)
     with open(json_path, encoding="utf-8") as f:
         json_content = json.load(f)

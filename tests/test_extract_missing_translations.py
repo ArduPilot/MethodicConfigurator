@@ -20,10 +20,10 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 # Add the parent directory to the path to import the script
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../.github/skills/update-gui-translations/scripts")))
 
 # pylint: disable=wrong-import-position
-import extract_missing_translations
+import extract_missing_translations  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]  # pylint: disable=import-error
 
 # pylint: enable=wrong-import-position
 

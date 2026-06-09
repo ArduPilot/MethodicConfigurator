@@ -1,3 +1,8 @@
+---
+name: add-ui-translation
+description: 'Add a new translation language to the application. Use when adding support for a new locale/language code, creating .po files from the .pot template, registering language codes in internationalization.py, LANGUAGE_CHOICES, tasks.json, pyproject.toml classifiers, and the Windows installer.'
+---
+
 # Translate the user interface
 
 ## Adding a translation

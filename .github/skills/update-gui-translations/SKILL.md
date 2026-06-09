@@ -1,6 +1,11 @@
+---
+name: update-gui-translations
+description: 'Update existing GUI translations using AI assistance. Use when updating .po translation files, running create_pot_file.py, merge_pot_file.py, extract_missing_translations.py, insert_missing_translations.py, or create_mo_files.py to add missing translated strings to existing languages.'
+---
+
 # GUI Translation Instructions for ArduPilot Methodic Configurator
 
-> **See also**: [GitHub Copilot repository instructions](../copilot-instructions.md) for general project context.
+> **See also**: [GitHub Copilot repository instructions](../../copilot-instructions.md) for general project context.
 
 This document provides step-by-step instructions for AI-assisted update of existing ArduPilot Methodic Configurator GUI translations.
 
@@ -14,13 +19,13 @@ then translated into language-specific `.po` files, which are compiled into bina
 
 ### For Updating Existing Languages
 
-1. **Update POT template**: Execute `python create_pot_file.py` in the project root directory.
+1. **Update POT template**: Execute `python .github/skills/update-gui-translations/scripts/create_pot_file.py` from the project root.
    This extracts all translatable strings from the source code and updates the `.pot` template file.
 
-1. **Merge new strings**: Execute `python merge_pot_file.py` in the project root directory.
+1. **Merge new strings**: Execute `python .github/skills/update-gui-translations/scripts/merge_pot_file.py` from the project root.
    This merges new strings from the updated `.pot` file into all existing `.po` files, adding new untranslated entries.
 
-1. **Extract missing translations**: Execute `python extract_missing_translations.py` in the project root directory.
+1. **Extract missing translations**: Execute `python .github/skills/update-gui-translations/scripts/extract_missing_translations.py` from the project root.
    The script automatically detects all existing languages and creates/updates `missing_translations_<lang_code>.txt` files in the root directory.
    Each output file is limited both by the number of untranslated strings and by an approximate
    character budget to keep AI translation prompts small.
@@ -47,12 +52,12 @@ then translated into language-specific `.po` files, which are compiled into bina
    - Changing the line numbers
    - Removing the colon separator
 
-1. **Insert translations**: Execute `python insert_missing_translations.py` in the project root directory.
+1. **Insert translations**: Execute `python .github/skills/update-gui-translations/scripts/insert_missing_translations.py` from the project root.
    The script automatically processes all language files and inserts the translated strings into their respective `.po` files in `ardupilot_methodic_configurator/locale/<lang_code>/LC_MESSAGES/`.
 
    **Note**: The script processes all languages in a single run, so you only need to execute it once after translating all language files.
 
-1. **Compile and validate**: Execute `python create_mo_files.py` in the project root directory.
+1. **Compile and validate**: Execute `python .github/skills/update-gui-translations/scripts/create_mo_files.py` from the project root.
    This compiles the `.po` files into binary `.mo` files and performs partial validation of the translation files.
 
 1. **Test translations**: Run the application with your language to verify the translations appear correctly in the GUI.
