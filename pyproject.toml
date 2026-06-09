@@ -69,7 +69,7 @@ dev = [
     "mock==5.2.0",
     "mypy==1.19.1",
     "pre-commit==4.3.0",
-    "pylint==3.3.9",
+    "pylint==4.0.5",
     "pyautogui==0.9.54",
     "pyright==1.1.410",
     "pytest==9.0.3",
