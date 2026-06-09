@@ -567,7 +567,7 @@ msgstr ""
 msgid ""
 "In file '%s': '%s' %s parameter '%s' 'Change Reason' could not be evaluated, "
 "using raw string"
-msgstr ""
+msgstr "In Datei '%s': '%s' %s-Parameter '%s' 'Änderungsgrund' konnte nicht ausgewertet werden, roher String wird verwendet"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:490
 msgid ""
@@ -3016,7 +3016,7 @@ msgid ""
 "'Use throttle-based dynamic notch filter to reduce propeller noise' if "
 "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else "
 "'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'"
-msgstr ""
+msgstr "'Drosselbasierten dynamischen Notch-Filter verwenden, um Propellergeräusche zu reduzieren', if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'ESC-Telemetrie-Drehzahl (RPM) verwenden, um den Propeller-Notch-Filter dynamisch anzupassen'"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:271
 msgid "Activates the logging of the MAGH.Active message"
@@ -3214,7 +3214,7 @@ msgstr "Keine weiteren Systemidentifikations-Chip-Injektionen"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "No need to log raw data for IMU temperature calibration"
-msgstr ""
+msgstr "Es ist nicht notwendig, Rohdaten für die IMU-Temperaturkalibrierung zu protokollieren"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:313
 msgid "Normal state for everyday use"
@@ -3828,7 +3828,7 @@ msgstr "Batterieüberwachung gestoppt"
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:105
 msgid "Error in forced parameters"
-msgstr ""
+msgstr "Fehler bei erzwungenen Parametern"
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:165
 msgid "ExpressLRS Configuration Warning"

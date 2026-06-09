@@ -519,7 +519,7 @@ msgstr ""
 msgid ""
 "In file '%s': '%s' %s parameter '%s' 'Change Reason' could not be evaluated, "
 "using raw string"
-msgstr ""
+msgstr "在文件 '%s' 中：'%s' %s 参数 '%s' 的 '变更原因' 无法评估，已使用原始字符串"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:490
 msgid ""
@@ -2676,7 +2676,7 @@ msgid ""
 "'Use throttle-based dynamic notch filter to reduce propeller noise' if "
 "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else "
 "'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'"
-msgstr ""
+msgstr "'使用基于油门的动态陷波滤波器以减少螺旋桨噪声' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else '使用ESC遥测RPM动态调整螺旋桨陷波滤波器'"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:271
 msgid "Activates the logging of the MAGH.Active message"
@@ -2862,7 +2862,7 @@ msgstr "不再需要系统识别干扰信号注入"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "No need to log raw data for IMU temperature calibration"
-msgstr ""
+msgstr "IMU 温度校准无需记录原始数据"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:313
 msgid "Normal state for everyday use"
@@ -3408,7 +3408,7 @@ msgstr "电池监控已停止"
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:105
 msgid "Error in forced parameters"
-msgstr ""
+msgstr "强制参数出错"
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:165
 msgid "ExpressLRS Configuration Warning"

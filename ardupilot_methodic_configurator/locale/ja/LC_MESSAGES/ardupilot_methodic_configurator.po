@@ -557,7 +557,7 @@ msgstr ""
 msgid ""
 "In file '%s': '%s' %s parameter '%s' 'Change Reason' could not be evaluated, "
 "using raw string"
-msgstr ""
+msgstr "'%s' ファイル内: '%s' の %s パラメータ '%s' 「変更理由」を評価できなかったため、生の文字列を使用します"
 
 #: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:490
 msgid ""
@@ -2889,7 +2889,7 @@ msgid ""
 "'Use throttle-based dynamic notch filter to reduce propeller noise' if "
 "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else "
 "'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'"
-msgstr ""
+msgstr "'スロットルベースの動的ノッチフィルターでプロペラノイズを低減する' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'ESCテレメトリーRPMでプロペラノッチフィルターを動的に調整する'"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:271
 msgid "Activates the logging of the MAGH.Active message"
@@ -3083,7 +3083,7 @@ msgstr "システム識別チップ注入はこれ以上行いません"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "No need to log raw data for IMU temperature calibration"
-msgstr ""
+msgstr "IMU温度キャリブレーションのために生データを記録する必要はありません"
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:313
 msgid "Normal state for everyday use"
@@ -3656,7 +3656,7 @@ msgstr "バッテリー監視が停止しました"
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:105
 msgid "Error in forced parameters"
-msgstr ""
+msgstr "強制パラメータでエラーが発生しました"
 
 #: ardupilot_methodic_configurator/data_model_configuration_step.py:165
 msgid "ExpressLRS Configuration Warning"
