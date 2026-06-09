@@ -40,7 +40,7 @@ _monitor_bounds_cache: WeakKeyDictionary[tk.Misc, MonitorBounds] = WeakKeyDictio
 
 # Last monitor bounds recorded from a live Tk window (e.g. just before it closes).
 # Used as a positioning fallback for parentless dialogs shown after the main window is gone.
-_last_known_monitor_bounds: MonitorBounds | None = None
+_last_known_monitor_bounds: MonitorBounds | None = None  # pylint: disable=invalid-name
 
 
 def get_last_known_monitor_bounds() -> MonitorBounds | None:
