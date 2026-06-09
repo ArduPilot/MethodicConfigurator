@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-06-07 20:25+0000\n"
+"POT-Creation-Date: 2026-06-09 19:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -80,7 +80,7 @@ msgid "Unknown"
 msgstr ""
 
 #: ardupilot_methodic_configurator/__main__.py:595
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:104
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:112
 msgid "Error in derived parameters"
 msgstr ""
 
@@ -268,28 +268,28 @@ msgstr ""
 msgid "Cannot restart configuration: 00_default.param is the only available file and is not editable."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:934
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1832
+#: ardupilot_methodic_configurator/backend_filesystem.py:937
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1842
 msgid "Deleting parameters %s from '%s'"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1119
+#: ardupilot_methodic_configurator/backend_filesystem.py:1122
 msgid "The type of the vehicle. Default is ArduCopter"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1125
+#: ardupilot_methodic_configurator/backend_filesystem.py:1128
 msgid "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1133
+#: ardupilot_methodic_configurator/backend_filesystem.py:1136
 msgid "Start directly on the nth intermediate parameter file (skips previous files). Default is to start on the file next to the last that you wrote to the flight controller. If the file does not exist, it will start on the first file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1142
+#: ardupilot_methodic_configurator/backend_filesystem.py:1145
 msgid "Allow opening and editing template files directly. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/backend_filesystem.py:1151
+#: ardupilot_methodic_configurator/backend_filesystem.py:1154
 msgid "Save the vehicle component to the system templates. Only for software developers that know what they are doing. Default is %(default)s"
 msgstr ""
 
@@ -439,29 +439,34 @@ msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} p
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:470
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:477
+msgid "In file '%s': '%s' %s parameter '%s' 'Change Reason' could not be evaluated, using raw string"
+msgstr ""
+
+#:
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:490
 msgid "In file '{configuration_steps_filename}': '{filename}' {parameter_type} parameter '{parameter}' could not be computed: {e}"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:571
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:601
 msgid "Copied from the connected flight controller"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:598
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:628
 msgid "Skipping delete_parameters for '%s': no evaluation variables available"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:622
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:636
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:652
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:666
 msgid "File '{self.configuration_steps_filename}' not found. No intermediate parameter configuration steps available"
 msgstr ""
 
 #:
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:628
-#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:641
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:658
+#: ardupilot_methodic_configurator/backend_filesystem_configuration_steps.py:671
 msgid "No documentation available for {selected_file} in the {self.configuration_steps_filename} file"
 msgstr ""
 
@@ -2289,203 +2294,203 @@ msgid ""
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:270
-msgid "Activates the logging of the MAGH.Active message"
+msgid "'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:271
-msgid "Activates the temperature calibration for IMU 1 at the next start"
+msgid "Activates the logging of the MAGH.Active message"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:272
-msgid "Activates the temperature calibration for IMU 2 at the next start"
+msgid "Activates the temperature calibration for IMU 1 at the next start"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:273
-msgid "Activates the temperature calibration for IMU 3 at the next start"
+msgid "Activates the temperature calibration for IMU 2 at the next start"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:274
-msgid "Add Navigation logging"
+msgid "Activates the temperature calibration for IMU 3 at the next start"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:275
-msgid "Autotune pitch axis"
+msgid "Add Navigation logging"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:276
-msgid "Autotune roll and pitch axis"
+msgid "Autotune pitch axis"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:277
-msgid "Autotune roll axis"
+msgid "Autotune roll and pitch axis"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:278
-msgid "Autotune yaw D axis"
+msgid "Autotune roll axis"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:279
-msgid "Autotune yaw axis"
+msgid "Autotune yaw D axis"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:280
-msgid "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value"
+msgid "Autotune yaw axis"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:281
-msgid "Critical failsafe voltage x nr. of cells"
+msgid "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:282
-msgid "Defined in ESC specifications above"
+msgid "Critical failsafe voltage x nr. of cells"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:283
-msgid "Defined in component editor"
+msgid "Defined in ESC specifications above"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:284
-msgid "Derived from vehicle component editor propeller size"
+msgid "Defined in component editor"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:285
-msgid "Digital ESC protocol maximum is per definition 2000"
+msgid "Derived from vehicle component editor propeller size"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:286
-msgid "Digital ESC protocol minimum is per definition 1000"
+msgid "Digital ESC protocol maximum is per definition 2000"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:287
-msgid "Disable fast harmonic notch logging"
+msgid "Digital ESC protocol minimum is per definition 1000"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:288
-msgid "ESC RPM telemetry requires lua scripting"
+msgid "Disable fast harmonic notch logging"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:289
-msgid "ExpressLRS requires FLTMODE_CH != 5"
+msgid "ESC RPM telemetry requires lua scripting"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:290
-msgid "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)"
+msgid "ExpressLRS requires FLTMODE_CH != 5"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:291
-msgid "Gather data for the offline IMU temperature calibration while the FC is disarmed"
+msgid "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:292
-msgid "Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
+msgid "Gather data for the offline IMU temperature calibration while the FC is disarmed"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:293
-msgid "Hover learn will improve this initial guess"
+msgid "Gyro raw logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:294
-msgid "IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
+msgid "Hover learn will improve this initial guess"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:295
-msgid "IMU temperature calibration is finished, we no longer need to log data when disarmed"
+msgid "IMU batch logging no longer required, notch filter setup is complete, this reduces processor load and log file size"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:296
-msgid "INS_GYRO_FILTER / 2"
+msgid "IMU temperature calibration is finished, we no longer need to log data when disarmed"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:297
-msgid "Initial value, will be improved at a later step"
+msgid "INS_GYRO_FILTER / 2"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:298
-msgid "Inject chip on the input pitch signal"
+msgid "Initial value, will be improved at a later step"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:299
-msgid "Inject chip on the input roll signal"
+msgid "Inject chip on the input pitch signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:300
-msgid "Inject chip on the input yaw signal"
+msgid "Inject chip on the input roll signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:301
-msgid "Inject chip on the mixer pitch signal"
+msgid "Inject chip on the input yaw signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:302
-msgid "Inject chip on the mixer roll signal"
+msgid "Inject chip on the mixer pitch signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:303
-msgid "Inject chip on the mixer thrust signal"
+msgid "Inject chip on the mixer roll signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:304
-msgid "Inject chip on the mixer yaw signal"
+msgid "Inject chip on the mixer thrust signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:305
-msgid "Land ASAP"
+msgid "Inject chip on the mixer yaw signal"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:306
-msgid "Log relevant data for PID notch filters tuning. Later on we'll change this to other subsystems"
+msgid "Land ASAP"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:307
-msgid "Log relevant data for attitude PID and notch filter tuning. Later on we'll change this to other subsystems"
+msgid "Log relevant data for PID notch filters tuning. Later on we'll change this to other subsystems"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:308
-msgid "Low failsafe voltage x nr. of cells"
+msgid "Log relevant data for attitude PID and notch filter tuning. Later on we'll change this to other subsystems"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:309
-msgid "Maximize attitude control authority at high throttle"
+msgid "Low failsafe voltage x nr. of cells"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:310
-msgid "No more system identification chip injections"
+msgid "Maximize attitude control authority at high throttle"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:311
-msgid "Normal state for everyday use"
+msgid "No more system identification chip injections"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:312
-msgid "One .bin log file per flight, not per battery/reboot"
+msgid "No need to log raw data for IMU temperature calibration"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:313
-msgid "Only arm above this voltage, to avoid taking off with insufficient battery capacity"
+msgid "Normal state for everyday use"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:314
-msgid "Only for IMU and Raw-IMU"
+msgid "One .bin log file per flight, not per battery/reboot"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:315
-msgid "PID notch filters require batch logging, not raw logging"
+msgid "Only arm above this voltage, to avoid taking off with insufficient battery capacity"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:316
-msgid "PID notch filters require batch pre- and post- filters logging"
+msgid "Only for IMU and Raw-IMU"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:317
-msgid "Perform all arming checks. If you have a problem fix its source. Do NOT change this"
+msgid "PID notch filters require batch logging, not raw logging"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:318
-msgid "Reasonable for most places on this planet"
+msgid "PID notch filters require batch pre- and post- filters logging"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:319
-msgid "Reset to default after offline IMU temperature calibration"
+msgid "Perform all arming checks. If you have a problem fix its source. Do NOT change this"
 msgstr ""
 
 #: ardupilot_methodic_configurator/configuration_steps_strings.py:320
@@ -2952,44 +2957,48 @@ msgstr ""
 msgid "Battery monitoring stopped"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:153
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:105
+msgid "Error in forced parameters"
+msgstr ""
+
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:165
 msgid "ExpressLRS Configuration Warning"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:154
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:166
 msgid ""
 "FLTMODE_CH must be set to a channel other than 5 (currently set to 5).\n"
 "Please change FLTMODE_CH to a different channel (e.g., 6, 7, 8, etc.)\n"
 "to avoid conflicts with the required RC5 arming channel."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:224
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:243
 msgid "Skipping connection renaming because evaluation failed: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:233
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:252
 msgid "Removing duplicate parameter %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:234
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:253
 msgid "The parameter '{old_name}' was removed due to duplication."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:235
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:254
 msgid "Parameter Removed"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:239
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:258
 msgid "Renaming parameter %s to %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:240
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:259
 msgid ""
 "The parameter '{old_name}' was renamed to '{new_name}'.\n"
 "to obey the flight controller connection defined in the component editor window."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_configuration_step.py:244
+#: ardupilot_methodic_configurator/data_model_configuration_step.py:263
 msgid "Parameter Renamed"
 msgstr ""
 
@@ -3693,8 +3702,8 @@ msgstr ""
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1262
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1266
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1277
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2057
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2070
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2067
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2080
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:192
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:201
 #: ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:208
@@ -3730,7 +3739,7 @@ msgid ""
 msgstr ""
 
 #: ardupilot_methodic_configurator/data_model_parameter_editor.py:1275
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2040
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2050
 #: ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:335
 msgid "Success"
 msgstr ""
@@ -3825,150 +3834,146 @@ msgstr ""
 msgid "Failed to apply derived parameter %s: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1773
-msgid "Derived parameter %s not found in current parameters, skipping"
-msgstr ""
-
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1852
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1862
 msgid "Parameter not found"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1853
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1863
 msgid "Parameter {param_name} could not be located."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1865
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1871
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1875
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1881
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:405
 msgid "Out-of-range value"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1868
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1878
 msgid "Parameter %s out of range: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1875
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1885
 msgid "Invalid value for %s: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1878
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1888
 msgid "Invalid value"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1916
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1926
 msgid "No apm.pdef.xml file and no FC connected. Not possible autocomplete parameter names."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1937
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1947
 msgid "Parameter name can not be empty."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1946
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1956
 msgid "Parameter already exists, edit it instead"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1964
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1974
 msgid "Parameter name not found in the flight controller."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1982
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1992
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1987
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:1997
 msgid "Can not add parameter when no FC is connected and no apm.pdef.xml file exists."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2040
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2050
 msgid "Successfully added %d parameter(s)."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2044
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2054
 msgid "Added %d parameter(s)."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2046
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2063
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2056
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2073
 msgid "Skipped %d parameter(s): %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2048
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2065
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2058
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2075
 msgid "Failed %d parameter(s): %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2049
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2059
 msgid "Partial Success"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2053
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2063
 msgid "All %d parameter(s) already exist in the file."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2053
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2063
 msgid "No Changes"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2057
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2067
 msgid "Failed to add all %d parameter(s): %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2066
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2076
 msgid "No Parameters Added"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2070
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2080
 msgid "Unexpected result during bulk parameter addition."
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2211
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2221
 msgid "Why: "
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2213
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2223
 msgid "Why now: "
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2218
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2228
 msgid "{current_file} Documentation"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2220
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2230
 #: ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:62
 msgid "Documentation"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2240
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2250
 msgid "This configuration step ({current_file} intermediate parameter file) is {percentage}% mandatory"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2244
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2254
 msgid "Mandatory level not available for this configuration step ({current_file})"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2321
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2331
 msgid "Failed to patch derived parameter %s: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2350
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2360
 msgid "rename_connection eval failed for %s: %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2372
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2395
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2382
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2405
 msgid "Skipping connection rename %s → %s: target already exists"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2387
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2410
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2397
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2420
 msgid "Renamed connection parameter %s → %s"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2443
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2453
 msgid "vehicle_components evaluator reference is stale; re-syncing to the live object"
 msgstr ""
 
-#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2454
+#: ardupilot_methodic_configurator/data_model_parameter_editor.py:2464
 msgid "No vehicle component data loaded; save aborted."
 msgstr ""
 
