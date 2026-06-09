@@ -1,3 +1,8 @@
+---
+name: architecture-validation
+description: 'Validate and update ARCHITECTURE_n_*.md files against actual source code implementation. Use when checking if architecture docs are accurate, updating implementation status indicators (IMPLEMENTED/PARTIALLY/TODO), or verifying component lists, data flows, and integration points.'
+---
+
 # Architecture Validation Instructions for AI Agents
 
 ## Overview

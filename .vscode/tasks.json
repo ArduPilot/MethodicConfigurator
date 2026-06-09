@@ -118,7 +118,7 @@
             "type": "shell",
             "command": "${command:python.interpreterPath}",
             "args": [
-                "extract_missing_translations.py",
+                ".github/skills/update-gui-translations/scripts/extract_missing_translations.py",
                 "--lang-code",
                 "${input:languageCode}",
                 "--output-file",
@@ -137,7 +137,7 @@
             "type": "shell",
             "command": "${command:python.interpreterPath}",
             "args": [
-                "insert_missing_translations.py",
+                ".github/skills/update-gui-translations/scripts/insert_missing_translations.py",
                 "--lang-code",
                 "${input:languageCode}",
                 "--input-file",

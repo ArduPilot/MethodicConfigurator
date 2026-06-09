@@ -13,6 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import logging
 import os
 import subprocess
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 
 def extract_strings(directory: str, output_dir: str) -> None:
@@ -84,8 +87,8 @@ def remove_trailing_newline(file_path: str) -> None:
 
 def main() -> None:
     logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
-    directory_to_scan = "ardupilot_methodic_configurator"
-    output_directory = os.path.join(directory_to_scan, "locale")
+    directory_to_scan = str(PROJECT_ROOT / "ardupilot_methodic_configurator")
+    output_directory = str(PROJECT_ROOT / "ardupilot_methodic_configurator" / "locale")
 
     extract_strings(directory_to_scan, output_directory)
     msg = f"Internationalization strings extracted and saved to {output_directory}"

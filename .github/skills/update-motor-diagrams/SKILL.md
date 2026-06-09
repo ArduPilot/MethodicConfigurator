@@ -1,3 +1,8 @@
+---
+name: update-motor-diagrams
+description: 'Update motor diagram SVG files from ArduPilot documentation. Use when downloading new motor diagrams via scripts/download_motor_diagrams.py, adding new SVG filenames to the motor_diagrams list, or verifying SVG files in ardupilot_methodic_configurator/images/.'
+---
+
 # Motor Diagrams Update Instructions
 
 This document provides AI-assisted instructions for updating the ArduPilot motor diagram SVG files in the ArduPilot Methodic Configurator.

@@ -1,3 +1,8 @@
+---
+name: codebase-analysis
+description: 'Analyze the codebase structure and count lines of code by category using cloc. Use when generating code statistics, calculating test-to-application ratios, documentation-to-code ratios, or identifying generated code percentages.'
+---
+
 # Codebase Analysis Instructions
 
 This document provides step-by-step instructions for analyzing the ArduPilot Methodic Configurator codebase structure and counting lines of code across different categories.
