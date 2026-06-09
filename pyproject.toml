@@ -101,7 +101,7 @@ pypi_dist = [
 
 win_dist = [
     "pip==26.1",
-    "pywin32==311",
+    "pywin32==312",
     "pyinstaller==6.20.0",
     "packaging==26.2",
 ]
