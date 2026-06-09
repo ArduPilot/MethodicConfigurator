@@ -1913,3 +1913,159 @@ class TestConfigurationNavigation:
 
         assert result["phase1"]["weight"] == 2  # max(2, 2-1) = 2
         assert result["phase2"]["weight"] == 2  # max(2, 3-2) = 2
+
+
+# ---------------------------------------------------------------------------
+# compute_add_parameters - parameters_to_delete priority
+# ---------------------------------------------------------------------------
+
+
+class TestComputeAddParametersDeletePriority:
+    """Tests that delete_parameters entries take priority over add_parameters entries."""
+
+    def _make_file_info(self, add_params: dict) -> dict:
+        """Build a minimal file_info dict with add_parameters."""
+        return {"add_parameters": add_params}
+
+    def test_parameter_in_delete_set_is_not_added(self, config_steps: ConfigurationSteps) -> None:
+        """
+        A parameter listed in parameters_to_delete is skipped by compute_add_parameters.
+
+        GIVEN: A configuration step whose add_parameters contains only PARAM_A
+        AND: PARAM_A is also in the parameters_to_delete set
+        WHEN: compute_add_parameters is called with that delete set
+        THEN: PARAM_A must NOT appear in add_parameters output
+        AND: The entire file entry must be absent (nothing was added)
+        """
+        # Arrange (Given): single add-param that is also in the delete set
+        file_info = self._make_file_info({"PARAM_A": {"New Value": "1.0", "Change Reason": "added"}})
+        variables: dict = {"fc_parameters": {}}
+
+        # Act (When): compute with the delete set containing the only param
+        config_steps.compute_add_parameters(
+            "step.param",
+            file_info,
+            variables,
+            existing_params=None,
+            parameters_to_delete={"PARAM_A"},
+        )
+
+        # Assert (Then): nothing added — the file entry must not exist
+        assert "step.param" not in config_steps.add_parameters
+
+    def test_parameter_not_in_delete_set_is_added_normally(self, config_steps: ConfigurationSteps) -> None:
+        """
+        A parameter absent from parameters_to_delete is added as usual.
+
+        GIVEN: A configuration step whose add_parameters contains PARAM_B
+        AND: The parameters_to_delete set contains only an unrelated PARAM_A
+        WHEN: compute_add_parameters is called
+        THEN: PARAM_B appears in add_parameters output with the expected value and change reason
+        """
+        # Arrange (Given): PARAM_B to add, unrelated PARAM_A in delete set
+        file_info = self._make_file_info({"PARAM_B": {"New Value": "42.0", "Change Reason": "reason"}})
+        variables: dict = {"fc_parameters": {}}
+
+        # Act (When): compute with a delete set that does not contain PARAM_B
+        config_steps.compute_add_parameters(
+            "step.param",
+            file_info,
+            variables,
+            existing_params=None,
+            parameters_to_delete={"PARAM_A"},
+        )
+
+        # Assert (Then): PARAM_B added with correct value and reason
+        result = config_steps.add_parameters.get("step.param", {})
+        assert "PARAM_B" in result
+        assert result["PARAM_B"].value == 42.0
+        assert result["PARAM_B"].comment == "reason"
+
+    def test_none_delete_set_does_not_block_any_parameter(self, config_steps: ConfigurationSteps) -> None:
+        """
+        Passing parameters_to_delete=None does not block any add_parameters entry.
+
+        GIVEN: A configuration step with add_parameters containing PARAM_C
+        WHEN: compute_add_parameters is called with parameters_to_delete=None
+        THEN: PARAM_C is added normally with the correct value and change reason
+        """
+        # Arrange (Given): single add-param, no delete set
+        file_info = self._make_file_info({"PARAM_C": {"New Value": "7.0", "Change Reason": "none-test"}})
+        variables: dict = {"fc_parameters": {}}
+
+        # Act (When): compute with None delete set
+        config_steps.compute_add_parameters(
+            "step.param",
+            file_info,
+            variables,
+            existing_params=None,
+            parameters_to_delete=None,
+        )
+
+        # Assert (Then): param added with correct value and reason
+        result = config_steps.add_parameters.get("step.param", {})
+        assert "PARAM_C" in result
+        assert result["PARAM_C"].value == 7.0
+        assert result["PARAM_C"].comment == "none-test"
+
+    def test_delete_set_takes_priority_over_add_when_both_present(self, config_steps: ConfigurationSteps) -> None:
+        """
+        delete_parameters takes priority when a parameter appears in both add and delete sets.
+
+        GIVEN: Two add_parameters entries: KEEP_PARAM and DELETE_PARAM
+        AND: DELETE_PARAM is in the parameters_to_delete set
+        WHEN: compute_add_parameters is called
+        THEN: KEEP_PARAM appears in output with its correct value and change reason
+        AND: DELETE_PARAM does not appear in output at all
+        """
+        # Arrange (Given): two params to add, one of which is in the delete set
+        file_info = self._make_file_info(
+            {
+                "KEEP_PARAM": {"New Value": "1.0", "Change Reason": "keep-me"},
+                "DELETE_PARAM": {"New Value": "2.0", "Change Reason": "remove-me"},
+            }
+        )
+        variables: dict = {"fc_parameters": {}}
+
+        # Act (When): compute with DELETE_PARAM in the delete set
+        config_steps.compute_add_parameters(
+            "step.param",
+            file_info,
+            variables,
+            existing_params=None,
+            parameters_to_delete={"DELETE_PARAM"},
+        )
+
+        # Assert (Then): only KEEP_PARAM is present; DELETE_PARAM was suppressed
+        result = config_steps.add_parameters.get("step.param", {})
+        assert "KEEP_PARAM" in result
+        assert result["KEEP_PARAM"].value == 1.0
+        assert result["KEEP_PARAM"].comment == "keep-me"
+        assert "DELETE_PARAM" not in result
+
+    def test_empty_delete_set_does_not_block_any_parameter(self, config_steps: ConfigurationSteps) -> None:
+        """
+        An empty parameters_to_delete set leaves all add_parameters unaffected.
+
+        GIVEN: A configuration step with add_parameters containing PARAM_D
+        WHEN: compute_add_parameters is called with an empty delete set
+        THEN: PARAM_D is added normally with the correct value and change reason
+        """
+        # Arrange (Given): single add-param, empty delete set
+        file_info = self._make_file_info({"PARAM_D": {"New Value": "3.14", "Change Reason": "pi"}})
+        variables: dict = {"fc_parameters": {}}
+
+        # Act (When): compute with an empty delete set
+        config_steps.compute_add_parameters(
+            "step.param",
+            file_info,
+            variables,
+            existing_params=None,
+            parameters_to_delete=set(),
+        )
+
+        # Assert (Then): param added with correct value and reason
+        result = config_steps.add_parameters.get("step.param", {})
+        assert "PARAM_D" in result
+        assert result["PARAM_D"].value == 3.14
+        assert result["PARAM_D"].comment == "pi"

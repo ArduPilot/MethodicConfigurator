@@ -547,14 +547,22 @@ class ConfigurationSteps:
                 errors.append(error_msg)
         return "\n".join(errors)
 
-    def compute_add_parameters(
-        self, filename: str, file_info: dict, variables: dict, existing_params: ParDict | None = None
+    def compute_add_parameters(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        filename: str,
+        file_info: dict,
+        variables: dict,
+        existing_params: ParDict | None = None,
+        parameters_to_delete: set[str] | None = None,
     ) -> None:
         """
         Compute the add_parameters for a given configuration file.
 
         Entries whose 'if' condition evaluates to False are skipped. Any stale entries
         from a previous call for this file are cleared first.
+
+        Parameters that appear in ``delete_parameters`` (and whose delete condition passes)
+        are skipped because ``delete_parameters`` takes priority over ``add_parameters``.
 
         For parameters with conditions referencing ``fc_parameters``, automatically skips
         evaluation when ``fc_parameters`` is not available (e.g., when no FC is connected).
@@ -573,6 +581,8 @@ class ConfigurationSteps:
             if not self._condition_passes(parameter_info, variables):
                 continue
             if existing_params is not None and parameter in existing_params:
+                continue
+            if parameters_to_delete is not None and parameter in parameters_to_delete:
                 continue
             if "New Value" in parameter_info:
                 result, error_msg = self._eval_new_value(parameter_info["New Value"], filename, parameter, "add", variables)

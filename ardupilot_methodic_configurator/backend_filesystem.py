@@ -924,11 +924,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.merge_forced_or_derived_parameters(
                     param_filename, self.derived_parameters, fc_param_names, target=working
                 )
-                self.compute_add_parameters(param_filename, step_dict, eval_variables, existing_params=working)
+                # Compute deletions once and reuse in compute_add_parameters to avoid redundant evaluation
+                to_delete = self.compute_deletions(param_filename, step_dict, eval_variables)
+                self.compute_add_parameters(
+                    param_filename, step_dict, eval_variables, existing_params=working, parameters_to_delete=to_delete
+                )
                 self.merge_forced_or_derived_parameters(param_filename, self.add_parameters, None, target=working)
 
                 # Apply deletions from delete_parameters
-                to_delete = self.compute_deletions(param_filename, step_dict, eval_variables)
                 actually_deleted = [p for p in sorted(to_delete) if p in working]
                 if actually_deleted:
                     logging_info(_("Deleting parameters %s from '%s'"), actually_deleted, param_filename)
