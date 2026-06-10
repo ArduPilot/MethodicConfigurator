@@ -15,7 +15,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 import tkinter.font as tkfont
-from typing import Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -429,7 +428,7 @@ class TestCreateScaledFont:
         THEN: Should create a Font object with size increased by 20%
         """
         # Arrange: Create a font configuration
-        font_config: dict[str, Union[str, int]] = {"family": "Arial", "size": 10}
+        font_config: dict[str, str | int] = {"family": "Arial", "size": 10}
 
         # Act: Create scaled font with 1.2x multiplier
         result_font = create_scaled_font(font_config, 1.2)
@@ -450,7 +449,7 @@ class TestCreateScaledFont:
         THEN: Should create a Font object with size decreased by 20%
         """
         # Arrange: Create a font configuration
-        font_config: dict[str, Union[str, int]] = {"family": "Helvetica", "size": 20}
+        font_config: dict[str, str | int] = {"family": "Helvetica", "size": 20}
 
         # Act: Create scaled font with 0.8x multiplier
         result_font = create_scaled_font(font_config, 0.8)
@@ -470,7 +469,7 @@ class TestCreateScaledFont:
         THEN: Should create a Font object with original size unchanged
         """
         # Arrange: Create a font configuration
-        font_config: dict[str, Union[str, int]] = {"family": "Courier", "size": 12}
+        font_config: dict[str, str | int] = {"family": "Courier", "size": 12}
 
         # Act: Create font with default scale factor
         result_font = create_scaled_font(font_config)
@@ -510,7 +509,7 @@ class TestCreateScaledFont:
         THEN: Should correctly calculate scaled sizes using integer conversion
         """
         # Test various scaling scenarios
-        test_cases: list[tuple[dict[str, Union[str, int]], float, int]] = [
+        test_cases: list[tuple[dict[str, str | int], float, int]] = [
             ({"family": "Times", "size": 10}, 1.1, 11),  # 10 * 1.1 = 11
             ({"family": "Arial", "size": 12}, 1.25, 15),  # 12 * 1.25 = 15
             ({"family": "Verdana", "size": 14}, 1.5, 21),  # 14 * 1.5 = 21
@@ -533,7 +532,7 @@ class TestCreateScaledFont:
         THEN: The original dictionary should have its size modified (side effect)
         """
         # Arrange: Create a font configuration
-        font_config: dict[str, Union[str, int]] = {"family": "Segoe UI", "size": 9}
+        font_config: dict[str, str | int] = {"family": "Segoe UI", "size": 9}
         original_id = id(font_config)
 
         # Act: Create scaled font
@@ -552,7 +551,7 @@ class TestCreateScaledFont:
         THEN: The original config should remain unchanged
         """
         # Arrange: Create original font configuration
-        original_config: dict[str, Union[str, int]] = {"family": "Calibri", "size": 11}
+        original_config: dict[str, str | int] = {"family": "Calibri", "size": 11}
         original_size = original_config["size"]
 
         # Act: Create scaled font with a copy
@@ -571,7 +570,7 @@ class TestCreateScaledFont:
         THEN: Should create Font objects with appropriate relative sizing
         """
         # Arrange: Base font configuration
-        base_config: dict[str, Union[str, int]] = {"family": "Roboto", "size": 10}
+        base_config: dict[str, str | int] = {"family": "Roboto", "size": 10}
 
         # Act: Create fonts for different contexts
         header_font = create_scaled_font(base_config.copy(), 1.6)  # 60% larger

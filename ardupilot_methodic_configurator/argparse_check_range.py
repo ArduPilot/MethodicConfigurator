@@ -13,7 +13,7 @@ https://gist.github.com/dmitriykovalev/2ab1aa33a8099ef2d514925d84aa89e7
 from argparse import Action, ArgumentError, ArgumentParser, Namespace
 from collections.abc import Sequence
 from operator import ge, gt, le, lt
-from typing import Any, Union
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 
@@ -56,8 +56,8 @@ class CheckRange(Action):
         self,
         parser: ArgumentParser,  # noqa: ARG002
         namespace: Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: Union[None, str] = None,  # noqa: ARG002
+        values: str | Sequence[Any] | None,
+        option_string: None | str = None,  # noqa: ARG002
     ) -> None:
         if not isinstance(values, (int, float)):
             raise ArgumentError(self, _("Value must be a number."))

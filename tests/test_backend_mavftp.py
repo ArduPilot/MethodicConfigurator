@@ -281,5 +281,45 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         self.log_stream.truncate(0)
 
 
+class TestMAVFTPWritePathCrashes(unittest.TestCase):
+    """Test MAVFTP write path crash fixes."""
+
+    def setUp(self) -> None:
+        self.mock_master = mavutil.mavlink_connection(device="udp:localhost:0", source_system=1)
+        self.mav_ftp = MAVFTP(self.mock_master, target_system=1, target_component=1)
+
+    def test_send_more_writes_none_write_list_does_not_crash(self) -> None:
+        """Bug fix: len(None) TypeError when write_list is None."""
+        self.mav_ftp.write_list = None
+        try:
+            self.mav_ftp._MAVFTP__send_more_writes()  # pylint: disable=protected-access
+        except TypeError as e:
+            self.fail(f"__send_more_writes raised TypeError with None write_list: {e}")
+
+    def test_handle_write_reply_empty_file_does_not_crash(self) -> None:
+        """Bug fix: ZeroDivisionError when uploading empty file (write_total=0)."""
+        self.mav_ftp.write_total = 0
+        self.mav_ftp.write_block_size = 239
+        self.mav_ftp.write_list = set()
+        self.mav_ftp.write_recv_idx = -1
+        self.mav_ftp.write_pending = 0
+        self.mav_ftp.write_acks = 0
+        self.mav_ftp.put_callback_progress = None
+        op = FTP_OP(seq=1, session=1, opcode=OP_Ack, size=0, req_opcode=0, burst_complete=0, offset=0, payload=None)
+        try:
+            self.mav_ftp._MAVFTP__handle_write_reply(op, None)  # pylint: disable=protected-access
+        except ZeroDivisionError as e:
+            self.fail(f"__handle_write_reply raised ZeroDivisionError for empty file: {e}")
+
+    def test_send_more_writes_none_guard_at_line_886(self) -> None:
+        """Bug fix: Missing None guard before len(write_list) at line 886."""
+        self.mav_ftp.write_list = None
+        self.mav_ftp.write_file_size = 0
+        try:
+            self.mav_ftp._MAVFTP__send_more_writes()  # pylint: disable=protected-access
+        except TypeError as e:
+            self.fail(f"__send_more_writes raised TypeError at len(write_list) guard: {e}")
+
+
 if __name__ == "__main__":
     unittest.main()

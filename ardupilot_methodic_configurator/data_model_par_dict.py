@@ -11,12 +11,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import re
+from collections.abc import Callable
 from math import isfinite as math_isfinite
 from os import path as os_path
 from shutil import get_terminal_size
 from sys import exc_info as sys_exc_info
 from types import TracebackType
-from typing import IO, Callable, Optional, Union
+from typing import IO
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_safe_file_io import safe_write
@@ -96,7 +97,7 @@ class Par:
 
     """
 
-    def __init__(self, value: float, comment: Optional[str] = None) -> None:
+    def __init__(self, value: float, comment: str | None = None) -> None:
         self.value = value
         self.comment = comment
 
@@ -119,7 +120,7 @@ class ParDict(dict[str, Par]):
     for merging and comparing parameter dictionaries.
     """
 
-    def __init__(self, initial_data: Optional[dict[str, Par]] = None) -> None:
+    def __init__(self, initial_data: dict[str, Par] | None = None) -> None:
         """
         Initialize the ParDict.
 
@@ -187,7 +188,7 @@ class ParDict(dict[str, Par]):
         parameter_dict: "ParDict",
         i: int,
         original_line: str,
-        comment: Union[None, str],
+        comment: None | str,
         parameter_name: str,
         value: str,
     ) -> None:
@@ -288,7 +289,7 @@ class ParDict(dict[str, Par]):
         return formatted_params
 
     def export_to_param(
-        self, filename_out: str, file_format: str = "missionplanner", content_header: Optional[list[str]] = None
+        self, filename_out: str, file_format: str = "missionplanner", content_header: list[str] | None = None
     ) -> None:
         """
         Export parameters to a parameter file.
@@ -368,7 +369,7 @@ class ParDict(dict[str, Par]):
             self[param_name] = param_value
 
     def remove_if_value_is_similar(
-        self, other: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+        self, other: "ParDict", tolerance_func: Callable[[float, float], bool] | None = None
     ) -> None:
         """
         Remove parameters from this dictionary if their values match those in another dictionary.
@@ -398,7 +399,7 @@ class ParDict(dict[str, Par]):
         self.update(filtered_params)
 
     def get_missing_or_different(
-        self, other: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+        self, other: "ParDict", tolerance_func: Callable[[float, float], bool] | None = None
     ) -> "ParDict":
         """
         Get parameters that are missing in the other ParDict or have different values.
@@ -422,7 +423,7 @@ class ParDict(dict[str, Par]):
         return ParDict(self._get_different_or_missing_params(other, tolerance_func))
 
     def _get_different_or_missing_params(
-        self, other: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+        self, other: "ParDict", tolerance_func: Callable[[float, float], bool] | None = None
     ) -> dict[str, Par]:
         """
         Private helper method to get parameters that are missing or have different values.
@@ -531,7 +532,7 @@ class ParDict(dict[str, Par]):
         return cls.from_float_dict(fc_params)
 
     def _filter_by_defaults(
-        self, default_params: "ParDict", tolerance_func: Optional[Callable[[float, float], bool]] = None
+        self, default_params: "ParDict", tolerance_func: Callable[[float, float], bool] | None = None
     ) -> "ParDict":
         """
         Filter out parameters that have default values within tolerance.
@@ -613,7 +614,7 @@ class ParDict(dict[str, Par]):
         self,
         doc_dict: dict,
         default_params: "ParDict",
-        tolerance_func: Optional[Callable[[float, float], bool]] = None,
+        tolerance_func: Callable[[float, float], bool] | None = None,
     ) -> tuple["ParDict", "ParDict", "ParDict", "ParDict"]:
         """
         Categorize parameters into read-only, calibration, IDs and other non-default parameters.

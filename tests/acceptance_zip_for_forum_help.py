@@ -18,7 +18,7 @@ from collections.abc import Iterator, Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from types import MethodType, SimpleNamespace
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 from zipfile import ZipFile
 
@@ -94,7 +94,7 @@ def get_filesystem(parameter_editor: ParameterEditor) -> LocalFilesystem:
 def configure_filesystem(
     parameter_editor: ParameterEditor,
     vehicle_dir: Path,
-    parameter_files: Optional[list[str]] = None,
+    parameter_files: list[str] | None = None,
 ) -> LocalFilesystem:
     """Configure filesystem directory and parameter files for a test."""
     filesystem = get_filesystem(parameter_editor)
@@ -106,8 +106,8 @@ def configure_filesystem(
 def create_forum_help_zip(
     parameter_editor: ParameterEditor,
     *,
-    show_info: Optional[MagicMock] = None,
-    show_error: Optional[MagicMock] = None,
+    show_info: MagicMock | None = None,
+    show_error: MagicMock | None = None,
 ) -> Path:
     """Execute the public workflow helper and return the created zip path."""
     info_callback = show_info or MagicMock()
@@ -131,7 +131,7 @@ def create_forum_help_zip(
 def setup_zip_mock(
     parameter_editor: ParameterEditor,
     vehicle_dir: Path,
-    file_parameters: Mapping[str, Union[ParDict, Mapping[str, Any], None]],
+    file_parameters: Mapping[str, ParDict | Mapping[str, Any] | None],
     configuration_steps_filename: str = "configuration_steps_ArduCopter.json",
 ) -> None:
     """

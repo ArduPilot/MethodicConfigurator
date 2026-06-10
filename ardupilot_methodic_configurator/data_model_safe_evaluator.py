@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from math import log
 from types import MappingProxyType
-from typing import Union, cast
+from typing import cast
 
 from packaging.version import Version
 from simpleeval import EvalWithCompoundTypes, InvalidExpression
@@ -44,7 +44,7 @@ class ConfigurationStepEvalError(Exception):
     """
 
 
-def safe_evaluate(expression: str, variables: dict) -> Union[int, float, str]:
+def safe_evaluate(expression: str, variables: dict) -> int | float | str:
     """
     Evaluate a parameter expression safely using simpleeval.
 
@@ -72,7 +72,7 @@ def safe_evaluate(expression: str, variables: dict) -> Union[int, float, str]:
     """
     try:
         evaluator = EvalWithCompoundTypes(names=variables, functions=dict(SAFE_FUNCTIONS))
-        return cast("Union[int, float, str]", evaluator.eval(expression))
+        return cast("int | float | str", evaluator.eval(expression))
     except (
         InvalidExpression,
         SyntaxError,

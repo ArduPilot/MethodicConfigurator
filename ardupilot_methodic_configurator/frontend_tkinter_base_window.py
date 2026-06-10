@@ -27,7 +27,6 @@ from logging import debug as logging_debug
 from logging import error as logging_error
 from platform import system as platform_system
 from tkinter import messagebox, ttk
-from typing import Optional, Union
 
 from PIL import Image
 from screeninfo import get_monitors
@@ -85,7 +84,7 @@ class BaseWindow:
 
     """
 
-    def __init__(self, root_tk: Optional[Union[tk.Tk, tk.Toplevel]] = None) -> None:
+    def __init__(self, root_tk: tk.Tk | tk.Toplevel | None = None) -> None:
         """
         Initialize a new BaseWindow instance.
 
@@ -98,7 +97,7 @@ class BaseWindow:
             When root_tk is provided, this creates a child dialog or sub-window.
 
         """
-        self.root: Union[tk.Toplevel, tk.Tk]
+        self.root: tk.Toplevel | tk.Tk
         if root_tk:
             self.root = tk.Toplevel(root_tk)
         else:
@@ -332,7 +331,7 @@ class BaseWindow:
         return f"{round(width * self.dpi_scaling_factor)}x{round(height * self.dpi_scaling_factor)}"
 
     @staticmethod
-    def center_window(window: Union[tk.Toplevel, tk.Tk], parent: Union[tk.Toplevel, tk.Tk]) -> None:
+    def center_window(window: tk.Toplevel | tk.Tk, parent: tk.Toplevel | tk.Tk) -> None:
         """
         Center a window relative to its parent window.
 
@@ -371,7 +370,7 @@ class BaseWindow:
             window.update()
 
     @staticmethod
-    def center_window_on_screen(window: Union[tk.Toplevel, tk.Tk]) -> None:
+    def center_window_on_screen(window: tk.Toplevel | tk.Tk) -> None:
         """
         Center a window on the screen where the mouse pointer is located.
 
@@ -450,7 +449,7 @@ class BaseWindow:
         parent: ttk.Frame,
         filepath: str,
         image_height: int = 40,
-        fallback_text: Optional[str] = None,
+        fallback_text: str | None = None,
     ) -> ttk.Label:
         """
         Load an image and create a TTK label containing the resized image.

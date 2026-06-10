@@ -10,9 +10,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import tkinter as tk
+from collections.abc import Callable
 from pathlib import Path
 from tkinter import messagebox, ttk
-from typing import Callable, Optional, Union
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -32,7 +32,7 @@ class FlightControllerInfoPresenter:
         self.vehicle_dir = vehicle_dir
         self.param_default_values: ParDict = ParDict()
 
-    def get_info_data(self) -> dict[str, Union[str, dict[str, str]]]:
+    def get_info_data(self) -> dict[str, str | dict[str, str]]:
         """Get formatted flight controller information for display."""
         return self.flight_controller.info.get_info()
 
@@ -40,7 +40,7 @@ class FlightControllerInfoPresenter:
         """Log flight controller information."""
         self.flight_controller.info.log_flight_controller_info()
 
-    def download_parameters(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> ParDict:
+    def download_parameters(self, progress_callback: Callable[[int, int], None] | None = None) -> ParDict:
         """
         Download flight controller parameters.
 
@@ -112,7 +112,7 @@ class FlightControllerInfoWindow(BaseWindow):
         self.progress_label = ttk.Label(self.progress_frame, text=_("Ready to download parameters..."))
         self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False)
 
-    def _create_info_row(self, row_nr: int, description: str, attr_value: Union[str, dict[str, str]]) -> None:
+    def _create_info_row(self, row_nr: int, description: str, attr_value: str | dict[str, str]) -> None:
         """Create a single row of information display."""
         label = ttk.Label(self.info_frame, text=f"{description}:")
         label.grid(row=row_nr, column=0, sticky="w")

@@ -44,10 +44,17 @@ old_cwd = os.getcwd()
 
 def ensure_dependencies() -> None:
     """Check for and install required dependencies if they're missing."""
-    required_packages = ["lxml==6.1.0"]
+    required_packages = ["lxml==6.1.1"]
 
     for package in required_packages:
-        if importlib.util.find_spec(package) is None:
+        module_name = (
+            package.split("==", maxsplit=1)[0]
+            .split(">=", maxsplit=1)[0]
+            .split("<=", maxsplit=1)[0]
+            .split("!=", maxsplit=1)[0]
+            .split("~=", maxsplit=1)[0]
+        )
+        if importlib.util.find_spec(module_name) is None:
             print(f"Installing required dependency: {package}")  # noqa: T201
             # This is safe as we're only installing known packages defined in the code
             subprocess.check_call([sys.executable, "-m", "pip", "install", package])  # noqa: S603

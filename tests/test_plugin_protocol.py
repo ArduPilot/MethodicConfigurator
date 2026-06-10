@@ -11,7 +11,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-from typing import Union
 from unittest.mock import MagicMock
 
 import pytest
@@ -89,7 +88,7 @@ class TestPluginViewProtocol:
                 self.base_window = base_window
                 self.frame = tk.Frame(parent)
 
-            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: Union[str, bool, int]) -> None:
+            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: str | bool | int) -> None:
                 self.frame.pack(fill=fill, expand=expand, **kwargs)
 
             def destroy(self) -> None:
@@ -125,7 +124,7 @@ class TestPluginViewProtocol:
                 self.frame = tk.Frame(parent)
                 self.packed = False
 
-            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: Union[str, bool, int]) -> None:
+            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: str | bool | int) -> None:
                 self.frame.pack(fill=fill, expand=expand, **kwargs)
                 self.packed = True
 
@@ -161,7 +160,7 @@ class TestPluginViewProtocol:
                 self.activation_count = 0
                 self.deactivation_count = 0
 
-            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: Union[str, bool, int]) -> None:
+            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: str | bool | int) -> None:
                 self.frame.pack(fill=fill, expand=expand, **kwargs)
 
             def destroy(self) -> None:
@@ -203,7 +202,7 @@ class TestPluginViewProtocol:
                 self.frame = tk.Frame(parent)
                 self.cleaned_up = False
 
-            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: Union[str, bool, int]) -> None:
+            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: str | bool | int) -> None:
                 self.frame.pack(fill=fill, expand=expand, **kwargs)
 
             def destroy(self) -> None:
@@ -239,7 +238,7 @@ class TestPluginViewProtocol:
                 self.base_window = base_window
                 self.frame = tk.Frame(parent)
 
-            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: Union[str, bool, int]) -> None:
+            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: str | bool | int) -> None:
                 self.frame.pack(fill=fill, expand=expand, **kwargs)
 
             def destroy(self) -> None:
@@ -274,9 +273,9 @@ class TestPluginViewProtocol:
 
             def __init__(self, parent: tk.Frame, model: object, base_window: object) -> None:
                 self.frame = tk.Frame(parent)
-                self.pack_options: dict[str, Union[str, bool, int]] = {}
+                self.pack_options: dict[str, str | bool | int] = {}
 
-            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: Union[str, bool, int]) -> None:
+            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: str | bool | int) -> None:
                 self.pack_options = {"fill": fill, "expand": expand, **kwargs}
                 self.frame.pack(fill=fill, expand=expand, **kwargs)
 
@@ -315,7 +314,7 @@ class TestPluginViewProtocol:
                 self.is_active = False
                 self.custom_state = ""
 
-            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: Union[str, bool, int]) -> None:
+            def pack(self, *, fill: str = "none", expand: bool = False, **kwargs: str | bool | int) -> None:
                 self.frame.pack(fill=fill, expand=expand, **kwargs)
 
             def destroy(self) -> None:

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, cast
 from unittest.mock import ANY, MagicMock, patch
 
 import pytest
@@ -28,7 +28,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
     from pathlib import Path
 
 # pylint: disable=too-many-lines, redefined-outer-name, protected-access

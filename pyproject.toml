@@ -12,7 +12,7 @@ maintainers = [
 ]
 description = "A clear configuration sequence for ArduPilot vehicles"
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["ArduPilot", "Configuration", "SCM", "Methodic", "ArduCopter", "ArduPlane", "ArduRover", "ArduSub"]
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE.md", "LICENSES/*.txt", "credits/CREDITS.md"]
@@ -31,7 +31,6 @@ classifiers = [
     "Natural Language :: Italian",
     "Natural Language :: Japanese",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -47,18 +46,17 @@ dependencies = [
     "argcomplete==3.6.3",
     "certifi==2026.5.20",
     "defusedxml==0.7.1",
-    "jsonschema==4.25.1",
-    "matplotlib==3.9.4; python_version < '3.10'",
-    "matplotlib==3.10.3; python_version >= '3.10' and python_version < '3.14'",
+    "jsonschema==4.26.0",
+    "matplotlib==3.10.3; python_version < '3.14'",
     "matplotlib==3.10.7; python_version >= '3.14'",
     "numpy==2.0.2; python_version < '3.13'",
     "numpy==2.3.4; python_version >= '3.13'",
-    "pillow==11.3.0",
-    "pip_system_certs==4.0",
-    "platformdirs==4.4.0",
+    "pillow==12.2.0",
+    "pip_system_certs==5.3",
+    "platformdirs==4.10.0",
     "pymavlink==2.4.49",
     "pyserial==3.5",
-    "requests==2.32.5",
+    "requests==2.33.0",
     "screeninfo==0.8.1",
     "simpleeval==1.0.7",
 ]
@@ -69,19 +67,19 @@ dynamic = ["version"]
 dev = [
     "coverage==7.10.7",
     "mock==5.2.0",
-    "mypy==1.18.2",
+    "mypy==1.19.1",
     "pre-commit==4.3.0",
-    "pylint==3.3.9",
+    "pylint==4.0.5",
     "pyautogui==0.9.54",
     "pyright==1.1.410",
-    "pytest==8.4.2",
+    "pytest==9.0.3",
     "pytest-cov==7.1.0",
     "pytest-md==0.2.0",
     "pytest-mock==3.15.1",
     "python-gettext==5.0",
-    "ruff==0.15.15",
+    "ruff==0.15.16",
     "types-requests==2.32.4.20260107",
-    "ty==0.0.43",
+    "ty==0.0.46",
 ]
 
 ci_headless_tests = [
@@ -92,30 +90,30 @@ scripts = [
     "bs4==0.0.2",
     "psutil==7.2.2",
     "selenium==4.36.0",
-    "webdriver_manager==4.1.1",
+    "webdriver_manager==4.1.2",
 ]
 
 pypi_dist = [
-    "build==1.4.4",
+    "build==1.5.0",
     "packaging==26.2",
     "setuptools==82.0.1",
 ]
 
 win_dist = [
-    "pip==26.0.1",
-    "pywin32==311",
+    "pip==26.1",
+    "pywin32==312",
     "pyinstaller==6.20.0",
     "packaging==26.2",
 ]
 
 mac_dist = [
-    "pip==26.0.1",
+    "pip==26.1",
     "pyinstaller==6.20.0",
     "packaging==26.2",
 ]
 
 linux_dist = [
-    "pip==26.0.1",
+    "pip==26.1",
     "pyinstaller==6.20.0",
     "packaging==26.2",
 ]
@@ -166,7 +164,7 @@ ignore-words-list = "datas,intoto,juli,laf,ned,parm,sade,sitl,thst,sie,mot,caris
 skip = "*.pdef.xml,*.pdf,*.po"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 exclude = [
     ".git",
     "__pycache__",
@@ -221,7 +219,6 @@ indent-width = 4
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D101", "UP031", "ARG002", "ANN001", "S101", "SLF001"]
-"ardupilot_methodic_configurator/backend_mavftp.py" = ["PGH004", "N801", "ANN001"]
 "ardupilot_methodic_configurator/backend_mavftp_example.py" = ["ANN001"]
 "ardupilot_methodic_configurator/tempcal_imu.py" = ["ANN001"]
 
@@ -297,7 +294,7 @@ exclude = [
     "ardupilot_methodic_configurator/mavftp_example.py",
 ]
 typeCheckingMode = "standard"
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 pythonPlatform = "All"
 deprecateTypingAliases = true
 venvPath = "."

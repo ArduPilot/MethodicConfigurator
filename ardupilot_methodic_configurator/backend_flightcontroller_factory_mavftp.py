@@ -8,7 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 from ardupilot_methodic_configurator.backend_mavftp import MAVFTP
 
@@ -40,7 +40,7 @@ def create_mavftp(master: Union["MavlinkConnection", None]) -> MAVFTP:
 
 def create_mavftp_safe(
     master: Union["MavlinkConnection", None],
-) -> Optional[MAVFTP]:  # pyright: ignore[reportGeneralTypeIssues]
+) -> MAVFTP | None:  # pyright: ignore[reportGeneralTypeIssues]
     """
     Factory function for creating MAVFTP instances with safe error handling.
 

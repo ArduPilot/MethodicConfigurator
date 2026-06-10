@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Sequence
 from logging import info as logging_info
-from typing import Union
 
 from pymavlink import mavutil
 
@@ -86,7 +85,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
 
         self.capabilities.clear()
 
-    def get_info(self) -> dict[str, Union[str, dict[str, str]]]:
+    def get_info(self) -> dict[str, str | dict[str, str]]:
         return {
             _("USB Vendor"): self.vendor_and_vendor_id,
             _("USB Product"): self.product_and_product_id,
@@ -290,7 +289,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
         logging_info("Flight Controller USB vendor ID: %s", self.vendor)
         logging_info("Flight Controller USB product ID: %s", self.product)
 
-    def format_display_value(self, value: Union[str, dict[str, str], None]) -> str:
+    def format_display_value(self, value: str | dict[str, str] | None) -> str:
         """Format a value for display in the UI."""
         if value:
             if isinstance(value, dict):

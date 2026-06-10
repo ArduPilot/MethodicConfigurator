@@ -46,7 +46,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self._flight_controller = flight_controller
         self._creator = VehicleProjectCreator(local_filesystem)
         self._opener = VehicleProjectOpener(local_filesystem)
-        self._settings: Optional[NewVehicleProjectSettings] = None  # It will be set if a new project is created successfully
+        self._settings: NewVehicleProjectSettings | None = None  # It will be set if a new project is created successfully
         self.configuration_template: str = ""  # It will be set if a new project is created successfully
 
     # Directory and path operations
@@ -349,7 +349,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             and self._flight_controller.master is not None
         )
 
-    def fc_parameters(self) -> Optional[dict[str, float]]:
+    def fc_parameters(self) -> dict[str, float] | None:
         """
         Return the flight controller's parameter dictionary if available.
 

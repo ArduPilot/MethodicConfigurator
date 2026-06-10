@@ -18,7 +18,7 @@ from json import load as json_load
 from logging import debug as logging_debug
 from logging import error as logging_error
 from os import path as os_path
-from typing import Any, Union
+from typing import Any
 
 from jsonschema import ValidationError, validate, validators
 
@@ -32,8 +32,8 @@ class FilesystemJSONWithSchema:
     def __init__(self, json_filename: str, schema_filename: str) -> None:
         self.json_filename = json_filename
         self.schema_filename = schema_filename
-        self.data: Union[None, dict[str, Any]] = None
-        self.schema: Union[None, dict[Any, Any]] = None
+        self.data: None | dict[str, Any] = None
+        self.schema: None | dict[Any, Any] = None
         self._data_on_disk: dict[str, Any] = {}
 
     def load_schema(self) -> dict:
@@ -169,7 +169,7 @@ class FilesystemJSONWithSchema:
 
         return False, ""
 
-    def has_unsaved_changes(self, key: Union[str, None] = None) -> bool:
+    def has_unsaved_changes(self, key: str | None = None) -> bool:
         """
         Return True if in-memory data differs from what was last loaded or saved to disk.
 

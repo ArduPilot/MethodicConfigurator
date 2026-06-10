@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -19,7 +19,7 @@ from os import path as os_path
 from os import readlink as os_readlink
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, NoReturn, Optional, Union, no_type_check
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Optional, Union, no_type_check
 
 import serial.tools.list_ports
 import serial.tools.list_ports_common
@@ -123,9 +123,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self,
         info: FlightControllerInfo,
         baudrate: int = DEFAULT_BAUDRATE,
-        network_ports: Optional[list[str]] = None,
-        serial_port_discovery: Optional[SerialPortDiscovery] = None,
-        mavlink_connection_factory: Optional[MavlinkConnectionFactory] = None,
+        network_ports: list[str] | None = None,
+        serial_port_discovery: SerialPortDiscovery | None = None,
+        mavlink_connection_factory: MavlinkConnectionFactory | None = None,
     ) -> None:
         """
         Initialize the connection manager.
@@ -139,12 +139,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         """
         self.info = info
-        self.master: Optional[MavlinkConnection] = None
-        self.comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo, None] = None
+        self.master: MavlinkConnection | None = None
+        self.comport: mavutil.SerialPort | serial.tools.list_ports_common.ListPortInfo | None = None
         self._baudrate = baudrate
         self._network_ports = list(network_ports) if network_ports is not None else self.DEFAULT_NETWORK_PORTS[:]
         self._connection_tuples: list[tuple[str, str]] = []
-        self._logged_connection_tuples: Optional[list[tuple[str, str]]] = None  # None = never logged
+        self._logged_connection_tuples: list[tuple[str, str]] | None = None  # None = never logged
         self._serial_port_discovery: SerialPortDiscovery = serial_port_discovery or SystemSerialPortDiscovery()
         self._mavlink_connection_factory: MavlinkConnectionFactory = (
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
@@ -152,8 +152,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
     def discover_connections(
         self,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
-        preserved_connections: Optional[Sequence[str]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
+        preserved_connections: Sequence[str] | None = None,
     ) -> None:
         """
         Discover all available connections (serial and network ports).
@@ -255,8 +255,8 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def _register_and_try_connect(
         self,
-        comport: Union[mavutil.SerialPort, serial.tools.list_ports_common.ListPortInfo],
-        progress_callback: Union[None, Callable[[int, int], None]],
+        comport: mavutil.SerialPort | serial.tools.list_ports_common.ListPortInfo,
+        progress_callback: None | Callable[[int, int], None],
         baudrate: int,
         log_errors: bool,
         retries: int = 3,
@@ -292,9 +292,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     def connect(
         self,
         device: str,
-        progress_callback: Union[None, Callable[[int, int], None]] = None,
+        progress_callback: None | Callable[[int, int], None] = None,
         log_errors: bool = True,
-        baudrate: Optional[int] = None,
+        baudrate: int | None = None,
     ) -> str:
         """
         Establishes a connection to the FlightController using a specified device.
@@ -390,7 +390,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         baudrate: int = 115200,
         timeout: int = 5,
         retries: int = 3,
-        progress_callback: Union[None, Callable[[int, int], None]] = None,
+        progress_callback: None | Callable[[int, int], None] = None,
     ) -> Union["MavlinkConnection", None]:
         """
         Factory method for creating MAVLink connections.
@@ -613,7 +613,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         return ""
 
-    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, Optional[int]]:
+    def _extract_chibios_version_from_banner(self, banner_msgs: list[str]) -> tuple[str, int | None]:
         """
         Extract ChibiOS version and its index from banner messages.
 
@@ -648,7 +648,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         return os_custom_version, os_custom_version_index
 
-    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: Optional[int]) -> str:
+    def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: int | None) -> str:
         """
         Extract firmware type from banner messages.
 
@@ -691,7 +691,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self.info.set_flight_custom_version(m.flight_custom_version)
         self.info.set_os_custom_version(m.os_custom_version)
 
-    def _process_autopilot_version(self, m: Optional[MAVLink_autopilot_version_message], banner_msgs: list[str]) -> str:
+    def _process_autopilot_version(self, m: MAVLink_autopilot_version_message | None, banner_msgs: list[str]) -> str:
         """
         Process AUTOPILOT_VERSION message and banner messages to extract flight controller info.
 
@@ -801,7 +801,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        progress_callback: Union[None, Callable[[int, int], None]],
+        progress_callback: None | Callable[[int, int], None],
         retries: int = 3,
         timeout: int = 5,
         baudrate: int = DEFAULT_BAUDRATE,

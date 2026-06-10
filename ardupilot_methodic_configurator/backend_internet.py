@@ -18,13 +18,14 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
 from logging import shutdown as logging_shutdown
 from logging import warning as logging_warning
-from typing import Any, Callable, Optional, Union
+from typing import Any
 from urllib.parse import urljoin, urlparse
 from webbrowser import open as webbrowser_open
 
@@ -85,7 +86,7 @@ def _write_response(  # pylint: disable=too-many-arguments, too-many-positional-
     mode: str,
     initial_downloaded: int,
     total_size: int,
-    progress_callback: Optional[Callable[[float, str], None]],
+    progress_callback: Callable[[float, str], None] | None,
 ) -> int:
     """Write HTTP response to disk with progress tracking."""
     downloaded_local = initial_downloaded
@@ -101,7 +102,7 @@ def _write_response(  # pylint: disable=too-many-arguments, too-many-positional-
     return downloaded_local
 
 
-def _get_verify_param() -> Union[str, bool]:
+def _get_verify_param() -> str | bool:
     """
     Return the CA bundle path to use with requests, especially for PyInstaller builds.
 
@@ -146,7 +147,7 @@ def _attempt_download_once(  # pylint: disable=too-many-arguments, too-many-posi
     timeout: int,
     proxies: dict[str, str],
     headers: dict[str, str],
-    progress_callback: Optional[Callable[[float, str], None]],
+    progress_callback: Callable[[float, str], None] | None,
 ) -> bool:
     """
     Perform a single HTTP GET and write the response to disk.
@@ -191,7 +192,7 @@ def download_file_from_url(  # pylint: disable=too-many-arguments, too-many-posi
     url: str,
     local_filename: str,
     timeout: int = 30,
-    progress_callback: Optional[Callable[[float, str], None]] = None,
+    progress_callback: Callable[[float, str], None] | None = None,
     retries: int = 3,
     backoff_factor: float = 0.5,
     allow_resume: bool = True,
@@ -300,7 +301,7 @@ def get_release_info(name: str, should_be_pre_release: bool, timeout: int = 30) 
         raise
 
 
-def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str, timeout: int = 30) -> Optional[str]:
+def get_expected_sha256_from_release(release_info: dict[str, Any], filename: str, timeout: int = 30) -> str | None:
     """
     Try to obtain the expected SHA256 for a release asset.
 
@@ -364,7 +365,7 @@ def _validate_github_url(url: str) -> bool:
     return True
 
 
-def _verify_installer_integrity(path: str, expected_sha256: Optional[str]) -> bool:
+def _verify_installer_integrity(path: str, expected_sha256: str | None) -> bool:
     """Verify SHA256 checksum of downloaded installer if expected hash is provided."""
     if not expected_sha256:
         logging_warning(
@@ -385,7 +386,7 @@ def _verify_installer_integrity(path: str, expected_sha256: Optional[str]) -> bo
     return True
 
 
-def _validate_download_file(path: str, magic_bytes: Optional[bytes] = None, magic_error_msg: str = "") -> bool:
+def _validate_download_file(path: str, magic_bytes: bytes | None = None, magic_error_msg: str = "") -> bool:
     """Validate downloaded file size, optional magic bytes signature, and set secure permissions."""
     try:
         st = os.stat(path)
@@ -433,7 +434,7 @@ def _create_installer_batch_file(temp_dir: str, installer_path: str) -> str:
     return batch_file_path
 
 
-def _launch_installer_and_exit(batch_file_path: str, progress_callback: Optional[Callable[[float, str], None]] = None) -> None:
+def _launch_installer_and_exit(batch_file_path: str, progress_callback: Callable[[float, str], None] | None = None) -> None:
     """Launch the installer batch file and exit the current process."""
     with subprocess.Popen(  # noqa: S602
         [batch_file_path],
@@ -460,8 +461,8 @@ def _launch_installer_and_exit(batch_file_path: str, progress_callback: Optional
 def download_and_install_on_windows(
     download_url: str,
     file_name: str,
-    progress_callback: Optional[Callable[[float, str], None]] = None,
-    expected_sha256: Optional[str] = None,
+    progress_callback: Callable[[float, str], None] | None = None,
+    expected_sha256: str | None = None,
 ) -> bool:
     """
     Download and install a new version of the application on Windows.
@@ -530,7 +531,7 @@ def download_and_install_on_windows(
     return False
 
 
-def _mount_dmg(dmg_path: str) -> Optional[str]:
+def _mount_dmg(dmg_path: str) -> str | None:
     """Mount a DMG file using hdiutil and return the mount point path."""
     try:
         result = subprocess.run(  # noqa: S603
@@ -554,7 +555,7 @@ def _mount_dmg(dmg_path: str) -> Optional[str]:
     return None
 
 
-def _install_app_from_mount(mount_point: str, progress_callback: Optional[Callable[[float, str], None]] = None) -> bool:
+def _install_app_from_mount(mount_point: str, progress_callback: Callable[[float, str], None] | None = None) -> bool:
     """Copy .app bundle from DMG mount point to /Applications using ditto."""
     try:
         apps = [os.path.join(mount_point, f) for f in os.listdir(mount_point) if f.endswith(".app")]
@@ -595,7 +596,7 @@ def _unmount_dmg(mount_point: str) -> None:
 
 def _mount_and_install_dmg(
     temp_path: str,
-    progress_callback: Optional[Callable[[float, str], None]] = None,
+    progress_callback: Callable[[float, str], None] | None = None,
 ) -> bool:
     """Mount the DMG at temp_path, install the .app to /Applications, then unmount."""
     if progress_callback:
@@ -620,8 +621,8 @@ def _mount_and_install_dmg(
 def download_and_install_on_macos(
     download_url: str,
     file_name: str,
-    progress_callback: Optional[Callable[[float, str], None]] = None,
-    expected_sha256: Optional[str] = None,
+    progress_callback: Callable[[float, str], None] | None = None,
+    expected_sha256: str | None = None,
 ) -> bool:
     """
     Download and install a new version of the application on macOS via DMG.
@@ -679,7 +680,7 @@ def download_and_install_on_macos(
     return False
 
 
-def download_and_install_pip_release(progress_callback: Optional[Callable[[float, str], None]] = None) -> int:
+def download_and_install_pip_release(progress_callback: Callable[[float, str], None] | None = None) -> int:
     """Download and install the latest release via pip/uv from PyPI."""
     if progress_callback:
         progress_callback(0.0, _("Starting installation..."))

@@ -41,7 +41,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import pytest
 from pymavlink import mavutil
@@ -591,7 +591,7 @@ def test_user_can_set_multiple_parameters_on_real_sitl(sitl_flight_controller: F
         "BATT_MONITOR": 3.0,  # Type depends on SITL config, using common value
         "BATT_CAPACITY": 5000.0,
     }
-    original_params: dict[str, Optional[float]] = {name: sitl_flight_controller.fetch_param(name) for name in test_params}
+    original_params: dict[str, float | None] = {name: sitl_flight_controller.fetch_param(name) for name in test_params}
 
     try:
         for param_name, value in test_params.items():
@@ -1013,7 +1013,7 @@ def test_battery_status_retrieval_with_real_sitl(sitl_flight_controller: FlightC
         # Wait for SITL to start sending battery messages and poll until data arrives
         wait_window = max(5.0, sitl_flight_controller.BATTERY_STATUS_TIMEOUT * 10)
         deadline = time.time() + wait_window
-        battery_status: Optional[tuple[float, float]] = None
+        battery_status: tuple[float, float] | None = None
         error = ""
         while time.time() < deadline and battery_status is None:
             battery_status, error = sitl_flight_controller.get_battery_status()

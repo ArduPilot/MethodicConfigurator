@@ -18,7 +18,8 @@ import logging
 import statistics
 import time
 import tkinter as tk
-from typing import Callable, NamedTuple
+from collections.abc import Callable
+from typing import NamedTuple
 
 try:
     import psutil

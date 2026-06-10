@@ -8,7 +8,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 
@@ -25,9 +26,9 @@ class RecentItemsHistoryList:
         self,
         settings_key: str,
         max_items: int,
-        normalizer: Optional[Callable[[str], str]] = None,
-        validator: Optional[Callable[[str], None]] = None,
-        comparer: Optional[Callable[[str], str]] = None,
+        normalizer: Callable[[str], str] | None = None,
+        validator: Callable[[str], None] | None = None,
+        comparer: Callable[[str], str] | None = None,
     ) -> None:
         """
         Initialize a history list manager.

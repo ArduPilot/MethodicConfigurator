@@ -42,7 +42,6 @@ from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
-from typing import Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
@@ -55,7 +54,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
 
     def __init__(
         self,
-        master: Union[tk.Widget, tk.Tk],
+        master: tk.Widget | tk.Tk,
         sorted_phases: dict[str, PhaseData],
         total_steps: int,
         gui_complexity: str,
@@ -65,7 +64,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         self.phases = sorted_phases
         self.total_files = total_steps
         self.phase_frames: dict[str, ttk.Frame] = {}
-        self.phase_bars: list[dict[str, Union[ttk.Progressbar, int]]] = []
+        self.phase_bars: list[dict[str, ttk.Progressbar | int]] = []
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -145,7 +144,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(frame, tooltip_msg)
         return frame
 
-    def _on_resize(self, _event: Union[tk.Event, None] = None) -> None:
+    def _on_resize(self, _event: tk.Event | None = None) -> None:
         """Update progress bar and label widths when window is resized."""
         if not self.phase_frames:
             return

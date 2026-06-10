@@ -13,7 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -27,7 +26,7 @@ def _validate_parent(parent: tk.Tk) -> bool:
     return bool(parent and parent.winfo_exists())
 
 
-def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> Union[BaseWindow, None]:
+def display_workflow_explanation(parent: tk.Tk | None = None) -> BaseWindow | None:
     """
     Display the workflow explanation popup window.
 
@@ -91,7 +90,7 @@ def display_workflow_explanation(parent: Optional[tk.Tk] = None) -> Union[BaseWi
     return popup_window
 
 
-def display_component_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
+def display_component_editor_usage_popup(parent: tk.Tk) -> BaseWindow | None:
     if not _validate_parent(parent):
         return None
 
@@ -160,7 +159,7 @@ def confirm_component_properties(parent: tk.Tk) -> bool:
     )
 
 
-def display_parameter_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
+def display_parameter_editor_usage_popup(parent: tk.Tk) -> BaseWindow | None:
     if not _validate_parent(parent):
         return None
 
@@ -221,7 +220,7 @@ def display_parameter_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, Non
     return usage_popup_window
 
 
-def display_bitmask_parameters_editor_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
+def display_bitmask_parameters_editor_usage_popup(parent: tk.Tk) -> BaseWindow | None:
     if not _validate_parent(parent):
         return None
 
@@ -253,7 +252,7 @@ def display_bitmask_parameters_editor_usage_popup(parent: tk.Tk) -> Union[BaseWi
     return usage_popup_window
 
 
-def only_upload_changed_parameters_usage_popup(parent: tk.Tk) -> Union[BaseWindow, None]:
+def only_upload_changed_parameters_usage_popup(parent: tk.Tk) -> BaseWindow | None:
     if not _validate_parent(parent):
         return None
 

@@ -19,7 +19,6 @@ import logging
 import os
 import shutil
 import subprocess
-from typing import Optional
 
 SEQUENCE_FILENAME = "configuration_steps_ArduCopter.json"
 # Extra files (Python scripts, YAML workflows, etc.) whose content references
@@ -239,7 +238,7 @@ def update_old_filenames_in_json_file(json_path: str) -> None:
         f.writelines(new_lines)
 
 
-def _git_executable() -> Optional[str]:
+def _git_executable() -> str | None:
     """Return the absolute path to the git executable, or None if unavailable."""
     return shutil.which("git")
 

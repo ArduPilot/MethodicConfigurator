@@ -16,7 +16,7 @@ from logging import warning as logging_warning
 from math import isfinite
 from os import path as os_path
 from re import search as re_search
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, TypedDict
 
 # from sys import exit as sys_exit
 from jsonschema import validate as json_validate
@@ -310,7 +310,7 @@ class ConfigurationSteps:
 
     def _eval_new_value(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        new_value_expr: Union[str, float, bool],
+        new_value_expr: str | float | bool,
         filename: str,
         parameter: str,
         parameter_type: str,
@@ -464,7 +464,27 @@ class ConfigurationSteps:
                 return self._handle_param_error(error_msg, parameter_type, ignore_fc_derived_param_warnings)
 
             self._ensure_file_entry(destination, filename)
-            change_reason = _(parameter_info["Change Reason"]) if parameter_info["Change Reason"] else ""
+            change_reason_expr = parameter_info["Change Reason"]
+            if change_reason_expr:
+                # Only evaluate as an expression when it looks like a conditional (contains 'if'/'else')
+                # to avoid the overhead of safe_evaluate for plain literal strings (~99% of cases)
+                if " if " in change_reason_expr and " else " in change_reason_expr:
+                    try:
+                        evaluated_reason = safe_evaluate(str(change_reason_expr), variables)
+                        change_reason = _(str(evaluated_reason)) if evaluated_reason else ""
+                    except ConfigurationStepEvalError:
+                        logging_warning(
+                            _("In file '%s': '%s' %s parameter '%s' 'Change Reason' could not be evaluated, using raw string"),
+                            self.configuration_steps_filename,
+                            filename,
+                            parameter_type,
+                            parameter,
+                        )
+                        change_reason = _(change_reason_expr)
+                else:
+                    change_reason = _(change_reason_expr)
+            else:
+                change_reason = ""
             destination[filename][parameter] = Par(float(result), change_reason)
         except (SyntaxError, NameError, KeyError, ValueError, TypeError) as e:
             error_msg = _(
@@ -527,14 +547,22 @@ class ConfigurationSteps:
                 errors.append(error_msg)
         return "\n".join(errors)
 
-    def compute_add_parameters(
-        self, filename: str, file_info: dict, variables: dict, existing_params: Optional[ParDict] = None
+    def compute_add_parameters(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        filename: str,
+        file_info: dict,
+        variables: dict,
+        existing_params: ParDict | None = None,
+        parameters_to_delete: set[str] | None = None,
     ) -> None:
         """
         Compute the add_parameters for a given configuration file.
 
         Entries whose 'if' condition evaluates to False are skipped. Any stale entries
         from a previous call for this file are cleared first.
+
+        Parameters that appear in ``delete_parameters`` (and whose delete condition passes)
+        are skipped because ``delete_parameters`` takes priority over ``add_parameters``.
 
         For parameters with conditions referencing ``fc_parameters``, automatically skips
         evaluation when ``fc_parameters`` is not available (e.g., when no FC is connected).
@@ -553,6 +581,8 @@ class ConfigurationSteps:
             if not self._condition_passes(parameter_info, variables):
                 continue
             if existing_params is not None and parameter in existing_params:
+                continue
+            if parameters_to_delete is not None and parameter in parameters_to_delete:
                 continue
             if "New Value" in parameter_info:
                 result, error_msg = self._eval_new_value(parameter_info["New Value"], filename, parameter, "add", variables)
@@ -669,7 +699,7 @@ class ConfigurationSteps:
 
         return sorted_phases
 
-    def get_component(self, selected_file: str) -> Optional[str]:
+    def get_component(self, selected_file: str) -> str | None:
         """
         Get the component name for the selected file.
 
@@ -684,7 +714,7 @@ class ConfigurationSteps:
             return self.configuration_steps[selected_file].get("component")
         return None
 
-    def get_plugin(self, selected_file: str) -> Optional[dict]:
+    def get_plugin(self, selected_file: str) -> dict | None:
         """
         Get the plugin configuration for the selected file.
 
@@ -699,7 +729,7 @@ class ConfigurationSteps:
             return self.configuration_steps[selected_file].get("plugin")
         return None
 
-    def get_instructions_popup(self, selected_file: str) -> Optional[dict]:
+    def get_instructions_popup(self, selected_file: str) -> dict | None:
         """Get the instructions popup configuration for the selected file."""
         if selected_file in self.configuration_steps:
             return self.configuration_steps[selected_file].get("instructions_popup")

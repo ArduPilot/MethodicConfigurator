@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import re
 from logging import info as logging_info
 from logging import warning as logging_warning
-from typing import Any, Optional
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -90,11 +90,19 @@ class ConfigurationStepProcessor:
         duplicates_to_remove: set[str] = set()
         renames_to_apply: list[tuple[str, str]] = []
         derived_params_to_apply: ParDict = ParDict()
+        parameters_to_delete: set[str] = set()
 
         # Process configuration step operations if configuration steps exist
         if self.local_filesystem.configuration_steps and selected_file in self.local_filesystem.configuration_steps:
             variables = self.variables.copy()
             variables["fc_parameters"] = fc_parameters
+
+            # Compute forced parameters (does NOT mutate filesystem.file_parameters)
+            error_msg = self.local_filesystem.compute_parameters(
+                selected_file, self.local_filesystem.configuration_steps[selected_file], "forced", variables
+            )
+            if error_msg:
+                ui_errors.append((_("Error in forced parameters"), error_msg))
 
             # Compute derived parameters (does NOT mutate filesystem.file_parameters)
             error_msg = self.local_filesystem.compute_parameters(
@@ -106,13 +114,16 @@ class ConfigurationStepProcessor:
             elif selected_file in self.local_filesystem.derived_parameters:
                 # Filter derived parameters that exist in FC (if fc_parameters provided)
                 fc_param_keys = set(fc_parameters.keys()) if fc_parameters else set()
-                existing_param_names = set(self.local_filesystem.file_parameters.get(selected_file, ParDict()).keys())
                 for param_name, param in self.local_filesystem.derived_parameters[selected_file].items():
-                    if param_name not in existing_param_names:
-                        continue
                     # Only include if no FC filter OR parameter exists in FC
                     if not fc_param_keys or param_name in fc_param_keys:
                         derived_params_to_apply[param_name] = param
+
+            # Compute deletions first so they can be passed to both compute_add_parameters and _apply_auto_imports,
+            # avoiding redundant evaluate calls.
+            parameters_to_delete = self.local_filesystem.compute_deletions(
+                selected_file, self.local_filesystem.configuration_steps[selected_file], variables
+            )
 
             # Compute add_parameters (does NOT mutate filesystem.file_parameters)
             self.local_filesystem.compute_add_parameters(
@@ -120,6 +131,7 @@ class ConfigurationStepProcessor:
                 self.local_filesystem.configuration_steps[selected_file],
                 variables,
                 existing_params=self.local_filesystem.file_parameters.get(selected_file),
+                parameters_to_delete=parameters_to_delete,
             )
 
             # Populate new_connection_prefix from rename_connection configuration step (per-step scope)
@@ -140,7 +152,7 @@ class ConfigurationStepProcessor:
         current_step_parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
 
         # Apply auto-imports for the current step
-        self._apply_auto_imports(selected_file, fc_parameters, current_step_parameters)
+        self._apply_auto_imports(selected_file, fc_parameters, current_step_parameters, parameters_to_delete)
 
         # Check for ExpressLRS and add FLTMODE_CH warning
         if current_step_parameters.get("RC_OPTIONS") is not None or current_step_parameters.get("FLTMODE_CH") is not None:
@@ -166,15 +178,22 @@ class ConfigurationStepProcessor:
         selected_file: str,
         fc_parameters: dict[str, float],
         current_step_parameters: dict[str, ArduPilotParameter],
+        parameters_to_delete: set[str] | None = None,
     ) -> None:
         """Automatically import non-default FC parameters matching regex rules into the domain model."""
         step_dict = self.local_filesystem.configuration_steps.get(selected_file, {})
         if "autoimport_nondefault_regexp" not in step_dict or not fc_parameters:
             return
 
+        # Parameters that will be deleted take priority; skip auto-importing them
+        if parameters_to_delete is None:
+            parameters_to_delete = set()
+
         regex_rules = step_dict["autoimport_nondefault_regexp"]
         for live_key, live_value in fc_parameters.items():
             if live_key in current_step_parameters:
+                continue
+            if live_key in parameters_to_delete:
                 continue
 
             is_matching_regex = any(re.match(pattern, live_key) for pattern in regex_rules)
@@ -332,7 +351,7 @@ class ConfigurationStepProcessor:
 
     @staticmethod
     def calculate_connection_rename_operations(
-        parameters: ParDict, new_connection_prefix: str, variables: Optional[dict[str, Any]] = None
+        parameters: ParDict, new_connection_prefix: str, variables: dict[str, Any] | None = None
     ) -> tuple[set[str], list[tuple[str, str]]]:
         """
         Calculate connection prefix rename operations without mutating the parameters dictionary.

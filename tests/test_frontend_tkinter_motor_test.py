@@ -15,7 +15,7 @@ from __future__ import annotations
 from importlib import import_module
 from tkinter import Event, ttk
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Callable, cast  # pylint: disable=unused-import
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -38,7 +38,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_motor_test import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
+    from typing import Any
 
 
 # pylint: disable=redefined-outer-name, too-few-public-methods, protected-access, raising-bad-type

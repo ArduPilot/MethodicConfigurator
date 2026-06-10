@@ -15,11 +15,14 @@
             "forced_parameters": {
                 "INS_TCAL1_ENABLE": { "New Value": 2, "Change Reason": "Activates the temperature calibration for IMU 1 at the next start" },
                 "LOG_BITMASK": { "New Value": 65535, "Change Reason": "Only for IMU and Raw-IMU" },
-                "LOG_DISARMED": { "New Value": 1, "Change Reason": "Gather data for the offline IMU temperature calibration while the FC is disarmed" }
+                "LOG_DISARMED": { "New Value": 1, "Change Reason": "Gather data for the offline IMU temperature calibration while the FC is disarmed" },
+                "INS_RAW_LOG_OPT": { "New Value": "0", "Change Reason": "No need to log raw data for IMU temperature calibration" }
             },
             "derived_parameters": {
                 "INS_TCAL2_ENABLE": { "if": "'INS_TCAL2_ENABLE' in fc_parameters", "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 2 at the next start" },
-                "INS_TCAL3_ENABLE": { "if": "'INS_TCAL3_ENABLE' in fc_parameters", "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 3 at the next start" },
+                "INS_TCAL3_ENABLE": { "if": "'INS_TCAL3_ENABLE' in fc_parameters", "New Value": "2", "Change Reason": "Activates the temperature calibration for IMU 3 at the next start" }
+            },
+            "add_parameters": {
                 "BRD_HEAT_TARG": { "if": "'BRD_HEAT_TARG' in fc_parameters", "New Value": "65", "Change Reason": "Reasonable for most places on this planet" }
             },
             "delete_parameters": {
@@ -43,7 +46,7 @@
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["INS_TCAL1_.*", "INS_TCAL2_.*", "INS_TCAL3_.*"],
             "add_parameters": {
-                "INS_TCAL2_ENABLE":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
+                "INS_TCAL2_ENABLE":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters", "Change Reason": "After a successful IMU temperature calibration, the FC will automatically set this to 1" },
                 "INS_TCAL2_TMIN":    { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
                 "INS_TCAL2_TMAX":    { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
                 "INS_TCAL2_ACC1_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
@@ -64,7 +67,7 @@
                 "INS_TCAL2_GYR3_X":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
                 "INS_TCAL2_GYR3_Y":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
                 "INS_TCAL2_GYR3_Z":  { "if": "'INS_TCAL2_ENABLE' in fc_parameters" },
-                "INS_TCAL3_ENABLE":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
+                "INS_TCAL3_ENABLE":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters", "Change Reason": "After a successful IMU temperature calibration, the FC will automatically set this to 1" },
                 "INS_TCAL3_TMIN":    { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
                 "INS_TCAL3_TMAX":    { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
                 "INS_TCAL3_ACC1_X":  { "if": "'INS_TCAL3_ENABLE' in fc_parameters" },
@@ -146,8 +149,9 @@
             "forced_parameters": {
                 "LOG_DISARMED": { "New Value": 0, "Change Reason": "IMU temperature calibration is finished, we no longer need to log data when disarmed" }
             },
-            "derived_parameters": {
-                "BRD_HEAT_TARG": { "if": "'BRD_HEAT_TARG' in fc_parameters", "New Value": "45", "Change Reason": "Reset to default after offline IMU temperature calibration" }
+            "add_parameters": {
+                "BRD_HEAT_TARG": { "if": "'BRD_HEAT_TARG' in fc_parameters", "New Value": "45", "Change Reason": "Reset to default after offline IMU temperature calibration" },
+                "BRD_HEAT_LOWMGN": { "if": "'BRD_HEAT_LOWMGN' in fc_parameters", "New Value": "0", "Change Reason": "Now that IMC temperature is calibrated, arm ASAP" }
             },
             "delete_parameters": {
                 "BRD_HEAT_TARG":  { "if": "'BRD_HEAT_TARG' not in fc_parameters" }
@@ -533,7 +537,8 @@
                 "INS_HNTCH_ENABLE": { "New Value": 1, "Change Reason": "Use the first notch filter to filter the noise created by the motors/propellers" }
             },
             "derived_parameters": {
-                "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" }
+                "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" },
+                "INS_HNTCH_MODE": { "New Value": "1 if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 3", "Change Reason": "'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'" }
             },
             "old_filenames": ["17_notch_filter_setup.param", "18_notch_filter_setup.param"]
         },
