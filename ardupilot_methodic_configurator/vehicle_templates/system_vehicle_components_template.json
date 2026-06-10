@@ -951,7 +951,7 @@
                     "Type": "None",
                     "Protocol": "None"
                 },
-                "Notes": "Main Out connectie want All in one has the current and the pwm modulation for the ESC's"
+                "Notes": "Requires normal PWM signals, but does provide current sum analog output"
             }
         },
         {
