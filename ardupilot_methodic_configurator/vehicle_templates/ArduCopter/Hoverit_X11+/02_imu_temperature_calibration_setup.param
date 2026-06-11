@@ -1,4 +1,5 @@
 BRD_HEAT_TARG,65  # Reasonable for most places on this planet
+INS_RAW_LOG_OPT,0  # No need to log raw data for IMU temperature calibration
 INS_TCAL1_ENABLE,2  # Activates the temperature calibration for IMU 1 at the next start
 INS_TCAL1_TMAX,70  # CubeOrange has an heater that heats up the board to almost 70 deg
 INS_TCAL2_ENABLE,2  # Activates the temperature calibration for IMU 2 at the next start

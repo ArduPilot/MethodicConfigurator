@@ -1,4 +1,4 @@
 MOT_PWM_TYPE,6  # Specified in component editor window
 SERIAL5_BAUD,115  # bi-directional DShot telemetry data rate from T-Motor F45 4in1 ESC V2
-SERIAL5_PROTOCOL,16  # bi-directional DShot telemetry pin is connected to SERIAL5
+SERIAL5_PROTOCOL,16  # Defined in ESC specifications above
 SERVO_BLH_TRATE,5  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry

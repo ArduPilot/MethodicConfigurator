@@ -1,3 +1,3 @@
 MOT_PWM_TYPE,0  # Specified in component editor window
 SERIAL1_BAUD,57  # FETtec one-wire data rate
-SERIAL1_PROTOCOL,38  # FETtec one-wire is connected to SERIAL1
+SERIAL1_PROTOCOL,38  # Defined in ESC specifications above
