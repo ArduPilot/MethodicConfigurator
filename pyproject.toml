@@ -192,25 +192,22 @@ lint.select = ["ALL"]
 lint.ignore = [
     "ERA",     # eradicate
     "BLE",     # flake8-blind-except
-    "CPY",     # flake8-copyright
     "PTH",     # flake8-use-pathlib
-    "DOC",     # pydoclint
     "TRY",     # tryceratops
     "ISC001",  # to let formatter run
-    "ANN002",
-    "ANN003",
+    "ANN002",  # Missing type annotation for `*args`
+    "ANN003",  # Missing type annotation for `**kwargs`
     "D102",    # Missing docstring in public method
     "D103",    # Missing docstring in public function
     "D107",    # Missing docstring in `__init__`
-    "D203",    #
+    "D203",    # incorrect-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
     "D212",    # Multi-line docstring summary should start at the first line
     "D401",    # First line of docstring should be in imperative mood
-    "COM812",
+    "COM812",  # Trailing comma missing
     "DTZ005",  # `tz=None` passed to `datetime.datetime.now()`
     "FBT001",  # Boolean-typed positional argument in function definition
     "FBT002",  # Boolean default positional argument in function definition
     "LOG015",  # `error()` call on root logger, Use own logger instead
-    "FA100",   # Add `from __future__ import annotations` to simplify xxx
     "TRY400",  # Use logging.exception instead of logging.error
 ]
 
@@ -223,7 +220,7 @@ indent-width = 4
 "ardupilot_methodic_configurator/tempcal_imu.py" = ["ANN001"]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 22  # Default is 10
+max-complexity = 21  # Default is 10
 
 [tool.ruff.lint.pylint]
 allow-magic-value-types = ["bytes", "float", "int", "str"]
