@@ -1,2 +1,3 @@
 MOT_PWM_TYPE,0  # Specified in component editor window
 SCR_ENABLE,1  # ESC RPM telemetry requires lua scripting
+SERIAL2_PROTOCOL,28  # Defined in ESC specifications above
