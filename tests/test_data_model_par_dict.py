@@ -174,7 +174,6 @@ class TestParTolerance:
         """
         # Inf values are invalid and should never reach this function.
         # is_within_tolerance behaviour with Inf is therefore undefined/untested by design.
-        pass
 
     def test_is_within_tolerance_nan_values(self) -> None:
         """
