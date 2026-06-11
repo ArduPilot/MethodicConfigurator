@@ -65,7 +65,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "coverage==7.10.7",
+    "coverage==7.14.1",
     "mock==5.2.0",
     "mypy==1.19.1",
     "pre-commit==4.3.0",
