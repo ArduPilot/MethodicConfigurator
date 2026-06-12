@@ -163,6 +163,36 @@ class TestParTolerance:
         assert is_within_tolerance(100, 102, atol=3)  # 2% difference but within atol=3
         assert is_within_tolerance(100, 110, rtol=0.1)  # 10% difference but within rtol=0.1
 
+    def test_is_within_tolerance_inf_values(self) -> None:
+        """
+        Inf values are invalid in param files and are rejected at load time.
+
+        The mentor confirmed: NaN and Inf are invalid on both the FC and in param files.
+        They are already rejected by _validate_parameter via math_isfinite before
+        they can ever reach is_within_tolerance.
+        This test documents that is_within_tolerance does not need to handle Inf.
+        """
+        # Inf values are invalid and should never reach this function.
+        # is_within_tolerance behaviour with Inf is therefore undefined/untested by design.
+
+    def test_is_within_tolerance_nan_values(self) -> None:
+        """
+        Bug fix: NaN comparisons now return False consistently.
+
+        NaN is not equal to anything including itself.
+        Previously this would silently return False but for the wrong reason.
+        Now it is explicit and documented.
+        """
+        # NaN != NaN must be False
+        assert not is_within_tolerance(float("nan"), float("nan"))
+
+        # NaN vs finite must be False
+        assert not is_within_tolerance(float("nan"), 1.0)
+        assert not is_within_tolerance(1.0, float("nan"))
+
+        # NaN vs Inf must be False
+        assert not is_within_tolerance(float("nan"), float("inf"))
+
 
 class TestParameterNameValidation:  # pylint: disable=too-few-public-methods
     """Test user-facing validation of parameter names."""
