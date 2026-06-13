@@ -85,11 +85,15 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
     def is_fc_manufacturer_valid(self, manufacturer: str) -> bool:
         """Is flight controller manufacturer data valid."""
-        return bool(manufacturer and manufacturer not in (_("Unknown"), "ArduPilot"))
+        if not manufacturer:
+            return False
+        return manufacturer.strip().lower() not in (_("Unknown").lower(), "ardupilot")
 
     def is_fc_model_valid(self, model: str) -> bool:
         """Is flight controller model data valid."""
-        return bool(model and model not in (_("Unknown"), "MAVLink"))
+        if not model:
+            return False
+        return model.strip().lower() not in (_("Unknown").lower(), "mavlink")
 
     @staticmethod
     def _reverse_key_search(
