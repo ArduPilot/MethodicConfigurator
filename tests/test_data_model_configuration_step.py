@@ -773,6 +773,36 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         assert "CAN_P1_DRIVER" in renamed_dict
         assert "SERIAL1_PROTOCOL" not in renamed_dict
 
+    def test_generate_connection_renames_multidigit_battery_prefix(self) -> None:
+        """
+        Bug fix: multi-digit connection numbers (e.g. BATT12) were parsed incorrectly.
+
+        Previously new_connection_prefix[:-1] and [-1] only handled single-digit
+        numbers. "BATT12" was split into type="BATT1", number="2" instead of
+        type="BATT", number="12".
+        """
+        parameters = ["BATT1_MONITOR", "BATT1_CAPACITY"]
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "BATT12")
+
+        assert renames == {
+            "BATT1_MONITOR": "BATT12_MONITOR",
+            "BATT1_CAPACITY": "BATT12_CAPACITY",
+        }
+
+    def test_generate_connection_renames_single_digit_still_works(self) -> None:
+        """Single-digit connection prefixes must continue to work after the fix."""
+        parameters = ["CAN1_DRIVER"]
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN2")
+
+        assert renames == {"CAN1_DRIVER": "CAN2_DRIVER"}
+
+    def test_generate_connection_renames_invalid_prefix_returns_empty(self) -> None:
+        """A prefix with no trailing digits returns an empty rename dict."""
+        parameters = ["CAN1_DRIVER"]
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN")
+
+        assert renames == {}
+
 
 class TestConfigurationStepProcessorErrorHandling:
     """Test error handling and edge cases in configuration processing."""
