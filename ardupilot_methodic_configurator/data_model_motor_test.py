@@ -205,6 +205,13 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     break
 
         if self._motor_count == 0:
+            if self._frame_class == 0:
+                logging_error(
+                    _("No motor configuration found for frame class %d and type %d"),
+                    self._frame_class,
+                    self._frame_type,
+                )
+                return
             raise RuntimeError(
                 _("No motor configuration found for frame class %(class)d and type %(type)d")
                 % {"class": self._frame_class, "type": self._frame_type}
