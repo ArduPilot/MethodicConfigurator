@@ -1620,7 +1620,7 @@ class TestComponentDataModelValidationUncoveredBranches:
 
         basic_model._update_possible_choices_for_path(("Battery Monitor", "FC Connection", "Type"), "None")
 
-        assert basic_model._possible_choices[("Battery Monitor", "FC Connection", "Protocol")] == ("None",)
+        assert basic_model._possible_choices[("Battery Monitor", "FC Connection", "Protocol")] == ("Disabled",)
 
     def test_system_restricts_esc_protocols_to_none_for_none_connection(self, basic_model) -> None:
         """

@@ -181,7 +181,7 @@ class TestValidationInternals:  # pylint: disable=too-many-public-methods
         model._update_possible_choices_for_path(("Battery Monitor", "FC Connection", "Type"), "None")
         protocol_choices = model._possible_choices.get(("Battery Monitor", "FC Connection", "Protocol"), ())
 
-        assert protocol_choices == ("None",)
+        assert protocol_choices == ("Disabled",)
 
     def test_update_possible_choices_for_battery_monitor_analog(self, realistic_model) -> None:
         """Test _update_possible_choices_for_path with Battery Monitor analog connection."""

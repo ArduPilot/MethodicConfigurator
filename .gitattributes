@@ -4,3 +4,4 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 *.prompt.yml linguist-language=YAML
+*.xml text eol=lf
