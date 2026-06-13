@@ -368,7 +368,13 @@ def _validate_github_url(url: str) -> bool:
 def _verify_installer_integrity(path: str, expected_sha256: str | None) -> bool:
     """Verify SHA256 checksum of downloaded installer if expected hash is provided."""
     if not expected_sha256:
-        logging_warning(_("could not get expected SHA256 checksum from github.com"))
+        logging_warning(
+            _(
+                "Could not get SHA256 checksum from github.com. "
+                "The installer integrity could not be verified. "
+                "Proceeding with installation, but exercise caution."
+            )
+        )
         return True
 
     actual_hash = _compute_sha256(path)
