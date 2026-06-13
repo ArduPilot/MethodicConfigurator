@@ -15,13 +15,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import contextlib
+import logging
 import re
 
 import argcomplete
 from argcomplete.completers import FilesCompleter
 from pymavlink import mavutil
 
-NO_DEFAULT_VALUES_MESSAGE = "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version"
+NO_DEFAULT_VALUES_MESSAGE = (
+    "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version."
+)
 PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
 PARAM_NAME_MAX_LEN = 16
 MAVLINK_SYSID_MAX = 2**24
@@ -82,7 +85,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_arguments(args: None | argparse.Namespace = None) -> argparse.Namespace:
+def parse_arguments(args: None | list[str] = None) -> argparse.Namespace:
     """
     Parses command line arguments for the script.
 
@@ -94,24 +97,20 @@ def parse_arguments(args: None | argparse.Namespace = None) -> argparse.Namespac
 
     """
     parser = create_argument_parser()
-    args, _ = parser.parse_known_args(args)  # type: ignore[arg-type]
+    parsed_args, _ = parser.parse_known_args(args)
 
-    if args is None:
-        msg = "No arguments provided"
-        raise ValueError(msg)
+    if parsed_args.sort == "":
+        parsed_args.sort = parsed_args.format
 
-    if args.sort == "":
-        args.sort = args.format
-
-    if args.format != "qgcs":
-        if args.sysid != -1:
+    if parsed_args.format != "qgcs":
+        if parsed_args.sysid != -1:
             msg = "--sysid parameter is only relevant if --format is qgcs"
             raise SystemExit(msg)
-        if args.compid != -1:
+        if parsed_args.compid != -1:
             msg = "--compid parameter is only relevant if --format is qgcs"
             raise SystemExit(msg)
 
-    return args
+    return parsed_args
 
 
 def open_log(logfile: str) -> mavutil.mavfile:
@@ -130,7 +129,7 @@ def open_log(logfile: str) -> mavutil.mavfile:
     except Exception as e:
         msg = f"Error opening the {logfile} logfile: {e!s}"
         raise SystemExit(msg) from e
-    return mlog
+    return mlog  # pyright: ignore[reportReturnType]  # pymavlink stubs include CSVReader which doesn't extend mavfile
 
 
 def close_log(mlog: mavutil.mavfile) -> None:
@@ -141,13 +140,58 @@ def close_log(mlog: mavutil.mavfile) -> None:
         mlog: The mavutil.mavfile connection to close.
 
     """
-    close_method = getattr(mlog, "close", None)
-    if callable(close_method):
-        with contextlib.suppress(OSError):
-            close_method()
+    with contextlib.suppress(OSError):
+        mlog.close()
 
 
-def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict[str, float]:  # pylint: disable=too-many-branches
+def _get_parm_value(m: object, pname: str, param_type: str) -> float | None:
+    """
+    Extract the float value from a PARM message for the requested param_type.
+
+    Args:
+        m: A MAVLink PARM message object.
+        pname: The parameter name (used only for log messages).
+        param_type: One of 'defaults', 'values', or 'non_default_values'.
+
+    Returns:
+        The extracted float value, or None if the message should be skipped.
+
+    """
+    if param_type == "defaults":
+        default_val = getattr(m, "Default", None)
+        if default_val is None:
+            logging.debug("PARM message for %s has no Default field; skipping.", pname)
+            return None
+        try:
+            return float(default_val)
+        except ValueError as e:
+            msg = f"Error converting {default_val} to float"
+            raise SystemExit(msg) from e
+    if param_type == "values":
+        value_val = getattr(m, "Value", None)
+        if value_val is None:
+            logging.debug("PARM message for %s has no Value field; skipping.", pname)
+            return None
+        try:
+            return float(value_val)
+        except ValueError as e:
+            msg = f"Error converting {value_val} to float"
+            raise SystemExit(msg) from e
+    if param_type == "non_default_values":
+        value_val = getattr(m, "Value", None)
+        default_val = getattr(m, "Default", None)
+        if value_val is None or default_val is None or value_val == default_val:
+            return None
+        try:
+            return float(value_val)
+        except ValueError as e:
+            msg = f"Error converting {value_val} to float"
+            raise SystemExit(msg) from e
+    msg = f"Invalid type {param_type}"
+    raise SystemExit(msg)
+
+
+def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict[str, float]:
     """
     Extracts the parameter values from an ArduPilot .bin log file.
 
@@ -160,14 +204,12 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
 
     """
     mlog = open_log(logfile)
+    values: dict[str, float] = {}
     try:
-        values: dict[str, float] = {}
         while True:
             m = mlog.recv_match(type=["PARM"])
             if m is None:
-                if not values:
-                    raise SystemExit(NO_DEFAULT_VALUES_MESSAGE)
-                return values
+                break
             pname = str(m.Name)
             if len(pname) > PARAM_NAME_MAX_LEN:
                 msg = f"Too long parameter name: {pname}"
@@ -178,32 +220,14 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
             # parameter names are supposed to be unique
             if pname in values:
                 continue
-            if param_type == "defaults":
-                if hasattr(m, "Default") and m.Default is not None:
-                    try:
-                        values[pname] = float(m.Default)
-                    except ValueError as e:
-                        msg = f"Error converting {m.Default} to float"
-                        raise SystemExit(msg) from e
-            elif param_type == "values":
-                if hasattr(m, "Value") and m.Value is not None:
-                    try:
-                        values[pname] = float(m.Value)
-                    except ValueError as e:
-                        msg = f"Error converting {m.Value} to float"
-                        raise SystemExit(msg) from e
-            elif param_type == "non_default_values":
-                if hasattr(m, "Value") and hasattr(m, "Default") and m.Value != m.Default and m.Value is not None:
-                    try:
-                        values[pname] = float(m.Value)
-                    except ValueError as e:
-                        msg = f"Error converting {m.Value} to float"
-                        raise SystemExit(msg) from e
-            else:
-                msg = f"Invalid type {param_type}"
-                raise SystemExit(msg)
+            value = _get_parm_value(m, pname, param_type)
+            if value is not None:
+                values[pname] = value
     finally:
         close_log(mlog)
+    if not values:
+        raise SystemExit(NO_DEFAULT_VALUES_MESSAGE)
+    return values
 
 
 def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, int, int]:
@@ -301,7 +325,7 @@ def sort_params(params: dict[str, float], sort_type: str = "none") -> dict[str, 
     elif sort_type == "mavproxy":
         params = dict(sorted(params.items(), key=lambda x: mavproxy_sort(x[0])))
     elif sort_type == "qgcs":
-        params = {k: params[k] for k in sorted(params)}
+        params = dict(sorted(params.items(), key=lambda x: x[0]))
     return params
 
 
@@ -319,9 +343,6 @@ def output_params(
         format_type: The output file format. Can be 'missionplanner', 'mavproxy' or 'qgcs'.
         sysid: MAVLink System ID
         compid: MAVLink component ID
-
-    Returns:
-        None
 
     """
     if format_type == "qgcs":
