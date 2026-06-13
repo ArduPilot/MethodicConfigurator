@@ -770,7 +770,8 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         assert "SERIAL1_PROTOCOL" not in renamed_dict
 
     def test_generate_connection_renames_multidigit_battery_prefix(self) -> None:
-        """Bug fix: multi-digit connection numbers (e.g. BATT12) were parsed incorrectly.
+        """
+        Bug fix: multi-digit connection numbers (e.g. BATT12) were parsed incorrectly.
 
         Previously new_connection_prefix[:-1] and [-1] only handled single-digit
         numbers. "BATT12" was split into type="BATT1", number="2" instead of
@@ -797,6 +798,7 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN")
 
         assert renames == {}
+
 
 class TestConfigurationStepProcessorErrorHandling:
     """Test error handling and edge cases in configuration processing."""
