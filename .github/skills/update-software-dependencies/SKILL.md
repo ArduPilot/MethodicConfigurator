@@ -1,3 +1,8 @@
+---
+name: update-software-dependencies
+description: 'Add or update software dependencies following the REUSE compliance workflow. Use when adding packages to pyproject.toml, updating credits/CREDITS.md, running credits/update_credits_licenses.py to download license files, adding REUSE.toml annotations, and verifying reuse lint and pre-commit hooks pass.'
+---
+
 <!--
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 

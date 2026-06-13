@@ -20,10 +20,10 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 # Add the parent directory to the path to import the script
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../.github/skills/update-gui-translations/scripts")))
 
 # pylint: disable=wrong-import-position
-import extract_missing_translations
+import extract_missing_translations  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
 # pylint: enable=wrong-import-position
 
@@ -352,9 +352,15 @@ def test_extract_missing_translations_with_real_po_file() -> None:
     if not os.path.exists(test_po_file):
         pytest.skip(f"Test PO file not found: {test_po_file}")
 
-    # Use a single with statement with multiple contexts instead of nested with statements
+    # Patch PROJECT_ROOT so that the Path / chain resolves to the test PO file
+    mock_root = MagicMock()
+    mock_po_path = MagicMock()
+    mock_po_path.__str__ = MagicMock(return_value=test_po_file)
+    mock_root.__truediv__ = MagicMock(return_value=mock_po_path)
+    mock_po_path.__truediv__ = MagicMock(return_value=mock_po_path)
+
     with (
-        patch("extract_missing_translations.os.path.join", return_value=test_po_file),
+        patch("extract_missing_translations.PROJECT_ROOT", mock_root),
         patch("extract_missing_translations.gettext.translation") as mock_translation,
     ):
         # Mock translator to simulate all strings are untranslated

@@ -306,6 +306,10 @@ Congratulations your flight controller is now fully configured in the safest and
 
 Enjoy your properly configured vehicle.
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=ArduPilot/MethodicConfigurator&type=date&legend=top-left)](https://www.star-history.com/?repos=ArduPilot%2FMethodicConfigurator&type=date&legend=top-left)
+
 ## Documentation and Support
 
 Need [help or support](https://ardupilot.github.io/MethodicConfigurator/SUPPORT.html)

@@ -1,3 +1,8 @@
+---
+name: configuration-steps-reorder
+description: 'Add, delete, or re-order configuration steps in configuration_steps_*.json. Use when inserting new param files, deleting steps, renaming .param files with param_reorder.py, updating vehicle templates, or migrating parameters between files in backend_filesystem_migration.py.'
+---
+
 # Add, delete or re-order configuration steps
 
 This workflow primarily targets ArduCopter but the propagation step (step 15) covers other
@@ -20,7 +25,7 @@ vehicle types (`configuration_steps_ArduPlane.json`, `configuration_steps_Rover.
     - For simple renames (no renumbering), manually add the old filename(s) to the
       `old_filenames` list of the new entry so existing vehicle projects migrate automatically
       on next launch. Skip steps 7–10 in this case.
-    - When renumbering via `param_reorder.py` (steps 7–10), `old_filenames` is updated
+    - When renumbering via [param_reorder.py](./scripts/param_reorder.py) (steps 7–10), `old_filenames` is updated
       automatically — no manual edit needed here.
 1. *(Skip if only simple renames are involved — handled by `old_filenames` above)*
    Update `ardupilot_methodic_configurator/backend_filesystem_migration.py`:
@@ -37,13 +42,13 @@ vehicle types (`configuration_steps_ArduPlane.json`, `configuration_steps_Rover.
    structure, and recomputes and saves derived/forced parameter values.
 1. Review the updated vehicle template directories and commit the results to git.
 1. *(Skip if no files need renumbering or explicit renaming)*
-   Edit the `file_renames` dict in `param_reorder.py` to map each old filename to its new
+   Edit the `file_renames` dict in [param_reorder.py](./scripts/param_reorder.py) to map each old filename to its new
    filename. If you only need to auto-renumber files to match their position in the JSON
    sequence (e.g., after inserting or deleting a step), `file_renames` can remain empty —
    `param_reorder.py` will renumber based on sequence order automatically.
 1. Run the linters locally: `ruff format && ruff check --fix && ty check && mypy && pyright`
 1. Commit the `param_reorder.py` changes to git.
-1. Execute `python ./param_reorder.py` to rename `.param` and `.pdef.xml` files on disk
+1. Execute `python .github/skills/configuration-steps-reorder/scripts/param_reorder.py` to rename `.param` and `.pdef.xml` files on disk
    (using `git mv` when tracked), update all filename references in `*.py`, `*.json`, and
    `*.md` files across the repository, and populate `old_filenames` in
    `configuration_steps_ArduCopter.json` automatically. The script also validates that

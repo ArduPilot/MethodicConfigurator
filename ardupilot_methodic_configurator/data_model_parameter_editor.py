@@ -1006,7 +1006,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         report_file_path = Path(getattr(self._local_filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
 
         # Write a CSV with a header ("param", <list of files>) and one row per parameter.
-        with open(report_file_path, "w", newline="", encoding="utf-8") as file:
+        with open(report_file_path, "w", newline="\n", encoding="utf-8") as file:
             writer = csv_writer(file)
             writer.writerow(["param", *report_files])
 

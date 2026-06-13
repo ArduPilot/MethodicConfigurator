@@ -1,4 +1,5 @@
 MOT_PWM_TYPE,6  # Specified in component editor window
 SERIAL5_BAUD,57  # left at default
 SERIAL5_PROTOCOL,-1
+SERIAL7_PROTOCOL,16  # Defined in ESC specifications above
 SERVO_BLH_TRATE,10

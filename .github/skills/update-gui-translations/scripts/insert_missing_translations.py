@@ -13,8 +13,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import logging
 import os
+from pathlib import Path
 
-from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+os.chdir(PROJECT_ROOT)
+
+from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES  # noqa: E402 # isort:skip  # pylint: disable=wrong-import-position
 
 TRANSLATED_LANGUAGES = set(LANGUAGE_CHOICES) - {LANGUAGE_CHOICES[0]}  # Remove the default language (en) from the set
 
@@ -109,9 +113,16 @@ def insert_translations(lang_code: str, translations_basename: str, output_file_
         output_file_name: Name of the output .po file
 
     """
-    po_file = os.path.join(
-        "ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", "ardupilot_methodic_configurator.po"
+    # pylint: disable=duplicate-code
+    po_file = str(
+        PROJECT_ROOT
+        / "ardupilot_methodic_configurator"
+        / "locale"
+        / lang_code
+        / "LC_MESSAGES"
+        / "ardupilot_methodic_configurator.po"
     )
+    # pylint: enable=duplicate-code
     logging.debug("Reading .po file: %s", po_file)
     with open(po_file, encoding="utf-8") as f:
         lines = f.readlines()
@@ -141,7 +152,9 @@ def insert_translations(lang_code: str, translations_basename: str, output_file_
             insertion_offset += 1  # Increment the offset for each insertion
 
     # Writing back to a new output file
-    output_file = os.path.join("ardupilot_methodic_configurator", "locale", lang_code, "LC_MESSAGES", output_file_name)
+    output_file = str(
+        PROJECT_ROOT / "ardupilot_methodic_configurator" / "locale" / lang_code / "LC_MESSAGES" / output_file_name
+    )
     logging.debug("Writing updated translations to: %s", output_file)
     with open(output_file, "w", encoding="utf-8", newline="\n") as f:  # use Linux line endings even on Windows
         f.writelines(lines)
