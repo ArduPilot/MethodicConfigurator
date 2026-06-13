@@ -114,6 +114,39 @@ def parse_arguments(args: None | argparse.Namespace = None) -> argparse.Namespac
     return args
 
 
+def open_log(logfile: str) -> mavutil.mavfile:
+    """
+    Open an ArduPilot log file.
+
+    Args:
+        logfile: The path to the ArduPilot .bin log file.
+
+    Returns:
+        A mavutil.mavfile connection object.
+
+    """
+    try:
+        mlog = mavutil.mavlink_connection(logfile)
+    except Exception as e:
+        msg = f"Error opening the {logfile} logfile: {e!s}"
+        raise SystemExit(msg) from e
+    return mlog
+
+
+def close_log(mlog: mavutil.mavfile) -> None:
+    """
+    Close an ArduPilot log file.
+
+    Args:
+        mlog: The mavutil.mavfile connection to close.
+
+    """
+    close_method = getattr(mlog, "close", None)
+    if callable(close_method):
+        with contextlib.suppress(OSError):
+            close_method()
+
+
 def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict[str, float]:  # pylint: disable=too-many-branches
     """
     Extracts the parameter values from an ArduPilot .bin log file.
@@ -126,52 +159,51 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
         A dictionary with parameter names as keys and their values as float.
 
     """
+    mlog = open_log(logfile)
     try:
-        mlog = mavutil.mavlink_connection(logfile)
-    except Exception as e:
-        msg = f"Error opening the {logfile} logfile: {e!s}"
-        raise SystemExit(msg) from e
-    values: dict[str, float] = {}
-    while True:
-        m = mlog.recv_match(type=["PARM"])
-        if m is None:
-            if not values:
-                raise SystemExit(NO_DEFAULT_VALUES_MESSAGE)
-            return values
-        pname = str(m.Name)
-        if len(pname) > PARAM_NAME_MAX_LEN:
-            msg = f"Too long parameter name: {pname}"
-            raise SystemExit(msg)
-        if not re.match(PARAM_NAME_REGEX, pname):
-            msg = f"Invalid parameter name {pname}"
-            raise SystemExit(msg)
-        # parameter names are supposed to be unique
-        if pname in values:
-            continue
-        if param_type == "defaults":
-            if hasattr(m, "Default") and m.Default is not None:
-                try:
-                    values[pname] = float(m.Default)
-                except ValueError as e:
-                    msg = f"Error converting {m.Default} to float"
-                    raise SystemExit(msg) from e
-        elif param_type == "values":
-            if hasattr(m, "Value") and m.Value is not None:
-                try:
-                    values[pname] = float(m.Value)
-                except ValueError as e:
-                    msg = f"Error converting {m.Value} to float"
-                    raise SystemExit(msg) from e
-        elif param_type == "non_default_values":
-            if hasattr(m, "Value") and hasattr(m, "Default") and m.Value != m.Default and m.Value is not None:
-                try:
-                    values[pname] = float(m.Value)
-                except ValueError as e:
-                    msg = f"Error converting {m.Value} to float"
-                    raise SystemExit(msg) from e
-        else:
-            msg = f"Invalid type {param_type}"
-            raise SystemExit(msg)
+        values: dict[str, float] = {}
+        while True:
+            m = mlog.recv_match(type=["PARM"])
+            if m is None:
+                if not values:
+                    raise SystemExit(NO_DEFAULT_VALUES_MESSAGE)
+                return values
+            pname = str(m.Name)
+            if len(pname) > PARAM_NAME_MAX_LEN:
+                msg = f"Too long parameter name: {pname}"
+                raise SystemExit(msg)
+            if not re.match(PARAM_NAME_REGEX, pname):
+                msg = f"Invalid parameter name {pname}"
+                raise SystemExit(msg)
+            # parameter names are supposed to be unique
+            if pname in values:
+                continue
+            if param_type == "defaults":
+                if hasattr(m, "Default") and m.Default is not None:
+                    try:
+                        values[pname] = float(m.Default)
+                    except ValueError as e:
+                        msg = f"Error converting {m.Default} to float"
+                        raise SystemExit(msg) from e
+            elif param_type == "values":
+                if hasattr(m, "Value") and m.Value is not None:
+                    try:
+                        values[pname] = float(m.Value)
+                    except ValueError as e:
+                        msg = f"Error converting {m.Value} to float"
+                        raise SystemExit(msg) from e
+            elif param_type == "non_default_values":
+                if hasattr(m, "Value") and hasattr(m, "Default") and m.Value != m.Default and m.Value is not None:
+                    try:
+                        values[pname] = float(m.Value)
+                    except ValueError as e:
+                        msg = f"Error converting {m.Value} to float"
+                        raise SystemExit(msg) from e
+            else:
+                msg = f"Invalid type {param_type}"
+                raise SystemExit(msg)
+    finally:
+        close_log(mlog)
 
 
 def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, int, int]:
@@ -189,12 +221,7 @@ def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, i
         A tuple of (vehicle_type, major, minor, patch), e.g. ("ArduCopter", 4, 6, 3).
 
     """
-    try:
-        mlog = mavutil.mavlink_connection(logfile)
-    except Exception as e:
-        msg = f"Error opening the {logfile} logfile: {e!s}"
-        raise SystemExit(msg) from e
-
+    mlog = open_log(logfile)
     try:
         msg_fallback_result: tuple[str, int, int, int] | None = None
         while True:
@@ -224,10 +251,7 @@ def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, i
         msg = f"No firmware version information found in {logfile}"
         raise SystemExit(msg)
     finally:
-        close_method = getattr(mlog, "close", None)
-        if callable(close_method):
-            with contextlib.suppress(Exception):
-                close_method()
+        close_log(mlog)
 
 
 def missionplanner_sort(item: str) -> tuple[str, ...]:
