@@ -6,3 +6,4 @@ MAGH_LOG_ENABLE,1
 MAGH_MIN_SPEED,6
 MAGH_NUM_WP,18
 MAGH_USE_LOITER,1
+SCR_ENABLE,1  # Use lua scripting for MagFit flight path automation
