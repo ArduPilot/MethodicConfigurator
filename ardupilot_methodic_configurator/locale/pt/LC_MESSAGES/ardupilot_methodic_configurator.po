@@ -3346,11 +3346,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
 msgid "Use lua scripting for MagFit flight path automation"
-msgstr ""
+msgstr "Usar scripting lua para automação do percurso de voo MagFit"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Use lua scripting for VTOL-Quicktune"
-msgstr ""
+msgstr "Usar scripting lua para VTOL-Quicktune"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid ""
@@ -3940,7 +3940,7 @@ msgstr "Erro ao carregar dados de teste de motor: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:210
 msgid "No motor configuration found for frame class %d and type %d"
-msgstr ""
+msgstr "Nenhuma configuração de motor encontrada para a classe de estrutura %d e tipo %d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:216
 msgid ""
