@@ -309,12 +309,13 @@ class ConfigurationStepProcessor:
         renames: dict[str, str] = {}
 
         # Extract the type and number from the new connection prefix
-        if len(new_connection_prefix) < 2:
+        # Use regex to support multi-digit instance numbers (e.g., "BATT12" -> "BATT", "12")
+        match = re.match(r"^([A-Z_]+)(\d+)$", new_connection_prefix)
+        if not match:
             return renames
 
-        new_type = new_connection_prefix[:-1]  # e.g., "CAN" from "CAN2"
-        new_number = new_connection_prefix[-1]  # e.g., "2" from "CAN2"
-
+        new_type = match.group(1)  # e.g., "CAN" from "CAN2", "BATT" from "BATT12"
+        new_number = match.group(2)  # e.g., "2" from "CAN2", "12" from "BATT12"
         for param_name in parameters:
             new_prefix = new_connection_prefix
             old_prefix = param_name.split("_")[0]
