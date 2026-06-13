@@ -1,1 +1,1 @@
-ATC_THR_MIX_MAX,0.5
+ATC_THR_MIX_MAX,0.9  # Maximize attitude control authority at high throttle

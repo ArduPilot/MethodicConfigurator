@@ -1,7 +1,7 @@
 ATC_ACC_P_MAX,1167  # Derived from vehicle component editor propeller size
 ATC_ACC_R_MAX,1167  # Derived from vehicle component editor propeller size
 ATC_ACC_Y_MAX,270  # Derived from vehicle component editor propeller size
-ATC_ANG_YAW_P,4.5  # Derived from vehicle component editor propeller size
+ATC_ANG_YAW_P,6  # Derived from vehicle component editor propeller size
 ATC_RAT_PIT_FLTD,21  # INS_GYRO_FILTER / 2
 ATC_RAT_PIT_FLTE,0  # Initial value, will be improved at a later step
 ATC_RAT_PIT_FLTT,21  # INS_GYRO_FILTER / 2

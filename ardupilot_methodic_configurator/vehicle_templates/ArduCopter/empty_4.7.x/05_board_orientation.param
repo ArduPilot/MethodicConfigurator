@@ -1,2 +1,2 @@
 AHRS_ORIENTATION,0
-FRAME_CLASS,0
+FRAME_CLASS,0  # Selected in the component editor
