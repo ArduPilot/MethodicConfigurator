@@ -13,10 +13,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import logging
 import os
+import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-os.chdir(PROJECT_ROOT)
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from ardupilot_methodic_configurator.internationalization import LANGUAGE_CHOICES  # noqa: E402 # isort:skip  # pylint: disable=wrong-import-position
 
