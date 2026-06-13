@@ -1,0 +1,4 @@
+ARMING_SKIPCHK,0
+ATC_RATE_FF_ENAB,1  # Restore value now that system identification is done
+PSC_D_ACC_I,0.1
+SID_AXIS,0  # No more system identification chip injections
