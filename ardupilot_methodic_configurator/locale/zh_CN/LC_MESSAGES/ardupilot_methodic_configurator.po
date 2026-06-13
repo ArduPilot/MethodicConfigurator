@@ -2983,11 +2983,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
 msgid "Use lua scripting for MagFit flight path automation"
-msgstr ""
+msgstr "使用lua脚本进行MagFit飞行路径自动化"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Use lua scripting for VTOL-Quicktune"
-msgstr ""
+msgstr "使用lua脚本进行VTOL快速调节"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid ""
@@ -3540,7 +3540,7 @@ msgstr "加载电机测试数据错误：%(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:210
 msgid "No motor configuration found for frame class %d and type %d"
-msgstr ""
+msgstr "未找到适用于框架类别 %d 和类型 %d 的电机配置"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:216
 msgid ""

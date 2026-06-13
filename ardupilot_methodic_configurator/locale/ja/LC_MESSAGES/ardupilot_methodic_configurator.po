@@ -3216,11 +3216,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
 msgid "Use lua scripting for MagFit flight path automation"
-msgstr ""
+msgstr "MagFit飛行経路の自動化にLuaスクリプトを使用する"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Use lua scripting for VTOL-Quicktune"
-msgstr ""
+msgstr "VTOL-QuicktuneのためにLuaスクリプトを使用する"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid ""
@@ -3789,7 +3789,7 @@ msgstr "モーターテストデータの読み込みエラー：%(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:210
 msgid "No motor configuration found for frame class %d and type %d"
-msgstr ""
+msgstr "フレームクラス%dとタイプ%dのモーター設定が見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:216
 msgid ""
