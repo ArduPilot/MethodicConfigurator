@@ -90,6 +90,36 @@ class TestComponentDataModelImport(BasicTestMixin, RealisticDataTestMixin):
         assert not basic_model.is_fc_model_valid("")
         assert not basic_model.is_fc_model_valid(None)
 
+    def test_fc_manufacturer_valid_case_insensitive(self, basic_model) -> None:
+        """
+        System rejects manufacturer placeholder values regardless of case.
+
+        GIVEN: The placeholder value "ArduPilot" with different casing
+        WHEN: Validating the manufacturer name
+        THEN: All casing variants should be rejected as invalid
+        """
+        assert not basic_model.is_fc_manufacturer_valid("ardupilot")
+        assert not basic_model.is_fc_manufacturer_valid("ARDUPILOT")
+        assert not basic_model.is_fc_manufacturer_valid("ArduPilot")
+        assert not basic_model.is_fc_manufacturer_valid("  ArduPilot  ")
+        assert not basic_model.is_fc_manufacturer_valid("unknown")
+        assert not basic_model.is_fc_manufacturer_valid("UNKNOWN")
+
+    def test_fc_model_valid_case_insensitive(self, basic_model) -> None:
+        """
+        System rejects model placeholder values regardless of case.
+
+        GIVEN: The placeholder value "MAVLink" with different casing
+        WHEN: Validating the model name
+        THEN: All casing variants should be rejected as invalid
+        """
+        assert not basic_model.is_fc_model_valid("mavlink")
+        assert not basic_model.is_fc_model_valid("MAVLINK")
+        assert not basic_model.is_fc_model_valid("MAVLink")
+        assert not basic_model.is_fc_model_valid("  MAVLink  ")
+        assert not basic_model.is_fc_model_valid("unknown")
+        assert not basic_model.is_fc_model_valid("UNKNOWN")
+
     def test_user_can_import_gnss_serial_connection_from_fc(self, realistic_model) -> None:
         """
         User can import GNSS receiver configuration with serial connection.
