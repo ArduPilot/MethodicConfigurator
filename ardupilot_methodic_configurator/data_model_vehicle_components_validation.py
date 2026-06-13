@@ -781,7 +781,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
     def _update_battery_monitor_protocol_choices(self, value: str, protocol_path: ComponentPath) -> None:
         """Update Battery Monitor protocol choices based on the selected connection type."""
         if value == "None":
-            self._possible_choices[protocol_path] = ("None",)
+            self._possible_choices[protocol_path] = ("Disabled",)  # from BATT_MONITOR_CONNECTION key "0"
             return
         batt_available_protocols: list[str] = [
             str(conn_dict["protocol"])
