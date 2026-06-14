@@ -773,6 +773,84 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         assert "CAN_P1_DRIVER" in renamed_dict
         assert "SERIAL1_PROTOCOL" not in renamed_dict
 
+    def test_generate_connection_renames_multidigit_serial_prefix(self) -> None:
+        """
+        Bug fix: multi-digit connection numbers (e.g. SERIAL10) were parsed incorrectly.
+
+        Previously new_connection_prefix[:-1] and [-1] only handled single-digit
+        numbers. "SERIAL10" was split into type="SERIAL1", number="0" instead of
+        type="SERIAL", number="10".
+
+        GIVEN: A list of SERIAL1 parameters and the target prefix "SERIAL10"
+        WHEN: _generate_connection_renames is called
+        THEN: Each parameter is renamed using the full numeric suffix "10", not "0"
+        """
+        # Arrange
+        parameters = ["SERIAL1_PROTOCOL", "SERIAL1_BAUD"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "SERIAL10")
+
+        # Assert
+        assert renames == {
+            "SERIAL1_PROTOCOL": "SERIAL10_PROTOCOL",
+            "SERIAL1_BAUD": "SERIAL10_BAUD",
+        }
+
+    def test_generate_connection_renames_multidigit_can_prefix(self) -> None:
+        """
+        Multi-digit CAN numbers must correctly remap CAN_P and CAN_D sub-prefixes.
+
+        GIVEN: CAN_P and CAN_D parameters for instance 1 and the target prefix "CAN10"
+        WHEN: _generate_connection_renames is called
+        THEN: Both CAN_P and CAN_D sub-prefixes are updated with the full suffix "10"
+        """
+        # Arrange
+        parameters = ["CAN_P1_DRIVER", "CAN_D1_PROTOCOL"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN10")
+
+        # Assert
+        assert renames == {
+            "CAN_P1_DRIVER": "CAN_P10_DRIVER",
+            "CAN_D1_PROTOCOL": "CAN_D10_PROTOCOL",
+        }
+
+    def test_generate_connection_renames_single_digit_still_works(self) -> None:
+        """
+        Single-digit connection prefixes must continue to work after the fix.
+
+        GIVEN: A parameter with a single-digit connection number and the target prefix "CAN2"
+        WHEN: _generate_connection_renames is called
+        THEN: The parameter is renamed correctly using the single-digit suffix
+        """
+        # Arrange
+        parameters = ["CAN1_DRIVER"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN2")
+
+        # Assert
+        assert renames == {"CAN1_DRIVER": "CAN2_DRIVER"}
+
+    def test_generate_connection_renames_invalid_prefix_returns_empty(self) -> None:
+        """
+        A prefix with no trailing digits returns an empty rename dict.
+
+        GIVEN: A parameter list and a prefix containing only letters with no trailing digits
+        WHEN: _generate_connection_renames is called
+        THEN: An empty dictionary is returned without raising an error
+        """
+        # Arrange
+        parameters = ["CAN1_DRIVER"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN")
+
+        # Assert
+        assert not renames
+
 
 class TestConfigurationStepProcessorErrorHandling:
     """Test error handling and edge cases in configuration processing."""
