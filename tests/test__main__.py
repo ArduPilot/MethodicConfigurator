@@ -44,7 +44,7 @@ from ardupilot_methodic_configurator.__main__ import (
     write_parameter_defaults,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
-from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict
+from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 
 # pylint: disable=too-many-lines,redefined-outer-name,too-few-public-methods
@@ -1909,43 +1909,6 @@ class TestEditorBackupAndMainOrchestration:
             # Assert
             mock_err.assert_called()
 
-    def test_gps_params_renamed_for_46_firmware(self) -> None:
-        """
-        parameter_editor_and_uploader renames legacy GPS params for 4.6 firmware.
-
-        GIVEN: fc firmware starts with '4.6.' and file_parameters contains 'GPS_TYPE'
-        WHEN: parameter_editor_and_uploader is called
-        THEN: 'GPS_TYPE' is replaced by 'GPS1_TYPE' in file_parameters
-        """
-        # Arrange
-        state = ApplicationState(argparse.Namespace(n=0, export_fc_params_missing_or_different=False))
-        state.flight_controller = MagicMock()
-        state.flight_controller.info.flight_sw_version = "4.6.0"
-        state.flight_controller.fc_parameters = {
-            "GPS_TYPE": MagicMock(),
-            "INS_TCAL1_ENABLE": MagicMock(),
-        }
-        mock_fs = MagicMock()
-        mock_fs.file_parameters = {"01.param": ParDict({"GPS_TYPE": MagicMock()})}
-        mock_fs.get_start_file.return_value = "01.param"
-        state.local_filesystem = mock_fs
-
-        with (
-            patch(
-                "ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting",
-                return_value="normal",
-            ),
-            patch("ardupilot_methodic_configurator.__main__.ParameterEditor"),
-            patch("ardupilot_methodic_configurator.__main__.ParameterEditorWindow"),
-        ):
-            # Act
-            parameter_editor_and_uploader(state)
-
-        # Assert
-        updated = mock_fs.file_parameters["01.param"]
-        assert "GPS1_TYPE" in updated
-        assert "GPS_TYPE" not in updated
-
     def test_main_disconnect_and_exit_0_on_normal_completion(self) -> None:
         """
         main() calls flight_controller.disconnect and sys_exit(0) on normal completion.
@@ -1964,6 +1927,7 @@ class TestEditorBackupAndMainOrchestration:
             state.local_filesystem.file_parameters = {"01.param": {}}
             state.local_filesystem.doc_dict = {}
             state.local_filesystem.vehicle_dir = "/fake"
+            state.local_filesystem.get_fc_fw_version_from_vehicle_components_json.return_value = "4.6.0"
             state.param_default_values_dirty = False  # type: ignore[union-attr]
 
         with (
@@ -1988,6 +1952,7 @@ class TestEditorBackupAndMainOrchestration:
             patch("ardupilot_methodic_configurator.__main__.component_editor"),
             patch("ardupilot_methodic_configurator.__main__.process_component_editor_results"),
             patch("ardupilot_methodic_configurator.__main__.backup_fc_parameters"),
+            patch("ardupilot_methodic_configurator.__main__.upgrade_parameters_for_firmware_version"),
             patch("ardupilot_methodic_configurator.__main__.parameter_editor_and_uploader"),
             patch("ardupilot_methodic_configurator.__main__.sys_exit") as mock_exit,
         ):
