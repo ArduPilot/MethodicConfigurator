@@ -45,6 +45,7 @@ from ardupilot_methodic_configurator.backend_internet import verify_and_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
+from ardupilot_methodic_configurator.data_model_parameter_upgrade import upgrade_parameters_for_firmware_version
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
@@ -684,38 +685,6 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
     simple_gui: bool = ProgramSettings.get_setting("gui_complexity") == "simple"
     start_file = state.local_filesystem.get_start_file(state.args.n, imu_tcal_available and not simple_gui)
 
-    # Upgrade parameter names if the user is using 4.6 firmware
-    param_upgrade_dict: dict[str, str] = {
-        "GPS_CAN_NODEID1": "GPS1_CAN_NODEID",
-        "GPS_CAN_NODEID2": "GPS2_CAN_NODEID",
-        "GPS_COM_PORT": "GPS1_COM_PORT",
-        "GPS_COM_PORT2": "GPS2_COM_PORT",
-        "GPS_DELAY_MS": "GPS1_DELAY_MS",
-        "GPS_DELAY_MS2": "GPS2_DELAY_MS",
-        "GPS_GNSS_MODE": "GPS1_GNSS_MODE",
-        "GPS_GNSS_MODE2": "GPS2_GNSS_MODE",
-        "GPS_MB1_TYPE": "GPS1_MB_TYPE",
-        "GPS_MB2_TYPE": "GPS2_MB_TYPE",
-        "GPS_POS1_X": "GPS1_POS_X",
-        "GPS_POS1_Y": "GPS1_POS_Y",
-        "GPS_POS1_Z": "GPS1_POS_Z",
-        "GPS_POS2_X": "GPS2_POS_X",
-        "GPS_POS2_Y": "GPS2_POS_Y",
-        "GPS_POS2_Z": "GPS2_POS_Z",
-        "GPS_RATE_MS": "GPS1_RATE_MS",
-        "GPS_RATE_MS2": "GPS2_RATE_MS",
-        "GPS_TYPE": "GPS1_TYPE",
-        "GPS_TYPE2": "GPS2_TYPE",
-    }
-    if state.flight_controller.fc_parameters and state.flight_controller.info.flight_sw_version.startswith("4.6."):
-        for filename in state.local_filesystem.file_parameters:
-            state.local_filesystem.file_parameters[filename] = ParDict(
-                {
-                    param_upgrade_dict.get(parameter_name, parameter_name): par
-                    for parameter_name, par in state.local_filesystem.file_parameters[filename].items()
-                }
-            )
-
     # Call the GUI function with the starting intermediate parameter file
     parameter_editor = ParameterEditor(
         start_file,
@@ -775,6 +744,10 @@ def main() -> None:
     if not files:
         vehicle_directory_selection(state)
 
+    # Extract parameter files version from vehicle_components.json (set when files were created)
+    # must be done before the component editor workflow updates the file with information from the connected FC
+    parameter_files_version_str = state.local_filesystem.get_fc_fw_version_from_vehicle_components_json()
+
     if (
         state.flight_controller.fc_parameters
         and state.flight_controller.info.flight_sw_version.startswith("4.6.")
@@ -807,6 +780,19 @@ def main() -> None:
 
     # Create parameter backups
     backup_fc_parameters(state)
+
+    # upgrade the parameter files if the connected FC is running a newer firmware version than
+    #  the one used when the parameter files were created.
+    project_file_and_fc_firmware_info_available = (
+        state.flight_controller.fc_parameters
+        and state.flight_controller.info
+        and state.flight_controller.info.flight_sw_version
+    )
+    if project_file_and_fc_firmware_info_available:
+        flight_controller_version_str = state.flight_controller.info.flight_sw_version.split(" ", maxsplit=1)[0]
+        upgrade_parameters_for_firmware_version(
+            parameter_files_version_str, flight_controller_version_str, state.local_filesystem.file_parameters
+        )
 
     # Start parameter editor
     parameter_editor_and_uploader(state)
