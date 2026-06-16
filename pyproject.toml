@@ -48,7 +48,7 @@ dependencies = [
     "defusedxml==0.7.1",
     "jsonschema==4.26.0",
     "matplotlib==3.10.3; python_version < '3.14'",
-    "matplotlib==3.10.7; python_version >= '3.14'",
+    "matplotlib==3.10.9; python_version >= '3.14'",
     "numpy==2.0.2; python_version < '3.13'",
     "numpy==2.3.4; python_version >= '3.13'",
     "pillow==12.2.0",
