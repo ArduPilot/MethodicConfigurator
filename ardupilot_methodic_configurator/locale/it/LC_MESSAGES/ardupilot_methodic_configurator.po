@@ -191,7 +191,7 @@ msgstr "Errore imprevisto durante la creazione dei file di backup: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:750
 msgid "Parameter files firmware version from vehicle_components.json: %s"
-msgstr ""
+msgstr "Versione firmware dei file dei parametri da vehicle_components.json: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:759
 msgid "Incompatible parameter definition file detected"
@@ -5118,39 +5118,39 @@ msgstr "Nessun dato del componente veicolo caricato; salvataggio annullato."
 msgid ""
 "Parameter collision in '%s': both old name '%s' and new name '%s' map to "
 "'%s'. Keeping the already-upgraded entry."
-msgstr ""
+msgstr "Collisione di parametro in '%s': sia il vecchio nome '%s' che il nuovo nome '%s' corrispondono a '%s'. Verrà mantenuta la voce già aggiornata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:277
 msgid ""
 "Parameter collision in '%s': both old name '%s' and already-present '%s' map "
 "to '%s'. Keeping the already-upgraded entry."
-msgstr ""
+msgstr "Collisione di parametro in '%s': sia il vecchio nome '%s' che '%s' già presente corrispondono a '%s'. Verrà mantenuta la voce già aggiornata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:300
 msgid ""
 "Parameter collision in '%s': both SR param '%s' and already-present '%s'. "
 "Keeping the already-upgraded entry."
-msgstr ""
+msgstr "Collisione di parametro in '%s': sia il parametro SR '%s' che '%s' già presente. Verrà mantenuta la voce già aggiornata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:339
 msgid ""
 "Parameter files firmware version is unknown. Parameter file upgrades will be "
 "skipped. Please ensure the parameter files match the target flight "
 "controller firmware version."
-msgstr ""
+msgstr "La versione firmware dei file dei parametri è sconosciuta. Gli aggiornamenti dei file dei parametri saranno ignorati. Assicurati che i file dei parametri corrispondano alla versione firmware del controller di volo di destinazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:348
 msgid ""
 "Flight controller firmware version is unknown. Parameter file upgrades will "
 "be skipped. Please ensure the parameter files match the target flight "
 "controller firmware version."
-msgstr ""
+msgstr "La versione firmware del controller di volo è sconosciuta. Gli aggiornamenti dei file dei parametri saranno ignorati. Assicurati che i file dei parametri corrispondano alla versione firmware del controller di volo di destinazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:360
 msgid ""
 "Invalid firmware version string(s): param_files='%s', fc='%s'. Parameter "
 "upgrades will be skipped."
-msgstr ""
+msgstr "Stringa(e) della versione firmware non valida: param_files='%s', fc='%s'. Gli aggiornamenti dei parametri saranno ignorati."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_recent_items_history_list.py:93
 msgid "Cannot store empty string in history"
