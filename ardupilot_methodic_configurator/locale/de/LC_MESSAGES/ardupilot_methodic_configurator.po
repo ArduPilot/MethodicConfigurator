@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-06-13 13:19+0000\n"
+"POT-Creation-Date: 2026-06-19 02:28+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -3200,11 +3200,9 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid ""
-"Log relevant data for attitude PID and notch filter tuning. Later on we'll "
-"change this to other subsystems"
+"Log relevant data for dynamic notch filter tuning. Later on we'll change "
+"this to other subsystems"
 msgstr ""
-"Relevante Daten für Attitude-PID und Notch-Filter-Tuning protokollieren. "
-"Später werden wir dies auf andere Teilsysteme umstellen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Low failsafe voltage x nr. of cells"
@@ -8673,6 +8671,13 @@ msgstr "Version oder Revision der Hardware"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "Weblink zur Produktseite oder Dokumentation"
+
+#~ msgid ""
+#~ "Log relevant data for attitude PID and notch filter tuning. Later on "
+#~ "we'll change this to other subsystems"
+#~ msgstr ""
+#~ "Relevante Daten für Attitude-PID und Notch-Filter-Tuning protokollieren. "
+#~ "Später werden wir dies auf andere Teilsysteme umstellen"
 
 #~ msgid ""
 #~ "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed "
