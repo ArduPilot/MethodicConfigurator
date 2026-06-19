@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-06-13 13:19+0000\n"
+"POT-Creation-Date: 2026-06-19 03:43+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:109
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:110
 msgid ""
 "Plugin '%(plugin_name)s' is configured but not registered. Available "
 "plugins: %(available)s"
@@ -24,7 +24,7 @@ msgstr ""
 "プラグイン '%(plugin_name)s' は設定されていますが登録されていません。利用可能"
 "なプラグイン: %(available)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:136
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:137
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -47,46 +47,46 @@ msgstr ""
 "にアップロードされます。「スキップ」を押すと、次の中間パラメータファイルにス"
 "キップします。このプロセスは各中間パラメータファイルに対して繰り返されます。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:183
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:184
 msgid "Will now exit the old software version."
 msgstr "古いソフトウェアバージョンを終了します。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:246
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:247
 msgid "Vehicle type explicitly set to %s."
 msgstr "機体タイプを%sに明示的に設定しました。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:249
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:250
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr "機体タイプが明示的に設定されていないため、%sを自動検出しました。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:268
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:269
 msgid "No serial ports found"
 msgstr "シリアルポートが見つかりません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:320
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:321
 msgid ""
 "Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."
 msgstr ""
 "車両ディレクトリ %(old_dir)s は書き込み可能ではありません。代わりに "
 "%(new_dir)s を使用します。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:344
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:345
 msgid "Using Vehicle directory %(new_dir)s for initial parameter download."
 msgstr ""
 "初期パラメータダウンロード用に車両ディレクトリ %(new_dir)s を使用します。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:366
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:367
 msgid "Vehicle project migration to format version %d completed"
 msgstr "車両プロジェクトの移行がフォーマットバージョン%dに完了しました"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:378
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:379
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:262
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:151
 msgid "Fatal error reading parameter files"
 msgstr "パラメータファイルの読み込みで致命的なエラーが発生しました"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:417
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:418
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
@@ -94,11 +94,11 @@ msgstr ""
 "FCが接続されておらず、コマンドラインで明示的な車両タイプが設定されていないた"
 "め、すべての車両タイプのすべての車両テンプレートを表示します"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:431
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:432
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "パラメータのデフォルト値へのリセットに失敗しました: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:499
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:500
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:128
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:131
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:133
@@ -111,12 +111,12 @@ msgstr "パラメータのデフォルト値へのリセットに失敗しまし
 msgid "Unknown"
 msgstr "不明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:595
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:596
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_configuration_step.py:112
 msgid "Error in derived parameters"
 msgstr "派生パラメータにエラーがあります"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:602
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:603
 msgid ""
 "The component or connection changes you just did will have repercussions on "
 "the following parameter files:\n"
@@ -126,7 +126,7 @@ msgstr ""
 "す。\n"
 "\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:604
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:605
 msgid ""
 "Please review the changes, and upload the updated parameter files to the "
 "flight controller.\n"
@@ -134,7 +134,7 @@ msgstr ""
 "変更内容を確認し、更新されたパラメータファイルをフライトコントローラーにアッ"
 "プロードしてください。\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:606
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:607
 msgid ""
 "If you already uploaded said parameters to the FC, switch to the normal GUI "
 "complexity mode\n"
@@ -142,23 +142,23 @@ msgstr ""
 "すでにこれらのパラメータをFCにアップロード済みの場合は、通常のGUI複雑度モード"
 "に切り替えてください\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:610
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:611
 msgid "in order to be able to jump to those specific parameter files"
 msgstr "指定されたパラメータファイルにジャンプできるようにするためです"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:613
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:614
 msgid "Component derived param changes"
 msgstr "コンポーネント由来のパラメータ変更"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:659
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:660
 msgid "Created backup file autobackup_%02d.param"
 msgstr "バックアップファイル autobackup_%02d.param を作成しました"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:661
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:662
 msgid "Permission denied when creating backup files: %s"
 msgstr "バックアップファイルの作成時にアクセス拒否されました: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:662
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:663
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
@@ -166,27 +166,31 @@ msgstr ""
 "ファイルの権限を確認し、車両ディレクトリへの書き込みアクセス権があることを確"
 "認してください"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:665
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:666
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "バックアップファイルを作成するためのディスク容量が不足しています: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:666
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:667
 msgid "Please free up disk space and try again"
 msgstr "ディスク容量を解放して再試行してください"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:668
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:669
 msgid "Failed to create backup files: %s"
 msgstr "バックアップファイルの作成に失敗しました: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:670
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:671
 msgid "Unexpected error creating backup files: %s"
 msgstr "バックアップファイルの作成中に予期しないエラーが発生しました: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:785
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:750
+msgid "Parameter files firmware version from vehicle_components.json: %s"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:759
 msgid "Incompatible parameter definition file detected"
 msgstr "互換性のないパラメータ定義ファイルが検出されました"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:786
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:760
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -3068,11 +3072,9 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid ""
-"Log relevant data for attitude PID and notch filter tuning. Later on we'll "
-"change this to other subsystems"
+"Log relevant data for dynamic notch filter tuning. Later on we'll change "
+"this to other subsystems"
 msgstr ""
-"姿勢PIDおよびノッチフィルタ調整のために関連データをログします。後で他のサブシ"
-"ステムに変更します"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Low failsafe voltage x nr. of cells"
@@ -4877,6 +4879,44 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2464
 msgid "No vehicle component data loaded; save aborted."
 msgstr "車両コンポーネントデータが読み込まれていません。保存を中止します。"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:236
+msgid ""
+"Parameter collision in '%s': both old name '%s' and new name '%s' map to "
+"'%s'. Keeping the already-upgraded entry."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:277
+msgid ""
+"Parameter collision in '%s': both old name '%s' and already-present '%s' map "
+"to '%s'. Keeping the already-upgraded entry."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:300
+msgid ""
+"Parameter collision in '%s': both SR param '%s' and already-present '%s'. "
+"Keeping the already-upgraded entry."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:339
+msgid ""
+"Parameter files firmware version is unknown. Parameter file upgrades will be "
+"skipped. Please ensure the parameter files match the target flight "
+"controller firmware version."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:348
+msgid ""
+"Flight controller firmware version is unknown. Parameter file upgrades will "
+"be skipped. Please ensure the parameter files match the target flight "
+"controller firmware version."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:360
+msgid ""
+"Invalid firmware version string(s): param_files='%s', fc='%s'. Parameter "
+"upgrades will be skipped."
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_recent_items_history_list.py:93
 msgid "Cannot store empty string in history"
@@ -8384,6 +8424,13 @@ msgstr "ハードウェアのバージョンまたはリビジョン"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "製品ページまたはドキュメントへのウェブリンク"
+
+#~ msgid ""
+#~ "Log relevant data for attitude PID and notch filter tuning. Later on "
+#~ "we'll change this to other subsystems"
+#~ msgstr ""
+#~ "姿勢PIDおよびノッチフィルタ調整のために関連データをログします。後で他のサ"
+#~ "ブシステムに変更します"
 
 #~ msgid ""
 #~ "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed "
