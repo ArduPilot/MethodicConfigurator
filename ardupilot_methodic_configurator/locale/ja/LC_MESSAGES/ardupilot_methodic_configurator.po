@@ -184,7 +184,7 @@ msgstr "バックアップファイルの作成中に予期しないエラーが
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:750
 msgid "Parameter files firmware version from vehicle_components.json: %s"
-msgstr ""
+msgstr "車両_components.jsonのパラメータファイルファームウェアバージョン: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:759
 msgid "Incompatible parameter definition file detected"
@@ -3074,7 +3074,7 @@ msgstr ""
 msgid ""
 "Log relevant data for dynamic notch filter tuning. Later on we'll change "
 "this to other subsystems"
-msgstr ""
+msgstr "ダイナミックノッチフィルター調整のための関連データを記録します。後で他のサブシステムに変更する予定です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Low failsafe voltage x nr. of cells"
@@ -4884,39 +4884,39 @@ msgstr "車両コンポーネントデータが読み込まれていません。
 msgid ""
 "Parameter collision in '%s': both old name '%s' and new name '%s' map to "
 "'%s'. Keeping the already-upgraded entry."
-msgstr ""
+msgstr "'%s'内のパラメータ衝突: 古い名前'%s'と新しい名前'%s'の両方が'%s'にマッピングされています。既にアップグレードされたエントリを保持します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:277
 msgid ""
 "Parameter collision in '%s': both old name '%s' and already-present '%s' map "
 "to '%s'. Keeping the already-upgraded entry."
-msgstr ""
+msgstr "'%s'内のパラメータ衝突: 古い名前'%s'と既存の'%s'の両方が'%s'にマッピングされています。既にアップグレードされたエントリを保持します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:300
 msgid ""
 "Parameter collision in '%s': both SR param '%s' and already-present '%s'. "
 "Keeping the already-upgraded entry."
-msgstr ""
+msgstr "'%s'内のパラメータ衝突: SRパラメータ'%s'と既存の'%s'の両方。既にアップグレードされたエントリを保持します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:339
 msgid ""
 "Parameter files firmware version is unknown. Parameter file upgrades will be "
 "skipped. Please ensure the parameter files match the target flight "
 "controller firmware version."
-msgstr ""
+msgstr "パラメータファイルのファームウェアバージョンが不明です。パラメータファイルのアップグレードはスキップされます。パラメータファイルが対象フライトコントローラのファームウェアバージョンに一致していることを確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:348
 msgid ""
 "Flight controller firmware version is unknown. Parameter file upgrades will "
 "be skipped. Please ensure the parameter files match the target flight "
 "controller firmware version."
-msgstr ""
+msgstr "フライトコントローラのファームウェアバージョンが不明です。パラメータファイルのアップグレードはスキップされます。パラメータファイルが対象フライトコントローラのファームウェアバージョンに一致していることを確認してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:360
 msgid ""
 "Invalid firmware version string(s): param_files='%s', fc='%s'. Parameter "
 "upgrades will be skipped."
-msgstr ""
+msgstr "無効なファームウェアバージョン文字列: param_files='%s', fc='%s'。パラメータのアップグレードはスキップされます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_recent_items_history_list.py:93
 msgid "Cannot store empty string in history"
