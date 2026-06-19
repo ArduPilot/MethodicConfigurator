@@ -39,6 +39,99 @@ def test_schema_validity() -> None:
         pytest.fail(f"The schema file {SCHEMA_FILE_PATH} is not a valid JSON Schema: {e}")
 
 
+def test_related_bin_messages_schema_rejects_malformed_entries() -> None:
+    """Ensure related_bin_messages entries require both name and required fields."""
+    valid_document = {
+        "steps": {
+            "01_demo.param": {
+                "why": "demo",
+                "why_now": "demo",
+                "blog_text": "demo",
+                "blog_url": "https://example.com",
+                "wiki_text": "demo",
+                "wiki_url": "https://example.com",
+                "external_tool_text": "demo",
+                "external_tool_url": "https://example.com",
+                "mandatory_text": "100% mandatory (0% optional)",
+                "related_bin_messages": {
+                    "GPS": {
+                        "name": "GPS",
+                        "required": True,
+                    }
+                },
+            }
+        }
+    }
+    validate(instance=valid_document, schema=schema)
+
+    invalid_document_missing_required = {
+        "steps": {
+            "01_demo.param": {
+                "why": "demo",
+                "why_now": "demo",
+                "blog_text": "demo",
+                "blog_url": "https://example.com",
+                "wiki_text": "demo",
+                "wiki_url": "https://example.com",
+                "external_tool_text": "demo",
+                "external_tool_url": "https://example.com",
+                "mandatory_text": "100% mandatory (0% optional)",
+                "related_bin_messages": {
+                    "GPS": {
+                        "name": "GPS",
+                    }
+                },
+            }
+        }
+    }
+
+    with pytest.raises(ValidationError, match=r"'required' is a required property"):
+        validate(instance=invalid_document_missing_required, schema=schema)
+
+    invalid_document_extra_property = {
+        "steps": {
+            "01_demo.param": {
+                "why": "demo",
+                "why_now": "demo",
+                "blog_text": "demo",
+                "blog_url": "https://example.com",
+                "wiki_text": "demo",
+                "wiki_url": "https://example.com",
+                "external_tool_text": "demo",
+                "external_tool_url": "https://example.com",
+                "mandatory_text": "100% mandatory (0% optional)",
+                "related_bin_messages": {
+                    "GPS": {
+                        "name": "GPS",
+                        "required": True,
+                        "unexpected": "boom",
+                    }
+                },
+            }
+        }
+    }
+
+    with pytest.raises(ValidationError, match=r"Additional properties are not allowed"):
+        validate(instance=invalid_document_extra_property, schema=schema)
+
+
+def test_arducopter_configuration_steps_bin_messages_each_have_a_required_message() -> None:
+    """Ensure every step with related_bin_messages declares at least one required message."""
+    arducopter_file = os.path.join("ardupilot_methodic_configurator", "configuration_steps_ArduCopter.json")
+    with open(arducopter_file, encoding="utf-8") as file:
+        config = json.load(file)
+
+    steps = config["steps"]
+    steps_with_mappings = {step_name: step for step_name, step in steps.items() if step.get("related_bin_messages")}
+
+    assert steps_with_mappings, "No configuration steps have related_bin_messages"
+
+    for step_name, step in steps_with_mappings.items():
+        messages = step["related_bin_messages"]
+        has_required = any(msg_info.get("required", False) for msg_info in messages.values())
+        assert has_required, f"Step '{step_name}' has no required message in related_bin_messages"
+
+
 def find_json_files(directory) -> list[str]:
     """Find all configuration_steps_*.json files in the specified directory and its subdirectories."""
     json_files = []
