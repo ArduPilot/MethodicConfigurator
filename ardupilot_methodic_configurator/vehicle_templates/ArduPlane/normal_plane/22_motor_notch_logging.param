@@ -1,4 +1,4 @@
 INS_LOG_BAT_MASK,1  # Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others
 INS_LOG_BAT_OPT,4  # Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others
-LOG_BITMASK,407517  # Log relevant data for attitude PID and notch filter tuning. Later on we'll change this to other subsystems
+LOG_BITMASK,145374  # Log relevant data for dynamic notch filter tuning. Later on we'll change this to other subsystems
 LOG_FILE_DSRMROT,1  # One .bin log file per flight, not per battery/reboot
