@@ -336,17 +336,25 @@ class ConfigurationStepProcessor:
         new_type = match.group(1)  # e.g., "CAN" from "CAN2", "SERIAL" from "SERIAL10"
         new_number = match.group(2)  # e.g., "2" from "CAN2", "10" from "SERIAL10"
         for param_name in parameters:
+            parts = param_name.split("_")
             new_prefix = new_connection_prefix
-            old_prefix = param_name.split("_")[0]
-            if new_type == "CAN" and "CAN_P" in param_name:
-                old_prefix = param_name.split("_")[0] + "_" + param_name.split("_")[1]
+            old_prefix = parts[0]
+            is_exception_case = False
+            if new_type == "CAN" and len(parts) >= 2 and parts[0] == "CAN" and re.match(r"^P\d+$", parts[1]):
+                old_prefix += "_" + parts[1]
                 new_prefix = "CAN_P" + new_number
-            if new_type == "CAN" and "CAN_D" in param_name:
-                old_prefix = param_name.split("_")[0] + "_" + param_name.split("_")[1]
+                is_exception_case = True
+            if new_type == "CAN" and len(parts) >= 2 and parts[0] == "CAN" and re.match(r"^D\d+$", parts[1]):
+                old_prefix += "_" + parts[1]
                 new_prefix = "CAN_D" + new_number
+                is_exception_case = True
+            if new_type == "SERIAL" and len(parts) >= 2 and parts[0] == "BRD" and re.match(r"^SER\d+$", parts[1]):
+                old_prefix += "_" + parts[1]
+                new_prefix = "BRD_SER" + new_number
+                is_exception_case = True
 
-            if new_type in old_prefix:
-                renames[param_name] = param_name.replace(old_prefix, new_prefix)
+            if new_type in old_prefix or is_exception_case:
+                renames[param_name] = param_name.replace(old_prefix, new_prefix, 1)
 
         return renames
 
