@@ -2850,7 +2850,7 @@ msgstr "记录与PID带阻滤波器调试相关的数据，之后将更改为其
 msgid ""
 "Log relevant data for dynamic notch filter tuning. Later on we'll change "
 "this to other subsystems"
-msgstr ""
+msgstr "记录与动态陷波滤波器调谐相关的数据。之后我们会改为记录其他子系统的数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Low failsafe voltage x nr. of cells"
