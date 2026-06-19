@@ -4,8 +4,6 @@
 """
 Extracts parameter values or parameter default values from an ArduPilot .bin log file.
 
-Supports Mission Planner, MAVProxy and QGCS file format output
-
 Currently has 95% unit test coverage
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
@@ -16,17 +14,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import contextlib
 import logging
-import re
 
 import argcomplete
 from argcomplete.completers import FilesCompleter
 from pymavlink import mavutil
 
+from ardupilot_methodic_configurator.data_model_par_dict import validate_param_name
+from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import (
+    process_msg_version_fallback,
+    process_ver,
+)
+
 NO_DEFAULT_VALUES_MESSAGE = (
     "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version."
 )
-PARAM_NAME_REGEX = r"^[A-Z][A-Z_0-9]*$"
-PARAM_NAME_MAX_LEN = 16
+
 MAVLINK_SYSID_MAX = 2**24
 MAVLINK_COMPID_MAX = 2**8
 MAV_PARAM_TYPE_REAL32 = 9
@@ -211,12 +213,9 @@ def extract_parameter_values(logfile: str, param_type: str = "defaults") -> dict
             if m is None:
                 break
             pname = str(m.Name)
-            if len(pname) > PARAM_NAME_MAX_LEN:
-                msg = f"Too long parameter name: {pname}"
-                raise SystemExit(msg)
-            if not re.match(PARAM_NAME_REGEX, pname):
-                msg = f"Invalid parameter name {pname}"
-                raise SystemExit(msg)
+            is_valid, error_msg = validate_param_name(pname)
+            if not is_valid:
+                raise SystemExit(error_msg)
             # parameter names are supposed to be unique
             if pname in values:
                 continue
@@ -253,21 +252,11 @@ def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, i
             if m is None:
                 break
             if m.get_type() == "VER":
-                fws = str(m.FWS)  # e.g. "ArduCopter V4.6.3 (3fc7011a)"
-                vehicle_type = fws.split(maxsplit=1)[0] if fws else ""
-                maj, min_, pat = m.Maj, m.Min, m.Pat
-                if maj is None or min_ is None or pat is None:
-                    continue
-                return vehicle_type, int(maj), int(min_), int(pat)
-            # Parse each MSG; store the first parseable Vx.y one as fallback and keep scanning for VER
-            if msg_fallback_result is None:
-                parts = str(m.Message).split()
-                if len(parts) >= 2 and parts[1].startswith("V"):
-                    version_parts = parts[1][1:].split(".")  # Remove "V" prefix, split by "."
-                    if len(version_parts) >= 2:
-                        with contextlib.suppress(ValueError):
-                            patch_val = int(version_parts[2]) if len(version_parts) >= 3 else 0
-                            msg_fallback_result = (parts[0], int(version_parts[0]), int(version_parts[1]), patch_val)
+                result = process_ver(m)
+                if result is not None:
+                    return result
+            elif m.get_type() == "MSG":
+                msg_fallback_result = process_msg_version_fallback(m, msg_fallback_result)
 
         if msg_fallback_result is not None:
             return msg_fallback_result

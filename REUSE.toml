@@ -215,3 +215,8 @@ SPDX-License-Identifier = "MIT"
 path = "credits/Inno_Setup-license.txt"
 SPDX-FileCopyrightText = "Copyright (C) 1997-2026 Jordan Russell. Portions Copyright (C) 2000-2026 Martijn Laan."
 SPDX-License-Identifier = "LicenseRef-Inno-Setup"
+
+[[annotations]]
+path = "tests/fixtures/backend_log_80k.bin"
+SPDX-FileCopyrightText = "2024-2026 Amilcar Lucas"
+SPDX-License-Identifier = "GPL-3.0-or-later"

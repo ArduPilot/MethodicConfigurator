@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import unittest
 from collections.abc import Generator
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
@@ -29,6 +30,8 @@ from ardupilot_methodic_configurator.extract_param_defaults import (
     parse_arguments,
     sort_params,
 )
+
+FIXTURE_LOG = Path(__file__).resolve().parent / "fixtures" / "backend_log_80k.bin"
 
 
 @pytest.fixture
@@ -690,6 +693,7 @@ class TestExtractFirmwareVersionAndVehicleType:
             extract_firmware_version_and_vehicle_type("bad.bin")
 
         assert "bad.bin" in str(exc_info.value)
+        assert "No firmware version" in str(exc_info.value)
 
     @patch("ardupilot_methodic_configurator.extract_param_defaults.mavutil.mavlink_connection")
     def test_return_type_is_tuple_of_str_int_int_int(self, mock_conn: MagicMock) -> None:
@@ -733,6 +737,15 @@ class TestExtractFirmwareVersionAndVehicleType:
 
         # With sort_type "mavproxy", alphabetical sorting
         assert list(sorted_params.keys()) == ["A_PARAM", "B_PARAM", "C_PARAM"]
+
+
+@pytest.mark.integration
+class TestExtractFirmwareVersionAndVehicleTypeIntegration:  # pylint: disable=too-few-public-methods
+    """Integration tests for extract_firmware_version_and_vehicle_type."""
+
+    def test_extracts_version_from_real_log_fixture(self) -> None:
+        """GIVEN a real log fixture, WHEN firmware is extracted, THEN the expected tuple is returned."""
+        assert extract_firmware_version_and_vehicle_type(str(FIXTURE_LOG)) == ("ArduCopter", 4, 6, 2)
 
 
 class TestExtractParameterValues:
