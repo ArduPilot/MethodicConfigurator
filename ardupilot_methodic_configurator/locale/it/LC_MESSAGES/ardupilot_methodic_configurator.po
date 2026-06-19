@@ -3236,7 +3236,7 @@ msgstr ""
 msgid ""
 "Log relevant data for dynamic notch filter tuning. Later on we'll change "
 "this to other subsystems"
-msgstr ""
+msgstr "Registra i dati rilevanti per la regolazione dinamica del filtro notch. In seguito cambieremo questo per altri sottosistemi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Low failsafe voltage x nr. of cells"
