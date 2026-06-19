@@ -12,6 +12,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 import platform
 import subprocess
 from collections.abc import Callable
@@ -2333,6 +2334,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if "rename_connection" in step_info:
             self._refresh_current_step_connection_renames(step_info, variables)
 
+    def _apply_gnss_protocol_value(self, target_name: str) -> None:
+        """Set the GNSS MAVLink protocol value on a newly renamed _PROTOCOL parameter, ignoring no-op updates."""
+        with contextlib.suppress(ParameterUnchangedError):
+            self.current_step_parameters[target_name].set_new_value(_GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True)
+
     def _refresh_current_step_connection_renames(self, step_info: dict, variables: dict) -> None:  # pylint: disable=too-many-branches
         """
         Re-evaluate the rename_connection expression and apply any changed renames in-place.
@@ -2389,9 +2395,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                             new_target, original_params[orig_name], self.current_file, self.fc_parameters
                         )
                         if is_gnss and new_target.endswith("_PROTOCOL"):
-                            self.current_step_parameters[new_target].set_new_value(
-                                _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
-                            )
+                            self._apply_gnss_protocol_value(new_target)
                         self._added_parameters.add(new_target)
                     self._connection_renames[orig_name] = new_target
                     logging_info(_("Renamed connection parameter %s → %s"), current_target, new_target)
@@ -2401,23 +2405,31 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if orig_name in self._connection_renames:
                 continue  # already handled above
             if orig_name in original_params:
-                if new_target in self.current_step_parameters:
-                    logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
-                else:
-                    # Remove the original (un-renamed) parameter if it is still present
-                    if orig_name in self.current_step_parameters:
-                        del self.current_step_parameters[orig_name]
-                        self._deleted_parameters.add(orig_name)
-                    self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-                        new_target, original_params[orig_name], self.current_file, self.fc_parameters
-                    )
-                    if is_gnss and new_target.endswith("_PROTOCOL"):
-                        self.current_step_parameters[new_target].set_new_value(
-                            _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
-                        )
-                    self._added_parameters.add(new_target)
-                    self._connection_renames[orig_name] = new_target
-                    logging_info(_("Renamed connection parameter %s → %s"), orig_name, new_target)
+                self._apply_new_connection_rename(orig_name, new_target, original_params, is_gnss)
+
+    def _apply_new_connection_rename(
+        self,
+        orig_name: str,
+        new_target: str,
+        original_params: ParDict,
+        is_gnss: bool,
+    ) -> None:
+        """Apply a single connection rename that was not previously tracked."""
+        if new_target in self.current_step_parameters:
+            logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
+            return
+        # Remove the original (un-renamed) parameter if it is still present
+        if orig_name in self.current_step_parameters:
+            del self.current_step_parameters[orig_name]
+            self._deleted_parameters.add(orig_name)
+        self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
+            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+        )
+        if is_gnss and new_target.endswith("_PROTOCOL"):
+            self._apply_gnss_protocol_value(new_target)
+        self._added_parameters.add(new_target)
+        self._connection_renames[orig_name] = new_target
+        logging_info(_("Renamed connection parameter %s → %s"), orig_name, new_target)
 
     def revert_vehicle_components(self) -> None:
         """
