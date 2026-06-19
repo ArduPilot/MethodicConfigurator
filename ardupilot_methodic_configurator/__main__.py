@@ -747,6 +747,7 @@ def main() -> None:
     # Extract parameter files version from vehicle_components.json (set when files were created)
     # must be done before the component editor workflow updates the file with information from the connected FC
     parameter_files_version_str = state.local_filesystem.get_fc_fw_version_from_vehicle_components_json()
+    logging_info(_("Parameter files firmware version from vehicle_components.json: %s"), parameter_files_version_str)
 
     if (
         state.flight_controller.fc_parameters
