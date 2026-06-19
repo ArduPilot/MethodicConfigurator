@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-06-13 13:19+0000\n"
+"POT-Creation-Date: 2026-06-19 02:28+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -3068,11 +3068,9 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid ""
-"Log relevant data for attitude PID and notch filter tuning. Later on we'll "
-"change this to other subsystems"
+"Log relevant data for dynamic notch filter tuning. Later on we'll change "
+"this to other subsystems"
 msgstr ""
-"姿勢PIDおよびノッチフィルタ調整のために関連データをログします。後で他のサブシ"
-"ステムに変更します"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Low failsafe voltage x nr. of cells"
@@ -8384,6 +8382,13 @@ msgstr "ハードウェアのバージョンまたはリビジョン"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "製品ページまたはドキュメントへのウェブリンク"
+
+#~ msgid ""
+#~ "Log relevant data for attitude PID and notch filter tuning. Later on "
+#~ "we'll change this to other subsystems"
+#~ msgstr ""
+#~ "姿勢PIDおよびノッチフィルタ調整のために関連データをログします。後で他のサ"
+#~ "ブシステムに変更します"
 
 #~ msgid ""
 #~ "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed "

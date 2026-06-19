@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-06-13 13:19+0000\n"
+"POT-Creation-Date: 2026-06-19 02:28+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -3187,11 +3187,9 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid ""
-"Log relevant data for attitude PID and notch filter tuning. Later on we'll "
-"change this to other subsystems"
+"Log relevant data for dynamic notch filter tuning. Later on we'll change "
+"this to other subsystems"
 msgstr ""
-"Registar dados relevantes para afinação do PID de atitude e do filtro notch. "
-"Mais tarde iremos alterar isto para outros subsistemas"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid "Low failsafe voltage x nr. of cells"
@@ -3940,7 +3938,9 @@ msgstr "Erro ao carregar dados de teste de motor: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:210
 msgid "No motor configuration found for frame class %d and type %d"
-msgstr "Nenhuma configuração de motor encontrada para a classe de estrutura %d e tipo %d"
+msgstr ""
+"Nenhuma configuração de motor encontrada para a classe de estrutura %d e "
+"tipo %d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_motor_test.py:216
 msgid ""
@@ -8647,6 +8647,13 @@ msgstr "Versão ou revisão do hardware"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid ""
+#~ "Log relevant data for attitude PID and notch filter tuning. Later on "
+#~ "we'll change this to other subsystems"
+#~ msgstr ""
+#~ "Registar dados relevantes para afinação do PID de atitude e do filtro "
+#~ "notch. Mais tarde iremos alterar isto para outros subsistemas"
 
 #~ msgid ""
 #~ "Use lua scripting for VTOL-Quicktune, MagFit automation and wind speed "
