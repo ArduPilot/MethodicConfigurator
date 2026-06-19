@@ -229,10 +229,13 @@ def upgrade_file_parameters_46(file_parameters: dict[str, ParDict]) -> None:
         upgraded: dict[str, Par] = {}
         for name, par in params.items():
             new_name = PARAM_UPGRADE_DICT_46.get(name, name)
-            if new_name in upgraded:
+            if name != new_name and new_name in params:
+                # The already-upgraded new name already exists in the original file; skip this rename
                 logging_warning(
-                    "Parameter collision in '%s': both old name '%s' and new name '%s' map to '%s'. "
-                    "Keeping the already-upgraded entry.",
+                    _(
+                        "Parameter collision in '%s': both old name '%s' and new name '%s' map to '%s'. "
+                        "Keeping the already-upgraded entry."
+                    ),
                     filename,
                     name,
                     new_name,
@@ -260,16 +263,19 @@ def upgrade_file_parameters_47(file_parameters: dict[str, ParDict]) -> None:
     # Build SR to MAV mapping based on SERIAL*_PROTOCOL configuration
     sr_to_mav_map, mavlink_port_indices = build_sr_to_mav_mapping(file_parameters)
 
-    for filename, params in file_parameters.items():
+    for filename, params in file_parameters.items():  # pylint: disable=too-many-nested-blocks
         upgraded: dict[str, Par] = {}
         for name, par in params.items():
             if name in PARAM_UPGRADE_DICT_47:
                 # Handle explicit parameter renames and scaling
                 new_name, scale = PARAM_UPGRADE_DICT_47[name]
-                if new_name in upgraded:
+                if new_name in params:
+                    # The already-upgraded new name already exists in the original file; skip this rename
                     logging_warning(
-                        "Parameter collision in '%s': both old name '%s' and already-present '%s' map to '%s'. "
-                        "Keeping the already-upgraded entry.",
+                        _(
+                            "Parameter collision in '%s': both old name '%s' and already-present '%s' map to '%s'. "
+                            "Keeping the already-upgraded entry."
+                        ),
                         filename,
                         name,
                         new_name,
@@ -286,7 +292,19 @@ def upgrade_file_parameters_47(file_parameters: dict[str, ParDict]) -> None:
 
                 if is_sr_param:
                     if new_par is not None:
-                        upgraded[new_name] = new_par
+                        if new_name in params:
+                            # The already-upgraded MAV param already exists in the original file; skip the SR rename
+                            logging_warning(
+                                _(
+                                    "Parameter collision in '%s': both SR param '%s' and already-present '%s'. "
+                                    "Keeping the already-upgraded entry."
+                                ),
+                                filename,
+                                name,
+                                new_name,
+                            )
+                        else:
+                            upgraded[new_name] = new_par
                     # else: parameter was dropped
                 else:
                     # Non-SR, non-upgrade parameters - keep unchanged
