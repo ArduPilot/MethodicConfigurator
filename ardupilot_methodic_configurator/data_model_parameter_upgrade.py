@@ -224,6 +224,7 @@ def upgrade_file_parameters_46(file_parameters: dict[str, ParDict]) -> None:
         file_parameters: Mapping of filename to ParDict, modified in-place.
 
     """
+    logging_warning("Upgrading parameter names for ArduPilot 4.6 firmware...")
     for filename, params in file_parameters.items():
         upgraded: dict[str, Par] = {}
         for name, par in params.items():
@@ -256,6 +257,7 @@ def upgrade_file_parameters_47(file_parameters: dict[str, ParDict]) -> None:
         file_parameters: Mapping of filename to ParDict, modified in-place.
 
     """
+    logging_warning("Upgrading parameter names and values for ArduPilot 4.7 firmware...")
     # Build SR to MAV mapping based on SERIAL*_PROTOCOL configuration
     sr_to_mav_map, mavlink_port_indices = build_sr_to_mav_mapping(file_parameters)
 
