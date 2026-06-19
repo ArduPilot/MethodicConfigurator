@@ -260,7 +260,12 @@
                 "SERVO_FTW_POLES": {}
             },
             "rename_connection": "vehicle_components['ESC']['ESC->FC Telemetry']['Type']",
-            "old_filenames": ["07_esc.param"]
+            "old_filenames": ["07_esc.param"],
+            "related_bin_messages": {
+                "ESC": { "name": "ESC telemetry", "required": true },
+                "ESCX": { "name": "ESC extended status", "required": false },
+                "EDT2": { "name": "Extended DShot telemetry", "required": false }
+            }
         },
         "10_battery_monitor.param": {
             "why": "The battery monitor must be configured to match the hardware connection type so that the autopilot correctly reads battery voltage and current",
@@ -288,6 +293,11 @@
             "plugin": {
                 "name": "battery_monitor",
                 "placement": "left"
+            },
+            "related_bin_messages": {
+                "BAT": { "name": "Battery", "required": true },
+                "BCL": { "name": "Battery cell voltages", "required": false },
+                "POWR": { "name": "Power monitor", "required": false }
             }
         },
         "11_battery.param": {
@@ -343,7 +353,21 @@
                 "GPS1_TYPE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) >= Version('4.6')","New Value": "vehicle_components['GNSS Receiver']['FC Connection']['Protocol']", "Change Reason": "Defined in component editor" }
             },
             "rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']",
-            "old_filenames": ["10_gnss.param"]
+            "old_filenames": ["10_gnss.param"],
+            "related_bin_messages": {
+                "GPS": {
+                    "name": "GPS",
+                    "required": true
+                },
+                "GPA": {
+                    "name": "GPS accuracy",
+                    "required": false
+                },
+                "GRAW": {
+                    "name": "Raw GPS data",
+                    "required": false
+                }
+            }
         },
         "13_initial_atc.param": {
             "why": "Propeller size has a big influence on the vehicle dynamics, this adapts the attitude controller response to it",

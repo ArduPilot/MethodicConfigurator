@@ -179,6 +179,28 @@
               "type": "string",
               "description": "Expression to rename connection"
             },
+            "related_bin_messages": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Z0-9_]+$": {
+                  "type": "object",
+                  "required": ["name", "required"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Human readable name of the log message"
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "description": "Whether this message is required for the step"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false,
+              "description": "ArduPilot log messages related to this configuration step"
+            },
             "download_file": {
               "type": "object",
               "required": ["source_url", "dest_local"],
