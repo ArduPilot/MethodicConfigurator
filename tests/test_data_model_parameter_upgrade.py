@@ -1032,6 +1032,91 @@ class TestCollisionHandling:
         assert "PSC_ACCZ_P" not in params["00_default.param"]
         assert "collision" in caplog.text.lower()
 
+    def test_46_collision_old_first_keeps_already_upgraded_entry_and_warns(self, caplog) -> None:
+        """
+        When old name appears before new name, the already-upgraded entry is still kept.
+
+        GIVEN: A file containing both GPS_TYPE (old, inserted first) and GPS1_TYPE (new, inserted second)
+        WHEN: upgrade_file_parameters_46 is called
+        THEN: GPS1_TYPE value from the already-upgraded entry is preserved
+        AND: A collision warning is logged
+        AND: Only one GPS1_TYPE entry exists in the result
+        """
+        params = {
+            "00_default.param": ParDict(
+                {
+                    "GPS_TYPE": Par(1.0, "Old entry"),  # old name inserted first
+                    "GPS1_TYPE": Par(5.0, "Already upgraded value"),  # already-upgraded entry inserted second
+                }
+            ),
+        }
+
+        upgrade_file_parameters_46(params)
+
+        # Already-upgraded entry wins regardless of insertion order
+        assert "GPS1_TYPE" in params["00_default.param"]
+        assert params["00_default.param"]["GPS1_TYPE"].value == pytest.approx(5.0)
+        assert params["00_default.param"]["GPS1_TYPE"].comment == "Already upgraded value"
+        assert "GPS_TYPE" not in params["00_default.param"]
+        assert "collision" in caplog.text.lower()
+
+    def test_47_collision_old_first_keeps_already_upgraded_entry_and_warns(self, caplog) -> None:
+        """
+        When old name appears before new name, the already-upgraded entry is still kept.
+
+        GIVEN: A file containing both PSC_ACCZ_P (old, inserted first) and PSC_D_ACC_P (new, inserted second)
+        WHEN: upgrade_file_parameters_47 is called
+        THEN: PSC_D_ACC_P value from the already-upgraded entry is preserved (not rescaled again)
+        AND: A collision warning is logged
+        """
+        params = {
+            "00_default.param": ParDict(
+                {
+                    "PSC_ACCZ_P": Par(10.0, "Old entry — would scale to 1.0 if applied"),  # old name inserted first
+                    "PSC_D_ACC_P": Par(0.2, "Already upgraded and scaled value"),  # already-upgraded inserted second
+                    "SERIAL0_PROTOCOL": Par(2.0, "MAVLink2"),
+                }
+            ),
+        }
+
+        upgrade_file_parameters_47(params)
+
+        # Already-upgraded entry wins regardless of insertion order; old value (10.0 * 0.1 = 1.0) is NOT applied
+        assert "PSC_D_ACC_P" in params["00_default.param"]
+        assert params["00_default.param"]["PSC_D_ACC_P"].value == pytest.approx(0.2)
+        assert params["00_default.param"]["PSC_D_ACC_P"].comment == "Already upgraded and scaled value"
+        assert "PSC_ACCZ_P" not in params["00_default.param"]
+        assert "collision" in caplog.text.lower()
+
+    def test_47_sr_collision_keeps_already_upgraded_mav_entry_and_warns(self, caplog) -> None:
+        """
+        When both an SR param and an already-upgraded MAV param coexist, the MAV entry is kept.
+
+        GIVEN: A file containing both SR0_RAW_SENS (old SR param) and MAV1_RAW_SENS (already upgraded)
+        WHEN: upgrade_file_parameters_47 is called
+        THEN: MAV1_RAW_SENS value from the already-upgraded entry is preserved
+        AND: A collision warning is logged
+        AND: SR0_RAW_SENS is not in the result
+        """
+        params = {
+            "00_default.param": ParDict(
+                {
+                    "SERIAL0_PROTOCOL": Par(2.0, "MAVLink2"),
+                    "SR0_RAW_SENS": Par(4.0, "Old SR param"),
+                    "MAV1_RAW_SENS": Par(10.0, "Already upgraded MAV param"),
+                }
+            ),
+        }
+
+        upgrade_file_parameters_47(params)
+
+        # Already-upgraded MAV entry wins; SR value is NOT applied
+        assert "MAV1_RAW_SENS" in params["00_default.param"]
+        assert params["00_default.param"]["MAV1_RAW_SENS"].value == pytest.approx(10.0)
+        assert params["00_default.param"]["MAV1_RAW_SENS"].comment == "Already upgraded MAV param"
+        assert "SR0_RAW_SENS" not in params["00_default.param"]
+        assert "collision" in caplog.text.lower()
+
 
 class TestEmptyAndPartialParameterSets:
     """Test upgrades with empty or partial parameter sets."""
