@@ -463,10 +463,10 @@ class TestParameterEditorTableUserWorkflows:
         children = parameter_table.view_port.winfo_children()
         assert len(children) > 0, "Table should have child widgets after population"
 
-        # Each parameter row has 8 widgets (del, name, fc_val, diff, new_val, unit, upload, change_reason)
+        # Each parameter row has 9 widgets (del, name, fc_val, diff, new_val, unit, upload, manual, change_reason)
         # Plus 1 Add button at the bottom
         # In "normal" mode, upload column is shown
-        expected_widgets_per_row = 8
+        expected_widgets_per_row = 9
         assert len(children) == len(test_params) * expected_widgets_per_row + 1, (
             f"Expected {len(test_params) * expected_widgets_per_row + 1} widgets "
             f"({len(test_params)} rows x {expected_widgets_per_row} + Add button), got {len(children)}"

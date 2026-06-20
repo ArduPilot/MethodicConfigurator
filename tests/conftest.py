@@ -212,6 +212,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE = (
     NEW_VALUE_DIFFERENT_STR,
     "New Value",
     "Unit",
+    "Manual",
     "Why are you changing this parameter?",
 )
 
@@ -223,6 +224,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED = (
     "New Value",
     "Unit",
     "Upload",
+    "Manual",
     "Why are you changing this parameter?",
 )
 
