@@ -231,7 +231,32 @@ class TestIMUData(unittest.TestCase):
         # Test above maximum temperature
         value = self.data.accel_at_temp(0, "X", 40.0)
         assert value == 2.0  # Should return last value
+    def test_accel_at_temp_duplicate_temperature_does_not_crash(self) -> None:
+        """Bug fix: duplicate consecutive temperature samples must not cause division by zero.
 
+        Two log samples can realistically be recorded at the same rounded
+        temperature. Previously this produced a silent NaN (via numpy's
+        divide-by-zero) instead of returning a sane value.
+        """
+        self.data.add_accel(0, 25.0, 1.0, Vector3(1.0, 2.0, 3.0))
+        self.data.add_accel(0, 25.0, 1.1, Vector3(1.0, 2.0, 3.0))  # duplicate temperature
+        self.data.add_accel(0, 30.0, 2.0, Vector3(1.5, 2.5, 3.5))
+
+        value = self.data.accel_at_temp(0, "X", 25.0)
+
+        assert not np.isnan(value)
+        assert value == 1.0
+
+    def test_gyro_at_temp_duplicate_temperature_does_not_crash(self) -> None:
+        """Bug fix: duplicate consecutive temperature samples must not cause division by zero."""
+        self.data.add_gyro(0, 25.0, 1.0, Vector3(1.0, 2.0, 3.0))
+        self.data.add_gyro(0, 25.0, 1.1, Vector3(1.0, 2.0, 3.0))  # duplicate temperature
+        self.data.add_gyro(0, 30.0, 2.0, Vector3(1.5, 2.5, 3.5))
+
+        value = self.data.gyro_at_temp(0, "X", 25.0)
+
+        assert not np.isnan(value)
+        assert value == 1.0
 
 class TestUtilityFunctions(unittest.TestCase):
     """Test utility functions."""

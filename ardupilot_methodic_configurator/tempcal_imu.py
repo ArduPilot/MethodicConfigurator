@@ -265,7 +265,8 @@ class IMUData:
             if self.accel[imu]["T"][i] <= temperature <= self.accel[imu]["T"][i + 1]:
                 v1 = self.accel[imu][axis][i]
                 v2 = self.accel[imu][axis][i + 1]
-                p = (temperature - self.accel[imu]["T"][i]) / (self.accel[imu]["T"][i + 1] - self.accel[imu]["T"][i])
+                denom = self.accel[imu]["T"][i + 1] - self.accel[imu]["T"][i]
+                p = (temperature - self.accel[imu]["T"][i]) / denom if denom != 0 else 0.0
                 return float(v1 + (v2 - v1) * p)
         return float(self.accel[imu][axis][-1])
 
@@ -277,7 +278,8 @@ class IMUData:
             if self.gyro[imu]["T"][i] <= temperature <= self.gyro[imu]["T"][i + 1]:
                 v1 = self.gyro[imu][axis][i]
                 v2 = self.gyro[imu][axis][i + 1]
-                p = (temperature - self.gyro[imu]["T"][i]) / (self.gyro[imu]["T"][i + 1] - self.gyro[imu]["T"][i])
+                denom = self.gyro[imu]["T"][i + 1] - self.gyro[imu]["T"][i]
+                p = (temperature - self.gyro[imu]["T"][i]) / denom if denom != 0 else 0.0
                 return float(v1 + (v2 - v1) * p)
         return float(self.gyro[imu][axis][-1])
 
