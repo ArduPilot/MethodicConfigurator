@@ -31,6 +31,11 @@ PARAM_NAME_MAX_LEN = 16
 # across different vehicles without intentional review.
 ID_PARAMETER_NAMES = {"SYSID_THISMAV", "SYSID_MYGCS", "FOLL_SYSID"}
 
+# Placeholder stored at the start of the change reason to indicate that a forced or derived
+# parameter has been manually overridden by the user. The backend skips re-applying
+# forced/derived values for parameters whose .param file comment begins with this prefix.
+MANUAL_OVERRIDE_PREFIX = "@manual_override"
+
 
 class ParamFileError(ValueError):
     """Raised when a .param file contains invalid or malformed data."""

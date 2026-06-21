@@ -2103,7 +2103,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return ParDict(
             {
-                name: Par(self.current_step_parameters[name].get_new_value(), self.current_step_parameters[name].change_reason)
+                name: Par(
+                    self.current_step_parameters[name].get_new_value(),
+                    self.current_step_parameters[name].change_reason_for_file,
+                )
                 for name in param_names
                 if name in self.current_step_parameters
             }

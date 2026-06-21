@@ -50,7 +50,7 @@ from ardupilot_methodic_configurator.annotate_params import (
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_PREFIX, Par, ParDict, is_within_tolerance
 
 PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
@@ -999,6 +999,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         for param_name, param in new_parameters[filename].items():
             if fc_param_names is None or not fc_param_names or param_name in fc_param_names:
                 if param_name in dest:
+                    # Skip parameters that have manual override active — user has explicitly
+                    # opted out of automated forced/derived value management for this param
+                    if (dest[param_name].comment or "").startswith(MANUAL_OVERRIDE_PREFIX):
+                        continue
                     if not is_within_tolerance(dest[param_name].value, param.value):
                         at_least_one_param_changed = True
                 else:
