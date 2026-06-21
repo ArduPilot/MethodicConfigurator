@@ -19,6 +19,7 @@ import pytest
 from ardupilot_methodic_configurator.backend_filesystem_migration import (
     VEHICLE_COMPONENTS_FORMAT_VERSION,
     _line_matches_any,
+    _param_name_from_line,
     migrate_vehicle_project_if_needed,
 )
 
@@ -798,6 +799,107 @@ class TestPatternMatchingEdgeCases:
         THEN: False is returned without raising an exception
         """
         assert _line_matches_any("ARMING_CHECK", ["[invalid"]) is False
+
+
+# ---------------------------------------------------------------------------
+# _param_name_from_line
+# ---------------------------------------------------------------------------
+
+
+class TestParamNameFromLine:
+    """Unit tests for the _param_name_from_line helper."""
+
+    def test_comma_separated_returns_name_only(self) -> None:
+        """
+        Comma-separated lines (Mission Planner format) return only the parameter name.
+
+        GIVEN: A line in the format 'NAME,value'
+        WHEN: _param_name_from_line is called
+        THEN: Only the parameter name is returned
+        """
+        assert _param_name_from_line("BATT_MONITOR,4\n") == "BATT_MONITOR"
+
+    def test_space_separated_returns_name_only(self) -> None:
+        """
+        Bug fix: space-separated lines must extract only the parameter name.
+
+        GIVEN: A line in the format 'NAME value' (mavproxy format)
+        WHEN: _param_name_from_line is called
+        THEN: Only the parameter name is returned, not the full 'NAME value' string
+        """
+        assert _param_name_from_line("BATT_MONITOR 4\n") == "BATT_MONITOR"
+
+    def test_tab_separated_returns_name_only(self) -> None:
+        r"""
+        Bug fix: tab-separated lines must extract only the parameter name.
+
+        GIVEN: A line in the format 'NAME\tvalue' (mavproxy format)
+        WHEN: _param_name_from_line is called
+        THEN: Only the parameter name is returned, not the full 'NAME\tvalue' string
+
+        Previously returned the entire line, breaking duplicate-parameter
+        detection during migration and producing invalid .param files.
+        """
+        assert _param_name_from_line("BATT_MONITOR\t4\n") == "BATT_MONITOR"
+
+    def test_comma_takes_priority_over_space(self) -> None:
+        """
+        When both comma and space are present, comma separator is used first.
+
+        GIVEN: A line 'NAME,value with spaces'
+        WHEN: _param_name_from_line is called
+        THEN: The name before the comma is returned, matching load_param_file_into_dict priority
+        """
+        assert _param_name_from_line("PARAM_NAME,val ue\n") == "PARAM_NAME"  # codespell:ignore
+
+    def test_blank_line_returns_empty_string(self) -> None:
+        """
+        Blank-only lines return an empty string.
+
+        GIVEN: A blank line
+        WHEN: _param_name_from_line is called
+        THEN: An empty string is returned.
+        """
+        assert _param_name_from_line("   \n") == ""
+
+    def test_comment_line_returns_empty_string(self) -> None:
+        """
+        Comment lines starting with '#' return an empty string.
+
+        GIVEN: A comment line starting with '#'
+        WHEN: _param_name_from_line is called
+        THEN: An empty string is returned.
+        """
+        assert _param_name_from_line("# this is a comment\n") == ""
+
+    def test_duplicate_detection_with_tab_separated_file(self) -> None:
+        r"""
+        End-to-end regression: tab-separated duplicate params are detected.
+
+        GIVEN: An existing .param file with 'BATT_MONITOR\t4' (tab-separated)
+          AND: A list of lines to merge containing 'BATT_MONITOR\t5'
+        WHEN: Duplicate detection uses _param_name_from_line on both sides
+        THEN: The duplicate is detected and the second line is NOT appended,
+              leaving a file with exactly one BATT_MONITOR entry
+        """
+        existing = ["BATT_MONITOR\t4\n"]
+        lines_to_add = ["BATT_MONITOR\t5\n"]
+
+        existing_names = {name for line in existing if (name := _param_name_from_line(line))}
+        new_lines = [line for line in lines_to_add if _param_name_from_line(line) not in existing_names]
+
+        assert new_lines == [], "duplicate should be suppressed, not appended"
+
+    def test_tab_separated_line_with_inline_comment_returns_name_only(self) -> None:
+        r"""
+        Tab-separated line with an inline comment returns only the parameter name.
+
+        GIVEN: A line in the format 'NAME\tvalue # inline comment'
+        WHEN: _param_name_from_line is called
+        THEN: Only the parameter name is returned; the inline comment must not
+              cause the space before '#' to be treated as the separator.
+        """
+        assert _param_name_from_line("BATT_MONITOR\t4 # inline comment\n") == "BATT_MONITOR"
 
 
 # ---------------------------------------------------------------------------

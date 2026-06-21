@@ -332,11 +332,27 @@ def _param_name_from_line(line: str) -> str:
     Return the parameter name from a .param file line, or an empty string.
 
     Blank lines and comment-only lines (starting with ``#``) return ``""``.
+    Supports comma-, space-, and tab-separated parameter files using the same
+    priority order as ParDict.load_param_file_into_dict: comma first, then
+    space, then tab.
     """
     stripped = line.strip()
     if not stripped or stripped.startswith("#"):
         return ""
-    return stripped.split(",", 1)[0].strip()
+    # Strip inline comments before separator detection, matching the behaviour
+    # of ParDict.load_param_file_into_dict, so that a line like
+    # "NAME\t4 # comment" doesn't falsely split on the space before '#'.
+    if "#" in stripped:
+        stripped = stripped.split("#", 1)[0].strip()
+    if not stripped:
+        return ""
+    if "," in stripped:
+        return stripped.split(",", 1)[0].strip()
+    if " " in stripped:
+        return stripped.split(" ", 1)[0].strip()
+    if "\t" in stripped:
+        return stripped.split("\t", 1)[0].strip()
+    return stripped
 
 
 def _line_matches_any(param_name: str, patterns: list[str]) -> bool:
