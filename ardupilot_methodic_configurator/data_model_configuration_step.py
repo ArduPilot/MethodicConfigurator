@@ -348,7 +348,12 @@ class ConfigurationStepProcessor:
                 old_prefix += "_" + parts[1]
                 new_prefix = "CAN_D" + new_number
                 is_exception_case = True
-            if new_type == "SERIAL" and len(parts) >= 2 and parts[0] == "BRD" and re.match(r"^SER\d+$", parts[1]):
+            if (
+                new_type == "SERIAL"
+                and len(parts) >= 2
+                and parts[0] == "BRD"
+                and re.match(r"^SER\d+$", parts[1])  # codespell:ignore
+            ):
                 old_prefix += "_" + parts[1]
                 new_prefix = "BRD_SER" + new_number
                 is_exception_case = True
