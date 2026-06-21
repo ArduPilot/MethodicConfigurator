@@ -348,7 +348,7 @@ class ConfigurationStepProcessor:
 
         Returns:
             Tuple containing:
-            - Set of parameter names that should be removed (duplicates)
+            - Set of parameter names that should be removed (duplicates)  # codespell:ignore
             - List of (old_name, new_name) pairs that should be renamed
 
         """

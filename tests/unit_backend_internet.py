@@ -1017,3 +1017,55 @@ def test_get_verify_param_frozen_bundled_cert_missing(mock_sys, mock_environ, mo
     result = _get_verify_param()
     assert result == "/certifi/cacert.pem"
     mock_certifi.where.assert_called_once()
+
+
+def test_verify_installer_integrity_no_hash_proceeds_with_warning(tmp_path) -> None:
+    """Updated: when SHA256 is unavailable from GitHub, proceed with a warning."""
+    from ardupilot_methodic_configurator.backend_internet import (  # noqa: PLC0415
+        _verify_installer_integrity,  # pylint: disable=import-outside-toplevel
+    )
+
+    test_file = tmp_path / "installer.exe"
+    test_file.write_bytes(b"fake content")
+    assert _verify_installer_integrity(str(test_file), None) is True
+    assert test_file.exists()
+
+
+def test_verify_installer_integrity_empty_hash_proceeds_with_warning(tmp_path) -> None:
+    """Updated: empty string hash also proceeds with warning."""
+    from ardupilot_methodic_configurator.backend_internet import (  # noqa: PLC0415
+        _verify_installer_integrity,  # pylint: disable=import-outside-toplevel
+    )
+
+    test_file = tmp_path / "installer.exe"
+    test_file.write_bytes(b"fake content")
+    assert _verify_installer_integrity(str(test_file), "") is True
+    assert test_file.exists()
+
+
+def test_verify_installer_integrity_valid_hash_passes(tmp_path) -> None:
+    """Verify that a correct SHA256 hash still passes after the fix."""
+    import hashlib  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
+
+    from ardupilot_methodic_configurator.backend_internet import (  # noqa: PLC0415
+        _verify_installer_integrity,  # pylint: disable=import-outside-toplevel
+    )
+
+    content = b"real content"
+    test_file = tmp_path / "installer.exe"
+    test_file.write_bytes(content)
+    h = hashlib.sha256(content).hexdigest()
+    assert _verify_installer_integrity(str(test_file), h) is True
+    assert test_file.exists()
+
+
+def test_verify_installer_integrity_wrong_hash_fails(tmp_path) -> None:
+    """Verify that a wrong SHA256 hash still fails after the fix."""
+    from ardupilot_methodic_configurator.backend_internet import (  # noqa: PLC0415
+        _verify_installer_integrity,  # pylint: disable=import-outside-toplevel
+    )
+
+    test_file = tmp_path / "installer.exe"
+    test_file.write_bytes(b"real content")
+    assert _verify_installer_integrity(str(test_file), "0" * 64) is False
+    assert not test_file.exists()
