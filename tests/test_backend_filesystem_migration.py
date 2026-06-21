@@ -19,6 +19,7 @@ import pytest
 from ardupilot_methodic_configurator.backend_filesystem_migration import (
     VEHICLE_COMPONENTS_FORMAT_VERSION,
     _line_matches_any,
+    _param_name_from_line,
     migrate_vehicle_project_if_needed,
 )
 
@@ -798,6 +799,43 @@ class TestPatternMatchingEdgeCases:
         THEN: False is returned without raising an exception
         """
         assert _line_matches_any("ARMING_CHECK", ["[invalid"]) is False
+
+    def test_param_name_from_line_handles_comma_separated(self) -> None:
+        """
+        Comma-separated lines (Mission Planner format) extract the parameter name.
+
+        GIVEN: A line in the format 'NAME,value'
+        WHEN: _param_name_from_line is called
+        THEN: Only the parameter name is returned, value is discarded
+        """
+        assert _param_name_from_line("BATT_MONITOR,4\n") == "BATT_MONITOR"
+
+    def test_param_name_from_line_handles_tab_separated(self) -> None:
+        r"""
+        Bug fix: tab-separated lines (mavproxy format) must extract only the name.
+
+        GIVEN: A line in the format 'NAME\tvalue', a valid ArduPilot param
+            file format also accepted by ParDict.load_param_file_into_dict
+        WHEN: _param_name_from_line is called
+        THEN: Only the parameter name is returned, not the full line
+
+        Previously this returned the entire line (name and value together),
+        which broke duplicate-parameter detection during migration: a
+        tab-separated file with the same parameter at a different value in
+        the source and destination would not be recognized as a duplicate,
+        producing an invalid .param file with the parameter listed twice.
+        """
+        assert _param_name_from_line("BATT_MONITOR\t4\n") == "BATT_MONITOR"
+
+    def test_param_name_from_line_handles_space_separated(self) -> None:
+        """
+        Bug fix: space-separated lines (mavproxy format) must extract only the name.
+
+        GIVEN: A line in the format 'NAME value'
+        WHEN: _param_name_from_line is called
+        THEN: Only the parameter name is returned, not the full line
+        """
+        assert _param_name_from_line("BATT_MONITOR 4\n") == "BATT_MONITOR"
 
 
 # ---------------------------------------------------------------------------
