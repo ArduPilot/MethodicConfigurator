@@ -12,7 +12,7 @@ from math import inf, isfinite, isnan, nan
 from typing import Any
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.data_model_par_dict import Par, is_within_tolerance
+from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_PREFIX, Par, is_within_tolerance
 
 
 class ParameterUnchangedError(Exception):
@@ -72,12 +72,33 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         self._is_forced = forced_value is not None and forced_value not in (nan, +inf, -inf)
         self._is_derived = derived_value is not None and derived_value not in (nan, +inf, -inf)
 
+        # Store original forced/derived values so they can be restored when manual override is disabled
+        self._forced_value = forced_value
+        self._forced_reason = forced_reason
+        self._derived_value = derived_value
+        self._derived_reason = derived_reason
+
         # these are the values read from file, not the new values
         self._value_on_file = par_obj.value
-        self._change_reason_on_file = par_obj.comment or ""
+        raw_comment = par_obj.comment if par_obj.comment is not None else ""
+        # Only forced/derived params can have a meaningful manual override. A regular
+        # param whose comment happens to start with the prefix is NOT treated as
+        # overridden; its comment is preserved verbatim.
+        self._is_manual_override = (self._is_forced or self._is_derived) and raw_comment.startswith(MANUAL_OVERRIDE_PREFIX)
+        self._manual_override_on_file = self._is_manual_override
+        if self._is_manual_override:
+            # Strip the "@manual_override " prefix so the user sees only their typed reason
+            stripped = raw_comment[len(MANUAL_OVERRIDE_PREFIX) :]
+            self._change_reason_on_file = stripped.lstrip(" ")
+        else:
+            self._change_reason_on_file = raw_comment
 
         # new value and change reason to be sent to the flight controller and/or saved to file
-        if self._is_forced and forced_value is not None:  # second condition is redundant, but keeps linters happy
+        if self._is_manual_override:
+            # Manual override active: use the file value regardless of forced/derived definition
+            self._new_value = par_obj.value
+            self._change_reason = self._change_reason_on_file
+        elif self._is_forced and forced_value is not None:  # second condition is redundant, but keeps linters happy
             self._new_value = forced_value
             self._change_reason = forced_reason or ""
         elif self._is_derived and derived_value is not None:  # second condition is redundant, but keeps linters happy
@@ -85,7 +106,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             self._change_reason = derived_reason or ""
         else:
             self._new_value = par_obj.value
-            self._change_reason = par_obj.comment or ""
+            self._change_reason = self._change_reason_on_file
 
     @property
     def name(self) -> str:
@@ -139,9 +160,14 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         )
 
     @property
+    def is_manual_override(self) -> bool:
+        """Return True if this forced/derived parameter has manual override active."""
+        return self._is_manual_override
+
+    @property
     def is_editable(self) -> bool:
         """Return True if the parameter can be edited, False otherwise."""
-        return not (self._is_forced or self._is_derived or self.is_readonly)
+        return not self.is_readonly and (not (self._is_forced or self._is_derived) or self._is_manual_override)
 
     @property
     def has_fc_value(self) -> bool:
@@ -187,7 +213,11 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             if self.is_bitmask or self.is_multiple_choice
             else not is_within_tolerance(self._new_value, self._value_on_file)
         )
-        return value_dirty or self._change_reason != self._change_reason_on_file
+        return (
+            value_dirty
+            or self._change_reason != self._change_reason_on_file
+            or self._is_manual_override != self._manual_override_on_file
+        )
 
     @property
     def choices_dict(self) -> dict[str, str]:
@@ -257,6 +287,20 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
     @property
     def change_reason(self) -> str:
         """Return the change reason string for this parameter."""
+        return self._change_reason
+
+    @property
+    def change_reason_for_file(self) -> str:
+        """
+        Return the change reason as it should be stored in the .param file.
+
+        For parameters with manual override active, this prepends the
+        ``@manual_override`` placeholder so the backend can detect and
+        respect the override on the next load.
+        """
+        if self._is_manual_override:
+            reason = self._change_reason
+            return f"{MANUAL_OVERRIDE_PREFIX} {reason}" if reason else MANUAL_OVERRIDE_PREFIX
         return self._change_reason
 
     def get_new_value(self) -> float:
@@ -357,7 +401,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
                 change the currently stored value.
 
         """
-        if self._is_forced or self._is_derived:
+        if (self._is_forced or self._is_derived) and not self._is_manual_override:
             raise ValueError(_("This parameter is forced or derived and cannot be changed."))
 
         if not isinstance(value, str):
@@ -440,7 +484,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             True if the change_reason was changed, False otherwise
 
         """
-        if self._is_forced or self._is_derived:
+        if (self._is_forced or self._is_derived) and not self._is_manual_override:
             return False
 
         if change_reason == self._change_reason or (change_reason == "" and self._change_reason is None):
@@ -493,10 +537,58 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
 
         self._change_reason = change_reason
 
+    def set_manual_override(self, enabled: bool) -> None:
+        """
+        Enable or disable manual override for a forced or derived parameter.
+
+        When enabled, the parameter becomes freely editable. If the file already had @manual_override
+        the persisted file value/reason are restored; otherwise the forced/derived value/reason are used
+        as a starting point.
+        When disabled, the forced/derived value and change reason are restored.
+
+        Args:
+            enabled: True to enable manual override, False to revert to forced/derived
+
+        Raises:
+            ValueError: If this parameter is neither forced nor derived
+
+        """
+        if not (self._is_forced or self._is_derived):
+            raise ValueError(_("Manual override is only applicable to forced or derived parameters."))
+
+        if enabled == self._is_manual_override:
+            return
+
+        if enabled:
+            self._is_manual_override = True
+            if self._manual_override_on_file:
+                # The file already had @manual_override: restore the persisted value and reason
+                # so re-enabling the checkbox does not overwrite the user's previous manual values.
+                self._new_value = self._value_on_file
+                self._change_reason = self._change_reason_on_file
+            elif self._is_forced and self._forced_value is not None:
+                self._new_value = self._forced_value
+                self._change_reason = self._forced_reason or ""
+            elif self._is_derived and self._derived_value is not None:
+                self._new_value = float(self._derived_value)
+                self._change_reason = self._derived_reason or ""
+            else:
+                self._new_value = self._value_on_file
+                self._change_reason = self._change_reason_on_file
+        else:
+            self._is_manual_override = False
+            if self._is_forced and self._forced_value is not None:
+                self._new_value = self._forced_value
+                self._change_reason = self._forced_reason or ""
+            elif self._is_derived and self._derived_value is not None:
+                self._new_value = float(self._derived_value)
+                self._change_reason = self._derived_reason or ""
+
     def copy_new_value_to_file(self) -> None:
         """Copy the new value to the value on file, marking it as saved, resetting the is_dirty property."""
         self._value_on_file = self._new_value
         self._change_reason_on_file = self._change_reason
+        self._manual_override_on_file = self._is_manual_override
 
 
 class BitmaskHelper:
