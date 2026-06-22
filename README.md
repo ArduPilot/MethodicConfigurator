@@ -64,6 +64,10 @@ It's simple graphical user interface (GUI) manages and visualizes ArduPilot para
 
 No visible menus, no hidden menus, no complicated options, what you see is what gets changed.
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/chart?repos=ArduPilot/MethodicConfigurator&type=date&legend=top-left)](https://www.star-history.com/?repos=ArduPilot%2FMethodicConfigurator&type=date&legend=top-left)
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)
@@ -305,10 +309,6 @@ Now that tuning and configuration are done, some logging and tests can be disabl
 Congratulations your flight controller is now fully configured in the safest and fastest way publicly known.
 
 Enjoy your properly configured vehicle.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=ArduPilot/MethodicConfigurator&type=date&legend=top-left)](https://www.star-history.com/?repos=ArduPilot%2FMethodicConfigurator&type=date&legend=top-left)
 
 ## Documentation and Support
 
