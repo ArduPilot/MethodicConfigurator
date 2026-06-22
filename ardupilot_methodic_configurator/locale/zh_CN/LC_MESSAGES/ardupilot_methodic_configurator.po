@@ -3378,7 +3378,7 @@ msgstr "只读参数不能被强制或派生。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:557
 msgid "Manual override is only applicable to forced or derived parameters."
-msgstr ""
+msgstr "手动覆盖仅适用于强制或派生参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_battery_monitor.py:77
 msgid ""
@@ -6807,17 +6807,17 @@ msgstr "选择后，将新值上传到飞控"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:174
 msgid "Manual"
-msgstr ""
+msgstr "手动"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:176
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter.\n"
-msgstr ""
+msgstr "选中时，允许手动编辑此强制或派生参数。\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:177
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:776
 msgid "When unchecked, reverts to the forced or derived value."
-msgstr ""
+msgstr "未选中时，将恢复为强制或派生值。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:180
 msgid "Why are you changing this parameter?"
@@ -6927,7 +6927,7 @@ msgstr "选择后将 {param_name} 新值上传到飞控"
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter "
 "value and change reason.\n"
-msgstr ""
+msgstr "选中时，允许手动编辑此强制或派生参数的值和更改原因。\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:810
 msgid ""

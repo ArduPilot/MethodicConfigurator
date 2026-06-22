@@ -3626,7 +3626,7 @@ msgstr "読み取り専用パラメータは強制または派生できません
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:557
 msgid "Manual override is only applicable to forced or derived parameters."
-msgstr ""
+msgstr "強制または派生パラメータにのみ手動オーバーライドが適用されます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_battery_monitor.py:77
 msgid ""
@@ -7211,17 +7211,17 @@ msgstr "選択時、新しい値をフライトコントローラにアップロ
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:174
 msgid "Manual"
-msgstr ""
+msgstr "手動"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:176
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter.\n"
-msgstr ""
+msgstr "チェックすると、この強制または派生パラメータを手動で編集できるようになります。\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:177
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:776
 msgid "When unchecked, reverts to the forced or derived value."
-msgstr ""
+msgstr "チェックを外すと、強制または派生値に戻ります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:180
 msgid "Why are you changing this parameter?"
@@ -7336,7 +7336,7 @@ msgstr "選択時、{param_name}の新しい値をフライトコントローラ
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter "
 "value and change reason.\n"
-msgstr ""
+msgstr "チェックすると、この強制または派生パラメータの値と変更理由を手動で編集できるようになります。\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:810
 msgid ""

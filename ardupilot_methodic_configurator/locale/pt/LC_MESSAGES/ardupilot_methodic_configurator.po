@@ -3774,7 +3774,7 @@ msgstr "Parâmetros só de leitura não podem ser forçados ou derivados."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:557
 msgid "Manual override is only applicable to forced or derived parameters."
-msgstr ""
+msgstr "Substituição manual só é aplicável a parâmetros forçados ou derivados."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_battery_monitor.py:77
 msgid ""
@@ -7443,17 +7443,17 @@ msgstr "Quando selecionado, enviar o novo valor para o controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:174
 msgid "Manual"
-msgstr ""
+msgstr "Manual"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:176
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter.\n"
-msgstr ""
+msgstr "Quando selecionado, permite a edição manual deste parâmetro forçado ou derivado.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:177
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:776
 msgid "When unchecked, reverts to the forced or derived value."
-msgstr ""
+msgstr "Quando não selecionado, reverte para o valor forçado ou derivado."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:180
 msgid "Why are you changing this parameter?"
@@ -7574,7 +7574,7 @@ msgstr ""
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter "
 "value and change reason.\n"
-msgstr ""
+msgstr "Quando selecionado, permite a edição manual do valor deste parâmetro forçado ou derivado e do motivo da alteração.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:810
 msgid ""
