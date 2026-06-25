@@ -1155,6 +1155,8 @@ def test_set_fc_value_maintains_comparison_state() -> None:
 
     # Assert: No longer different
     assert param.is_different_from_fc is False
+
+
 def test_set_new_value_multiple_choice_non_numeric_raises_friendly_error(param_fixture) -> None:
     """
     Bug fix: non-numeric input for a multiple-choice parameter raises a friendly ValueError.

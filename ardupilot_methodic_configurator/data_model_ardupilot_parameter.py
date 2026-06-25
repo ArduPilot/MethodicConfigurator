@@ -372,9 +372,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
             try:
                 new_value = float(s)
             except ValueError as exc:
-                raise ValueError(
-                    _("The value for {param_name} must be a number.").format(param_name=self._name)
-                ) from exc
+                raise ValueError(_("The value for {param_name} must be a number.").format(param_name=self._name)) from exc
             # No change
             if new_value == self._new_value:
                 raise ParameterUnchangedError(
