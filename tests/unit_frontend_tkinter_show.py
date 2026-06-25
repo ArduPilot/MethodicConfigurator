@@ -16,6 +16,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 from tkinter import TclError
 from unittest.mock import MagicMock, patch
 
@@ -40,7 +41,7 @@ class TestWindowsMonitorBoundsImplementation:
         """Test that missing ctypes module returns None."""
         widget = MagicMock()
 
-        with patch("builtins.__import__", side_effect=ImportError("No module named 'ctypes'")):
+        with patch.dict(sys.modules, {"ctypes": None, "ctypes.wintypes": None}):
             result = _monitor_bounds_windows(widget)
 
         assert result is None
