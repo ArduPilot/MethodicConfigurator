@@ -682,8 +682,10 @@ class ConfigurationSteps:
         """
         active_phases = {k: v for k, v in self.configuration_phases.items() if "start" in v}
 
-        # Sort phases by start position
-        sorted_phases: dict[str, PhaseData] = dict(sorted(active_phases.items(), key=lambda x: x[1].get("start", 0)))
+        # Sort phases by start position, copying each dict to avoid mutating configuration_phases
+        sorted_phases: dict[str, PhaseData] = dict(
+            sorted(((k, dict(v)) for k, v in active_phases.items()), key=lambda x: x[1].get("start", 0))
+        )
 
         # Add the end information to each phase using the start of the next phase
         phase_names = list(sorted_phases.keys())

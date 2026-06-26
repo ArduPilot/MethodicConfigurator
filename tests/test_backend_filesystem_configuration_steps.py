@@ -1914,6 +1914,51 @@ class TestConfigurationNavigation:
         assert result["phase1"]["weight"] == 2  # max(2, 2-1) = 2
         assert result["phase2"]["weight"] == 2  # max(2, 3-2) = 2
 
+    def test_get_sorted_phases_does_not_mutate_configuration_phases(self, config_steps: ConfigurationSteps) -> None:
+        """
+        Bug fix: get_sorted_phases_with_end_and_weight must not modify configuration_phases.
+
+        GIVEN: Three phases with only 'start' and 'description' keys
+        WHEN: get_sorted_phases_with_end_and_weight is called
+        THEN: configuration_phases still has only 'start' and 'description' keys (no 'end' or 'weight')
+
+        Previously the function mutated the inner dicts of configuration_phases by adding
+        'end' and 'weight' keys, because sorted_phases held references to the same dict
+        objects rather than copies. A second call with a different total_files would then
+        return stale 'end' values from the first call.
+        """
+        config_steps.configuration_phases = {
+            "phase1": {"start": 1, "description": "Phase 1"},  # type: ignore[typeddict-item]
+            "phase2": {"start": 5, "description": "Phase 2"},  # type: ignore[typeddict-item]
+            "phase3": {"start": 10, "description": "Phase 3"},  # type: ignore[typeddict-item]
+        }
+
+        config_steps.get_sorted_phases_with_end_and_weight(15)
+
+        # configuration_phases must not have been mutated
+        for phase_data in config_steps.configuration_phases.values():
+            assert "end" not in phase_data
+            assert "weight" not in phase_data
+
+    def test_get_sorted_phases_second_call_uses_new_total_files(self, config_steps: ConfigurationSteps) -> None:
+        """
+        Bug fix: a second call with different total_files returns correct results.
+
+        GIVEN: Phases set up and a first call made with total_files=15
+        WHEN: get_sorted_phases_with_end_and_weight is called again with total_files=30
+        THEN: The last phase end equals 30, not the stale value 15 from the first call
+        """
+        config_steps.configuration_phases = {
+            "phase1": {"start": 1, "description": "Phase 1"},  # type: ignore[typeddict-item]
+            "phase2": {"start": 10, "description": "Phase 2"},  # type: ignore[typeddict-item]
+        }
+
+        config_steps.get_sorted_phases_with_end_and_weight(15)
+        result = config_steps.get_sorted_phases_with_end_and_weight(30)
+
+        assert result["phase2"]["end"] == 30
+        assert result["phase1"]["end"] == 10
+
 
 # ---------------------------------------------------------------------------
 # compute_add_parameters - parameters_to_delete priority
