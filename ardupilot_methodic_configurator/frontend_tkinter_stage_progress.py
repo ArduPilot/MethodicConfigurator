@@ -232,17 +232,28 @@ def main() -> None:  # pragma: no cover
     config_steps = ConfigurationSteps("", "ArduCopter")
     config_steps.re_init("", "ArduCopter")
 
-    processed_phases = config_steps.get_sorted_phases_with_end_and_weight(54)
-    progress = StageProgressBar(root, processed_phases, 54, "normal")
-    progress.pack(padx=10, pady=10, fill="both", expand=True)
+    try:
+        first_step_filename = next(iter(config_steps.configuration_steps))
+        last_step_filename = next(reversed(config_steps.configuration_steps))
+        first_step_number = int(first_step_filename.split("_", 1)[0])
+        last_step_number = int(last_step_filename.split("_", 1)[0])
+        processed_phases = config_steps.get_sorted_phases_with_end_and_weight(last_step_number)
+        progress = StageProgressBar(root, processed_phases, last_step_number, "normal")
+        progress.pack(padx=10, pady=10, fill="both", expand=True)
+    except StopIteration:
+        logging_error(_("No configuration steps found."))
+        return
+    except ValueError as e:
+        logging_error(_("Error parsing either first or last step numbers: {error}").format(error=str(e)))
+        return
 
     # Demo update function
-    current_file = 2
+    current_file = first_step_number
 
     def update_demo() -> None:
         nonlocal current_file
         progress.update_progress(current_file)
-        current_file = 2 if current_file > 54 else current_file + 1
+        current_file = first_step_number if current_file >= last_step_number else current_file + 1
         root.after(1000, update_demo)
 
     # Start demo updates
