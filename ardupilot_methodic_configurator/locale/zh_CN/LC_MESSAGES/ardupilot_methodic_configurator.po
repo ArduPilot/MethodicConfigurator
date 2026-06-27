@@ -7353,11 +7353,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:244
 msgid "No configuration steps found."
-msgstr ""
+msgstr "未找到配置步骤。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:247
 msgid "Error parsing either first or last step numbers: {error}"
-msgstr ""
+msgstr "解析第一步或最后一步编号时出错：{error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:112
 msgid ""
