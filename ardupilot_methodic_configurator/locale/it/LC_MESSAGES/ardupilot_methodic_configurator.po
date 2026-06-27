@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2026-06-22 02:17+0000\n"
+"POT-Creation-Date: 2026-06-27 11:23+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -684,11 +684,11 @@ msgstr "Errore di valore durante la serializzazione dei dati in JSON: {}"
 msgid "Unexpected error saving data to file '{}': {}"
 msgstr "Errore imprevisto durante il salvataggio dei dati nel file '{}': {}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:349
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:365
 msgid "Skipping malformed regex pattern %r: not a valid regular expression"
 msgstr "Saltato pattern regex malformato %r: espressione regolare non valida"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:402
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:418
 msgid ""
 "Unknown vehicle type %r; no type-specific migrations will run. Known types: "
 "%s"
@@ -696,56 +696,56 @@ msgstr ""
 "Tipo di veicolo sconosciuto %r; nessuna migrazione specifica per tipo verrà "
 "eseguita. Tipi conosciuti: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:413
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:429
 msgid "Migration source file not found, skipping extraction: %s"
 msgstr "File sorgente di migrazione non trovato, estrazione saltata: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:422
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:438
 msgid "Extracted %d parameter line(s) from %s for %s"
 msgstr "Estratte %d riga(e) di parametri da %s per %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:434
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:450
 msgid "%s parameter migration file: %s"
 msgstr "File di migrazione parametri %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:434
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:450
 msgid "Created"
 msgstr "Creato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:434
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:450
 msgid "Updated"
 msgstr "Aggiornato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:443
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:459
 msgid "Created new file: %s"
 msgstr "Creato nuovo file: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:455
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:471
 msgid ""
 "Deleting obsolete file %s which still contains %d unmigrated parameter(s): %s"
 msgstr ""
 "Eliminazione del file obsoleto %s che contiene ancora %d parametro(i) non "
 "migrati: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:461
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:477
 msgid "Deleted obsolete file: %s"
 msgstr "File obsoleto eliminato: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:497
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:513
 msgid "Failed to load %s: %s"
 msgstr "Impossibile caricare %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:510
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:526
 msgid "Migrating %s vehicle project in '%s' from format version %d to %d"
 msgstr ""
 "In corso la migrazione del progetto veicolo %s in '%s' dalla versione di "
 "formato %d alla %d"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:511
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:527
 msgid "unknown"
 msgstr "sconosciuto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:526
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_migration.py:542
 msgid "Migration to format version %d complete"
 msgstr "Migrazione alla versione di formato %d completata"
 
@@ -3830,7 +3830,8 @@ msgstr "I parametri di sola lettura non possono essere forzati o derivati."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:557
 msgid "Manual override is only applicable to forced or derived parameters."
-msgstr "La modifica manuale è applicabile solo ai parametri forzati o derivati."
+msgstr ""
+"La modifica manuale è applicabile solo ai parametri forzati o derivati."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_battery_monitor.py:77
 msgid ""
@@ -7501,7 +7502,9 @@ msgstr "Manuale"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:176
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter.\n"
-msgstr "Se selezionato, consente la modifica manuale di questo parametro forzato o derivato.\n"
+msgstr ""
+"Se selezionato, consente la modifica manuale di questo parametro forzato o "
+"derivato.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:177
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:776
@@ -7627,7 +7630,9 @@ msgstr ""
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter "
 "value and change reason.\n"
-msgstr "Se selezionato, consente la modifica manuale del valore di questo parametro forzato o derivato e della motivazione del cambiamento.\n"
+msgstr ""
+"Se selezionato, consente la modifica manuale del valore di questo parametro "
+"forzato o derivato e della motivazione del cambiamento.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:810
 msgid ""
@@ -8073,6 +8078,14 @@ msgstr ""
 "configurare i parametri di ArduPilot. Questo modulo mostra l'avanzamento "
 "della sequenza di configurazione sotto forma di una barra di avanzamento "
 "suddivisa in fasi di configurazione."
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:244
+msgid "No configuration steps found."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:247
+msgid "Error parsing either first or last step numbers: {error}"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:112
 msgid ""
