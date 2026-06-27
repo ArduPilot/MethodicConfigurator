@@ -672,7 +672,7 @@ class ConfigurationSteps:
             text = documentation.get(tooltip_key, text.format(**locals()))
         return text
 
-    def get_sorted_phases_with_end_and_weight(self, total_files: int) -> dict[str, PhaseData]:
+    def get_sorted_phases_with_end_and_weight(self, last_file_nr: int) -> dict[str, PhaseData]:
         """
         Get sorted phases with added 'end' and 'weight' information.
 
@@ -692,11 +692,11 @@ class ConfigurationSteps:
         for i, phase_name in enumerate(phase_names):
             if i < len(phase_names) - 1:
                 next_phase_name = phase_names[i + 1]
-                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name].get("start", total_files)
+                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name].get("start", last_file_nr)
             else:
-                sorted_phases[phase_name]["end"] = total_files
+                sorted_phases[phase_name]["end"] = last_file_nr + 1
             phase_start = sorted_phases[phase_name].get("start", 0)
-            phase_end = sorted_phases[phase_name].get("end", total_files)
+            phase_end = sorted_phases[phase_name].get("end", last_file_nr + 1)
             sorted_phases[phase_name]["weight"] = max(2, phase_end - phase_start)
 
         return sorted_phases
