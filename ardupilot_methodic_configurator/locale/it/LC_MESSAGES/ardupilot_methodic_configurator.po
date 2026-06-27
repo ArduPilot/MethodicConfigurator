@@ -8081,11 +8081,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:244
 msgid "No configuration steps found."
-msgstr ""
+msgstr "Nessun passaggio di configurazione trovato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py:247
 msgid "Error parsing either first or last step numbers: {error}"
-msgstr ""
+msgstr "Errore nell'analisi del primo o dell'ultimo numero di passaggio: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:112
 msgid ""
