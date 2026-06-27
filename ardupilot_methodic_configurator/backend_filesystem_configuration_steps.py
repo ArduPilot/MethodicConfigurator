@@ -680,26 +680,23 @@ class ConfigurationSteps:
         - 'end': The end file number (start of next phase or total_files)
         - 'weight': Weight for UI layout (max(2, end - start))
         """
-        active_phases = {k: v for k, v in self.configuration_phases.items() if "start" in v}
-
-        # Sort phases by start position, copying each dict to avoid mutating configuration_phases
-        sorted_phases: dict[str, PhaseData] = dict(
-            sorted(((k, dict(v)) for k, v in active_phases.items()), key=lambda x: x[1].get("start", 0))
+        active_phases = sorted(
+            ((k, v) for k, v in self.configuration_phases.items() if "start" in v),
+            key=lambda x: x[1].get("start", 0),
         )
 
-        # Add the end information to each phase using the start of the next phase
-        phase_names = list(sorted_phases.keys())
-        for i, phase_name in enumerate(phase_names):
-            if i < len(phase_names) - 1:
-                next_phase_name = phase_names[i + 1]
-                sorted_phases[phase_name]["end"] = sorted_phases[next_phase_name].get("start", last_file_nr)
-            else:
-                sorted_phases[phase_name]["end"] = last_file_nr + 1
-            phase_start = sorted_phases[phase_name].get("start", 0)
-            phase_end = sorted_phases[phase_name].get("end", last_file_nr + 1)
-            sorted_phases[phase_name]["weight"] = max(2, phase_end - phase_start)
+        # Compute 'end' for each phase: start of the next phase, or last_file_nr for the last phase
+        ends = [v.get("start", last_file_nr) for _, v in active_phases[1:]] + [last_file_nr]
 
-        return sorted_phases
+        # Build the enriched result as new PhaseData dicts, leaving configuration_phases untouched
+        return {
+            name: PhaseData(
+                **{k: v for k, v in src.items() if k not in ("end", "weight")},  # type: ignore[typeddict-item]
+                end=end,
+                weight=max(2, end - src.get("start", 0)),
+            )
+            for (name, src), end in zip(active_phases, ends, strict=True)
+        }
 
     def get_component(self, selected_file: str) -> str | None:
         """
