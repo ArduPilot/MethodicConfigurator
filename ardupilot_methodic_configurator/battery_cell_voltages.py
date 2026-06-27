@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from math import isnan, nan
-from typing import Optional
 
 BATTERY_CELL_VOLTAGE_TYPES: tuple[str, ...] = (
     "Volt per cell max",
@@ -148,14 +147,14 @@ class BatteryCell:
         return abs(estimated_cells - round(estimated_cells))
 
     @staticmethod
-    def best_chemistry_for_voltage(total_voltage: float, voltage_type: str) -> Optional[str]:
+    def best_chemistry_for_voltage(total_voltage: float, voltage_type: str) -> str | None:
         """
         Return the chemistry whose recommended cell voltage gives the most integer-like cell count.
 
         Returns the chemistry name if a clear winner is found (score < 0.03),
         otherwise returns None.
         """
-        best_chemistry: Optional[str] = None
+        best_chemistry: str | None = None
         best_score = float("inf")
         for chemistry in _recommended_battery_cell_voltages:
             score = BatteryCell.chemistry_voltage_score(chemistry, total_voltage, voltage_type)

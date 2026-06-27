@@ -156,7 +156,8 @@ class TestConfigurationStepProcessorWorkflows:
         parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Derived parameters were processed
-        processor.local_filesystem.compute_parameters.assert_called_once()
+        # compute_parameters is now called twice: once for "forced", once for "derived"
+        assert processor.local_filesystem.compute_parameters.call_count == 2
         # Note: merge_forced_or_derived_parameters is no longer called - derived params are returned instead
         assert isinstance(parameters, dict)
         assert ui_errors == []
@@ -183,8 +184,10 @@ class TestConfigurationStepProcessorWorkflows:
         parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Error feedback provided to UI layer
-        assert len(ui_errors) == 1
-        assert ui_errors[0][0] == "Error in derived parameters"  # Title
+        # Both forced and derived computation report errors since compute_parameters always returns error
+        assert len(ui_errors) == 2
+        assert any(e[0] == "Error in forced parameters" for e in ui_errors)
+        assert any(e[0] == "Error in derived parameters" for e in ui_errors)
         assert "Computation error: Invalid expression" in ui_errors[0][1]  # Message
         assert isinstance(parameters, dict)
         # Should have info messages about parameter renaming since configuration includes rename_connection
@@ -336,7 +339,8 @@ class TestConfigurationStepProcessorConnectionRenaming:
         parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Only derived parameters processed, no connection renaming
-        processor.local_filesystem.compute_parameters.assert_called_once()
+        # compute_parameters is now called twice: once for "forced", once for "derived"
+        assert processor.local_filesystem.compute_parameters.call_count == 2
         assert isinstance(parameters, dict)
         assert ui_errors == []
         assert ui_infos == []  # No connection renaming means no info messages
@@ -769,6 +773,84 @@ class TestConfigurationStepProcessorConnectionRenamingLogic:
         assert "CAN_P1_DRIVER" in renamed_dict
         assert "SERIAL1_PROTOCOL" not in renamed_dict
 
+    def test_generate_connection_renames_multidigit_serial_prefix(self) -> None:
+        """
+        Bug fix: multi-digit connection numbers (e.g. SERIAL10) were parsed incorrectly.
+
+        Previously new_connection_prefix[:-1] and [-1] only handled single-digit
+        numbers. "SERIAL10" was split into type="SERIAL1", number="0" instead of
+        type="SERIAL", number="10".
+
+        GIVEN: A list of SERIAL1 parameters and the target prefix "SERIAL10"
+        WHEN: _generate_connection_renames is called
+        THEN: Each parameter is renamed using the full numeric suffix "10", not "0"
+        """
+        # Arrange
+        parameters = ["SERIAL1_PROTOCOL", "SERIAL1_BAUD"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "SERIAL10")
+
+        # Assert
+        assert renames == {
+            "SERIAL1_PROTOCOL": "SERIAL10_PROTOCOL",
+            "SERIAL1_BAUD": "SERIAL10_BAUD",
+        }
+
+    def test_generate_connection_renames_multidigit_can_prefix(self) -> None:
+        """
+        Multi-digit CAN numbers must correctly remap CAN_P and CAN_D sub-prefixes.
+
+        GIVEN: CAN_P and CAN_D parameters for instance 1 and the target prefix "CAN10"
+        WHEN: _generate_connection_renames is called
+        THEN: Both CAN_P and CAN_D sub-prefixes are updated with the full suffix "10"
+        """
+        # Arrange
+        parameters = ["CAN_P1_DRIVER", "CAN_D1_PROTOCOL"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN10")
+
+        # Assert
+        assert renames == {
+            "CAN_P1_DRIVER": "CAN_P10_DRIVER",
+            "CAN_D1_PROTOCOL": "CAN_D10_PROTOCOL",
+        }
+
+    def test_generate_connection_renames_single_digit_still_works(self) -> None:
+        """
+        Single-digit connection prefixes must continue to work after the fix.
+
+        GIVEN: A parameter with a single-digit connection number and the target prefix "CAN2"
+        WHEN: _generate_connection_renames is called
+        THEN: The parameter is renamed correctly using the single-digit suffix
+        """
+        # Arrange
+        parameters = ["CAN1_DRIVER"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN2")
+
+        # Assert
+        assert renames == {"CAN1_DRIVER": "CAN2_DRIVER"}
+
+    def test_generate_connection_renames_invalid_prefix_returns_empty(self) -> None:
+        """
+        A prefix with no trailing digits returns an empty rename dict.
+
+        GIVEN: A parameter list and a prefix containing only letters with no trailing digits
+        WHEN: _generate_connection_renames is called
+        THEN: An empty dictionary is returned without raising an error
+        """
+        # Arrange
+        parameters = ["CAN1_DRIVER"]
+
+        # Act
+        renames = ConfigurationStepProcessor._generate_connection_renames(parameters, "CAN")
+
+        # Assert
+        assert not renames
+
 
 class TestConfigurationStepProcessorErrorHandling:
     """Test error handling and edge cases in configuration processing."""
@@ -1053,19 +1135,19 @@ class TestDerivedParametersFiltering:
         # Should have exactly 1 parameter (only the one in FC)
         assert len(derived_to_apply) == 1
 
-    def test_derived_parameters_not_in_file_are_excluded(self, processor, mock_local_filesystem) -> None:
+    def test_derived_parameters_not_in_file_are_included_for_adding_to_gui(self, processor, mock_local_filesystem) -> None:
         """
-        Derived parameters not currently in the file are excluded from derived_params_to_apply.
+        Derived parameters not currently in the file are included in derived_params_to_apply for GUI addition.
 
-        GIVEN: A configuration step with derived parameters where some are add-from-FC shorthands
+        GIVEN: A configuration step with derived parameters where some are not yet in the file
         WHEN: Processing produces derived parameters
-        THEN: Parameters that don't yet exist in the file should be excluded
-        AND: Only parameters already in the file should be in derived_params_to_apply
+        THEN: Parameters not in the file should be included in derived_params_to_apply
+        AND: The caller (repopulate) will add them to the GUI and track them for saving
         """
         selected_file = "test_file.param"
         derived_params = {
             "SERIAL1_PROTOCOL": Par(value=5.0, comment="derived"),  # in file
-            "NEW_PARAM": Par(value=99.0, comment="derived"),  # NOT in file (add-from-FC shorthand)
+            "NEW_PARAM": Par(value=99.0, comment="derived"),  # NOT in file — new, to be added
         }
         mock_local_filesystem.configuration_steps = {selected_file: {"derived": {}}}
         mock_local_filesystem.compute_parameters.return_value = None
@@ -1073,7 +1155,7 @@ class TestDerivedParametersFiltering:
         mock_local_filesystem.file_parameters = {
             selected_file: {
                 "SERIAL1_PROTOCOL": Par(value=4.0, comment="original"),
-                # NEW_PARAM not in file
+                # NEW_PARAM not in file yet
             }
         }
 
@@ -1084,13 +1166,13 @@ class TestDerivedParametersFiltering:
         )
 
         assert ui_errors == []
-        # Only parameters already in the file should be included
+        # Parameters in file should be included
         assert "SERIAL1_PROTOCOL" in derived_to_apply
         assert derived_to_apply["SERIAL1_PROTOCOL"].value == 5.0
-        # NEW_PARAM not in file, so should be excluded even though it's in FC and derived_params
-        assert "NEW_PARAM" not in derived_to_apply
-        # Should have exactly 1 parameter (only the one in file)
-        assert len(derived_to_apply) == 1
+        # NEW_PARAM not in file but should now be included so the caller can add it
+        assert "NEW_PARAM" in derived_to_apply
+        assert derived_to_apply["NEW_PARAM"].value == 99.0
+        assert len(derived_to_apply) == 2
 
     def test_derived_parameters_all_included_when_no_fc_parameters(self, processor, mock_local_filesystem) -> None:
         """
@@ -1185,3 +1267,127 @@ class TestConnectionRenamingWithSameNameSkip:
         # Verify that both parameters are still present (not removed due to conflict)
         assert "CAN_P1_DRIVER" in parameters
         assert "CAN_P2_DRIVER" in parameters
+
+
+class TestDeleteParametersPriority:
+    """Tests that delete_parameters takes priority over add_parameters and auto-import."""
+
+    def test_deleted_parameter_is_not_auto_imported_from_fc(self, processor) -> None:
+        """
+        A parameter scheduled for deletion is not auto-imported from the flight controller.
+
+        GIVEN: A configuration step with an autoimport regexp and a delete_parameters entry for the same param
+        WHEN: The step is processed with that parameter present in fc_parameters (non-default)
+        THEN: The parameter must NOT appear in the domain model
+        AND: compute_add_parameters is called with the delete set so add_parameters also cannot re-add it
+        AND: No errors are reported
+        """
+        # Arrange (Given): BATT_OPTIONS matches import regexp but is also scheduled for deletion
+        selected_file = "test_file.param"
+        processor.local_filesystem.param_default_dict = {
+            "BATT_OPTIONS": Par(value=0.0, comment="default"),
+        }
+        processor.local_filesystem.file_parameters = {selected_file: {}}
+        processor.local_filesystem.configuration_steps = {selected_file: {"autoimport_nondefault_regexp": ["BATT.*"]}}
+        processor.local_filesystem.compute_deletions.return_value = {"BATT_OPTIONS"}
+        processor.local_filesystem.compute_add_parameters.return_value = None
+
+        # Act (When): process the step with a non-default FC value for the to-be-deleted param
+        fc_params = {"BATT_OPTIONS": 5.0}
+        parameters, ui_errors, _ui_infos, _dup, _ren, _derived = processor.process_configuration_step(selected_file, fc_params)
+
+        # Assert (Then): BATT_OPTIONS absent because it is in the delete set
+        assert "BATT_OPTIONS" not in parameters
+        assert ui_errors == []
+        # compute_add_parameters must have received the delete set
+        call_kwargs = processor.local_filesystem.compute_add_parameters.call_args
+        assert call_kwargs is not None
+        passed_delete_set = call_kwargs.kwargs.get("parameters_to_delete")
+        if passed_delete_set is None and len(call_kwargs.args) > 4:
+            passed_delete_set = call_kwargs.args[4]
+        assert passed_delete_set == {"BATT_OPTIONS"}
+
+    def test_apply_auto_imports_skips_parameters_in_delete_set(self, processor) -> None:
+        """
+        _apply_auto_imports skips every parameter that appears in parameters_to_delete.
+
+        GIVEN: An auto-import step where two params match the regex and are non-default
+        AND: One of them is in the parameters_to_delete set
+        WHEN: _apply_auto_imports is called
+        THEN: Only the non-deleted parameter is added to the domain model with the correct FC value
+        AND: The deleted parameter is absent from the domain model
+        """
+        # Arrange (Given): two matching non-default params, one scheduled for deletion
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {selected_file: {"autoimport_nondefault_regexp": ["BATT.*"]}}
+        processor.local_filesystem.param_default_dict = {
+            "BATT_OPTIONS": Par(value=0.0),
+            "BATT_MONITOR": Par(value=0.0),
+        }
+        processor.local_filesystem.file_parameters = {selected_file: {}}
+        fc_params = {
+            "BATT_OPTIONS": 5.0,  # non-default, NOT deleted → must be imported
+            "BATT_MONITOR": 4.0,  # non-default, IN delete set → must be skipped
+        }
+        parameters_to_delete = {"BATT_MONITOR"}
+        current_step_parameters: dict = {}
+
+        # Act (When): run auto-import with the delete set
+        processor._apply_auto_imports(selected_file, fc_params, current_step_parameters, parameters_to_delete)
+
+        # Assert (Then): imported param present with correct value; deleted param absent
+        assert "BATT_OPTIONS" in current_step_parameters
+        assert current_step_parameters["BATT_OPTIONS"].get_new_value() == 5.0
+        assert "BATT_MONITOR" not in current_step_parameters
+
+    def test_apply_auto_imports_with_none_delete_set_behaves_as_empty_set(self, processor) -> None:
+        """
+        _apply_auto_imports treats a None parameters_to_delete the same as an empty set.
+
+        GIVEN: An auto-import step with a matching non-default FC parameter
+        WHEN: _apply_auto_imports is called with parameters_to_delete=None
+        THEN: The parameter is imported normally with the correct FC value
+        AND: No exception is raised
+        """
+        # Arrange (Given): single matching non-default param, no delete set provided
+        selected_file = "test_file.param"
+        processor.local_filesystem.configuration_steps = {selected_file: {"autoimport_nondefault_regexp": ["GPS.*"]}}
+        processor.local_filesystem.param_default_dict = {"GPS_TYPE": Par(value=0.0)}
+        processor.local_filesystem.file_parameters = {selected_file: {}}
+        current_step_parameters: dict = {}
+
+        # Act (When): call with None delete set
+        processor._apply_auto_imports(selected_file, {"GPS_TYPE": 1.0}, current_step_parameters, None)
+
+        # Assert (Then): param imported with correct value
+        assert "GPS_TYPE" in current_step_parameters
+        assert current_step_parameters["GPS_TYPE"].get_new_value() == 1.0
+
+    def test_process_configuration_step_passes_delete_set_to_add_parameters(self, processor) -> None:
+        """
+        process_configuration_step passes the computed delete set to compute_add_parameters.
+
+        GIVEN: A step whose compute_deletions returns a non-empty delete set
+        WHEN: The step is processed
+        THEN: compute_add_parameters is called exactly once with that delete set as parameters_to_delete
+        """
+        # Arrange (Given): step that yields a delete set from compute_deletions
+        selected_file = "test_file.param"
+        processor.local_filesystem.file_parameters = {selected_file: {}}
+        processor.local_filesystem.configuration_steps = {selected_file: {}}
+        delete_set = {"PARAM_TO_DELETE"}
+        processor.local_filesystem.compute_deletions.return_value = delete_set
+        processor.local_filesystem.compute_add_parameters.return_value = None
+        processor.local_filesystem.compute_parameters.return_value = None
+
+        # Act (When): process the step
+        processor.process_configuration_step(selected_file, {})
+
+        # Assert (Then): compute_add_parameters received the delete set via the named kwarg
+        call_kwargs = processor.local_filesystem.compute_add_parameters.call_args
+        assert call_kwargs is not None
+        # Prefer keyword argument; fall back to positional only when not passed as kwarg
+        passed_delete_set = call_kwargs.kwargs.get("parameters_to_delete")
+        if passed_delete_set is None and len(call_kwargs.args) > 4:
+            passed_delete_set = call_kwargs.args[4]
+        assert passed_delete_set == delete_set

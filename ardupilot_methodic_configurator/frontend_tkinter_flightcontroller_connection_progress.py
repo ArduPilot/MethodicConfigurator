@@ -13,14 +13,14 @@ import tkinter as tk
 from logging import error as logging_error
 from tkinter import ttk
 from types import TracebackType
-from typing import Literal, Optional
+from typing import Literal
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 if sys.version_info >= (3, 11):
     from typing import Self
-else:  # Python 3.9 and 3.10
+else:  # Python 3.10
     from typing_extensions import Self
 
 PROGRESS_FC_INIT_COMPLETE = 20
@@ -97,9 +97,9 @@ class FlightControllerConnectionProgress:
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> Literal[False]:
         """
         Exit context manager - ensures cleanup happens.

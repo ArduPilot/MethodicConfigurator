@@ -12,8 +12,10 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 import platform
 import subprocess
+from collections.abc import Callable
 from csv import writer as csv_writer
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -24,7 +26,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
 from time import time
-from typing import Callable, Literal, Optional
+from typing import Literal
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -65,7 +67,7 @@ class ComponentEditorDeps:
 
 # Type aliases for callback functions used in workflow methods
 AskConfirmationCallback = Callable[[str, str], bool]  # (title, message) -> bool
-SelectFileCallback = Callable[[str, list[str]], Optional[str]]  # (title, filetypes) -> Optional[filename]
+SelectFileCallback = Callable[[str, list[str]], str | None]  # (title, filetypes) -> Optional[filename]
 ShowWarningCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowErrorCallback = Callable[[str, str], None]  # (title, message) -> None
 ShowInfoCallback = Callable[[str, str], None]  # (title, message) -> None
@@ -96,8 +98,8 @@ class ParameterValueUpdateResult:
     """Presenter-friendly response describing the outcome of a parameter update attempt."""
 
     status: ParameterValueUpdateStatus
-    title: Optional[str] = None
-    message: Optional[str] = None
+    title: str | None = None
+    message: str | None = None
 
 
 # pylint: disable=too-many-lines
@@ -187,7 +189,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         select_file: SelectFileCallback,
         show_warning: ShowWarningCallback,
         show_error: ShowErrorCallback,
-        get_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
+        get_progress_callback: Callable[[], Callable | None] | None = None,
     ) -> bool:
         """
         Complete IMU temperature calibration workflow with user interaction via callbacks.
@@ -261,7 +263,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_error(_("Fatal error reading parameter files"), f"{exp}")
             raise
 
-    def _should_copy_fc_values_to_file(self, selected_file: str) -> tuple[bool, Optional[dict], Optional[str]]:
+    def _should_copy_fc_values_to_file(self, selected_file: str) -> tuple[bool, dict | None, str | None]:
         """
         Check if flight controller values should be copied to the specified file.
 
@@ -594,7 +596,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ask_confirmation: Callable[[str, str], bool],
         show_error: Callable[[str, str], None],
         show_warning: Callable[[str, str], None],
-        get_progress_callback: Callable[[], Optional[Callable]],
+        get_progress_callback: Callable[[], Callable | None],
     ) -> bool:
         """
         Handle file upload workflow with injected GUI callbacks.
@@ -664,7 +666,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return True
 
     def download_flight_controller_parameters(
-        self, get_progress_callback: Optional[Callable[[], Optional[Callable]]] = None
+        self, get_progress_callback: Callable[[], Callable | None] | None = None
     ) -> tuple[dict, dict]:
         """
         Download parameters from the flight controller.
@@ -711,8 +713,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         selected_params: dict,
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Optional[Callable] = None,
-        connection_progress_callback: Optional[Callable] = None,
+        reset_progress_callback: Callable | None = None,
+        connection_progress_callback: Callable | None = None,
     ) -> tuple[bool, set[str]]:
         """
         Upload parameters that require reset to the flight controller.
@@ -817,10 +819,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _reset_and_reconnect_flight_controller(
         self,
-        reset_progress_callback: Optional[Callable] = None,
-        connection_progress_callback: Optional[Callable] = None,
-        sleep_time: Optional[int] = None,
-    ) -> Optional[str]:
+        reset_progress_callback: Callable | None = None,
+        connection_progress_callback: Callable | None = None,
+        sleep_time: int | None = None,
+    ) -> str | None:
         """
         Reset and reconnect to the flight controller.
 
@@ -847,8 +849,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         fc_reset_unsure: list[str],
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Optional[Callable] = None,
-        connection_progress_callback: Optional[Callable] = None,
+        reset_progress_callback: Callable | None = None,
+        connection_progress_callback: Callable | None = None,
     ) -> bool:
         """
         Complete workflow for resetting and reconnecting to flight controller with user interaction.
@@ -891,7 +893,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self,
         selected_params: dict,
         show_error: Callable[[str, str], None],
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Callable | None = None,
     ) -> int:
         """
         Upload selected parameters to flight controller.
@@ -1005,7 +1007,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         report_file_path = Path(getattr(self._local_filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
 
         # Write a CSV with a header ("param", <list of files>) and one row per parameter.
-        with open(report_file_path, "w", newline="", encoding="utf-8") as file:
+        with open(report_file_path, "w", newline="\n", encoding="utf-8") as file:
             writer = csv_writer(file)
             writer.writerow(["param", *report_files])
 
@@ -1029,10 +1031,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ask_confirmation: AskConfirmationCallback,
         ask_retry_cancel: AskRetryCancelCallback,
         show_error: ShowErrorCallback,
-        get_upload_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
-        get_reset_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
-        get_connection_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
-        get_download_progress_callback: Optional[Callable[[], Optional[Callable]]] = None,
+        get_upload_progress_callback: Callable[[], Callable | None] | None = None,
+        get_reset_progress_callback: Callable[[], Callable | None] | None = None,
+        get_connection_progress_callback: Callable[[], Callable | None] | None = None,
+        get_download_progress_callback: Callable[[], Callable | None] | None = None,
     ) -> None:
         """
         Complete workflow for uploading selected parameters, including reset, upload, validation, and retry.
@@ -1244,7 +1246,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ask_saveas_filename: Callable[[], str],
         show_error: Callable[[str, str], None],
         show_info: Callable[[str, str], None],
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> None:
         """
         Download the last flight log from the flight controller, using GUI callbacks for interaction.
@@ -1275,7 +1277,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         else:
             show_error(_("Error"), _("Failed to download flight log. Check the console for details."))
 
-    def is_configuration_step_optional(self, file_name: Optional[str] = None, threshold_pct: int = 20) -> bool:
+    def is_configuration_step_optional(self, file_name: str | None = None, threshold_pct: int = 20) -> bool:
         """
         Check if the configuration step for the given file is optional.
 
@@ -1302,7 +1304,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return percentage <= threshold_pct
 
-    def get_next_non_optional_file(self, current_file: Optional[str] = None, gui_complexity: str = "simple") -> Optional[str]:
+    def get_next_non_optional_file(self, current_file: str | None = None, gui_complexity: str = "simple") -> str | None:
         """
         Get the next non-optional configuration file in sequence.
 
@@ -1311,7 +1313,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             gui_complexity: The GUI complexity setting ("simple" or other).
 
         Returns:
-            Optional[str]: Next non-optional file name, or None if at the end.
+            str | None: Next non-optional file name, or None if at the end.
 
         """
         files = list(self._local_filesystem.file_parameters.keys())
@@ -1767,11 +1769,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         str(e),
                     )
             else:
-                # Parameter in derived_params but not in self.parameters - this is unexpected
-                logging_error(
-                    _("Derived parameter %s not found in current parameters, skipping"),
-                    param_name,
+                # Parameter not yet in file - add it to the GUI and track as added
+                self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                    param_name, derived_par, self.current_file, self.fc_parameters
                 )
+                self._added_parameters.add(param_name)
 
         # Apply rename operations to domain model using add/delete tracking
         for old_name in duplicates_to_remove:
@@ -1804,6 +1806,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
                 # Track the rename so refresh_current_step_connection_renames() can undo/redo it
                 self._connection_renames[old_name] = new_name
+
+        # Add forced parameters not yet in the file to both the GUI and the saved-changes tracker.
+        # This runs unconditionally because forced_parameters are pre-computed before this method is called.
+        for param_name, forced_par in self._local_filesystem.forced_parameters.get(self.current_file, ParDict()).items():
+            if param_name not in self._local_filesystem.file_parameters.get(self.current_file, ParDict()):
+                if param_name not in self.current_step_parameters:
+                    self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                        param_name, forced_par, self.current_file, self.fc_parameters
+                    )
+                self._added_parameters.add(param_name)
 
         # Process delete_parameters and add-from-FC derived entries from configuration steps
         step_info = self._local_filesystem.configuration_steps.get(self.current_file, {})
@@ -2071,7 +2083,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     def should_display_bitmask_parameter_editor_usage(self, param_name: str) -> bool:
         return self.current_step_parameters[param_name].is_editable and self.current_step_parameters[param_name].is_bitmask
 
-    def get_parameters_as_par_dict(self, param_names: Optional[list[str]] = None) -> ParDict:
+    def get_parameters_as_par_dict(self, param_names: list[str] | None = None) -> ParDict:
         """
         Extract Par objects from ArduPilotParameter domain models.
 
@@ -2091,7 +2103,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return ParDict(
             {
-                name: Par(self.current_step_parameters[name].get_new_value(), self.current_step_parameters[name].change_reason)
+                name: Par(
+                    self.current_step_parameters[name].get_new_value(),
+                    self.current_step_parameters[name].change_reason_for_file,
+                )
                 for name in param_names
                 if name in self.current_step_parameters
             }
@@ -2120,7 +2135,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Check individual parameter edits (value or comment changes)
         return any(param.is_dirty for param in self.current_step_parameters.values())
 
-    def get_last_configuration_step_number(self) -> Optional[int]:
+    def get_last_configuration_step_number(self) -> int | None:
         """
         Get the last configuration step number by scanning actual .param files on disk.
 
@@ -2197,7 +2212,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     # frontend_tkinter_parameter_editor_table.py API end
 
     # frontend_tkinter_parameter_editor_documentation_frame.py API start
-    def get_documentation_text_and_url(self, key: str, filename: Optional[str] = None) -> tuple[str, str]:
+    def get_documentation_text_and_url(self, key: str, filename: str | None = None) -> tuple[str, str]:
         if filename is None:
             filename = self.current_file
         return self._local_filesystem.get_documentation_text_and_url(filename, key)
@@ -2247,7 +2262,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     # plugin API begin
 
-    def get_plugin(self, filename: str) -> Optional[dict]:
+    def get_plugin(self, filename: str) -> dict | None:
         return self._local_filesystem.get_plugin(filename)
 
     def get_component_editor_deps(self) -> ComponentEditorDeps:
@@ -2262,7 +2277,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             fc_parameters=self.fc_parameters,
         )
 
-    def get_current_component(self) -> Optional[str]:
+    def get_current_component(self) -> str | None:
         """Get the component name associated with the current configuration step, or None."""
         return self._local_filesystem.get_component(self.current_file)
 
@@ -2322,6 +2337,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if "rename_connection" in step_info:
             self._refresh_current_step_connection_renames(step_info, variables)
 
+    def _apply_gnss_protocol_value(self, target_name: str) -> None:
+        """Set the GNSS MAVLink protocol value on a newly renamed _PROTOCOL parameter, ignoring no-op updates."""
+        with contextlib.suppress(ParameterUnchangedError):
+            self.current_step_parameters[target_name].set_new_value(_GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True)
+
     def _refresh_current_step_connection_renames(self, step_info: dict, variables: dict) -> None:  # pylint: disable=too-many-branches
         """
         Re-evaluate the rename_connection expression and apply any changed renames in-place.
@@ -2378,9 +2398,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                             new_target, original_params[orig_name], self.current_file, self.fc_parameters
                         )
                         if is_gnss and new_target.endswith("_PROTOCOL"):
-                            self.current_step_parameters[new_target].set_new_value(
-                                _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
-                            )
+                            self._apply_gnss_protocol_value(new_target)
                         self._added_parameters.add(new_target)
                     self._connection_renames[orig_name] = new_target
                     logging_info(_("Renamed connection parameter %s → %s"), current_target, new_target)
@@ -2390,23 +2408,31 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if orig_name in self._connection_renames:
                 continue  # already handled above
             if orig_name in original_params:
-                if new_target in self.current_step_parameters:
-                    logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
-                else:
-                    # Remove the original (un-renamed) parameter if it is still present
-                    if orig_name in self.current_step_parameters:
-                        del self.current_step_parameters[orig_name]
-                        self._deleted_parameters.add(orig_name)
-                    self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
-                        new_target, original_params[orig_name], self.current_file, self.fc_parameters
-                    )
-                    if is_gnss and new_target.endswith("_PROTOCOL"):
-                        self.current_step_parameters[new_target].set_new_value(
-                            _GNSS_MAVLINK_PROTOCOL_VALUE, ignore_out_of_range=True
-                        )
-                    self._added_parameters.add(new_target)
-                    self._connection_renames[orig_name] = new_target
-                    logging_info(_("Renamed connection parameter %s → %s"), orig_name, new_target)
+                self._apply_new_connection_rename(orig_name, new_target, original_params, is_gnss)
+
+    def _apply_new_connection_rename(
+        self,
+        orig_name: str,
+        new_target: str,
+        original_params: ParDict,
+        is_gnss: bool,
+    ) -> None:
+        """Apply a single connection rename that was not previously tracked."""
+        if new_target in self.current_step_parameters:
+            logging_warning(_("Skipping connection rename %s → %s: target already exists"), orig_name, new_target)
+            return
+        # Remove the original (un-renamed) parameter if it is still present
+        if orig_name in self.current_step_parameters:
+            del self.current_step_parameters[orig_name]
+            self._deleted_parameters.add(orig_name)
+        self.current_step_parameters[new_target] = self._config_step_processor.create_ardupilot_parameter(
+            new_target, original_params[orig_name], self.current_file, self.fc_parameters
+        )
+        if is_gnss and new_target.endswith("_PROTOCOL"):
+            self._apply_gnss_protocol_value(new_target)
+        self._added_parameters.add(new_target)
+        self._connection_renames[orig_name] = new_target
+        logging_info(_("Renamed connection parameter %s → %s"), orig_name, new_target)
 
     def revert_vehicle_components(self) -> None:
         """
@@ -2453,11 +2479,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return True, _("No vehicle component data loaded; save aborted.")
         return self._local_filesystem.save_vehicle_components_json_data(data, self._local_filesystem.vehicle_dir)
 
-    def get_instructions_popup(self, filename: str) -> Optional[dict]:
+    def get_instructions_popup(self, filename: str) -> dict | None:
         """Get the optional instructions popup data for a given configuration step."""
         return self._local_filesystem.get_instructions_popup(filename)
 
-    def create_plugin_data_model(self, plugin_name: str) -> Optional[object]:
+    def create_plugin_data_model(self, plugin_name: str) -> object | None:
         """
         Create and return a data model for the specified plugin.
 

@@ -2,4 +2,4 @@ ESC_HW_ENABLE,1
 MOT_PWM_TYPE,0  # Specified in component editor window
 SCR_ENABLE,1  # ESC RPM telemetry requires lua scripting
 SERIAL2_BAUD,115  # Baud rate of data link
-SERIAL2_PROTOCOL,28  # Serial port setup for data link
+SERIAL2_PROTOCOL,28  # Defined in ESC specifications above

@@ -760,8 +760,10 @@
                 "Specifications": {
                     "Chemistry": "Lipo",
                     "Volt per cell max": 4.2,
+                    "Volt per cell arm": 3.9333,
                     "Volt per cell low": 3.6,
                     "Volt per cell crit": 3.55,
+                    "Volt per cell min": 3.3,
                     "Number of cells": 6,
                     "Capacity mAh": 3000
                 },
@@ -780,8 +782,10 @@
                 "Specifications": {
                     "Chemistry": "Lipo",
                     "Volt per cell max": 4.2,
+                    "Volt per cell arm": 3.925,
                     "Volt per cell low": 3.6,
                     "Volt per cell crit": 3.55,
+                    "Volt per cell min": 3.3,
                     "Number of cells": 4,
                     "Capacity mAh": 1800
                 },
@@ -800,8 +804,10 @@
                 "Specifications": {
                     "Chemistry": "Lipo",
                     "Volt per cell max": 4.2,
+                    "Volt per cell arm": 3.675,
                     "Volt per cell low": 3.4,
                     "Volt per cell crit": 3.3,
+                    "Volt per cell min": 3.3,
                     "Number of cells": 4,
                     "Capacity mAh": 5000
                 },
@@ -820,8 +826,10 @@
                 "Specifications": {
                     "Chemistry": "LipoHVSS",
                     "Volt per cell max": 4.2,
+                    "Volt per cell arm": 3.6833,
                     "Volt per cell low": 3.4,
                     "Volt per cell crit": 3.3,
+                    "Volt per cell min": 3.3,
                     "Number of cells": 6,
                     "Capacity mAh": 11000
                 },
@@ -840,8 +848,10 @@
                 "Specifications": {
                     "Chemistry": "LipoHV",
                     "Volt per cell max": 4.35,
+                    "Volt per cell arm": 3.9333,
                     "Volt per cell low": 3.6,
                     "Volt per cell crit": 3.55,
+                    "Volt per cell min": 3.3,
                     "Number of cells": 6,
                     "Capacity mAh": 6500
                 },
@@ -860,8 +870,10 @@
                 "Specifications": {
                     "Chemistry": "LipoHV",
                     "Volt per cell max": 4.2,
+                    "Volt per cell arm": 3.9333,
                     "Volt per cell low": 3.6,
                     "Volt per cell crit": 3.55,
+                    "Volt per cell min": 3.3,
                     "Number of cells": 6,
                     "Capacity mAh": 30000
                 },
@@ -883,11 +895,15 @@
                     "Type": "BLHeli32",
                     "Version": "32.10"
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "DShot600"
                 },
-                "Notes": "Runs BDshot600 on Main out and uses SERIAL5 as extra connection for low rate telemetry"
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
+                    "Protocol": "ESC Telemetry"
+                },
+                "Notes": "Runs BDshot600 on Main out and uses SERIAL2 as extra connection for low rate telemetry"
             }
         },
         {
@@ -903,11 +919,15 @@
                     "Type": "BLHeli32",
                     "Version": "32.10"
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "DShot600"
                 },
-                "Notes": "Runs BDshot600 on Main out and uses SERIAL5 as extra connection for low rate telemetry"
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
+                    "Protocol": "ESC Telemetry"
+                },
+                "Notes": "Runs BDshot600 on Main out and uses SERIAL2 as extra connection for low rate telemetry"
             }
         },
         {
@@ -923,11 +943,15 @@
                     "Type": "",
                     "Version": ""
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "Normal"
                 },
-                "Notes": "Main Out connectie want All in one has the current and the pwm modulation for the ESC's"
+                "ESC->FC Telemetry": {
+                    "Type": "None",
+                    "Protocol": "None"
+                },
+                "Notes": "Requires normal PWM signals, but does provide current sum analog output"
             }
         },
         {
@@ -943,11 +967,39 @@
                     "Type": "AM32",
                     "Version": ""
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "DShot600"
                 },
+                "ESC->FC Telemetry": {
+                    "Type": "Main Out",
+                    "Protocol": "BDShotOnly"
+                },
                 "Notes": ""
+            }
+        },
+        {
+            "name": "HOBBYWING X6 SE",
+            "data": {
+                "Product": {
+                    "Manufacturer": "HOBBYWING",
+                    "Model": "X6 SE",
+                    "Version": "280KV",
+                    "URL": "https://hobbywinguav.com/product/x6-se-6208-280kv/"
+                },
+                "Firmware": {
+                    "Type": "",
+                    "Version": ""
+                },
+                "FC->ESC Connection": {
+                    "Type": "Main Out",
+                    "Protocol": "Normal"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
+                    "Protocol": "Scripting"
+                },
+                "Notes": "18-65V, Fixed throttle pulse width: 1050-1950\u00b5s"
             }
         },
         {
@@ -963,9 +1015,13 @@
                     "Type": "",
                     "Version": ""
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "Normal"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
+                    "Protocol": "Scripting"
                 },
                 "Notes": "18-65V, Fixed throttle pulse width: 1050-1950\u00b5s"
             }
@@ -983,9 +1039,13 @@
                     "Type": "",
                     "Version": ""
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "Normal"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
+                    "Protocol": "Scripting"
                 },
                 "Notes": "max 61V, Fixed throttle pulse width: 1050-1950\u00b5s"
             }
@@ -1003,8 +1063,12 @@
                     "Type": "FETtec",
                     "Version": "10_224"
                 },
-                "FC Connection": {
-                    "Type": "SERIAL1",
+                "FC->ESC Connection": {
+                    "Type": "SERIAL2",
+                    "Protocol": "FETtecOneWire"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
                     "Protocol": "FETtecOneWire"
                 },
                 "Notes": "Firmware should be > 183"
@@ -1023,8 +1087,12 @@
                     "Type": "FETtec",
                     "Version": "10_224"
                 },
-                "FC Connection": {
-                    "Type": "SERIAL1",
+                "FC->ESC Connection": {
+                    "Type": "SERIAL2",
+                    "Protocol": "FETtecOneWire"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
                     "Protocol": "FETtecOneWire"
                 },
                 "Notes": "Firmware should be > 183"
@@ -1043,8 +1111,12 @@
                     "Type": "FETtec",
                     "Version": "10_224"
                 },
-                "FC Connection": {
-                    "Type": "SERIAL1",
+                "FC->ESC Connection": {
+                    "Type": "SERIAL2",
+                    "Protocol": "FETtecOneWire"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
                     "Protocol": "FETtecOneWire"
                 },
                 "Notes": "Firmware should be > 183"
@@ -1063,8 +1135,12 @@
                     "Type": "FETtec",
                     "Version": "10_224"
                 },
-                "FC Connection": {
-                    "Type": "SERIAL1",
+                "FC->ESC Connection": {
+                    "Type": "SERIAL2",
+                    "Protocol": "FETtecOneWire"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
                     "Protocol": "FETtecOneWire"
                 },
                 "Notes": "Firmware should be > 183"
@@ -1083,9 +1159,13 @@
                     "Type": "BLHeLi_S",
                     "Version": ""
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "Normal"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "None",
+                    "Protocol": "None"
                 },
                 "Notes": "Firmware should be > 183"
             }
@@ -1103,9 +1183,13 @@
                     "Type": "BLHeli32",
                     "Version": "32.10"
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "DShot600"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "SERIAL2",
+                    "Protocol": "ESC Telemetry"
                 },
                 "Notes": "Runs BDshot600 on Main out and uses SERIAL3 as extra connection for low rate telemetry"
             }
@@ -1123,9 +1207,13 @@
                     "Type": "T-Motor",
                     "Version": ""
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "Normal"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "None",
+                    "Protocol": "None"
                 },
                 "Notes": "ESCs are integrated in the motor arm sets"
             }
@@ -1143,9 +1231,13 @@
                     "Type": "",
                     "Version": ""
                 },
-                "FC Connection": {
+                "FC->ESC Connection": {
                     "Type": "Main Out",
                     "Protocol": "Normal"
+                },
+                "ESC->FC Telemetry": {
+                    "Type": "None",
+                    "Protocol": "None"
                 },
                 "Notes": ""
             }
@@ -1542,7 +1634,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 0.9,
-                    "TOW max Kg": 0.9
+                    "TOW max Kg": 0.9,
+                    "Frame class": "Quad"
                 },
                 "Notes": ""
             }
@@ -1558,7 +1651,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 0.6,
-                    "TOW max Kg": 0.6
+                    "TOW max Kg": 0.6,
+                    "Frame class": "Quad"
                 },
                 "Notes": "A small 3'' ducted frame"
             }
@@ -1574,7 +1668,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 1.09,
-                    "TOW max Kg": 2.11
+                    "TOW max Kg": 2.11,
+                    "Frame class": "Quad"
                 },
                 "Notes": "Frame is X500 V2 type. Look on holybro site for more specifications"
             }
@@ -1590,7 +1685,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 5.6,
-                    "TOW max Kg": 7.6
+                    "TOW max Kg": 7.6,
+                    "Frame class": "Quad"
                 },
                 "Notes": "Frame is X650 V2 type. Look on holybro site for more specifications"
             }
@@ -1606,7 +1702,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 35,
-                    "TOW max Kg": 50
+                    "TOW max Kg": 50,
+                    "Frame class": "Quad"
                 },
                 "Notes": "customized drone"
             }
@@ -1622,7 +1719,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 0.7,
-                    "TOW max Kg": 0.7
+                    "TOW max Kg": 0.7,
+                    "Frame class": "Quad"
                 },
                 "Notes": ""
             }
@@ -1638,7 +1736,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 2.884,
-                    "TOW max Kg": 2.884
+                    "TOW max Kg": 2.884,
+                    "Frame class": "Quad"
                 },
                 "Notes": "10-14\" Props"
             }
@@ -1654,7 +1753,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 5,
-                    "TOW max Kg": 7
+                    "TOW max Kg": 7,
+                    "Frame class": "Quad"
                 },
                 "Notes": "A frame with 960mm diameter (motor to notor) using T-Motor MN7005(7206) propulsion sets for 25mm tube arms"
             }
@@ -1670,7 +1770,8 @@
                 },
                 "Specifications": {
                     "TOW min Kg": 4.7,
-                    "TOW max Kg": 8.2
+                    "TOW max Kg": 8.2,
+                    "Frame class": "Hexa"
                 },
                 "Notes": ""
             }
@@ -1712,7 +1813,7 @@
                 },
                 "FC Connection": {
                     "Type": "CAN1",
-                    "Protocol": "ESC"
+                    "Protocol": "DroneCAN-BatteryInfo"
                 },
                 "Notes": "Voltage and current are monitored via the ESC."
             }
@@ -1751,7 +1852,7 @@
                     "Version": "10_224"
                 },
                 "FC Connection": {
-                    "Type": "SERIAL1",
+                    "Type": "other",
                     "Protocol": "ESC"
                 },
                 "Notes": "ESC Telemetry is used as battery monitor"
@@ -1771,7 +1872,7 @@
                     "Version": "10_224"
                 },
                 "FC Connection": {
-                    "Type": "SERIAL1",
+                    "Type": "other",
                     "Protocol": "ESC"
                 },
                 "Notes": "ESC Telemetry is used as battery monitor"
@@ -1791,7 +1892,7 @@
                     "Version": "10_224"
                 },
                 "FC Connection": {
-                    "Type": "SERIAL1",
+                    "Type": "other",
                     "Protocol": "ESC"
                 },
                 "Notes": "ESC Telemetry is used as battery monitor"
@@ -1811,7 +1912,7 @@
                     "Version": "10_224"
                 },
                 "FC Connection": {
-                    "Type": "SERIAL1",
+                    "Type": "other",
                     "Protocol": "ESC"
                 },
                 "Notes": "ESC Telemetry is used as battery monitor"

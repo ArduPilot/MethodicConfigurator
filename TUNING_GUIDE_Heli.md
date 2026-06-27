@@ -502,7 +502,7 @@ Follow [mounting the autopilot](https://ardupilot.org/copter/docs/common-mountin
 1. **Add** or **Del**ete parameters if necessary, using the respective GUI buttons
 1. Edit the parameters' `New Value` and `Change Reason` to suit your requirements.
 The `Change Reason` field is extremely important because:
-    - if forces you to think, causing rational decisions instead of impulsive ones
+    - it forces you to think, causing rational decisions instead of impulsive ones
     - justifies your decisions on a vehicle certification process required in most countries
     - allows for someone else to see if you know what you are doing
     - allows for someone else (or yourself after a few weeks) to understand your rationale

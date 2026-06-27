@@ -14,7 +14,7 @@ import tkinter as tk
 from collections.abc import Generator
 from tkinter import ttk
 from types import SimpleNamespace
-from typing import Any, Optional, cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -48,8 +48,8 @@ def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-argu
     name: str = "TEST_PARAM",
     value: float = 1.0,
     comment: str = "test comment",
-    metadata: Optional[dict[str, Any]] = None,
-    fc_value: Optional[float] = None,
+    metadata: dict[str, Any] | None = None,
+    fc_value: float | None = None,
     is_forced: bool = False,
     is_derived: bool = False,
     is_calibration: bool = False,
@@ -626,8 +626,8 @@ class TestUIComplexityBehavior:
         # Act: Get column index with upload column enabled
         column_index = parameter_editor_table._get_change_reason_column_index(show_upload_column=True)
 
-        # Assert: Base columns (6) + Upload column (1) = 7
-        assert column_index == 7
+        # Assert: Base columns (6) + Upload column (1) + Manual column (1) = 8
+        assert column_index == 8
 
     def test_get_change_reason_column_index_without_upload(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -641,8 +641,8 @@ class TestUIComplexityBehavior:
         # Act: Get column index with upload column disabled
         column_index = parameter_editor_table._get_change_reason_column_index(show_upload_column=False)
 
-        # Assert: Base columns (6) only
-        assert column_index == 6
+        # Assert: Base columns (6) + Manual column (1) = 7
+        assert column_index == 7
 
 
 class TestParameterChangeStateBehavior:
@@ -706,7 +706,7 @@ class TestIntegrationBehavior:
 
         # Assert: Simple mode calculations
         assert show_upload is False
-        assert column_index == 6  # No upload column
+        assert column_index == 7  # No upload column, but Manual column added
 
         # Act: Calculate columns for advanced mode override
         show_upload_advanced = parameter_editor_table._should_show_upload_column("normal")
@@ -714,7 +714,7 @@ class TestIntegrationBehavior:
 
         # Assert: Advanced mode calculations
         assert show_upload_advanced is True
-        assert column_index_advanced == 7  # With upload column
+        assert column_index_advanced == 8  # With upload column + Manual column
 
 
 class TestParameterValueUpdateHandling:
@@ -1028,7 +1028,7 @@ class TestHeaderCreationBehavior:
         # Assert: Headers match expected simple mode structure
         assert headers == PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE
         assert len(tooltips) == len(headers)
-        assert len(tooltips) == 7  # No upload column tooltip
+        assert len(tooltips) == 8  # No upload column tooltip, but Manual column tooltip
 
     def test_create_headers_and_tooltips_advanced_mode(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -1044,7 +1044,7 @@ class TestHeaderCreationBehavior:
         # Assert: Headers match expected advanced mode structure
         assert headers == PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED
         assert len(tooltips) == len(headers)
-        assert len(tooltips) == 8  # With upload column tooltip
+        assert len(tooltips) == 9  # With upload column tooltip and Manual column tooltip
 
     def test_headers_and_tooltips_localization(self, parameter_editor_table: ParameterEditorTable) -> None:
         """
@@ -1145,7 +1145,7 @@ class TestCompleteIntegrationWorkflows:
 
         # Assert: Simple mode excludes upload column
         assert "Upload" not in headers_simple
-        assert column_index_simple == 6
+        assert column_index_simple == 7  # Manual column only
 
         # Arrange & Act: Test advanced mode
         parameter_editor_table.parameter_editor_window.gui_complexity = "normal"
@@ -1159,7 +1159,7 @@ class TestCompleteIntegrationWorkflows:
 
         # Assert: Advanced mode includes upload column
         assert "Upload" in headers_advanced
-        assert column_index_advanced == 7
+        assert column_index_advanced == 8
 
 
 class TestMousewheelHandlingBehavior:
@@ -1685,7 +1685,7 @@ class TestUIErrorInfoHandling:
             patch("tkinter.ttk.Button") as mock_button,
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip,
         ):
-            mock_create_widgets.return_value = [MagicMock() for _ in range(7)]  # Mock 7 column widgets
+            mock_create_widgets.return_value = [MagicMock() for _ in range(8)]  # Mock 8 column widgets
 
             # Act: Update the table
             parameter_editor_table._update_table(params, "simple")
@@ -2146,10 +2146,21 @@ class TestLayoutUtilityMethods:
         ):
             widgets = parameter_editor_table._create_column_widgets("PARAM", param, show_upload_column=True)
 
-        assert widgets == ["delete", "name", "fc", "diff", "new", "unit", "upload", "change"]
+        # The manual widget is created by _create_manual_override_widget (not mocked here),
+        # so verify length and all mocked slots by position rather than equality.
+        assert len(widgets) == 9
+        assert widgets[0] == "delete"
+        assert widgets[1] == "name"
+        assert widgets[2] == "fc"
+        assert widgets[3] == "diff"
+        assert widgets[4] == "new"
+        assert widgets[5] == "unit"
+        assert widgets[6] == "upload"
+        # widgets[7] is the manual override widget (real tk widget, not mocked)
+        assert widgets[8] == "change"
 
     def test_grid_column_widgets_places_upload_column(self, parameter_editor_table: ParameterEditorTable) -> None:
-        row_widgets = [MagicMock() for _ in range(8)]
+        row_widgets = [MagicMock() for _ in range(9)]
 
         parameter_editor_table._grid_column_widgets(row_widgets, row=2, show_upload_column=True)
 

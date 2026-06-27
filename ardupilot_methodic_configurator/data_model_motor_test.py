@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Callable
 from enum import Enum
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -15,7 +16,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from math import nan
 from os import path as os_path
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -120,7 +121,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self._first_test_acknowledged = False
 
         # Cache for frame options to avoid reloading them repeatedly
-        self._cached_frame_options: Optional[dict[str, dict[int, str]]] = None
+        self._cached_frame_options: dict[str, dict[int, str]] | None = None
 
         # Load motor configuration data
         self._load_motor_data()
@@ -204,6 +205,13 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     break
 
         if self._motor_count == 0:
+            if self._frame_class == 0:
+                logging_error(
+                    _("No motor configuration found for frame class %d and type %d"),
+                    self._frame_class,
+                    self._frame_type,
+                )
+                return
             raise RuntimeError(
                 _("No motor configuration found for frame class %(class)d and type %(type)d")
                 % {"class": self._frame_class, "type": self._frame_type}
@@ -301,7 +309,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         """
         return self.battery_monitor.is_battery_monitoring_enabled()
 
-    def get_battery_status(self) -> Optional[tuple[float, float]]:
+    def get_battery_status(self) -> tuple[float, float] | None:
         """
         Get the current battery voltage and current.
 
@@ -372,9 +380,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self,
         param_name: str,
         value: float,
-        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        extra_sleep_time: Optional[int] = 0,
+        reset_progress_callback: None | Callable[[int, int], None] = None,
+        connection_progress_callback: None | Callable[[int, int], None] = None,
+        extra_sleep_time: int | None = 0,
     ) -> None:
         """
         Set a parameter value and upload to flight controller.
@@ -509,7 +517,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         except ValueError as e:
             raise ValidationError(_("Invalid motor labels provided for swapping.")) from e
 
-    def get_parameter(self, param_name: str) -> Optional[float]:
+    def get_parameter(self, param_name: str) -> float | None:
         """
         Get a parameter value from the flight controller.
 
@@ -528,8 +536,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def set_motor_spin_arm_value(
         self,
         value: float,
-        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
+        reset_progress_callback: None | Callable[[int, int], None] = None,
+        connection_progress_callback: None | Callable[[int, int], None] = None,
     ) -> None:
         """Set MOT_SPIN_ARM ensuring a 0.02 margin relative to MOT_SPIN_MIN."""
         spin_min = self.get_parameter("MOT_SPIN_MIN")
@@ -634,7 +642,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
     def _emit_status_event(
         self,
-        callback: Optional[MotorStatusCallback],
+        callback: MotorStatusCallback | None,
         motor_number: int,
         event: MotorStatusEvent,
     ) -> None:
@@ -646,7 +654,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self,
         test_sequence_nr: int,
         motor_output_nr: int,
-        status_callback: Optional[MotorStatusCallback] = None,
+        status_callback: MotorStatusCallback | None = None,
     ) -> None:
         """Execute a single motor test using stored throttle/duration settings."""
         throttle_pct = self.get_test_throttle_pct()
@@ -700,7 +708,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         if not success:
             raise MotorTestExecutionError(message)
 
-    def run_all_motors_test(self, status_callback: Optional[MotorStatusCallback] = None) -> None:
+    def run_all_motors_test(self, status_callback: MotorStatusCallback | None = None) -> None:
         """Execute an all-motors test using stored settings and report events."""
         throttle_pct = self.get_test_throttle_pct()
         duration = int(self.get_test_duration_s())
@@ -708,7 +716,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         for motor_number in range(1, self.motor_count + 1):
             self._emit_status_event(status_callback, motor_number, MotorStatusEvent.COMMAND_SENT)
 
-    def run_sequential_motor_test(self, status_callback: Optional[MotorStatusCallback] = None) -> None:
+    def run_sequential_motor_test(self, status_callback: MotorStatusCallback | None = None) -> None:
         """Execute a sequential test using stored settings and report events."""
         throttle_pct = self.get_test_throttle_pct()
         duration = int(self.get_test_duration_s())
@@ -728,7 +736,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         if not success:
             raise MotorTestExecutionError(message)
 
-    def emergency_stop_motors(self, status_callback: Optional[MotorStatusCallback] = None) -> None:
+    def emergency_stop_motors(self, status_callback: MotorStatusCallback | None = None) -> None:
         """Stop motors and emit status events for listeners."""
         self.stop_all_motors()
         for motor_number in range(1, self.motor_count + 1):
@@ -1140,9 +1148,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def update_frame_type_from_selection(
         self,
         selected_text: str,
-        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        extra_sleep_time: Optional[int] = None,
+        reset_progress_callback: None | Callable[[int, int], None] = None,
+        connection_progress_callback: None | Callable[[int, int], None] = None,
+        extra_sleep_time: int | None = None,
     ) -> bool:
         """
         Update frame configuration based on user selection.
@@ -1208,9 +1216,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def update_frame_type_by_key(
         self,
         selected_key: str,
-        reset_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        connection_progress_callback: Union[None, Callable[[int, int], None]] = None,
-        extra_sleep_time: Optional[int] = None,
+        reset_progress_callback: None | Callable[[int, int], None] = None,
+        connection_progress_callback: None | Callable[[int, int], None] = None,
+        extra_sleep_time: int | None = None,
     ) -> bool:
         """Update frame configuration using the combobox key directly."""
         try:

@@ -22,7 +22,6 @@ from logging import warning as logging_warning
 from platform import system as platform_system
 from sys import exit as sys_exit
 from tkinter import Label, Toplevel, ttk
-from typing import Optional, Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
@@ -45,7 +44,7 @@ def setup_combobox_mousewheel_handling(combobox: ttk.Combobox) -> None:
     # Track dropdown state to control mouse wheel behavior
     combobox.dropdown_is_open = False  # type: ignore[attr-defined]
 
-    def handle_mousewheel(event: tk.Event) -> Optional[str]:
+    def handle_mousewheel(event: tk.Event) -> str | None:
         """Handle mouse wheel events - propagate to parent when dropdown is closed."""
         if not combobox.dropdown_is_open:  # type: ignore[attr-defined]
             # Propagate the wheel event to the parent widget
@@ -53,11 +52,11 @@ def setup_combobox_mousewheel_handling(combobox: ttk.Combobox) -> None:
             return "break"  # Prevent default combobox behavior
         return None  # Allow default behavior when dropdown is open
 
-    def dropdown_opened(_event: Optional[tk.Event] = None) -> None:
+    def dropdown_opened(_event: tk.Event | None = None) -> None:
         """Mark dropdown as open."""
         combobox.dropdown_is_open = True  # type: ignore[attr-defined]
 
-    def dropdown_closed(_event: Optional[tk.Event] = None) -> None:
+    def dropdown_closed(_event: tk.Event | None = None) -> None:
         """Mark dropdown as closed."""
         combobox.dropdown_is_open = False  # type: ignore[attr-defined]    # Bind mouse wheel events (Windows and Linux)
 
@@ -88,7 +87,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self,
         master,  # noqa: ANN001
         list_pair_tuple: list[tuple[str, str]],
-        selected_element: Union[None, str],
+        selected_element: None | str,
         cb_name: str,
         *args,
         **kwargs,
@@ -110,13 +109,13 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         # Apply mouse wheel handling to this combobox instance
         setup_combobox_mousewheel_handling(self)
 
-    def set_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
+    def set_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: None | str) -> None:
         # Clear existing entries before setting new ones
         self.list_keys.clear()
         self.list_shows.clear()
         self.append_entries_tuple(list_pair_tuple, selected_element)
 
-    def append_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: Union[None, str]) -> None:
+    def append_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: None | str) -> None:
         if isinstance(list_pair_tuple, list):
             for tpl in list_pair_tuple:
                 self.list_keys.append(tpl[0])
@@ -138,7 +137,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         else:
             logging_debug(_("No %s combobox element selected"), self.cb_name)
 
-    def _find_and_validate_selected_element(self, selected_element: str) -> Union[int, None]:
+    def _find_and_validate_selected_element(self, selected_element: str) -> int | None:
         """
         Find the index of the selected element in list_keys.
 
@@ -162,19 +161,21 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
             )
             return None
 
-    def get_selected_key(self) -> Union[str, None]:
+    def get_selected_key(self) -> str | None:
         try:
             i_index = self.current()
-            # self.current() returns -1 if no item is selected
-            if i_index < 0:
+            # self.current() returns -1 (Tcl 8.6) or "" (Tcl 9.0) if no item is selected.
+            # On some Tcl builds (e.g. Python 3.10 CI) it raises TclError ("expected integer
+            # but got "") instead of returning a sentinel, so tk.TclError must be caught too.
+            if i_index is None or not isinstance(i_index, int) or i_index < 0:
                 return None
             return self.list_keys[i_index]
-        except IndexError:
+        except (IndexError, TypeError, tk.TclError):
             return None
 
     def get_entries_tuple(self) -> list[tuple[str, str]]:
         """Return the current list of key-value tuples."""
-        return list(zip(self.list_keys, self.list_shows))
+        return list(zip(self.list_keys, self.list_shows, strict=True))
 
     # SPDX-SnippetEnd
 
@@ -291,13 +292,13 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         self,
         master,  # noqa: ANN001
         list_pair_tuple: list[tuple[str, str]],
-        selected_element: Union[None, str],
+        selected_element: None | str,
         cb_name: str,
         *args,
         **kwargs,
     ) -> None:
         super().__init__(master, list_pair_tuple, selected_element, cb_name, *args, **kwargs)
-        self.tooltip: Union[None, Toplevel] = None
+        self.tooltip: None | Toplevel = None
 
         # Bind events related to the dropdown
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
@@ -307,7 +308,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         self._bind(("bind", lb), "<Escape>", self.on_escape_press, None)  # type: ignore[attr-defined]
         self.bind("<<ComboboxSelected>>", self.on_combobox_selected, None)
 
-    def on_key_release(self, _event: Union[None, tk.Event]) -> None:
+    def on_key_release(self, _event: None | tk.Event) -> None:
         """Get the keyboard highlighted index and create a tooltip for it."""
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
@@ -341,10 +342,10 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
             # If there's no active item, we don't need to update the tooltip
             pass
 
-    def on_combobox_selected(self, _event: Union[None, tk.Event]) -> None:
+    def on_combobox_selected(self, _event: None | tk.Event) -> None:
         self.destroy_tooltip()
 
-    def on_escape_press(self, _event: Union[None, tk.Event]) -> None:
+    def on_escape_press(self, _event: None | tk.Event) -> None:
         self.destroy_tooltip()
 
     def destroy_tooltip(self) -> None:

@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# requires-python = ">=3.9"
+# requires-python = ">=3.10"
 # dependencies = [
 #     "beautifulsoup4",
 #     "requests",
@@ -19,7 +19,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import logging
 import time
 from os import environ as os_environ
-from typing import Union
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -68,7 +67,7 @@ URL_BLACKLIST_PREFIXES = ["https://docs.cubepilot.org/user-guides/~/changes/", "
 
 
 # pylint: disable=duplicate-code
-def get_env_proxies() -> Union[dict[str, str], None]:
+def get_env_proxies() -> dict[str, str] | None:
     proxies_env = {
         "http": os_environ.get("HTTP_PROXY") or os_environ.get("http_proxy"),
         "https": os_environ.get("HTTPS_PROXY") or os_environ.get("https_proxy"),

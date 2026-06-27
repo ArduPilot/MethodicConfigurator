@@ -12,12 +12,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import tkinter as tk
+from collections.abc import Callable
 from sys import platform as sys_platform
 
 # from logging import debug as logging_debug
 # from logging import info as logging_info
 from tkinter import BooleanVar, ttk
-from typing import Callable, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -86,7 +86,7 @@ class PopupWindow:
     @staticmethod
     def finalize_setup_popupwindow(
         popup_window: BaseWindow,
-        parent: Optional[tk.Tk],
+        parent: tk.Tk | None,
         close_callback: Callable[[], None],
     ) -> None:
         """Finalize window setup: center, show, make modal on non-macOS, set close handler."""
@@ -132,7 +132,7 @@ class PopupWindow:
             pass
 
     @staticmethod
-    def close(popup_window: BaseWindow, parent: Optional[tk.Tk]) -> None:
+    def close(popup_window: BaseWindow, parent: tk.Tk | None) -> None:
         """Close the popup window and re-enable the parent window."""
         if not _is_macos():
             with contextlib.suppress(tk.TclError):
@@ -176,7 +176,7 @@ class UsagePopupWindow(PopupWindow):
 
     @staticmethod
     def finalize_setup_window(
-        parent: Optional[tk.Tk],
+        parent: tk.Tk | None,
         usage_popup_window: BaseWindow,
         ptype: str,
         dismiss_text: str = _("I understand this"),

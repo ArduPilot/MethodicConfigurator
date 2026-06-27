@@ -13,14 +13,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tkinter as tk
 from tkinter import font as tkFont  # noqa: N812
 from tkinter import ttk
-from typing import Optional
 
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config, safe_font_nametofont
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip_on_richtext_tag
 
 
-def _get_ttk_label_color(widget: Optional[tk.Misc], option: str, fallback: str) -> str:
+def _get_ttk_label_color(widget: tk.Misc | None, option: str, fallback: str) -> str:
     """Return a ttk label color or a safe fallback."""
     style = ttk.Style(widget)
     color = style.lookup("TLabel", option)

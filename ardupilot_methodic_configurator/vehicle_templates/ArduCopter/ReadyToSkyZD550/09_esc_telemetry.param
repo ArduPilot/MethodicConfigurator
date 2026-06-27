@@ -1,4 +1,4 @@
 MOT_PWM_TYPE,6  # Specified in component editor window
 SERIAL3_BAUD,115  # bi-directional DShot telemetry data rate
-SERIAL3_PROTOCOL,16  # bi-directional DShot telemetry pin is connected to SERIAL3
+SERIAL3_PROTOCOL,16  # Defined in ESC specifications above
 SERVO_BLH_TRATE,5  # Set to a low value because the RPM telemetry uses bi-directional DShot telemetry instead of this UART telemetry

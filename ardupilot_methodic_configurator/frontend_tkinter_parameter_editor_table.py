@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from dataclasses import dataclass
 from logging import critical as logging_critical
 from logging import debug as logging_debug
@@ -18,7 +19,7 @@ from platform import system as platform_system
 from sys import exit as sys_exit
 from sys import platform as sys_platform
 from tkinter import ttk
-from typing import TYPE_CHECKING, Callable, Optional, Union
+from typing import TYPE_CHECKING
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, BitmaskHelper
@@ -81,7 +82,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         master: tk.Misc,
         parameter_editor: ParameterEditor,
         parameter_editor_window: "ParameterEditorWindow",
-        dialogs: Optional[ParameterEditorTableDialogs] = None,
+        dialogs: ParameterEditorTableDialogs | None = None,
     ) -> None:
         super().__init__(master)
         self.main_frame = master
@@ -97,16 +98,16 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         style = ttk.Style()
         style.configure("narrow.TButton", padding=0, width=4, border=(0, 0, 0, 0))
 
-    def _get_parent_root(self) -> Optional[tk.Tk]:
+    def _get_parent_root(self) -> tk.Tk | None:
         """Return the closest tk.Tk ancestor if available."""
-        widget: Optional[tk.Misc] = self.main_frame
+        widget: tk.Misc | None = self.main_frame
         while widget is not None and not isinstance(widget, tk.Tk):
             widget = widget.master
         return widget if isinstance(widget, tk.Tk) else None
 
-    def _get_parent_toplevel(self) -> Union[tk.Tk, tk.Toplevel]:
+    def _get_parent_toplevel(self) -> tk.Tk | tk.Toplevel:
         """Return the closest Tk or Toplevel ancestor for centering dialogs."""
-        widget: Optional[tk.Misc] = self.main_frame
+        widget: tk.Misc | None = self.main_frame
         while widget is not None and not isinstance(widget, (tk.Tk, tk.Toplevel)):
             widget = widget.master
         if isinstance(widget, (tk.Tk, tk.Toplevel)):
@@ -117,7 +118,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         msg = "Could not resolve parent toplevel window"
         raise RuntimeError(msg)
 
-    def _should_show_upload_column(self, gui_complexity: Union[str, None] = None) -> bool:
+    def _should_show_upload_column(self, gui_complexity: str | None = None) -> bool:
         """
         Determine if the upload column should be shown based on UI complexity.
 
@@ -169,6 +170,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if show_upload_column:
             base_headers.append(_("Upload"))
             base_tooltips.append(_("When selected, upload the new value to the flight controller"))
+
+        base_headers.append(_("Manual"))
+        base_tooltips.append(
+            _("When checked, allows manual editing of this forced or derived parameter.\n")
+            + _("When unchecked, reverts to the forced or derived value.")
+        )
 
         base_headers.append(_("Why are you changing this parameter?"))
         base_tooltips.append(change_reason_tooltip)
@@ -276,6 +283,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if show_upload_column:
             row_widgets.append(self._create_upload_checkbutton(param_name))
 
+        row_widgets.append(self._create_manual_override_widget(param))
         row_widgets.append(change_reason_widget)
 
         return row_widgets
@@ -291,6 +299,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         if show_upload_column:
             row_widgets[6].grid(row=row, column=6, sticky="e", padx=0)
+            row_widgets[7].grid(row=row, column=7, sticky="e", padx=0)  # manual
+        else:
+            row_widgets[6].grid(row=row, column=6, sticky="e", padx=0)  # manual
 
         change_reason_column = self._get_change_reason_column_index(show_upload_column)
         row_widgets[change_reason_column].grid(row=row, column=change_reason_column, sticky="ew", padx=(0, 5))
@@ -306,11 +317,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             Column index for change reason entry
 
         """
-        # Base columns: Delete, Parameter, Current Value, New Value, Unit
+        # Base columns: Delete, Parameter, Current Value, ≠, New Value, Unit
         base_column_count = 6
+        # Manual column is always present (column 6 without upload, 7 with upload)
         if show_upload_column:
-            return base_column_count + 1  # Upload column + Change Reason
-        return base_column_count  # Change Reason directly after Unit
+            return base_column_count + 2  # Upload + Manual + Change Reason
+        return base_column_count + 1  # Manual + Change Reason
 
     def _configure_table_columns(self, show_upload_column: bool) -> None:
         """Configure table column weights and sizes."""
@@ -323,6 +335,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         if show_upload_column:
             self.view_port.columnconfigure(6, weight=0)  # Upload to FC
+            self.view_port.columnconfigure(7, weight=0)  # Manual override
+        else:
+            self.view_port.columnconfigure(6, weight=0)  # Manual override
 
         self.view_port.columnconfigure(self._get_change_reason_column_index(show_upload_column), weight=1)  # Change Reason
 
@@ -454,9 +469,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
     def _create_new_value_entry(  # pylint: disable=too-many-statements # noqa: PLR0915
         self, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different_label: ttk.Label
-    ) -> Union[PairTupleCombobox, ttk.Entry]:
+    ) -> PairTupleCombobox | ttk.Entry:
         """Create an entry widget for editing the parameter value."""
-        new_value_entry: Union[PairTupleCombobox, ttk.Entry]
+        new_value_entry: PairTupleCombobox | ttk.Entry
 
         # Check if parameter has values dictionary
         if param.is_multiple_choice:
@@ -648,7 +663,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 ),
             )
 
-        def is_widget_visible(widget: Union[tk.Misc, None]) -> bool:
+        def is_widget_visible(widget: tk.Misc | None) -> bool:
             return bool(widget and widget.winfo_ismapped())
 
         def focus_out_handler(_event: tk.Event) -> None:
@@ -733,6 +748,34 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         msg = _("When selected upload {param_name} new value to the flight controller")
         show_tooltip(upload_checkbutton, msg.format(**locals()))
         return upload_checkbutton
+
+    def _create_manual_override_widget(self, param: ArduPilotParameter) -> ttk.Checkbutton | ttk.Label:
+        """
+        Create a manual override checkbox for forced/derived params, or an empty label for others.
+
+        For forced or derived parameters the checkbox lets the user bypass the automatic
+        value management so they can set the value and change reason freely.  Toggling the
+        checkbox reverts the table by calling repopulate_parameter_table() while preserving
+        the current scroll position.
+        """
+        if not (param.is_forced or param.is_derived) or param.is_readonly:
+            return ttk.Label(self.view_port, text="")
+
+        var = tk.BooleanVar(value=param.is_manual_override)
+
+        def on_toggle() -> None:
+            current_scroll = self.canvas.yview()[0]
+            param.set_manual_override(var.get())
+            self.parameter_editor_window.repopulate_parameter_table()
+            self.canvas.yview_moveto(current_scroll)
+
+        checkbox = ttk.Checkbutton(self.view_port, variable=var, command=on_toggle)
+        checkbox._manual_override_var = var  # type: ignore[attr-defined]  # noqa: SLF001 # pylint: disable=protected-access # keep var alive
+        tooltip_msg = _(
+            "When checked, allows manual editing of this forced or derived parameter value and change reason.\n"
+        ) + _("When unchecked, reverts to the forced or derived value.")
+        show_tooltip(checkbox, tooltip_msg)
+        return checkbox
 
     def _create_change_reason_entry(self, param: ArduPilotParameter) -> ttk.Entry:
         """Create an entry for the parameter change reason."""
@@ -985,7 +1028,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Ensure focus ends up on the search_entry, not just the window
         add_parameter_window.root.after(0, search_entry.focus_set)
 
-    def _center_and_focus_window(self, window: Union[tk.Toplevel, tk.Tk]) -> None:
+    def _center_and_focus_window(self, window: tk.Toplevel | tk.Tk) -> None:
         BaseWindow.center_window(window, self._get_parent_toplevel())
         window.lift()
         window.update()  # Ensure the window is fully rendered before setting focus

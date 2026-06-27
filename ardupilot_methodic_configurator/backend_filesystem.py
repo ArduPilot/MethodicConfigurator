@@ -30,7 +30,7 @@ from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 from shutil import rmtree as shutil_rmtree
 from subprocess import SubprocessError, run
-from typing import Any, Optional, Union
+from typing import Any
 from zipfile import ZipFile
 
 from argcomplete.completers import DirectoriesCompleter
@@ -50,7 +50,7 @@ from ardupilot_methodic_configurator.annotate_params import (
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
-from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_PREFIX, Par, ParDict, is_within_tolerance
 
 PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
@@ -201,7 +201,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             return []
 
         # Sort values numerically by key
-        def sort_key(item: tuple[str, Any]) -> tuple[int, Union[int, float, str]]:
+        def sort_key(item: tuple[str, Any]) -> tuple[int, int | float | str]:
             key = item[0]
             try:
                 return (0, int(key))  # sort integers and floats together
@@ -358,7 +358,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             logging_error(_("Error: %s is not a directory."), self.vehicle_dir)
         return parameters
 
-    def compound_params(self, last_filename: Optional[str] = None, skip_default: bool = True) -> tuple[ParDict, Optional[str]]:
+    def compound_params(self, last_filename: str | None = None, skip_default: bool = True) -> tuple[ParDict, str | None]:
         """
         Compound parameters from multiple .param files into a single ParDict.
 
@@ -399,7 +399,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return compound, first_config_step_filename
 
     @staticmethod
-    def str_to_bool(s: str) -> Optional[bool]:
+    def str_to_bool(s: str) -> bool | None:
         """
         Converts a string representation of a boolean value to a boolean.
 
@@ -606,7 +606,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         blank_change_reason: bool,
         copy_vehicle_image: bool,
         use_fc_params: bool = False,
-        fc_parameters: Optional[dict[str, float]] = None,
+        fc_parameters: dict[str, float] | None = None,
     ) -> str:
         # Copy the template files to the new vehicle directory
         try:
@@ -662,7 +662,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         params: ParDict,
         blank_change_reason: bool,
         use_fc_params: bool,
-        fc_parameters: Optional[dict[str, float]],
+        fc_parameters: dict[str, float] | None,
     ) -> None:
         """
         Apply in-place transformations to a parameter dict during template copy.
@@ -845,7 +845,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
     def calculate_derived_and_forced_param_changes(
         self,
         fc_param_names: list[str],
-        fc_parameters: Optional[dict[str, float]] = None,
+        fc_parameters: dict[str, float] | None = None,
     ) -> dict[str, ParDict]:
         """
         Compute updated parameter values for all configuration files.
@@ -924,11 +924,14 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
                 self.merge_forced_or_derived_parameters(
                     param_filename, self.derived_parameters, fc_param_names, target=working
                 )
-                self.compute_add_parameters(param_filename, step_dict, eval_variables, existing_params=working)
+                # Compute deletions once and reuse in compute_add_parameters to avoid redundant evaluation
+                to_delete = self.compute_deletions(param_filename, step_dict, eval_variables)
+                self.compute_add_parameters(
+                    param_filename, step_dict, eval_variables, existing_params=working, parameters_to_delete=to_delete
+                )
                 self.merge_forced_or_derived_parameters(param_filename, self.add_parameters, None, target=working)
 
                 # Apply deletions from delete_parameters
-                to_delete = self.compute_deletions(param_filename, step_dict, eval_variables)
                 actually_deleted = [p for p in sorted(to_delete) if p in working]
                 if actually_deleted:
                     logging_info(_("Deleting parameters %s from '%s'"), actually_deleted, param_filename)
@@ -968,8 +971,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         self,
         filename: str,
         new_parameters: dict[str, ParDict],
-        fc_param_names: Optional[list[str]],
-        target: Optional[ParDict] = None,
+        fc_param_names: list[str] | None,
+        target: ParDict | None = None,
     ) -> bool:
         """
         Merge forced or derived parameter values into a target parameter dict.
@@ -996,6 +999,10 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         for param_name, param in new_parameters[filename].items():
             if fc_param_names is None or not fc_param_names or param_name in fc_param_names:
                 if param_name in dest:
+                    # Skip parameters that have manual override active — user has explicitly
+                    # opted out of automated forced/derived value management for this param
+                    if (dest[param_name].comment or "").startswith(MANUAL_OVERRIDE_PREFIX):
+                        continue
                     if not is_within_tolerance(dest[param_name].value, param.value):
                         at_least_one_param_changed = True
                 else:

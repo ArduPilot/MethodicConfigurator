@@ -22,7 +22,7 @@ import time
 import tkinter as tk
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 from unittest.mock import MagicMock, Mock, patch
 
 import pyautogui
@@ -146,10 +146,10 @@ def tk_root() -> Generator[tk.Tk, None, None]:
 
 
 @pytest.fixture
-def mock_tkinter_context() -> Callable[[Optional[MockConfiguration]], tuple[contextlib.ExitStack, list]]:
+def mock_tkinter_context() -> Callable[[MockConfiguration | None], tuple[contextlib.ExitStack, list]]:
     """Provide common Tkinter mocking context manager."""
 
-    def _mock_context(config: Optional[MockConfiguration] = None) -> tuple[contextlib.ExitStack, list]:
+    def _mock_context(config: MockConfiguration | None = None) -> tuple[contextlib.ExitStack, list]:
         if config is None:
             config = MockConfiguration()
 
@@ -212,6 +212,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_SIMPLE = (
     NEW_VALUE_DIFFERENT_STR,
     "New Value",
     "Unit",
+    "Manual",
     "Why are you changing this parameter?",
 )
 
@@ -223,6 +224,7 @@ PARAMETER_EDITOR_TABLE_HEADERS_ADVANCED = (
     "New Value",
     "Unit",
     "Upload",
+    "Manual",
     "Why are you changing this parameter?",
 )
 
@@ -296,9 +298,9 @@ def test_param_editor(tmp_path) -> ParameterEditor:
 class SITLManager:
     """Manages ArduCopter SITL process lifecycle."""
 
-    def __init__(self, sitl_binary: Optional[str] = None) -> None:
+    def __init__(self, sitl_binary: str | None = None) -> None:
         self.sitl_binary = sitl_binary or os.environ.get("SITL_BINARY")
-        self.process: Optional[subprocess.Popen] = None
+        self.process: subprocess.Popen | None = None
         self.connection_string = "tcp:127.0.0.1:5760"
         self._ready = False
 

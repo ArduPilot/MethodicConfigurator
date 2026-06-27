@@ -2,12 +2,12 @@
 
 sudo pip uninstall -y MethodicConfigurator
 pip uninstall -y MethodicConfigurator
-uv pip uninstall -y MethodicConfigurator
+uv pip uninstall MethodicConfigurator
 sudo rm -Rf /usr/local/MethodicConfigurator/
 
 sudo pip uninstall -y ardupilot_methodic_configurator
 pip uninstall -y ardupilot_methodic_configurator
-uv pip uninstall -y ardupilot_methodic_configurator
+uv pip uninstall ardupilot_methodic_configurator
 sudo rm -Rf /usr/local/ardupilot_methodic_configurator/
 
 sudo rm -Rf /usr/local/vehicle_templates/
@@ -23,18 +23,18 @@ rm -Rf ~/.local/ardupilot_methodic_configurator
 rm -Rf ~/.local/bin/ardupilot_methodic_configurator
 rm -Rf build dist/ ardupilot_methodic_configurator.egg-info/
 
-uv venv --python 3.12
+uv venv --python 3.10 .venv
 # shellcheck source=/dev/null
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
     source .venv/Scripts/activate
 else
     source .venv/bin/activate
 fi
-uv pip install "build==1.4.4" "packaging==26.2" "setuptools==80.10.2"
+uv pip install "build==1.5.0" "packaging==26.2" "setuptools==82.0.1"
 
 python -m build
 
-uv pip install -U dist/ardupilot_methodic_configurator-2.9.6-py3-none-any.whl
+uv pip install -U dist/ardupilot_methodic_configurator-4.0.2-py3-none-any.whl
 
 cd ..
 

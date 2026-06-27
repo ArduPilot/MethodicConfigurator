@@ -10,8 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import gettext
+from collections.abc import Callable
 from os import path as os_path
-from typing import Callable
 
 # Do not import nor use logging functions in this file.
 # Logging is not yet configured when these functions are called

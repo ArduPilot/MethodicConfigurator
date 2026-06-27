@@ -10,7 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -71,7 +71,7 @@ def mock_flight_controller() -> MagicMock:
     fc.set_param.side_effect = set_param_side_effect
 
     # Configure fetch_param to return values from fc_parameters
-    def fetch_param_side_effect(param_name: str) -> Optional[float]:
+    def fetch_param_side_effect(param_name: str) -> float | None:
         value = fc.fc_parameters.get(param_name)
         if isinstance(value, (int, float)):
             return float(value)
@@ -153,7 +153,7 @@ def program_settings_store(monkeypatch) -> dict[str, Any]:
     """Provide in-memory ProgramSettings storage for deterministic tests."""
     store: dict[str, Any] = {"motor_test": {"duration": 3.0, "throttle_pct": 12}}
 
-    def _get_setting(setting: str) -> Optional[float]:
+    def _get_setting(setting: str) -> float | None:
         parts = setting.split("/")
         current: Any = store
         for part in parts:
@@ -2178,7 +2178,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
     ) -> None:
         """Missing duration settings raise a ReferenceError during initialization."""
 
-        def fake_get(setting: str) -> Optional[float]:
+        def fake_get(setting: str) -> float | None:
             if setting == "motor_test/duration":
                 return None
             if setting == "motor_test/throttle_pct":
@@ -2207,7 +2207,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
     ) -> None:
         """Out-of-range duration values raise ValueError on load."""
 
-        def fake_get(setting: str) -> Optional[float]:
+        def fake_get(setting: str) -> float | None:
             if setting == "motor_test/duration":
                 return 0
             if setting == "motor_test/throttle_pct":
@@ -2231,7 +2231,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
     ) -> None:
         """Missing throttle percentages raise ReferenceError."""
 
-        def fake_get(setting: str) -> Optional[float]:
+        def fake_get(setting: str) -> float | None:
             if setting == "motor_test/throttle_pct":
                 return None
             if setting == "motor_test/duration":
@@ -2260,7 +2260,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
     ) -> None:
         """Throttle percentages outside 1-100 are rejected on load."""
 
-        def fake_get(setting: str) -> Optional[float]:
+        def fake_get(setting: str) -> float | None:
             if setting == "motor_test/throttle_pct":
                 return 500
             if setting == "motor_test/duration":
@@ -2284,7 +2284,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
     ) -> None:
         """Duration settings above 60 seconds raise ValueError on load."""
 
-        def fake_get(setting: str) -> Optional[float]:
+        def fake_get(setting: str) -> float | None:
             if setting == "motor_test/duration":
                 return 999
             if setting == "motor_test/throttle_pct":
@@ -2308,7 +2308,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
     ) -> None:
         """Throttle settings below 1% are rejected."""
 
-        def fake_get(setting: str) -> Optional[float]:
+        def fake_get(setting: str) -> float | None:
             if setting == "motor_test/throttle_pct":
                 return 0
             if setting == "motor_test/duration":
@@ -3302,7 +3302,7 @@ class TestMotorTestDataModelMotorSwapping:
         """
 
         # Arrange: Set up mock parameter reading
-        def mock_get_param(param_name: str) -> Optional[float]:
+        def mock_get_param(param_name: str) -> float | None:
             if param_name == "SERVO1_FUNCTION":
                 return 33.0  # e.g, Motor 1 output function code
             if param_name == "SERVO3_FUNCTION":

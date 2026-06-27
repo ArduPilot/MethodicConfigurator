@@ -8,8 +8,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from typing import Union
-
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_vehicle_components_base import (
     ComponentDataModelBase,
@@ -130,7 +128,7 @@ class ComponentDataModelDisplay(ComponentDataModelBase):
             "is_toplevel": is_toplevel,
         }
 
-    def prepare_leaf_widget_config(self, key: str, value: Union[str, float], path: list[str]) -> dict:
+    def prepare_leaf_widget_config(self, key: str, value: str | float, path: list[str]) -> dict:
         """
         Prepare configuration for leaf widget creation. Pure function for easy testing.
 

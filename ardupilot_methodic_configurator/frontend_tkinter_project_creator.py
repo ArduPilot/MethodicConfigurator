@@ -20,7 +20,6 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from tkinter import messagebox, ttk
-from typing import Optional
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -88,7 +87,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
         initial_base_dir: str,
         initial_new_dir: str,
         fc_connected: bool,
-        fc_parameters: Optional[dict[str, float]],
+        fc_parameters: dict[str, float] | None,
         connected_fc_vehicle_type: str,
     ) -> None:
         # Option 1 - Create a new vehicle configuration directory based on an existing template

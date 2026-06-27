@@ -17,7 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import os
 import re
-from typing import Callable, Union
+from collections.abc import Callable
 
 import argcomplete
 from argcomplete.completers import DirectoriesCompleter, FilesCompleter
@@ -82,7 +82,7 @@ def ranged_type(value_type: type, min_value: float, max_value: float) -> Callabl
         max_value   - maximum acceptable argument value.
     """
 
-    def range_checker(arg: str) -> Union[int, float]:
+    def range_checker(arg: str) -> int | float:
         try:
             f = value_type(arg)
         except ValueError as exc:

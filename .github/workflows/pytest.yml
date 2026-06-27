@@ -31,7 +31,7 @@ jobs:
         python-version: ["3.14"]  # to make sure the latest AMC supported python version does not break
         include:
           - os: ubuntu-latest
-            python-version: "3.9"  # to make sure the minimum AMC supported python version does not break
+            python-version: "3.10"  # to make sure the minimum AMC supported python version does not break
             # this is also the version used to report test coverage, other versions do not report coverage
 
     steps:
@@ -66,15 +66,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          # Only install system Tcl/Tk for Python < 3.13 (newer versions bundle their own)
-          if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
-            echo "Installing system Tcl/Tk 8.6 for Python ${{ matrix.python-version }}"
-            sudo apt-get install -y python3-tk tcl8.6 tk8.6 libtcl8.6 libtk8.6
-          else
-            echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, skipping system packages"
-            # Only install tools, not Tcl/Tk libraries
-            sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
-          fi
+          # uv standalone Python bundles its own Tcl/Tk (9.0+), so we do not install system Tcl/Tk
+          # to avoid version conflicts (system has Tcl 8.6, uv Python links against Tcl 9.0)
+          sudo apt-get install -y scrot xdotool x11-utils gnome-screenshot
           python3 --version && python3 -c "import tkinter; print(tkinter.TclVersion, tkinter.TkVersion)"
 
       - name: Cache Homebrew packages (macOS)
@@ -93,14 +87,9 @@ jobs:
       - name: Ensure Tcl/Tk search paths
         if: matrix.os == 'ubuntu-latest'
         run: |
-          # Only set Tcl/Tk paths for Python < 3.13
-          if [[ "${{ matrix.python-version }}" < "3.13" ]]; then
-            echo "Setting Tcl/Tk paths for Python ${{ matrix.python-version }}"
-            echo "TCL_LIBRARY=/usr/share/tcltk/tcl8.6" >> $GITHUB_ENV
-            echo "TK_LIBRARY=/usr/share/tcltk/tk8.6" >> $GITHUB_ENV
-          else
-            echo "Python ${{ matrix.python-version }} uses bundled Tcl/Tk, no custom paths needed"
-          fi
+          # uv standalone Python bundles its own Tcl 9.0 - do not override TCL_LIBRARY/TK_LIBRARY
+          # as pointing them at the system Tcl 8.6 causes a version conflict
+          echo "Using bundled Tcl/Tk from uv Python (no TCL_LIBRARY override needed)"
 
       - name: Check Tcl and Tk installed versions
         shell: bash
@@ -244,7 +233,7 @@ jobs:
 
       - name: Upload coverage to Coveralls (parallel)
         # https://docs.coveralls.io/parallel-builds
-        if: always() && github.repository == 'ArduPilot/MethodicConfigurator'
+        if: always() && github.repository == 'ArduPilot/MethodicConfigurator' && matrix.os != 'macos-latest'
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -269,7 +258,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
-          carryforward: "run-ubuntu-latest-py3.9,run-ubuntu-latest-py3.14,run-windows-latest-py3.14,run-macos-latest-py3.14"
+          carryforward: "run-ubuntu-latest-py3.10,run-ubuntu-latest-py3.14,run-windows-latest-py3.14,run-macos-latest-py3.14"
 
       # TODO: create a badge that presents the result of the Upload coverage xml report step
 
@@ -299,7 +288,7 @@ jobs:
           path: artifacts
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2.23.0
+        uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3 # v2.24.0
         if: always()
         id: test-results
         with:
@@ -345,14 +334,14 @@ jobs:
         if: needs.pytest.result != 'skipped'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: coverage-ubuntu-latest-3.9
+          name: coverage-ubuntu-latest-3.10
 
       # https://docs.astral.sh/uv/guides/integration/github/
       - name: Install uv and set the Python version
         if: needs.pytest.result != 'skipped'
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
-          python-version: '3.9'  # Match with the coverage report Python version
+          python-version: '3.10'  # Match with the coverage report Python version
           activate-environment: true
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
@@ -389,7 +378,7 @@ jobs:
       - name: Download coverage xml report
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: coverage-ubuntu-latest-3.9-xml
+          name: coverage-ubuntu-latest-3.10-xml
 
       - name: Get Cover
         uses: orgoro/coverage@71cf993a407154ad9d8dd027c88a374b0ed002a9 # v3.3

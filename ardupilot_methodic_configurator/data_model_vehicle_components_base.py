@@ -13,7 +13,7 @@ from copy import deepcopy
 from logging import error as logging_error
 from logging import warning as logging_warning
 from math import isnan, nan
-from typing import Any, Optional, Union
+from typing import Any
 
 from ardupilot_methodic_configurator import _, __version__
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -28,7 +28,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema i
 # Type aliases to improve code readability
 ComponentPath = tuple[str, ...]
 ComponentData = dict[str, Any]
-ComponentValue = Union[str, int, float]
+ComponentValue = str | int | float
 
 
 class ComponentDataModelBase:
@@ -57,7 +57,7 @@ class ComponentDataModelBase:
         """
         return self._data
 
-    def get_component_value(self, path: ComponentPath) -> Union[ComponentData, ComponentValue]:
+    def get_component_value(self, path: ComponentPath) -> ComponentData | ComponentValue:
         """Get a specific component value from the data structure."""
         data_path = self._data["Components"]
         for key in path:
@@ -72,7 +72,7 @@ class ComponentDataModelBase:
         # If it's some other type, convert to string
         return str(data_path)
 
-    def set_component_value(self, path: ComponentPath, value: Union[ComponentData, ComponentValue, None]) -> None:
+    def set_component_value(self, path: ComponentPath, value: ComponentData | ComponentValue | None) -> None:
         """Set a specific component value in the data structure."""
         if value is None:
             value = ""
@@ -96,7 +96,7 @@ class ComponentDataModelBase:
             # If the component has a specific datatype, use it to process the value
             data_path[path[-1]] = self._process_value(path, str(value) if value is not None else None)
 
-    def _get_component_datatype(self, path: ComponentPath) -> Optional[type]:
+    def _get_component_datatype(self, path: ComponentPath) -> type | None:
         """
         Safely get the Python datatype for a component path from the nested datatypes dictionary.
 
@@ -122,7 +122,7 @@ class ComponentDataModelBase:
             return None
 
     def _safe_cast_value(  # noqa: PLR0911 pylint: disable=too-many-return-statements
-        self, value: Union[ComponentData, ComponentValue, None], datatype: type, path: ComponentPath
+        self, value: ComponentData | ComponentValue | None, datatype: type, path: ComponentPath
     ) -> Any:  # noqa: ANN401 # Use Any to handle dict/list returns that don't fit ComponentValue
         """
         Safely cast a value to the specified datatype with proper error handling.
@@ -182,7 +182,7 @@ class ComponentDataModelBase:
             logging_warning(_("Failed to cast value '%s' to %s for path %s: %s"), value, type_name, path, e)
             return self._process_value(path, str(value) if value is not None else None)
 
-    def _process_value(self, path: ComponentPath, value: Union[str, None]) -> ComponentValue:
+    def _process_value(self, path: ComponentPath, value: str | None) -> ComponentValue:
         """Process a string value into the appropriate type based on context."""
         # Handle None value
         if value is None:
@@ -215,8 +215,8 @@ class ComponentDataModelBase:
     def post_init(
         self,
         doc_dict: dict,
-        fc_parameters: Optional[dict[str, float]] = None,
-        file_parameters: Optional[dict[str, ParDict]] = None,
+        fc_parameters: dict[str, float] | None = None,
+        file_parameters: dict[str, ParDict] | None = None,
     ) -> None:
         """Update the data structure to ensure all required fields are present."""
         self.update_json_structure(fc_parameters, file_parameters)
@@ -239,8 +239,8 @@ class ComponentDataModelBase:
 
     def update_json_structure(
         self,
-        fc_parameters: Optional[dict[str, float]] = None,
-        file_parameters: Optional[dict[str, ParDict]] = None,
+        fc_parameters: dict[str, float] | None = None,
+        file_parameters: dict[str, ParDict] | None = None,
     ) -> None:
         """
         Update the data structure to ensure all required fields are present.
@@ -337,8 +337,8 @@ class ComponentDataModelBase:
 
     def migrate_legacy_battery_fields(
         self,
-        fc_parameters: Optional[dict[str, float]] = None,
-        file_parameters: Optional[dict[str, ParDict]] = None,
+        fc_parameters: dict[str, float] | None = None,
+        file_parameters: dict[str, ParDict] | None = None,
     ) -> None:
         """
         Migrate legacy battery voltage fields: add Volt per cell arm and Volt per cell min when missing.

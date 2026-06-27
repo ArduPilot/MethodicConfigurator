@@ -13,7 +13,7 @@ import functools
 import operator
 from logging import error as logging_error
 from types import MappingProxyType
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
@@ -160,7 +160,7 @@ ESC_SERIAL_SAME_PORT_PROTOCOLS: tuple[str, ...] = tuple(
     if v.get("component") == "ESC" and v["protocol"] not in ESC_TELEMETRY_ONLY_PROTOCOLS
 )
 
-BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
+BATT_MONITOR_CONNECTION: dict[str, dict[str, tuple[str, ...] | str]] = {
     "0": {"type": ("None",), "protocol": "Disabled"},
     "3": {"type": ANALOG_PORTS, "protocol": "Analog Voltage Only"},
     "4": {"type": ANALOG_PORTS, "protocol": "Analog Voltage and Current"},
@@ -191,7 +191,7 @@ BATT_MONITOR_CONNECTION: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
     "29": {"type": OTHER_PORTS, "protocol": "Scripting"},
 }
 
-GNSS_RECEIVER_CONNECTION: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
+GNSS_RECEIVER_CONNECTION: dict[str, dict[str, tuple[str, ...] | str]] = {
     "0": {"type": ("None",), "protocol": "None"},
     "1": {"type": SERIAL_PORTS, "protocol": "AUTO"},
     "2": {"type": SERIAL_PORTS, "protocol": "uBlox"},
@@ -233,7 +233,7 @@ ESC_TO_FC_TELEMETRY_SAME: EscToFcTelemetryDict = {("same_as_FC_to_ESC",): "same_
 
 # FC->ESC Connection types and protocols determine the possible ESC->FC Telemetry protocols,
 # with some variations by vehicle type.
-ESC_CONNECTION_DICT: dict[str, dict[str, dict[str, Union[tuple[str, ...], str, EscToFcTelemetryDict]]]] = {
+ESC_CONNECTION_DICT: dict[str, dict[str, dict[str, tuple[str, ...] | str | EscToFcTelemetryDict]]] = {
     "ArduCopter": {
         "0": {"type": PWM_OUT_PORTS, "protocol": "Normal", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SCRIPTING_ONLY},
         "1": {"type": PWM_OUT_PORTS, "protocol": "OneShot", "ESC_to_FC": ESC_TO_FC_TELEMETRY_SERIAL_ONLY},
@@ -302,7 +302,7 @@ ESC_CONNECTION_DICT: dict[str, dict[str, dict[str, Union[tuple[str, ...], str, E
 
 def get_esc_connection_sub_dict(
     vehicle_type: str,
-) -> dict[str, dict[str, Union[tuple[str, ...], str, EscToFcTelemetryDict]]]:
+) -> dict[str, dict[str, tuple[str, ...] | str | EscToFcTelemetryDict]]:
     """Return the vehicle-type-specific entry sub-dict from ESC_CONNECTION_DICT."""
     return ESC_CONNECTION_DICT.get(vehicle_type, ESC_CONNECTION_DICT["ArduCopter"])
 
@@ -310,7 +310,7 @@ def get_esc_connection_sub_dict(
 # RC_PROTOCOLS is a bitmask parameter, so keys are actual bitmask values (2^bit_position)
 # Special case: value 1 = All protocols enabled
 # Bit 1 (value 2) = PPM, Bit 2 (value 4) = IBUS, Bit 3 (value 8) = SBUS, etc.
-RC_PROTOCOLS_DICT: dict[str, dict[str, Union[tuple[str, ...], str]]] = {
+RC_PROTOCOLS_DICT: dict[str, dict[str, tuple[str, ...] | str]] = {
     "1": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "All"},  # Special case: 1 = All protocols
     "2": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "PPM"},  # Bit 1
     "4": {"type": RC_PORTS + SERIAL_PORTS, "protocol": "IBUS"},  # Bit 2
@@ -429,7 +429,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         }
     )
 
-    def set_component_value(self, path: ComponentPath, value: Union[ComponentData, ComponentValue, None]) -> None:
+    def set_component_value(self, path: ComponentPath, value: ComponentData | ComponentValue | None) -> None:
         ComponentDataModelBase.set_component_value(self, path, value)
 
         # and change side effects
@@ -781,7 +781,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
     def _update_battery_monitor_protocol_choices(self, value: str, protocol_path: ComponentPath) -> None:
         """Update Battery Monitor protocol choices based on the selected connection type."""
         if value == "None":
-            self._possible_choices[protocol_path] = ("None",)
+            self._possible_choices[protocol_path] = ("Disabled",)  # from BATT_MONITOR_CONNECTION key "0"
             return
         batt_available_protocols: list[str] = [
             str(conn_dict["protocol"])
@@ -838,9 +838,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         ]
         self._possible_choices[protocol_path] = tuple(gnss_available_protocols) if gnss_available_protocols else ("None",)
 
-    def _update_possible_choices_for_path(
-        self, path: ComponentPath, value: Union[ComponentData, ComponentValue, None]
-    ) -> None:
+    def _update_possible_choices_for_path(self, path: ComponentPath, value: ComponentData | ComponentValue | None) -> None:
         """Update _possible_choices when connection type values that affect protocol choices are changed."""
         if len(path) < 3 or not isinstance(value, str):
             return
@@ -879,7 +877,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             else:  # section == "FC->ESC Connection"
                 self._update_esc_fc_connection_choices(value, protocol_path)
 
-    def _validate_tow_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
+    def _validate_tow_limits(self, value: str, path: ComponentPath) -> tuple[str, float | None]:
         """Validate takeoff weight min/max cross-constraints."""
         if path[2] == "TOW max Kg":
             try:
@@ -899,7 +897,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
                 return self.validate_against_another_value(tow_min, lim, "TOW max Kg", above=False, delta=0.01)
         return "", None
 
-    def validate_entry_limits(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:
+    def validate_entry_limits(self, value: str, path: ComponentPath) -> tuple[str, float | None]:
         """
         Validate entry values against limits.
 
@@ -928,7 +926,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
 
         return "", None  # value is within valid interval, return empty string as there is no error
 
-    def validate_cell_voltage(self, value: str, path: ComponentPath) -> tuple[str, Optional[float]]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
+    def validate_cell_voltage(self, value: str, path: ComponentPath) -> tuple[str, float | None]:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
         """
         Validate battery cell voltage.
 
@@ -998,7 +996,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
         limit_name: str,
         above: bool,
         delta: float,
-    ) -> tuple[str, Optional[float]]:
+    ) -> tuple[str, float | None]:
         """Validate user defined value against another user defined value."""
         if not isinstance(limit_value, (float, str, int)):
             return _("{limit_name} is not a float nor string").format(limit_name=limit_name), None

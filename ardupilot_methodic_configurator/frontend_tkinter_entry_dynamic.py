@@ -13,9 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from tkinter import Entry, Listbox, StringVar, ttk
 from tkinter.constants import END, HORIZONTAL, SINGLE, VERTICAL, E, N, S, W
-from typing import Callable, Union
 
 from ardupilot_methodic_configurator import _
 
@@ -35,10 +35,10 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        master: Union[tk.Tk, ttk.Frame],
-        list_of_items: Union[None, list[str]] = None,
-        custom_filter_function: Union[None, Callable[[str], list[str]]] = None,
-        listbox_width: Union[None, int] = None,
+        master: tk.Tk | ttk.Frame,
+        list_of_items: None | list[str] = None,
+        custom_filter_function: None | Callable[[str], list[str]] = None,
+        listbox_width: None | int = None,
         listbox_height: int = 12,
         ignorecase_match: bool = False,
         startswith_match: bool = True,
@@ -71,7 +71,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
-        self._listbox: Union[None, Listbox] = None
+        self._listbox: None | Listbox = None
 
         self.bind("<Up>", self._previous)
         self.bind("<Down>", self._next)
@@ -169,7 +169,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         if values:
             self._build_listbox(values)
 
-    def unpost_listbox(self, _event: Union[None, tk.Event] = None) -> str:
+    def unpost_listbox(self, _event: None | tk.Event = None) -> str:
         if self._listbox is not None:
             self._listbox.master.destroy()
             self._listbox = None
@@ -192,7 +192,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
         self._entry_var.set(text)
         self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
-    def update_entry_from_listbox(self, _event: Union[None, tk.Event]) -> str:
+    def update_entry_from_listbox(self, _event: None | tk.Event) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()  # type: ignore[no-untyped-call]
 
@@ -209,7 +209,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         return "break"
 
-    def _previous(self, _event: Union[None, tk.Event]) -> str:
+    def _previous(self, _event: None | tk.Event) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()  # type: ignore[no-untyped-call]
 
@@ -231,7 +231,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         return "break"
 
-    def _next(self, _event: Union[None, tk.Event]) -> str:
+    def _next(self, _event: None | tk.Event) -> str:
         if self._listbox is not None:
             current_selection = self._listbox.curselection()  # type: ignore[no-untyped-call]
             if len(current_selection) == 0:

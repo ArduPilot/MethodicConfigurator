@@ -42,7 +42,6 @@ from logging import basicConfig as logging_basicConfig
 from logging import error as logging_error
 from logging import getLevelName as logging_getLevelName
 from tkinter import ttk
-from typing import Union
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps, PhaseData
@@ -55,7 +54,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
 
     def __init__(
         self,
-        master: Union[tk.Widget, tk.Tk],
+        master: tk.Widget | tk.Tk,
         sorted_phases: dict[str, PhaseData],
         total_steps: int,
         gui_complexity: str,
@@ -65,7 +64,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
         self.phases = sorted_phases
         self.total_files = total_steps
         self.phase_frames: dict[str, ttk.Frame] = {}
-        self.phase_bars: list[dict[str, Union[ttk.Progressbar, int]]] = []
+        self.phase_bars: list[dict[str, ttk.Progressbar | int]] = []
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -145,7 +144,7 @@ class StageProgressBar(ttk.LabelFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(frame, tooltip_msg)
         return frame
 
-    def _on_resize(self, _event: Union[tk.Event, None] = None) -> None:
+    def _on_resize(self, _event: tk.Event | None = None) -> None:
         """Update progress bar and label widths when window is resized."""
         if not self.phase_frames:
             return
@@ -233,17 +232,28 @@ def main() -> None:  # pragma: no cover
     config_steps = ConfigurationSteps("", "ArduCopter")
     config_steps.re_init("", "ArduCopter")
 
-    processed_phases = config_steps.get_sorted_phases_with_end_and_weight(54)
-    progress = StageProgressBar(root, processed_phases, 54, "normal")
-    progress.pack(padx=10, pady=10, fill="both", expand=True)
+    try:
+        first_step_filename = next(iter(config_steps.configuration_steps))
+        last_step_filename = next(reversed(config_steps.configuration_steps))
+        first_step_number = int(first_step_filename.split("_", 1)[0])
+        last_step_number = int(last_step_filename.split("_", 1)[0])
+        processed_phases = config_steps.get_sorted_phases_with_end_and_weight(last_step_number)
+        progress = StageProgressBar(root, processed_phases, last_step_number, "normal")
+        progress.pack(padx=10, pady=10, fill="both", expand=True)
+    except StopIteration:
+        logging_error(_("No configuration steps found."))
+        return
+    except ValueError as e:
+        logging_error(_("Error parsing either first or last step numbers: {error}").format(error=str(e)))
+        return
 
     # Demo update function
-    current_file = 2
+    current_file = first_step_number
 
     def update_demo() -> None:
         nonlocal current_file
         progress.update_progress(current_file)
-        current_file = 2 if current_file > 54 else current_file + 1
+        current_file = first_step_number if current_file >= last_step_number else current_file + 1
         root.after(1000, update_demo)
 
     # Start demo updates
