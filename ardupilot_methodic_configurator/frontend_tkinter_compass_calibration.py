@@ -18,7 +18,7 @@ from ardupilot_methodic_configurator.plugin_constants import PLUGIN_COMPASS_CALI
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 
-class CompassCalibrationView(ttk.Frame):
+class CompassCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors
     """GUI for compass calibration plugin."""
 
     def __init__(
