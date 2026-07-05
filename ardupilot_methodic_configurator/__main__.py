@@ -48,6 +48,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import Paramete
 from ardupilot_methodic_configurator.data_model_parameter_upgrade import upgrade_parameters_for_firmware_version
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
+from ardupilot_methodic_configurator.frontend_tkinter_compass_calibration import register_compass_calibration_plugin
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress import (
@@ -83,6 +84,7 @@ def register_plugins() -> None:
 
     register_motor_test_plugin()
     register_battery_monitor_plugin()
+    register_compass_calibration_plugin()
 
     # Add more plugin registrations here in the future
 
