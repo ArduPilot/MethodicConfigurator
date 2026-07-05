@@ -173,7 +173,11 @@
             "derived_parameters": {
                 "FRAME_CLASS": { "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
             },
-            "old_filenames": ["04_board_orientation.param"]
+            "old_filenames": ["04_board_orientation.param"],
+            "plugin": {
+                "name": "accelerometer_calibration",
+                "placement": "left"
+            }
         },
         "06_remote_controller_receiver.param": {
             "why": "Remote controller is mandatory in the initial configuration and tuning phases. Later might be required for operation and/or safety",
