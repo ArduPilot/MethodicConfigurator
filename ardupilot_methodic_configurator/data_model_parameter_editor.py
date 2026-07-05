@@ -39,10 +39,15 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ParameterUnchangedError,
 )
 from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR, PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugin_constants import (
+    PLUGIN_BATTERY_MONITOR,
+    PLUGIN_COMPASS_CALIBRATION,
+    PLUGIN_MOTOR_TEST,
+)
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
 # GNSS MAVLink protocol default value (ArduPilot GPS_TYPE value 5 = MAVLink GPS)
@@ -2502,7 +2507,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if not self.is_fc_connected:
                 return None
             return BatteryMonitorDataModel(self._flight_controller, self)
+        if plugin_name == PLUGIN_COMPASS_CALIBRATION:
+            if not self.is_fc_connected:
+                return None
+            return CompassCalibrationDataModel(self._flight_controller)
         # Add more plugins here in the future
-        return None
+        raise ValueError(
+            _("data_model_parameter_editor: Unsupported plugin name: {plugin_name}").format(plugin_name=plugin_name)
+        )
 
     # plugin API end

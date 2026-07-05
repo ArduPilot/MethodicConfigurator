@@ -3395,14 +3395,14 @@ class TestDerivedParameterApplication:
         WHEN: create_plugin_data_model is called with an unknown plugin name
         THEN: None is returned
         """
-        result = parameter_editor.create_plugin_data_model("unknown_plugin")
-        assert result is None
+        with pytest.raises(ValueError, match="Unsupported plugin name: unknown_plugin"):
+            parameter_editor.create_plugin_data_model("unknown_plugin")
 
-        result = parameter_editor.create_plugin_data_model("")
-        assert result is None
+        with pytest.raises(ValueError, match="Unsupported plugin name: "):
+            parameter_editor.create_plugin_data_model("")
 
-        result = parameter_editor.create_plugin_data_model(None)
-        assert result is None
+        with pytest.raises(ValueError, match="Unsupported plugin name: None"):
+            parameter_editor.create_plugin_data_model(None)
 
 
 class TestEditorStateInitialization:
@@ -3469,11 +3469,8 @@ class TestEditorStateInitialization:
         WHEN: create_plugin_data_model is called with an unknown plugin identifier
         THEN: It should return None without raising
         """
-        # Act
-        result = parameter_editor.create_plugin_data_model("UNKNOWN_PLUGIN")
-
-        # Assert
-        assert result is None
+        with pytest.raises(ValueError, match="Unsupported plugin name: UNKNOWN_PLUGIN"):
+            parameter_editor.create_plugin_data_model("UNKNOWN_PLUGIN")
 
     def test_system_returns_false_when_fc_parameter_is_not_in_current_step(self, parameter_editor) -> None:
         """

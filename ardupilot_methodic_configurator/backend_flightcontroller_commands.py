@@ -536,3 +536,119 @@ class FlightControllerCommands:
 
         """
         return get_frame_info(self._params_manager.fc_parameters)
+
+    def start_compass_calibration(self) -> tuple[bool, str]:
+        """
+        Start compass calibration for all compasses.
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for compass calibration")
+            logging_error(error_msg)
+            return False, error_msg
+
+        success, error_msg = self.send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_DO_START_MAG_CAL,
+            param1=0,  # All compasses
+            param2=1,  # Retry
+            param3=1,  # Autosave
+            param4=0,  # unused
+            param5=0,  # unused
+            param6=0,  # unused
+            param7=0,  # unused
+            timeout=5.0,
+        )
+        if success:
+            logging_info(_("Compass calibration start command confirmed"))
+        else:
+            error_msg = _("Compass calibration start failed: %(error)s") % {"error": error_msg}
+            logging_error(error_msg)
+        return success, error_msg
+
+    def cancel_compass_calibration(self) -> tuple[bool, str]:
+        """
+        Cancel an ongoing compass calibration.
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available to cancel compass calibration")
+            logging_error(error_msg)
+            return False, error_msg
+
+        success, error_msg = self.send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_DO_CANCEL_MAG_CAL,
+            param1=0,  # Cancel all
+            param2=0,  # unused
+            param3=0,  # unused
+            param4=0,  # unused
+            param5=0,  # unused
+            param6=0,  # unused
+            param7=0,  # unused
+            timeout=5.0,
+        )
+        if success:
+            logging_info(_("Compass calibration cancel command confirmed"))
+        else:
+            error_msg = _("Compass calibration cancel failed: %(error)s") % {"error": error_msg}
+            logging_error(error_msg)
+        return success, error_msg
+
+    def get_compass_calibration_progress(self) -> list[dict[str, int | float | str]]:
+        """
+        Listen for MAG_CAL_PROGRESS or MAG_CAL_REPORT messages from the FC.
+
+        Empties the MAVLink buffer and returns a list of updates for all compasses.
+
+        Returns:
+            list[dict]: A list of dictionaries containing calibration status updates.
+
+        """
+        if self.master is None:
+            return []
+
+        results = []
+        try:
+            while True:
+                report_msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="MAG_CAL_REPORT", blocking=False
+                )
+                if report_msg:
+                    results.append(
+                        {
+                            "type": "REPORT",
+                            "compass_id": report_msg.compass_id,
+                            "status": report_msg.cal_status,
+                            "fitness": report_msg.fitness,
+                            "saved": report_msg.autosaved,
+                        }
+                    )
+                    continue
+
+                progress_msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="MAG_CAL_PROGRESS", blocking=False
+                )
+                if progress_msg:
+                    results.append(
+                        {
+                            "type": "PROGRESS",
+                            "compass_id": progress_msg.compass_id,
+                            "status": progress_msg.cal_status,
+                            "completion_pct": progress_msg.completion_pct,
+                            "direction_x": progress_msg.direction_x,
+                            "direction_y": progress_msg.direction_y,
+                            "direction_z": progress_msg.direction_z,
+                        }
+                    )
+                    continue
+                break
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_debug(_("Error reading compass calibration progress: %(error)s"), {"error": str(e)})
+
+        return results
