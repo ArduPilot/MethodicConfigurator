@@ -15,3 +15,4 @@ SPDX-License-Identifier: GPL-3.0-or-later
 PLUGIN_MOTOR_TEST = "motor_test"
 PLUGIN_BATTERY_MONITOR = "battery_monitor"
 PLUGIN_COMPASS_CALIBRATION = "compass_calibration"
+PLUGIN_ACCELEROMETER_CALIBRATION = "accelerometer_calibration"
