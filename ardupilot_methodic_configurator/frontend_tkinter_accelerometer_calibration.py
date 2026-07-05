@@ -10,15 +10,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from tkinter import Frame, ttk
-from tkinter.messagebox import showinfo, showerror
-from typing import TYPE_CHECKING
+from tkinter.messagebox import showerror, showinfo
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-
-if TYPE_CHECKING:
-    pass
 
 
 class AccelerometerCalibrationView(Frame):
@@ -37,6 +33,7 @@ class AccelerometerCalibrationView(Frame):
             parent: Parent widget
             model: Data model for accelerometer calibration
             base_window: Parent BaseWindow instance
+
         """
         super().__init__(parent)
         self.model = model
@@ -102,11 +99,9 @@ class AccelerometerCalibrationView(Frame):
 
     def on_activate(self) -> None:
         """Called when the plugin view is displayed (lifecycle method)."""
-        pass
 
     def on_deactivate(self) -> None:
         """Called when the plugin view is hidden (lifecycle method)."""
-        pass
 
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""

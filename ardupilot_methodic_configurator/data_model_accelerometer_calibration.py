@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from logging import debug as logging_debug
 from logging import warning as logging_warning
-from typing import Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
@@ -29,6 +28,7 @@ class AccelerometerCalibrationDataModel:
 
         Args:
             flight_controller: Backend flight controller interface
+
         """
         self.flight_controller = flight_controller
 
@@ -42,6 +42,7 @@ class AccelerometerCalibrationDataModel:
 
         Returns:
             tuple[bool, str]: (success, message)
+
         """
         master = self.flight_controller.master
         if master is None:
@@ -53,18 +54,18 @@ class AccelerometerCalibrationDataModel:
                 master.target_system,
                 master.target_component,
                 241,  # MAV_CMD_PREFLIGHT_CALIBRATION
-                0,    # confirmation
-                0,    # param1: gyro
-                0,    # param2: mag
-                0,    # param3: pressure
-                0,    # param4: radio
-                1,    # param5: accel simple
-                0,    # param6: reserved
-                0,    # param7: reserved
+                0,  # confirmation
+                0,  # param1: gyro
+                0,  # param2: mag
+                0,  # param3: pressure
+                0,  # param4: radio
+                1,  # param5: accel simple
+                0,  # param6: reserved
+                0,  # param7: reserved
             )
             logging_debug(_("Sent simple accelerometer calibration command"))
             return True, _("Calibration started - keep vehicle level")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logging_warning(_("Failed to start calibration: %s"), e)
             return False, _("Command failed: %s") % str(e)
 
@@ -74,6 +75,7 @@ class AccelerometerCalibrationDataModel:
 
         Returns:
             tuple[bool, str]: (success, message)
+
         """
         master = self.flight_controller.master
         if master is None:
@@ -85,17 +87,17 @@ class AccelerometerCalibrationDataModel:
                 master.target_system,
                 master.target_component,
                 241,  # MAV_CMD_PREFLIGHT_CALIBRATION
-                0,    # confirmation
-                0,    # param1: gyro
-                0,    # param2: mag
-                0,    # param3: pressure
-                0,    # param4: radio
-                4,    # param5: accel full (6-position)
-                0,    # param6: reserved
-                0,    # param7: reserved
+                0,  # confirmation
+                0,  # param1: gyro
+                0,  # param2: mag
+                0,  # param3: pressure
+                0,  # param4: radio
+                4,  # param5: accel full (6-position)
+                0,  # param6: reserved
+                0,  # param7: reserved
             )
             logging_debug(_("Sent full accelerometer calibration command"))
             return True, _("Calibration started - follow on-screen instructions")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logging_warning(_("Failed to start calibration: %s"), e)
             return False, _("Command failed: %s") % str(e)
