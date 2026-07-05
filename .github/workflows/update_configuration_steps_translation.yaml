@@ -24,7 +24,12 @@ permissions:
 jobs:
   update-strings:
     # Do not run in forks; it only clutters fork repositories with unused branches.
-    if: ${{ !github.event.repository.fork }}
+    # Also skip pull_request events from forks: GITHUB_TOKEN is read-only for those,
+    # so the bot cannot push the generated branch. The push event after merge handles it.
+    if: >-
+      !github.event.repository.fork &&
+      !(github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name != github.repository)
     permissions:
       contents: write       # for creating branches and commits
       pull-requests: write  # for creating PRs
