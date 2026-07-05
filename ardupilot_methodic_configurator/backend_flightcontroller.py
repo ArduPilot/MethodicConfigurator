@@ -557,3 +557,17 @@ class FlightController:  # pylint: disable=too-many-public-methods
             help=_("Flight controller reboot time. Default is %(default)s"),
         )
         return parser
+
+    # Compass Calibration
+
+    def start_compass_calibration(self) -> tuple[bool, str]:
+        """Start onboard compass calibration."""
+        return self._commands_manager.start_compass_calibration()
+
+    def cancel_compass_calibration(self) -> tuple[bool, str]:
+        """Cancel ongoing compass calibration."""
+        return self._commands_manager.cancel_compass_calibration()
+
+    def get_compass_calibration_progress(self) -> list[dict[str, int | float | str]]:
+        """Get compass calibration progress."""
+        return self._commands_manager.get_compass_calibration_progress()

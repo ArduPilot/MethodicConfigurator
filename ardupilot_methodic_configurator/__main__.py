@@ -78,11 +78,15 @@ def register_plugins() -> None:
     from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (  # noqa: PLC0415
         register_battery_monitor_plugin,
     )
+    from ardupilot_methodic_configurator.frontend_tkinter_compass_calibration import (  # noqa: PLC0415
+        register_compass_calibration_plugin,
+    )
     from ardupilot_methodic_configurator.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
     # pylint: enable=import-outside-toplevel, cyclic-import
 
     register_motor_test_plugin()
     register_battery_monitor_plugin()
+    register_compass_calibration_plugin()
 
     # Add more plugin registrations here in the future
 
