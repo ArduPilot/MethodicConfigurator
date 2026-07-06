@@ -31,7 +31,7 @@ from ardupilot_methodic_configurator.__main__ import (
     display_first_use_documentation,
     get_preferred_vehicle_dir,
     initialize_filesystem,
-    initialize_flight_controller_and_filesystem,
+    initialize_flight_controller,
     main,
     open_firmware_documentation,
     parameter_editor_and_uploader,
@@ -357,7 +357,8 @@ class TestFlightControllerConnection:
             mock_local_filesystem.set_param_default_values_if_different.return_value = True
 
             # Act: User initializes with connected hardware
-            initialize_flight_controller_and_filesystem(application_state)
+            initialize_flight_controller(application_state)
+            initialize_filesystem(application_state)
 
             # Assert: Successful hardware initialization
             assert application_state.flight_controller is mock_flight_controller
@@ -395,7 +396,8 @@ class TestFlightControllerConnection:
             mock_fs_class.return_value = MagicMock()
 
             # Act: User initializes in simulation mode
-            initialize_flight_controller_and_filesystem(application_state)
+            initialize_flight_controller(application_state)
+            initialize_filesystem(application_state)
 
             # Assert: Simulation mode works
             assert application_state.flight_controller is mock_fc
@@ -416,12 +418,8 @@ class TestFlightControllerConnection:
         """
         # Arrange: Mock configuration failure
         mock_fc = MagicMock()
+        application_state.flight_controller = mock_fc  # set by initialize_flight_controller
         with (
-            patch(
-                "ardupilot_methodic_configurator.__main__.connect_to_fc_and_set_vehicle_type",
-                return_value=(mock_fc, "ArduCopter"),
-            ),
-            patch("ardupilot_methodic_configurator.__main__.FlightControllerInfoWindow"),
             patch(
                 "ardupilot_methodic_configurator.__main__.LocalFilesystem",
                 side_effect=ParamFileError("Configuration error"),
@@ -430,7 +428,7 @@ class TestFlightControllerConnection:
         ):
             # Act & Assert: Configuration error should be handled gracefully
             with pytest.raises(ParamFileError):
-                initialize_flight_controller_and_filesystem(application_state)
+                initialize_filesystem(application_state)
 
             # Assert: Clear error message displayed
             mock_error.assert_called_once()
@@ -612,7 +610,8 @@ class TestApplicationIntegration:
 
             display_first_use_documentation()  # Should complete without issues
 
-            initialize_flight_controller_and_filesystem(state)
+            initialize_flight_controller(state)
+            initialize_filesystem(state)
 
             result = vehicle_directory_selection(state)
 
@@ -1930,8 +1929,9 @@ class TestEditorBackupAndMainOrchestration:
                 "ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting",
                 side_effect=lambda key: False if key != "gui_complexity" else "normal",
             ),
+            patch("ardupilot_methodic_configurator.__main__.initialize_flight_controller"),
             patch(
-                "ardupilot_methodic_configurator.__main__.initialize_flight_controller_and_filesystem",
+                "ardupilot_methodic_configurator.__main__.initialize_filesystem",
                 side_effect=_init_fs,
             ),
             patch("ardupilot_methodic_configurator.__main__.component_editor"),

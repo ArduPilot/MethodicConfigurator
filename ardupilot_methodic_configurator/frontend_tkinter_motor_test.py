@@ -36,7 +36,8 @@ from typing import cast
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
     ApplicationState,
-    initialize_flight_controller_and_filesystem,
+    initialize_filesystem,
+    initialize_flight_controller,
     setup_logging,
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
@@ -806,7 +807,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         super().destroy()
 
 
-class MotorTestWindow(BaseWindow):
+class MotorTestWindow(BaseWindow):  # pragma: no cover
     """
     Standalone window for the motor test GUI.
 
@@ -880,7 +881,8 @@ def main() -> None:  # pragma: no cover
     )
 
     # Initialize flight controller and filesystem
-    initialize_flight_controller_and_filesystem(state)
+    initialize_flight_controller(state)
+    initialize_filesystem(state)
 
     try:
         data_model = MotorTestDataModel(state.flight_controller, state.local_filesystem)
