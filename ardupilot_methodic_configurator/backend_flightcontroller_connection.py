@@ -525,6 +525,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
                 self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
                 mavutil.mavlink.MAV_CMD_DO_SEND_BANNER,
+                # pylint: disable=duplicate-code
                 0,
                 0,
                 0,
@@ -533,6 +534,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 0,
                 0,
                 0,
+                # pylint: enable=duplicate-code
             )
 
     def _receive_banner_text(self) -> list[str]:

@@ -420,6 +420,179 @@ class FlightControllerCommands:
 
         return success, error_msg
 
+    # Accelerometer Calibration - uses MAV_CMD_PREFLIGHT_CALIBRATION (param5 controls mode)
+    # param5=4  simple one-shot level calibration (AP_InertialSensor::simple_accel_cal)
+    # param5=2  level trim / AHRS_TRIM_* adjustment
+    # param5=1  interactive 6-position calibration (requires position-confirmation exchange)
+
+    def start_accel_calibration_simple(self) -> tuple[bool, str]:
+        """
+        Run a simple one-shot accelerometer calibration (vehicle must be level and stationary).
+
+        Sends MAV_CMD_PREFLIGHT_CALIBRATION with param5=4. The FC samples the
+        accelerometers until converged, then returns MAV_RESULT_ACCEPTED.
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for accelerometer calibration")
+            logging_error(error_msg)
+            return False, error_msg
+
+        success, error_msg = self.send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            param5=4.0,  # simple one-shot level calibration
+            timeout=30.0,
+        )
+        if success:
+            logging_info(_("Simple accelerometer calibration completed successfully"))
+        else:
+            logging_error(_("Simple accelerometer calibration failed: %(error)s"), {"error": error_msg})
+        return success, error_msg
+
+    def start_accel_calibration_level(self) -> tuple[bool, str]:
+        """
+        Level-trim the accelerometers to the vehicle's current attitude (sets AHRS_TRIM_*).
+
+        Sends MAV_CMD_PREFLIGHT_CALIBRATION with param5=2. The vehicle must be
+        placed level. No multi-step interaction is required.
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for level calibration")
+            logging_error(error_msg)
+            return False, error_msg
+
+        success, error_msg = self.send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+            param5=2.0,  # level trim / AHRS trim
+            timeout=15.0,
+        )
+        if success:
+            logging_info(_("Level calibration completed successfully"))
+        else:
+            logging_error(_("Level calibration failed: %(error)s"), {"error": error_msg})
+        return success, error_msg
+
+    def send_accel_calibration_full_start(self) -> tuple[bool, str]:
+        """
+        Start the interactive 6-position accelerometer calibration (param5=1).
+
+        This method only sends the start command and returns immediately; it does
+        NOT wait for the final COMMAND_ACK.  The full protocol requires the GCS to
+        confirm each position via confirm_accel_vehicle_pos() in response to
+        COMMAND_LONG messages polled with poll_accel_cal_vehicle_pos().
+
+        Returns:
+            tuple[bool, str]: (success, error_message) - True if the command was
+                              sent without a communication error, not calibration success.
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for full accelerometer calibration")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                # pylint: disable=duplicate-code
+                0,  # confirmation
+                0,  # param1: gyro (0 = no gyro cal)
+                0,  # param2: mag
+                0,  # param3: pressure
+                0,  # param4: radio
+                1,  # param5: full 6-position interactive accel cal
+                0,  # param6: reserved
+                0,  # param7: reserved
+                # pylint: enable=duplicate-code
+            )
+            logging_info(_("Full accelerometer calibration start command sent"))
+            return True, ""
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send full accelerometer calibration command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def poll_accel_cal_vehicle_pos(self, timeout: float = 0.05) -> int | None:
+        """
+        Poll for a position-request COMMAND_LONG from the FC during full accel calibration.
+
+        ArduPilot sends COMMAND_LONG with command=MAV_CMD_ACCELCAL_VEHICLE_POS (42429)
+        every second while waiting for position confirmation.  Special values
+        ACCELCAL_VEHICLE_POS_SUCCESS and ACCELCAL_VEHICLE_POS_FAILED signal completion.
+
+        Args:
+            timeout: How long to wait in seconds. Keep short (<=0.1 s) when called
+                     from a UI polling loop so the GUI stays responsive.
+
+        Returns:
+            int: The ACCELCAL_VEHICLE_POS enum value if a message arrived, else None.
+
+        """
+        if self.master is None:
+            return None
+
+        try:
+            msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                type="COMMAND_LONG", blocking=True, timeout=timeout
+            )
+            if msg and msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
+                return int(msg.param1)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_debug(_("Exception while polling ACCELCAL_VEHICLE_POS: %(error)s"), {"error": str(e)})
+        return None
+
+    def confirm_accel_vehicle_pos(self, position: int) -> tuple[bool, str]:
+        """
+        Confirm that the vehicle is in the requested calibration position.
+
+        Sends COMMAND_LONG with MAV_CMD_ACCELCAL_VEHICLE_POS back to the FC.
+        Call this after the user has placed the vehicle in the position returned
+        by poll_accel_cal_vehicle_pos().
+
+        Args:
+            position: The ACCELCAL_VEHICLE_POS enum value (1-6) to confirm.
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available to confirm calibration position")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
+                mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS,
+                0,  # confirmation
+                float(position),  # param1: position enum value
+                # pylint: disable=duplicate-code
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                # pylint: enable=duplicate-code
+            )
+            logging_debug(_("Sent ACCELCAL_VEHICLE_POS confirmation for position %d"), position)
+            return True, ""
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send position confirmation: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """
         Request periodic BATTERY_STATUS messages from the flight controller.

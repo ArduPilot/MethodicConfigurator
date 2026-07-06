@@ -18,8 +18,10 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
+_POLL_INTERVAL_MS = 100  # tkinter polling interval during full calibration
 
-class AccelerometerCalibrationView(Frame):
+
+class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-attributes
     """GUI for accelerometer calibration plugin."""
 
     def __init__(
@@ -40,6 +42,7 @@ class AccelerometerCalibrationView(Frame):
         super().__init__(parent)
         self.model = model
         self.base_window = base_window
+        self._poll_job: str | None = None  # tkinter after() handle
 
         self._setup_ui()
 
@@ -49,64 +52,192 @@ class AccelerometerCalibrationView(Frame):
         main_frame.pack(fill="both", expand=True)
 
         # Title
-        title_label = ttk.Label(
+        ttk.Label(
             main_frame,
             text=_("Accelerometer Calibration"),
             font=("TkDefaultFont", 14, "bold"),
-        )
-        title_label.pack(pady=(0, 20))
+        ).pack(pady=(0, 10))
 
         # Info text
         info_text = _(
-            "This tool calibrates the accelerometers without leaving the AMC interface.\n\n"
-            "Simple calibration: Place vehicle level and click Simple Calibration.\n"
-            "Full calibration: Follow on-screen instructions for 6 orientations."
+            "Simple calibration: Place vehicle level, then click Simple Calibration.\n"
+            "Level calibration: Place vehicle level to set the AHRS trim angles.\n"
+            "Full calibration: Follow the on-screen instructions for all 6 orientations."
         )
-        info_label = ttk.Label(main_frame, text=info_text, justify="center")
-        info_label.pack(pady=(0, 30))
+        ttk.Label(main_frame, text=info_text, justify="center").pack(pady=(0, 20))
 
-        # Buttons frame
+        # --- Static buttons (always visible) ---
         buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.pack(pady=20)
+        buttons_frame.pack(pady=10)
 
-        simple_button = ttk.Button(
+        self._simple_btn = ttk.Button(
             buttons_frame,
             text=_("Simple Calibration (Level)"),
             command=self._on_simple_calibration,
         )
-        simple_button.pack(side="left", padx=10)
+        self._simple_btn.pack(side="left", padx=8)
 
-        full_button = ttk.Button(
+        self._level_btn = ttk.Button(
+            buttons_frame,
+            text=_("Level Calibration (Trim)"),
+            command=self._on_level_calibration,
+        )
+        self._level_btn.pack(side="left", padx=8)
+
+        self._full_btn = ttk.Button(
             buttons_frame,
             text=_("Full Calibration (6-Position)"),
-            command=self._on_full_calibration,
+            command=self._on_start_full_calibration,
         )
-        full_button.pack(side="left", padx=10)
+        self._full_btn.pack(side="left", padx=8)
+
+        # --- Full-calibration wizard panel (hidden until full cal is active) ---
+        self._wizard_frame = ttk.LabelFrame(main_frame, text=_("6-Position Calibration"), padding=12)
+
+        self._position_label = ttk.Label(
+            self._wizard_frame,
+            text="",
+            font=("TkDefaultFont", 11),
+            justify="center",
+            wraplength=500,
+        )
+        self._position_label.pack(pady=(0, 12))
+
+        wizard_buttons = ttk.Frame(self._wizard_frame)
+        wizard_buttons.pack()
+
+        self._continue_btn = ttk.Button(
+            wizard_buttons,
+            text=_("Continue"),
+            state="disabled",
+            command=self._on_continue,
+        )
+        self._continue_btn.pack(side="left", padx=8)
+
+        self._cancel_btn = ttk.Button(
+            wizard_buttons,
+            text=_("Cancel"),
+            command=self._on_cancel_full_calibration,
+        )
+        self._cancel_btn.pack(side="left", padx=8)
+
+    # ------------------------------------------------------------------
+    # Simple / level calibration
+    # ------------------------------------------------------------------
 
     def _on_simple_calibration(self) -> None:
-        """Handle simple calibration button click."""
+        """Handle Simple Calibration button."""
         success, message = self.model.start_simple_calibration()
         if success:
-            showinfo(_("Calibration Started"), message)
+            showinfo(_("Calibration Result"), message)
         else:
             showerror(_("Calibration Failed"), message)
 
-    def _on_full_calibration(self) -> None:
-        """Handle full calibration button click."""
-        success, message = self.model.start_full_calibration()
+    def _on_level_calibration(self) -> None:
+        """Handle Level Calibration button."""
+        success, message = self.model.start_level_calibration()
         if success:
-            showinfo(_("Calibration Started"), message)
+            showinfo(_("Calibration Result"), message)
         else:
             showerror(_("Calibration Failed"), message)
+
+    # ------------------------------------------------------------------
+    # Full 6-position calibration wizard
+    # ------------------------------------------------------------------
+
+    def _on_start_full_calibration(self) -> None:
+        """Start the full 6-position calibration and show the wizard panel."""
+        success, message = self.model.start_full_calibration()
+        if not success:
+            showerror(_("Calibration Failed"), message)
+            return
+
+        # Show wizard, disable the top-level calibration buttons
+        self._simple_btn.configure(state="disabled")
+        self._level_btn.configure(state="disabled")
+        self._full_btn.configure(state="disabled")
+        self._position_label.configure(text=_("Waiting for flight controller..."))
+        self._continue_btn.configure(state="disabled")
+        self._wizard_frame.pack(fill="x", padx=20, pady=(10, 0))
+
+        self._start_polling()
+
+    def _start_polling(self) -> None:
+        """Schedule the first poll tick."""
+        self._poll_job = self.after(_POLL_INTERVAL_MS, self._poll_tick)
+
+    def _poll_tick(self) -> None:
+        """Called by tkinter every _POLL_INTERVAL_MS ms to check for FC messages."""
+        pos = self.model.poll_for_next_position()
+
+        if pos is None:
+            # Nothing yet - reschedule
+            self._poll_job = self.after(_POLL_INTERVAL_MS, self._poll_tick)
+            return
+
+        if self.model.is_calibration_complete(pos):
+            self._end_full_calibration(success=self.model.is_calibration_successful(pos))
+            return
+
+        # New position requested — update the instruction label and enable Continue
+        label = self.model.get_position_label(pos)
+        self._position_label.configure(text=label)
+        self._continue_btn.configure(state="normal")
+        # Stop polling while waiting for the user to click Continue
+
+    def _on_continue(self) -> None:
+        """User clicked Continue — confirm the current position and resume polling."""
+        self._continue_btn.configure(state="disabled")
+        success, error_msg = self.model.confirm_current_position()
+        if not success:
+            showerror(_("Calibration Error"), error_msg)
+            self._end_full_calibration(success=False)
+            return
+        self._position_label.configure(text=_("Waiting for flight controller..."))
+        self._start_polling()
+
+    def _on_cancel_full_calibration(self) -> None:
+        """User clicked Cancel during full calibration."""
+        self._stop_polling()
+        self._hide_wizard()
+        showerror(_("Calibration Cancelled"), _("Full accelerometer calibration was cancelled."))
+
+    def _end_full_calibration(self, *, success: bool) -> None:
+        """Called when full calibration completes (successfully or not)."""
+        self._stop_polling()
+        self._hide_wizard()
+        if success:
+            showinfo(_("Calibration Result"), _("Full accelerometer calibration successful!"))
+        else:
+            showerror(_("Calibration Failed"), _("Full accelerometer calibration failed."))
+
+    def _stop_polling(self) -> None:
+        """Cancel any pending after() poll job."""
+        if self._poll_job is not None:
+            self.after_cancel(self._poll_job)
+            self._poll_job = None
+
+    def _hide_wizard(self) -> None:
+        """Hide the wizard panel and re-enable the top-level buttons."""
+        self._wizard_frame.pack_forget()
+        self._simple_btn.configure(state="normal")
+        self._level_btn.configure(state="normal")
+        self._full_btn.configure(state="normal")
+
+    # ------------------------------------------------------------------
+    # Plugin lifecycle
+    # ------------------------------------------------------------------
 
     def on_activate(self) -> None:
         """Called when the plugin view is displayed (lifecycle method)."""
 
     def on_deactivate(self) -> None:
         """Called when the plugin view is hidden (lifecycle method)."""
+        self._stop_polling()
 
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""
+        self._stop_polling()
         super().destroy()
 
 
