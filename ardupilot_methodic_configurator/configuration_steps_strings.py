@@ -388,12 +388,14 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _(
         "A list of regular expressions to match parameters for automatic import if they have non-default values."
     )
+    _config_steps_descriptions = _("ArduPilot log messages related to this configuration step")
     _config_steps_descriptions = _("Computed value: evaluate New Value expression and set the parameter")
     _config_steps_descriptions = _("Description of the phase")
     _config_steps_descriptions = _("Explanation of why this step is needed")
     _config_steps_descriptions = _("Explanation of why this step needs to be done at this point")
     _config_steps_descriptions = _("Expression to derive new parameter value")
     _config_steps_descriptions = _("Expression to rename connection")
+    _config_steps_descriptions = _("Human readable name of the log message")
     _config_steps_descriptions = _(
         "If not already present, add parameter to the file: use 'New Value' if provided, otherwise copy the current FC value. Optionally conditioned on a Python expression."
     )
@@ -434,4 +436,5 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _("URL to external tool")
     _config_steps_descriptions = _("URL to wiki documentation")
     _config_steps_descriptions = _("Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents")
+    _config_steps_descriptions = _("Whether this message is required for the step")
     _config_steps_descriptions = _("Whether this phase is optional")
