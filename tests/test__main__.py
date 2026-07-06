@@ -39,13 +39,18 @@ from ardupilot_methodic_configurator.__main__ import (
     register_plugins,
     resolve_writable_vehicle_dir_for_initial_download,
     should_open_firmware_documentation,
-    validate_plugin_registry,
     vehicle_directory_selection,
     write_parameter_defaults,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
+from ardupilot_methodic_configurator.plugin_constants import (
+    PLUGIN_BATTERY_MONITOR,
+    PLUGIN_COMPASS_CALIBRATION,
+    PLUGIN_MOTOR_TEST,
+)
+from ardupilot_methodic_configurator.plugin_factory import PluginFactory
 
 # pylint: disable=too-many-lines,redefined-outer-name,too-few-public-methods
 
@@ -1448,57 +1453,44 @@ class TestValidatePluginRegistry:
         """
         Every configured plugin is successfully registered.
 
-        GIVEN: A filesystem with a known, registered plugin ('motor_test')
-        WHEN: validate_plugin_registry is called
+        GIVEN: A PluginFactory with 'motor_test' registered
+        WHEN: validate_configuration_steps is called with a step referencing 'motor_test'
         THEN: No errors are logged
         """
-        # Arrange
-        mock_fs = MagicMock()
-        mock_fs.configuration_steps = {"step1.param": {"plugin": {"name": "motor_test"}}}
+        configuration_steps = {"step1.param": {"plugin": {"name": "motor_test"}}}
+        factory = PluginFactory()
+        factory._creators["motor_test"] = MagicMock()  # pylint: disable=protected-access
 
-        with (
-            patch("ardupilot_methodic_configurator.__main__.plugin_factory") as mock_factory,
-            patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err,
-        ):
-            mock_factory.is_registered.return_value = True
+        with patch("ardupilot_methodic_configurator.plugin_factory.logging_error") as mock_err:
+            factory.validate_configuration_steps(configuration_steps)
 
-            # Act
-            validate_plugin_registry(mock_fs)
-
-            # Assert
             mock_err.assert_not_called()
 
     def test_error_logged_for_unregistered_plugin(self) -> None:
         """
         A configured plugin is missing from the registry.
 
-        GIVEN: A filesystem referencing an unregistered plugin
-        WHEN: validate_plugin_registry is called
-        THEN: An error is logged identifying the missing plugin
+        GIVEN: A PluginFactory with the standard plugins registered
+        WHEN: validate_configuration_steps is called with a step referencing 'unknown_plugin'
+        THEN: An error is logged identifying the missing plugin and available plugins
         """
-        # Arrange
-        mock_fs = MagicMock()
-        mock_fs.configuration_steps = {"step1.param": {"plugin": {"name": "unknown_plugin"}}}
+        configuration_steps = {"step1.param": {"plugin": {"name": "unknown_plugin"}}}
+        factory = PluginFactory()
+        factory.register(PLUGIN_BATTERY_MONITOR, MagicMock())
+        factory.register(PLUGIN_COMPASS_CALIBRATION, MagicMock())
+        factory.register(PLUGIN_MOTOR_TEST, MagicMock())
 
-        with (
-            patch("ardupilot_methodic_configurator.__main__.plugin_factory") as mock_factory,
-            patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err,
-        ):
-            mock_factory.is_registered.return_value = False
-            mock_factory.available_plugins.return_value = ["battery_monitor", "compass_calibration", "motor_test"]
+        with patch("ardupilot_methodic_configurator.plugin_factory.logging_error") as mock_err:
+            factory.validate_configuration_steps(configuration_steps)
 
-            # Act
-            validate_plugin_registry(mock_fs)
-
-            # Assert
             mock_err.assert_called_once()
             args, kwargs = mock_err.call_args
             # Ensure that the logged error message identifies the missing plugin
             combined = " ".join([str(a) for a in args] + [str(v) for v in kwargs.values()])
             assert "unknown_plugin" in combined
-            assert "battery_monitor" in combined
-            assert "compass_calibration" in combined
-            assert "motor_test" in combined
+            assert PLUGIN_BATTERY_MONITOR in combined
+            assert PLUGIN_COMPASS_CALIBRATION in combined
+            assert PLUGIN_MOTOR_TEST in combined
 
 
 class TestConnectionAndFilesystemBranches:
