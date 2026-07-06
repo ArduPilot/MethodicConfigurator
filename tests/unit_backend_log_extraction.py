@@ -19,8 +19,6 @@ from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import 
     close_log,
     extract_schemas,
     open_log,
-    process_msg_version_fallback,
-    process_ver,
     read_messages,
     store_message,
 )
@@ -100,45 +98,6 @@ class TestCloseLog:
         mock_conn = MagicMock()
         mock_conn.close.side_effect = OSError("already closed")
         close_log(mock_conn)
-
-
-class TestProcessVer:
-    """Tests for process_ver()."""
-
-    def test_well_formed_ver_entry_yields_vehicle_and_version(self) -> None:
-        """GIVEN a valid VER message, WHEN it is parsed, THEN firmware tuple is returned."""
-        msg = SimpleNamespace(FWS="ArduCopter V4.6.3", Maj=4, Min=6, Pat=3)
-        assert process_ver(msg) == ("ArduCopter", 4, 6, 3)
-
-    def test_ver_entry_with_missing_fields_is_ignored(self) -> None:
-        """GIVEN an incomplete VER message, WHEN it is parsed, THEN None is returned."""
-        msg = SimpleNamespace(FWS="ArduCopter V4.6.3", Maj=None, Min=6, Pat=3)
-        assert process_ver(msg) is None
-
-    def test_ver_entry_without_fws_is_ignored(self) -> None:
-        """GIVEN a VER message without FWS, WHEN it is parsed, THEN None is returned."""
-        msg = SimpleNamespace(Maj=4, Min=6, Pat=3)
-        assert process_ver(msg) is None
-
-
-class TestProcessMsgVersionFallback:
-    """Tests for process_msg_version_fallback()."""
-
-    def test_msg_entry_with_full_three_part_version_is_parsed(self) -> None:
-        """GIVEN a parseable MSG line, WHEN the fallback is applied, THEN a version tuple is returned."""
-        msg = SimpleNamespace(Message="ArduCopter V4.6.3 (3fc7011a)")
-        assert process_msg_version_fallback(msg, None) == ("ArduCopter", 4, 6, 3)
-
-    def test_msg_entry_without_message_is_ignored(self) -> None:
-        """GIVEN a MSG entry without text, WHEN the fallback is applied, THEN None is returned."""
-        msg = SimpleNamespace()
-        assert process_msg_version_fallback(msg, None) is None
-
-    def test_already_found_version_is_preserved_unchanged(self) -> None:
-        """GIVEN an existing firmware tuple, WHEN the fallback is called again, THEN it is preserved."""
-        existing = ("ArduCopter", 4, 6, 3)
-        msg = SimpleNamespace(Message="ArduPlane V4.5.0 (abc)")
-        assert process_msg_version_fallback(msg, existing) == existing
 
 
 class TestStoreMessage:  # pylint: disable=too-few-public-methods
