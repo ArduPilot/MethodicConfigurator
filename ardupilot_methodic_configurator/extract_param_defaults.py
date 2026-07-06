@@ -14,16 +14,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import contextlib
 import logging
+from typing import Any
 
 import argcomplete
 from argcomplete.completers import FilesCompleter
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.data_model_par_dict import validate_param_name
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import (
-    process_msg_version_fallback,
-    process_ver,
-)
 
 NO_DEFAULT_VALUES_MESSAGE = (
     "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version."
@@ -146,6 +143,54 @@ def close_log(mlog: mavutil.mavfile) -> None:
         mlog.close()
 
 
+def _process_ver(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+    """
+    Extract firmware version from a VER DataFlash log entry.
+
+    Returns (vehicle_type, major, minor, patch) or None if any field is missing.
+    """
+    fws = getattr(msg, "FWS", None)
+    if isinstance(fws, bytes):
+        fws = fws.decode("utf-8", errors="replace")
+    elif not isinstance(fws, str):
+        return None
+    fws = fws.strip()  # e.g. "ArduCopter V4.6.3"
+    if not fws:
+        return None
+    parts = fws.split(maxsplit=1)
+    vehicle_type = parts[0] if parts else ""
+    if not vehicle_type:
+        return None
+    maj = getattr(msg, "Maj", None)
+    mini = getattr(msg, "Min", None)
+    pat = getattr(msg, "Pat", None)
+    if maj is None or mini is None or pat is None:
+        return None
+    return (vehicle_type, int(maj), int(mini), int(pat))
+
+
+def _parse_msg_version(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+    """
+    Parse firmware version from a MSG DataFlash log entry.
+
+    Returns (vehicle_type, major, minor, patch) or None if the entry is not parseable.
+    The caller is responsible for not calling this once a result has already been found.
+    """
+    message = getattr(msg, "Message", "")
+    if isinstance(message, bytes):
+        message = message.decode("utf-8", errors="replace")
+    elif not isinstance(message, str):
+        return None
+    parts = message.split()
+    if len(parts) >= 2 and parts[1].startswith("V"):
+        version_parts = parts[1][1:].split(".")  # Remove "V" prefix, split by "."
+        if len(version_parts) >= 2:
+            with contextlib.suppress(ValueError):
+                patch_val = int(version_parts[2]) if len(version_parts) >= 3 else 0
+                return (parts[0], int(version_parts[0]), int(version_parts[1]), patch_val)
+    return None
+
+
 def _get_parm_value(m: object, pname: str, param_type: str) -> float | None:
     """
     Extract the float value from a PARM message for the requested param_type.
@@ -252,11 +297,11 @@ def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, i
             if m is None:
                 break
             if m.get_type() == "VER":
-                result = process_ver(m)
+                result = _process_ver(m)
                 if result is not None:
                     return result
-            elif m.get_type() == "MSG":
-                msg_fallback_result = process_msg_version_fallback(m, msg_fallback_result)
+            elif m.get_type() == "MSG" and msg_fallback_result is None:
+                msg_fallback_result = _parse_msg_version(m)
 
         if msg_fallback_result is not None:
             return msg_fallback_result

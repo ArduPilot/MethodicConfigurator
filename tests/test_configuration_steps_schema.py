@@ -17,6 +17,7 @@ import fnmatch
 import json
 import os
 import subprocess
+from pathlib import Path
 
 import pytest
 from jsonschema import ValidationError, exceptions, validate, validators
@@ -117,7 +118,7 @@ def test_related_bin_messages_schema_rejects_malformed_entries() -> None:
 
 def test_arducopter_configuration_steps_bin_messages_each_have_a_required_message() -> None:
     """Ensure every step with related_bin_messages declares at least one required message."""
-    arducopter_file = os.path.join("ardupilot_methodic_configurator", "configuration_steps_ArduCopter.json")
+    arducopter_file = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "configuration_steps_ArduCopter.json"
     with open(arducopter_file, encoding="utf-8") as file:
         config = json.load(file)
 
