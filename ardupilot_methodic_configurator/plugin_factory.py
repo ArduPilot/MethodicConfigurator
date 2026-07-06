@@ -17,6 +17,8 @@ from collections.abc import Callable
 from logging import error as logging_error
 from tkinter import ttk
 
+from ardupilot_methodic_configurator import _
+
 # Note: PluginView is defined in plugin_protocol for documentation purposes
 # Type alias for plugin creator functions
 # Note: We use object types to allow plugin creators to be more specific with their types
@@ -87,6 +89,33 @@ class PluginFactory:
 
         """
         return plugin_name in self._creators
+
+    def validate_configuration_steps(self, configuration_steps: dict) -> None:
+        """
+        Validate that all plugins referenced in configuration steps are registered.
+
+        Called at application startup (see ``register_plugins()`` in ``__main__.py``)
+        after all plugins have been registered.  Logs an error for every plugin name
+        that appears in the configuration JSON but has no registered creator.
+
+        Args:
+            configuration_steps: Mapping of filename → step-info dict, as returned
+                                  by ``LocalFilesystem.configuration_steps``.
+
+        """
+        configured_plugins: set[str] = set()
+        for file_info in configuration_steps.values():
+            plugin = file_info.get("plugin")
+            if plugin and plugin.get("name"):
+                configured_plugins.add(plugin["name"])
+
+        available = list(self._creators.keys())
+        for plugin_name in configured_plugins:
+            if not self.is_registered(plugin_name):
+                logging_error(
+                    _("Plugin '%(plugin_name)s' is configured but not registered. Available plugins: %(available)s"),
+                    {"plugin_name": plugin_name, "available": available},
+                )
 
 
 # Global factory instance
