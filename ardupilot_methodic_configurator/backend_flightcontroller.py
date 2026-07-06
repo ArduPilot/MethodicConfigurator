@@ -491,6 +491,28 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Emergency stop for all motors - delegates to commands manager."""
         return self._commands_manager.stop_all_motors()
 
+    # Accelerometer Calibration - Delegated to commands manager
+
+    def start_accel_calibration_simple(self) -> tuple[bool, str]:
+        """Run simple one-shot accelerometer calibration - delegates to commands manager."""
+        return self._commands_manager.start_accel_calibration_simple()
+
+    def start_accel_calibration_level(self) -> tuple[bool, str]:
+        """Level-trim the accelerometers (sets AHRS_TRIM_*) - delegates to commands manager."""
+        return self._commands_manager.start_accel_calibration_level()
+
+    def send_accel_calibration_full_start(self) -> tuple[bool, str]:
+        """Send the start command for interactive 6-position calibration - delegates to commands manager."""
+        return self._commands_manager.send_accel_calibration_full_start()
+
+    def poll_accel_cal_vehicle_pos(self, timeout: float = 0.05) -> int | None:
+        """Poll for a position-request from the FC during full accel calibration - delegates to commands manager."""
+        return self._commands_manager.poll_accel_cal_vehicle_pos(timeout)
+
+    def confirm_accel_vehicle_pos(self, position: int) -> tuple[bool, str]:
+        """Confirm calibration position to the FC - delegates to commands manager."""
+        return self._commands_manager.confirm_accel_vehicle_pos(position)
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """Request periodic BATTERY_STATUS messages - delegates to commands manager."""
         return self._commands_manager.request_periodic_battery_status(interval_microseconds)
