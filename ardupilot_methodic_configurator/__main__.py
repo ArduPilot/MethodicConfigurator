@@ -66,13 +66,22 @@ from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 
 def register_plugins() -> None:
-    """
+    r"""
     Register all available plugins with the factory.
 
     This function explicitly imports and registers plugins, avoiding
     side-effect imports and potential race conditions.
+
+    To add a new plugin, you must touch five places:
+      1. ``plugin_constants.py``                          - add a PLUGIN_* constant.
+      2. Here (``register_plugins``)                      - import and call its register function.
+      3. ``data_model_parameter_editor.create_plugin_data_model``  - instantiate its data model.
+      4. The plugin's ``frontend_tkinter_*.py`` module    - implement and call ``plugin_factory.register``.
+      5. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
+         ``plugin > properties > enum`` in the configuration steps schema.
     """
-    # Import and register plugins
+    # Imports are intentionally deferred to avoid circular imports: the frontend_tkinter_* modules
+    # import plugin_factory at module level, so top-level imports here would form a cycle.
     # pylint: disable=import-outside-toplevel, cyclic-import
     from ardupilot_methodic_configurator.frontend_tkinter_accelerometer_calibration import (  # noqa: PLC0415
         register_accelerometer_calibration_plugin,
@@ -92,32 +101,6 @@ def register_plugins() -> None:
     register_motor_test_plugin()
 
     # Add more plugin registrations here in the future
-
-
-def validate_plugin_registry(local_filesystem: LocalFilesystem) -> None:
-    """
-    Validate that all plugins configured in configuration steps are registered.
-
-    Args:
-        local_filesystem: The filesystem interface to access configuration steps
-
-    """
-    # Get all configured plugins
-    configured_plugins = set()
-    # configuration_steps is a dict, not an object with configuration_steps attribute
-    for file_info in local_filesystem.configuration_steps.values():
-        plugin = file_info.get("plugin")
-        if plugin and plugin.get("name"):
-            configured_plugins.add(plugin["name"])
-
-    # Verify each configured plugin is registered
-    for plugin_name in configured_plugins:
-        if not plugin_factory.is_registered(plugin_name):
-            available_plugins = ", ".join(plugin_factory.available_plugins()) or _("none")
-            logging_error(
-                _("Plugin '%(plugin_name)s' is configured but not registered. Available plugins: %(available)s"),
-                {"plugin_name": plugin_name, "available": available_plugins},
-            )
 
 
 class ApplicationState:  # pylint: disable=too-few-public-methods
@@ -738,7 +721,7 @@ def main() -> None:
 
     # Validate that all configured plugins are registered
     if state.local_filesystem:
-        validate_plugin_registry(state.local_filesystem)
+        plugin_factory.validate_configuration_steps(state.local_filesystem.configuration_steps)
 
     if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
         display_first_use_documentation()

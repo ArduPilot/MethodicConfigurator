@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
+from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
     ParameterOutOfRangeError,
@@ -44,6 +45,7 @@ from ardupilot_methodic_configurator.data_model_configuration_step import Config
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.plugin_constants import (
+    PLUGIN_ACCELEROMETER_CALIBRATION,
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
     PLUGIN_MOTOR_TEST,
@@ -2489,8 +2491,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return self._local_filesystem.get_instructions_popup(filename)
 
     def create_plugin_data_model(self, plugin_name: str) -> object | None:
-        """
+        r"""
         Create and return a data model for the specified plugin.
+
+        To add a new plugin, you must touch five places:
+          1. ``plugin_constants.py``                                   - add a PLUGIN_* constant.
+          2. ``__main__.py -> register_plugins()``                     - import and call its register function.
+          3. Here                                                      - instantiate its data model.
+          4. The plugin's ``frontend_tkinter_*.py`` module             - implement and call ``plugin_factory.register``.
+          5. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
+             ``plugin > properties > enum`` in the configuration steps schema.
 
         Args:
             plugin_name: The name of the plugin to create a data model for
@@ -2503,17 +2513,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         """
         if plugin_name == PLUGIN_MOTOR_TEST:
-            if not self.is_fc_connected:
-                return None
-            return MotorTestDataModel(self._flight_controller, self._local_filesystem)
+            return MotorTestDataModel(self._flight_controller, self._local_filesystem) if self.is_fc_connected else None
         if plugin_name == PLUGIN_BATTERY_MONITOR:
-            if not self.is_fc_connected:
-                return None
-            return BatteryMonitorDataModel(self._flight_controller, self)
+            return BatteryMonitorDataModel(self._flight_controller, self) if self.is_fc_connected else None
         if plugin_name == PLUGIN_COMPASS_CALIBRATION:
-            if not self.is_fc_connected:
-                return None
-            return CompassCalibrationDataModel(self._flight_controller)
+            return CompassCalibrationDataModel(self._flight_controller) if self.is_fc_connected else None
+        if plugin_name == PLUGIN_ACCELEROMETER_CALIBRATION:
+            return AccelerometerCalibrationDataModel(self._flight_controller) if self.is_fc_connected else None
         # Add more plugins here in the future
         raise ValueError(
             _("data_model_parameter_editor: Unsupported plugin name: {plugin_name}").format(plugin_name=plugin_name)
