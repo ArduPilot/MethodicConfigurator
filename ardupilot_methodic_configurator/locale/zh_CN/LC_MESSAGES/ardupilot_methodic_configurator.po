@@ -7619,35 +7619,35 @@ msgstr "[找不到图像: what_gets_uploaded.png]"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:78
 msgid "Missing field definitions"
-msgstr ""
+msgstr "缺少字段定义"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:80
 msgid "Missing format string"
-msgstr ""
+msgstr "缺少格式字符串"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:82
 msgid "Invalid message length"
-msgstr ""
+msgstr "消息长度无效"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:84
 msgid "Unit count mismatch"
-msgstr ""
+msgstr "单位数量不匹配"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:86
 msgid "Multiplier count mismatch"
-msgstr ""
+msgstr "乘数数量不匹配"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:89
 msgid "{message} has no logging data"
-msgstr ""
+msgstr "{message} 没有日志数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
 msgid "Field mismatch in record {index}. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "记录 {index} 的字段不匹配。缺少: {missing}，多余: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:158
 msgid "Schema not found"
-msgstr ""
+msgstr "未找到模式"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:20
 msgid "Battery"
