@@ -9,10 +9,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from argparse import ArgumentParser, Namespace
+from contextlib import suppress
+from logging import error as logging_error
+from logging import warning as logging_warning
 from tkinter import Frame, ttk
 from tkinter.messagebox import showerror, showinfo
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.__main__ import (
+    ApplicationState,
+    initialize_flight_controller,
+    setup_logging,
+)
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
@@ -269,3 +279,92 @@ def _create_accelerometer_calibration_view(
 def register_accelerometer_calibration_plugin() -> None:
     """Register the accelerometer calibration plugin with the factory."""
     plugin_factory.register(PLUGIN_ACCELEROMETER_CALIBRATION, _create_accelerometer_calibration_view)
+
+
+class AccelerometerCalibrationWindow(BaseWindow):  # pragma: no cover
+    """
+    Standalone window for the accelerometer calibration GUI.
+
+    Used for development and testing only.
+    """
+
+    def __init__(self, model: AccelerometerCalibrationDataModel) -> None:
+        super().__init__()
+        self.model = model  # Store model reference for tests
+        self.root.title(_("ArduPilot Accelerometer Calibration"))
+        self.root.geometry(self.calculate_scaled_geometry(600, 400))
+
+        self.view = AccelerometerCalibrationView(self.main_frame, model, self)
+        self.view.pack(fill="both", expand=True)
+
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self) -> None:
+        """Handle window close event."""
+        # Attempt to stop any running tests gracefully
+        with suppress(tk.TclError, AttributeError):
+            self.view._stop_polling()  # noqa: SLF001 # pylint: disable=protected-access
+
+        self.root.destroy()
+
+
+def argument_parser() -> Namespace:  # pragma: no cover
+    """
+    Parses command-line arguments for the script.
+
+    This function sets up an argument parser to handle the command-line arguments for the script.
+    This is just for testing the script. Production code will not call this function.
+
+    Returns:
+    argparse.Namespace: An object containing the parsed arguments.
+
+    """
+    # The rest of the file should not have access to any of these backends.
+    # It must use the data_model layer instead of accessing the backends directly.
+    # pylint: disable=import-outside-toplevel
+    from ardupilot_methodic_configurator.backend_flightcontroller import FlightController  # noqa: PLC0415
+    # pylint: enable=import-outside-toplevel
+
+    parser = ArgumentParser(
+        description=_(
+            "This main is for testing and development only. "
+            "Usually, the AccelerometerCalibrationView is called from another script"
+        )
+    )
+    parser = FlightController.add_argparse_arguments(parser)
+    return add_common_arguments(parser).parse_args()
+
+
+# pylint: disable=duplicate-code
+def main() -> None:  # pragma: no cover
+    args = argument_parser()
+
+    state = ApplicationState(args)
+
+    setup_logging(state)
+
+    logging_warning(
+        _(
+            "This main is for testing and development only. "
+            "Usually, the AccelerometerCalibrationView is called from another script"
+        )
+    )
+
+    initialize_flight_controller(state)
+
+    try:
+        data_model = AccelerometerCalibrationDataModel(state.flight_controller)
+        window = AccelerometerCalibrationWindow(data_model)
+        window.root.mainloop()
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logging_error("Failed to start AccelerometerCalibrationWindow: %(error)s", {"error": e})
+        # Show error to user
+        showerror(_("Error"), f"Failed to start accelerometer calibration: {e}")
+    finally:
+        if state.flight_controller:
+            state.flight_controller.disconnect()  # Disconnect from the flight controller
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()
