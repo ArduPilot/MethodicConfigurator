@@ -15,6 +15,8 @@ from tkinter.messagebox import showerror, showinfo
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
+from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 
 class AccelerometerCalibrationView(Frame):
@@ -106,3 +108,33 @@ class AccelerometerCalibrationView(Frame):
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""
         super().destroy()
+
+
+def _create_accelerometer_calibration_view(
+    parent: tk.Frame | ttk.Frame,
+    model: object,
+    base_window: object,
+) -> AccelerometerCalibrationView:
+    """
+    Factory function to create AccelerometerCalibrationView instances.
+
+    This function trusts that the caller provides the correct types
+    as per the plugin protocol (duck typing approach).
+
+    Args:
+        parent: The parent frame
+        model: The AccelerometerCalibrationDataModel instance (passed as object for protocol compliance)
+        base_window: The BaseWindow instance (passed as object for protocol compliance)
+
+    Returns:
+        A new AccelerometerCalibrationView instance
+
+    """
+    # Trust the caller to provide correct types (protocol-based duck typing)
+    # Type checker will verify this at static analysis time
+    return AccelerometerCalibrationView(parent, model, base_window)  # type: ignore[arg-type]
+
+
+def register_accelerometer_calibration_plugin() -> None:
+    """Register the accelerometer calibration plugin with the factory."""
+    plugin_factory.register(PLUGIN_ACCELEROMETER_CALIBRATION, _create_accelerometer_calibration_view)
