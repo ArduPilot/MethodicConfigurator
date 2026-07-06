@@ -377,21 +377,6 @@ def initialize_filesystem(state: ApplicationState) -> None:
         )
 
 
-def initialize_flight_controller_and_filesystem(state: ApplicationState) -> None:
-    """
-    Initialize flight controller connection and local filesystem.
-
-    Args:
-        state: Application state to populate with initialized objects
-
-    Raises:
-        SystemExit: If there's a fatal error reading parameter files
-
-    """
-    initialize_flight_controller(state)
-    initialize_filesystem(state)
-
-
 def vehicle_directory_selection(state: ApplicationState) -> VehicleProjectOpenerWindow | None:
     """
     Handle vehicle directory selection if no parameter files are found in the current working directory.
@@ -726,7 +711,9 @@ def main() -> None:
     if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
         display_first_use_documentation()
 
-    initialize_flight_controller_and_filesystem(state)
+    initialize_flight_controller(state)
+
+    initialize_filesystem(state)
 
     # Get the list of intermediate parameter files that will be processed sequentially
     files = list(state.local_filesystem.file_parameters.keys()) if state.local_filesystem.file_parameters else []
