@@ -8372,35 +8372,35 @@ msgstr "[Immagine non trovata: what_gets_uploaded.png]"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:78
 msgid "Missing field definitions"
-msgstr ""
+msgstr "Definizioni dei campi mancanti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:80
 msgid "Missing format string"
-msgstr ""
+msgstr "Stringa di formato mancante"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:82
 msgid "Invalid message length"
-msgstr ""
+msgstr "Lunghezza del messaggio non valida"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:84
 msgid "Unit count mismatch"
-msgstr ""
+msgstr "Conteggio delle unità non corrispondente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:86
 msgid "Multiplier count mismatch"
-msgstr ""
+msgstr "Conteggio dei moltiplicatori non corrispondente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:89
 msgid "{message} has no logging data"
-msgstr ""
+msgstr "{message} non contiene dati di registrazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
 msgid "Field mismatch in record {index}. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "Incongruenza dei campi nel record {index}. Mancanti: {missing}, extra: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:158
 msgid "Schema not found"
-msgstr ""
+msgstr "Schema non trovato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:20
 msgid "Battery"
