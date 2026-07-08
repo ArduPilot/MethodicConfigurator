@@ -7939,42 +7939,42 @@ msgstr "[找不到图像: what_gets_uploaded.png]"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:39
 msgid "Error opening logfile {logfile}: {error}"
-msgstr ""
+msgstr "打开日志文件 {logfile} 时出错：{error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:163
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:345
 msgid "Structured array for {message_type} is missing field metadata"
-msgstr ""
+msgstr "{message_type} 的结构化数组缺少字段元数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:237
 msgid "Schema {name} has mismatched field and format counts"
-msgstr ""
+msgstr "模式 {name} 的字段和格式数量不匹配"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:248
 msgid "Unsupported log format character {format_char!r} in schema {name}"
-msgstr ""
+msgstr "模式 {name} 中不支持的日志格式字符 {format_char!r}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:298
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "{name} 的字段不匹配。缺少: {missing}，多余: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:335
 msgid "Message count for {message_type} exceeded the preallocated array size"
-msgstr ""
+msgstr "{message_type} 的消息数量超过了预分配数组大小"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:362
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
-msgstr ""
+msgstr "{message_name} 的消息数量不匹配：预期为 {expected}，实际写入为 {written}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:39
 msgid "Configuration file '{config_file}' not found"
-msgstr ""
+msgstr "未找到配置文件 '{config_file}'"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:41
 msgid "Error in configuration file '{config_file}': {error}"
-msgstr ""
+msgstr "配置文件 '{config_file}' 错误：{error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:79
 msgid "Missing field definitions"
@@ -8002,7 +8002,7 @@ msgstr "{message} 没有日志数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "字段不匹配。缺少: {missing}，多余: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:153
 msgid "Schema not found"
