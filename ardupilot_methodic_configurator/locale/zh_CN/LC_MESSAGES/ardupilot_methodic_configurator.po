@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-07-08 15:22+0000\n"
+"POT-Creation-Date: 2026-07-08 19:47+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -998,7 +998,9 @@ msgstr "无法进行指南针校准，未连接飞行控制器"
 msgid ""
 "Sending compass calibration start command to target %(system)s/%(component)s "
 "with params p1=%(p1)s p2=%(p2)s p3=%(p3)s"
-msgstr "正在向目标 %(system)s/%(component)s 发送指南针校准开始命令，参数为 p1=%(p1)s p2=%(p2)s p3=%(p3)s"
+msgstr ""
+"正在向目标 %(system)s/%(component)s 发送指南针校准开始命令，参数为 p1=%(p1)s "
+"p2=%(p2)s p3=%(p3)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:594
 msgid "Compass calibration start command confirmed"
@@ -1025,7 +1027,8 @@ msgstr "指南针校准取消失败：%(error)s"
 msgid ""
 "Compass calibration report queued for compass %(compass_id)s: "
 "status=%(status)s saved=%(saved)s"
-msgstr "指南针 %(compass_id)s 的校准报告已排队：状态=%(status)s 已保存=%(saved)s"
+msgstr ""
+"指南针 %(compass_id)s 的校准报告已排队：状态=%(status)s 已保存=%(saved)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:688
 msgid ""
@@ -3496,7 +3499,8 @@ msgstr "指南针校准起飞前准备：COMPASS_ENABLE 已禁用或参数不可
 msgid ""
 "Compass calibration preflight: enabled compass ids=%(compasses)s, raw "
 "flags=%(flags)s"
-msgstr "指南针校准起飞前准备：已启用的指南针ID=%(compasses)s，原始标志=%(flags)s"
+msgstr ""
+"指南针校准起飞前准备：已启用的指南针ID=%(compasses)s，原始标志=%(flags)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:90
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:122
@@ -3507,7 +3511,9 @@ msgstr "飞行控制器未连接"
 msgid ""
 "No active compasses are enabled. Set COMPASS_ENABLE=1 and enable at least "
 "one COMPASS_USE* parameter."
-msgstr "未启用任何活动的指南针。请将 COMPASS_ENABLE 设置为 1，并至少启用一个 COMPASS_USE* 参数。"
+msgstr ""
+"未启用任何活动的指南针。请将 COMPASS_ENABLE 设置为 1，并至少启用一个 "
+"COMPASS_USE* 参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:102
 msgid "Compass calibration start requested for active compasses: %(compasses)s"
@@ -5610,7 +5616,13 @@ msgid ""
 "(front, back, left, right, top, and bottom)\n"
 "points down, until all progress bars\n"
 "reach 100%."
-msgstr "将飞行器悬空，保持在你面前并保持水平。\n\n然后旋转飞行器，使每一面\n（前、后、左、右、上、下）\n都朝下，直到所有进度条\n达到100%。"
+msgstr ""
+"将飞行器悬空，保持在你面前并保持水平。\n"
+"\n"
+"然后旋转飞行器，使每一面\n"
+"（前、后、左、右、上、下）\n"
+"都朝下，直到所有进度条\n"
+"达到100%。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:76
 msgid "Continue"
@@ -5667,7 +5679,9 @@ msgid ""
 "No compass calibration telemetry has arrived after %(polls)d polls. The FC "
 "may still be waiting for vehicle movement, or the calibration may not have "
 "started."
-msgstr "在进行了%(polls)d次轮询后仍未收到指南针校准遥测数据。飞控可能仍在等待飞行器移动，或校准尚未开始。"
+msgstr ""
+"在进行了%(polls)d次轮询后仍未收到指南针校准遥测数据。飞控可能仍在等待飞行器移"
+"动，或校准尚未开始。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:352
 msgid ""
@@ -7923,35 +7937,74 @@ msgstr "上传到飞控的内容"
 msgid "[Image not found: what_gets_uploaded.png]"
 msgstr "[找不到图像: what_gets_uploaded.png]"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:78
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:39
+msgid "Error opening logfile {logfile}: {error}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:163
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:345
+msgid "Structured array for {message_type} is missing field metadata"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:237
+msgid "Schema {name} has mismatched field and format counts"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:248
+msgid "Unsupported log format character {format_char!r} in schema {name}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:298
+msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:335
+msgid "Message count for {message_type} exceeded the preallocated array size"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:362
+msgid ""
+"Message count mismatch for {message_name}: expected {expected}, wrote "
+"{written}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:39
+msgid "Configuration file '{config_file}' not found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:41
+msgid "Error in configuration file '{config_file}': {error}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:79
 msgid "Missing field definitions"
 msgstr "缺少字段定义"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:81
 msgid "Missing format string"
 msgstr "缺少格式字符串"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:82
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:83
 msgid "Invalid message length"
 msgstr "消息长度无效"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:84
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:85
 msgid "Unit count mismatch"
 msgstr "单位数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:86
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:87
 msgid "Multiplier count mismatch"
 msgstr "乘数数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:89
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:90
 msgid "{message} has no logging data"
 msgstr "{message} 没有日志数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
-msgid "Field mismatch in record {index}. Missing: {missing}, extra: {extra}"
-msgstr "记录 {index} 的字段不匹配。缺少: {missing}，多余: {extra}"
+msgid "Field mismatch. Missing: {missing}, extra: {extra}"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:158
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:153
 msgid "Schema not found"
 msgstr "未找到模式"
 
@@ -8375,6 +8428,9 @@ msgstr "硬件的版本或修订号"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid "Field mismatch in record {index}. Missing: {missing}, extra: {extra}"
+#~ msgstr "记录 {index} 的字段不匹配。缺少: {missing}，多余: {extra}"
 
 #~ msgid ""
 #~ "Log relevant data for attitude PID and notch filter tuning. Later on "
