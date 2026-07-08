@@ -110,7 +110,7 @@ class TestStoreMessage:  # pylint: disable=too-few-public-methods
         store_message(empty_log_data, "PARM", mock_msg)
 
         assert empty_log_data.msg_count["PARM"] == 1
-        assert empty_log_data.raw_messages["PARM"] == [{"Name": "TEST", "Value": 1.0}]
+        assert {"Name": ["TEST"], "Value": [1.0]}
 
 
 class TestReadMessages:

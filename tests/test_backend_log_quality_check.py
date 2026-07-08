@@ -8,6 +8,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import numpy as np
+
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData, MessageSchema
 from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import (
     validate_configuration_steps,
@@ -30,26 +32,21 @@ def _make_schema(fields: list[str]) -> MessageSchema:
 class TestValidateFmtSchema:
     """Validate FMT Schema with the rest of the log."""
 
-    def test_all_records_must_match_schema(self) -> None:
+    def test_field_mismatch_is_detected(self) -> None:
         schema = _make_schema(["A", "B"])
-        records = [
-            {"mavpackettype": "TEST", "A": 1, "B": 2},
-            {"mavpackettype": "TEST", "A": 3, "C": 4},
-        ]
+        # columns have A and C, but schema expects A and B: B missing, C extra
+        columns = {"A": np.array([1, 3]), "C": np.array([4, 5])}
 
-        result = validate_fmt_schema(schema, records)
+        result = validate_fmt_schema(schema, columns)
 
         assert result.valid is False
-        assert "record 1" in result.issues[0]
+        assert "mismatch" in result.issues[0].lower()
 
     def test_matching_records_are_valid(self) -> None:
         schema = _make_schema(["A", "B"])
-        records = [
-            {"mavpackettype": "TEST", "A": 1, "B": 2},
-            {"mavpackettype": "TEST", "A": 3, "B": 4},
-        ]
+        columns = {"A": np.array([1, 3]), "B": np.array([2, 4])}
 
-        result = validate_fmt_schema(schema, records)
+        result = validate_fmt_schema(schema, columns)
 
         assert result.valid is True
         assert not result.issues
@@ -66,7 +63,7 @@ class TestValidateConfigurationSteps:
     def test_required_message_missing_invalidates_step(self) -> None:
         log_data = LogData()
         log_data.schemas["TEST"] = _make_schema(["A"])
-        log_data.raw_messages["TEST"] = [{"mavpackettype": "TEST", "A": 1}]
+        log_data.raw_messages["TEST"] = {"A": np.array([1])}
 
         results = validate_configuration_steps(
             log_data,
@@ -92,7 +89,7 @@ class TestValidateConfigurationSteps:
     def test_valid_required_message_keeps_step_valid(self) -> None:
         log_data = LogData()
         log_data.schemas["TEST"] = _make_schema(["A"])
-        log_data.raw_messages["TEST"] = [{"mavpackettype": "TEST", "A": 1}]
+        log_data.raw_messages["TEST"] = {"A": np.array([1])}
 
         results = validate_configuration_steps(
             log_data,

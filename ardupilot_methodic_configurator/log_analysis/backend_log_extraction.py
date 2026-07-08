@@ -16,6 +16,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
+import numpy as np
 from pymavlink import mavutil
 
 
@@ -98,9 +99,7 @@ class MessageSchema:  # pylint: disable=too-many-instance-attributes
     records: int = 0
 
 
-# Cap raw_messages storage to 1 sample per message type to prevent memory exhaustion on large .bin log files
-# Set to 0 to store them all (not recommended for large logs)
-MAX_SAMPLES_PER_TYPE = 1
+MAX_SAMPLES_PER_TYPE = 0
 """Maximum number of sample records stored per message type (memory guard)."""
 
 
@@ -113,22 +112,23 @@ class LogData:
         schemas: Raw message definitions extracted from FMT/FMTU/UNIT/MULT,
             keyed by message name. Each holds columns, units, multipliers and
             types exactly as pymavlink reports them.
-        raw_messages: Up to MAX_SAMPLES_PER_TYPE decoded records per message type,
-            keyed by type name. Capped to prevent memory exhaustion on large logs.
+        raw_messages: Per message type, a dict mapping each field name to a numpy
+            array of that field's values across all records (columnar storage).
         msg_count: Total number of decoded messages for each message type name.
 
     """
 
     schemas: dict[str, MessageSchema] = field(default_factory=dict)
-    raw_messages: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    raw_messages: dict[str, dict[str, Any]] = field(default_factory=dict)
     msg_count: dict[str, int] = field(default_factory=dict)
 
 
 def store_message(log_data: LogData, msg_type: str, msg: Any) -> None:  # noqa: ANN401
     """
-    Record one decoded message: increment its count and store a sample of its fields.
+    Record one decoded message: increment its count and append each field's value to that field's column.
 
-    Only up to MAX_SAMPLES_PER_TYPE records are stored per type to cap memory usage.
+    When MAX_SAMPLES_PER_TYPE is non-zero, only that many records are stored per
+    type to cap memory usage; 0 stores all records (needed for analysis).
 
     Args:
         log_data: The LogData instance to update.
@@ -137,9 +137,17 @@ def store_message(log_data: LogData, msg_type: str, msg: Any) -> None:  # noqa: 
 
     """
     log_data.msg_count[msg_type] = log_data.msg_count.get(msg_type, 0) + 1
-    bucket = log_data.raw_messages.setdefault(msg_type, [])
-    if MAX_SAMPLES_PER_TYPE == 0 or len(bucket) < MAX_SAMPLES_PER_TYPE:
-        bucket.append(msg.to_dict())
+    columns = log_data.raw_messages.setdefault(msg_type, {})
+    # Cap: stop storing once we have MAX_SAMPLES_PER_TYPE records (0 = store all)
+    if MAX_SAMPLES_PER_TYPE != 0:
+        # check current stored length (any column's length)
+        stored = len(next(iter(columns.values()))) if columns else 0
+        if stored >= MAX_SAMPLES_PER_TYPE:
+            return
+    for key, value in msg.to_dict().items():
+        if key == "mavpackettype":
+            continue
+        columns.setdefault(key, []).append(value)
 
 
 def read_messages(mlog: mavutil.mavfile, log_data: LogData) -> None:
@@ -179,6 +187,13 @@ def extract_schemas(mlog: mavutil.mavfile, log_data: LogData) -> None:
         )
 
 
+def _finalize_columns(log_data: LogData) -> None:
+    """Convert accumulated per-field lists into numpy arrays."""
+    for columns in log_data.raw_messages.values():
+        for field_name, values in columns.items():
+            columns[field_name] = np.array(values)
+
+
 def extract_log(logfile: str) -> LogData:
     """
     Parse a complete ArduPilot .bin log into a generic LogData object.
@@ -205,5 +220,7 @@ def extract_log(logfile: str) -> LogData:
         extract_schemas(mlog, log_data)
     finally:
         close_log(mlog)
+
+    _finalize_columns(log_data)
 
     return log_data
