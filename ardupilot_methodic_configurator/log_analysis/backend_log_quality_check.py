@@ -16,6 +16,8 @@ from logging import error as logging_error
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData, MessageSchema
 
@@ -34,9 +36,9 @@ def load_configuration_steps(vehicle_type: str = "ArduCopter") -> dict[str, Any]
             data: dict[str, Any] = json_load(file)
             return data
     except FileNotFoundError:
-        logging_error("Configuration file '%s' not found", config_file)
+        logging_error(_("Configuration file '{config_file}' not found").format(config_file=config_file))
     except JSONDecodeError as e:
-        logging_error("Error in configuration file '%s': %s", config_file, e)
+        logging_error(_("Error in configuration file '{config_file}': {error}").format(config_file=config_file, error=e))
 
     return None
 
@@ -59,13 +61,13 @@ class StepValidationResult:
     message_results: dict[str, MessageValidation]
 
 
-def validate_fmt_schema(schema: MessageSchema, columns: dict[str, Any]) -> MessageValidation:
+def validate_fmt_schema(schema: MessageSchema, columns: np.ndarray | None) -> MessageValidation:
     """
     Validate one message schema.
 
     Args:
         schema: Schema extracted from the FMT messages.
-        columns: Column for this message type(np arrays).
+        columns: Structured numpy array for this message type.
 
     Returns:
         MessageValidation
@@ -84,11 +86,11 @@ def validate_fmt_schema(schema: MessageSchema, columns: dict[str, Any]) -> Messa
     if schema.multipliers and len(schema.multipliers) != len(schema.fields):
         issues.append(_("Multiplier count mismatch"))
 
-    if not columns:
+    if columns is None or columns.size == 0:
         issues.append(_("{message} has no logging data").format(message=schema.name))
     else:
         expected_fields = set(schema.fields)
-        actual_fields = set(columns.keys())  # columns ARE the fields now
+        actual_fields = set(columns.dtype.names or ())
         missing = expected_fields - actual_fields
         extra = actual_fields - expected_fields
         if missing or extra:
@@ -157,7 +159,7 @@ def validate_configuration_steps(  # pylint: disable=too-many-locals
                 message_results[message_name] = validation
                 continue
 
-            columns = log_data.raw_messages.get(message_name, {})  # default {} (empty dict)
+            columns = log_data.get_message_columns(message_name)
             validation = validate_fmt_schema(schema=schema, columns=columns)
 
             if required and not validation.valid:

@@ -11,17 +11,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import (
     LogData,
     MessageSchema,
+    _allocate_message_arrays,
+    _fill_message_arrays,
+    _schema_numpy_dtype,
     close_log,
     extract_schemas,
     open_log,
-    read_messages,
-    store_message,
 )
+
+# pylint: disable=redefined-outer-name, protected-access
 
 
 class MessageStub:
@@ -57,6 +61,27 @@ class FakeMavLog:  # pylint: disable=too-few-public-methods
 def empty_log_data() -> LogData:
     """Fixture providing a fresh, empty LogData instance for each test."""
     return LogData()
+
+
+@pytest.fixture
+def populated_log_data_with_float_field() -> LogData:
+    """Fixture providing one preallocated message type with floating-point values."""
+    log_data = LogData()
+    log_data.schemas["PARM"] = MessageSchema(
+        name="PARM",
+        msg_type=1,
+        length=4,
+        format="f",
+        fields=["Value"],
+        units=["V"],
+        multipliers=[0.01],
+    )
+    log_data.msg_count["PARM"] = 2
+    log_data.schemas["PARM"].records = 2
+
+    _allocate_message_arrays(log_data)
+    _fill_message_arrays(FakeMavLog([MessageStub("PARM", Value=1.0), MessageStub("PARM", Value=2.5)]), log_data)
+    return log_data
 
 
 class TestOpenLog:
@@ -100,45 +125,152 @@ class TestCloseLog:
         close_log(mock_conn)
 
 
-class TestStoreMessage:  # pylint: disable=too-few-public-methods
-    """Tests for store_message()."""
+class TestNumpyAllocation:
+    """Tests for the structured numpy allocation helpers."""
 
-    def test_store_message_adds_to_raw_messages_and_counts(self, empty_log_data: LogData) -> None:  # pylint: disable=redefined-outer-name
-        """GIVEN a message, WHEN it is stored, THEN counts and raw payloads are updated."""
-        mock_msg = MessageStub("PARM", Name="TEST", Value=1.0)
+    def test_schema_numpy_dtype_maps_numeric_fields(self) -> None:
+        """
+        Map numeric FMT characters to numpy dtypes.
 
-        store_message(empty_log_data, "PARM", mock_msg)
+        GIVEN a schema with numeric FMT characters,
 
-        assert empty_log_data.msg_count["PARM"] == 1
-        assert {"Name": ["TEST"], "Value": [1.0]}
+        WHEN a numpy dtype is created,
+        THEN the dtype should match the declared field types.
+        """
+        schema = MessageSchema(
+            name="TEST",
+            msg_type=1,
+            length=4,
+            format="bHf",
+            fields=["a", "b", "c"],
+            units=["", "", ""],
+            multipliers=[None, None, None],
+        )
 
+        dtype = _schema_numpy_dtype(schema)
 
-class TestReadMessages:
-    """Tests for read_messages()."""
+        assert dtype.names == ("a", "b", "c")
+        assert dtype["a"] == np.dtype(np.int8)
+        assert dtype["b"] == np.dtype(np.uint16)
+        assert dtype["c"] == np.dtype(np.float32)
 
-    def test_read_messages_loops_until_none(self, empty_log_data: LogData) -> None:  # pylint: disable=redefined-outer-name
-        """GIVEN a finite stream of messages, WHEN read, THEN all are stored and the loop stops."""
-        mock_mlog = FakeMavLog([MessageStub("PARM", Name="TEST"), MessageStub("BAT", Volt=16.0)])
+    def test_preallocated_arrays_store_and_scale_message_values(self, populated_log_data_with_float_field: LogData) -> None:
+        """
+        Store and scale preallocated message values.
 
-        read_messages(mock_mlog, empty_log_data)
+        GIVEN a preallocated message array with multipliers,
 
-        assert empty_log_data.msg_count["PARM"] == 1
-        assert empty_log_data.msg_count["BAT"] == 1
-        assert len(empty_log_data.raw_messages) == 2
+        WHEN the stored values are accessed,
+        THEN raw values remain unchanged and scaled access applies the multiplier.
+        """
+        log_data = populated_log_data_with_float_field
 
-    def test_read_messages_raises_when_recv_match_fails(self, empty_log_data: LogData) -> None:  # pylint: disable=redefined-outer-name
-        """GIVEN a parser failure, WHEN read_messages is called, THEN the exception is propagated."""
-        mock_mlog = FakeMavLog([RuntimeError("parse failed")])
+        assert log_data.get_field("PARM", "Value", scaled=False).shape == (2,)
 
-        with pytest.raises(RuntimeError, match="parse failed"):
-            read_messages(mock_mlog, empty_log_data)
+        np.testing.assert_allclose(
+            log_data.get_field("PARM", "Value", scaled=False),
+            np.array([1.0, 2.5], dtype=np.float32),
+        )
+        np.testing.assert_allclose(log_data.get_field("PARM", "Value"), np.array([0.01, 0.025]))
+        assert list(log_data.iter_message_records("PARM")) == [{"Value": 0.01}, {"Value": 0.025}]
+
+    def test_get_message_columns_returns_raw_structured_array(self) -> None:
+        """
+        Return the raw structured array for a message type.
+
+        GIVEN a stored structured array,
+
+        WHEN the raw columns are requested,
+        THEN the original structured numpy array is returned.
+        """
+        log_data = LogData()
+        log_data._raw_messages["PARM"] = np.array([(1.0,)], dtype=[("Value", np.float32)])
+
+        columns = log_data.get_message_columns("PARM")
+
+        assert columns is not None
+        assert columns.dtype.names == ("Value",)
+
+    def test_integer_scaling_promotes_dtype(self) -> None:
+        """
+        Promote fixed-point integers when scaling.
+
+        GIVEN fixed-point integer fields,
+
+        WHEN scaled values are accessed,
+        THEN the returned dtype should be widened to avoid overflow.
+        """
+        log_data = LogData()
+        log_data.schemas["INTS"] = MessageSchema(
+            name="INTS",
+            msg_type=1,
+            length=8,
+            format="ce",
+            fields=["Small", "Large"],
+            units=["", ""],
+            multipliers=[100, 100],
+        )
+        log_data.msg_count["INTS"] = 2
+        log_data.schemas["INTS"].records = 2
+
+        _allocate_message_arrays(log_data)
+        mock_mlog = FakeMavLog(
+            [
+                MessageStub("INTS", Small=1, Large=2),
+                MessageStub("INTS", Small=3, Large=4),
+            ]
+        )
+        _fill_message_arrays(mock_mlog, log_data)
+
+        small = log_data.get_field("INTS", "Small")
+        large = log_data.get_field("INTS", "Large")
+
+        assert small.dtype == np.int32
+        assert large.dtype == np.int64
+        np.testing.assert_array_equal(small, np.array([100, 300], dtype=np.int32))
+        np.testing.assert_array_equal(large, np.array([200, 400], dtype=np.int64))
+
+    def test_fill_message_arrays_raises_on_field_mismatch(self) -> None:
+        """
+        Reject messages whose fields do not match the schema.
+
+        GIVEN a decoded message with unexpected fields,
+
+        WHEN the preallocated arrays are filled,
+        THEN a validation error is raised.
+        """
+        log_data = LogData()
+        log_data.schemas["PARM"] = MessageSchema(
+            name="PARM",
+            msg_type=1,
+            length=4,
+            format="f",
+            fields=["Value"],
+            units=["V"],
+            multipliers=[None],
+        )
+        log_data.msg_count["PARM"] = 1
+        log_data.schemas["PARM"].records = 1
+        _allocate_message_arrays(log_data)
+
+        mock_mlog = FakeMavLog([MessageStub("PARM", Other=1.0)])
+
+        with pytest.raises(ValueError, match="Field mismatch for PARM"):
+            _fill_message_arrays(mock_mlog, log_data)
 
 
 class TestExtractSchemas:  # pylint: disable=too-few-public-methods
     """Tests for extract_schemas()."""
 
     def test_extract_schemas_populates_message_schema(self, empty_log_data: LogData) -> None:  # pylint: disable=redefined-outer-name
-        """GIVEN discovered FMT metadata, WHEN schemas are extracted, THEN LogData is populated."""
+        """
+        Populate schemas from discovered FMT metadata.
+
+        GIVEN discovered FMT metadata,
+
+        WHEN schemas are extracted,
+        THEN LogData should contain the schema details and record count.
+        """
         mock_fmt = SimpleNamespace(
             name="PARM",
             type=1,
