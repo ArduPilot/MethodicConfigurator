@@ -18,7 +18,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:112
 msgid "none"
-msgstr ""
+msgstr "keine"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:114
 msgid ""
@@ -1074,61 +1074,61 @@ msgstr "Batteriestatus nicht in der Telemetrie verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:565
 msgid "No flight controller connection available for compass calibration"
-msgstr ""
+msgstr "Keine Verbindung zum Flugcontroller für Kompasskalibrierung verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:570
 msgid ""
 "Sending compass calibration start command to target %(system)s/%(component)s "
 "with params p1=%(p1)s p2=%(p2)s p3=%(p3)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Startbefehl wird an Ziel %(system)s/%(component)s mit Parametern p1=%(p1)s p2=%(p2)s p3=%(p3)s gesendet"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:594
 msgid "Compass calibration start command confirmed"
-msgstr ""
+msgstr "Bestätigung für Kompasskalibrierungs-Startbefehl erhalten"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:596
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:502
 msgid "Compass calibration start failed: %(error)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Start fehlgeschlagen: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:609
 msgid "No flight controller connection available to cancel compass calibration"
-msgstr ""
+msgstr "Keine Verbindung zum Flugcontroller verfügbar, um Kompasskalibrierung abzubrechen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:625
 msgid "Compass calibration cancel command confirmed"
-msgstr ""
+msgstr "Bestätigung für Kompasskalibrierungs-Abbruchbefehl erhalten"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:627
 msgid "Compass calibration cancel failed: %(error)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Abbruch fehlgeschlagen: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:670
 msgid ""
 "Compass calibration report queued for compass %(compass_id)s: "
 "status=%(status)s saved=%(saved)s"
-msgstr ""
+msgstr "Kompasskalibrierungsbericht für Kompass %(compass_id)s in Warteschlange: status=%(status)s gespeichert=%(saved)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:688
 msgid ""
 "Compass calibration progress queued for compass %(compass_id)s: pct=%(pct)s "
 "status=%(status)s"
-msgstr ""
+msgstr "Kompasskalibrierungsfortschritt für Kompass %(compass_id)s in Warteschlange: Prozent=%(pct)s Status=%(status)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:707
 msgid ""
 "Compass calibration status text received: severity=%(severity)s text=%(text)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Statustext empfangen: Schweregrad=%(severity)s Text=%(text)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:713
 msgid ""
 "Ignoring non calibration MAVLink message during compass calibration poll: "
 "%(message_type)s"
-msgstr ""
+msgstr "Nicht-Kalibrierungs-MAVLink-Nachricht während Kompasskalibrierungsabfrage ignoriert: %(message_type)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:718
 msgid "Error reading compass calibration progress: %(error)s"
-msgstr ""
+msgstr "Fehler beim Lesen des Kompasskalibrierungsfortschritts: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:195
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:203
@@ -3908,59 +3908,59 @@ msgstr "Batterieüberwachung gestoppt"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:41
 msgid "Flight controller not connected, cannot check compass status."
-msgstr ""
+msgstr "Flugcontroller nicht verbunden, Kompassstatus kann nicht überprüft werden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:54
 msgid ""
 "Compass calibration preflight: COMPASS_ENABLE disabled or parameters "
 "unavailable."
-msgstr ""
+msgstr "Kompasskalibrierung vor dem Flug: COMPASS_ENABLE deaktiviert oder Parameter nicht verfügbar."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:71
 msgid ""
 "Compass calibration preflight: enabled compass ids=%(compasses)s, raw "
 "flags=%(flags)s"
-msgstr ""
+msgstr "Kompasskalibrierung vor dem Flug: aktivierte Kompass-IDs=%(compasses)s, Roh-Flags=%(flags)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:90
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:122
 msgid "Flight controller not connected"
-msgstr ""
+msgstr "Flugcontroller nicht verbunden"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:94
 msgid ""
 "No active compasses are enabled. Set COMPASS_ENABLE=1 and enable at least "
 "one COMPASS_USE* parameter."
-msgstr ""
+msgstr "Es sind keine aktiven Kompasse aktiviert. Setzen Sie COMPASS_ENABLE=1 und aktivieren Sie mindestens einen COMPASS_USE* Parameter."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:102
 msgid "Compass calibration start requested for active compasses: %(compasses)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Start angefordert für aktive Kompasse: %(compasses)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:107
 msgid "Compass calibration start accepted by flight controller."
-msgstr ""
+msgstr "Kompasskalibrierungs-Start vom Flugcontroller akzeptiert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:109
 msgid "Compass calibration start rejected: %(error)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Start vom Flugcontroller abgelehnt: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:125
 msgid "Compass calibration cancel requested."
-msgstr ""
+msgstr "Kompasskalibrierungs-Abbruch angefordert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:130
 msgid "Compass calibration cancel accepted by flight controller."
-msgstr ""
+msgstr "Kompasskalibrierungs-Abbruch vom Flugcontroller akzeptiert."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:132
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:461
 msgid "Compass calibration cancel rejected: %(error)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Abbruch vom Flugcontroller abgelehnt: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:149
 msgid "Compass calibration progress requested while disconnected."
-msgstr ""
+msgstr "Kompasskalibrierungsfortschritt angefordert während nicht verbunden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_configuration_step.py:105
 msgid "Error in forced parameters"
@@ -5198,7 +5198,7 @@ msgstr "Keine Fahrzeugkomponentendaten geladen; Speichern abgebrochen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2519
 msgid "data_model_parameter_editor: Unsupported plugin name: {plugin_name}"
-msgstr ""
+msgstr "data_model_parameter_editor: Nicht unterstützter Plugin-Name: {plugin_name}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:236
 msgid ""
@@ -6182,179 +6182,179 @@ msgid ""
 "(front, back, left, right, top, and bottom)\n"
 "points down, until all progress bars\n"
 "reach 100%."
-msgstr ""
+msgstr "Halten Sie das Fahrzeug in der Luft, halten Sie es\nvor sich und horizontal.\n\nDrehen Sie es dann so, dass jede Seite\n(Vorderseite, Rückseite, Links, Rechts, Oben und Unten)\nnach unten zeigt, bis alle Fortschrittsbalken\n100% erreichen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:76
 msgid "Continue"
-msgstr ""
+msgstr "Weiter"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:176
 msgid "Compass calibration progress popup created and polling scheduled."
-msgstr ""
+msgstr "Kompasskalibrierungs-Fortschrittspopup erstellt und Abfrage geplant."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:211
 msgid "Calibrating Compasses"
-msgstr ""
+msgstr "Kalibriere Kompasse"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:222
 msgid "Keep moving the drone"
-msgstr ""
+msgstr "Bewegen Sie die Drohne weiter"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:232
 msgid "Cancel Calibration"
-msgstr ""
+msgstr "Kalibrierung abbrechen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:241
 msgid ""
 "Compass calibration popup could not query expected compasses from the model: "
 "%(error)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Popup konnte die erwarteten Kompasse nicht vom Modell abfragen: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:248
 msgid ""
 "Compass calibration popup received unexpected compass list type %(type)s; "
 "waiting for telemetry."
-msgstr ""
+msgstr "Kompasskalibrierungs-Popup erhielt einen unerwarteten Kompasslistentyp %(type)s; warte auf Telemetrie."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:254
 msgid "Compass calibration popup expects compass ids: %(compasses)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Popup erwartet Kompass-IDs: %(compasses)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:264
 msgid "Compass {compass_id}"
-msgstr ""
+msgstr "Kompass {compass_id}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:274
 msgid "Compass calibration progress bar created for compass %(compass_id)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Fortschrittsbalken erstellt für Kompass %(compass_id)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:284
 msgid ""
 "Compass calibration popup has no known active compasses yet; waiting for "
 "telemetry to discover them."
-msgstr ""
+msgstr "Kompasskalibrierungs-Popup hat bisher keine bekannten aktiven Kompasse; warte darauf, dass sie per Telemetrie erkannt werden."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:335
 msgid ""
 "No compass calibration telemetry has arrived after %(polls)d polls. The FC "
 "may still be waiting for vehicle movement, or the calibration may not have "
 "started."
-msgstr ""
+msgstr "Nach %(polls)d Abfragen sind keine Kompasskalibrierungs-Telemetriedaten eingetroffen. Der FC könnte noch auf die Bewegung des Fahrzeugs warten oder die Kalibrierung wurde noch nicht gestartet."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:352
 msgid ""
 "Compass calibration update received for compass %(compass_id)s: "
 "type=%(update_type)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Update für Kompass %(compass_id)s empfangen: Typ=%(update_type)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:369
 msgid "Compass calibration completion inferred from generic status text."
-msgstr ""
+msgstr "Kompasskalibrierungs-Abschluss aus generischem Status-Text abgeleitet."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:387
 msgid ""
 "Compass calibration completion inferred from status text for compass "
 "%(compass_id)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Abschluss aus Status-Text für Kompass %(compass_id)s abgeleitet"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:400
 msgid ""
 "Compass calibration progress bar updated for compass %(compass_id)s to "
 "%(pct)s%%"
-msgstr ""
+msgstr "Kompasskalibrierungs-Fortschrittsbalken für Kompass %(compass_id)s auf %(pct)s%% aktualisiert"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:414
 msgid "Compass calibration completed for compass %(compass_id)s"
-msgstr ""
+msgstr "Kompasskalibrierung für Kompass %(compass_id)s abgeschlossen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:418
 msgid ""
 "Compass calibration failed for compass %(compass_id)s; attempting cancel."
-msgstr ""
+msgstr "Kompasskalibrierung für Kompass %(compass_id)s fehlgeschlagen; Abbruch wird versucht."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:425
 msgid "Calibration Failed"
-msgstr ""
+msgstr "Kalibrierung fehlgeschlagen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:426
 msgid "Calibration for Compass {compass_id} failed. Please try again."
-msgstr ""
+msgstr "Kalibrierung für Kompass {compass_id} fehlgeschlagen. Bitte versuchen Sie es erneut."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:431
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:460
 msgid "Failed to Cancel"
-msgstr ""
+msgstr "Abbrechen fehlgeschlagen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:433
 msgid "Compass calibration cancel failed after report failure: %(error)s"
-msgstr ""
+msgstr "Kompasskalibrierungs-Abbruch nach Fehlermeldung fehlgeschlagen: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:442
 msgid "Compass calibration finished for all compasses; closing popup."
-msgstr ""
+msgstr "Kompasskalibrierung für alle Kompasse abgeschlossen; Popup wird geschlossen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:443
 msgid "All compasses successfully calibrated and saved!"
-msgstr ""
+msgstr "Alle Kompasse wurden erfolgreich kalibriert und gespeichert!"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:443
 msgid "Calibration Complete"
-msgstr ""
+msgstr "Kalibrierung abgeschlossen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:446
 msgid "Compass calibration still in progress; scheduling next poll in 100 ms."
-msgstr ""
+msgstr "Kompasskalibrierung läuft noch; nächster Poll in 100 ms geplant."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:450
 msgid "Compass calibration cancel button clicked."
-msgstr ""
+msgstr "Kompasskalibrierung-Abbrechen-Button wurde geklickt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:455
 msgid "Compass calibration cancel accepted; closing popup."
-msgstr ""
+msgstr "Kompasskalibrierung-Abbrechen akzeptiert; Popup wird geschlossen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:456
 msgid "Cancelled"
-msgstr ""
+msgstr "Abgebrochen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:456
 msgid "Compass calibration was cancelled."
-msgstr ""
+msgstr "Kompasskalibrierung wurde abgebrochen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:486
 msgid "Start Compass Calibration"
-msgstr ""
+msgstr "Kompasskalibrierung starten"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:490
 msgid "Compass calibration start button clicked."
-msgstr ""
+msgstr "Kompasskalibrierung-Start-Button wurde geklickt."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:495
 msgid "Compass calibration instructions accepted; starting calibration."
-msgstr ""
+msgstr "Kompasskalibrierungsanweisungen akzeptiert; Kalibrierung wird gestartet."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:498
 msgid "Compass calibration start succeeded; opening progress popup."
-msgstr ""
+msgstr "Kompasskalibrierung erfolgreich gestartet; Fortschritts-Popup wird geöffnet."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:503
 msgid "Failed to Start"
-msgstr ""
+msgstr "Start fehlgeschlagen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:528
 msgid "ArduPilot Compass Calibration"
-msgstr ""
+msgstr "ArduPilot Kompasskalibrierung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:560
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:580
 msgid ""
 "This main is for testing and development only. Usually, the "
 "CompassCalibrationView is called from another script"
-msgstr ""
+msgstr "Dieses Hauptskript ist nur für Tests und Entwicklung. Üblicherweise wird die CompassCalibrationView von einem anderen Skript aufgerufen."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:591
 msgid "Failed to start compass calibration: %(error)s"
-msgstr ""
+msgstr "Kompasskalibrierung konnte nicht gestartet werden: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:51
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:60
