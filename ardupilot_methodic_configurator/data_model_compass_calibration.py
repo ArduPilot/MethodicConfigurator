@@ -13,6 +13,7 @@ from logging import warning as logging_warning
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_commands import CompassCalibrationUpdate
 
 
 class CompassCalibrationDataModel:
@@ -136,12 +137,12 @@ class CompassCalibrationDataModel:
         """Mark the calibration flow as finished."""
         self._is_calibrating = False
 
-    def get_progress(self) -> list[dict[str, int | float | str]]:
+    def get_progress(self) -> list[CompassCalibrationUpdate]:
         """
         Get the current progress of the compass calibration.
 
         Returns:
-            dict | None: Dictionary containing calibration progress, or None if no data.
+            list[CompassCalibrationUpdate]: Calibration updates, or an empty list if no data is available.
 
         """
         if self.flight_controller.master is None:

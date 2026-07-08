@@ -155,6 +155,22 @@ class TestPluginFactory:
         assert hasattr(plugin_factory, "register")
         assert hasattr(plugin_factory, "create")
         assert hasattr(plugin_factory, "is_registered")
+        assert hasattr(plugin_factory, "available_plugins")
+
+    def test_user_can_list_registered_plugins_in_sorted_order(self) -> None:
+        """
+        User can inspect the registered plugin names in alphabetical order.
+
+        GIVEN: A plugin factory with multiple registrations
+        WHEN: The user requests the list of available plugins
+        THEN: The plugin names are returned sorted
+        """
+        factory = PluginFactory()
+        factory.register("zeta", MagicMock())
+        factory.register("alpha", MagicMock())
+        factory.register("middle", MagicMock())
+
+        assert factory.available_plugins() == ["alpha", "middle", "zeta"]
 
     def test_user_can_register_different_plugin_types(self) -> None:
         """

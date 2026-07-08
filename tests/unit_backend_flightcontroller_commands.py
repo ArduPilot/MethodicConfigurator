@@ -302,6 +302,175 @@ class TestFlightControllerCommandsFailureBranches:
 class TestCompassCalibrationProgressPolling:
     """Tests for compass calibration MAVLink polling behavior."""
 
+    def test_start_compass_calibration_returns_clear_error_when_disconnected(self) -> None:
+        """
+        The backend rejects compass calibration when no FC connection exists.
+
+        GIVEN: The flight controller connection is unavailable
+        WHEN: start_compass_calibration is called
+        THEN: The command is not sent
+        AND: A clear connection error is returned
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_compass_calibration()
+
+        assert success is False
+        assert "No flight controller connection available" in error
+
+    def test_start_compass_calibration_sends_expected_mavlink_command(self) -> None:
+        """
+        The backend sends the compass calibration start command with the expected parameters.
+
+        GIVEN: The flight controller is connected
+        WHEN: start_compass_calibration is called
+        THEN: The MAG calibration command is sent with all-compass parameters
+        """
+        # pylint: disable=duplicate-code
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        # pylint: enable=duplicate-code
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        commands_mgr.send_command_and_wait_ack = MagicMock(return_value=(True, ""))
+
+        success, error = commands_mgr.start_compass_calibration()
+
+        commands_mgr.send_command_and_wait_ack.assert_called_once()
+        assert success is True
+        assert error == ""
+        _, kwargs = commands_mgr.send_command_and_wait_ack.call_args
+        assert kwargs["param1"] == 0
+        assert kwargs["param2"] == 1
+        assert kwargs["param3"] == 1
+        assert kwargs["timeout"] == 5.0
+
+    def test_start_compass_calibration_surfaces_backend_rejection(self) -> None:
+        """
+        Backend command failures are surfaced with compass-calibration context.
+
+        GIVEN: The flight controller rejects the calibration command
+        WHEN: start_compass_calibration is called
+        THEN: The returned error includes the calibration failure context
+        """
+        # pylint: disable=duplicate-code
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        # pylint: enable=duplicate-code
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        commands_mgr.send_command_and_wait_ack = MagicMock(return_value=(False, "MAVLink rejected"))
+
+        success, error = commands_mgr.start_compass_calibration()
+
+        assert success is False
+        assert "Compass calibration start failed" in error
+        assert "MAVLink rejected" in error
+
+    def test_cancel_compass_calibration_returns_clear_error_when_disconnected(self) -> None:
+        """
+        The backend rejects compass calibration cancel requests without a connection.
+
+        GIVEN: The flight controller connection is unavailable
+        WHEN: cancel_compass_calibration is called
+        THEN: The command is not sent
+        AND: A clear connection error is returned
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.cancel_compass_calibration()
+
+        assert success is False
+        assert "No flight controller connection available" in error
+
+    def test_cancel_compass_calibration_sends_expected_mavlink_command(self) -> None:
+        """
+        The backend sends the compass calibration cancel command with the expected parameters.
+
+        GIVEN: The flight controller is connected
+        WHEN: cancel_compass_calibration is called
+        THEN: The MAG cancel command is sent for all compasses
+        """
+        # pylint: disable=duplicate-code
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        # pylint: enable=duplicate-code
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        commands_mgr.send_command_and_wait_ack = MagicMock(return_value=(True, ""))
+
+        success, error = commands_mgr.cancel_compass_calibration()
+
+        commands_mgr.send_command_and_wait_ack.assert_called_once()
+        assert success is True
+        assert error == ""
+        _, kwargs = commands_mgr.send_command_and_wait_ack.call_args
+        assert kwargs["param1"] == 0
+        assert kwargs["timeout"] == 5.0
+
+    def test_cancel_compass_calibration_surfaces_backend_rejection(self) -> None:
+        """
+        Backend cancel failures are surfaced with compass-calibration context.
+
+        GIVEN: The flight controller rejects the cancel command
+        WHEN: cancel_compass_calibration is called
+        THEN: The returned error includes the calibration failure context
+        """
+        # pylint: disable=duplicate-code
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        # pylint: enable=duplicate-code
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        commands_mgr.send_command_and_wait_ack = MagicMock(return_value=(False, "Rejected"))
+
+        success, error = commands_mgr.cancel_compass_calibration()
+
+        assert success is False
+        assert "Compass calibration cancel failed" in error
+        assert "Rejected" in error
+
+    def test_get_compass_calibration_progress_ignores_non_calibration_messages(self) -> None:
+        """
+        Periodic and unrelated MAVLink messages should be ignored during polling.
+
+        GIVEN: The MAVLink buffer contains heartbeat and unrelated messages
+        WHEN: get_compass_calibration_progress is called
+        THEN: The backend returns an empty progress list
+        """
+        mock_master = MagicMock()
+        mock_master.recv_msg.side_effect = [
+            MagicMock(get_type=MagicMock(return_value="HEARTBEAT")),
+            MagicMock(get_type=MagicMock(return_value="TIMESYNC")),
+            MagicMock(get_type=MagicMock(return_value="PARAM_VALUE")),
+            MagicMock(get_type=MagicMock(return_value="UNKNOWN")),
+            None,
+        ]
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.get_compass_calibration_progress()
+
+        assert not result
+
     def test_get_compass_calibration_progress_preserves_mixed_progress_and_report_messages(self) -> None:
         """
         Progress polling should drain raw messages without discarding non-report updates.
@@ -393,3 +562,65 @@ class TestCompassCalibrationProgressPolling:
                 "text": "Mag(0) good orientation: 12 21.2",
             },
         ]
+
+    def test_get_compass_calibration_progress_uses_default_compass_id_when_status_text_has_no_marker(self) -> None:
+        """
+        Status text without an embedded compass index should still be surfaced.
+
+        GIVEN: The MAVLink buffer contains a STATUSTEXT message without Mag(n) notation
+        WHEN: get_compass_calibration_progress is called
+        THEN: Compass id 0 is used as the fallback
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_status = MagicMock()
+        mock_status.get_type.return_value = "STATUSTEXT"
+        mock_status.text = "Calibration still running"
+        mock_status.severity = 5
+
+        mock_master.recv_msg.side_effect = [mock_status, None]
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.get_compass_calibration_progress()
+
+        assert result == [{"type": "STATUS_TEXT", "compass_id": None, "status": 5, "text": "Calibration still running"}]
+
+    def test_get_compass_calibration_progress_recovers_from_recv_errors(self) -> None:
+        """
+        Read errors should not crash the polling loop.
+
+        GIVEN: recv_msg raises an exception while polling
+        WHEN: get_compass_calibration_progress is called
+        THEN: The backend returns whatever it collected so far
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_master.recv_msg.side_effect = RuntimeError("boom")
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.get_compass_calibration_progress()
+
+        assert not result
+
+    def test_get_compass_calibration_progress_returns_empty_when_disconnected(self) -> None:
+        """
+        Polling should be a no-op when the flight controller is unavailable.
+
+        GIVEN: The flight controller connection is unavailable
+        WHEN: get_compass_calibration_progress is called
+        THEN: An empty list is returned
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert not commands_mgr.get_compass_calibration_progress()

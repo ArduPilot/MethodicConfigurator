@@ -14,7 +14,7 @@ from logging import error as logging_error
 from logging import info as logging_info
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import ClassVar
+from typing import ClassVar, Literal, TypedDict
 
 from pymavlink import mavutil
 
@@ -30,6 +30,21 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     FlightControllerParamsProtocol,
     MavlinkConnection,
 )
+
+
+class CompassCalibrationUpdate(TypedDict, total=False):
+    """Normalized compass calibration telemetry payload."""
+
+    type: Literal["PROGRESS", "REPORT", "STATUS_TEXT"]
+    compass_id: int | None
+    status: int
+    completion_pct: int | float
+    direction_x: int | float
+    direction_y: int | float
+    direction_z: int | float
+    fitness: int | float
+    saved: bool
+    text: str
 
 
 class FlightControllerCommands:
@@ -613,7 +628,7 @@ class FlightControllerCommands:
             logging_error(error_msg)
         return success, error_msg
 
-    def get_compass_calibration_progress(self) -> list[dict[str, int | float | str]]:
+    def get_compass_calibration_progress(self) -> list[CompassCalibrationUpdate]:
         """
         Listen for MAG_CAL_PROGRESS or MAG_CAL_REPORT messages from the FC.
 
@@ -629,7 +644,7 @@ class FlightControllerCommands:
         if self.master is None:
             return []
 
-        results: list[dict[str, int | float | str]] = []
+        results: list[CompassCalibrationUpdate] = []
         try:
             drained_messages = 0
             while True:
@@ -681,7 +696,7 @@ class FlightControllerCommands:
                     status_text = getattr(msg, "text", "")
                     status_severity = getattr(msg, "severity", None)
                     compass_match = re.search(r"Mag\((\d+)\)", status_text)
-                    compass_id = int(compass_match.group(1)) if compass_match else 0
+                    compass_id = int(compass_match.group(1)) if compass_match else None
                     results.append(
                         {
                             "type": "STATUS_TEXT",

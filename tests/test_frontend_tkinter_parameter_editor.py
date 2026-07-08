@@ -1189,6 +1189,24 @@ class TestPluginLoading:
 
         assert "requires flight controller" in mock_label.call_args.kwargs.get("text", "")
 
+    def test_user_gets_error_label_when_plugin_data_model_raises(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        parent_frame = MagicMock()
+        plugin = {"name": "explosive"}
+        param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
+        param_editor_mock.create_plugin_data_model = MagicMock(side_effect=ValueError("boom"))
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.plugin_factory") as mock_factory,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label",
+                return_value=MagicMock(pack=MagicMock()),
+            ) as mock_label,
+        ):
+            mock_factory.is_registered.return_value = True
+            parameter_editor_window._load_plugin(parent_frame, plugin)
+
+        assert "boom" in mock_label.call_args.kwargs.get("text", "")
+
     def test_user_sees_message_when_plugin_creation_returns_none(self, parameter_editor_window: ParameterEditorWindow) -> None:
         _ = self
         parent_frame = MagicMock()
