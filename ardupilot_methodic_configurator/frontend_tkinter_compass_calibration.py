@@ -18,11 +18,6 @@ from tkinter.messagebox import showerror
 from typing import Any, cast
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.__main__ import (
-    ApplicationState,
-    initialize_flight_controller,
-    setup_logging,
-)
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -50,6 +45,8 @@ class CompassCalibrationInstructionsPopup(tk.Toplevel):
 
         self._setup_ui()
         self._resize_and_center()
+        self.lift()
+        self.focus_force()
 
     def _setup_ui(self) -> None:
         self.configure(bg=self._KEY_COLOR)
@@ -168,7 +165,14 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
         self._setup_style()
         self._setup_ui()
         self._resize_and_center()
+        self.lift()
+        self.focus_force()
         self._timer_id = self.after(100, self._check_progress)
+
+    def destroy(self) -> None:
+        """Stop polling before destroying the popup."""
+        self._stop_polling()
+        super().destroy()
 
     def _setup_style(self) -> None:
         style = ttk.Style(self)
@@ -250,6 +254,13 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
 
         self.geometry(f"{width}x{height}+{x}+{y}")
 
+    def _stop_polling(self) -> None:
+        """Cancel the periodic progress polling callback if it is active."""
+        if self._timer_id:
+            with suppress(tk.TclError):
+                self.after_cancel(self._timer_id)
+            self._timer_id = None
+
     def _check_progress(self) -> None:
         data_list = self.model.get_progress()
 
@@ -290,32 +301,42 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                     progress_bar.update_idletasks()
                     self.completion_status[cid] = True
                 else:
-                    # The calibration failed! Abort and warn the user.
-                    if self._timer_id:
-                        self.after_cancel(self._timer_id)
-                    self.model.cancel_calibration()
-                    messagebox.showerror(
-                        _("Calibration Failed"),
-                        _("Calibration for Compass {compass_id} failed. Please try again.").format(compass_id=cid),
-                        parent=self,
-                    )
-                    self.destroy()
+                    # The calibration failed; try to cancel the session before closing the popup.
+                    self._stop_polling()
+                    success, error_msg = self.model.cancel_calibration()
+                    if success:
+                        self.model.finish_calibration()
+                        messagebox.showerror(
+                            _("Calibration Failed"),
+                            _("Calibration for Compass {compass_id} failed. Please try again.").format(compass_id=cid),
+                            parent=self,
+                        )
+                        self.destroy()
+                    else:
+                        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+                        self._timer_id = self.after(100, self._check_progress)
                     return
 
         if self.completion_status and all(self.completion_status.values()):
             if self._timer_id:
                 self.after_cancel(self._timer_id)
+            self.model.finish_calibration()
             messagebox.showinfo(_("Calibration Complete"), _("All compasses successfully calibrated and saved!"), parent=self)
             self.destroy()
         else:
             self._timer_id = self.after(100, self._check_progress)
 
     def _on_cancel(self) -> None:
-        if self._timer_id:
-            self.after_cancel(self._timer_id)
-        self.model.cancel_calibration()
-        messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self)
-        self.destroy()
+        self._stop_polling()
+        success, error_msg = self.model.cancel_calibration()
+        if success:
+            self.model.finish_calibration()
+            messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self)
+            self.destroy()
+            return
+
+        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+        self._timer_id = self.after(100, self._check_progress)
 
 
 # pylint: disable=too-many-ancestors
@@ -331,6 +352,8 @@ class CompassCalibrationView(ttk.Frame):
         super().__init__(parent)
         self.model = model
         self.base_window = base_window
+        self._instructions_popup: CompassCalibrationInstructionsPopup | None = None
+        self._calibration_popup: CompassCalibrationPopup | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -341,12 +364,12 @@ class CompassCalibrationView(ttk.Frame):
         self.start_button.pack(pady=5)
 
     def _on_start(self) -> None:
-        CompassCalibrationInstructionsPopup(self, self._begin_calibration)
+        self._instructions_popup = CompassCalibrationInstructionsPopup(self.winfo_toplevel(), self._begin_calibration)
 
     def _begin_calibration(self) -> None:
         success, error_msg = self.model.start_calibration()
         if success:
-            CompassCalibrationPopup(self, self.model)
+            self._calibration_popup = CompassCalibrationPopup(self.winfo_toplevel(), self.model)
         else:
             messagebox.showerror(_("Failed to Start"), error_msg, parent=self)
 
@@ -382,7 +405,8 @@ class CompassCalibrationWindow(BaseWindow):  # pragma: no cover
     def on_close(self) -> None:
         """Handle window close event."""
         with suppress(tk.TclError, AttributeError):
-            pass  # Suppress closing errors for the standalone window
+            if self.model._is_calibrating:  # noqa: SLF001 #pylint: disable=protected-access
+                self.model.cancel_calibration()
         self.root.destroy()
 
 
@@ -414,6 +438,12 @@ def argument_parser() -> Namespace:  # pragma: no cover
 
 # pylint: disable=duplicate-code
 def main() -> None:  # pragma: no cover
+    from ardupilot_methodic_configurator.__main__ import (  # pylint: disable=import-outside-toplevel # noqa: PLC0415
+        ApplicationState,
+        initialize_flight_controller,
+        setup_logging,
+    )
+
     args = argument_parser()
     state = ApplicationState(args)
     setup_logging(state)

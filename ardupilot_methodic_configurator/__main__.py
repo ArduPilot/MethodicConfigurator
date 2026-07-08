@@ -62,7 +62,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
 )
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 
@@ -110,9 +109,10 @@ def validate_plugin_registry(local_filesystem: LocalFilesystem) -> None:
     # Verify each configured plugin is registered
     for plugin_name in configured_plugins:
         if not plugin_factory.is_registered(plugin_name):
+            available_plugins = ", ".join(plugin_factory.available_plugins()) or _("none")
             logging_error(
                 _("Plugin '%(plugin_name)s' is configured but not registered. Available plugins: %(available)s"),
-                {"plugin_name": plugin_name, "available": PLUGIN_MOTOR_TEST},
+                {"plugin_name": plugin_name, "available": available_plugins},
             )
 
 

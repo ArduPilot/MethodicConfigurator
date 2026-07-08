@@ -22,7 +22,11 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterEditor,
     ParameterValueUpdateStatus,
 )
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR, PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugin_constants import (
+    PLUGIN_BATTERY_MONITOR,
+    PLUGIN_COMPASS_CALIBRATION,
+    PLUGIN_MOTOR_TEST,
+)
 
 # pylint: disable=redefined-outer-name, too-many-lines, protected-access
 
@@ -3350,59 +3354,99 @@ class TestDerivedParameterApplication:
         assert parameter_editor.current_step_parameters["NEW_FORCED"] is mock_ap_param
         assert "NEW_FORCED" in parameter_editor._added_parameters
 
-    def test_create_plugin_data_model_returns_motor_test_data_model_when_fc_connected(self, parameter_editor) -> None:
+    def test_user_can_create_motor_test_data_model_when_fc_is_connected(self, parameter_editor) -> None:
         """
-        Test that create_plugin_data_model returns MotorTestDataModel when FC is connected.
+        The editor creates the motor test data model when the flight controller is connected.
 
         GIVEN: Flight controller is connected
-        WHEN: create_plugin_data_model is called with "motor_test"
+        WHEN: The motor test plugin model is requested
         THEN: A MotorTestDataModel instance is returned
         """
-        # Mock FC connection by setting master to a mock object
+        # Arrange: connect the flight controller
         parameter_editor._flight_controller.master = MagicMock()
 
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.MotorTestDataModel") as mock_motor_test_model:
+            # Act
             result = parameter_editor.create_plugin_data_model(PLUGIN_MOTOR_TEST)
 
+            # Assert
             mock_motor_test_model.assert_called_once_with(
                 parameter_editor._flight_controller, parameter_editor._local_filesystem
             )
             assert result == mock_motor_test_model.return_value
 
-    def test_create_plugin_data_model_returns_none_when_motor_test_but_no_fc_connection(self, parameter_editor) -> None:
+    def test_user_cannot_create_motor_test_data_model_when_fc_is_disconnected(self, parameter_editor) -> None:
         """
-        Test that create_plugin_data_model returns None when motor_test is requested but FC is not connected.
+        The editor refuses to create the motor test model when the flight controller is disconnected.
 
         GIVEN: Flight controller is not connected
-        WHEN: create_plugin_data_model is called with "motor_test"
+        WHEN: The motor test plugin model is requested
         THEN: None is returned
         """
-        # Mock FC disconnection by setting master to None
+        # Arrange: disconnect the flight controller
         parameter_editor._flight_controller.master = None
 
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.MotorTestDataModel") as mock_motor_test_model:
+            # Act
             result = parameter_editor.create_plugin_data_model(PLUGIN_MOTOR_TEST)
 
-            # MotorTestDataModel should not be instantiated
+            # Assert
             mock_motor_test_model.assert_not_called()
             assert result is None
 
-    def test_create_plugin_data_model_returns_none_for_unknown_plugin(self, parameter_editor) -> None:
+    def test_user_can_create_compass_calibration_data_model_when_fc_is_connected(self, parameter_editor) -> None:
         """
-        Test that create_plugin_data_model returns None for unknown plugin names.
+        The editor creates the compass calibration model when the flight controller is connected.
 
-        GIVEN: Any flight controller connection state
-        WHEN: create_plugin_data_model is called with an unknown plugin name
+        GIVEN: Flight controller is connected
+        WHEN: The compass calibration plugin model is requested
+        THEN: A CompassCalibrationDataModel instance is returned
+        """
+        # Arrange: connect the flight controller
+        parameter_editor._flight_controller.master = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.CompassCalibrationDataModel"
+        ) as mock_compass_model:
+            # Act
+            result = parameter_editor.create_plugin_data_model(PLUGIN_COMPASS_CALIBRATION)
+
+            # Assert
+            mock_compass_model.assert_called_once_with(parameter_editor._flight_controller)
+            assert result == mock_compass_model.return_value
+
+    def test_user_cannot_create_compass_calibration_data_model_when_fc_is_disconnected(self, parameter_editor) -> None:
+        """
+        The editor refuses to create the compass calibration model when the flight controller is disconnected.
+
+        GIVEN: Flight controller is not connected
+        WHEN: The compass calibration plugin model is requested
         THEN: None is returned
         """
-        with pytest.raises(ValueError, match="Unsupported plugin name: unknown_plugin"):
-            parameter_editor.create_plugin_data_model("unknown_plugin")
+        # Arrange: disconnect the flight controller
+        parameter_editor._flight_controller.master = None
 
-        with pytest.raises(ValueError, match="Unsupported plugin name: "):
-            parameter_editor.create_plugin_data_model("")
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.CompassCalibrationDataModel"
+        ) as mock_compass_model:
+            # Act
+            result = parameter_editor.create_plugin_data_model(PLUGIN_COMPASS_CALIBRATION)
 
-        with pytest.raises(ValueError, match="Unsupported plugin name: None"):
-            parameter_editor.create_plugin_data_model(None)
+            # Assert
+            mock_compass_model.assert_not_called()
+            assert result is None
+
+    @pytest.mark.parametrize("plugin_name", ["unknown_plugin", "", None])
+    def test_user_sees_an_error_for_unsupported_plugin_name(self, parameter_editor, plugin_name) -> None:
+        """
+        The editor raises a clear error for unsupported plugin names.
+
+        GIVEN: Any flight controller connection state
+        WHEN: An unknown plugin name is requested
+        THEN: A ValueError is raised with the plugin name in the message
+        """
+        with pytest.raises(ValueError, match=f"Unsupported plugin name: {plugin_name}"):
+            parameter_editor.create_plugin_data_model(plugin_name)
 
 
 class TestEditorStateInitialization:
@@ -3442,7 +3486,7 @@ class TestEditorStateInitialization:
         # Assert
         assert mavftp_support is False
 
-    @pytest.mark.parametrize("plugin_name", [PLUGIN_MOTOR_TEST, PLUGIN_BATTERY_MONITOR])
+    @pytest.mark.parametrize("plugin_name", [PLUGIN_MOTOR_TEST, PLUGIN_BATTERY_MONITOR, PLUGIN_COMPASS_CALIBRATION])
     def test_system_returns_none_for_known_plugin_when_fc_is_disconnected(self, parameter_editor, plugin_name: str) -> None:
         """
         System refuses to create a plugin data model when the Flight Controller is disconnected.
@@ -3460,17 +3504,6 @@ class TestEditorStateInitialization:
 
         # Assert
         assert result is None
-
-    def test_system_returns_none_for_unrecognised_plugin_name(self, parameter_editor) -> None:
-        """
-        System returns None for a plugin name it does not recognise.
-
-        GIVEN: Any parameter editor state
-        WHEN: create_plugin_data_model is called with an unknown plugin identifier
-        THEN: It should return None without raising
-        """
-        with pytest.raises(ValueError, match="Unsupported plugin name: UNKNOWN_PLUGIN"):
-            parameter_editor.create_plugin_data_model("UNKNOWN_PLUGIN")
 
     def test_system_returns_false_when_fc_parameter_is_not_in_current_step(self, parameter_editor) -> None:
         """
