@@ -25,15 +25,12 @@ from ardupilot_methodic_configurator.data_model_compass_calibration import Compa
 
 @pytest.fixture
 def connected_flight_controller() -> MagicMock:
-    """Fixture provides a connected flight controller."""
+    """Fixture providing a connected flight controller."""
     fc = MagicMock(spec=FlightController)
-    fc.master = MagicMock()  # Simulate connected state
+    fc.master = MagicMock()
 
-    # Setup default successful return values for compass methods
     fc.start_compass_calibration.return_value = (True, "")
     fc.cancel_compass_calibration.return_value = (True, "")
-
-    # FIXED: Now returns a list of dictionaries to match the multi-compass architecture
     fc.get_compass_calibration_progress.return_value = [{"type": "PROGRESS", "compass_id": 0, "completion_pct": 50}]
 
     return fc
@@ -43,203 +40,244 @@ def connected_flight_controller() -> MagicMock:
 def disconnected_flight_controller() -> MagicMock:
     """Fixture providing a disconnected flight controller."""
     fc = MagicMock(spec=FlightController)
-    fc.master = None  # Simulate disconnected state
+    fc.master = None
 
     return fc
 
 
 @pytest.fixture
-def compass_calibration_data_model(
-    connected_flight_controller: MagicMock,
-) -> CompassCalibrationDataModel:
-    """Fixture providing a compass calibration data model with connected flight controller."""
+def connected_compass_calibration_model(connected_flight_controller: MagicMock) -> CompassCalibrationDataModel:
+    """Fixture providing a compass calibration model with a connected flight controller."""
     return CompassCalibrationDataModel(connected_flight_controller)
 
 
-# ==================== UNIT TESTS ====================
+@pytest.fixture
+def disconnected_compass_calibration_model(
+    disconnected_flight_controller: MagicMock,
+) -> CompassCalibrationDataModel:
+    """Fixture providing a compass calibration model with a disconnected flight controller."""
+    return CompassCalibrationDataModel(disconnected_flight_controller)
 
 
 class TestCompassCalibrationWithDisconnectedFlightController:
-    """Test compass calibration behavior when flight controller is disconnected."""
+    """Test compass calibration behavior when the flight controller is disconnected."""
 
-    def test_is_connected_returns_false_when_disconnected(self, disconnected_flight_controller: MagicMock) -> None:
+    def test_user_sees_not_connected_state_when_fc_is_disconnected(
+        self, disconnected_compass_calibration_model: CompassCalibrationDataModel
+    ) -> None:
         """
-        is_connected() returns False when flight controller is disconnected.
+        The model reports that the flight controller is not connected.
 
         GIVEN: Flight controller is not connected (master is None)
-        WHEN: is_connected() is called
-        THEN: Should return False
+        WHEN: The connection state is checked
+        THEN: The model should report False
         """
-        # Arrange: Disconnected FC
-        model = CompassCalibrationDataModel(disconnected_flight_controller)
-
         # Act
-        result = model.is_connected()
+        result = disconnected_compass_calibration_model.is_connected()
 
         # Assert
-        assert result is False, "Should return False when flight controller disconnected"
+        assert result is False
 
-    def test_start_calibration_fails_gracefully_when_disconnected(self, disconnected_flight_controller: MagicMock) -> None:
+    def test_user_cannot_start_calibration_without_a_flight_controller(
+        self, disconnected_compass_calibration_model: CompassCalibrationDataModel, disconnected_flight_controller: MagicMock
+    ) -> None:
         """
-        start_calibration aborts and returns an error when disconnected.
+        Starting calibration fails early when there is no connection.
 
         GIVEN: Flight controller is disconnected
-        WHEN: start_calibration() is called
-        THEN: It should return False with an error message
-        AND: It should not call the flight controller backend
+        WHEN: The user starts calibration
+        THEN: The model returns a connection error
+        AND: The backend is not called
         """
-        model = CompassCalibrationDataModel(disconnected_flight_controller)
+        # Act
+        success, error_msg = disconnected_compass_calibration_model.start_calibration()
 
-        success, error_msg = model.start_calibration()
-
+        # Assert
         assert success is False
         assert error_msg == "Flight controller not connected"
-        assert model._is_calibrating is False
         disconnected_flight_controller.start_compass_calibration.assert_not_called()
+        assert disconnected_compass_calibration_model._is_calibrating is False
 
-    def test_cancel_calibration_fails_gracefully_when_disconnected(self, disconnected_flight_controller: MagicMock) -> None:
+    def test_user_cannot_cancel_calibration_without_a_flight_controller(
+        self, disconnected_compass_calibration_model: CompassCalibrationDataModel, disconnected_flight_controller: MagicMock
+    ) -> None:
         """
-        cancel_calibration aborts and returns an error when disconnected.
+        Canceling calibration fails early when there is no connection.
 
         GIVEN: Flight controller is disconnected
-        WHEN: cancel_calibration() is called
-        THEN: It should return False with an error message
-        AND: It should not call the flight controller backend
+        WHEN: The user cancels calibration
+        THEN: The model returns a connection error
+        AND: The backend is not called
         """
-        model = CompassCalibrationDataModel(disconnected_flight_controller)
+        # Act
+        success, error_msg = disconnected_compass_calibration_model.cancel_calibration()
 
-        success, error_msg = model.cancel_calibration()
-
+        # Assert
         assert success is False
         assert error_msg == "Flight controller not connected"
         disconnected_flight_controller.cancel_compass_calibration.assert_not_called()
 
-    def test_get_progress_returns_empty_list_when_disconnected(self, disconnected_flight_controller: MagicMock) -> None:
+    def test_user_sees_no_progress_data_when_fc_is_disconnected(
+        self, disconnected_compass_calibration_model: CompassCalibrationDataModel, disconnected_flight_controller: MagicMock
+    ) -> None:
         """
-        get_progress returns an empty list when disconnected to prevent loop iteration errors.
+        Progress polling returns no updates when there is no connection.
 
         GIVEN: Flight controller is disconnected
-        WHEN: get_progress() is called
-        THEN: It should return an empty list []
-        AND: It should not call the flight controller backend
+        WHEN: The GUI asks for calibration progress
+        THEN: The model returns an empty list
+        AND: The backend is not called
         """
-        model = CompassCalibrationDataModel(disconnected_flight_controller)
+        # Act
+        result = disconnected_compass_calibration_model.get_progress()
 
-        result = model.get_progress()
-
-        # FIXED: Assert against an empty list instead of None
+        # Assert
         assert result == []
         disconnected_flight_controller.get_compass_calibration_progress.assert_not_called()
 
 
 class TestCompassCalibrationWithConnectedFlightController:
-    """Test compass calibration behavior when flight controller is connected."""
+    """Test compass calibration behavior when the flight controller is connected."""
 
-    def test_is_connected_returns_true_when_connected(
-        self, compass_calibration_data_model: CompassCalibrationDataModel
+    def test_user_sees_connected_state_when_fc_is_connected(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel
     ) -> None:
         """
-        is_connected() returns True when flight controller is connected.
+        The model reports that the flight controller is connected.
 
         GIVEN: Flight controller is connected (master is not None)
-        WHEN: is_connected() is called
-        THEN: Should return True
+        WHEN: The connection state is checked
+        THEN: The model should report True
         """
-        assert compass_calibration_data_model.is_connected() is True
+        assert connected_compass_calibration_model.is_connected() is True
 
-    def test_start_calibration_success_updates_state(self, connected_flight_controller: MagicMock) -> None:
+    def test_user_can_start_calibration_successfully(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
         """
-        start_calibration delegates to the backend and updates internal state on success.
+        Starting calibration delegates to the backend and updates model state.
 
         GIVEN: Flight controller is connected and will successfully start calibration
-        WHEN: start_calibration() is called
-        THEN: It should delegate to flight_controller.start_compass_calibration()
-        AND: Return True with no error
-        AND: Update _is_calibrating state to True
+        WHEN: The user starts calibration
+        THEN: The backend command succeeds
+        AND: The model marks itself as calibrating
         """
-        model = CompassCalibrationDataModel(connected_flight_controller)
-        connected_flight_controller.start_compass_calibration.return_value = (True, "")
+        # Arrange
+        assert connected_compass_calibration_model._is_calibrating is False
 
-        assert model._is_calibrating is False
+        # Act
+        success, error_msg = connected_compass_calibration_model.start_calibration()
 
-        success, error_msg = model.start_calibration()
-
+        # Assert
         connected_flight_controller.start_compass_calibration.assert_called_once()
         assert success is True
         assert error_msg == ""
-        assert model._is_calibrating is True
+        assert connected_compass_calibration_model._is_calibrating is True
 
-    def test_start_calibration_failure_preserves_state(self, connected_flight_controller: MagicMock) -> None:
+    def test_user_sees_backend_error_when_starting_calibration_fails(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
         """
-        start_calibration preserves state if backend command fails.
+        Backend failures are surfaced and the calibrating state stays unchanged.
 
         GIVEN: Flight controller backend fails to start calibration
-        WHEN: start_calibration() is called
-        THEN: It should return False with the backend error message
-        AND: _is_calibrating should remain False
+        WHEN: The user starts calibration
+        THEN: The backend error is returned
+        AND: The model does not enter the calibrating state
         """
-        model = CompassCalibrationDataModel(connected_flight_controller)
+        # Arrange
         connected_flight_controller.start_compass_calibration.return_value = (False, "MAVLink command rejected")
 
-        success, error_msg = model.start_calibration()
+        # Act
+        success, error_msg = connected_compass_calibration_model.start_calibration()
 
+        # Assert
         assert success is False
         assert error_msg == "MAVLink command rejected"
-        assert model._is_calibrating is False
+        assert connected_compass_calibration_model._is_calibrating is False
 
-    def test_cancel_calibration_success_updates_state(self, connected_flight_controller: MagicMock) -> None:
+    def test_user_can_cancel_calibration_successfully(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
         """
-        cancel_calibration delegates to the backend and updates internal state on success.
+        Canceling calibration delegates to the backend and clears model state.
 
         GIVEN: Flight controller is calibrating and backend successfully cancels
-        WHEN: cancel_calibration() is called
-        THEN: It should delegate to flight_controller.cancel_compass_calibration()
-        AND: Update _is_calibrating state to False
+        WHEN: The user cancels calibration
+        THEN: The backend command succeeds
+        AND: The model leaves the calibrating state
         """
-        model = CompassCalibrationDataModel(connected_flight_controller)
-        model._is_calibrating = True  # Manually set state as if calibration is running
-        connected_flight_controller.cancel_compass_calibration.return_value = (True, "")
+        # Arrange
+        connected_compass_calibration_model._is_calibrating = True
 
-        success, error_msg = model.cancel_calibration()
+        # Act
+        success, error_msg = connected_compass_calibration_model.cancel_calibration()
 
+        # Assert
         connected_flight_controller.cancel_compass_calibration.assert_called_once()
         assert success is True
         assert error_msg == ""
-        assert model._is_calibrating is False
+        assert connected_compass_calibration_model._is_calibrating is False
 
-    def test_cancel_calibration_failure_preserves_state(self, connected_flight_controller: MagicMock) -> None:
+    def test_user_can_mark_calibration_complete(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel
+    ) -> None:
         """
-        cancel_calibration preserves state if backend command fails.
+        The model can be explicitly marked as finished after the popup completes.
+
+        GIVEN: Compass calibration is in progress
+        WHEN: The workflow reaches the final completion state
+        THEN: The calibrating flag is cleared
+        """
+        # Arrange
+        connected_compass_calibration_model._is_calibrating = True
+
+        # Act
+        connected_compass_calibration_model.finish_calibration()
+
+        # Assert
+        assert connected_compass_calibration_model._is_calibrating is False
+
+    def test_user_sees_backend_error_when_canceling_calibration_fails(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        Backend cancel failures are surfaced and the state is preserved.
 
         GIVEN: Flight controller backend fails to cancel calibration
-        WHEN: cancel_calibration() is called
-        THEN: It should return False with the backend error message
-        AND: _is_calibrating should remain True
+        WHEN: The user cancels calibration
+        THEN: The backend error is returned
+        AND: The model stays in the calibrating state
         """
-        model = CompassCalibrationDataModel(connected_flight_controller)
-        model._is_calibrating = True
+        # Arrange
         connected_flight_controller.cancel_compass_calibration.return_value = (False, "Timeout")
+        connected_compass_calibration_model._is_calibrating = True
 
-        success, error_msg = model.cancel_calibration()
+        # Act
+        success, error_msg = connected_compass_calibration_model.cancel_calibration()
 
+        # Assert
         assert success is False
         assert error_msg == "Timeout"
-        assert model._is_calibrating is True
+        assert connected_compass_calibration_model._is_calibrating is True
 
-    def test_get_progress_delegates_to_backend(self, connected_flight_controller: MagicMock) -> None:
+    def test_user_can_poll_progress_updates_from_the_backend(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
         """
-        get_progress delegates data retrieval directly to the backend.
+        Progress polling returns the backend updates unchanged.
 
         GIVEN: Flight controller is connected
-        WHEN: get_progress() is called
-        THEN: It should return the dictionary provided by the backend
+        WHEN: The GUI asks for calibration progress
+        THEN: The backend progress list is returned unchanged
         """
-        model = CompassCalibrationDataModel(connected_flight_controller)
-
+        # Arrange
         expected_data = [{"type": "REPORT", "compass_id": 0, "status": 4}]
         connected_flight_controller.get_compass_calibration_progress.return_value = expected_data
 
-        result = model.get_progress()
+        # Act
+        result = connected_compass_calibration_model.get_progress()
 
+        # Assert
         connected_flight_controller.get_compass_calibration_progress.assert_called_once()
         assert result == expected_data

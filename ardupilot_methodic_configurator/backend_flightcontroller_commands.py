@@ -604,6 +604,9 @@ class FlightControllerCommands:
         Listen for MAG_CAL_PROGRESS or MAG_CAL_REPORT messages from the FC.
 
         Empties the MAVLink buffer and returns a list of updates for all compasses.
+        We intentionally use recv_msg() instead of recv_match(type=[...]) here.
+        recv_match() still filters by message type and can discard MAG_CAL_PROGRESS
+        while waiting for a report message, which makes the GUI appear frozen.
 
         Returns:
             list[dict]: A list of dictionaries containing calibration status updates.
@@ -612,41 +615,38 @@ class FlightControllerCommands:
         if self.master is None:
             return []
 
-        results = []
+        results: list[dict[str, int | float | str]] = []
         try:
             while True:
-                report_msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="MAG_CAL_REPORT", blocking=False
-                )
-                if report_msg:
+                msg = self.master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]
+                if msg is None:
+                    break
+
+                msg_type = msg.get_type()
+                if msg_type == "MAG_CAL_REPORT":
                     results.append(
                         {
                             "type": "REPORT",
-                            "compass_id": report_msg.compass_id,
-                            "status": report_msg.cal_status,
-                            "fitness": report_msg.fitness,
-                            "saved": report_msg.autosaved,
+                            "compass_id": msg.compass_id,
+                            "status": msg.cal_status,
+                            "fitness": msg.fitness,
+                            "saved": msg.autosaved,
                         }
                     )
                     continue
 
-                progress_msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="MAG_CAL_PROGRESS", blocking=False
-                )
-                if progress_msg:
+                if msg_type == "MAG_CAL_PROGRESS":
                     results.append(
                         {
                             "type": "PROGRESS",
-                            "compass_id": progress_msg.compass_id,
-                            "status": progress_msg.cal_status,
-                            "completion_pct": progress_msg.completion_pct,
-                            "direction_x": progress_msg.direction_x,
-                            "direction_y": progress_msg.direction_y,
-                            "direction_z": progress_msg.direction_z,
+                            "compass_id": msg.compass_id,
+                            "status": msg.cal_status,
+                            "completion_pct": msg.completion_pct,
+                            "direction_x": msg.direction_x,
+                            "direction_y": msg.direction_y,
+                            "direction_z": msg.direction_z,
                         }
                     )
-                    continue
-                break
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Error reading compass calibration progress: %(error)s"), {"error": str(e)})

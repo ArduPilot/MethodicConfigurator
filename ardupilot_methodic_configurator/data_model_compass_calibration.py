@@ -77,6 +77,10 @@ class CompassCalibrationDataModel:
 
         return success, error_msg
 
+    def finish_calibration(self) -> None:
+        """Mark the calibration flow as finished."""
+        self._is_calibrating = False
+
     def get_progress(self) -> list[dict[str, int | float | str]]:
         """
         Get the current progress of the compass calibration.

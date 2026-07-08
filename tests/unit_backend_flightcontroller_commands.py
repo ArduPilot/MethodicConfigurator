@@ -297,3 +297,64 @@ class TestFlightControllerCommandsFailureBranches:
         assert success is False
         assert error != ""
         assert "unsupported" in error.lower()
+
+
+class TestCompassCalibrationProgressPolling:
+    """Tests for compass calibration MAVLink polling behavior."""
+
+    def test_get_compass_calibration_progress_preserves_mixed_progress_and_report_messages(self) -> None:
+        """
+        Progress polling should drain raw messages without discarding non-report updates.
+
+        GIVEN: The MAVLink buffer contains both progress and report messages
+        WHEN: get_compass_calibration_progress is called
+        THEN: Both message types are returned in the order they were received
+        AND: The backend does not filter progress away while looking for reports
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_progress = MagicMock()
+        mock_progress.get_type.return_value = "MAG_CAL_PROGRESS"
+        mock_progress.compass_id = 0
+        mock_progress.cal_status = 1
+        mock_progress.completion_pct = 42
+        mock_progress.direction_x = 1
+        mock_progress.direction_y = 2
+        mock_progress.direction_z = 3
+
+        mock_report = MagicMock()
+        mock_report.get_type.return_value = "MAG_CAL_REPORT"
+        mock_report.compass_id = 0
+        mock_report.cal_status = 4
+        mock_report.fitness = 0.12
+        mock_report.autosaved = True
+
+        mock_master.recv_msg.side_effect = [mock_progress, mock_report, None]
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.get_compass_calibration_progress()
+
+        assert result == [
+            {
+                "type": "PROGRESS",
+                "compass_id": 0,
+                "status": 1,
+                "completion_pct": 42,
+                "direction_x": 1,
+                "direction_y": 2,
+                "direction_z": 3,
+            },
+            {
+                "type": "REPORT",
+                "compass_id": 0,
+                "status": 4,
+                "fitness": 0.12,
+                "saved": True,
+            },
+        ]

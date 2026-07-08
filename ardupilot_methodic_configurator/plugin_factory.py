@@ -88,6 +88,10 @@ class PluginFactory:
         """
         return plugin_name in self._creators
 
+    def available_plugins(self) -> list[str]:
+        """Return the registered plugin names in sorted order."""
+        return sorted(self._creators)
+
 
 # Global factory instance
 plugin_factory = PluginFactory()
