@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import re
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -550,6 +551,19 @@ class FlightControllerCommands:
             logging_error(error_msg)
             return False, error_msg
 
+        logging_debug(
+            _(
+                "Sending compass calibration start command to target %(system)s/%(component)s with params p1=%(p1)s p2=%(p2)s "
+                "p3=%(p3)s"
+            ),
+            {
+                "system": self.master.target_system,
+                "component": self.master.target_component,
+                "p1": 0,
+                "p2": 1,
+                "p3": 1,
+            },
+        )
         success, error_msg = self.send_command_and_wait_ack(
             mavutil.mavlink.MAV_CMD_DO_START_MAG_CAL,
             param1=0,  # All compasses
@@ -617,12 +631,18 @@ class FlightControllerCommands:
 
         results: list[dict[str, int | float | str]] = []
         try:
+            drained_messages = 0
             while True:
                 msg = self.master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]
                 if msg is None:
                     break
 
+                drained_messages += 1
                 msg_type = msg.get_type()
+
+                if msg_type in ["HEARTBEAT", "TIMESYNC", "PARAM_VALUE"]:
+                    continue  # ignore these periodic messages
+
                 if msg_type == "MAG_CAL_REPORT":
                     results.append(
                         {
@@ -632,6 +652,10 @@ class FlightControllerCommands:
                             "fitness": msg.fitness,
                             "saved": msg.autosaved,
                         }
+                    )
+                    logging_debug(
+                        _("Compass calibration report queued for compass %(compass_id)s: status=%(status)s saved=%(saved)s"),
+                        {"compass_id": msg.compass_id, "status": msg.cal_status, "saved": msg.autosaved},
                     )
                     continue
 
@@ -647,6 +671,35 @@ class FlightControllerCommands:
                             "direction_z": msg.direction_z,
                         }
                     )
+                    logging_debug(
+                        _("Compass calibration progress queued for compass %(compass_id)s: pct=%(pct)s status=%(status)s"),
+                        {"compass_id": msg.compass_id, "pct": msg.completion_pct, "status": msg.cal_status},
+                    )
+                    continue
+
+                if msg_type == "STATUSTEXT":
+                    status_text = getattr(msg, "text", "")
+                    status_severity = getattr(msg, "severity", None)
+                    compass_match = re.search(r"Mag\((\d+)\)", status_text)
+                    compass_id = int(compass_match.group(1)) if compass_match else 0
+                    results.append(
+                        {
+                            "type": "STATUS_TEXT",
+                            "compass_id": compass_id,
+                            "status": status_severity if status_severity is not None else 0,
+                            "text": status_text,
+                        }
+                    )
+                    logging_debug(
+                        _("Compass calibration status text received: severity=%(severity)s text=%(text)s"),
+                        {"severity": status_severity, "text": status_text},
+                    )
+                    continue
+
+                logging_debug(
+                    _("Ignoring non calibration MAVLink message during compass calibration poll: %(message_type)s"),
+                    {"message_type": msg_type},
+                )
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Error reading compass calibration progress: %(error)s"), {"error": str(e)})
