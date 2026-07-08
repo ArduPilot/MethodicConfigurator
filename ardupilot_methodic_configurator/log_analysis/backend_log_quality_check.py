@@ -59,13 +59,13 @@ class StepValidationResult:
     message_results: dict[str, MessageValidation]
 
 
-def validate_fmt_schema(schema: MessageSchema, records: list[dict]) -> MessageValidation:
+def validate_fmt_schema(schema: MessageSchema, columns: dict[str, Any]) -> MessageValidation:
     """
     Validate one message schema.
 
     Args:
         schema: Schema extracted from the FMT messages.
-        records: Decoded records for this message type.
+        columns: Column for this message type(np arrays).
 
     Returns:
         MessageValidation
@@ -73,7 +73,6 @@ def validate_fmt_schema(schema: MessageSchema, records: list[dict]) -> MessageVa
     """
     issues: list[str] = []
 
-    # To be removed if these checks become stale, as pymavlink should handle these
     if not schema.fields:
         issues.append(_("Missing field definitions"))
     if not schema.format:
@@ -85,28 +84,22 @@ def validate_fmt_schema(schema: MessageSchema, records: list[dict]) -> MessageVa
     if schema.multipliers and len(schema.multipliers) != len(schema.fields):
         issues.append(_("Multiplier count mismatch"))
 
-    if not records:
+    if not columns:
         issues.append(_("{message} has no logging data").format(message=schema.name))
     else:
         expected_fields = set(schema.fields)
-        for index, record in enumerate(records):
-            actual_fields = {col for col in record if col != "mavpackettype"}
-            missing = expected_fields - actual_fields
-            extra = actual_fields - expected_fields
-            if missing or extra:
-                issues.append(
-                    _("Field mismatch in record {index}. Missing: {missing}, extra: {extra}").format(
-                        index=index,
-                        missing=sorted(missing),
-                        extra=sorted(extra),
-                    )
+        actual_fields = set(columns.keys())  # columns ARE the fields now
+        missing = expected_fields - actual_fields
+        extra = actual_fields - expected_fields
+        if missing or extra:
+            issues.append(
+                _("Field mismatch. Missing: {missing}, extra: {extra}").format(
+                    missing=sorted(missing),
+                    extra=sorted(extra),
                 )
-                break
+            )
 
-    return MessageValidation(
-        valid=not issues,
-        issues=issues,
-    )
+    return MessageValidation(valid=not issues, issues=issues)
 
 
 def validate_configuration_steps(  # pylint: disable=too-many-locals
@@ -164,12 +157,8 @@ def validate_configuration_steps(  # pylint: disable=too-many-locals
                 message_results[message_name] = validation
                 continue
 
-            records = log_data.raw_messages.get(message_name, [])
-
-            validation = validate_fmt_schema(
-                schema=schema,
-                records=records,
-            )
+            columns = log_data.raw_messages.get(message_name, {})  # default {} (empty dict)
+            validation = validate_fmt_schema(schema=schema, columns=columns)
 
             if required and not validation.valid:
                 step_valid = False
