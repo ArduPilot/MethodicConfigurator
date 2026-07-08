@@ -646,13 +646,11 @@ class FlightControllerCommands:
 
         results: list[CompassCalibrationUpdate] = []
         try:
-            drained_messages = 0
             while True:
                 msg = self.master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]
                 if msg is None:
                     break
 
-                drained_messages += 1
                 msg_type = msg.get_type()
 
                 if msg_type in ["HEARTBEAT", "TIMESYNC", "PARAM_VALUE"]:

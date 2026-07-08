@@ -7,8 +7,8 @@ calibrating the onboard magnetometers of an ArduPilot vehicle.
 
 The workflow consists of two popup windows. The first popup provides
 preparation instructions before calibration begins. After the user
-continues, a second popup displays live calibration progress for up to
-three active compasses.
+continues, a second popup displays live calibration progress for all
+active compasses.
 
 Communication with the flight controller is performed through MAVLink
 commands. Progress updates continue until calibration is completed or
@@ -36,8 +36,8 @@ cancelled.
 
 ### User Interface
 
-- Progress bars are created before calibration
-  begins to keep the layout stable.
+- Progress bars are pre-created when active compass IDs are known; otherwise they are created when telemetry arrives.
+  This keeps the layout stable whenever possible.
 - Independent progress display for Compass 0, Compass 1,
   and Compass 2 and so on.
 - Visual indication when a compass completes calibration, turns green.
@@ -49,7 +49,7 @@ cancelled.
 
 - Uses `grab_set()` to prevent interaction with the main
   application during calibration.
-- Sends the cancel command if the popup is closed.
+- Stops polling when the popup is closed; cancellation is performed via the Cancel Calibration button.
 - Displays preparation instructions before calibration.
 
 ### Usability
