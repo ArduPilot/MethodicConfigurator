@@ -10,7 +10,7 @@ Possible ways you can help:
 * Fixing issues
 * Adding new features
 * Reviewing [existing pull requests](https://github.com/ArduPilot/MethodicConfigurator/pulls), and notifying the maintainer if it passes your code review.
-* [Translating the software into your language](https://github.com/ArduPilot/MethodicConfigurator/blob/master/.github/instructions/manually_translate_the_user_interface.md#adding-a-translation)
+* [Translating the software into your language](https://github.com/ArduPilot/MethodicConfigurator/blob/master/.github/skills/add-ui-translation/SKILL.md#adding-a-translation)
 * Finding and fixing [security issues](SECURITY.md)
 
 ## Learning the Code
@@ -159,7 +159,7 @@ in order to keep the project REUSE-compliant and credits accurate:
 6. **Verify** — run `reuse lint` and `pre-commit run --all` until all checks pass.
 
 Full details and examples are in
-[`.github/instructions/update_software_dependencies.md`](.github/instructions/update_software_dependencies.md).
+[`.github/skills/update-software-dependencies/SKILL.md`](.github/skills/update-software-dependencies/SKILL.md).
 
 ## Submitting patches
 
