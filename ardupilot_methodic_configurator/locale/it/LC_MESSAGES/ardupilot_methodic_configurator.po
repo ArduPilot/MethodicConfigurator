@@ -18,7 +18,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:112
 msgid "none"
-msgstr ""
+msgstr "nessuno"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:114
 msgid ""
@@ -1089,61 +1089,61 @@ msgstr "Stato della batteria non disponibile dalla telemetria"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:565
 msgid "No flight controller connection available for compass calibration"
-msgstr ""
+msgstr "Nessuna connessione al controllore di volo disponibile per la calibrazione della bussola"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:570
 msgid ""
 "Sending compass calibration start command to target %(system)s/%(component)s "
 "with params p1=%(p1)s p2=%(p2)s p3=%(p3)s"
-msgstr ""
+msgstr "Invio comando di avvio calibrazione bussola al target %(system)s/%(component)s con parametri p1=%(p1)s p2=%(p2)s p3=%(p3)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:594
 msgid "Compass calibration start command confirmed"
-msgstr ""
+msgstr "Comando di avvio calibrazione bussola confermato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:596
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:502
 msgid "Compass calibration start failed: %(error)s"
-msgstr ""
+msgstr "Avvio calibrazione bussola fallito: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:609
 msgid "No flight controller connection available to cancel compass calibration"
-msgstr ""
+msgstr "Nessuna connessione al controllore di volo disponibile per annullare la calibrazione della bussola"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:625
 msgid "Compass calibration cancel command confirmed"
-msgstr ""
+msgstr "Comando di annullamento calibrazione bussola confermato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:627
 msgid "Compass calibration cancel failed: %(error)s"
-msgstr ""
+msgstr "Annullamento calibrazione bussola fallito: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:670
 msgid ""
 "Compass calibration report queued for compass %(compass_id)s: "
 "status=%(status)s saved=%(saved)s"
-msgstr ""
+msgstr "Rapporto di calibrazione bussola in coda per la bussola %(compass_id)s: stato=%(status)s salvato=%(saved)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:688
 msgid ""
 "Compass calibration progress queued for compass %(compass_id)s: pct=%(pct)s "
 "status=%(status)s"
-msgstr ""
+msgstr "Avanzamento calibrazione bussola in coda per la bussola %(compass_id)s: pct=%(pct)s stato=%(status)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:707
 msgid ""
 "Compass calibration status text received: severity=%(severity)s text=%(text)s"
-msgstr ""
+msgstr "Testo dello stato calibrazione bussola ricevuto: severità=%(severity)s testo=%(text)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:713
 msgid ""
 "Ignoring non calibration MAVLink message during compass calibration poll: "
 "%(message_type)s"
-msgstr ""
+msgstr "Messaggio MAVLink non di calibrazione ignorato durante la verifica calibrazione bussola: %(message_type)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:718
 msgid "Error reading compass calibration progress: %(error)s"
-msgstr ""
+msgstr "Errore nella lettura dell'avanzamento calibrazione bussola: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:195
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:203
@@ -3945,59 +3945,59 @@ msgstr "Monitoraggio batteria interrotto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:41
 msgid "Flight controller not connected, cannot check compass status."
-msgstr ""
+msgstr "Controllore di volo non connesso, impossibile verificare stato bussola."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:54
 msgid ""
 "Compass calibration preflight: COMPASS_ENABLE disabled or parameters "
 "unavailable."
-msgstr ""
+msgstr "Preflight calibrazione bussola: COMPASS_ENABLE disabilitato o parametri non disponibili."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:71
 msgid ""
 "Compass calibration preflight: enabled compass ids=%(compasses)s, raw "
 "flags=%(flags)s"
-msgstr ""
+msgstr "Preflight calibrazione bussola: id bussole abilitate=%(compasses)s, flag grezzi=%(flags)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:90
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:122
 msgid "Flight controller not connected"
-msgstr ""
+msgstr "Controllore di volo non connesso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:94
 msgid ""
 "No active compasses are enabled. Set COMPASS_ENABLE=1 and enable at least "
 "one COMPASS_USE* parameter."
-msgstr ""
+msgstr "Nessuna bussola attiva è abilitata. Imposta COMPASS_ENABLE=1 e abilita almeno un parametro COMPASS_USE*."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:102
 msgid "Compass calibration start requested for active compasses: %(compasses)s"
-msgstr ""
+msgstr "Avvio calibrazione bussola richiesto per bussole attive: %(compasses)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:107
 msgid "Compass calibration start accepted by flight controller."
-msgstr ""
+msgstr "Avvio calibrazione bussola accettato dal controllore di volo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:109
 msgid "Compass calibration start rejected: %(error)s"
-msgstr ""
+msgstr "Avvio calibrazione bussola rifiutato: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:125
 msgid "Compass calibration cancel requested."
-msgstr ""
+msgstr "Annullamento calibrazione bussola richiesto."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:130
 msgid "Compass calibration cancel accepted by flight controller."
-msgstr ""
+msgstr "Annullamento calibrazione bussola accettato dal controllore di volo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:132
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:461
 msgid "Compass calibration cancel rejected: %(error)s"
-msgstr ""
+msgstr "Annullamento calibrazione bussola rifiutato: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_compass_calibration.py:149
 msgid "Compass calibration progress requested while disconnected."
-msgstr ""
+msgstr "Avanzamento calibrazione bussola richiesto mentre disconnesso."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_configuration_step.py:105
 msgid "Error in forced parameters"
@@ -5241,7 +5241,7 @@ msgstr "Nessun dato del componente veicolo caricato; salvataggio annullato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2519
 msgid "data_model_parameter_editor: Unsupported plugin name: {plugin_name}"
-msgstr ""
+msgstr "data_model_parameter_editor: Nome del plugin non supportato: {plugin_name}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:236
 msgid ""
@@ -6229,179 +6229,179 @@ msgid ""
 "(front, back, left, right, top, and bottom)\n"
 "points down, until all progress bars\n"
 "reach 100%."
-msgstr ""
+msgstr "Tieni il veicolo in aria, mantienilo\ndi fronte a te e orizzontale.\n\nPoi ruotalo in modo che ciascun lato\n(avanti, dietro, sinistra, destra, sopra e sotto)\npunti verso il basso, fino a quando tutte le\nbarre di avanzamento raggiungono il 100%."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:76
 msgid "Continue"
-msgstr ""
+msgstr "Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:176
 msgid "Compass calibration progress popup created and polling scheduled."
-msgstr ""
+msgstr "Finestra di avanzamento calibrazione bussola creata e polling pianificato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:211
 msgid "Calibrating Compasses"
-msgstr ""
+msgstr "Calibrazione Bussole"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:222
 msgid "Keep moving the drone"
-msgstr ""
+msgstr "Continua a muovere il drone"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:232
 msgid "Cancel Calibration"
-msgstr ""
+msgstr "Annulla Calibrazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:241
 msgid ""
 "Compass calibration popup could not query expected compasses from the model: "
 "%(error)s"
-msgstr ""
+msgstr "La finestra di calibrazione della bussola non ha potuto ottenere le bussole previste dal modello: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:248
 msgid ""
 "Compass calibration popup received unexpected compass list type %(type)s; "
 "waiting for telemetry."
-msgstr ""
+msgstr "La finestra di calibrazione della bussola ha ricevuto un tipo di lista bussole inaspettato %(type)s; in attesa di telemetria."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:254
 msgid "Compass calibration popup expects compass ids: %(compasses)s"
-msgstr ""
+msgstr "La finestra di calibrazione della bussola si aspetta gli id bussole: %(compasses)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:264
 msgid "Compass {compass_id}"
-msgstr ""
+msgstr "Bussola {compass_id}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:274
 msgid "Compass calibration progress bar created for compass %(compass_id)s"
-msgstr ""
+msgstr "Barra di avanzamento calibrazione bussola creata per bussola %(compass_id)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:284
 msgid ""
 "Compass calibration popup has no known active compasses yet; waiting for "
 "telemetry to discover them."
-msgstr ""
+msgstr "La finestra di calibrazione della bussola non ha ancora bussole attive conosciute; in attesa che vengano rilevate tramite telemetria."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:335
 msgid ""
 "No compass calibration telemetry has arrived after %(polls)d polls. The FC "
 "may still be waiting for vehicle movement, or the calibration may not have "
 "started."
-msgstr ""
+msgstr "Nessuna telemetria di calibrazione bussola ricevuta dopo %(polls)d tentativi. Il controllore di volo potrebbe essere ancora in attesa che il veicolo si muova, o la calibrazione potrebbe non essere iniziata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:352
 msgid ""
 "Compass calibration update received for compass %(compass_id)s: "
 "type=%(update_type)s"
-msgstr ""
+msgstr "Aggiornamento calibrazione bussola ricevuto per bussola %(compass_id)s: tipo=%(update_type)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:369
 msgid "Compass calibration completion inferred from generic status text."
-msgstr ""
+msgstr "Completamento calibrazione bussola dedotto da testo di stato generico."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:387
 msgid ""
 "Compass calibration completion inferred from status text for compass "
 "%(compass_id)s"
-msgstr ""
+msgstr "Completamento calibrazione bussola dedotto da testo di stato per bussola %(compass_id)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:400
 msgid ""
 "Compass calibration progress bar updated for compass %(compass_id)s to "
 "%(pct)s%%"
-msgstr ""
+msgstr "Barra di avanzamento calibrazione bussola aggiornata per bussola %(compass_id)s al %(pct)s%%"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:414
 msgid "Compass calibration completed for compass %(compass_id)s"
-msgstr ""
+msgstr "Calibrazione bussola completata per bussola %(compass_id)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:418
 msgid ""
 "Compass calibration failed for compass %(compass_id)s; attempting cancel."
-msgstr ""
+msgstr "Calibrazione bussola fallita per bussola %(compass_id)s; tentativo di annullamento."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:425
 msgid "Calibration Failed"
-msgstr ""
+msgstr "Calibrazione Fallita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:426
 msgid "Calibration for Compass {compass_id} failed. Please try again."
-msgstr ""
+msgstr "Calibrazione per Bussola {compass_id} fallita. Riprova."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:431
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:460
 msgid "Failed to Cancel"
-msgstr ""
+msgstr "Annullamento Fallito"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:433
 msgid "Compass calibration cancel failed after report failure: %(error)s"
-msgstr ""
+msgstr "Annullamento calibrazione bussola fallito dopo errore nella segnalazione: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:442
 msgid "Compass calibration finished for all compasses; closing popup."
-msgstr ""
+msgstr "Calibrazione bussola completata per tutte le bussole; chiusura finestra."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:443
 msgid "All compasses successfully calibrated and saved!"
-msgstr ""
+msgstr "Tutte le bussole calibrate e salvate con successo!"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:443
 msgid "Calibration Complete"
-msgstr ""
+msgstr "Calibrazione completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:446
 msgid "Compass calibration still in progress; scheduling next poll in 100 ms."
-msgstr ""
+msgstr "La calibrazione della bussola è ancora in corso; prossimo controllo programmato tra 100 ms."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:450
 msgid "Compass calibration cancel button clicked."
-msgstr ""
+msgstr "Pulsante di annullamento della calibrazione della bussola cliccato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:455
 msgid "Compass calibration cancel accepted; closing popup."
-msgstr ""
+msgstr "Annullamento della calibrazione della bussola accettato; chiusura popup."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:456
 msgid "Cancelled"
-msgstr ""
+msgstr "Annullato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:456
 msgid "Compass calibration was cancelled."
-msgstr ""
+msgstr "La calibrazione della bussola è stata annullata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:486
 msgid "Start Compass Calibration"
-msgstr ""
+msgstr "Avvia calibrazione della bussola"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:490
 msgid "Compass calibration start button clicked."
-msgstr ""
+msgstr "Pulsante di avvio della calibrazione della bussola cliccato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:495
 msgid "Compass calibration instructions accepted; starting calibration."
-msgstr ""
+msgstr "Istruzioni per la calibrazione della bussola accettate; avvio calibrazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:498
 msgid "Compass calibration start succeeded; opening progress popup."
-msgstr ""
+msgstr "Avvio calibratura bussola riuscito; apertura popup di avanzamento."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:503
 msgid "Failed to Start"
-msgstr ""
+msgstr "Impossibile avviare"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:528
 msgid "ArduPilot Compass Calibration"
-msgstr ""
+msgstr "Calibrazione della bussola ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:560
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:580
 msgid ""
 "This main is for testing and development only. Usually, the "
 "CompassCalibrationView is called from another script"
-msgstr ""
+msgstr "Questa pagina è solo per test e sviluppo. Di solito, la CompassCalibrationView viene chiamata da un altro script"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:591
 msgid "Failed to start compass calibration: %(error)s"
-msgstr ""
+msgstr "Impossibile avviare la calibrazione della bussola: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:51
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:60
