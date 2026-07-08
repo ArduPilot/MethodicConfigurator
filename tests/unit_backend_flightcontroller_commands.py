@@ -358,3 +358,38 @@ class TestCompassCalibrationProgressPolling:
                 "saved": True,
             },
         ]
+
+    def test_get_compass_calibration_progress_surfaces_status_text_feedback(self) -> None:
+        """
+        Progress polling should preserve calibration status text as user feedback.
+
+        GIVEN: The MAVLink buffer contains a compass-related STATUSTEXT
+        WHEN: get_compass_calibration_progress is called
+        THEN: The status text is returned with the compass id if it can be inferred
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_status = MagicMock()
+        mock_status.get_type.return_value = "STATUSTEXT"
+        mock_status.text = "Mag(0) good orientation: 12 21.2"
+        mock_status.severity = 6
+
+        mock_master.recv_msg.side_effect = [mock_status, None]
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.get_compass_calibration_progress()
+
+        assert result == [
+            {
+                "type": "STATUS_TEXT",
+                "compass_id": 0,
+                "status": 6,
+                "text": "Mag(0) good orientation: 12 21.2",
+            },
+        ]

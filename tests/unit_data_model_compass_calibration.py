@@ -28,6 +28,7 @@ def connected_flight_controller() -> MagicMock:
     """Fixture providing a connected flight controller."""
     fc = MagicMock(spec=FlightController)
     fc.master = MagicMock()
+    fc.fc_parameters = {"COMPASS_ENABLE": 1, "COMPASS_USE": 1, "COMPASS_USE2": 0, "COMPASS_USE3": 0}
 
     fc.start_compass_calibration.return_value = (True, "")
     fc.cancel_compass_calibration.return_value = (True, "")
@@ -151,6 +152,18 @@ class TestCompassCalibrationWithConnectedFlightController:
         """
         assert connected_compass_calibration_model.is_connected() is True
 
+    def test_user_can_detect_active_compasses_from_flight_controller_parameters(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel
+    ) -> None:
+        """
+        The model can identify which compasses are enabled.
+
+        GIVEN: A connected flight controller with compass enable flags in its parameter cache
+        WHEN: The enabled compass list is requested
+        THEN: The primary compass index is returned
+        """
+        assert connected_compass_calibration_model.get_active_compass_ids() == [0]
+
     def test_user_can_start_calibration_successfully(
         self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
     ) -> None:
@@ -194,6 +207,31 @@ class TestCompassCalibrationWithConnectedFlightController:
         # Assert
         assert success is False
         assert error_msg == "MAVLink command rejected"
+        assert connected_compass_calibration_model._is_calibrating is False
+
+    def test_user_sees_a_clear_error_when_no_compasses_are_enabled(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        The model refuses to start calibration when no compass is enabled.
+
+        GIVEN: A connected flight controller with all compass enable flags cleared
+        WHEN: The user starts calibration
+        THEN: The backend is not called
+        AND: A clear configuration error is returned
+        """
+        connected_flight_controller.fc_parameters = {
+            "COMPASS_ENABLE": 1,
+            "COMPASS_USE": 0,
+            "COMPASS_USE2": 0,
+            "COMPASS_USE3": 0,
+        }
+
+        success, error_msg = connected_compass_calibration_model.start_calibration()
+
+        assert success is False
+        assert "No active compasses" in error_msg
+        connected_flight_controller.start_compass_calibration.assert_not_called()
         assert connected_compass_calibration_model._is_calibrating is False
 
     def test_user_can_cancel_calibration_successfully(

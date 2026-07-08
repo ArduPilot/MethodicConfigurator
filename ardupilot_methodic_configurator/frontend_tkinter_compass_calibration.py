@@ -11,6 +11,7 @@ import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from contextlib import suppress
+from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import warning as logging_warning
 from tkinter import messagebox, ttk
@@ -159,15 +160,20 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
         self._drag_y = 0
 
         self._timer_id: str | None = None
+        self._polls_without_updates = 0
+        self._no_telemetry_warning_emitted = False
+        self._expected_compass_ids = self._load_expected_compass_ids()
         self.progress_bars: dict[int, ttk.Progressbar] = {}
         self.completion_status: dict[int, bool] = {}
 
         self._setup_style()
         self._setup_ui()
+        self._precreate_progress_rows()
         self._resize_and_center()
         self.lift()
         self.focus_force()
         self._timer_id = self.after(100, self._check_progress)
+        logging_debug(_("Compass calibration progress popup created and polling scheduled."))
 
     def destroy(self) -> None:
         """Stop polling before destroying the popup."""
@@ -226,6 +232,62 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
         self.cancel_button = ttk.Button(content_frame, text=_("Cancel Calibration"), command=self._on_cancel)
         self.cancel_button.pack(pady=(15, 0))
 
+    def _load_expected_compass_ids(self) -> list[int]:
+        """Ask the data model which compasses are expected before telemetry starts arriving."""
+        try:
+            raw_compass_ids = self.model.get_active_compass_ids()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging_debug(
+                _("Compass calibration popup could not query expected compasses from the model: %(error)s"),
+                {"error": str(exc)},
+            )
+            return []
+
+        if not isinstance(raw_compass_ids, (list, tuple, set)):
+            logging_debug(
+                _("Compass calibration popup received unexpected compass list type %(type)s; waiting for telemetry."),
+                {"type": type(raw_compass_ids).__name__},
+            )
+            return []
+
+        compass_ids = sorted({int(compass_id) for compass_id in raw_compass_ids})
+        logging_debug(_("Compass calibration popup expects compass ids: %(compasses)s"), {"compasses": compass_ids})
+        return compass_ids
+
+    def _create_progress_row(self, compass_id: int) -> ttk.Progressbar:
+        """Create the visual row for a compass if it does not already exist."""
+        if compass_id not in self.progress_bars:
+            row = ttk.Frame(self.rows_container)
+            row.pack(fill="x", pady=8)
+            ttk.Label(
+                row,
+                text=_("Compass {compass_id}").format(compass_id=compass_id),
+                width=10,
+                font=("TkDefaultFont", 11, "bold"),
+            ).pack(side="left")
+            progress_bar = ttk.Progressbar(row, orient="horizontal", length=320, mode="indeterminate", maximum=100)
+            progress_bar.pack(side="left", expand=True, fill="x", padx=10)
+            progress_bar.start(10)
+
+            self.progress_bars[compass_id] = progress_bar
+            self.completion_status[compass_id] = False
+            logging_debug(_("Compass calibration progress bar created for compass %(compass_id)s"), {"compass_id": compass_id})
+            self.update_idletasks()
+            self._resize_and_center()
+
+        return self.progress_bars[compass_id]
+
+    def _precreate_progress_rows(self) -> None:
+        """Create placeholder rows for the compasses the data model already knows about."""
+        if not self._expected_compass_ids:
+            logging_debug(
+                _("Compass calibration popup has no known active compasses yet; waiting for telemetry to discover them.")
+            )
+            return
+
+        for compass_id in self._expected_compass_ids:
+            self._create_progress_row(compass_id)
+
     def _start_move(self, event: tk.Event) -> None:
         self._drag_x = event.x
         self._drag_y = event.y
@@ -261,47 +323,86 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                 self.after_cancel(self._timer_id)
             self._timer_id = None
 
-    def _check_progress(self) -> None:
+    def _check_progress(self) -> None:  # noqa: PLR0915  # pylint: disable=too-many-branches, too-many-statements
         data_list = self.model.get_progress()
+        # logging_debug(_("Compass calibration progress poll returned %(count)d updates"), {"count": len(data_list)})
 
         if not data_list:
+            self._polls_without_updates += 1
+            if self._polls_without_updates == 50 and not self._no_telemetry_warning_emitted:
+                self._no_telemetry_warning_emitted = True
+                logging_warning(
+                    _(
+                        "No compass calibration telemetry has arrived after %(polls)d polls. "
+                        "The FC may still be waiting for vehicle movement, or the calibration may not have started."
+                    ),
+                    {"polls": self._polls_without_updates},
+                )
+            # logging_debug(_("Compass calibration progress poll found no updates; rescheduling in 100 ms."))
             self._timer_id = self.after(100, self._check_progress)
             return
 
+        self._polls_without_updates = 0
+        self._no_telemetry_warning_emitted = False
         for raw_data in data_list:
             data: dict[str, Any] = cast("dict", raw_data)
             cid = data.get("compass_id", 0)
+            logging_debug(
+                _("Compass calibration update received for compass %(compass_id)s: type=%(update_type)s"),
+                {"compass_id": cid, "update_type": data.get("type")},
+            )
 
-            if cid not in self.progress_bars:
-                row = ttk.Frame(self.rows_container)
-                row.pack(fill="x", pady=8)
-                ttk.Label(
-                    row, text=_("Compass {compass_id}").format(compass_id=cid), width=10, font=("TkDefaultFont", 11, "bold")
-                ).pack(side="left")
-                progress_bar = ttk.Progressbar(row, orient="horizontal", length=320, mode="determinate", maximum=100)
-                progress_bar.pack(side="left", expand=True, fill="x", padx=10)
-
-                self.progress_bars[cid] = progress_bar
-                self.completion_status[cid] = False
-                self.update_idletasks()
-                self._resize_and_center()
-
-            if data["type"] == "PROGRESS":
-                pct = data.get("completion_pct", 0)
-                self.progress_bars[cid]["value"] = int(pct)
-
-            elif data["type"] == "REPORT":
-                # Only mark as done if the calibration was successful (status 4 = MAG_CAL_SUCCESS)
-                if data.get("status") == 4 or data.get("saved"):
-                    progress_bar = self.progress_bars[cid]
+            if data["type"] == "STATUS_TEXT":
+                status_text = str(data.get("text", "")).strip()
+                if status_text:
+                    self.hint_label.configure(text=status_text)
+                # Some ArduPilot builds emit calibration feedback as STATUSTEXT
+                # before any MAG_CAL_PROGRESS packet arrives. Create the row as
+                # soon as we know which compass is talking so the user sees a
+                # visible progress indicator instead of only the hint text.
+                progress_bar = self._create_progress_row(cid)
+                if "Compass calibrated requires reboot" in status_text:
                     progress_bar.stop()
+                    progress_bar.configure(mode="determinate")
                     progress_bar["maximum"] = 100
                     progress_bar["value"] = 100
                     progress_bar.configure(style="Done.Horizontal.TProgressbar")
                     progress_bar.update_idletasks()
                     self.completion_status[cid] = True
+                    logging_debug(
+                        _("Compass calibration completion inferred from status text for compass %(compass_id)s"),
+                        {"compass_id": cid},
+                    )
+                continue
+
+            progress_bar = self._create_progress_row(cid)
+
+            if data["type"] == "PROGRESS":
+                progress_bar.stop()
+                progress_bar.configure(mode="determinate")
+                pct = data.get("completion_pct", 0)
+                progress_bar["value"] = int(pct)
+                logging_debug(
+                    _("Compass calibration progress bar updated for compass %(compass_id)s to %(pct)s%%"),
+                    {"compass_id": cid, "pct": int(pct)},
+                )
+
+            elif data["type"] == "REPORT":
+                # Only mark as done if the calibration was successful (status 4 = MAG_CAL_SUCCESS)
+                progress_bar.stop()
+                progress_bar.configure(mode="determinate")
+                if data.get("status") == 4 or data.get("saved"):
+                    progress_bar["maximum"] = 100
+                    progress_bar["value"] = 100
+                    progress_bar.configure(style="Done.Horizontal.TProgressbar")
+                    progress_bar.update_idletasks()
+                    self.completion_status[cid] = True
+                    logging_debug(_("Compass calibration completed for compass %(compass_id)s"), {"compass_id": cid})
                 else:
                     # The calibration failed; try to cancel the session before closing the popup.
+                    logging_debug(
+                        _("Compass calibration failed for compass %(compass_id)s; attempting cancel."), {"compass_id": cid}
+                    )
                     self._stop_polling()
                     success, error_msg = self.model.cancel_calibration()
                     if success:
@@ -314,6 +415,9 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                         self.destroy()
                     else:
                         messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+                        logging_debug(
+                            _("Compass calibration cancel failed after report failure: %(error)s"), {"error": error_msg}
+                        )
                         self._timer_id = self.after(100, self._check_progress)
                     return
 
@@ -321,21 +425,26 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
             if self._timer_id:
                 self.after_cancel(self._timer_id)
             self.model.finish_calibration()
+            logging_debug(_("Compass calibration finished for all compasses; closing popup."))
             messagebox.showinfo(_("Calibration Complete"), _("All compasses successfully calibrated and saved!"), parent=self)
             self.destroy()
         else:
+            logging_debug(_("Compass calibration still in progress; scheduling next poll in 100 ms."))
             self._timer_id = self.after(100, self._check_progress)
 
     def _on_cancel(self) -> None:
+        logging_debug(_("Compass calibration cancel button clicked."))
         self._stop_polling()
         success, error_msg = self.model.cancel_calibration()
         if success:
             self.model.finish_calibration()
+            logging_debug(_("Compass calibration cancel accepted; closing popup."))
             messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self)
             self.destroy()
             return
 
         messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+        logging_debug(_("Compass calibration cancel rejected: %(error)s"), {"error": error_msg})
         self._timer_id = self.after(100, self._check_progress)
 
 
@@ -364,13 +473,19 @@ class CompassCalibrationView(ttk.Frame):
         self.start_button.pack(pady=5)
 
     def _on_start(self) -> None:
-        self._instructions_popup = CompassCalibrationInstructionsPopup(self.winfo_toplevel(), self._begin_calibration)
+        logging_debug(_("Compass calibration start button clicked."))
+        parent = cast("tk.Widget", self.winfo_toplevel())
+        self._instructions_popup = CompassCalibrationInstructionsPopup(parent, self._begin_calibration)
 
     def _begin_calibration(self) -> None:
+        logging_debug(_("Compass calibration instructions accepted; starting calibration."))
         success, error_msg = self.model.start_calibration()
         if success:
-            self._calibration_popup = CompassCalibrationPopup(self.winfo_toplevel(), self.model)
+            logging_debug(_("Compass calibration start succeeded; opening progress popup."))
+            parent = cast("tk.Widget", self.winfo_toplevel())
+            self._calibration_popup = CompassCalibrationPopup(parent, self.model)
         else:
+            logging_debug(_("Compass calibration start failed: %(error)s"), {"error": error_msg})
             messagebox.showerror(_("Failed to Start"), error_msg, parent=self)
 
 

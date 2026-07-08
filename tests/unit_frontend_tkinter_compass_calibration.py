@@ -45,8 +45,11 @@ def progress_popup() -> CompassCalibrationPopup:
     """Fixture providing a minimally configured popup for progress-flow testing."""
     popup = object.__new__(CompassCalibrationPopup)
     popup._timer_id = "after-id"
+    popup._expected_compass_ids = [0, 1]
+    popup._polls_without_updates = 0
     popup.model = MagicMock()
     popup.model.get_progress = MagicMock()
+    popup.model.get_active_compass_ids = MagicMock(return_value=[0, 1])
     popup.model.cancel_calibration = MagicMock()
     popup.model.finish_calibration = MagicMock()
     popup.after_cancel = MagicMock()
@@ -55,6 +58,7 @@ def progress_popup() -> CompassCalibrationPopup:
     popup.progress_bars = {0: MagicMock(), 1: MagicMock()}
     popup.completion_status = {0: False, 1: False}
     popup.rows_container = MagicMock()
+    popup.hint_label = MagicMock()
     popup.update_idletasks = MagicMock()
     popup._resize_and_center = MagicMock()
     return popup
@@ -75,7 +79,6 @@ def calibration_view() -> CompassCalibrationView:
     view = object.__new__(CompassCalibrationView)
     view.model = MagicMock()
     view.winfo_toplevel = MagicMock(return_value=MagicMock())
-    view._begin_calibration = MagicMock()
     return view
 
 
@@ -189,6 +192,107 @@ class TestCompassCalibrationPopupProgressFlow:
         popup.destroy.assert_not_called()
         popup.after.assert_called_once_with(100, popup._check_progress)
         assert popup._timer_id == "new-after-id"
+
+    def test_user_sees_status_text_feedback_when_only_statustext_arrives(
+        self, progress_popup: CompassCalibrationPopup
+    ) -> None:
+        """
+        The popup surfaces calibration status text even when no progress packets arrive.
+
+        GIVEN: The FC emits calibration-related STATUSTEXT messages but no MAG_CAL_PROGRESS packet
+        WHEN: The popup polls progress
+        THEN: The hint label is updated with the latest status text
+        AND: The popup remains open
+        """
+        popup = progress_popup
+        popup.model.get_progress.return_value = [
+            {"type": "STATUS_TEXT", "compass_id": 0, "status": 6, "text": "Mag(0) good orientation: 12 21.2"}
+        ]
+
+        popup._check_progress()
+
+        popup.hint_label.configure.assert_called_once_with(text="Mag(0) good orientation: 12 21.2")
+        popup.destroy.assert_not_called()
+
+    def test_user_sees_a_progress_row_created_from_status_text(self, progress_popup: CompassCalibrationPopup) -> None:
+        """
+        Status text should still reveal the compass row even if no progress packet has arrived.
+
+        GIVEN: The FC emits calibration-related STATUSTEXT before MAG_CAL_PROGRESS
+        WHEN: The popup polls progress
+        THEN: A progress row is created for the compass
+        AND: The hint label still shows the latest status text
+        """
+        popup = progress_popup
+        popup.progress_bars = {}
+        popup._create_progress_row = MagicMock()
+        popup.model.get_progress.return_value = [
+            {"type": "STATUS_TEXT", "compass_id": 0, "status": 6, "text": "Mag(0) good orientation: 12 21.2"}
+        ]
+
+        popup._check_progress()
+
+        popup._create_progress_row.assert_called_once_with(0)
+        popup.hint_label.configure.assert_called_once_with(text="Mag(0) good orientation: 12 21.2")
+        popup.destroy.assert_not_called()
+
+    def test_user_sees_completion_when_calibration_status_text_requires_reboot(
+        self, progress_popup: CompassCalibrationPopup
+    ) -> None:
+        """
+        The popup should finish when ArduPilot reports that calibration is done and a reboot is required.
+
+        GIVEN: The FC emits the terminal STATUSTEXT instead of MAG_CAL_REPORT
+        WHEN: The popup polls progress
+        THEN: The compass row is marked complete
+        AND: The popup closes after the model is marked finished
+        """
+        popup = progress_popup
+        popup.progress_bars = {0: MagicMock()}
+        popup.completion_status = {0: False}
+        popup.model.get_progress.return_value = [
+            {"type": "STATUS_TEXT", "compass_id": 0, "status": 2, "text": "Compass calibrated requires reboot"}
+        ]
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showinfo") as mock_info:
+            popup._check_progress()
+
+        assert popup.completion_status[0] is True
+        popup.progress_bars[0].stop.assert_called_once()
+        popup.progress_bars[0].configure.assert_any_call(mode="determinate")
+        popup.progress_bars[0].configure.assert_any_call(style="Done.Horizontal.TProgressbar")
+        mock_info.assert_called_once()
+        popup.destroy.assert_called_once()
+
+    def test_user_sees_completion_when_multiple_compasses_finish_through_mixed_signals(
+        self, progress_popup: CompassCalibrationPopup
+    ) -> None:
+        """
+        The popup should wait until all active compasses complete, even if they finish via different signals.
+
+        GIVEN: One compass completes via terminal STATUSTEXT and another via MAG_CAL_REPORT
+        WHEN: The popup polls progress
+        THEN: Both compasses are marked complete
+        AND: The popup closes only after all compasses are done
+        """
+        popup = progress_popup
+        popup.progress_bars = {0: MagicMock(), 1: MagicMock()}
+        popup.completion_status = {0: False, 1: False}
+        popup.model.get_progress.return_value = [
+            {"type": "STATUS_TEXT", "compass_id": 0, "status": 2, "text": "Compass calibrated requires reboot"},
+            {"type": "REPORT", "compass_id": 1, "status": 4, "saved": True},
+        ]
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showinfo") as mock_info:
+            popup._check_progress()
+
+        assert popup.completion_status == {0: True, 1: True}
+        popup.progress_bars[0].stop.assert_called_once()
+        popup.progress_bars[1].stop.assert_called_once()
+        popup.progress_bars[0].configure.assert_any_call(style="Done.Horizontal.TProgressbar")
+        popup.progress_bars[1].configure.assert_any_call(style="Done.Horizontal.TProgressbar")
+        mock_info.assert_called_once()
+        popup.destroy.assert_called_once()
 
 
 class TestCompassCalibrationWindowClose:
