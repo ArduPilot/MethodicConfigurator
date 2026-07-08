@@ -164,6 +164,59 @@ class TestCompassCalibrationWithConnectedFlightController:
         """
         assert connected_compass_calibration_model.get_active_compass_ids() == [0]
 
+    def test_user_can_detect_multiple_active_compasses_from_flight_controller_parameters(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        The model includes every enabled compass index.
+
+        GIVEN: A connected flight controller with multiple compass flags enabled
+        WHEN: The enabled compass list is requested
+        THEN: All active compass indices are returned in sorted order
+        """
+        connected_flight_controller.fc_parameters = {
+            "COMPASS_ENABLE": 1,
+            "COMPASS_USE": 1,
+            "COMPASS_USE2": 1,
+            "COMPASS_USE3": 0,
+            "COMPASS_USE4": 1,
+            "COMPASS_USEX": 1,
+        }
+
+        assert connected_compass_calibration_model.get_active_compass_ids() == [0, 1, 3]
+
+    def test_user_sees_no_active_compasses_when_compass_calibration_is_disabled(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        The model returns no compass ids when compass calibration is disabled.
+
+        GIVEN: A connected flight controller with COMPASS_ENABLE set to 0
+        WHEN: The enabled compass list is requested
+        THEN: An empty list is returned
+        """
+        connected_flight_controller.fc_parameters = {
+            "COMPASS_ENABLE": 0,
+            "COMPASS_USE": 1,
+            "COMPASS_USE2": 1,
+        }
+
+        assert connected_compass_calibration_model.get_active_compass_ids() == []
+
+    def test_user_sees_no_active_compasses_when_parameters_are_missing(
+        self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
+    ) -> None:
+        """
+        The model returns no compass ids when parameter data is unavailable.
+
+        GIVEN: A connected flight controller without parameter cache data
+        WHEN: The enabled compass list is requested
+        THEN: An empty list is returned
+        """
+        connected_flight_controller.fc_parameters = None
+
+        assert connected_compass_calibration_model.get_active_compass_ids() == []
+
     def test_user_can_start_calibration_successfully(
         self, connected_compass_calibration_model: CompassCalibrationDataModel, connected_flight_controller: MagicMock
     ) -> None:

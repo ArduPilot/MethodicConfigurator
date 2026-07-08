@@ -1417,11 +1417,11 @@ class TestRegisterPluginsInternals:
 
     def test_both_plugin_register_functions_are_called(self) -> None:
         """
-        register_plugins calls motor_test and battery_monitor registration.
+        register_plugins calls the expected plugin registration hooks.
 
         GIVEN: Both plugin register functions are available
         WHEN: register_plugins is called
-        THEN: register_motor_test_plugin and register_battery_monitor_plugin are executed
+        THEN: register_motor_test_plugin, register_battery_monitor_plugin, and register_compass_calibration_plugin are executed
         """
         # Arrange
         with (
@@ -1429,12 +1429,16 @@ class TestRegisterPluginsInternals:
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.register_battery_monitor_plugin"
             ) as mock_battery,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.register_compass_calibration_plugin"
+            ) as mock_compass,
         ):
             register_plugins()
 
             # Assert
             mock_motor.assert_called_once()
             mock_battery.assert_called_once()
+            mock_compass.assert_called_once()
 
 
 class TestValidatePluginRegistry:
@@ -1481,6 +1485,7 @@ class TestValidatePluginRegistry:
             patch("ardupilot_methodic_configurator.__main__.logging_error") as mock_err,
         ):
             mock_factory.is_registered.return_value = False
+            mock_factory.available_plugins.return_value = ["battery_monitor", "compass_calibration", "motor_test"]
 
             # Act
             validate_plugin_registry(mock_fs)
@@ -1491,6 +1496,9 @@ class TestValidatePluginRegistry:
             # Ensure that the logged error message identifies the missing plugin
             combined = " ".join([str(a) for a in args] + [str(v) for v in kwargs.values()])
             assert "unknown_plugin" in combined
+            assert "battery_monitor" in combined
+            assert "compass_calibration" in combined
+            assert "motor_test" in combined
 
 
 class TestConnectionAndFilesystemBranches:
@@ -1593,37 +1601,36 @@ class TestConnectionAndFilesystemBranches:
         WHEN: resolve_writable_vehicle_dir_for_initial_download is called
         THEN: The fallback directory is returned and logging_warning is called once
         """
-        with tempfile.TemporaryDirectory() as fallback_tmp:
-            fallback = Path(fallback_tmp)
-            preferred = Path("/not/writable")
+        fallback = Path(tempfile.gettempdir()) / "amc-test-fallback"
+        preferred = Path("/not/writable")
 
-            with (
-                patch(
-                    "ardupilot_methodic_configurator.__main__._is_directory_writable",
-                    return_value=False,
-                ),
-                patch(
-                    "ardupilot_methodic_configurator.__main__.ProgramSettings.get_vehicles_default_dir",
-                    return_value=fallback,
-                ),
-                patch("ardupilot_methodic_configurator.__main__.logging_warning") as mock_warn,
-            ):
-                # Act
-                result = resolve_writable_vehicle_dir_for_initial_download(preferred)
+        with (
+            patch(
+                "ardupilot_methodic_configurator.__main__._is_directory_writable",
+                return_value=False,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.__main__.ProgramSettings.get_vehicles_default_dir",
+                return_value=fallback,
+            ),
+            patch("ardupilot_methodic_configurator.__main__.logging_warning") as mock_warn,
+        ):
+            # Act
+            result = resolve_writable_vehicle_dir_for_initial_download(preferred)
 
-            # Assert
-            assert result == fallback
-            mock_warn.assert_called_once()
-            warn_kwargs = {}
-            args, kwargs = mock_warn.call_args
-            if kwargs:
-                warn_kwargs: dict = kwargs
-            elif len(args) > 1 and isinstance(args[1], dict):
-                warn_kwargs = args[1]
-            else:
-                pytest.fail("logging_warning was not called with expected keyword or dict positional arguments")
-            assert warn_kwargs["old_dir"] == preferred
-            assert warn_kwargs["new_dir"] == fallback
+        # Assert
+        assert result == fallback
+        mock_warn.assert_called_once()
+        warn_kwargs = {}
+        args, kwargs = mock_warn.call_args
+        if kwargs:
+            warn_kwargs: dict = kwargs
+        elif len(args) > 1 and isinstance(args[1], dict):
+            warn_kwargs = args[1]
+        else:
+            pytest.fail("logging_warning was not called with expected keyword or dict positional arguments")
+        assert warn_kwargs["old_dir"] == preferred
+        assert warn_kwargs["new_dir"] == fallback
 
     def test_initialize_filesystem_shows_error_and_re_raises_on_system_exit(self) -> None:
         """

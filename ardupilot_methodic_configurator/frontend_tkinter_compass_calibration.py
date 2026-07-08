@@ -346,16 +346,30 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
         self._no_telemetry_warning_emitted = False
         for raw_data in data_list:
             data: dict[str, Any] = cast("dict", raw_data)
-            cid = data.get("compass_id", 0)
+            cid_raw = data.get("compass_id")
+            cid = int(cid_raw) if cid_raw is not None else 0
             logging_debug(
                 _("Compass calibration update received for compass %(compass_id)s: type=%(update_type)s"),
-                {"compass_id": cid, "update_type": data.get("type")},
+                {"compass_id": cid_raw, "update_type": data.get("type")},
             )
 
             if data["type"] == "STATUS_TEXT":
                 status_text = str(data.get("text", "")).strip()
                 if status_text:
                     self.hint_label.configure(text=status_text)
+                if "Compass calibrated requires reboot" in status_text and cid_raw is None:
+                    for compass_id, progress_bar in self.progress_bars.items():
+                        progress_bar.stop()
+                        progress_bar.configure(mode="determinate")
+                        progress_bar["maximum"] = 100
+                        progress_bar["value"] = 100
+                        progress_bar.configure(style="Done.Horizontal.TProgressbar")
+                        progress_bar.update_idletasks()
+                        self.completion_status[compass_id] = True
+                    logging_debug(_("Compass calibration completion inferred from generic status text."))
+                    continue
+                if cid_raw is None:
+                    continue
                 # Some ArduPilot builds emit calibration feedback as STATUSTEXT
                 # before any MAG_CAL_PROGRESS packet arrives. Create the row as
                 # soon as we know which compass is talking so the user sees a
@@ -371,7 +385,7 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                     self.completion_status[cid] = True
                     logging_debug(
                         _("Compass calibration completion inferred from status text for compass %(compass_id)s"),
-                        {"compass_id": cid},
+                        {"compass_id": cid_raw},
                     )
                 continue
 
@@ -384,7 +398,7 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                 progress_bar["value"] = int(pct)
                 logging_debug(
                     _("Compass calibration progress bar updated for compass %(compass_id)s to %(pct)s%%"),
-                    {"compass_id": cid, "pct": int(pct)},
+                    {"compass_id": cid_raw, "pct": int(pct)},
                 )
 
             elif data["type"] == "REPORT":
@@ -397,11 +411,11 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                     progress_bar.configure(style="Done.Horizontal.TProgressbar")
                     progress_bar.update_idletasks()
                     self.completion_status[cid] = True
-                    logging_debug(_("Compass calibration completed for compass %(compass_id)s"), {"compass_id": cid})
+                    logging_debug(_("Compass calibration completed for compass %(compass_id)s"), {"compass_id": cid_raw})
                 else:
                     # The calibration failed; try to cancel the session before closing the popup.
                     logging_debug(
-                        _("Compass calibration failed for compass %(compass_id)s; attempting cancel."), {"compass_id": cid}
+                        _("Compass calibration failed for compass %(compass_id)s; attempting cancel."), {"compass_id": cid_raw}
                     )
                     self._stop_polling()
                     success, error_msg = self.model.cancel_calibration()
@@ -494,7 +508,7 @@ def _create_compass_calibration_view(
     model: object,
     base_window: object,
 ) -> CompassCalibrationView:
-    return CompassCalibrationView(parent, model, base_window)  # type: ignore[arg-type]
+    return CompassCalibrationView(parent, cast("CompassCalibrationDataModel", model), cast("BaseWindow", base_window))
 
 
 def register_compass_calibration_plugin() -> None:
@@ -574,7 +588,7 @@ def main() -> None:  # pragma: no cover
     except Exception as e:  # pylint: disable=broad-exception-caught
         logging_error("Failed to start CompassCalibrationWindow: %(error)s", {"error": e})
         # Show error to user
-        showerror(_("Error"), f"Failed to start compass calibration: {e}")
+        showerror(_("Error"), _("Failed to start compass calibration: %(error)s") % {"error": e})
     finally:
         if state.flight_controller:
             state.flight_controller.disconnect()  # Disconnect from the flight controller

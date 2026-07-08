@@ -33,6 +33,9 @@ import serial.tools.list_ports_common
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_flightcontroller_commands import CompassCalibrationUpdate
+
 # Type alias for MAVLink connection to avoid type checker issues
 # We define MavlinkConnection as a protocol-like type to represent any MAVLink connection object
 if TYPE_CHECKING:
@@ -255,7 +258,7 @@ class FlightControllerCommandsProtocol(Protocol):
 
     def cancel_compass_calibration(self) -> tuple[bool, str]: ...
 
-    def get_compass_calibration_progress(self) -> list[dict[str, int | float | str]]: ...
+    def get_compass_calibration_progress(self) -> list["CompassCalibrationUpdate"]: ...
 
 
 class FlightControllerFilesProtocol(Protocol):

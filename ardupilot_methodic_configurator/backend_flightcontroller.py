@@ -22,7 +22,10 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.argparse_check_range import CheckRange
-from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
+from ardupilot_methodic_configurator.backend_flightcontroller_commands import (
+    CompassCalibrationUpdate,
+    FlightControllerCommands,
+)
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import (
     DEFAULT_BAUDRATE,
     DEVICE_FC_PARAM_FROM_FILE,
@@ -568,6 +571,6 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Cancel ongoing compass calibration."""
         return self._commands_manager.cancel_compass_calibration()
 
-    def get_compass_calibration_progress(self) -> list[dict[str, int | float | str]]:
+    def get_compass_calibration_progress(self) -> list[CompassCalibrationUpdate]:
         """Get compass calibration progress."""
         return self._commands_manager.get_compass_calibration_progress()

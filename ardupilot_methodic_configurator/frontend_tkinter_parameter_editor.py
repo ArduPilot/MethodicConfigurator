@@ -784,7 +784,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         # Get the data model for the plugin
-        model = self.parameter_editor.create_plugin_data_model(plugin_name)
+        try:
+            model = self.parameter_editor.create_plugin_data_model(plugin_name)
+        except ValueError as exc:
+            error_msg = str(exc)
+            ttk.Label(parent_frame, text=error_msg, foreground="red").pack()
+            logging_error(error_msg)
+            return
         if model is None:
             error_msg = _("Plugin requires flight controller connection")
             ttk.Label(parent_frame, text=error_msg).pack()
