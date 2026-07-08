@@ -8423,42 +8423,42 @@ msgstr "[画像が見つかりません: what_gets_uploaded.png]"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:39
 msgid "Error opening logfile {logfile}: {error}"
-msgstr ""
+msgstr "ログファイル {logfile} を開く際にエラーが発生しました: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:163
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:345
 msgid "Structured array for {message_type} is missing field metadata"
-msgstr ""
+msgstr "{message_type} 用の構造化配列にフィールドメタデータがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:237
 msgid "Schema {name} has mismatched field and format counts"
-msgstr ""
+msgstr "スキーマ {name} にフィールド数とフォーマット数の不一致があります"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:248
 msgid "Unsupported log format character {format_char!r} in schema {name}"
-msgstr ""
+msgstr "スキーマ {name} でサポートされていないログフォーマット文字 {format_char!r}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:298
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "{name} のフィールドの不一致。欠落: {missing}、余分: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:335
 msgid "Message count for {message_type} exceeded the preallocated array size"
-msgstr ""
+msgstr "{message_type} のメッセージ数が事前割り当てされた配列サイズを超えました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:362
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
-msgstr ""
+msgstr "{message_name} のメッセージ数の不一致: 期待値 {expected}、書き込んだ数 {written}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:39
 msgid "Configuration file '{config_file}' not found"
-msgstr ""
+msgstr "構成ファイル '{config_file}' が見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:41
 msgid "Error in configuration file '{config_file}': {error}"
-msgstr ""
+msgstr "構成ファイル '{config_file}' 内でエラーが発生しました: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:79
 msgid "Missing field definitions"
@@ -8486,7 +8486,7 @@ msgstr "{message} にロギングデータがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "フィールドの不一致。欠落: {missing}、余分: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:153
 msgid "Schema not found"

@@ -8689,42 +8689,42 @@ msgstr "[Imagem não encontrada: what_gets_uploaded.png]"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:39
 msgid "Error opening logfile {logfile}: {error}"
-msgstr ""
+msgstr "Erro ao abrir o ficheiro de registo {logfile}: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:163
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:345
 msgid "Structured array for {message_type} is missing field metadata"
-msgstr ""
+msgstr "Falta o campo metadata na matriz estruturada para {message_type}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:237
 msgid "Schema {name} has mismatched field and format counts"
-msgstr ""
+msgstr "O esquema {name} tem contagem de campos e formatos incompatível"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:248
 msgid "Unsupported log format character {format_char!r} in schema {name}"
-msgstr ""
+msgstr "Caractere de formato de registo {format_char!r} não suportado no esquema {name}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:298
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "Incompatibilidade de campos para {name}. Em falta: {missing}, em excesso: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:335
 msgid "Message count for {message_type} exceeded the preallocated array size"
-msgstr ""
+msgstr "O número de mensagens para {message_type} excedeu o tamanho pré-alocado da matriz"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:362
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
-msgstr ""
+msgstr "Incompatibilidade na contagem de mensagens para {message_name}: esperado {expected}, escrito {written}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:39
 msgid "Configuration file '{config_file}' not found"
-msgstr ""
+msgstr "Ficheiro de configuração '{config_file}' não encontrado"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:41
 msgid "Error in configuration file '{config_file}': {error}"
-msgstr ""
+msgstr "Erro no ficheiro de configuração '{config_file}': {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:79
 msgid "Missing field definitions"
@@ -8752,7 +8752,7 @@ msgstr "{message} não tem dados de registo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
-msgstr ""
+msgstr "Incompatibilidade de campos. Em falta: {missing}, em excesso: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:153
 msgid "Schema not found"
