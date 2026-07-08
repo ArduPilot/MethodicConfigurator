@@ -2498,6 +2498,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         Returns:
             The data model instance, or None if plugin not supported or requirements not met
 
+        Raises:
+            ValueError when plugin name is unknown/unsupported
+
         """
         if plugin_name == PLUGIN_MOTOR_TEST:
             if not self.is_fc_connected:

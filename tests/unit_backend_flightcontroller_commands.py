@@ -569,7 +569,7 @@ class TestCompassCalibrationProgressPolling:
 
         GIVEN: The MAVLink buffer contains a STATUSTEXT message without Mag(n) notation
         WHEN: get_compass_calibration_progress is called
-        THEN: Compass id 0 is used as the fallback
+        THEN: The status text is surfaced with compass_id set to None
         """
         mock_master = MagicMock()
         mock_master.target_system = 1
