@@ -178,6 +178,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _poll_tick(self) -> None:
         """Called by tkinter every _POLL_INTERVAL_MS ms to check for FC messages."""
+        self._poll_job = None  # The scheduled callback is now running, so no pending job remains.
         pos = self.model.poll_for_next_position()
 
         if pos is None:
@@ -224,8 +225,10 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
     def _stop_polling(self) -> None:
         """Cancel any pending after() poll job."""
         if self._poll_job is not None:
-            self.after_cancel(self._poll_job)
+            poll_job = self._poll_job
             self._poll_job = None
+            with suppress(tk.TclError):
+                self.after_cancel(poll_job)
 
     def _hide_wizard(self) -> None:
         """Hide the wizard panel and re-enable the top-level buttons."""
@@ -358,9 +361,9 @@ def main() -> None:  # pragma: no cover
         window.root.mainloop()
 
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logging_error("Failed to start AccelerometerCalibrationWindow: %(error)s", {"error": e})
+        logging_error(_("Failed to start AccelerometerCalibrationWindow: %(error)s"), {"error": e})
         # Show error to user
-        showerror(_("Error"), f"Failed to start accelerometer calibration: {e}")
+        showerror(_("Error"), _("Failed to start accelerometer calibration: %(error)s") % {"error": e})
     finally:
         if state.flight_controller:
             state.flight_controller.disconnect()  # Disconnect from the flight controller
