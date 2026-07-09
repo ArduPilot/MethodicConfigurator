@@ -1458,7 +1458,7 @@ class TestValidatePluginRegistry:
         """
         configuration_steps = {"step1.param": {"plugin": {"name": "motor_test"}}}
         factory = PluginFactory()
-        factory._creators["motor_test"] = MagicMock()  # pylint: disable=protected-access
+        factory.register("motor_test", MagicMock())
 
         with patch("ardupilot_methodic_configurator.plugin_factory.logging_error") as mock_err:
             factory.validate_configuration_steps(configuration_steps)

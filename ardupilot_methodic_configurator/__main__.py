@@ -704,10 +704,6 @@ def main() -> None:
         if popup_window:
             popup_window.root.mainloop()
 
-    # Validate that all configured plugins are registered
-    if state.local_filesystem:
-        plugin_factory.validate_configuration_steps(state.local_filesystem.configuration_steps)
-
     if bool(ProgramSettings.get_setting("auto_open_doc_in_browser")):
         display_first_use_documentation()
 
@@ -721,6 +717,9 @@ def main() -> None:
     # Handle vehicle directory selection if no vehicle configuration files are present in the current working directory
     if not files:
         vehicle_directory_selection(state)
+
+    # Validate that all configured plugins are registered after the filesystem has loaded configuration steps.
+    plugin_factory.validate_configuration_steps(state.local_filesystem.configuration_steps)
 
     # Extract parameter files version from vehicle_components.json (set when files were created)
     # must be done before the component editor workflow updates the file with information from the connected FC
