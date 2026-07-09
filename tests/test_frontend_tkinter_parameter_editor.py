@@ -150,11 +150,12 @@ def parameter_editor() -> MagicMock:
         *,
         get_progress_callback: Callable[[], Callable | None] | None = None,
         **_ignored: object,
-    ) -> None:
+    ) -> bool:
         if get_progress_callback is not None:
             manager.last_upload_progress_callback = get_progress_callback()
             if manager.last_upload_progress_callback is not None:
                 manager.last_upload_progress_callback(10, 20)
+        return True
 
     manager.should_upload_file_to_fc_workflow = MagicMock(side_effect=_should_upload_file_to_fc)
     manager._should_download_file_from_url_workflow = MagicMock()
@@ -670,7 +671,7 @@ class TestFileUploadHelpers:
             show_error: Callable[[str, str], None],
             show_warning: Callable[[str, str], None],
             get_progress_callback: Callable[[], Callable | None],
-        ) -> None:
+        ) -> bool:
             assert selected_file == "01_initial.param"
             assert ask_confirmation is parameter_editor_window.ui.ask_yesno
             assert show_error is parameter_editor_window.ui.show_error
@@ -679,10 +680,11 @@ class TestFileUploadHelpers:
             assert callback is progress_window.update_progress_bar
             assert callback is not None
             callback(5, 10)
+            return True
 
         parameter_editor.should_upload_file_to_fc_workflow.side_effect = fake_upload
 
-        parameter_editor_window._should_upload_file_to_fc("01_initial.param")
+        assert parameter_editor_window._should_upload_file_to_fc("01_initial.param") is True
 
         parameter_editor_window.ui.create_progress_window.assert_called_once()
         progress_window.destroy.assert_called_once()
@@ -695,6 +697,7 @@ class TestFileUploadHelpers:
         progress_window.update_progress_bar = MagicMock()
         progress_window.destroy = MagicMock()
         parameter_editor_window.ui.create_progress_window = MagicMock(return_value=progress_window)
+        parameter_editor_window.ui.ask_retry_cancel = MagicMock(return_value=False)
 
         def failing_upload(
             selected_file: str,
@@ -717,10 +720,30 @@ class TestFileUploadHelpers:
 
         parameter_editor.should_upload_file_to_fc_workflow.side_effect = failing_upload
 
-        parameter_editor_window._should_upload_file_to_fc("01_initial.param")
+        assert parameter_editor_window._should_upload_file_to_fc("01_initial.param") is False
 
-        parameter_editor_window.ui.show_error.assert_called_once()
+        parameter_editor_window.ui.ask_retry_cancel.assert_called_once()
+        parameter_editor_window.ui.show_error.assert_not_called()
         progress_window.destroy.assert_called_once()
+        assert parameter_editor_window.file_upload_progress_window is None
+
+    def test_user_can_retry_file_upload_after_reported_failure(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        first_progress_window = MagicMock(update_progress_bar=MagicMock(), destroy=MagicMock())
+        second_progress_window = MagicMock(update_progress_bar=MagicMock(), destroy=MagicMock())
+        parameter_editor_window.ui.create_progress_window = MagicMock(
+            side_effect=[first_progress_window, second_progress_window]
+        )
+        parameter_editor_window.ui.ask_retry_cancel = MagicMock(return_value=True)
+        parameter_editor.should_upload_file_to_fc_workflow.side_effect = [False, True]
+
+        assert parameter_editor_window._should_upload_file_to_fc("01_initial.param") is True
+
+        assert parameter_editor.should_upload_file_to_fc_workflow.call_count == 2
+        parameter_editor_window.ui.ask_retry_cancel.assert_called_once()
+        first_progress_window.destroy.assert_not_called()  # No progress callback was requested on this attempt.
+        second_progress_window.destroy.assert_not_called()  # No progress callback was requested on this attempt.
         assert parameter_editor_window.file_upload_progress_window is None
 
 
@@ -1868,7 +1891,7 @@ class TestPersistenceAndExit:
         progress_instance.update_progress_bar = MagicMock()
         editor.ui.create_progress_window = MagicMock(return_value=progress_instance)
 
-        editor._should_upload_file_to_fc("01_initial.param")
+        assert editor._should_upload_file_to_fc("01_initial.param") is True
         parameter_editor.should_upload_file_to_fc_workflow.assert_called_once()
         kwargs = parameter_editor.should_upload_file_to_fc_workflow.call_args.kwargs
         assert callable(kwargs["ask_confirmation"])
