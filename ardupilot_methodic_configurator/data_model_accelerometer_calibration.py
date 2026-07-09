@@ -171,4 +171,5 @@ class AccelerometerCalibrationDataModel:
         success, error_msg = self.flight_controller.confirm_accel_vehicle_pos(self._current_position)
         if success:
             logging_debug(_("Confirmed calibration position %d"), self._current_position)
-        return success, error_msg or _("Failed to send position confirmation")
+            return True, error_msg
+        return False, error_msg or _("Failed to send position confirmation")
