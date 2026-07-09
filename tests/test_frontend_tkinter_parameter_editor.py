@@ -717,9 +717,9 @@ class TestFileUploadHelpers:
 
         parameter_editor.should_upload_file_to_fc_workflow.side_effect = failing_upload
 
-        with pytest.raises(RuntimeError):
-            parameter_editor_window._should_upload_file_to_fc("01_initial.param")
+        parameter_editor_window._should_upload_file_to_fc("01_initial.param")
 
+        parameter_editor_window.ui.show_error.assert_called_once()
         progress_window.destroy.assert_called_once()
         assert parameter_editor_window.file_upload_progress_window is None
 
@@ -902,9 +902,9 @@ class TestUploadSelectedParameters:
 
         param_editor_mock.upload_selected_params_workflow.side_effect = failing_workflow
 
-        with pytest.raises(RuntimeError):
-            parameter_editor_window.upload_selected_params({})
+        assert parameter_editor_window.upload_selected_params({}) is False
 
+        parameter_editor_window.ui.show_error.assert_called_once()
         upload_window.destroy.assert_called_once()
         reset_window.destroy.assert_called_once()
         connection_window.destroy.assert_called_once()
