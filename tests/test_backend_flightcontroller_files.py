@@ -33,7 +33,7 @@ def _create_files_manager() -> FlightControllerFiles:
     return FlightControllerFiles(connection_manager=mock_conn_mgr)
 
 
-# pylint: disable=protected-access, too-few-public-methods
+# pylint: disable=protected-access, too-few-public-methods, too-many-lines
 
 
 class TestFlightControllerFilesInitialization:
@@ -138,7 +138,7 @@ class TestFlightControllerFilesUpload:
         mock_ret.error_code = 0
 
         mock_mavftp = MagicMock()
-        mock_mavftp.cmd_put = MagicMock()
+        mock_mavftp.cmd_put = MagicMock(return_value=MagicMock(error_code=0))
         mock_mavftp.process_ftp_reply.return_value = mock_ret
 
         mock_master = MagicMock()
@@ -156,8 +156,11 @@ class TestFlightControllerFilesUpload:
             progress_calls.append((current, total))
 
         # When: Upload file with mocked file existence
-        with patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe", return_value=mock_mavftp
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe", return_value=mock_mavftp
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
         ):
             success = files_mgr.upload_file(
                 local_filename="/tmp/test.param",  # noqa: S108
@@ -176,13 +179,17 @@ class TestFlightControllerFilesUpload:
         """Upload reports MAVFTP errors when CreateFile fails."""
         files_mgr = _create_files_manager()
         mock_mavftp = MagicMock()
+        mock_mavftp.cmd_put.return_value = MagicMock(error_code=0)
         mock_ret = MagicMock()
         mock_ret.error_code = 5
         mock_mavftp.process_ftp_reply.return_value = mock_ret
 
-        with patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
-            return_value=mock_mavftp,
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
         ):
             success = files_mgr.upload_file(
                 local_filename="/tmp/test.param",  # noqa: S108
@@ -198,9 +205,12 @@ class TestFlightControllerFilesUpload:
         mock_mavftp = MagicMock()
         mock_mavftp.cmd_put.side_effect = RuntimeError("boom")
 
-        with patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
-            return_value=mock_mavftp,
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
         ):
             success = files_mgr.upload_file(
                 local_filename="/tmp/test.param",  # noqa: S108
@@ -208,6 +218,134 @@ class TestFlightControllerFilesUpload:
             )
 
         assert success is False
+
+    def test_file_upload_creates_missing_remote_parent_directories(self) -> None:
+        """
+        File upload creates absolute remote parent directories before creating the file.
+
+        GIVEN: A script upload target below /APM/Scripts
+        WHEN: User uploads the file via MAVFTP
+        THEN: Parent directories are created first
+        AND: The file upload is attempted afterwards
+        """
+        files_mgr = _create_files_manager()
+        mock_mavftp = MagicMock()
+        mkdir_ret = MagicMock(error_code=0)
+        put_ret = MagicMock(error_code=0)
+        mock_mavftp.cmd_mkdir.return_value = mkdir_ret
+        mock_mavftp.cmd_put.return_value = put_ret
+        mock_mavftp.process_ftp_reply.return_value = put_ret
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            success = files_mgr.upload_file(
+                local_filename="/tmp/VTOL-quicktune.lua",  # noqa: S108
+                remote_filename="/APM/Scripts/VTOL-quicktune.lua",
+            )
+
+        assert success is True
+        mock_mavftp.cmd_mkdir.assert_any_call(["/APM"])
+        mock_mavftp.cmd_mkdir.assert_any_call(["/APM/Scripts"])
+        mock_mavftp.cmd_put.assert_called_once()
+
+    def test_file_upload_treats_existing_remote_parent_directories_as_success(self) -> None:
+        """Existing remote parent directories do not block file uploads."""
+        files_mgr = _create_files_manager()
+        mock_mavftp = MagicMock()
+        mkdir_ret = MagicMock(error_code=8)
+        put_ret = MagicMock(error_code=0)
+        mock_mavftp.cmd_mkdir.return_value = mkdir_ret
+        mock_mavftp.cmd_put.return_value = put_ret
+        mock_mavftp.process_ftp_reply.return_value = put_ret
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            success = files_mgr.upload_file(
+                local_filename="/tmp/VTOL-quicktune.lua",  # noqa: S108
+                remote_filename="/APM/Scripts/VTOL-quicktune.lua",
+            )
+
+        assert success is True
+        mock_mavftp.cmd_put.assert_called_once()
+
+    def test_file_upload_stops_when_remote_parent_directory_creation_fails(self) -> None:
+        """Upload stops before CreateFile when a parent directory cannot be created."""
+        files_mgr = _create_files_manager()
+        mock_mavftp = MagicMock()
+        mkdir_ret = MagicMock(error_code=9)
+        mock_mavftp.cmd_mkdir.return_value = mkdir_ret
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            success = files_mgr.upload_file(
+                local_filename="/tmp/VTOL-quicktune.lua",  # noqa: S108
+                remote_filename="/APM/Scripts/VTOL-quicktune.lua",
+            )
+
+        assert success is False
+        mkdir_ret.display_message.assert_called_once()
+        mock_mavftp.cmd_put.assert_not_called()
+
+    def test_file_upload_does_not_create_remote_directories_when_local_file_is_missing(self) -> None:
+        """Local validation runs before remote directory creation."""
+        files_mgr = _create_files_manager()
+        mock_mavftp = MagicMock()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=False),
+        ):
+            success = files_mgr.upload_file(
+                local_filename="/tmp/missing.lua",  # noqa: S108
+                remote_filename="/APM/Scripts/missing.lua",
+            )
+
+        assert success is False
+        mock_mavftp.cmd_mkdir.assert_not_called()
+        mock_mavftp.cmd_put.assert_not_called()
+        mock_mavftp.process_ftp_reply.assert_not_called()
+
+    def test_file_upload_stops_when_cmd_put_fails_synchronously(self) -> None:
+        """Synchronous cmd_put failures are reported without waiting for a CreateFile reply."""
+        files_mgr = _create_files_manager()
+        mock_mavftp = MagicMock()
+        mock_mavftp.cmd_mkdir.return_value = MagicMock(error_code=0)
+        put_ret = MagicMock(error_code=72)
+        mock_mavftp.cmd_put.return_value = put_ret
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+                return_value=mock_mavftp,
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_files.os.path.isfile", return_value=True),
+        ):
+            success = files_mgr.upload_file(
+                local_filename="/tmp/unreadable.lua",  # noqa: S108
+                remote_filename="/APM/Scripts/unreadable.lua",
+            )
+
+        assert success is False
+        put_ret.display_message.assert_called_once()
+        mock_mavftp.process_ftp_reply.assert_not_called()
 
 
 class TestFlightControllerFilesDownload:
@@ -678,6 +816,23 @@ class TestFlightControllerFilesLogDiscovery:
 class TestFlightControllerFilesDownloadHelpers:
     """Test helper utilities for downloading logs."""
 
+    def test_remote_parent_directory_helper_normalizes_paths(self) -> None:
+        """
+        Remote parent directory helper should collapse redundant segments.
+
+        GIVEN: A remote path containing duplicate separators and a dot segment
+        WHEN: The helper derives the parent directories
+        THEN: Only normalized absolute parents should be returned
+        """
+        parents = FlightControllerFiles._remote_parent_directories("/APM//Scripts/./VTOL-quicktune.lua")
+
+        assert parents == ["/APM", "/APM/Scripts"]
+
+    def test_remote_parent_directory_helper_returns_noops_for_root_paths(self) -> None:
+        """Root and relative paths should not trigger mkdir calls."""
+        assert FlightControllerFiles._remote_parent_directories("/") == []  # pylint: disable=use-implicit-booleaness-not-comparison
+        assert FlightControllerFiles._remote_parent_directories("Scripts/VTOL-quicktune.lua") == []  # pylint: disable=use-implicit-booleaness-not-comparison
+
     def test_download_log_file_reports_mavftp_errors(self) -> None:
         """
         Download helper reports MAVFTP failures to the caller.
@@ -825,7 +980,7 @@ class TestFlightControllerFilesLastlogTxt:
         assert result is False
 
 
-class TestFlightControllerFilesConstants:  # pylint: disable=too-few-public-methods
+class TestFlightControllerFilesConstants:
     """Test MAVFTP timeout constants are properly defined."""
 
     def test_mavftp_timeout_constants_are_defined(self) -> None:

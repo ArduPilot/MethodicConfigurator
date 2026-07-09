@@ -974,7 +974,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.ui.show_info,
         )
 
-    def _should_upload_file_to_fc(self, selected_file: str) -> None:
+    def _should_upload_file_to_fc(self, selected_file: str) -> bool:
         def get_progress_callback() -> Callable | None:
             """Create and return progress window callback only when upload will actually happen."""
             show_only_on_update = True
@@ -986,22 +986,36 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             return self.file_upload_progress_window.update_progress_bar
 
-        try:
-            self.parameter_editor.should_upload_file_to_fc_workflow(
-                selected_file,
-                ask_confirmation=self.ui.ask_yesno,
-                show_error=self.ui.show_error,
-                show_warning=self.ui.show_warning,
-                get_progress_callback=get_progress_callback,
-            )
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            self.ui.show_error(_("File Upload Error"), f"{_('Failed to upload file to flight controller:')} {e}")
-            logging_exception("File upload to flight controller failed")
-        finally:
-            # Clean up progress window if it was created
-            if self.file_upload_progress_window is not None:
-                self.file_upload_progress_window.destroy()
-                self.file_upload_progress_window = None
+        while True:
+            try:
+                upload_success = self.parameter_editor.should_upload_file_to_fc_workflow(
+                    selected_file,
+                    ask_confirmation=self.ui.ask_yesno,
+                    show_error=self.ui.show_error,
+                    show_warning=self.ui.show_warning,
+                    get_progress_callback=get_progress_callback,
+                )
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logging_exception("File upload to flight controller failed")
+                retry = self.ui.ask_retry_cancel(
+                    _("File Upload Error"),
+                    f"{_('Failed to upload file to flight controller:')} {e}\n\n{_('Do you want to retry?')}",
+                )
+            else:
+                if upload_success:
+                    return True
+                retry = self.ui.ask_retry_cancel(
+                    _("File Upload Error"),
+                    _("File upload failed. Do you want to retry?"),
+                )
+            finally:
+                # Clean up progress window if it was created
+                if self.file_upload_progress_window is not None:
+                    self.file_upload_progress_window.destroy()
+                    self.file_upload_progress_window = None
+
+            if not retry:
+                return False
 
     def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:  # noqa: UP007
         if not self.file_selection_combobox["values"]:

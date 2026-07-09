@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
+import posixpath
 from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -25,14 +26,17 @@ if TYPE_CHECKING:
         FlightControllerConnectionProtocol,
         MavlinkConnection,
     )
+    from ardupilot_methodic_configurator.backend_mavftp import MAVFTP as MAVFTPType  # noqa: N811
 
 # Conditionally import MAVFTP if available
 try:
-    from ardupilot_methodic_configurator.backend_mavftp import MAVFTP
+    from ardupilot_methodic_configurator.backend_mavftp import MAVFTP, ERR_FileExists, ERR_None
 
     # from pymavlink import mavftp
     # MAVFTP = mavftp.MAVFTP
 except ImportError:
+    ERR_None = 0
+    ERR_FileExists = 8
     MAVFTP = None  # type: ignore[assignment,misc]
 
 
@@ -77,7 +81,7 @@ class FlightControllerFiles:
         """Get flight controller info."""
         return self._connection_manager.info
 
-    def upload_file(
+    def upload_file(  # noqa: PLR0911 # pylint: disable=too-many-return-statements
         self, local_filename: str, remote_filename: str, progress_callback: None | Callable[[int, int], None] = None
     ) -> bool:
         """
@@ -106,7 +110,18 @@ class FlightControllerFiles:
                 progress_callback(int(completion * 100), 100)
 
         try:
-            mavftp_instance.cmd_put([local_filename, remote_filename], progress_callback=put_progress_callback)
+            if not os.path.isfile(local_filename):
+                logging_error(_("Local file does not exist or is not a regular file: %(local)s"), {"local": local_filename})
+                return False
+
+            if not self._ensure_remote_directory_exists(mavftp_instance, remote_filename):
+                return False
+
+            put_ret = mavftp_instance.cmd_put([local_filename, remote_filename], progress_callback=put_progress_callback)
+            if put_ret.error_code != ERR_None:
+                put_ret.display_message()
+                return False
+
             ret = mavftp_instance.process_ftp_reply("CreateFile", timeout=self.MAVFTP_FILE_OPERATION_TIMEOUT)
             if ret.error_code != 0:
                 ret.display_message()
@@ -118,6 +133,43 @@ class FlightControllerFiles:
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_error(_("Failed to upload file: %(error)s"), {"error": str(e)})
             return False
+
+    def _ensure_remote_directory_exists(self, mavftp_instance: "MAVFTPType", remote_filename: str) -> bool:
+        """
+        Ensure all parent directories for a remote MAVFTP file path exist.
+
+        ArduPilot's MAVFTP CreateFile operation fails with "file/directory not found" when the parent
+        directory is missing. Create every absolute parent directory before uploading, after normalizing
+        the path, and treat "already exists" as success.
+        """
+        parent_directories = self._remote_parent_directories(remote_filename)
+        if not parent_directories:
+            return True
+
+        for current_dir in parent_directories:
+            ret = mavftp_instance.cmd_mkdir([current_dir])
+            if ret.error_code not in {ERR_None, ERR_FileExists}:
+                ret.display_message()
+                logging_error(_("Failed to create remote directory %(directory)s"), {"directory": current_dir})
+                return False
+        return True
+
+    @staticmethod
+    def _remote_parent_directories(remote_filename: str) -> list[str]:
+        """Return the absolute parent directories that should exist for a remote file path."""
+        remote_dir = posixpath.dirname(remote_filename)
+        remote_dir = posixpath.normpath(remote_dir)
+        if not remote_dir or remote_dir in {".", "/"} or not remote_dir.startswith("/"):
+            return []
+
+        current_dir = ""
+        parent_directories: list[str] = []
+        for part in remote_dir.strip("/").split("/"):
+            if not part:
+                continue
+            current_dir = f"{current_dir}/{part}"
+            parent_directories.append(current_dir)
+        return parent_directories
 
     def download_last_flight_log(
         self, local_filename: str, progress_callback: None | Callable[[int, int], None] = None

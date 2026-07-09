@@ -486,7 +486,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         auto_open_documentation: bool,
         handle_imu_temp_cal: Callable[[str], None],
         handle_copy_fc_values: Callable[[str], ExperimentChoice],
-        handle_upload_file: Callable[[str], None],
+        handle_upload_file: Callable[[str], bool],
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
         show_info: ShowInfoCallback,
