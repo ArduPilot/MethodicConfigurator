@@ -113,7 +113,7 @@ class PluginFactory:
             if plugin and plugin.get("name"):
                 configured_plugins.add(plugin["name"])
 
-        available = self.available_plugins()
+        available = ", ".join(self.available_plugins()) or _("none")
         for plugin_name in configured_plugins:
             if not self.is_registered(plugin_name):
                 logging_error(
