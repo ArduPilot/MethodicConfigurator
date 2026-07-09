@@ -94,7 +94,7 @@ class PluginFactory:
         """Return the registered plugin names in sorted order."""
         return sorted(self._creators)
 
-    def validate_configuration_steps(self, configuration_steps: dict) -> None:
+    def validate_configuration_steps(self, configuration_steps: dict[str, dict]) -> None:
         """
         Validate that all plugins referenced in configuration steps are registered.
 
