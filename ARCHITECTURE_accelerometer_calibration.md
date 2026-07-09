@@ -96,7 +96,7 @@ Position enum values (`ACCELCAL_VEHICLE_POS_*`):
 | `start_simple_calibration()` | Calls `start_accel_calibration_simple()`, blocks until ACK |
 | `start_level_calibration()` | Calls `start_accel_calibration_level()`, blocks until ACK |
 | `start_full_calibration()` | Calls `send_accel_calibration_full_start()`, returns immediately |
-| `poll_for_next_position()` | Thin wrapper around `poll_accel_cal_vehicle_pos(timeout=0.05)` |
+| `poll_for_next_position()` | Thin wrapper around `poll_accel_cal_vehicle_pos()` |
 | `get_position_label(pos)` | Looks up `POSITION_LABELS[pos]` |
 | `confirm_current_position()` | Calls `confirm_accel_vehicle_pos(_current_position)` |
 
@@ -128,7 +128,7 @@ timeouts of 30 s and 15 s respectively, relying on the standard `COMMAND_ACK` re
 arrives after the complete 6-position exchange (potentially minutes later).  Instead:
 
 - `send_accel_calibration_full_start()` sends the `COMMAND_LONG` and returns immediately.
-- `poll_accel_cal_vehicle_pos()` calls `master.recv_match(type="COMMAND_LONG", blocking=True, timeout=0.05)` and filters on `msg.command == 42429`.
+- `poll_accel_cal_vehicle_pos()` calls `master.recv_match(type="COMMAND_LONG", blocking=False)` and filters on `msg.command == 42429`.
 - `confirm_accel_vehicle_pos(position)` sends `COMMAND_LONG` with `cmd=42429` and `param1=position` back to the FC.
 
 ### GUI Layer (`frontend_tkinter_accelerometer_calibration.py`)
@@ -176,7 +176,7 @@ User clicks "Full Calibration (6-Position)"
 
   ── 100 ms poll tick ──────────────────────────────────────────────
   │  model.poll_for_next_position()
-  │    → FlightControllerCommands.poll_accel_cal_vehicle_pos(0.05)
+  │    → FlightControllerCommands.poll_accel_cal_vehicle_pos()
   │      → recv_match(COMMAND_LONG) from FC
   │        if cmd==42429 → return int(param1)   ← position (1–6)
   │  position_label updated; Continue button enabled

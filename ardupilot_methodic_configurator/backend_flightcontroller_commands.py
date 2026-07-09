@@ -521,17 +521,13 @@ class FlightControllerCommands:
             logging_error(error_msg)
             return False, error_msg
 
-    def poll_accel_cal_vehicle_pos(self, timeout: float = 0.05) -> int | None:
+    def poll_accel_cal_vehicle_pos(self) -> int | None:
         """
         Poll for a position-request COMMAND_LONG from the FC during full accel calibration.
 
         ArduPilot sends COMMAND_LONG with command=MAV_CMD_ACCELCAL_VEHICLE_POS (42429)
         every second while waiting for position confirmation.  Special values
         ACCELCAL_VEHICLE_POS_SUCCESS and ACCELCAL_VEHICLE_POS_FAILED signal completion.
-
-        Args:
-            timeout: How long to wait in seconds. Keep short (<=0.1 s) when called
-                     from a UI polling loop so the GUI stays responsive.
 
         Returns:
             int: The ACCELCAL_VEHICLE_POS enum value if a message arrived, else None.
@@ -541,7 +537,6 @@ class FlightControllerCommands:
             return None
 
         try:
-            _timeout = timeout  # Retained for API compatibility; polling is intentionally non-blocking.
             msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                 type="COMMAND_LONG", blocking=False
             )

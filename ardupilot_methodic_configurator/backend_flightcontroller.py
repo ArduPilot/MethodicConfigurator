@@ -508,9 +508,9 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Send the start command for interactive 6-position calibration - delegates to commands manager."""
         return self._commands_manager.send_accel_calibration_full_start()
 
-    def poll_accel_cal_vehicle_pos(self, timeout: float = 0.05) -> int | None:
+    def poll_accel_cal_vehicle_pos(self) -> int | None:
         """Poll for a position-request from the FC during full accel calibration - delegates to commands manager."""
-        return self._commands_manager.poll_accel_cal_vehicle_pos(timeout)
+        return self._commands_manager.poll_accel_cal_vehicle_pos()
 
     def confirm_accel_vehicle_pos(self, position: int) -> tuple[bool, str]:
         """Confirm calibration position to the FC - delegates to commands manager."""
