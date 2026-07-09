@@ -129,7 +129,7 @@ class AccelerometerCalibrationDataModel:
                  message has arrived yet.
 
         """
-        pos = self.flight_controller.poll_accel_cal_vehicle_pos(timeout=0.05)
+        pos = self.flight_controller.poll_accel_cal_vehicle_pos()
         if pos is not None:
             self._current_position = pos
             logging_debug(_("FC requested calibration position: %d"), pos)

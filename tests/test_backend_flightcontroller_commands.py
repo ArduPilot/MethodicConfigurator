@@ -780,7 +780,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
 
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        position = commands_mgr.poll_accel_cal_vehicle_pos(timeout=0.5)
+        position = commands_mgr.poll_accel_cal_vehicle_pos()
 
         assert position == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
         mock_master.recv_match.assert_called_once_with(type="COMMAND_LONG", blocking=False)
