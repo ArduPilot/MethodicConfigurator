@@ -994,6 +994,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 show_warning=self.ui.show_warning,
                 get_progress_callback=get_progress_callback,
             )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self.ui.show_error(_("File Upload Error"), f"{_('Failed to upload file to flight controller:')} {e}")
+            logging_exception("File upload to flight controller failed")
         finally:
             # Clean up progress window if it was created
             if self.file_upload_progress_window is not None:
@@ -1175,17 +1178,24 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.on_skip_click()
             return
 
-        self.upload_selected_params(selected_params)
-        # Delete the parameter table and create a new one with the next file if available
-        self.on_skip_click()
+        if self.upload_selected_params(selected_params):
+            # Delete the parameter table and create a new one with the next file if available
+            self.on_skip_click()
 
     # This function can recurse multiple times if there is an upload error
-    def upload_selected_params(self, selected_params: dict) -> None:
-        self.ui.upload_params_with_progress(
-            self.root,
-            self.parameter_editor.upload_selected_params_workflow,
-            selected_params,
-        )
+
+    def upload_selected_params(self, selected_params: dict) -> bool:
+        try:
+            self.ui.upload_params_with_progress(
+                self.root,
+                self.parameter_editor.upload_selected_params_workflow,
+                selected_params,
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {e}")
+            logging_exception("Parameter upload failed")
+            return False
+        return True
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""
