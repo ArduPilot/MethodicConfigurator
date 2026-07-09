@@ -541,8 +541,9 @@ class FlightControllerCommands:
             return None
 
         try:
+            _timeout = timeout  # Retained for API compatibility; polling is intentionally non-blocking.
             msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="COMMAND_LONG", blocking=True, timeout=timeout
+                type="COMMAND_LONG", blocking=False
             )
             if msg and msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
                 return int(msg.param1)

@@ -21,6 +21,8 @@ from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 
+# pylint: disable=too-many-lines
+
 
 class TestFlightControllerCommandsInitialization:
     """Test command manager initialization and setup."""
@@ -665,6 +667,137 @@ class TestFlightControllerCommandsWrapperMethods:
         # Then: Should return frame class and type
         assert frame_class == 1
         assert frame_type == 1
+
+
+class TestFlightControllerCommandsAccelerometerCalibration:
+    """Test accelerometer calibration command functionality."""
+
+    def test_user_can_start_simple_accelerometer_calibration(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        User can start the simple one-shot accelerometer calibration.
+
+        GIVEN: Connected flight controller ready for calibration
+        WHEN: User starts simple accelerometer calibration
+        THEN: Preflight calibration command should be sent with param5=4
+        AND: The command should be acknowledged successfully
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = mock_ack
+
+        mock_params_mgr = Mock()
+        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_simple()
+
+        assert success is True
+        assert error == ""
+        mock_master.mav.command_long_send.assert_called_once()
+        args = mock_master.mav.command_long_send.call_args.args
+        assert args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        assert args[8] == 4.0
+
+    def test_simple_accelerometer_calibration_fails_without_connection(self) -> None:
+        """
+        Simple accelerometer calibration fails cleanly without a connection.
+
+        GIVEN: No flight controller connection
+        WHEN: User starts simple accelerometer calibration
+        THEN: The method should return a clear connection error
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_simple()
+
+        assert success is False
+        assert "connection" in error.lower()
+
+    def test_user_can_start_full_accelerometer_calibration(self) -> None:
+        """
+        User can start the interactive 6-position accelerometer calibration.
+
+        GIVEN: Connected flight controller ready for calibration
+        WHEN: User starts full accelerometer calibration
+        THEN: Preflight calibration command should be sent with param5=1
+        AND: The command should be reported as sent successfully
+        """
+        # pylint: disable=duplicate-code
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        # pylint: enable=duplicate-code
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.send_accel_calibration_full_start()
+
+        assert success is True
+        assert error == ""
+        mock_master.mav.command_long_send.assert_called_once()
+        args = mock_master.mav.command_long_send.call_args.args
+        assert args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        assert args[8] == 1
+
+    def test_full_accelerometer_calibration_fails_without_connection(self) -> None:
+        """
+        Full accelerometer calibration fails cleanly without a connection.
+
+        GIVEN: No flight controller connection
+        WHEN: User starts the full accelerometer calibration
+        THEN: The method should return a clear connection error
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.send_accel_calibration_full_start()
+
+        assert success is False
+        assert "connection" in error.lower()
+
+    def test_poll_accel_cal_vehicle_pos_is_non_blocking_and_parses_position(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Polling for accel calibration position should not block the UI thread.
+
+        GIVEN: A COMMAND_LONG message requesting a calibration position
+        WHEN: poll_accel_cal_vehicle_pos is called
+        THEN: The message should be read with non-blocking recv_match
+        AND: The requested position should be returned
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_msg = MagicMock()
+        mock_msg.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        mock_msg.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
+        mock_master.recv_match.return_value = mock_msg
+
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        position = commands_mgr.poll_accel_cal_vehicle_pos(timeout=0.5)
+
+        assert position == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
+        mock_master.recv_match.assert_called_once_with(type="COMMAND_LONG", blocking=False)
+
+    def test_poll_accel_cal_vehicle_pos_returns_none_without_connection(self) -> None:
+        """
+        Polling accel calibration position returns None without a connection.
+
+        GIVEN: No flight controller connection
+        WHEN: poll_accel_cal_vehicle_pos is called
+        THEN: The method should return None
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
 
 
 class TestFlightControllerCommandsResultCodes:

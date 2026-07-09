@@ -247,6 +247,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
     def on_deactivate(self) -> None:
         """Called when the plugin view is hidden (lifecycle method)."""
         self._stop_polling()
+        self._hide_wizard()
 
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""
