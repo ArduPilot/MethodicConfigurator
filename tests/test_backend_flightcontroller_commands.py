@@ -716,7 +716,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         assert success is False
         assert "connection" in error.lower()
 
-    def test_user_can_start_full_accelerometer_calibration(self) -> None:
+    def test_user_can_start_full_accelerometer_calibration(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can start the interactive 6-position accelerometer calibration.
 
@@ -725,14 +725,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         THEN: Preflight calibration command should be sent with param5=1
         AND: The command should be reported as sent successfully
         """
-        # pylint: disable=duplicate-code
-        mock_master = MagicMock()
-        mock_master.target_system = 1
-        mock_master.target_component = 1
-
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = mock_master
-        # pylint: enable=duplicate-code
+        mock_master, mock_conn_mgr = mock_connected_master
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         success, error = commands_mgr.send_accel_calibration_full_start()
@@ -819,7 +812,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         success, error = commands_mgr.start_accel_calibration_simple()
 
         assert success is False
-        assert error != ""
+        assert error == "Command failed"
 
     def test_user_can_run_level_accelerometer_calibration(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
@@ -840,6 +833,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
 
         assert success is True
         assert error == ""
+        mock_master.mav.command_long_send.assert_called_once()
         args = mock_master.mav.command_long_send.call_args.args
         assert args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
         assert args[8] == 2.0
@@ -881,7 +875,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         success, error = commands_mgr.start_accel_calibration_level()
 
         assert success is False
-        assert error != ""
+        assert error == "Command failed"
 
     def test_full_accelerometer_calibration_reports_send_error(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
@@ -898,7 +892,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         success, error = commands_mgr.send_accel_calibration_full_start()
 
         assert success is False
-        assert "link down" in error
+        assert error == "Failed to send full accelerometer calibration command: link down"
 
     def test_poll_accel_cal_vehicle_pos_ignores_unrelated_messages(
         self, mock_connected_master: tuple[MagicMock, Mock]
@@ -1001,7 +995,7 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         success, error = commands_mgr.confirm_accel_vehicle_pos(mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT)
 
         assert success is False
-        assert "write failed" in error
+        assert error == "Failed to send position confirmation: write failed"
 
 
 class TestFlightControllerCommandsResultCodes:
