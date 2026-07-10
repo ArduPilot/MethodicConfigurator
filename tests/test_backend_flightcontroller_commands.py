@@ -799,6 +799,210 @@ class TestFlightControllerCommandsAccelerometerCalibration:
 
         assert commands_mgr.poll_accel_cal_vehicle_pos() is None
 
+    def test_simple_accelerometer_calibration_reports_backend_failure(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        A rejected simple calibration surfaces the acknowledgement failure.
+
+        GIVEN: A connected flight controller that rejects the calibration command
+        WHEN: User starts simple accelerometer calibration
+        THEN: The method reports failure with the backend error message
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_FAILED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_simple()
+
+        assert success is False
+        assert error != ""
+
+    def test_user_can_run_level_accelerometer_calibration(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        User can level-trim the accelerometers on a connected vehicle.
+
+        GIVEN: A connected flight controller ready for level trim
+        WHEN: User starts level calibration
+        THEN: Preflight calibration is sent with param5=2 and acknowledged
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_level()
+
+        assert success is True
+        assert error == ""
+        args = mock_master.mav.command_long_send.call_args.args
+        assert args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        assert args[8] == 2.0
+
+    def test_level_accelerometer_calibration_fails_without_connection(self) -> None:
+        """
+        Level calibration fails cleanly without a connection.
+
+        GIVEN: No flight controller connection
+        WHEN: User starts level calibration
+        THEN: The method returns a clear connection error
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_level()
+
+        assert success is False
+        assert "connection" in error.lower()
+
+    def test_level_accelerometer_calibration_reports_backend_failure(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        A rejected level calibration surfaces the acknowledgement failure.
+
+        GIVEN: A connected flight controller that rejects the level command
+        WHEN: User starts level calibration
+        THEN: The method reports failure with the backend error message
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_FAILED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.start_accel_calibration_level()
+
+        assert success is False
+        assert error != ""
+
+    def test_full_accelerometer_calibration_reports_send_error(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        A transport error while starting full calibration is surfaced cleanly.
+
+        GIVEN: A connected flight controller whose link raises on send
+        WHEN: User starts the full 6-position calibration
+        THEN: The method returns failure with the transport error message
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.mav.command_long_send.side_effect = ConnectionError("link down")
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.send_accel_calibration_full_start()
+
+        assert success is False
+        assert "link down" in error
+
+    def test_poll_accel_cal_vehicle_pos_ignores_unrelated_messages(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Polling ignores COMMAND_LONG messages that are not position requests.
+
+        GIVEN: A COMMAND_LONG that is not a MAV_CMD_ACCELCAL_VEHICLE_POS request
+        WHEN: poll_accel_cal_vehicle_pos is called
+        THEN: No position is returned
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_msg = MagicMock()
+        mock_msg.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        mock_master.recv_match.return_value = mock_msg
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
+    def test_poll_accel_cal_vehicle_pos_returns_none_when_no_message_waiting(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Polling returns None when the flight controller has sent nothing.
+
+        GIVEN: A non-blocking poll that finds no message
+        WHEN: poll_accel_cal_vehicle_pos is called
+        THEN: None is returned
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.recv_match.return_value = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
+    def test_poll_accel_cal_vehicle_pos_swallows_transport_exceptions(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        A transient link error during polling never propagates to the UI loop.
+
+        GIVEN: A poll whose recv_match raises a transport error
+        WHEN: poll_accel_cal_vehicle_pos is called
+        THEN: None is returned instead of raising
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.recv_match.side_effect = ConnectionError("socket reset")
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
+    def test_user_can_confirm_accelerometer_calibration_position(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        User confirmation of a position is sent back to the flight controller.
+
+        GIVEN: A connected flight controller mid full calibration
+        WHEN: confirm_accel_vehicle_pos is called with a position
+        THEN: MAV_CMD_ACCELCAL_VEHICLE_POS is sent with that position in param1
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.confirm_accel_vehicle_pos(mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEDOWN)
+
+        assert success is True
+        assert error == ""
+        args = mock_master.mav.command_long_send.call_args.args
+        assert args[2] == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        assert args[4] == float(mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEDOWN)
+
+    def test_confirm_accelerometer_position_fails_without_connection(self) -> None:
+        """
+        Position confirmation fails cleanly without a connection.
+
+        GIVEN: No flight controller connection
+        WHEN: confirm_accel_vehicle_pos is called
+        THEN: The method returns a clear connection error
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.confirm_accel_vehicle_pos(mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL)
+
+        assert success is False
+        assert "connection" in error.lower()
+
+    def test_confirm_accelerometer_position_reports_send_error(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        A transport error while confirming a position is surfaced cleanly.
+
+        GIVEN: A connected flight controller whose link raises on send
+        WHEN: confirm_accel_vehicle_pos is called
+        THEN: The method returns failure with the transport error message
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.mav.command_long_send.side_effect = ConnectionError("write failed")
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        success, error = commands_mgr.confirm_accel_vehicle_pos(mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT)
+
+        assert success is False
+        assert "write failed" in error
+
 
 class TestFlightControllerCommandsResultCodes:
     """Test command result code handling."""
