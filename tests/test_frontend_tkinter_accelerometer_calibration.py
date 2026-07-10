@@ -28,7 +28,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_accelerometer_calibration 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access,redefined-outer-name
 
 _FRONTEND = "ardupilot_methodic_configurator.frontend_tkinter_accelerometer_calibration"
 
@@ -367,7 +367,7 @@ class TestPluginLifecycle:
         parent.destroy()
 
 
-class TestPluginFactoryFunction:
+class TestPluginFactoryFunction:  # pylint: disable=too-few-public-methods
     """Test the module-level factory function used by the plugin registry."""
 
     def test_factory_builds_a_view_wired_to_the_given_parent_and_model(self, tk_root) -> None:
