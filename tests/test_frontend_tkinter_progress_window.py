@@ -20,30 +20,48 @@ import pytest
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 
-class TestProgressWindowUserExperience:
+@pytest.fixture
+def progress_window(tk_root) -> Generator[ProgressWindow, None, None]:
+    """Fixture providing a ProgressWindow ready for user interaction testing."""
+    # Block all macOS Tkinter rendering traps and infinite waits
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window_on_screen"),
+        patch("tkinter.Misc.wait_visibility"),
+        patch("tkinter.Misc.wait_window"),
+        patch("tkinter.Misc.update"),
+        patch("tkinter.Misc.update_idletasks"),
+    ):
+        window = ProgressWindow(tk_root, title="Test Progress", message="Progress: {}/{}", width=300, height=80)
+        yield window
+        # Cleanup
+        with contextlib.suppress(Exception):
+            window.destroy()
+
+
+@pytest.fixture
+def lazy_progress_window(tk_root) -> Generator[ProgressWindow, None, None]:
+    """Fixture providing a ProgressWindow that only shows when progress is updated."""
+    # Block all macOS Tkinter rendering traps and infinite waits
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window_on_screen"),
+        patch("tkinter.Misc.wait_visibility"),
+        patch("tkinter.Misc.wait_window"),
+        patch("tkinter.Misc.update"),
+        patch("tkinter.Misc.update_idletasks"),
+    ):
+        window = ProgressWindow(
+            tk_root, title="Lazy Progress", message="Processing: {}/{}", only_show_when_update_progress_called=True
+        )
+        yield window
+        # Cleanup
+        with contextlib.suppress(Exception):
+            window.destroy()
+
+
+class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name
     """Test ProgressWindow from the user's perspective - focusing on progress indication behavior."""
-
-    @pytest.fixture
-    def progress_window(self, tk_root) -> Generator[ProgressWindow, None, None]:
-        """Fixture providing a ProgressWindow ready for user interaction testing."""
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"):
-            window = ProgressWindow(tk_root, title="Test Progress", message="Progress: {}/{}", width=300, height=80)
-            yield window
-            # Cleanup
-            with contextlib.suppress(Exception):
-                window.destroy()
-
-    @pytest.fixture
-    def lazy_progress_window(self, tk_root) -> Generator[ProgressWindow, None, None]:
-        """Fixture providing a ProgressWindow that only shows when progress is updated."""
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"):
-            window = ProgressWindow(
-                tk_root, title="Lazy Progress", message="Processing: {}/{}", only_show_when_update_progress_called=True
-            )
-            yield window
-            # Cleanup
-            with contextlib.suppress(Exception):
-                window.destroy()
 
     def test_user_sees_progress_window_with_initial_state(self, progress_window) -> None:
         """
@@ -226,6 +244,9 @@ class TestProgressWindowUserExperience:
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.logging_error") as mock_logging,
             patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"),
+            patch("tkinter.Misc.wait_visibility"),
+            patch("tkinter.Misc.update"),
+            patch("tkinter.Misc.update_idletasks"),
         ):
             window = ProgressWindow(non_tk_master, title="Test Progress", message="Progress: {}/{}")
 
@@ -323,6 +344,9 @@ class TestProgressWindowUserExperience:
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"
             ) as mock_center_parent,
+            patch("tkinter.Misc.wait_visibility"),
+            patch("tkinter.Misc.update"),
+            patch("tkinter.Misc.update_idletasks"),
         ):
             window = ProgressWindow(
                 tk_root,
@@ -361,6 +385,9 @@ class TestProgressWindowUserExperience:
             patch.object(tk.Toplevel, "winfo_fpixels", side_effect=tk.TclError("no display")),
             patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window_on_screen"),
             patch("ardupilot_methodic_configurator.frontend_tkinter_base_window.BaseWindow.center_window"),
+            patch("tkinter.Misc.wait_visibility"),
+            patch("tkinter.Misc.update"),
+            patch("tkinter.Misc.update_idletasks"),
         ):
             # Should not raise — except handler sets dpi_scaling_factor = 1.0
             window = ProgressWindow(

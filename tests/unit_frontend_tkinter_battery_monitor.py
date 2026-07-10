@@ -73,7 +73,7 @@ class TestUploadButtonErrorHandling:
         mock_base_window.ui = None  # Ensure no fallback to base_window.ui
         model = BatteryMonitorDataModel(mock_flight_controller, mock_param_editor)
         view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=None)
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
         with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
@@ -101,7 +101,7 @@ class TestUploadButtonErrorHandling:
         # Ensure no parameter_editor_table attribute
         mock_base_window.gui_complexity = "simple"
         mock_base_window.parameter_editor_table = None
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
         with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
@@ -130,7 +130,7 @@ class TestUploadButtonErrorHandling:
 
         mock_base_window.gui_complexity = "normal"
         mock_base_window.parameter_editor_table = mock_param_table
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
         with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
@@ -162,7 +162,7 @@ class TestUploadButtonErrorHandling:
 
         # Remove parameter editor after view creation
         view.model.parameter_editor = None
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
         with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
@@ -192,7 +192,7 @@ class TestUploadButtonErrorHandling:
 
         mock_base_window.gui_complexity = "normal"
         mock_base_window.parameter_editor_table = mock_param_table
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act: Click upload button
         view._on_upload_button_clicked()
@@ -226,7 +226,7 @@ class TestUploadButtonErrorHandling:
         mock_base_window.gui_complexity = "normal"
         mock_base_window.parameter_editor_table = mock_param_table
         mock_base_window.show_only_differences = mock_show_only_diff
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act: Click upload button
         view._on_upload_button_clicked()
@@ -259,7 +259,7 @@ class TestUploadButtonErrorHandling:
         mock_base_window.gui_complexity = "simple"
         mock_base_window.parameter_editor_table = mock_param_table
         mock_base_window.show_only_differences = mock_show_only_diff
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act: Click upload button
         view._on_upload_button_clicked()
@@ -286,7 +286,7 @@ class TestUploadSelectedParamsMethod:
         mock_base_window.ui = None  # Ensure no fallback
         model = BatteryMonitorDataModel(mock_flight_controller, mock_param_editor)
         view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=None)
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Call upload_selected_params
         with (
@@ -311,7 +311,7 @@ class TestUploadSelectedParamsMethod:
         mock_ui_services = MagicMock()
         model = BatteryMonitorDataModel(mock_flight_controller, None)
         view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=mock_ui_services)
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Call upload_selected_params
         with (
@@ -339,7 +339,7 @@ class TestUploadSelectedParamsMethod:
 
         model = BatteryMonitorDataModel(mock_flight_controller, mock_param_editor)
         view = BatteryMonitorView(tk_root, model, mock_base_window, ui_services=mock_ui_services)
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Call upload_selected_params
         with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.logging_error") as mock_log:
@@ -367,7 +367,7 @@ class TestTimerLifecycle:
         view = BatteryMonitorView(tk_root, model, mock_base_window)
         view.on_activate()
         first_timer_id = view._timer_id
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act: Activate again
         view.on_activate()
@@ -412,7 +412,7 @@ class TestTimerLifecycle:
         model = BatteryMonitorDataModel(mock_flight_controller, None)
         view = BatteryMonitorView(tk_root, model, mock_base_window)
         view.on_activate()
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Simulate connection loss
         mock_flight_controller.is_connected.return_value = False
@@ -420,7 +420,7 @@ class TestTimerLifecycle:
 
         # Act: Trigger periodic update
         view._periodic_update()
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Assert: Timer should still be scheduled (continuous monitoring)
         assert view._timer_id is not None
@@ -441,7 +441,7 @@ class TestTimerLifecycle:
         mock_flight_controller.master = None  # Disconnected
         model = BatteryMonitorDataModel(mock_flight_controller, None)
         view = BatteryMonitorView(tk_root, model, mock_base_window)
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act: Trigger periodic update
         with patch.object(view, "_update_battery_status") as mock_update:
@@ -466,7 +466,7 @@ class TestTimerLifecycle:
         mock_flight_controller.master = None  # Disconnected
         model = BatteryMonitorDataModel(mock_flight_controller, None)
         view = BatteryMonitorView(tk_root, model, mock_base_window)
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act: Activate the view
         with patch.object(view, "_update_battery_status") as mock_update:
@@ -537,7 +537,7 @@ class TestParameterTableRefresh:
 
         # Base window has no parameter_editor_table attribute
         mock_base_window.parameter_editor_table = None
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
         with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
@@ -571,7 +571,7 @@ class TestParameterTableRefresh:
         # Ensure show_only_differences attribute doesn't exist
         if hasattr(mock_base_window, "show_only_differences"):
             delattr(mock_base_window, "show_only_differences")
-        tk_root.update()
+        tk_root.update_idletasks()
 
         # Act: Click upload button
         view._on_upload_button_clicked()
