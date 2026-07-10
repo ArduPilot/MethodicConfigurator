@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
 import tempfile
+import tkinter as tk
 from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import patch
@@ -119,6 +120,7 @@ def component_editor_window(temp_vehicle_dir_with_esc) -> Generator[ComponentEdi
     WHEN: The ComponentEditorWindow is initialised and frames are populated
     THEN: Real PairTupleCombobox widgets exist for all ESC connection paths
     """
+    # pylint: disable=duplicate-code
     filesystem = LocalFilesystem(
         vehicle_dir=temp_vehicle_dir_with_esc,
         vehicle_type="ArduCopter",
@@ -126,10 +128,14 @@ def component_editor_window(temp_vehicle_dir_with_esc) -> Generator[ComponentEdi
         allow_editing_template_files=True,
         save_component_to_system_templates=False,
     )
+    # pylint: enable=duplicate-code
 
-    with patch(
-        "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.UsagePopupWindow.should_display",
-        return_value=False,
+    with (
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window.UsagePopupWindow.should_display",
+            return_value=False,
+        ),
+        patch.object(tk.Toplevel, "winfo_fpixels", side_effect=tk.TclError("no display")),
     ):
         editor = ComponentEditorWindow("1.0.0", filesystem, {})
         editor.populate_frames()
