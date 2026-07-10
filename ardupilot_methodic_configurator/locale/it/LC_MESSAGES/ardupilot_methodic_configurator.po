@@ -1033,57 +1033,57 @@ msgstr "Comando arresto motore fallito: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:440
 msgid "No flight controller connection available for accelerometer calibration"
-msgstr ""
+msgstr "Nessuna connessione al flight controller disponibile per la calibrazione dell'accelerometro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:450
 msgid "Simple accelerometer calibration completed successfully"
-msgstr ""
+msgstr "Calibrazione semplice dell'accelerometro completata con successo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:452
 msgid "Simple accelerometer calibration failed: %(error)s"
-msgstr ""
+msgstr "Calibrazione semplice dell'accelerometro non riuscita: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:467
 msgid "No flight controller connection available for level calibration"
-msgstr ""
+msgstr "Nessuna connessione al flight controller disponibile per la calibrazione del livello"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:477
 msgid "Level calibration completed successfully"
-msgstr ""
+msgstr "Calibrazione del livello completata con successo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:479
 msgid "Level calibration failed: %(error)s"
-msgstr ""
+msgstr "Calibrazione del livello non riuscita: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:497
 msgid ""
 "No flight controller connection available for full accelerometer calibration"
-msgstr ""
+msgstr "Nessuna connessione al flight controller disponibile per la calibrazione completa dell'accelerometro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:517
 msgid "Full accelerometer calibration start command sent"
-msgstr ""
+msgstr "Comando di inizio calibrazione completa dell'accelerometro inviato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:520
 msgid "Failed to send full accelerometer calibration command: %(error)s"
-msgstr ""
+msgstr "Impossibile inviare il comando di calibrazione completa dell'accelerometro: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:546
 msgid "Exception while polling ACCELCAL_VEHICLE_POS: %(error)s"
-msgstr ""
+msgstr "Eccezione durante il polling di ACCELCAL_VEHICLE_POS: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:565
 msgid ""
 "No flight controller connection available to confirm calibration position"
-msgstr ""
+msgstr "Nessuna connessione al flight controller disponibile per confermare la posizione di calibrazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:585
 msgid "Sent ACCELCAL_VEHICLE_POS confirmation for position %d"
-msgstr ""
+msgstr "Conferma di ACCELCAL_VEHICLE_POS inviata per la posizione %d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:588
 msgid "Failed to send position confirmation: %(error)s"
-msgstr ""
+msgstr "Impossibile inviare la conferma della posizione: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:605
 msgid "No flight controller connection available for battery status request"
@@ -3860,27 +3860,27 @@ msgstr "Se questa fase è opzionale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:22
 msgid "Place vehicle LEVEL and click Continue"
-msgstr ""
+msgstr "Posizionare il veicolo LIVELLO e cliccare Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:23
 msgid "Place vehicle on its LEFT side and click Continue"
-msgstr ""
+msgstr "Posizionare il veicolo sul lato SINISTRO e cliccare Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:24
 msgid "Place vehicle on its RIGHT side and click Continue"
-msgstr ""
+msgstr "Posizionare il veicolo sul lato DESTRO e cliccare Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:25
 msgid "Place vehicle NOSE DOWN and click Continue"
-msgstr ""
+msgstr "Posizionare il veicolo con il MUSO VERSO IL BASSO e cliccare Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:26
 msgid "Place vehicle NOSE UP and click Continue"
-msgstr ""
+msgstr "Posizionare il veicolo con il MUSO VERSO L'ALTO e cliccare Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:27
 msgid "Place vehicle on its BACK and click Continue"
-msgstr ""
+msgstr "Posizionare il veicolo sul suo DORSO e cliccare Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:72
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:91
@@ -3892,59 +3892,59 @@ msgstr "Controllore di volo non connesso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:75
 msgid "Simple accelerometer calibration completed"
-msgstr ""
+msgstr "Calibrazione semplice dell'accelerometro completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:76
 msgid "Calibration successful"
-msgstr ""
+msgstr "Calibrazione avvenuta con successo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:77
 msgid "Calibration failed"
-msgstr ""
+msgstr "Calibrazione non riuscita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:94
 msgid "Level calibration completed"
-msgstr ""
+msgstr "Calibrazione del livello completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:95
 msgid "Level calibration successful"
-msgstr ""
+msgstr "Calibrazione del livello avvenuta con successo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:96
 msgid "Level calibration failed"
-msgstr ""
+msgstr "Calibrazione del livello non riuscita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:115
 msgid "Calibration started - follow on-screen instructions"
-msgstr ""
+msgstr "Calibrazione avviata - seguire le istruzioni sullo schermo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:116
 msgid "Failed to start calibration"
-msgstr ""
+msgstr "Impossibile avviare la calibrazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:135
 msgid "FC requested calibration position: %d"
-msgstr ""
+msgstr "Il controllore di volo ha richiesto la posizione di calibrazione: %d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:140
 msgid "Unknown position %d"
-msgstr ""
+msgstr "Posizione sconosciuta %d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:165
 msgid "No position has been requested by the flight controller yet"
-msgstr ""
+msgstr "Nessuna posizione richiesta dal controllore di volo al momento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:170
 msgid "Calibration has already completed"
-msgstr ""
+msgstr "La calibrazione è già stata completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:173
 msgid "Confirmed calibration position %d"
-msgstr ""
+msgstr "Posizione di calibrazione %d confermata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_accelerometer_calibration.py:175
 msgid "Failed to send position confirmation"
-msgstr ""
+msgstr "Impossibile inviare la conferma della posizione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:248
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:298
@@ -6220,30 +6220,30 @@ msgstr "Codice Sorgente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:67
 msgid "Accelerometer Calibration"
-msgstr ""
+msgstr "Calibrazione Accelerometro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:72
 msgid ""
 "Simple calibration: Place vehicle level, then click Simple Calibration.\n"
 "Level calibration: Place vehicle level to set the AHRS trim angles.\n"
 "Full calibration: Follow the on-screen instructions for all 6 orientations."
-msgstr ""
+msgstr "Calibrazione semplice: posiziona il veicolo in piano, poi clicca su Calibrazione Semplice.\nCalibrazione livello: posiziona il veicolo in piano per impostare gli angoli di trim AHRS.\nCalibrazione completa: segui le istruzioni sullo schermo per tutte le 6 orientazioni."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:85
 msgid "Simple Calibration (Level)"
-msgstr ""
+msgstr "Calibrazione Semplice (Livello)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:92
 msgid "Level Calibration (Trim)"
-msgstr ""
+msgstr "Calibrazione di Livello (Trim)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:99
 msgid "Full Calibration (6-Position)"
-msgstr ""
+msgstr "Calibrazione Completa (6 Posizioni)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:105
 msgid "6-Position Calibration"
-msgstr ""
+msgstr "Calibrazione a 6 Posizioni"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:121
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:76
@@ -6252,13 +6252,13 @@ msgstr "Continua"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:129
 msgid "Cancel"
-msgstr ""
+msgstr "Annulla"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:142
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:150
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:221
 msgid "Calibration Result"
-msgstr ""
+msgstr "Risultato Calibrazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:144
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:152
@@ -6271,46 +6271,46 @@ msgstr "Calibrazione Fallita"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:169
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:207
 msgid "Waiting for flight controller..."
-msgstr ""
+msgstr "In attesa del controllore di volo..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:204
 msgid "Calibration Error"
-msgstr ""
+msgstr "Errore di Calibrazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:214
 msgid "Calibration Cancelled"
-msgstr ""
+msgstr "Calibrazione Annullata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:214
 msgid "Full accelerometer calibration was cancelled."
-msgstr ""
+msgstr "La calibrazione completa dell’accelerometro è stata annullata."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:221
 msgid "Full accelerometer calibration successful!"
-msgstr ""
+msgstr "Calibrazione completa dell’accelerometro riuscita!"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:223
 msgid "Full accelerometer calibration failed."
-msgstr ""
+msgstr "Calibrazione completa dell’accelerometro fallita."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:298
 msgid "ArduPilot Accelerometer Calibration"
-msgstr ""
+msgstr "Calibrazione Accelerometro ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:333
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:351
 msgid ""
 "This main is for testing and development only. Usually, the "
 "AccelerometerCalibrationView is called from another script"
-msgstr ""
+msgstr "Questo main è solo per test e sviluppo. Di solito, AccelerometerCalibrationView viene chiamato da un altro script"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:365
 msgid "Failed to start AccelerometerCalibrationWindow: %(error)s"
-msgstr ""
+msgstr "Impossibile avviare AccelerometerCalibrationWindow: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:367
 msgid "Failed to start accelerometer calibration: %(error)s"
-msgstr ""
+msgstr "Impossibile avviare la calibrazione dell'accelerometro: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_autoresize_combobox.py:59
 msgid "param_file combobox selected string '%s' not in list %s"
