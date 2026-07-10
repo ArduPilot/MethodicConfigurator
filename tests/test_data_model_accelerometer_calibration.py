@@ -80,7 +80,7 @@ class TestAccelerometerCalibrationDataModelSimpleCalibration:
         success, message = model.start_simple_calibration()
 
         assert success is False
-        assert "not connected" in message
+        assert message == "Flight controller not connected"
         disconnected_flight_controller.start_accel_calibration_simple.assert_not_called()
 
     def test_simple_calibration_succeeds_when_backend_confirms(self, connected_flight_controller) -> None:
@@ -97,7 +97,7 @@ class TestAccelerometerCalibrationDataModelSimpleCalibration:
         success, message = model.start_simple_calibration()
 
         assert success is True
-        assert "successful" in message
+        assert message == "Calibration successful"
         connected_flight_controller.start_accel_calibration_simple.assert_called_once_with()
 
     def test_simple_calibration_surfaces_backend_error_message(self, connected_flight_controller) -> None:
@@ -130,7 +130,7 @@ class TestAccelerometerCalibrationDataModelSimpleCalibration:
         success, message = model.start_simple_calibration()
 
         assert success is False
-        assert "failed" in message
+        assert message == "Calibration failed"
 
 
 class TestAccelerometerCalibrationDataModelLevelCalibration:
@@ -149,7 +149,7 @@ class TestAccelerometerCalibrationDataModelLevelCalibration:
         success, message = model.start_level_calibration()
 
         assert success is False
-        assert "not connected" in message
+        assert message == "Flight controller not connected"
         disconnected_flight_controller.start_accel_calibration_level.assert_not_called()
 
     def test_level_calibration_succeeds_when_backend_confirms(self, connected_flight_controller) -> None:
@@ -166,7 +166,7 @@ class TestAccelerometerCalibrationDataModelLevelCalibration:
         success, message = model.start_level_calibration()
 
         assert success is True
-        assert "successful" in message
+        assert message == "Level calibration successful"
         connected_flight_controller.start_accel_calibration_level.assert_called_once_with()
 
     def test_level_calibration_surfaces_backend_error_message(self, connected_flight_controller) -> None:
@@ -199,7 +199,7 @@ class TestAccelerometerCalibrationDataModelLevelCalibration:
         success, message = model.start_level_calibration()
 
         assert success is False
-        assert "failed" in message
+        assert message == "Level calibration failed"
 
 
 class TestAccelerometerCalibrationDataModelFullCalibration:
@@ -218,7 +218,7 @@ class TestAccelerometerCalibrationDataModelFullCalibration:
         success, message = model.start_full_calibration()
 
         assert success is False
-        assert "not connected" in message
+        assert message == "Flight controller not connected"
         disconnected_flight_controller.send_accel_calibration_full_start.assert_not_called()
 
     def test_full_calibration_start_resets_current_position_and_confirms_start(self, connected_flight_controller) -> None:
@@ -236,7 +236,7 @@ class TestAccelerometerCalibrationDataModelFullCalibration:
         success, message = model.start_full_calibration()
 
         assert success is True
-        assert "follow on-screen instructions" in message
+        assert message == "Calibration started - follow on-screen instructions"
         assert model._current_position is None
         connected_flight_controller.send_accel_calibration_full_start.assert_called_once_with()
 
@@ -270,7 +270,7 @@ class TestAccelerometerCalibrationDataModelFullCalibration:
         success, message = model.start_full_calibration()
 
         assert success is False
-        assert "Failed to start" in message
+        assert message == "Failed to start calibration"
 
 
 class TestAccelerometerCalibrationDataModelPolling:
@@ -312,19 +312,32 @@ class TestAccelerometerCalibrationDataModelPolling:
 class TestAccelerometerCalibrationDataModelPositionHelpers:
     """Test the pure helpers that classify and label calibration positions."""
 
-    def test_known_position_returns_human_readable_instruction(self) -> None:
+    @pytest.mark.parametrize(
+        ("position", "expected_fragment"),
+        [
+            (mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL, "LEVEL"),
+            (mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT, "LEFT"),
+            (mavutil.mavlink.ACCELCAL_VEHICLE_POS_RIGHT, "RIGHT"),
+            (mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEDOWN, "NOSE DOWN"),
+            (mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEUP, "NOSE UP"),
+            (mavutil.mavlink.ACCELCAL_VEHICLE_POS_BACK, "BACK"),
+        ],
+    )
+    def test_all_known_positions_return_human_readable_instructions(
+        self, position: int, expected_fragment: str
+    ) -> None:
         """
-        A recognised position maps to its human-readable instruction.
+        Every defined ACCELCAL_VEHICLE_POS value maps to a human-readable instruction.
 
-        GIVEN: The LEVEL position enum value
+        GIVEN: A known ACCELCAL_VEHICLE_POS enum value
         WHEN: get_position_label is called
-        THEN: The matching instruction text is returned
+        THEN: The returned label contains the position name in upper-case
         """
         model = AccelerometerCalibrationDataModel(MagicMock())
 
-        label = model.get_position_label(mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL)
+        label = model.get_position_label(position)
 
-        assert "LEVEL" in label
+        assert expected_fragment in label
 
     def test_unknown_position_falls_back_to_generic_label(self) -> None:
         """

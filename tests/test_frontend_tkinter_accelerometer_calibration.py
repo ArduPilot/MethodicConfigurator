@@ -72,6 +72,7 @@ class TestSimpleAndLevelCalibrationButtons:
         view_with_model.view._on_simple_calibration()
 
         view_with_model.showinfo.assert_called_once()
+        assert view_with_model.showinfo.call_args.args[1] == "Calibration successful"
         view_with_model.showerror.assert_not_called()
 
     def test_simple_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
@@ -87,6 +88,7 @@ class TestSimpleAndLevelCalibrationButtons:
         view_with_model.view._on_simple_calibration()
 
         view_with_model.showerror.assert_called_once()
+        assert view_with_model.showerror.call_args.args[1] == "not connected"
         view_with_model.showinfo.assert_not_called()
 
     def test_level_calibration_success_shows_result_dialog(self, view_with_model) -> None:
@@ -102,6 +104,7 @@ class TestSimpleAndLevelCalibrationButtons:
         view_with_model.view._on_level_calibration()
 
         view_with_model.showinfo.assert_called_once()
+        assert view_with_model.showinfo.call_args.args[1] == "Level calibration successful"
         view_with_model.showerror.assert_not_called()
 
     def test_level_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
@@ -117,6 +120,7 @@ class TestSimpleAndLevelCalibrationButtons:
         view_with_model.view._on_level_calibration()
 
         view_with_model.showerror.assert_called_once()
+        assert view_with_model.showerror.call_args.args[1] == "vehicle not level"
         view_with_model.showinfo.assert_not_called()
 
 
@@ -189,7 +193,7 @@ class TestFullCalibrationPolling:
         THEN: The instruction label is updated and the Continue button is enabled
         """
         view = view_with_model.view
-        view_with_model.model.poll_for_next_position.return_value = 1
+        view_with_model.model.poll_for_next_position.return_value = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
         view_with_model.model.is_calibration_complete.return_value = False
         view_with_model.model.get_position_label.return_value = "Place vehicle LEVEL and click Continue"
 
@@ -275,7 +279,7 @@ class TestFullCalibrationContinueAndCancel:
         view._on_continue()
 
         assert view_with_model.showerror.called
-        assert "command denied" in str(view_with_model.showerror.call_args_list[0])
+        assert view_with_model.showerror.call_args_list[0].args[1] == "command denied"
         assert view._wizard_frame.winfo_manager() == ""
 
     def test_cancel_stops_polling_hides_wizard_and_notifies_user(self, view_with_model) -> None:
@@ -296,6 +300,7 @@ class TestFullCalibrationContinueAndCancel:
         assert view._wizard_frame.winfo_manager() == ""
         assert str(view._simple_btn.cget("state")) == "normal"
         view_with_model.showerror.assert_called_once()
+        assert view_with_model.showerror.call_args.args[1] == "Full accelerometer calibration was cancelled."
 
 
 class TestPluginLifecycle:
