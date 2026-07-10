@@ -1356,7 +1356,7 @@ msgstr "MAVFTP non è disponibile per il caricamento del file"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:114
 msgid "Local file does not exist or is not a regular file: %(local)s"
-msgstr ""
+msgstr "Il file locale non esiste o non è un file normale: %(local)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:130
 msgid "Successfully uploaded %(local)s to %(remote)s"
@@ -1368,7 +1368,7 @@ msgstr "Caricamento del file fallito: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:153
 msgid "Failed to create remote directory %(directory)s"
-msgstr ""
+msgstr "Impossibile creare la directory remota %(directory)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:189
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1270
@@ -7889,19 +7889,19 @@ msgstr "Caricato {} di {} %"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1001
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1008
 msgid "File Upload Error"
-msgstr ""
+msgstr "Errore di caricamento file"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1002
 msgid "Do you want to retry?"
-msgstr ""
+msgstr "Vuoi riprovare?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1002
 msgid "Failed to upload file to flight controller:"
-msgstr ""
+msgstr "Impossibile caricare il file sul controller di volo:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1009
 msgid "File upload failed. Do you want to retry?"
-msgstr ""
+msgstr "Caricamento del file non riuscito. Vuoi riprovare?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1076
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1078

@@ -1340,7 +1340,7 @@ msgstr "MAVFTP ist nicht für Datei-Upload verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:114
 msgid "Local file does not exist or is not a regular file: %(local)s"
-msgstr ""
+msgstr "Lokale Datei existiert nicht oder ist keine reguläre Datei: %(local)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:130
 msgid "Successfully uploaded %(local)s to %(remote)s"
@@ -1352,7 +1352,7 @@ msgstr "Fehler beim Hochladen der Datei: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:153
 msgid "Failed to create remote directory %(directory)s"
-msgstr ""
+msgstr "Remote-Verzeichnis %(directory)s konnte nicht erstellt werden"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:189
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1270
@@ -7857,19 +7857,19 @@ msgstr "Erfolgreich hochgeladen {} von {} %"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1001
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1008
 msgid "File Upload Error"
-msgstr ""
+msgstr "Fehler beim Hochladen der Datei"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1002
 msgid "Do you want to retry?"
-msgstr ""
+msgstr "Möchten Sie es erneut versuchen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1002
 msgid "Failed to upload file to flight controller:"
-msgstr ""
+msgstr "Hochladen der Datei zum Flugcontroller fehlgeschlagen:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1009
 msgid "File upload failed. Do you want to retry?"
-msgstr ""
+msgstr "Hochladen der Datei fehlgeschlagen. Möchten Sie es erneut versuchen?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1076
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1078
