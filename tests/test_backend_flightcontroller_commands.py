@@ -944,6 +944,36 @@ class TestFlightControllerCommandsAccelerometerCalibration:
 
         assert commands_mgr.poll_accel_cal_vehicle_pos() is None
 
+    def test_poll_accel_cal_vehicle_pos_drains_duplicate_messages(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        Polling drains all duplicate position messages and returns only the latest.
+
+        GIVEN: ArduPilot sends the same position request multiple times (every second while waiting)
+        WHEN: poll_accel_cal_vehicle_pos is called
+        THEN: All stale duplicates are consumed and only the latest position is returned
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        # Simulate FC sending LEVEL position 3 times, then nothing
+        msg1 = MagicMock()
+        msg1.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        msg1.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        msg2 = MagicMock()
+        msg2.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        msg2.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        msg3 = MagicMock()
+        msg3.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        msg3.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        mock_master.recv_match.side_effect = [msg1, msg2, msg3, None]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.poll_accel_cal_vehicle_pos()
+
+        # Should drain all 3 duplicates and return the position once
+        assert result == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        # Next poll should return None (queue is drained)
+        mock_master.recv_match.side_effect = [None]
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
     def test_user_can_confirm_accelerometer_calibration_position(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User confirmation of a position is sent back to the flight controller.
