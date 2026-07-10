@@ -320,7 +320,7 @@ class TestFlightControllerCommandsEdgeCases:
         success, error = commands_mgr.request_periodic_battery_status(interval_microseconds=1000000)
 
         assert success is False
-        assert "denied" in error.lower() or "failed" in error.lower()
+        assert "denied" in error.lower()
 
     def test_get_battery_status_returns_recent_cache(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """Return cached battery data when no new telemetry is available but a recent value exists."""
@@ -377,7 +377,7 @@ class TestFlightControllerCommandsEdgeCases:
         success, error = commands_mgr.test_motor(1, "A", 1, 10, 2)
 
         assert success is False
-        assert "denied" in error.lower() or "failed" in error.lower()
+        assert "denied" in error.lower()
 
     def test_send_command_unknown_result(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """send_command_and_wait_ack should return an error for unknown result codes."""
