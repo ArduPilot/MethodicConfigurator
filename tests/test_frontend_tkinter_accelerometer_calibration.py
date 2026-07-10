@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
+from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_accelerometer_calibration import (
@@ -208,7 +209,7 @@ class TestFullCalibrationPolling:
         view = view_with_model.view
         view_with_model.model.start_full_calibration.return_value = (True, "started")
         view._on_start_full_calibration()
-        view_with_model.model.poll_for_next_position.return_value = 16777215
+        view_with_model.model.poll_for_next_position.return_value = mavutil.mavlink.ACCELCAL_VEHICLE_POS_SUCCESS
         view_with_model.model.is_calibration_complete.return_value = True
         view_with_model.model.is_calibration_successful.return_value = True
 
@@ -228,7 +229,7 @@ class TestFullCalibrationPolling:
         view = view_with_model.view
         view_with_model.model.start_full_calibration.return_value = (True, "started")
         view._on_start_full_calibration()
-        view_with_model.model.poll_for_next_position.return_value = 16777216
+        view_with_model.model.poll_for_next_position.return_value = mavutil.mavlink.ACCELCAL_VEHICLE_POS_FAILED
         view_with_model.model.is_calibration_complete.return_value = True
         view_with_model.model.is_calibration_successful.return_value = False
 
