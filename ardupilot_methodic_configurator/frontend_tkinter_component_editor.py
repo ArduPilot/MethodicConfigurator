@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
@@ -317,7 +318,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if err_msg:
                     show_error_message(_("Error"), err_msg)
                     protocol_combobox.configure(style="comb_input_invalid.TCombobox")
-                protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
+                if sys.platform != "darwin":  # update_idletasks() segfaults on macOS with Tcl/Tk 9.0
+                    protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
         return err_msg
 
     def update_cell_voltage_limits_entries(self, component_path: ComponentPath, chemistry: str) -> str:
