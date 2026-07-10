@@ -323,9 +323,7 @@ class TestAccelerometerCalibrationDataModelPositionHelpers:
             (mavutil.mavlink.ACCELCAL_VEHICLE_POS_BACK, "BACK"),
         ],
     )
-    def test_all_known_positions_return_human_readable_instructions(
-        self, position: int, expected_fragment: str
-    ) -> None:
+    def test_all_known_positions_return_human_readable_instructions(self, position: int, expected_fragment: str) -> None:
         """
         Every defined ACCELCAL_VEHICLE_POS value maps to a human-readable instruction.
 
