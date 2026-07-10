@@ -93,25 +93,6 @@ def process_hwdef_files(base_directory: str) -> HwdefDict:
     return dict(sorted(hwdef_data.items(), key=lambda x: x[0].lower()))
 
 
-def capitalize_mcu_series(series: str) -> str:
-    """
-    Capitalize MCU series name while preserving trailing x characters.
-
-    Examples:
-        >>> capitalize_mcu_series("stm32f4xx")
-        'STM32F4xx'
-        >>> capitalize_mcu_series("stm32h7")
-        'STM32H7'
-
-    """
-    # Split into main part and trailing x's
-    main_str = series.rstrip("x")
-    x_count = len(series) - len(main_str)
-
-    # Capitalize main part and add back x's
-    return main_str.upper() + "x" * x_count
-
-
 def update_board_id_dict(
     board_id: int, new_value: str, existing_dict: dict[int, list[str]], dict_name: str
 ) -> dict[int, list[str]]:
