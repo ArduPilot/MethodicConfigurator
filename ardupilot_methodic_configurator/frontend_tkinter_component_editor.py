@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
@@ -271,7 +272,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
             # Ensure both ESC->FC Telemetry comboboxes are enabled (not greyed).
             self._set_esc_telemetry_combobox_mirror_state()
 
-    def update_protocol_combobox_entries(self, protocols: tuple[str, ...], protocol_path: ComponentPath) -> str:
+    def update_protocol_combobox_entries(self, protocols: tuple[str, ...], protocol_path: ComponentPath) -> str:  # pylint: disable=too-many-branches
         err_msg = ""
         if protocol_path in self.entry_widgets:
             protocol_combobox = self.entry_widgets[protocol_path]
@@ -317,7 +318,8 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
                 if err_msg:
                     show_error_message(_("Error"), err_msg)
                     protocol_combobox.configure(style="comb_input_invalid.TCombobox")
-                protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
+                if sys.platform != "darwin":  # update_idletasks() segfaults on macOS with Tcl/Tk 9.0
+                    protocol_combobox.update_idletasks()  # re-draw the combobox ASAP
         return err_msg
 
     def update_cell_voltage_limits_entries(self, component_path: ComponentPath, chemistry: str) -> str:
