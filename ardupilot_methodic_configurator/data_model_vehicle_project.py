@@ -12,6 +12,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
@@ -50,6 +51,35 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self.configuration_template: str = ""  # It will be set if a new project is created successfully
 
     # Directory and path operations
+    def get_fc_default_template_dir(self) -> str:
+        """
+        Get the default template directory derived from the connected FC's vehicle type and firmware version.
+
+        If a flight controller is connected and its vehicle type and firmware version are known,
+        this returns the path to the matching empty template (e.g. ArduCopter/empty_4.6.x).
+        Falls back to the recently used template directory if the FC-derived path does not exist.
+
+        Returns:
+            Path to the best matching template directory
+
+        """
+        if self._flight_controller is not None and self.is_flight_controller_connected():
+            vehicle_type = self._flight_controller.info.vehicle_type
+            fw_version = self._flight_controller.info.flight_sw_version  # e.g. "4.6.0"
+            if vehicle_type and fw_version:
+                parts = fw_version.split(".")
+                if len(parts) >= 2:
+                    try:
+                        major, minor = int(parts[0]), int(parts[1])
+                        template_name = f"empty_{major}.{minor}.x"
+                        candidate = Path(LocalFilesystem.get_templates_base_dir()) / vehicle_type / template_name
+                        if candidate.is_dir():
+                            return str(candidate)
+                    except ValueError:
+                        pass
+        template_dir, _nbd, _vd = LocalFilesystem.get_recently_used_dirs()
+        return template_dir
+
     def get_recently_used_dirs(self) -> tuple[str, str, str]:
         """
         Get the recently used template, base, and vehicle directories.

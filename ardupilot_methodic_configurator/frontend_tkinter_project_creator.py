@@ -62,7 +62,8 @@ class VehicleProjectCreatorWindow(BaseWindow):
         self.new_project_settings_vars: dict[str, tk.BooleanVar] = {}
         self.new_project_settings_widgets: dict[str, ttk.Checkbutton] = {}
 
-        template_dir, new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
+        _template_dir, new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
+        template_dir = project_manager.get_fc_default_template_dir() if fc_connected else _template_dir
         logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
         logging_debug("new_base_dir: %s", new_base_dir)  # this string is intentionally left untranslated
         logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
