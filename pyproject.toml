@@ -160,7 +160,7 @@ version = {attr = "ardupilot_methodic_configurator.__version__"}
 
 [tool.codespell]
 check-filenames = true
-ignore-words-list = "datas,intoto,juli,laf,ned,parm,sade,sitl,thst,sie,mot,carisma"
+ignore-words-list = "datas,intoto,juli,laf,ned,parm,sade,sitl,thst,sie,mot,carisma,ine,InE"
 skip = "*.pdef.xml,*.pdf,*.po"
 
 [tool.ruff]

@@ -12,14 +12,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import contextlib
+import os
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from logging import error as logging_error
 from typing import Any
 
 import numpy as np
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
+
+_NO_ID_ASSIGNED = "-"  # ArduPilot's FMTU convention: '-' marks a field with no unit/multiplier ID assigned
 
 
 def open_log(logfile: str) -> mavutil.mavfile:
@@ -145,6 +149,9 @@ class LogData:
     schemas: dict[str, MessageSchema] = field(default_factory=dict)
     _raw_messages: dict[str, np.ndarray] = field(default_factory=dict, repr=False)
     msg_count: dict[str, int] = field(default_factory=dict)
+
+    flight_duration_sec: float | None = None
+    log_file_size: int = 0
 
     def get_message_columns(self, message_name: str) -> np.ndarray | None:
         """Return the structured numpy array for one message type, if present."""
@@ -301,11 +308,35 @@ def _validate_message_fields(schema: MessageSchema, payload: dict[str, Any]) -> 
         raise ValueError(msg)
 
 
-def _record_message_counts_and_fields(mlog: mavutil.mavfile, log_data: LogData) -> None:
-    """First pass: count message occurrences."""
+def _record_message_counts_and_fields(mlog: mavutil.mavfile, log_data: LogData) -> dict[int, str]:
+    """
+    First pass: count message occurrences and capture each type's FMTU MultIds string.
+
+    MultIds maps each field position to a single-character multiplier ID,
+    resolved later against mlog.mult_lookup.
+    """
+    mult_ids_by_type: dict[int, str] = {}
     for msg in _iter_messages(mlog):
         msg_type = msg.get_type()
         log_data.msg_count[msg_type] = log_data.msg_count.get(msg_type, 0) + 1
+        if msg_type == "FMTU":
+            mult_ids_by_type[int(msg.FmtType)] = msg.MultIds
+    return mult_ids_by_type
+
+
+def _resolve_multipliers(fmt: Any, mult_ids: str | None, mult_lookup: dict[str, float]) -> list[float | None]:  # noqa: ANN401
+    resolved: list[float | None] = []
+    for i, fixed_mult in enumerate(fmt.msg_mults):
+        if fixed_mult is not None:
+            resolved.append(fixed_mult)
+            continue
+
+        if mult_ids is not None and i < len(mult_ids) and mult_ids[i] != _NO_ID_ASSIGNED and mult_ids[i] in mult_lookup:
+            resolved.append(mult_lookup[mult_ids[i]])
+        else:
+            resolved.append(None)
+
+    return resolved
 
 
 def _allocate_message_arrays(log_data: LogData) -> None:
@@ -365,7 +396,7 @@ def _fill_message_arrays(mlog: mavutil.mavfile, log_data: LogData) -> None:  # p
             raise ValueError(msg)
 
 
-def extract_schemas(mlog: mavutil.mavfile, log_data: LogData) -> None:
+def extract_schemas(mlog: mavutil.mavfile, log_data: LogData, mult_ids_by_type: dict[int, str]) -> None:
     """
     Copy pymavlink's discovered FMT/FMTU schemas into log_data.schemas.
 
@@ -374,6 +405,7 @@ def extract_schemas(mlog: mavutil.mavfile, log_data: LogData) -> None:
     Args:
         mlog: An open pymavlink connection (fully read).
         log_data: The LogData instance to populate.
+        mult_ids_by_type: Per message type, the MultIds string from that type's FMTU message.
 
     """
     for fmt in mlog.formats.values():
@@ -384,9 +416,65 @@ def extract_schemas(mlog: mavutil.mavfile, log_data: LogData) -> None:
             format=fmt.format,
             fields=list(fmt.columns),
             units=list(fmt.units) if fmt.units is not None else [],
-            multipliers=list(getattr(fmt, "msg_mults", None) or []),
+            multipliers=_resolve_multipliers(fmt, mult_ids_by_type.get(fmt.type), mlog.mult_lookup),
             records=log_data.msg_count.get(fmt.name, 0),
         )
+
+
+def extract_log_metadata(log_data: LogData, logfile: str) -> None:
+    """Extract generic metadata from a parsed log."""
+    log_data.log_file_size = os.path.getsize(logfile)
+    log_data.flight_duration_sec = compute_flight_duration(log_data)
+
+
+def compute_flight_duration(log_data: LogData) -> float | None:
+    """
+    Compute the total flight duration in seconds.
+
+    Args:
+        log_data: parsed log.
+
+    Returns:
+        Time in seconds or None.
+
+    """
+    message_info = (
+        ("ARM", "ArmState", 1, 0),
+        ("EV", "Id", 10, 11),
+    )
+
+    try:
+        for message_name, state_field, start_value, stop_value in message_info:
+            records = log_data.get_message_columns(message_name)
+            if records is None or records.size == 0:
+                continue
+
+            timeus = log_data.get_field(message_name, "TimeUS", scaled=False)
+            states = log_data.get_field(message_name, state_field)
+            total_time = 0
+            start_time = None
+
+            # Many logs have multiple arm/disarm events, calculate them separately and sum up
+            for time_dur, state in zip(timeus, states, strict=True):
+                if state == start_value and start_time is None:
+                    start_time = time_dur
+                elif state == stop_value and start_time is not None:
+                    total_time += time_dur - start_time
+                    start_time = None
+
+            # If there is no disarm message the flight time can't be calculated.
+            if start_time is not None:
+                logging_error(
+                    _("{message_name} log ends while still armed, no trailing disarm found").format(message_name=message_name)
+                )
+
+            if total_time > 0:
+                return total_time / 1e6  # 1_000_000
+
+    except (KeyError, ValueError) as error:
+        logging_error(_("Could not compute flight duration: {error}").format(error=error))
+
+    return None
 
 
 def extract_log(logfile: str) -> LogData:
@@ -411,9 +499,9 @@ def extract_log(logfile: str) -> LogData:
     # first pass: count messages per message-type so that second pass can read data into known-sized arrays
     mlog = open_log(logfile)
     try:
-        _record_message_counts_and_fields(mlog, log_data)
+        mult_ids_by_type = _record_message_counts_and_fields(mlog, log_data)
         # extract_schemas should not raise any exception if it does it should fail
-        extract_schemas(mlog, log_data)
+        extract_schemas(mlog, log_data, mult_ids_by_type)
     finally:
         close_log(mlog)
 
@@ -425,5 +513,7 @@ def extract_log(logfile: str) -> LogData:
         _fill_message_arrays(mlog, log_data)
     finally:
         close_log(mlog)
+
+    extract_log_metadata(log_data, logfile)
 
     return log_data
