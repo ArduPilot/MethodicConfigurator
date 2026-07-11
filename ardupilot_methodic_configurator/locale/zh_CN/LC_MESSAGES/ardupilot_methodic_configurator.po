@@ -3245,7 +3245,7 @@ msgstr "用于自动导入参数的正则表达式列表，如果这些参数具
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
 msgid "ArduPilot log messages related to this configuration step"
-msgstr ""
+msgstr "与此配置步骤相关的ArduPilot日志消息"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
 msgid "Computed value: evaluate New Value expression and set the parameter"
@@ -3273,7 +3273,7 @@ msgstr "重命名连接的表达式"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
 msgid "Human readable name of the log message"
-msgstr ""
+msgstr "日志消息的可读名称"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
 msgid ""
@@ -3420,7 +3420,7 @@ msgstr "放置插件的位置: 'left'表示可滚动框架左侧,'top'表示内�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
 msgid "Whether this message is required for the step"
-msgstr ""
+msgstr "此消息是否为该步骤所需"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
 msgid "Whether this phase is optional"
