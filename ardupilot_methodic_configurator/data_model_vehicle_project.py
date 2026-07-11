@@ -77,7 +77,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                             return str(candidate)
                     except ValueError:
                         pass
-        template_dir, _nbd, _vd = LocalFilesystem.get_recently_used_dirs()
+        template_dir, _nbd, _vd = self.get_recently_used_dirs()
         return template_dir
 
     def get_recently_used_dirs(self) -> tuple[str, str, str]:

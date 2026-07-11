@@ -1487,7 +1487,7 @@ class TestGetFcDefaultTemplateDir:
 
     def test_user_gets_fallback_when_firmware_version_has_no_dot(self) -> None:
         """
-        User gets the recently-used fallback when the firmware version string is unparseable.
+        User gets the recently-used fallback when the firmware version string is unparsable.
 
         GIVEN: An FC is connected but flight_sw_version contains no '.' separator
         WHEN: get_fc_default_template_dir is called
@@ -1548,3 +1548,26 @@ class TestGetFcDefaultTemplateDir:
             result = manager.get_fc_default_template_dir()
 
         assert result == "/fallback/template"
+
+    def test_fallback_uses_manager_wrapper_not_direct_localfilesystem_call(self) -> None:
+        """
+        get_fc_default_template_dir falls back via self.get_recently_used_dirs().
+
+        GIVEN: A subclass of VehicleProjectManager that overrides get_recently_used_dirs
+        AND: No FC is connected (so the FC-derived path is not attempted)
+        WHEN: get_fc_default_template_dir is called
+        THEN: The subclass override is used for the fallback, not the base LocalFilesystem method
+        """
+
+        class _ManagerWithOverride(VehicleProjectManager):
+            def get_recently_used_dirs(self) -> tuple[str, str, str]:
+                return ("/overridden/template", "/base", "/vehicle")
+
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        manager = _ManagerWithOverride(mock_filesystem)
+
+        # Ensure the base LocalFilesystem is NOT patched — if the code still calls
+        # LocalFilesystem.get_recently_used_dirs() directly the override would be bypassed.
+        result = manager.get_fc_default_template_dir()
+
+        assert result == "/overridden/template"
