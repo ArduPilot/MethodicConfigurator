@@ -7955,14 +7955,14 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:352
 msgid "Confirm template selection"
-msgstr ""
+msgstr "确认模板选择"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:353
 msgid ""
 "Apply the highlighted template?\n"
 "\n"
 "{path}"
-msgstr ""
+msgstr "应用高亮显示的模板？\n\n{path}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:398
 msgid "No 'vehicle.jpg' image file in the vehicle template directory."
