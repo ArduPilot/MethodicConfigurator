@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-07-11 13:42+0000\n"
+"POT-Creation-Date: 2026-07-11 14:38+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -3495,30 +3495,38 @@ msgstr ""
 "現リスト。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
+msgid "ArduPilot log messages related to this configuration step"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
 msgid "Computed value: evaluate New Value expression and set the parameter"
 msgstr "計算値: 「New Value」式を評価してパラメータを設定します"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:393
 msgid "Description of the phase"
 msgstr "フェーズの説明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:393
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
 msgid "Explanation of why this step is needed"
 msgstr "このステップが必要な理由の説明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:395
 msgid "Explanation of why this step needs to be done at this point"
 msgstr "このステップがこの時点で実行される必要がある理由の説明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:395
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:396
 msgid "Expression to derive new parameter value"
 msgstr "新しいパラメータ値を導出する式"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
 msgid "Expression to rename connection"
 msgstr "接続名を変更する式"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
+msgid "Human readable name of the log message"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
 msgid ""
 "If not already present, add parameter to the file: use 'New Value' if "
 "provided, otherwise copy the current FC value. Optionally conditioned on a "
@@ -3528,27 +3536,27 @@ msgstr ""
 "れていればそれを使用し、なければ現在のFC値をコピーします。必要に応じてPython"
 "式による条件も設定できます。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:400
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
 msgid "Message about possible jump to another step"
 msgstr "別のステップへのジャンプの可能性に関するメッセージ"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:401
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
 msgid "Name of the vehicle component edited inline for this configuration step"
 msgstr "この設定ステップでインライン編集された車両コンポーネントの名前"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
 msgid "Name of tool/process that automatically changes these parameters"
 msgstr "これらのパラメータを自動的に変更するツール/プロセスの名前"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
 msgid "Name/description of external tool needed"
 msgstr "必要な外部ツールの名前/説明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:406
 msgid "New value for the parameter"
 msgstr "パラメータの新しい値"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:407
 msgid ""
 "Optional Python expression; if present, the parameter is only applied when "
 "this expression evaluates to true"
@@ -3556,7 +3564,7 @@ msgstr ""
 "任意のPython式。指定した場合、この式がtrueと評価された場合のみパラメータが適"
 "用されます"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:408
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
 msgid ""
 "Optional Python expression; if present, the parameter is only deleted when "
 "this expression evaluates to true"
@@ -3564,28 +3572,28 @@ msgstr ""
 "オプションのPython式。これが指定されている場合、この式が真と評価された時のみ"
 "パラメータが削除されます"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:411
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
 msgid ""
 "Optional Python expression; the parameter is only added when this evaluates "
 "to true"
 msgstr ""
 "オプションのPython式; これがtrueと評価された場合のみパラメータが追加されます"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:412
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:414
 msgid ""
 "Optional expression for the parameter value; if absent, the current FC value "
 "is used"
 msgstr "パラメータ値のオプション式; 未指定の場合は現在のFC値が使用されます"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:415
 msgid "Optional instructions to display as a popup when entering this step"
 msgstr "このステップに入る際にポップアップとして表示する任意の指示"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:414
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:416
 msgid "Optional reason for the parameter value"
 msgstr "パラメータ値に関するオプションの理由"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:415
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:417
 msgid ""
 "Parameters to add to the configuration file, if not already present, "
 "editable in the UI. Value comes from 'New Value' expression if given, "
@@ -3594,74 +3602,74 @@ msgstr ""
 "まだ存在しない場合に設定ファイルに追加するパラメータ。UIで編集可能。「New "
 "Value」式があればその値、なければFCからコピーします。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:418
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:420
 msgid ""
 "Parameters to remove from the configuration file, optionally conditioned on "
 "a Python expression"
 msgstr "設定ファイルから削除するパラメータ。Python式による条件設定も可能です"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:421
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
 msgid ""
 "Parameters whose values are derived from vehicle component data or FC state."
 msgstr "車両コンポーネントのデータやFCの状態から値が導出されるパラメータ"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:422
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:424
 msgid "Phases of the configuration process"
 msgstr "構成プロセスのフェーズ"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:425
 msgid "Previous filenames for this step"
 msgstr "このステップの以前のファイル名"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:424
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
 msgid "Reason for changing the parameter"
 msgstr "パラメータを変更する理由"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:425
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:427
 msgid "Reason for the derived parameter"
 msgstr "導出されたパラメータの理由"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:428
 msgid "Short description for blog reference"
 msgstr "ブログ参照用の短い説明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:427
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
 msgid "Short description for wiki reference"
 msgstr "Wiki参照用の短い説明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:428
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
 msgid "Starting step number of this phase"
 msgstr "このフェーズの開始ステップ番号"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
 msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr "ステップが必須か任意かを割合付きで示すテキスト"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
 msgid "The instruction message to display to the user"
 msgstr "ユーザーに表示する指示メッセージ"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
 msgid "The name of the plugin to load"
 msgstr "読み込むプラグインの名前"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
 msgid "The type of popup dialog to display (info or warning)"
 msgstr "表示するポップアップダイアログの種類（情報または警告）"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
 msgid "URL to blog documentation"
 msgstr "ブログドキュメントへのURL"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
 msgid "URL to external tool"
 msgstr "外部ツールへのURL"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
 msgid "URL to wiki documentation"
 msgstr "Wikiドキュメントへのダイム"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:438
 msgid ""
 "Where to place the plugin: 'left' for left of scrollable frame, 'top' for "
 "above contents"
@@ -3669,7 +3677,11 @@ msgstr ""
 "プラグインを配置する場所: スクロール可能なフレームの左側に配置する場合"
 "は'left'、コンテンツの上に配置する場合は'top'"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
+msgid "Whether this message is required for the step"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
 msgid "Whether this phase is optional"
 msgstr "このフェーズが任意かどうか"
 
@@ -8445,7 +8457,10 @@ msgid ""
 "Apply the highlighted template?\n"
 "\n"
 "{path}"
-msgstr "強調表示されたテンプレートを適用しますか？\n\n{path}"
+msgstr ""
+"強調表示されたテンプレートを適用しますか？\n"
+"\n"
+"{path}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:398
 msgid "No 'vehicle.jpg' image file in the vehicle template directory."
