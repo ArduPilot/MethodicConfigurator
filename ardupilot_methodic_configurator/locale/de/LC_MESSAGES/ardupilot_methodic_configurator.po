@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-07-10 12:33+0000\n"
+"POT-Creation-Date: 2026-07-11 13:42+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -930,61 +930,61 @@ msgstr ""
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr "Reboot-Zeit des Flugcontrollers. Standard ist %(default)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:135
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:136
 msgid "No flight controller connection available for command"
 msgstr "Keine Flugcontroller-Verbindung für Befehl verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:165
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:166
 msgid "Command temporarily rejected"
 msgstr "Befehl vorübergehend abgelehnt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:166
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:167
 msgid "Command denied"
 msgstr "Befehl verweigert"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:167
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:168
 msgid "Command unsupported"
 msgstr "Befehl nicht unterstützt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:168
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:169
 msgid "Command failed"
 msgstr "Befehl fehlgeschlagen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:180
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:181
 msgid "Command in progress: %(progress)d%%"
 msgstr "Befehl läuft: %(progress)d%%"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:184
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:185
 msgid "Command acknowledgment with unknown result: %(result)d"
 msgstr "Befehlsbestätigung mit unbekanntem Ergebnis: %(result)d"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:191
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:192
 msgid "Command acknowledgment timeout after %(timeout).1f seconds"
 msgstr "Timeout der Befehlsbestätigung nach %(timeout).1f Sekunden"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:196
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:197
 msgid "Failed to send command: %(error)s"
 msgstr "Fehler beim Senden des Befehls: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:219
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:220
 msgid "No flight controller connection available for parameter reset"
 msgstr "Keine Flugcontroller-Verbindung für Parameter-Reset verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:239
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:240
 msgid "Parameter reset to defaults command confirmed by flight controller"
 msgstr "Parameter-Reset auf Standardwerte vom Flugcontroller bestätigt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:243
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:244
 msgid "Parameter reset command failed: %(error)s"
 msgstr "Parameter-Reset-Befehl fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:267
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:318
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:359
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:268
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:319
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:360
 msgid "No flight controller connection available for motor test"
 msgstr "Keine Flugcontroller-Verbindung für Motortest verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:286
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:287
 msgid ""
 "Motor test command acknowledged: Motor %(seq)s on output %(output)d at "
 "%(throttle)d%% thrust for %(duration)d seconds"
@@ -992,11 +992,11 @@ msgstr ""
 "Motortest-Befehl bestätigt: Motor %(seq)s an Ausgang %(output)d mit "
 "%(throttle)d%% Schub für %(duration)d Sekunden"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:298
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:299
 msgid "Motor test command failed: %(error)s"
 msgstr "Motortest-Befehl fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:377
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:378
 msgid ""
 "Sequential motor test command confirmed at %(throttle)d%% for %(duration)d "
 "seconds per motor"
@@ -1004,135 +1004,135 @@ msgstr ""
 "Sequenzieller Motortest-Befehl bestätigt mit %(throttle)d%% für %(duration)d "
 "Sekunden pro Motor"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:384
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:385
 msgid "Sequential motor test command failed: %(error)s"
 msgstr "Sequenzieller Motortest-Befehl fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:399
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:400
 msgid "No flight controller connection available for motor stop"
 msgstr "Keine Flugcontroller-Verbindung für Motorstopp verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:416
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:417
 msgid "Motor stop command confirmed"
 msgstr "Motor-Stopp-Befehl bestätigt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:418
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:419
 msgid "Motor stop command failed: %(error)s"
 msgstr "Motor-Stopp-Befehl fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:440
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:441
 msgid "No flight controller connection available for accelerometer calibration"
 msgstr ""
 "Keine Verbindung zum Flugcontroller für die Kalibrierung des "
 "Beschleunigungsmessers verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:450
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:451
 msgid "Simple accelerometer calibration completed successfully"
 msgstr ""
 "Einfache Kalibrierung des Beschleunigungsmessers erfolgreich abgeschlossen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:452
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:453
 msgid "Simple accelerometer calibration failed: %(error)s"
 msgstr ""
 "Einfache Kalibrierung des Beschleunigungsmessers fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:467
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:468
 msgid "No flight controller connection available for level calibration"
 msgstr ""
 "Keine Verbindung zum Flugcontroller für die Nivellierungskalibrierung "
 "verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:477
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:478
 msgid "Level calibration completed successfully"
 msgstr "Nivellierungskalibrierung erfolgreich abgeschlossen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:479
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:480
 msgid "Level calibration failed: %(error)s"
 msgstr "Nivellierungskalibrierung fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:497
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:498
 msgid ""
 "No flight controller connection available for full accelerometer calibration"
 msgstr ""
 "Keine Verbindung zum Flugcontroller für die vollständige Kalibrierung des "
 "Beschleunigungsmessers verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:517
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:518
 msgid "Full accelerometer calibration start command sent"
 msgstr ""
 "Befehl zum Start der vollständigen Kalibrierung des Beschleunigungsmessers "
 "gesendet"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:520
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:522
 msgid "Failed to send full accelerometer calibration command: %(error)s"
 msgstr ""
 "Fehler beim Senden des Befehls zur vollständigen Kalibrierung des "
 "Beschleunigungsmessers: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:546
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:568
 msgid "Exception while polling ACCELCAL_VEHICLE_POS: %(error)s"
 msgstr "Ausnahme beim Abfragen von ACCELCAL_VEHICLE_POS: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:565
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:587
 msgid ""
 "No flight controller connection available to confirm calibration position"
 msgstr ""
 "Keine Verbindung zum Flugcontroller verfügbar, um die Kalibrierungsposition "
 "zu bestätigen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:585
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:607
 msgid "Sent ACCELCAL_VEHICLE_POS confirmation for position %d"
 msgstr "Bestätigung von ACCELCAL_VEHICLE_POS für Position %d gesendet"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:588
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:610
 msgid "Failed to send position confirmation: %(error)s"
 msgstr "Fehler beim Senden der Positionsbestätigung: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:605
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:627
 msgid "No flight controller connection available for battery status request"
 msgstr "Keine Flugcontroller-Verbindung für Batteriestatus-Anfrage verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:626
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:648
 msgid "BATTERY_STATUS stream request attempt %(attempt)d confirmed"
 msgstr "BATTERY_STATUS-Stream-Anfrage Versuch %(attempt)d bestätigt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:632
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:654
 msgid "BATTERY_STATUS stream request attempt %(attempt)d failed: %(error)s"
 msgstr ""
 "BATTERY_STATUS-Stream-Anfrage Versuch %(attempt)d fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:638
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:660
 msgid "Failed to request periodic battery status: %(error)s"
 msgstr "Fehler beim Anfordern des periodischen Batteriestatus: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:643
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:665
 msgid ""
 "Periodic BATTERY_STATUS messages confirmed every %(interval)d microseconds"
 msgstr ""
 "Periodische BATTERY_STATUS-Nachrichten bestätigt alle %(interval)d "
 "Mikrosekunden"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:660
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:682
 msgid "No flight controller connection or parameters available"
 msgstr "Keine Flugcontroller-Verbindung oder Parameter verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:665
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:687
 msgid "Battery monitoring is not enabled (BATT_MONITOR=0)"
 msgstr "Batterieüberwachung ist nicht aktiviert (BATT_MONITOR=0)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:683
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:705
 msgid "Failed to get battery status from telemetry: %(error)s"
 msgstr "Fehler beim Abrufen des Batteriestatus aus der Telemetrie: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:692
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:714
 msgid "Battery status not available from telemetry"
 msgstr "Batteriestatus nicht in der Telemetrie verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:734
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:756
 msgid "No flight controller connection available for compass calibration"
 msgstr "Keine Verbindung zum Flugcontroller für Kompasskalibrierung verfügbar"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:739
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:761
 msgid ""
 "Sending compass calibration start command to target %(system)s/%(component)s "
 "with params p1=%(p1)s p2=%(p2)s p3=%(p3)s"
@@ -1140,30 +1140,30 @@ msgstr ""
 "Kompasskalibrierungs-Startbefehl wird an Ziel %(system)s/%(component)s mit "
 "Parametern p1=%(p1)s p2=%(p2)s p3=%(p3)s gesendet"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:763
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:785
 msgid "Compass calibration start command confirmed"
 msgstr "Bestätigung für Kompasskalibrierungs-Startbefehl erhalten"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:765
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:787
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_compass_calibration.py:502
 msgid "Compass calibration start failed: %(error)s"
 msgstr "Kompasskalibrierungs-Start fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:778
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:800
 msgid "No flight controller connection available to cancel compass calibration"
 msgstr ""
 "Keine Verbindung zum Flugcontroller verfügbar, um Kompasskalibrierung "
 "abzubrechen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:794
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:816
 msgid "Compass calibration cancel command confirmed"
 msgstr "Bestätigung für Kompasskalibrierungs-Abbruchbefehl erhalten"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:796
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:818
 msgid "Compass calibration cancel failed: %(error)s"
 msgstr "Kompasskalibrierungs-Abbruch fehlgeschlagen: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:839
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:861
 msgid ""
 "Compass calibration report queued for compass %(compass_id)s: "
 "status=%(status)s saved=%(saved)s"
@@ -1171,7 +1171,7 @@ msgstr ""
 "Kompasskalibrierungsbericht für Kompass %(compass_id)s in Warteschlange: "
 "status=%(status)s gespeichert=%(saved)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:857
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:879
 msgid ""
 "Compass calibration progress queued for compass %(compass_id)s: pct=%(pct)s "
 "status=%(status)s"
@@ -1179,14 +1179,14 @@ msgstr ""
 "Kompasskalibrierungsfortschritt für Kompass %(compass_id)s in Warteschlange: "
 "Prozent=%(pct)s Status=%(status)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:876
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:898
 msgid ""
 "Compass calibration status text received: severity=%(severity)s text=%(text)s"
 msgstr ""
 "Kompasskalibrierungs-Statustext empfangen: Schweregrad=%(severity)s "
 "Text=%(text)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:882
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:904
 msgid ""
 "Ignoring non calibration MAVLink message during compass calibration poll: "
 "%(message_type)s"
@@ -1194,7 +1194,7 @@ msgstr ""
 "Nicht-Kalibrierungs-MAVLink-Nachricht während Kompasskalibrierungsabfrage "
 "ignoriert: %(message_type)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:887
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:909
 msgid "Error reading compass calibration progress: %(error)s"
 msgstr "Fehler beim Lesen des Kompasskalibrierungsfortschritts: %(error)s"
 
@@ -5833,7 +5833,7 @@ msgstr "Die Anzahl der Magnetpole muss für {paths_str} gerade sein"
 msgid "Invalid integer value for {paths_str}"
 msgstr "Ungültiger Ganzzahlwert für {paths_str}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:387
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:417
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
@@ -5841,7 +5841,7 @@ msgstr ""
 "Keine Zwischenparameterdateien im\n"
 "aktuellen Arbeitsverzeichnis gefunden."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:388
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:418
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
@@ -5849,7 +5849,7 @@ msgstr ""
 "Keine Zwischenparameterdateien im\n"
 "im --vehicle-dir angegebenen Verzeichnis gefunden."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:408
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:438
 msgid "MyVehicleName"
 msgstr "MeinFahrzeugName"
 
@@ -8324,12 +8324,12 @@ msgstr "Aktualisiere Fortschritts-Widgets: {_e}"
 msgid " - Create a new vehicle project directory"
 msgstr "- Erstelle ein neues Fahrzeugprojekt-Verzeichnis"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:94
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:95
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:85
 msgid "New vehicle"
 msgstr "Neues Fahrzeug"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:97
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:98
 msgid ""
 "Existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
@@ -8337,7 +8337,7 @@ msgstr ""
 "Vorhandenes Fahrzeugvorlagenverzeichnis mit den Zwischenparameterdateien,\n"
 "die in das neue Fahrzeugkonfigurationsverzeichnis kopiert werden sollen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:101
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:102
 msgid ""
 "Select the existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
@@ -8347,15 +8347,15 @@ msgstr ""
 " enthält, die in das neue Fahrzeugkonfigurationsverzeichnis kopiert werden "
 "sollen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:113
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:121
 msgid "Selected template directory: %s"
 msgstr "Ausgewähltes Vorlagenverzeichnis: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:120
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:128
 msgid "Source Template directory:"
 msgstr "Quellvorlagenverzeichnis:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:151
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:159
 msgid ""
 "Existing directory where the new vehicle configuration directory will be "
 "created"
@@ -8363,7 +8363,7 @@ msgstr ""
 "Vorhandenes Verzeichnis, in dem das neue Fahrzeugkonfigurationsverzeichnis "
 "erstellt wird"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:152
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:160
 msgid ""
 "Select the directory where the new vehicle configuration directory will be "
 "created"
@@ -8371,11 +8371,11 @@ msgstr ""
 "Wählen Sie das Verzeichnis aus, in dem das neue "
 "Fahrzeugkonfigurationsverzeichnis erstellt wird"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:157
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:165
 msgid "Destination base directory:"
 msgstr "Zielbasisverzeichnis:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:164
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:172
 msgid ""
 "A new vehicle configuration directory with this name will be created at the "
 "(destination) base directory"
@@ -8383,16 +8383,16 @@ msgstr ""
 "Ein neues Fahrzeugkonfigurationsverzeichnis mit diesem Namen wird im "
 "(Ziel-)Basisverzeichnis erstellt"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:168
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:176
 msgid "Destination new vehicle name:"
 msgstr "Neuer Fahrzeugname:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:173
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:181
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:91
 msgid "Create a vehicle configuration directory from template"
 msgstr "Erstelle ein Fahrzeugkonfigurationsverzeichnis aus Vorlage"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:179
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:187
 msgid ""
 "Create a new vehicle configuration directory on the (destination) base "
 "directory,\n"
@@ -8405,7 +8405,7 @@ msgstr ""
 "und\n"
 "laden Sie die neu erstellten Dateien in die Anwendung"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:216
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:224
 msgid ""
 "This main is for testing and development only. Usually, the "
 "VehicleProjectCreatorWindow is called from another script"
@@ -8413,7 +8413,7 @@ msgstr ""
 "Dieses main ist nur für Test und Entwicklung. Normalerweise wird das "
 "VehicleProjectCreatorWindow von einem anderen Skript aufgerufen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:231
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:239
 msgid ""
 "This main is for testing and development only, usually the "
 "VehicleProjectCreatorWindow is called from another script"
@@ -8421,7 +8421,7 @@ msgstr ""
 "Dieses main ist nur für Test und Entwicklung, normalerweise wird das "
 "VehicleProjectCreatorWindow von einem anderen Skript aufgerufen"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:248
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:256
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:290
 msgid "No intermediate parameter files found in %s."
 msgstr "Keine Zwischenparametern-Dateien in %s gefunden."
@@ -8681,7 +8681,7 @@ msgstr "Keine Konfigurationsschritte gefunden."
 msgid "Error parsing either first or last step numbers: {error}"
 msgstr "Fehler beim Parsen der ersten oder letzten Schrittnummern: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:112
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:122
 msgid ""
 "Amilcar Lucas's - ArduPilot methodic configurator {version} - Template "
 "Overview and selection"
@@ -8689,14 +8689,14 @@ msgstr ""
 "Amilcar Lucas's - ArduPilot methodischer Konfigurator {version} - Vorlagen-"
 "Übersicht und Auswahl"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:145
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:155
 msgid ""
 "Double-click the template below that best matches your vehicle's components."
 msgstr ""
 "Doppelklicken Sie auf die Vorlage unten, die am besten zu den Komponenten "
 "Ihres Fahrzeugs passt."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:146
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:156
 msgid ""
 "\n"
 "Don't worry about finding a perfect match - choose the closest one available."
@@ -8705,7 +8705,7 @@ msgstr ""
 "Machen Sie sich keine Sorgen, eine perfekte Übereinstimmung zu finden - "
 "wählen Sie die nächstbeste verfügbare aus."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:147
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:157
 msgid ""
 "\n"
 "If unsure, select the 'empty' template for your firmware version (provides "
@@ -8715,11 +8715,22 @@ msgstr ""
 "Wenn Sie unsicher sind, wählen Sie die 'leere' Vorlage für Ihre Firmware-"
 "Version (bietet minimale Startkonfiguration)."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:355
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:352
+msgid "Confirm template selection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:353
+msgid ""
+"Apply the highlighted template?\n"
+"\n"
+"{path}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:398
 msgid "No 'vehicle.jpg' image file in the vehicle template directory."
 msgstr "Keine 'vehicle.jpg' Bilddatei im Fahrzeugvorlagenverzeichnis."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:392
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_template_overview.py:435
 msgid ""
 "ArduPilot Template Overview - A component of the ArduPilot Methodic "
 "Configurator suite. This tool presents available vehicle templates in a user-"
