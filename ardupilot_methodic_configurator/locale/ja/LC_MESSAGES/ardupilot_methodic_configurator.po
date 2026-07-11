@@ -3496,7 +3496,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
 msgid "ArduPilot log messages related to this configuration step"
-msgstr ""
+msgstr "この構成手順に関連するArduPilotのログメッセージ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
 msgid "Computed value: evaluate New Value expression and set the parameter"
@@ -3524,7 +3524,7 @@ msgstr "接続名を変更する式"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
 msgid "Human readable name of the log message"
-msgstr ""
+msgstr "ログメッセージの人間が読める名前"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
 msgid ""
@@ -3679,7 +3679,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
 msgid "Whether this message is required for the step"
-msgstr ""
+msgstr "このステップにこのメッセージが必要かどうか"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
 msgid "Whether this phase is optional"
