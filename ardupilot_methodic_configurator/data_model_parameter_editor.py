@@ -47,12 +47,14 @@ from ardupilot_methodic_configurator.data_model_esc_rpm_scale import EscRpmScale
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
+from ardupilot_methodic_configurator.data_model_rc_calibration import RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugin_constants import (
     PLUGIN_ACCELEROMETER_CALIBRATION,
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
     PLUGIN_ESC_RPM_SCALE,
     PLUGIN_MOTOR_TEST,
+    PLUGIN_RC_CALIBRATION,
 )
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
@@ -2559,6 +2561,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return AccelerometerCalibrationDataModel(self._flight_controller) if self.is_fc_connected else None
         if plugin_name == PLUGIN_ESC_RPM_SCALE:
             return EscRpmScaleDataModel(self._flight_controller, self._local_filesystem) if self.is_fc_connected else None
+        if plugin_name == PLUGIN_RC_CALIBRATION:
+            return RCCalibrationDataModel(self._flight_controller) if self.is_fc_connected else None
         # Add more plugins here in the future
         raise ValueError(
             _("data_model_parameter_editor: Unsupported plugin name: {plugin_name}").format(plugin_name=plugin_name)
