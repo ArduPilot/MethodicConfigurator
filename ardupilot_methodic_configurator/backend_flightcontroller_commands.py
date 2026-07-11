@@ -94,6 +94,7 @@ class FlightControllerCommands:
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager
         self._last_battery_status: tuple[float, float] | None = None
         self._last_battery_message_time: float = 0.0
+        self._last_accel_cal_vehicle_pos: int | None = None
 
     @property
     def master(self) -> MavlinkConnection | None:
@@ -515,6 +516,7 @@ class FlightControllerCommands:
                 # pylint: enable=duplicate-code
             )
             logging_info(_("Full accelerometer calibration start command sent"))
+            self._last_accel_cal_vehicle_pos = None
             return True, ""
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Failed to send full accelerometer calibration command: %(error)s") % {"error": str(e)}
@@ -541,7 +543,7 @@ class FlightControllerCommands:
 
         try:
             # Drain all pending ACCELCAL_VEHICLE_POS messages and keep only the latest
-            latest_pos = None
+            latest_pos: int | None = None
             while True:
                 msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
                     type="COMMAND_LONG", blocking=False
@@ -550,6 +552,17 @@ class FlightControllerCommands:
                     break
                 if msg.command == mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS:
                     latest_pos = int(msg.param1)
+
+            if latest_pos is None:
+                return None
+
+            # Suppress duplicate: return None if the position hasn't changed since last poll.
+            # This prevents the UI from re-enabling Continue on a stale position value
+            # that was already confirmed by the user.
+            if latest_pos == self._last_accel_cal_vehicle_pos:
+                return None
+
+            self._last_accel_cal_vehicle_pos = latest_pos
             return latest_pos
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Exception while polling ACCELCAL_VEHICLE_POS: %(error)s"), {"error": str(e)})
