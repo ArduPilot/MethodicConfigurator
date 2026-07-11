@@ -30,7 +30,7 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
 else
     source .venv/bin/activate
 fi
-uv pip install "build==1.5.0" "packaging==26.2" "setuptools==82.0.1"
+uv pip install "build==1.5.0" "packaging==26.2" "setuptools==83.0.0"
 
 python -m build
 
