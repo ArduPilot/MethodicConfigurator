@@ -136,13 +136,16 @@ def component_editor_window(temp_vehicle_dir_with_esc) -> Generator[ComponentEdi
             return_value=False,
         ),
         patch.object(tk.Toplevel, "winfo_fpixels", side_effect=tk.TclError("no display")),
+        patch("tkinter.Misc.update"),
+        patch("tkinter.Misc.update_idletasks"),
     ):
         editor = ComponentEditorWindow("1.0.0", filesystem, {})
         editor.populate_frames()
         editor.root.update_idletasks()
-        editor.root.update()
 
-    yield editor
+        # THIS MUST BE INDENTED INSIDE THE 'WITH' BLOCK!
+        # This keeps the Tkinter anti-freeze patches alive while the tests run.
+        yield editor
 
     editor.root.destroy()
 
@@ -199,7 +202,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: FC->ESC Connection Protocol → "DroneCAN"
         fc_esc_protocol_cb = editor.entry_widgets[fc_esc_protocol_path]
@@ -236,7 +238,6 @@ class TestESCConnectionCascadeBehavior:
         editor.root.deiconify()
         editor.root.lift()
         editor.root.update_idletasks()
-        editor.root.update()
 
         screenshot = pyautogui.screenshot()
         assert screenshot is not None
@@ -279,7 +280,7 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
+
             # Select CoDevESC as the FC->ESC protocol (unlocks specific same-port mapping).
             # Also sync the data model directly — the <<ComboboxSelected>> event on a protocol
             # combobox only triggers _on_esc_fc_protocol_changed (which mirrors to telemetry) but
@@ -293,7 +294,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Verify pre-conditions for the main act
         assert fc_esc_type_cb.get_selected_key() == "SERIAL5"
@@ -322,7 +322,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: no error dialog was triggered
         assert not error_was_shown, "No error dialog should appear when switching between SERIAL ports with a valid protocol"
@@ -379,7 +378,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         editor.data_model.set_component_value(fc_esc_protocol_path, "Normal")
 
@@ -406,7 +404,6 @@ class TestESCConnectionCascadeBehavior:
             telem_type_cb.set_entries_tuple([(k, k) for k in telem_type_choices], "SERIAL1")
             telem_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: no error dialog
         assert not error_was_shown, "No error dialog should appear when selecting SERIAL1 with a valid Normal protocol"
@@ -456,7 +453,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         editor.data_model.set_component_value(fc_esc_protocol_path, "DShot600")
 
@@ -483,7 +479,6 @@ class TestESCConnectionCascadeBehavior:
             telem_type_cb.set_entries_tuple([(k, k) for k in telem_type_choices], "SERIAL1")
             telem_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: no error dialog
         assert not error_was_shown, "No error dialog should appear when selecting SERIAL1 with a valid DShot protocol"
@@ -539,7 +534,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             # Step 2: set FC->ESC Protocol = "Normal" in the data model and widget.
             editor.data_model.set_component_value(fc_esc_protocol_path, "Normal")
@@ -550,7 +544,6 @@ class TestESCConnectionCascadeBehavior:
             telem_type_cb.set_entries_tuple([(k, k) for k in telem_type_choices], "SERIAL5")
             telem_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             # Step 4: set ESC->FC Telemetry Protocol = "Scripting" (the only choice for Normal/SERIAL5).
             editor.data_model.set_component_value(telem_protocol_path, "Scripting")
@@ -578,7 +571,6 @@ class TestESCConnectionCascadeBehavior:
             fc_esc_protocol_cb.set_entries_tuple([("OneShot", "OneShot")], "OneShot")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: no error dialog — only one valid option, so it is auto-selected silently
         assert not error_was_shown, "No error dialog should appear when there is exactly one valid option to auto-select"
@@ -631,7 +623,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: both ESC->FC Telemetry comboboxes are editable
         telem_type_cb = editor.entry_widgets[telem_type_path]
@@ -679,7 +670,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Set FC->ESC Protocol to "Normal" (not a same-port protocol)
         editor.data_model.set_component_value(fc_esc_protocol_path, "Normal")
@@ -689,7 +679,6 @@ class TestESCConnectionCascadeBehavior:
         fc_esc_protocol_cb.set_entries_tuple([("Normal", "Normal")], "Normal")
         fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
         editor.root.update_idletasks()
-        editor.root.update()
 
         # Assert: both ESC->FC Telemetry comboboxes are NOT disabled
         telem_type_cb = editor.entry_widgets[telem_type_path]
@@ -738,13 +727,11 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         editor.data_model.set_component_value(fc_esc_protocol_path, "FETtecOneWire")
         fc_esc_protocol_cb.set_entries_tuple([("FETtecOneWire", "FETtecOneWire")], "FETtecOneWire")
         fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
         editor.root.update_idletasks()
-        editor.root.update()
 
         # Assert: both ESC->FC Telemetry comboboxes ARE disabled (mirrored)
         telem_type_cb = editor.entry_widgets[telem_type_path]
@@ -803,20 +790,17 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "DShot150")
             fc_esc_protocol_cb.set_entries_tuple([("DShot150", "DShot150")], "DShot150")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             telem_type_choices = editor.data_model.get_combobox_values_for_path(telem_type_path)
             assert "SERIAL3" in telem_type_choices, f"SERIAL3 should be available for DShot150: {telem_type_choices}"
             telem_type_cb.set_entries_tuple([(k, k) for k in telem_type_choices], "SERIAL3")
             telem_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             telem_protocol_choices = editor.data_model.get_combobox_values_for_path(telem_protocol_path)
             assert "ESC Telemetry" in telem_protocol_choices, (
@@ -837,7 +821,6 @@ class TestESCConnectionCascadeBehavior:
             fc_esc_protocol_cb.set_entries_tuple([("Brushed", "Brushed")], "Brushed")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: ESC->FC Telemetry Type is reset to "None"
         assert telem_type_cb.get_selected_key() == "None", (
@@ -902,13 +885,11 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "Brushed")
             fc_esc_protocol_cb.set_entries_tuple([("Brushed", "Brushed")], "Brushed")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(telem_type_path, "None")
             telem_type_cb.set_entries_tuple([("None", "None")], "None")
@@ -928,7 +909,6 @@ class TestESCConnectionCascadeBehavior:
             fc_esc_protocol_cb.set_entries_tuple([("DShot150", "DShot150")], "DShot150")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: ESC->FC Telemetry Type combobox IS enabled (not greyed out)
         # DShot has multiple type choices (None, BDShotOnly same-port, SERIAL) so it is NOT fully mirrored
@@ -988,7 +968,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "Normal")
             fc_esc_protocol_cb.set_entries_tuple([("Normal", "Normal")], "Normal")
@@ -997,7 +976,6 @@ class TestESCConnectionCascadeBehavior:
             telem_type_cb.set_entries_tuple([(k, k) for k in telem_type_choices], "SERIAL5")
             telem_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(telem_protocol_path, "Scripting")
             telem_protocol_cb.set_entries_tuple([("Scripting", "Scripting")], "Scripting")
@@ -1019,7 +997,6 @@ class TestESCConnectionCascadeBehavior:
         )
         fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
         editor.root.update_idletasks()
-        editor.root.update()
 
         # Assert: ESC->FC Telemetry Protocol is immediately "ESC Telemetry" — no second selection needed.
         assert telem_protocol_cb.get_selected_key() == "ESC Telemetry", (
@@ -1071,7 +1048,7 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
+
             editor.data_model.set_component_value(fc_esc_protocol_path, "Normal")
 
         # Act: Change FC->ESC Type to AIO
@@ -1082,7 +1059,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert cascade results
         assert fc_esc_type_cb.get_selected_key() == "AIO"
@@ -1106,7 +1082,7 @@ class TestESCConnectionCascadeBehavior:
         screenshot = pyautogui.screenshot()
         assert screenshot.size[0] > 0
 
-    def test_changing_fc_esc_protocol_from_brushed_to_dshot300_expands_telemetry_type_options(  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-statements
+    def test_changing_fc_esc_protocol_from_brushed_to_dshot300_expands_telemetry_type_options(  # pylint: disable=too-many-locals
         self,
         component_editor_window: ComponentEditorWindow,
         gui_test_environment,  # pylint: disable=unused-argument
@@ -1151,13 +1127,11 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "Brushed")
             fc_esc_protocol_cb.set_entries_tuple([("Brushed", "Brushed")], "Brushed")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Verify pre-conditions
         assert fc_esc_type_cb.get_selected_key() == "Main Out"
@@ -1188,7 +1162,6 @@ class TestESCConnectionCascadeBehavior:
             fc_esc_protocol_cb.set_entries_tuple([("DShot300", "DShot300")], "DShot300")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert: no error dialog — current telemetry "None" is valid for DShot300
         assert not error_was_shown, "No error dialog should appear: ESC->FC Telemetry 'None' is valid for DShot300"
@@ -1260,7 +1233,7 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
+
             editor.data_model.set_component_value(fc_esc_protocol_path, "Normal")
 
         # Act
@@ -1270,7 +1243,6 @@ class TestESCConnectionCascadeBehavior:
         )
         fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
         editor.root.update_idletasks()
-        editor.root.update()
 
         # Assert
         assert fc_esc_protocol_cb.get_selected_key() == "DShot600"
@@ -1315,7 +1287,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "DShot")
             fc_esc_protocol_cb.set_entries_tuple(
@@ -1338,7 +1309,6 @@ class TestESCConnectionCascadeBehavior:
         )
         telem_type_cb.event_generate("<<ComboboxSelected>>")
         editor.root.update_idletasks()
-        editor.root.update()
 
         # Assert: Telemetry Type changed
         assert telem_type_cb.get_selected_key() == alt_port
@@ -1399,7 +1369,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Verify: CAN state (fully mirrored, disabled)
         assert fc_esc_protocol_cb.list_keys == ["DroneCAN"], (
@@ -1418,7 +1387,6 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert cascade rule 1: FC->ESC Protocol widget entries updated
         assert len(fc_esc_protocol_cb.list_keys) > 1, (
@@ -1492,13 +1460,11 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "Brushed")
             fc_esc_protocol_cb.set_entries_tuple([("Brushed", "Brushed")], "Brushed")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Verify pre-conditions
         assert fc_esc_protocol_cb.get_selected_key() == "Brushed"
@@ -1522,7 +1488,6 @@ class TestESCConnectionCascadeBehavior:
             fc_esc_protocol_cb.set_entries_tuple([("DShot150", "DShot150")], "DShot150")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert cascade rule 2: no error (current "None" telem type is still valid for DShot150)
         assert not error_was_shown, "No error dialog should appear: 'None' is valid for DShot150"
@@ -1590,13 +1555,11 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "DShot300")
             fc_esc_protocol_cb.set_entries_tuple([("DShot300", "DShot300")], "DShot300")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Verify pre-conditions: DShot300 should have expanded Telem Type options
         assert "Main Out" in telem_type_cb.list_keys, (
@@ -1619,7 +1582,6 @@ class TestESCConnectionCascadeBehavior:
             fc_esc_protocol_cb.set_entries_tuple([("Brushed", "Brushed")], "Brushed")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert cascade rule 2: no error (current "None" is still valid for Brushed)
         assert not error_was_shown, "No error dialog should appear: 'None' is valid for Brushed"
@@ -1684,13 +1646,11 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "DShot300")
             fc_esc_protocol_cb.set_entries_tuple([("DShot300", "DShot300")], "DShot300")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Verify pre-conditions: telem type widget must offer "Main Out" (DShot BDShot option)
         assert "Main Out" in telem_type_cb.list_keys, (
@@ -1703,7 +1663,6 @@ class TestESCConnectionCascadeBehavior:
             telem_type_cb.set_entries_tuple([(k, k) for k in telem_type_cb.list_keys], "Main Out")
             telem_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert cascade rule 3: Telem Protocol widget entries updated to BDShot only
         assert telem_type_cb.get_selected_key() == "Main Out"
@@ -1762,13 +1721,11 @@ class TestESCConnectionCascadeBehavior:
             )
             fc_esc_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
             editor.data_model.set_component_value(fc_esc_protocol_path, "DShot150")
             fc_esc_protocol_cb.set_entries_tuple([("DShot150", "DShot150")], "DShot150")
             fc_esc_protocol_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Verify pre-conditions
         assert fc_esc_protocol_cb.get_selected_key() == "DShot150"
@@ -1781,7 +1738,6 @@ class TestESCConnectionCascadeBehavior:
             telem_type_cb.set_entries_tuple([(k, k) for k in telem_type_cb.list_keys], "SERIAL4")
             telem_type_cb.event_generate("<<ComboboxSelected>>")
             editor.root.update_idletasks()
-            editor.root.update()
 
         # Assert cascade rule 3: Telem Protocol widget entries updated
         assert telem_type_cb.get_selected_key() == "SERIAL4"
