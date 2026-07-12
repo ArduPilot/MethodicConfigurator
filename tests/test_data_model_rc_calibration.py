@@ -133,8 +133,8 @@ class TestRCCalibrationDataModelStartCancel:
 
         model.start_calibration()
 
-        assert model._channel_min == {}
-        assert model._channel_max == {}
+        assert not model._channel_min
+        assert not model._channel_max
 
     def test_cancel_calibration_discards_state_without_writing(self, connected_flight_controller) -> None:
         """
@@ -154,8 +154,8 @@ class TestRCCalibrationDataModelStartCancel:
         assert success is True
         assert error_msg == ""
         assert model._is_calibrating is False
-        assert model._channel_min == {}
-        assert model._channel_max == {}
+        assert not model._channel_min
+        assert not model._channel_max
         connected_flight_controller.master.set_param.assert_not_called()
         connected_flight_controller.set_param.assert_not_called()
 
@@ -248,8 +248,8 @@ class TestRCCalibrationDataModelFinish:
 
         model.finish_calibration()
 
-        assert model._channel_min == {}
-        assert model._channel_max == {}
+        assert not model._channel_min
+        assert not model._channel_max
 
 
 class TestRCCalibrationDataModelTelemetry:
@@ -265,7 +265,7 @@ class TestRCCalibrationDataModelTelemetry:
         """
         model = RCCalibrationDataModel(disconnected_flight_controller)
 
-        assert model.get_rc_telemetry() == {}
+        assert not model.get_rc_telemetry()
 
     def test_telemetry_is_empty_when_no_message_available(self, connected_flight_controller) -> None:
         """
@@ -278,7 +278,7 @@ class TestRCCalibrationDataModelTelemetry:
         model = RCCalibrationDataModel(connected_flight_controller)
         connected_flight_controller.master.recv_match.return_value = None
 
-        assert model.get_rc_telemetry() == {}
+        assert not model.get_rc_telemetry()
 
     def test_telemetry_maps_first_four_channels_to_axes(self, connected_flight_controller) -> None:
         """
@@ -360,7 +360,7 @@ class TestRCCalibrationDataModelTelemetry:
         model = RCCalibrationDataModel(connected_flight_controller)
         connected_flight_controller.master.recv_match.side_effect = RuntimeError("link lost")
 
-        assert model.get_rc_telemetry() == {}
+        assert not model.get_rc_telemetry()
 
     def test_telemetry_includes_flight_mode_from_heartbeat(self, connected_flight_controller) -> None:
         """
@@ -416,8 +416,8 @@ class TestRCCalibrationDataModelMinMaxTracking:
 
         model.get_rc_telemetry()
 
-        assert model._channel_min == {}
-        assert model._channel_max == {}
+        assert not model._channel_min
+        assert not model._channel_max
 
 
 class TestRCCalibrationDataModelFlightMode:
