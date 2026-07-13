@@ -22,7 +22,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
+from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase, center_over_parent
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_COMPASS_CALIBRATION
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
@@ -133,15 +133,7 @@ class CompassCalibrationInstructionsPopup(tk.Toplevel):
         self.update_idletasks()
         width, height = self._width, self._height
 
-        parent_x = self._parent.winfo_rootx()
-        parent_y = self._parent.winfo_rooty()
-        parent_width = self._parent.winfo_width()
-        parent_height = self._parent.winfo_height()
-
-        x = parent_x + (parent_width // 2) - (width // 2)
-        y = parent_y + (parent_height // 2) - (height // 2)
-
-        self.geometry(f"{width}x{height}+{x}+{y}")
+        center_over_parent(self, self._parent, width, height)
 
 
 class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"]):  # pylint: disable=too-many-instance-attributes
