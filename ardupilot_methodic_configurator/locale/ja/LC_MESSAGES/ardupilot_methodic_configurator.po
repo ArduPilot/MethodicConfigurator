@@ -1306,7 +1306,7 @@ msgstr "%d回試行後も接続に失敗しました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_factory_mavftp.py:69
 msgid "Failed to initialize MAVFTP: %(error)s"
-msgstr ""
+msgstr "MAVFTP の初期化に失敗しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:100
 msgid "No flight controller connection available for file upload"
