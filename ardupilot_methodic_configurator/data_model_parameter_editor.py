@@ -1001,14 +1001,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ]
         report_files = [
             "00_default.param",
-            "11_initial_atc.param",
-            "16_pid_adjustment.param",
-            "23_quick_tune_results.param",
-            "31_autotune_roll_results.param",
-            "33_autotune_pitch_results.param",
-            "35_autotune_yaw_results.param",
-            "37_autotune_yawd_results.param",
-            "39_autotune_roll_pitch_retune_results.param",
+            "13_initial_atc.param",
+            "23_optional_pid_adjustment.param",
+            "30_quick_tune_results.param",
+            "36_autotune_roll_results.param",
+            "38_autotune_pitch_results.param",
+            "40_autotune_yaw_results.param",
+            "42_autotune_yawd_results.param",
+            "44_autotune_roll_pitch_retune_results.param",
         ]
 
         report_file_path = Path(getattr(self._local_filesystem, "vehicle_dir", ".")) / "tuning_report.csv"
