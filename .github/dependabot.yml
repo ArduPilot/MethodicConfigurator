@@ -10,7 +10,7 @@ updates:
     cooldown:
       default-days: 14
     commit-message:
-      prefix: deps
+      prefix: chore
       include: scope
     open-pull-requests-limit: 5
     labels:
