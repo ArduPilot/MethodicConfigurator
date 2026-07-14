@@ -12,7 +12,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -234,6 +234,27 @@ class TestCreateMavftpErrorHandling:
         assert result1 is None
         assert result2 is None
         assert result3 is None
+
+    def test_create_mavftp_safe_returns_none_when_initialization_fails(self) -> None:
+        """
+        create_mavftp_safe handles MAVFTP initialization errors gracefully.
+
+        GIVEN: A connection whose serial port dies while MAVFTP resets sessions
+        WHEN: User creates MAVFTP safely
+        THEN: The exception should not escape to the UI workflow
+        AND: None should be returned so callers can fail gracefully
+        """
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp.MAVFTP",
+            side_effect=OSError("ClearCommError failed"),
+        ):
+            result = create_mavftp_safe(mock_master)
+
+        assert result is None
 
 
 class TestCreateMavftpEdgeCases:

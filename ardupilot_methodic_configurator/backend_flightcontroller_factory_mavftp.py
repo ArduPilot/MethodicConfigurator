@@ -8,8 +8,10 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from logging import error as logging_error
 from typing import TYPE_CHECKING, Union
 
+from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_mavftp import MAVFTP
 
 if TYPE_CHECKING:
@@ -44,7 +46,9 @@ def create_mavftp_safe(
     """
     Factory function for creating MAVFTP instances with safe error handling.
 
-    Returns None instead of raising an exception when MAVFTP is unavailable.
+    Returns None instead of raising an exception when MAVFTP is unavailable or
+    MAVFTP initialization fails because the underlying MAVLink/serial connection
+    is no longer usable.
 
     Args:
         master: The MAVLink connection object
@@ -55,8 +59,12 @@ def create_mavftp_safe(
     """
     if master is None or MAVFTP is None:
         return None
-    return MAVFTP(
-        master,
-        target_system=master.target_system,
-        target_component=master.target_component,
-    )
+    try:
+        return MAVFTP(
+            master,
+            target_system=master.target_system,
+            target_component=master.target_component,
+        )
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logging_error(_("Failed to initialize MAVFTP: %(error)s"), {"error": str(e)})
+        return None
