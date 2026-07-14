@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-07-11 14:38+0000\n"
+"POT-Creation-Date: 2026-07-14 20:22+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -1334,6 +1334,10 @@ msgstr "Conexão falhou: %s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:868
 msgid "Failed to connect after %d attempts."
 msgstr "Falha ao conectar após %d tentativas."
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_factory_mavftp.py:69
+msgid "Failed to initialize MAVFTP: %(error)s"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:100
 msgid "No flight controller connection available for file upload"
@@ -3633,7 +3637,8 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
 msgid "ArduPilot log messages related to this configuration step"
-msgstr "Mensagens de log do ArduPilot relacionadas com este passo de configuração"
+msgstr ""
+"Mensagens de log do ArduPilot relacionadas com este passo de configuração"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
 msgid "Computed value: evaluate New Value expression and set the parameter"
