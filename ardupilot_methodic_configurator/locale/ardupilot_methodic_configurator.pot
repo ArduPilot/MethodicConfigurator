@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-07-11 14:38+0000\n"
+"POT-Creation-Date: 2026-07-14 20:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1307,6 +1307,11 @@ msgstr ""
 #:
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:868
 msgid "Failed to connect after %d attempts."
+msgstr ""
+
+#:
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_factory_mavftp.py:69
+msgid "Failed to initialize MAVFTP: %(error)s"
 msgstr ""
 
 #:

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-07-11 14:38+0000\n"
+"POT-Creation-Date: 2026-07-14 20:22+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -1303,6 +1303,10 @@ msgstr "接続に失敗しました: %s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:868
 msgid "Failed to connect after %d attempts."
 msgstr "%d回試行後も接続に失敗しました。"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_factory_mavftp.py:69
+msgid "Failed to initialize MAVFTP: %(error)s"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:100
 msgid "No flight controller connection available for file upload"
