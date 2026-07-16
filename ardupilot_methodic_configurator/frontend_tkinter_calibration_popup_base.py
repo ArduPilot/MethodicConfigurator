@@ -13,37 +13,26 @@ from contextlib import suppress
 from tkinter import ttk
 from typing import Generic, TypeVar, cast
 
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow, center_over_parent
+
 _ModelT = TypeVar("_ModelT")
 
 
-def center_over_parent(window: tk.Toplevel, parent: tk.Misc, width: int, height: int) -> None:
-    """Size `window` to `width`x`height` and center it over `parent`."""
-    parent_x = parent.winfo_rootx()
-    parent_y = parent.winfo_rooty()
-    parent_width = parent.winfo_width()
-    parent_height = parent.winfo_height()
-
-    x = parent_x + (parent_width // 2) - (width // 2)
-    y = parent_y + (parent_height // 2) - (height // 2)
-
-    window.geometry(f"{width}x{height}+{x}+{y}")
-
-
-class CalibrationPopupBase(tk.Toplevel, Generic[_ModelT]):  # pylint: disable=too-many-instance-attributes
+class CalibrationPopupBase(BaseWindow, Generic[_ModelT]):  # pylint: disable=too-many-instance-attributes
     """Base class for calibration popup windows with draggable title bar and progress polling."""
 
     _MIN_WIDTH: int = 560
     _MIN_HEIGHT: int = 320
 
     def __init__(self, parent: tk.Widget, model: _ModelT) -> None:
-        super().__init__(parent)
+        super().__init__(cast("tk.Toplevel", parent))
         self.model: _ModelT = model
         self._parent = parent
         self._bg_color: str = ""
 
-        self.overrideredirect(boolean=True)
-        self.transient(cast("tk.Wm", parent))
-        self.grab_set()
+        self.root.overrideredirect(boolean=True)
+        self.root.transient(cast("tk.Wm", parent))
+        self.root.grab_set()
 
         # Variables for custom window dragging
         self._drag_x = 0
@@ -56,11 +45,11 @@ class CalibrationPopupBase(tk.Toplevel, Generic[_ModelT]):  # pylint: disable=to
     def destroy(self) -> None:
         """Stop polling before destroying the popup."""
         self._stop_polling()
-        super().destroy()
+        self.root.destroy()
 
     def _setup_style(self) -> None:
-        style = ttk.Style(self)
-        self._bg_color = style.lookup("TFrame", "background") or self.cget("bg")
+        style = ttk.Style(self.root)
+        self._bg_color = style.lookup("TFrame", "background") or self.root.cget("bg")
         style.configure(
             "Horizontal.TProgressbar",
             borderwidth=0,
@@ -76,8 +65,8 @@ class CalibrationPopupBase(tk.Toplevel, Generic[_ModelT]):  # pylint: disable=to
 
     def _create_framed_ui(self, title_text: str) -> ttk.Frame:
         """Create outer frame, draggable title bar, and return the content frame."""
-        self.configure(bg=self._bg_color)
-        outer_frame = tk.Frame(self, bg=self._bg_color, highlightthickness=0)
+        self.root.configure(bg=self._bg_color)
+        outer_frame = tk.Frame(self.main_frame, bg=self._bg_color, highlightthickness=0)
         outer_frame.pack(fill="both", expand=True)
 
         title_bar = tk.Frame(outer_frame, bg="#e0e0e0", relief="flat", bd=0)
@@ -99,24 +88,24 @@ class CalibrationPopupBase(tk.Toplevel, Generic[_ModelT]):  # pylint: disable=to
         self._drag_y = event.y
 
     def _do_move(self, event: tk.Event) -> None:
-        x = self.winfo_x() + event.x - self._drag_x
-        y = self.winfo_y() + event.y - self._drag_y
-        self.geometry(f"+{x}+{y}")
+        x = self.root.winfo_x() + event.x - self._drag_x
+        y = self.root.winfo_y() + event.y - self._drag_y
+        self.root.geometry(f"+{x}+{y}")
 
     def _resize_and_center(self) -> None:
-        self.update_idletasks()
-        self.minsize(self._MIN_WIDTH, self._MIN_HEIGHT)
+        self.root.update_idletasks()
+        self.root.minsize(self._MIN_WIDTH, self._MIN_HEIGHT)
 
-        width = max(self.winfo_reqwidth(), self._MIN_WIDTH)
-        height = max(self.winfo_reqheight(), self._MIN_HEIGHT)
-        self.geometry(f"{width}x{height}")
-        self.update_idletasks()
+        width = max(self.root.winfo_reqwidth(), self._MIN_WIDTH)
+        height = max(self.root.winfo_reqheight(), self._MIN_HEIGHT)
+        self.root.geometry(f"{width}x{height}")
+        self.root.update_idletasks()
 
-        center_over_parent(self, self._parent, width, height)
+        center_over_parent(self.root, self._parent, width, height)
 
     def _stop_polling(self) -> None:
         """Cancel the periodic polling callback if it is active."""
         if self._timer_id:
             with suppress(tk.TclError):
-                self.after_cancel(self._timer_id)
+                self.root.after_cancel(self._timer_id)
             self._timer_id = None
