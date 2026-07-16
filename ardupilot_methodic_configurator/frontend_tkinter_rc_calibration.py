@@ -43,7 +43,7 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):  # pyl
             "THROTTLE": 0.0,
             "YAW": 0.0,
         }
-        self.flight_mode: str = "No Data"
+        self.flight_mode: str = _("No Data")
         self.channels: list[dict] = []
 
         self.renderer = QuadcopterRenderer()
@@ -83,7 +83,7 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):  # pyl
         mode_frame = ttk.Frame(content_frame)
         mode_frame.pack(fill="x", pady=10)
         ttk.Label(mode_frame, text=_("Flight Mode:"), font=("TkDefaultFont", 11, "bold")).pack(side="left")
-        self.mode_label = ttk.Label(mode_frame, text="No Data", font=("TkDefaultFont", 11))
+        self.mode_label = ttk.Label(mode_frame, text=_("No Data"), font=("TkDefaultFont", 11))
         self.mode_label.pack(side="left", padx=10)
 
         # Channel List Section
@@ -110,7 +110,7 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):  # pyl
         self._no_telemetry_warning_emitted = False
 
         # Update Flight Mode
-        self.flight_mode = telemetry.get("flight_mode", "No Data")
+        self.flight_mode = telemetry.get("flight_mode", _("No Data"))
         self.mode_label.configure(text=self.flight_mode)
 
         # Update Stick Preview
@@ -169,7 +169,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         self._timer_id: str | None = None
         self._polls_without_updates = 0
         self._no_telemetry_warning_emitted = False
-        self.flight_mode: str = "No Data"
+        self.flight_mode: str = _("No Data")
         self.renderer = QuadcopterRenderer()
         self._setup_style()
         self._setup_ui()
@@ -245,7 +245,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         mode_frame = ttk.Frame(content_frame)
         mode_frame.pack(fill="x", pady=10)
         ttk.Label(mode_frame, text=_("Flight Mode:"), font=("TkDefaultFont", 11, "bold")).pack(side="left")
-        self.mode_label = ttk.Label(mode_frame, text="No Data", font=("TkDefaultFont", 11))
+        self.mode_label = ttk.Label(mode_frame, text=_("No Data"), font=("TkDefaultFont", 11))
         self.mode_label.pack(side="left", padx=10)
 
         # Channel List Section
@@ -308,7 +308,7 @@ class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-m
         self._no_telemetry_warning_emitted = False
 
         # Update Flight Mode
-        self.flight_mode = telemetry.get("flight_mode", "No Data")
+        self.flight_mode = telemetry.get("flight_mode", _("No Data"))
         self.mode_label.configure(text=self.flight_mode)
 
         # Update Stick Preview

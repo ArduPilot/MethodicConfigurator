@@ -35,7 +35,7 @@ class RCCalibrationDataModel:
     def start_calibration(self) -> tuple[bool, str]:
         """Start tracking per-channel min/max PWM values for calibration."""
         if not self.is_connected():
-            error_msg = _("Not connected to flight controller")
+            error_msg = _("Flight controller not connected")
             return False, error_msg
         self._is_calibrating = True
         self._channel_min.clear()
@@ -65,10 +65,19 @@ class RCCalibrationDataModel:
         for ch_idx, min_val in self._channel_min.items():
             ch_num = ch_idx + 1  # convert to 1-based RC channel number
             max_val = self._channel_max.get(ch_idx, _RC_CENTER_PWM * 2 - min_val)
+            # Use a symmetric fallback only when the maximum was never observed.
             trim_val = (min_val + max_val) // 2
-            self.flight_controller.set_param(f"RC{ch_num}_MIN", float(min_val))
-            self.flight_controller.set_param(f"RC{ch_num}_MAX", float(max_val))
-            self.flight_controller.set_param(f"RC{ch_num}_TRIM", float(trim_val))
+            for suffix, value in (("MIN", min_val), ("MAX", max_val), ("TRIM", trim_val)):
+                result = self.flight_controller.set_param(f"RC{ch_num}_{suffix}", float(value))
+                if isinstance(result, tuple) and len(result) == 2:
+                    success, error_msg = result
+                else:
+                    success, error_msg = True, ""
+                if not success:
+                    logging_warning(
+                        _("Failed to set RC%(ch)d_%(suffix)s: %(error)s"),
+                        {"ch": ch_num, "suffix": suffix, "error": error_msg},
+                    )
             logging_info(
                 _("RC%(ch)d: MIN=%(min)d MAX=%(max)d TRIM=%(trim)d"),
                 {"ch": ch_num, "min": min_val, "max": max_val, "trim": trim_val},
@@ -76,7 +85,7 @@ class RCCalibrationDataModel:
         self._channel_min.clear()
         self._channel_max.clear()
 
-    def get_rc_telemetry(self) -> dict[str, Any]:
+    def get_rc_telemetry(self) -> dict[str, Any]:  # pylint: disable=too-many-branches
         """
         Return live RC telemetry from the flight controller.
 
@@ -98,30 +107,40 @@ class RCCalibrationDataModel:
         telemetry: dict[str, Any] = {}
 
         try:
-            rc_msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="RC_CHANNELS", blocking=False
-            )
-            if rc_msg:
-                n_channels = min(rc_msg.chancount, _RC_MAX_CHANNELS)
+            latest_rc_msg = None
+            latest_hb = None
+            while True:
+                msg = master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]
+                if msg is None:
+                    break
+
+                msg_type = msg.get_type()
+                if msg_type == "RC_CHANNELS":
+                    latest_rc_msg = msg
+                elif msg_type == "HEARTBEAT":
+                    latest_hb = msg
+
+            if latest_rc_msg:
+                n_channels = min(latest_rc_msg.chancount, _RC_MAX_CHANNELS)
                 raw: list[int] = [
-                    rc_msg.chan1_raw,
-                    rc_msg.chan2_raw,
-                    rc_msg.chan3_raw,
-                    rc_msg.chan4_raw,
-                    rc_msg.chan5_raw,
-                    rc_msg.chan6_raw,
-                    rc_msg.chan7_raw,
-                    rc_msg.chan8_raw,
-                    rc_msg.chan9_raw,
-                    rc_msg.chan10_raw,
-                    rc_msg.chan11_raw,
-                    rc_msg.chan12_raw,
-                    rc_msg.chan13_raw,
-                    rc_msg.chan14_raw,
-                    rc_msg.chan15_raw,
-                    rc_msg.chan16_raw,
-                    rc_msg.chan17_raw,
-                    rc_msg.chan18_raw,
+                    latest_rc_msg.chan1_raw,
+                    latest_rc_msg.chan2_raw,
+                    latest_rc_msg.chan3_raw,
+                    latest_rc_msg.chan4_raw,
+                    latest_rc_msg.chan5_raw,
+                    latest_rc_msg.chan6_raw,
+                    latest_rc_msg.chan7_raw,
+                    latest_rc_msg.chan8_raw,
+                    latest_rc_msg.chan9_raw,
+                    latest_rc_msg.chan10_raw,
+                    latest_rc_msg.chan11_raw,
+                    latest_rc_msg.chan12_raw,
+                    latest_rc_msg.chan13_raw,
+                    latest_rc_msg.chan14_raw,
+                    latest_rc_msg.chan15_raw,
+                    latest_rc_msg.chan16_raw,
+                    latest_rc_msg.chan17_raw,
+                    latest_rc_msg.chan18_raw,
                 ]
                 telemetry["channels"] = [
                     {"name": f"CH{i + 1}", "value": raw[i]} for i in range(n_channels) if raw[i] != _RC_INVALID_PWM
@@ -140,17 +159,11 @@ class RCCalibrationDataModel:
                         if raw[i] != _RC_INVALID_PWM:
                             self._channel_min[i] = min(self._channel_min.get(i, raw[i]), raw[i])
                             self._channel_max[i] = max(self._channel_max.get(i, raw[i]), raw[i])
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging_debug(_("Error reading RC_CHANNELS: %(error)s"), {"error": str(exc)})
 
-        try:
-            hb = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="HEARTBEAT", blocking=False
-            )
-            if hb:
-                telemetry["flight_mode"] = str(hb.custom_mode)
+            if latest_hb:
+                telemetry["flight_mode"] = str(latest_hb.custom_mode)
         except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging_debug(_("Error reading HEARTBEAT: %(error)s"), {"error": str(exc)})
+            logging_debug(_("Error reading MAVLink telemetry: %(error)s"), {"error": str(exc)})
 
         return telemetry
 

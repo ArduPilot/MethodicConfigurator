@@ -1,7 +1,7 @@
 """
-3D Quadcopter Renderer using PyOpenGL.
+Quadcopter renderer (PIL stub).
 
-This module provides a class to render a simple 3D quadcopter model
+This module provides a class to render a simple schematic quadcopter image
 based on roll, pitch, yaw, and throttle inputs.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
@@ -29,10 +29,10 @@ class QuadcopterRenderer:  # pylint: disable=too-few-public-methods
         Renders the quadcopter based on inputs.
 
         Args:
-            roll: Roll angle in degrees.
-            pitch: Pitch angle in degrees.
-            yaw: Yaw angle in degrees.
-            throttle: Throttle value (0.0 to 1.0).
+            roll: Normalised roll input (-1.0 to 1.0).
+            pitch: Normalised pitch input (-1.0 to 1.0).
+            yaw: Normalised yaw input (-1.0 to 1.0).
+            throttle: Normalised throttle input (-1.0 to 1.0).
 
         Returns:
             PIL.Image: The rendered frame.
