@@ -21,8 +21,8 @@ from typing import Any, cast
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_compass_calibration import CompassCalibrationDataModel
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase, center_over_parent
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow, center_over_parent
+from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_COMPASS_CALIBRATION
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
@@ -152,9 +152,9 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
         self._setup_ui()
         self._precreate_progress_rows()
         self._resize_and_center()
-        self.lift()
-        self.focus_force()
-        self._timer_id = self.after(100, self._check_progress)
+        self.root.lift()
+        self.root.focus_force()
+        self._timer_id = self.root.after(100, self._check_progress)
         logging_debug(_("Compass calibration progress popup created and polling scheduled."))
 
     def _setup_ui(self) -> None:
@@ -215,7 +215,7 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
             self.progress_bars[compass_id] = progress_bar
             self.completion_status[compass_id] = False
             logging_debug(_("Compass calibration progress bar created for compass %(compass_id)s"), {"compass_id": compass_id})
-            self.update_idletasks()
+            self.root.update_idletasks()
             self._resize_and_center()
 
         return self.progress_bars[compass_id]
@@ -247,7 +247,7 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
                     {"polls": self._polls_without_updates},
                 )
             # logging_debug(_("Compass calibration progress poll found no updates; rescheduling in 100 ms."))
-            self._timer_id = self.after(100, self._check_progress)
+            self._timer_id = self.root.after(100, self._check_progress)
             return
 
         self._polls_without_updates = 0
@@ -332,27 +332,31 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
                         messagebox.showerror(
                             _("Calibration Failed"),
                             _("Calibration for Compass {compass_id} failed. Please try again.").format(compass_id=cid),
-                            parent=self,
+                            parent=self.root,
                         )
                         self.destroy()
                     else:
-                        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+                        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self.root)
                         logging_debug(
                             _("Compass calibration cancel failed after report failure: %(error)s"), {"error": error_msg}
                         )
-                        self._timer_id = self.after(100, self._check_progress)
+                        self._timer_id = self.root.after(100, self._check_progress)
                     return
 
         if self.completion_status and all(self.completion_status.values()):
             if self._timer_id:
-                self.after_cancel(self._timer_id)
+                self.root.after_cancel(self._timer_id)
             self.model.finish_calibration()
             logging_debug(_("Compass calibration finished for all compasses; closing popup."))
-            messagebox.showinfo(_("Calibration Complete"), _("All compasses successfully calibrated and saved!"), parent=self)
+            messagebox.showinfo(
+                _("Calibration Complete"),
+                _("All compasses successfully calibrated and saved!"),
+                parent=self.root,
+            )
             self.destroy()
         else:
             logging_debug(_("Compass calibration still in progress; scheduling next poll in 100 ms."))
-            self._timer_id = self.after(100, self._check_progress)
+            self._timer_id = self.root.after(100, self._check_progress)
 
     def _on_cancel(self) -> None:
         logging_debug(_("Compass calibration cancel button clicked."))
@@ -361,13 +365,13 @@ class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"
         if success:
             self.model.finish_calibration()
             logging_debug(_("Compass calibration cancel accepted; closing popup."))
-            messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self)
+            messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self.root)
             self.destroy()
             return
 
-        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self.root)
         logging_debug(_("Compass calibration cancel rejected: %(error)s"), {"error": error_msg})
-        self._timer_id = self.after(100, self._check_progress)
+        self._timer_id = self.root.after(100, self._check_progress)
 
 
 # pylint: disable=too-many-ancestors
