@@ -42,12 +42,12 @@ POSITION_ORIENTATION_NAMES: dict[int, str] = {
 # Specific force = -gravity_in_body when stationary.
 # Each entry is (unit_vector, display_name).
 _ORIENTATIONS: list[tuple[tuple[float, float, float], str]] = [
-    ((0.0, 0.0, -1.0), _("LEVEL")),        # belly down
-    ((0.0, 1.0, 0.0), _("LEFT")),          # left side down
-    ((0.0, -1.0, 0.0), _("RIGHT")),        # right side down
-    ((-1.0, 0.0, 0.0), _("NOSE DOWN")),    # nose pointing toward ground
-    ((1.0, 0.0, 0.0), _("NOSE UP")),       # nose pointing upward
-    ((0.0, 0.0, 1.0), _("BACK")),          # belly up / upside-down
+    ((0.0, 0.0, -1.0), _("LEVEL")),  # belly down
+    ((0.0, 1.0, 0.0), _("LEFT")),  # left side down
+    ((0.0, -1.0, 0.0), _("RIGHT")),  # right side down
+    ((-1.0, 0.0, 0.0), _("NOSE DOWN")),  # nose pointing toward ground
+    ((1.0, 0.0, 0.0), _("NOSE UP")),  # nose pointing upward
+    ((0.0, 0.0, 1.0), _("BACK")),  # belly up / upside-down
 ]
 _COS_20_DEG: float = 0.9397  # cos(20°) — threshold for a "definite" orientation
 
