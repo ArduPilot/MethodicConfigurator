@@ -23,8 +23,8 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 - 3D vehicle attitude visualisation delegated to `renderer_3d_quadcopter.py`
 - Embedded plugin view (`RCCalibrationView`) + standalone dev window (`RCCalibrationWindow`)
 
-> **Note:** The data model is currently a stub that returns dummy data.
-> MAVLink integration (`RC_CHANNELS` / `HEARTBEAT` messages) is planned for a future commit.
+> **Note:** The data model reads MAVLink `RC_CHANNELS` and `HEARTBEAT` messages when connected.
+> The renderer is currently a PIL-based stub; OpenGL-based attitude rendering is planned for a future commit.
 
 ## Architecture
 
@@ -44,7 +44,7 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 │                                                                    │
 │ ┌──────────────────────────────────────────────────────────────┐   │
 │ │ RCCalibrationPopup (tk.Toplevel) — floating draggable window │   │
-│ │  - Borderless, transient, grab_set()                         │   │
+│ │  - Borderless, transient popup window                        │   │
 │ │  - Custom title bar with drag-to-move                        │   │
 │ │  - Same stick / mode / channel widgets as the embedded view  │   │
 │ │  - 3D attitude preview via QuadcopterRenderer                │   │
@@ -67,7 +67,7 @@ an additional optional renderer module for 3D vehicle attitude visualisation.
 │ - start_calibration() / cancel_calibration() / finish_calibration()│
 │ - get_rc_telemetry() → dict with roll/pitch/throttle/yaw/          │
 │   flight_mode/channels                                             │
-│ - Currently returns dummy data; MAVLink integration is TODO        │
+│ - Reads MAVLink RC_CHANNELS / HEARTBEAT telemetry when connected   │
 └─────────────────────────────┬──────────────────────────────────────┘
                               │
 ┌─────────────────────────────▼──────────────────────────────────────┐
@@ -187,7 +187,7 @@ draggable monitoring window.  It shares the same telemetry polling loop and widg
 - `overrideredirect(True)` removes the OS title bar; a custom tkinter frame acts as the
   drag handle.
 - `transient(parent)` keeps the popup above its owner window.
-- `grab_set()` makes it modal (keyboard/mouse focus stays in the popup).
+- The popup is intentionally non-modal so the user can continue interacting with the main AMC window while monitoring RC input.
 - `_start_move` / `_do_move` bindings on the title bar implement drag-to-move via
   `winfo_x()` + event delta.
 - `_stop_polling()` cancels the `after()` job before `super().destroy()` to prevent

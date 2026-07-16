@@ -32,7 +32,6 @@ class CalibrationPopupBase(BaseWindow, Generic[_ModelT]):  # pylint: disable=too
 
         self.root.overrideredirect(boolean=True)
         self.root.transient(cast("tk.Wm", parent))
-        self.root.grab_set()
 
         # Variables for custom window dragging
         self._drag_x = 0

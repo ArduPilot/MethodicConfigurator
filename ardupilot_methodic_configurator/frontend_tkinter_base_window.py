@@ -56,7 +56,7 @@ def is_debugging() -> bool:
         return False
 
 
-def center_over_parent(window: tk.Toplevel, parent: tk.Misc, width: int, height: int) -> None:
+def center_over_parent(window: tk.Toplevel | tk.Tk, parent: tk.Misc, width: int, height: int) -> None:
     """Size `window` to `width`x`height` and center it over `parent`."""
     parent_x = parent.winfo_rootx()
     parent_y = parent.winfo_rooty()

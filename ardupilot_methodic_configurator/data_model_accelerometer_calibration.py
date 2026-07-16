@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from logging import debug as logging_debug
 from logging import info as logging_info
+from math import sqrt
 
 from pymavlink import mavutil
 
@@ -26,6 +27,29 @@ POSITION_LABELS: dict[int, str] = {
     mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEUP: _("Place vehicle NOSE UP and click Continue"),
     mavutil.mavlink.ACCELCAL_VEHICLE_POS_BACK: _("Place vehicle on its BACK and click Continue"),
 }
+
+# Maps each ACCELCAL_VEHICLE_POS value to the orientation name returned by compute_detected_position().
+POSITION_ORIENTATION_NAMES: dict[int, str] = {
+    mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL: _("LEVEL"),
+    mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT: _("LEFT"),
+    mavutil.mavlink.ACCELCAL_VEHICLE_POS_RIGHT: _("RIGHT"),
+    mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEDOWN: _("NOSE DOWN"),
+    mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEUP: _("NOSE UP"),
+    mavutil.mavlink.ACCELCAL_VEHICLE_POS_BACK: _("BACK"),
+}
+
+# Body frame: X=forward, Y=right, Z=down.
+# Specific force = -gravity_in_body when stationary.
+# Each entry is (unit_vector, display_name).
+_ORIENTATIONS: list[tuple[tuple[float, float, float], str]] = [
+    ((0.0, 0.0, -1.0), _("LEVEL")),  # belly down
+    ((0.0, 1.0, 0.0), _("LEFT")),  # left side down
+    ((0.0, -1.0, 0.0), _("RIGHT")),  # right side down
+    ((-1.0, 0.0, 0.0), _("NOSE DOWN")),  # nose pointing toward ground
+    ((1.0, 0.0, 0.0), _("NOSE UP")),  # nose pointing upward
+    ((0.0, 0.0, 1.0), _("BACK")),  # belly up / upside-down
+]
+_COS_20_DEG: float = 0.9397  # cos(20°) — threshold for a "definite" orientation
 
 
 class AccelerometerCalibrationDataModel:
@@ -52,6 +76,7 @@ class AccelerometerCalibrationDataModel:
         """
         self.flight_controller = flight_controller
         self._current_position: int | None = None  # last ACCELCAL_VEHICLE_POS value from FC
+        self._got_imu_stream: bool = False  # True once SCALED_IMU stream is established
 
     def is_connected(self) -> bool:
         """Check if flight controller is connected."""
@@ -139,6 +164,10 @@ class AccelerometerCalibrationDataModel:
         """Return a human-readable instruction for the given ACCELCAL_VEHICLE_POS value."""
         return POSITION_LABELS.get(position, _("Unknown position %d") % position)
 
+    def get_position_orientation_name(self, position: int) -> str:
+        """Return the orientation name (as produced by compute_detected_position) for the given ACCELCAL position."""
+        return POSITION_ORIENTATION_NAMES.get(position, "")
+
     def is_calibration_complete(self, position: int) -> bool:
         """Return True if position signals end of calibration (success or failure)."""
         return position in (
@@ -173,3 +202,88 @@ class AccelerometerCalibrationDataModel:
             logging_debug(_("Confirmed calibration position %d"), self._current_position)
             return True, error_msg
         return False, error_msg or _("Failed to send position confirmation")
+
+    def cancel_full_calibration(self) -> tuple[bool, str]:
+        """
+        Cancel an ongoing full 6-position accelerometer calibration.
+
+        Sends MAV_CMD_PREFLIGHT_CALIBRATION with param5=0 to abort the calibration
+        on the flight controller side.
+
+        Returns:
+            tuple[bool, str]: (success, message)
+
+        """
+        if not self.is_connected():
+            return False, _("Flight controller not connected")
+        self._current_position = None
+        success, error_msg = self.flight_controller.cancel_accel_calibration()
+        if success:
+            logging_info(_("Full accelerometer calibration cancelled"))
+            return True, _("Calibration cancelled")
+        return False, error_msg or _("Failed to cancel calibration")
+
+    def poll_imu_raw(self) -> tuple[float, float, float] | None:
+        """
+        Poll the latest IMU reading from the flight controller.
+
+        Returns:
+            tuple[float, float, float] | None: (xacc, yacc, zacc) in milli-g, or None if no data arrived.
+
+        """
+        if not self._got_imu_stream:
+            success, _ = self.flight_controller.request_scaled_imu_messages()
+            if success:
+                self._got_imu_stream = True
+        return self.flight_controller.poll_scaled_imu()
+
+    def stop_imu_monitoring(self) -> None:
+        """Stop SCALED_IMU streaming. Call on deactivation so the stream is re-requested on next activation."""
+        self._got_imu_stream = False
+
+    @staticmethod
+    def compute_movement_magnitude_ms2(xacc_mg: float, yacc_mg: float, zacc_mg: float) -> float:
+        """
+        Compute the magnitude of the acceleration vector in m/s².
+
+        When the vehicle is completely still this is approximately 9.81 m/s² (1 g).
+        Deviations indicate movement.
+
+        Args:
+            xacc_mg: X acceleration in milli-g
+            yacc_mg: Y acceleration in milli-g
+            zacc_mg: Z acceleration in milli-g
+
+        Returns:
+            float: magnitude in m/s²
+
+        """
+        mg_to_ms2 = 9.80665 / 1000.0
+        return sqrt(xacc_mg**2 + yacc_mg**2 + zacc_mg**2) * mg_to_ms2
+
+    @staticmethod
+    def compute_detected_position(xacc_mg: float, yacc_mg: float, zacc_mg: float) -> str:
+        """
+        Determine the board orientation from the acceleration vector.
+
+        Compares the normalised acceleration vector against the six canonical
+        calibration orientations.  A match is reported when the dot product
+        exceeds cos(20°), i.e. the angle is within 20° of exact.
+
+        Args:
+            xacc_mg: X acceleration in milli-g
+            yacc_mg: Y acceleration in milli-g
+            zacc_mg: Z acceleration in milli-g
+
+        Returns:
+            str: One of LEVEL, BACK, NOSE DOWN, NOSE UP, LEFT, RIGHT, or INDEFINITE.
+
+        """
+        mag = sqrt(xacc_mg**2 + yacc_mg**2 + zacc_mg**2)
+        if mag < 1.0:
+            return _("INDEFINITE")
+        nx, ny, nz = xacc_mg / mag, yacc_mg / mag, zacc_mg / mag
+        for (ex, ey, ez), name in _ORIENTATIONS:
+            if nx * ex + ny * ey + nz * ez > _COS_20_DEG:
+                return name
+        return _("INDEFINITE")
