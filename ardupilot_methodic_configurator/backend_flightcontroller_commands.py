@@ -611,6 +611,102 @@ class FlightControllerCommands:
             logging_error(error_msg)
             return False, error_msg
 
+    def cancel_accel_calibration(self) -> tuple[bool, str]:
+        """
+        Cancel any ongoing accelerometer calibration.
+
+        Sends MAV_CMD_PREFLIGHT_CALIBRATION with all parameters set to 0,
+        which signals ArduPilot to abort an in-progress calibration.
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available to cancel accelerometer calibration")
+            logging_error(error_msg)
+            return False, error_msg
+
+        try:
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                # pylint: disable=duplicate-code
+                0,  # confirmation
+                0,  # param1: gyro
+                0,  # param2: mag
+                0,  # param3: pressure
+                0,  # param4: radio
+                0,  # param5: accel = 0 → cancel / no calibration
+                0,  # param6: reserved
+                0,  # param7: reserved
+                # pylint: enable=duplicate-code
+            )
+            self._last_accel_cal_vehicle_pos = None
+            logging_info(_("Accelerometer calibration cancel command sent"))
+            return True, ""
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to send accelerometer calibration cancel command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def poll_scaled_imu(self) -> tuple[float, float, float] | None:
+        """
+        Read the latest SCALED_IMU message from the flight controller.
+
+        Returns:
+            tuple[float, float, float] | None: (xacc, yacc, zacc) in milli-g, or None if no message arrived.
+
+        """
+        if self.master is None:
+            return None
+        try:
+            msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                type="SCALED_IMU", blocking=False
+            )
+            if msg is None:
+                return None
+            return float(msg.xacc), float(msg.yacc), float(msg.zacc)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logging_debug(_("Exception while polling SCALED_IMU: %(error)s"), {"error": str(e)})
+            return None
+
+    def request_scaled_imu_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
+        """
+        Request periodic SCALED_IMU messages from the flight controller.
+
+        Uses MAV_CMD_SET_MESSAGE_INTERVAL to ask the FC to stream SCALED_IMU
+        at the given interval.  A single attempt is made (no retries) with a
+        short ACK timeout so the caller is not blocked for long.
+
+        Args:
+            interval_microseconds: Desired interval in µs (default: 200 000 µs = 5 Hz)
+
+        Returns:
+            tuple[bool, str]: (success, error_message)
+
+        """
+        if self.master is None:
+            error_msg = _("No flight controller connection available for SCALED_IMU stream request")
+            logging_debug(error_msg)
+            return False, error_msg
+
+        success, error_msg = self.send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+            param1=float(mavutil.mavlink.MAVLINK_MSG_ID_SCALED_IMU),
+            param2=float(interval_microseconds),
+            timeout=self.COMMAND_ACK_TIMEOUT_BATTERY,
+        )
+        if success:
+            logging_debug(
+                _("SCALED_IMU stream requested at %(interval)d µs interval"),
+                {"interval": interval_microseconds},
+            )
+        else:
+            logging_debug(_("SCALED_IMU stream request failed: %(error)s"), {"error": error_msg})
+        return success, error_msg
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """
         Request periodic BATTERY_STATUS messages from the flight controller.

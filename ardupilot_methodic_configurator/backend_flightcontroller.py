@@ -516,6 +516,18 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Confirm calibration position to the FC - delegates to commands manager."""
         return self._commands_manager.confirm_accel_vehicle_pos(position)
 
+    def cancel_accel_calibration(self) -> tuple[bool, str]:
+        """Cancel any ongoing accelerometer calibration - delegates to commands manager."""
+        return self._commands_manager.cancel_accel_calibration()
+
+    def poll_scaled_imu(self) -> tuple[float, float, float] | None:
+        """Read the latest SCALED_IMU reading - delegates to commands manager."""
+        return self._commands_manager.poll_scaled_imu()
+
+    def request_scaled_imu_messages(self, interval_microseconds: int = 200_000) -> tuple[bool, str]:
+        """Request periodic SCALED_IMU messages - delegates to commands manager."""
+        return self._commands_manager.request_scaled_imu_messages(interval_microseconds)
+
     def request_periodic_battery_status(self, interval_microseconds: int = 1000000) -> tuple[bool, str]:
         """Request periodic BATTERY_STATUS messages - delegates to commands manager."""
         return self._commands_manager.request_periodic_battery_status(interval_microseconds)

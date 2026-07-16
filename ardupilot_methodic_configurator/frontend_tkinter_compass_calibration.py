@@ -27,7 +27,7 @@ from ardupilot_methodic_configurator.plugin_constants import PLUGIN_COMPASS_CALI
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 
-class CompassCalibrationInstructionsPopup(tk.Toplevel):
+class CompassCalibrationInstructionsPopup(BaseWindow):
     """A small, tooltip-styled popup shown before calibration starts, explaining what to do."""
 
     _BG_COLOR = "#ffffe0"
@@ -35,27 +35,27 @@ class CompassCalibrationInstructionsPopup(tk.Toplevel):
     _KEY_COLOR = "#fffef0"
 
     def __init__(self, parent: tk.Widget, on_continue: Callable[[], None]) -> None:
-        super().__init__(parent)
+        super().__init__(cast("tk.Toplevel", parent))
         self._parent = parent
         self._on_continue = on_continue
         self._width = 0
         self._height = 0
 
-        self.overrideredirect(boolean=True)
-        self.transient(cast("tk.Wm", parent))
-        self.grab_set()
+        self.root.overrideredirect(boolean=True)
+        self.root.transient(cast("tk.Wm", parent))
+        self.root.grab_set()
 
         self._setup_ui()
         self._resize_and_center()
-        self.lift()
-        self.focus_force()
+        self.root.lift()
+        self.root.focus_force()
 
     def _setup_ui(self) -> None:
-        self.configure(bg=self._KEY_COLOR)
+        self.root.configure(bg=self._KEY_COLOR)
         with contextlib.suppress(tk.TclError):
-            self.wm_attributes("-transparentcolor", self._KEY_COLOR)
+            self.root.wm_attributes("-transparentcolor", self._KEY_COLOR)
 
-        self.canvas = tk.Canvas(self, bg=self._KEY_COLOR, highlightthickness=0, bd=0)
+        self.canvas = tk.Canvas(self.main_frame, bg=self._KEY_COLOR, highlightthickness=0, bd=0)
         self.canvas.pack(fill="both", expand=True)
 
         info_text = _(
@@ -126,14 +126,16 @@ class CompassCalibrationInstructionsPopup(tk.Toplevel):
         return self.canvas.create_polygon(points, smooth=True, **kwargs)
 
     def _on_continue_clicked(self) -> None:
-        self.destroy()
+        self.root.destroy()
         self._on_continue()
 
     def _resize_and_center(self) -> None:
-        self.update_idletasks()
+        self.root.update_idletasks()
         width, height = self._width, self._height
+        self.root.geometry(f"{width}x{height}")
+        self.root.update_idletasks()
 
-        center_over_parent(self, self._parent, width, height)
+        center_over_parent(self.root, self._parent, width, height)
 
 
 class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"]):  # pylint: disable=too-many-instance-attributes
