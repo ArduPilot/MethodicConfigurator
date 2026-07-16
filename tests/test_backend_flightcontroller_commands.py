@@ -1310,3 +1310,241 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         # Then
         assert success is False
         assert "failed to send command" in error.lower()
+
+
+class TestFlightControllerCommandsAccelCalibrationCancel:
+    """Test cancelling an in-progress accelerometer calibration (hardware-free)."""
+
+    def test_user_can_cancel_accel_calibration_when_connected(self, mock_connected_master) -> None:
+        """
+        User can cancel an ongoing accelerometer calibration.
+
+        GIVEN: A connected flight controller
+        WHEN: User cancels the accelerometer calibration
+        THEN: A PREFLIGHT_CALIBRATION command with all-zero params is sent
+        AND: The call reports success
+        """
+        # Given: Connected FC
+        mock_master, mock_conn_mgr = mock_connected_master
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Cancel calibration
+        success, error = commands_mgr.cancel_accel_calibration()
+
+        # Then: Success and the abort command was sent once
+        assert success is True
+        assert error == ""
+        mock_master.mav.command_long_send.assert_called_once()
+        sent_args = mock_master.mav.command_long_send.call_args.args
+        # target_system, target_component, command, then 8 params
+        assert sent_args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        # every calibration param must be 0 (abort signal)
+        assert all(param == 0 for param in sent_args[3:])
+
+    def test_cancel_accel_calibration_resets_vehicle_position(self, mock_connected_master) -> None:
+        """
+        Cancelling calibration clears any cached vehicle-position state.
+
+        GIVEN: A connected FC with a stale cached vehicle position
+        WHEN: User cancels the calibration
+        THEN: The cached position is reset to None
+        """
+        # Given: Connected FC with stale cached position
+        _mock_master, mock_conn_mgr = mock_connected_master
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        commands_mgr._last_accel_cal_vehicle_pos = 3  # pylint: disable=protected-access
+
+        # When: Cancel calibration
+        success, _error = commands_mgr.cancel_accel_calibration()
+
+        # Then: Cached position cleared
+        assert success is True
+        assert commands_mgr._last_accel_cal_vehicle_pos is None  # pylint: disable=protected-access
+
+    def test_cancel_accel_calibration_fails_without_connection(self) -> None:
+        """
+        Cancelling calibration fails gracefully when no FC is connected.
+
+        GIVEN: No flight controller connection
+        WHEN: User attempts to cancel the calibration
+        THEN: The call reports failure with a descriptive message
+        AND: No command is attempted
+        """
+        # Given: No connection
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Cancel calibration
+        success, error = commands_mgr.cancel_accel_calibration()
+
+        # Then: Graceful failure
+        assert success is False
+        assert error != ""
+
+    def test_cancel_accel_calibration_handles_send_exception(self, mock_connected_master) -> None:
+        """
+        Cancelling calibration reports failure if the MAVLink send raises.
+
+        GIVEN: A connected FC whose command send raises an exception
+        WHEN: User attempts to cancel the calibration
+        THEN: The call reports failure with the error captured in the message
+        """
+        # Given: Connected FC that raises on send
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.mav.command_long_send.side_effect = RuntimeError("link down")
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Cancel calibration
+        success, error = commands_mgr.cancel_accel_calibration()
+
+        # Then: Failure surfaced without raising
+        assert success is False
+        assert "link down" in error
+
+
+class TestFlightControllerCommandsPollScaledImu:
+    """Test polling SCALED_IMU accelerometer readings (hardware-free)."""
+
+    def test_poll_scaled_imu_returns_accelerations(self, mock_connected_master) -> None:
+        """
+        Polling SCALED_IMU returns the three axis accelerations.
+
+        GIVEN: A connected FC that has a SCALED_IMU message available
+        WHEN: User polls SCALED_IMU
+        THEN: The (xacc, yacc, zacc) triple is returned as floats
+        """
+        # Given: Connected FC with a SCALED_IMU message
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_msg = MagicMock()
+        mock_msg.xacc, mock_msg.yacc, mock_msg.zacc = 10, -20, 1000
+        mock_master.recv_match.return_value = mock_msg
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Poll SCALED_IMU
+        result = commands_mgr.poll_scaled_imu()
+
+        # Then: Triple of floats returned
+        assert result == (10.0, -20.0, 1000.0)
+        assert all(isinstance(v, float) for v in result)
+
+    def test_poll_scaled_imu_returns_none_when_no_message(self, mock_connected_master) -> None:
+        """
+        Polling SCALED_IMU returns None when no message has arrived.
+
+        GIVEN: A connected FC with no pending SCALED_IMU message
+        WHEN: User polls SCALED_IMU
+        THEN: None is returned
+        """
+        # Given: Connected FC, no message
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.recv_match.return_value = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When/Then
+        assert commands_mgr.poll_scaled_imu() is None
+
+    def test_poll_scaled_imu_returns_none_without_connection(self) -> None:
+        """
+        Polling SCALED_IMU returns None when no FC is connected.
+
+        GIVEN: No flight controller connection
+        WHEN: User polls SCALED_IMU
+        THEN: None is returned
+        """
+        # Given: No connection
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When/Then
+        assert commands_mgr.poll_scaled_imu() is None
+
+    def test_poll_scaled_imu_returns_none_on_exception(self, mock_connected_master) -> None:
+        """
+        Polling SCALED_IMU returns None if reading raises.
+
+        GIVEN: A connected FC whose recv_match raises
+        WHEN: User polls SCALED_IMU
+        THEN: None is returned instead of propagating the exception
+        """
+        # Given: Connected FC that raises on recv_match
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.recv_match.side_effect = RuntimeError("decode error")
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When/Then: Swallowed, None returned
+        assert commands_mgr.poll_scaled_imu() is None
+
+
+class TestFlightControllerCommandsRequestScaledImu:
+    """Test requesting a periodic SCALED_IMU stream (hardware-free)."""
+
+    def test_request_scaled_imu_stream_succeeds_on_ack(self, mock_connected_master) -> None:
+        """
+        Requesting the SCALED_IMU stream succeeds when the FC acknowledges.
+
+        GIVEN: A connected FC that ACKs SET_MESSAGE_INTERVAL
+        WHEN: User requests the SCALED_IMU stream
+        THEN: The call reports success
+        AND: A SET_MESSAGE_INTERVAL command is sent
+        """
+        # Given: Connected FC that accepts the command
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Request stream
+        success, error = commands_mgr.request_scaled_imu_messages()
+
+        # Then: Success and command sent
+        assert success is True
+        assert error == ""
+        mock_master.mav.command_long_send.assert_called_once()
+
+    def test_request_scaled_imu_stream_passes_requested_interval(self, mock_connected_master) -> None:
+        """
+        The requested interval is forwarded to the FC as a command parameter.
+
+        GIVEN: A connected FC that ACKs the command
+        WHEN: User requests the stream with a custom interval
+        THEN: That interval (µs) appears in the command parameters
+        """
+        # Given: Connected FC that accepts the command
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Request stream at 10 Hz (100 000 µs)
+        success, _error = commands_mgr.request_scaled_imu_messages(interval_microseconds=100_000)
+
+        # Then: Interval forwarded in the sent command params
+        assert success is True
+        sent_args = mock_master.mav.command_long_send.call_args.args
+        assert float(100_000) in [float(a) for a in sent_args[3:]]
+
+    def test_request_scaled_imu_stream_fails_without_connection(self) -> None:
+        """
+        Requesting the SCALED_IMU stream fails gracefully with no connection.
+
+        GIVEN: No flight controller connection
+        WHEN: User requests the SCALED_IMU stream
+        THEN: The call reports failure with a descriptive message
+        """
+        # Given: No connection
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Request stream
+        success, error = commands_mgr.request_scaled_imu_messages()
+
+        # Then: Graceful failure
+        assert success is False
+        assert error != ""
