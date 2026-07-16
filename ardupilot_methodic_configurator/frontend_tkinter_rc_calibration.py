@@ -50,9 +50,9 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):  # pyl
         self._setup_style()
         self._setup_ui()
         self._resize_and_center()
-        self.lift()
-        self.focus_force()
-        self._timer_id = self.after(100, self._check_telemetry)
+        self.root.lift()
+        self.root.focus_force()
+        self._timer_id = self.root.after(100, self._check_telemetry)
         logging_debug(_("RC calibration progress popup created and polling scheduled."))
 
     def _setup_ui(self) -> None:
@@ -103,7 +103,7 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):  # pyl
                 logging_warning(
                     _("No RC telemetry has arrived after %(polls)d polls."), {"polls": self._polls_without_updates}
                 )
-            self._timer_id = self.after(100, self._check_telemetry)
+            self._timer_id = self.root.after(100, self._check_telemetry)
             return
 
         self._polls_without_updates = 0
@@ -151,7 +151,7 @@ class RCCalibrationPopup(CalibrationPopupBase["RCCalibrationDataModel"]):  # pyl
         self.preview_label.configure(image=tk_img)
         self.preview_label.image = tk_img  # type: ignore[attr-defined] # Keep reference
 
-        self._timer_id = self.after(100, self._check_telemetry)
+        self._timer_id = self.root.after(100, self._check_telemetry)
 
 
 class RCCalibrationView(ttk.Frame):  # pylint: disable=too-many-ancestors, too-many-instance-attributes
