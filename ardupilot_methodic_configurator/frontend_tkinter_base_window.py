@@ -56,6 +56,19 @@ def is_debugging() -> bool:
         return False
 
 
+def center_over_parent(window: tk.Toplevel, parent: tk.Misc, width: int, height: int) -> None:
+    """Size `window` to `width`x`height` and center it over `parent`."""
+    parent_x = parent.winfo_rootx()
+    parent_y = parent.winfo_rooty()
+    parent_width = parent.winfo_width()
+    parent_height = parent.winfo_height()
+
+    x = parent_x + (parent_width // 2) - (width // 2)
+    y = parent_y + (parent_height // 2) - (height // 2)
+
+    window.geometry(f"{width}x{height}+{x}+{y}")
+
+
 class BaseWindow:
     """
     A foundational class for creating Tkinter windows in the ArduPilot Methodic Configurator.
