@@ -51,7 +51,7 @@ dependencies = [
     "matplotlib==3.10.9; python_version >= '3.14'",
     "numpy==2.0.2; python_version < '3.13'",
     "numpy==2.3.4; python_version >= '3.13'",
-    "pillow==12.2.0",
+    "pillow==12.3.0",
     "pip_system_certs==5.3",
     "platformdirs==4.10.0",
     "pymavlink==2.4.49",
