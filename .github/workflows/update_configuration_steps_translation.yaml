@@ -56,7 +56,7 @@ jobs:
           python update_configuration_steps_translation.py
 
       - name: Format generated file with Ruff
-        uses: astral-sh/ruff-action@0ce1b0bf8b818ef400413f810f8a11cdbda0034b # v4.0.0
+        uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
         with:
           version-file: pyproject.toml
           args: format ardupilot_methodic_configurator/configuration_steps_strings.py
