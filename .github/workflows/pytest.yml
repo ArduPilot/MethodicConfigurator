@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.14"]  # to make sure the latest AMC supported python version does not break
+        python-version: ["3.15"]  # to make sure the latest AMC supported python version does not break
         include:
           - os: ubuntu-latest
             python-version: "3.10"  # to make sure the minimum AMC supported python version does not break
@@ -39,6 +39,18 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit
+
+      - name: Install lxml dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.15'
+        run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt-dev
+
+      - name: Install lxml dependencies (macOS)
+        if: matrix.os == 'macos-latest' && matrix.python-version == '3.15'
+        run: |
+          brew install libxml2 libxslt
+          echo "LDFLAGS=-L$(brew --prefix libxml2)/lib -L$(brew --prefix libxslt)/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$(brew --prefix libxml2)/include -I$(brew --prefix libxslt)/include" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix libxslt)/lib/pkgconfig" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
