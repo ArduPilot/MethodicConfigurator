@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.plugin_constants import PLUGIN_ACCELEROMETE
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 _POLL_INTERVAL_MS = 100  # tkinter polling interval during full calibration
+_IMU_POLL_INTERVAL_MS = 200  # tkinter polling interval for live IMU monitor
 
 
 class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-attributes
@@ -53,8 +54,12 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self.model = model
         self.base_window = base_window
         self._poll_job: str | None = None  # tkinter after() handle
+        self._imu_poll_job: str | None = None  # tkinter after() handle for live IMU monitor
+        self._waiting_for_position: bool = False  # True while wizard awaits a position confirmation
+        self._expected_position_name: str = ""  # orientation name required for the current cal step
 
         self._setup_ui()
+        self._start_imu_polling()
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
@@ -70,11 +75,15 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
         # Info text
         info_text = _(
-            "Simple calibration: Place vehicle level, then click Simple Calibration.\n"
-            "Level calibration: Place vehicle level to set the AHRS trim angles.\n"
-            "Full calibration: Follow the on-screen instructions for all 6 orientations."
+            "Simple Calibration — For large or heavy vehicles that are difficult to move. "
+            "Place the vehicle level and click the button. Slightly reduced accuracy.\n\n"
+            "Full Calibration — Highest accuracy. Move the vehicle to 6 positions as instructed. "
+            "The vehicle must rest completely still (do not hold it) when you press Continue "
+            "for each step — stillness matters more than exact angle.\n\n"
+            "Level Calibration — Trims roll and pitch only (not yaw). "
+            "Must be performed AFTER a Simple or Full calibration."
         )
-        ttk.Label(main_frame, text=info_text, justify="center").pack(pady=(0, 20))
+        ttk.Label(main_frame, text=info_text, justify="left", wraplength=600).pack(pady=(0, 20))
 
         # --- Static buttons (always visible) ---
         buttons_frame = ttk.Frame(main_frame)
@@ -87,13 +96,6 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         )
         self._simple_btn.pack(side="left", padx=8)
 
-        self._level_btn = ttk.Button(
-            buttons_frame,
-            text=_("Level Calibration (Trim)"),
-            command=self._on_level_calibration,
-        )
-        self._level_btn.pack(side="left", padx=8)
-
         self._full_btn = ttk.Button(
             buttons_frame,
             text=_("Full Calibration (6-Position)"),
@@ -101,8 +103,48 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         )
         self._full_btn.pack(side="left", padx=8)
 
+        self._level_btn = ttk.Button(
+            buttons_frame,
+            text=_("Level Calibration (Trim)"),
+            command=self._on_level_calibration,
+        )
+        self._level_btn.pack(side="left", padx=8)
+
+        # --- Live sensor status ---
+        self._imu_position_var = tk.StringVar(value="—")
+        self._imu_magnitude_var = tk.StringVar(value="—")
+
+        status_frame = ttk.LabelFrame(main_frame, text=_("Live Sensor Status"), padding=8)
+        status_frame.pack(fill="x", padx=10, pady=(10, 0))
+
+        status_grid = ttk.Frame(status_frame)
+        status_grid.pack(anchor="w")
+
+        ttk.Label(status_grid, text=_("Detected position:")).grid(row=0, column=0, sticky="e", padx=(0, 10))
+        ttk.Label(
+            status_grid,
+            textvariable=self._imu_position_var,
+            font=("TkDefaultFont", 10, "bold"),
+            width=12,
+        ).grid(row=0, column=1, sticky="w")
+
+        ttk.Label(status_grid, text=_("Movement amplitude:")).grid(row=1, column=0, sticky="e", padx=(0, 10), pady=(4, 0))
+        ttk.Label(status_grid, textvariable=self._imu_magnitude_var).grid(row=1, column=1, sticky="w", pady=(4, 0))
+
         # --- Full-calibration wizard panel (hidden until full cal is active) ---
         self._wizard_frame = ttk.LabelFrame(main_frame, text=_("6-Position Calibration"), padding=12)
+
+        ttk.Label(
+            self._wizard_frame,
+            text=_(
+                "Rest the vehicle in each position — do not hold it. "
+                "Keep it completely still when pressing Continue. "
+                "Positions need only be within ~20° of exact, except the first (level)."
+            ),
+            justify="center",
+            wraplength=500,
+            foreground="#555555",
+        ).pack(pady=(0, 8))
 
         self._position_label = ttk.Label(
             self._wizard_frame,
@@ -168,6 +210,8 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._full_btn.configure(state="disabled")
         self._position_label.configure(text=_("Waiting for flight controller..."))
         self._continue_btn.configure(state="disabled")
+        self._waiting_for_position = False
+        self._expected_position_name = ""
         self._wizard_frame.pack(fill="x", padx=20, pady=(10, 0))
 
         self._start_polling()
@@ -190,14 +234,18 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
             self._end_full_calibration(success=self.model.is_calibration_successful(pos))
             return
 
-        # New position requested — update the instruction label and enable Continue
+        # New position requested — update the instruction label.
+        # Continue will be enabled by _imu_poll_tick once the detected position matches.
         label = self.model.get_position_label(pos)
         self._position_label.configure(text=label)
-        self._continue_btn.configure(state="normal")
-        # Stop polling while waiting for the user to click Continue
+        self._expected_position_name = self.model.get_position_orientation_name(pos)
+        self._waiting_for_position = True
+        # Stop polling while waiting for the user to match position and click Continue
 
     def _on_continue(self) -> None:
         """User clicked Continue — confirm the current position and resume polling."""
+        self._waiting_for_position = False
+        self._expected_position_name = ""
         self._continue_btn.configure(state="disabled")
         success, error_msg = self.model.confirm_current_position()
         if not success:
@@ -210,6 +258,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
     def _on_cancel_full_calibration(self) -> None:
         """User clicked Cancel during full calibration."""
         self._stop_polling()
+        self.model.cancel_full_calibration()
         self._hide_wizard()
         showerror(_("Calibration Cancelled"), _("Full accelerometer calibration was cancelled."))
 
@@ -232,10 +281,46 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _hide_wizard(self) -> None:
         """Hide the wizard panel and re-enable the top-level buttons."""
+        self._waiting_for_position = False
+        self._expected_position_name = ""
         self._wizard_frame.pack_forget()
         self._simple_btn.configure(state="normal")
         self._level_btn.configure(state="normal")
         self._full_btn.configure(state="normal")
+
+    # ------------------------------------------------------------------
+    # IMU live monitor
+    # ------------------------------------------------------------------
+
+    def _start_imu_polling(self) -> None:
+        """Start (or restart) the live IMU monitor polling loop."""
+        if self._imu_poll_job is None:
+            self._imu_poll_job = self.after(_IMU_POLL_INTERVAL_MS, self._imu_poll_tick)
+
+    def _stop_imu_polling(self) -> None:
+        """Cancel any pending IMU poll job."""
+        if self._imu_poll_job is not None:
+            job = self._imu_poll_job
+            self._imu_poll_job = None
+            with suppress(tk.TclError):
+                self.after_cancel(job)
+
+    def _imu_poll_tick(self) -> None:
+        """Poll the latest IMU data and update the live status labels."""
+        self._imu_poll_job = None
+        imu = self.model.poll_imu_raw()
+        if imu is not None:
+            x, y, z = imu
+            magnitude = self.model.compute_movement_magnitude_ms2(x, y, z)
+            position = self.model.compute_detected_position(x, y, z)
+            self._imu_magnitude_var.set(f"{magnitude:.2f} m/s²  (≈9.81 when still)")
+            self._imu_position_var.set(position)
+            if self._waiting_for_position:
+                matches = position == self._expected_position_name
+                self._continue_btn.configure(state="normal" if matches else "disabled")
+        elif self._waiting_for_position:
+            self._continue_btn.configure(state="disabled")
+        self._imu_poll_job = self.after(_IMU_POLL_INTERVAL_MS, self._imu_poll_tick)
 
     # ------------------------------------------------------------------
     # Plugin lifecycle
@@ -243,15 +328,19 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def on_activate(self) -> None:
         """Called when the plugin view is displayed (lifecycle method)."""
+        self._start_imu_polling()
 
     def on_deactivate(self) -> None:
         """Called when the plugin view is hidden (lifecycle method)."""
         self._stop_polling()
+        self._stop_imu_polling()
+        self.model.stop_imu_monitoring()
         self._hide_wizard()
 
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""
         self._stop_polling()
+        self._stop_imu_polling()
         super().destroy()
 
 

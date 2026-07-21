@@ -21,12 +21,13 @@ from typing import Any, cast
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_compass_calibration import CompassCalibrationDataModel
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow, center_over_parent
+from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
 from ardupilot_methodic_configurator.plugin_constants import PLUGIN_COMPASS_CALIBRATION
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 
-class CompassCalibrationInstructionsPopup(tk.Toplevel):
+class CompassCalibrationInstructionsPopup(BaseWindow):
     """A small, tooltip-styled popup shown before calibration starts, explaining what to do."""
 
     _BG_COLOR = "#ffffe0"
@@ -34,27 +35,27 @@ class CompassCalibrationInstructionsPopup(tk.Toplevel):
     _KEY_COLOR = "#fffef0"
 
     def __init__(self, parent: tk.Widget, on_continue: Callable[[], None]) -> None:
-        super().__init__(parent)
+        super().__init__(cast("tk.Toplevel", parent))
         self._parent = parent
         self._on_continue = on_continue
         self._width = 0
         self._height = 0
 
-        self.overrideredirect(boolean=True)
-        self.transient(cast("tk.Wm", parent))
-        self.grab_set()
+        self.root.overrideredirect(boolean=True)
+        self.root.transient(cast("tk.Wm", parent))
+        self.root.grab_set()
 
         self._setup_ui()
         self._resize_and_center()
-        self.lift()
-        self.focus_force()
+        self.root.lift()
+        self.root.focus_force()
 
     def _setup_ui(self) -> None:
-        self.configure(bg=self._KEY_COLOR)
+        self.root.configure(bg=self._KEY_COLOR)
         with contextlib.suppress(tk.TclError):
-            self.wm_attributes("-transparentcolor", self._KEY_COLOR)
+            self.root.wm_attributes("-transparentcolor", self._KEY_COLOR)
 
-        self.canvas = tk.Canvas(self, bg=self._KEY_COLOR, highlightthickness=0, bd=0)
+        self.canvas = tk.Canvas(self.main_frame, bg=self._KEY_COLOR, highlightthickness=0, bd=0)
         self.canvas.pack(fill="both", expand=True)
 
         info_text = _(
@@ -125,43 +126,26 @@ class CompassCalibrationInstructionsPopup(tk.Toplevel):
         return self.canvas.create_polygon(points, smooth=True, **kwargs)
 
     def _on_continue_clicked(self) -> None:
-        self.destroy()
+        self.root.destroy()
         self._on_continue()
 
     def _resize_and_center(self) -> None:
-        self.update_idletasks()
+        self.root.update_idletasks()
         width, height = self._width, self._height
+        self.root.geometry(f"{width}x{height}")
+        self.root.update_idletasks()
 
-        parent_x = self._parent.winfo_rootx()
-        parent_y = self._parent.winfo_rooty()
-        parent_width = self._parent.winfo_width()
-        parent_height = self._parent.winfo_height()
-
-        x = parent_x + (parent_width // 2) - (width // 2)
-        y = parent_y + (parent_height // 2) - (height // 2)
-
-        self.geometry(f"{width}x{height}+{x}+{y}")
+        center_over_parent(self.root, self._parent, width, height)
 
 
-class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance-attributes
+class CompassCalibrationPopup(CalibrationPopupBase["CompassCalibrationDataModel"]):  # pylint: disable=too-many-instance-attributes
     """A modern, borderless popup window with a custom draggable title bar."""
 
+    _MIN_WIDTH = 560
+    _MIN_HEIGHT = 320
+
     def __init__(self, parent: tk.Widget, model: CompassCalibrationDataModel) -> None:
-        super().__init__(parent)
-        self.model = model
-        self._parent = parent
-
-        self.overrideredirect(boolean=True)
-        self.transient(cast("tk.Wm", parent))
-        self.grab_set()
-
-        # Variables for custom window dragging
-        self._drag_x = 0
-        self._drag_y = 0
-
-        self._timer_id: str | None = None
-        self._polls_without_updates = 0
-        self._no_telemetry_warning_emitted = False
+        super().__init__(parent, model)
         self._expected_compass_ids = self._load_expected_compass_ids()
         self.progress_bars: dict[int, ttk.Progressbar] = {}
         self.completion_status: dict[int, bool] = {}
@@ -170,52 +154,13 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
         self._setup_ui()
         self._precreate_progress_rows()
         self._resize_and_center()
-        self.lift()
-        self.focus_force()
-        self._timer_id = self.after(100, self._check_progress)
+        self.root.lift()
+        self.root.focus_force()
+        self._timer_id = self.root.after(100, self._check_progress)
         logging_debug(_("Compass calibration progress popup created and polling scheduled."))
 
-    def destroy(self) -> None:
-        """Stop polling before destroying the popup."""
-        self._stop_polling()
-        super().destroy()
-
-    def _setup_style(self) -> None:
-        style = ttk.Style(self)
-        self._bg_color = style.lookup("TFrame", "background") or self.cget("bg")
-        style.configure(
-            "Horizontal.TProgressbar",
-            borderwidth=0,
-            thickness=24,
-        )
-        style.configure(
-            "Done.Horizontal.TProgressbar",
-            background="#8fbc8f",
-            borderwidth=0,
-            thickness=24,
-            troughcolor=style.lookup("Horizontal.TProgressbar", "troughcolor"),
-        )
-
     def _setup_ui(self) -> None:
-        self.configure(bg=self._bg_color)
-        outer_frame = tk.Frame(self, bg=self._bg_color, highlightthickness=0)
-        outer_frame.pack(fill="both", expand=True)
-
-        title_bar = tk.Frame(outer_frame, bg="#e0e0e0", relief="flat", bd=0)
-        title_bar.pack(fill="x", side="top")
-
-        title_bar.bind("<ButtonPress-1>", self._start_move)
-        title_bar.bind("<B1-Motion>", self._do_move)
-
-        title_label = tk.Label(
-            title_bar, text=_("Calibrating Compasses"), bg="#e0e0e0", fg="black", font=("TkDefaultFont", 11, "bold")
-        )
-        title_label.pack(side="left", padx=10, pady=5)
-        title_label.bind("<ButtonPress-1>", self._start_move)
-        title_label.bind("<B1-Motion>", self._do_move)
-
-        content_frame = ttk.Frame(outer_frame)
-        content_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        content_frame = self._create_framed_ui(_("Calibrating Compasses"))
 
         self.hint_label = ttk.Label(
             content_frame,
@@ -272,7 +217,7 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
             self.progress_bars[compass_id] = progress_bar
             self.completion_status[compass_id] = False
             logging_debug(_("Compass calibration progress bar created for compass %(compass_id)s"), {"compass_id": compass_id})
-            self.update_idletasks()
+            self.root.update_idletasks()
             self._resize_and_center()
 
         return self.progress_bars[compass_id]
@@ -287,41 +232,6 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
 
         for compass_id in self._expected_compass_ids:
             self._create_progress_row(compass_id)
-
-    def _start_move(self, event: tk.Event) -> None:
-        self._drag_x = event.x
-        self._drag_y = event.y
-
-    def _do_move(self, event: tk.Event) -> None:
-        x = self.winfo_x() + event.x - self._drag_x
-        y = self.winfo_y() + event.y - self._drag_y
-        self.geometry(f"+{x}+{y}")
-
-    def _resize_and_center(self) -> None:
-        self.update_idletasks()
-        self.minsize(560, 320)
-
-        width = max(self.winfo_reqwidth(), 560)
-        height = max(self.winfo_reqheight(), 320)
-        self.geometry(f"{width}x{height}")
-        self.update_idletasks()
-
-        parent_x = self._parent.winfo_rootx()
-        parent_y = self._parent.winfo_rooty()
-        parent_width = self._parent.winfo_width()
-        parent_height = self._parent.winfo_height()
-
-        x = parent_x + (parent_width // 2) - (width // 2)
-        y = parent_y + (parent_height // 2) - (height // 2)
-
-        self.geometry(f"{width}x{height}+{x}+{y}")
-
-    def _stop_polling(self) -> None:
-        """Cancel the periodic progress polling callback if it is active."""
-        if self._timer_id:
-            with suppress(tk.TclError):
-                self.after_cancel(self._timer_id)
-            self._timer_id = None
 
     def _check_progress(self) -> None:  # noqa: PLR0915  # pylint: disable=too-many-branches, too-many-statements
         data_list = self.model.get_progress()
@@ -339,7 +249,7 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                     {"polls": self._polls_without_updates},
                 )
             # logging_debug(_("Compass calibration progress poll found no updates; rescheduling in 100 ms."))
-            self._timer_id = self.after(100, self._check_progress)
+            self._timer_id = self.root.after(100, self._check_progress)
             return
 
         self._polls_without_updates = 0
@@ -424,27 +334,31 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
                         messagebox.showerror(
                             _("Calibration Failed"),
                             _("Calibration for Compass {compass_id} failed. Please try again.").format(compass_id=cid),
-                            parent=self,
+                            parent=self.root,
                         )
                         self.destroy()
                     else:
-                        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+                        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self.root)
                         logging_debug(
                             _("Compass calibration cancel failed after report failure: %(error)s"), {"error": error_msg}
                         )
-                        self._timer_id = self.after(100, self._check_progress)
+                        self._timer_id = self.root.after(100, self._check_progress)
                     return
 
         if self.completion_status and all(self.completion_status.values()):
             if self._timer_id:
-                self.after_cancel(self._timer_id)
+                self.root.after_cancel(self._timer_id)
             self.model.finish_calibration()
             logging_debug(_("Compass calibration finished for all compasses; closing popup."))
-            messagebox.showinfo(_("Calibration Complete"), _("All compasses successfully calibrated and saved!"), parent=self)
+            messagebox.showinfo(
+                _("Calibration Complete"),
+                _("All compasses successfully calibrated and saved!"),
+                parent=self.root,
+            )
             self.destroy()
         else:
             logging_debug(_("Compass calibration still in progress; scheduling next poll in 100 ms."))
-            self._timer_id = self.after(100, self._check_progress)
+            self._timer_id = self.root.after(100, self._check_progress)
 
     def _on_cancel(self) -> None:
         logging_debug(_("Compass calibration cancel button clicked."))
@@ -453,13 +367,13 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
         if success:
             self.model.finish_calibration()
             logging_debug(_("Compass calibration cancel accepted; closing popup."))
-            messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self)
+            messagebox.showinfo(_("Cancelled"), _("Compass calibration was cancelled."), parent=self.root)
             self.destroy()
             return
 
-        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self)
+        messagebox.showerror(_("Failed to Cancel"), error_msg, parent=self.root)
         logging_debug(_("Compass calibration cancel rejected: %(error)s"), {"error": error_msg})
-        self._timer_id = self.after(100, self._check_progress)
+        self._timer_id = self.root.after(100, self._check_progress)
 
 
 # pylint: disable=too-many-ancestors
