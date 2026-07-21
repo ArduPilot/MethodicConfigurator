@@ -1177,9 +1177,59 @@ def test_user_can_upload_files_via_files_manager(sitl_flight_controller: FlightC
         assert result is True
         cleanup_needed = True
         if progress_updates:
-            assert progress_updates[-1][1] == 100
+            assert max(current for current, _total in progress_updates) == 100
 
         verification_file = tmp_path / "copilot_upload_verify.txt"
+        mavftp.cmd_get([remote_filename, str(verification_file)])
+        ret = mavftp.process_ftp_reply("OpenFileRO", timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT)
+        assert ret.error_code == 0
+        assert verification_file.read_text(encoding="UTF-8") == local_file.read_text(encoding="UTF-8")
+    finally:
+        if cleanup_needed:
+            mavftp.cmd_rm([remote_filename])
+
+
+@pytest.mark.integration
+@pytest.mark.sitl
+def test_user_can_upload_script_to_apm_scripts_via_files_manager(
+    sitl_flight_controller: FlightController, tmp_path: Path
+) -> None:
+    """
+    User can upload a script into /APM/Scripts through the files manager.
+
+    GIVEN: Connected SITL controller with MAVFTP enabled
+    WHEN: The files manager uploads a Lua script to /APM/Scripts
+    THEN: The upload should succeed without manual directory preparation
+    AND: The remote script contents should match the local file after transfer
+    """
+    files_mgr = FlightControllerFiles(connection_manager=sitl_flight_controller)
+    mavftp = create_mavftp_safe(sitl_flight_controller.master)
+    if mavftp is None:
+        pytest.skip("MAVFTP not available in this SITL build")
+
+    local_file = tmp_path / "codex_upload_script.lua"
+    local_file.write_text("return 42\n", encoding="UTF-8")
+    remote_filename = f"/APM/Scripts/codex_upload_{int(time.time())}.lua"
+    verification_file = tmp_path / "codex_upload_script_verify.lua"
+
+    progress_updates: list[tuple[int, int]] = []
+
+    def progress_callback(current: int, total: int) -> None:
+        progress_updates.append((current, total))
+
+    cleanup_needed = False
+    try:
+        result = files_mgr.upload_file(
+            local_filename=str(local_file),
+            remote_filename=remote_filename,
+            progress_callback=progress_callback,
+        )
+
+        assert result is True
+        cleanup_needed = True
+        if progress_updates:
+            assert max(current for current, _total in progress_updates) == 100
+
         mavftp.cmd_get([remote_filename, str(verification_file)])
         ret = mavftp.process_ftp_reply("OpenFileRO", timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT)
         assert ret.error_code == 0
@@ -1242,7 +1292,7 @@ def test_user_can_download_synthetic_log_via_files_manager(sitl_flight_controlle
         assert result is True
         assert downloaded_file.read_bytes() == local_source.read_bytes()
         if progress_updates:
-            assert progress_updates[-1][1] == 100
+            assert max(current for current, _total in progress_updates) == 100
     finally:
         mavftp.cmd_rm([remote_filename])
         if lastlog_backed_up:

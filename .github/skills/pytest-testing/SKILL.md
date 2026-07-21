@@ -203,6 +203,43 @@ def test_integration_behavior(self, mock_api) -> None:
     """Test integration points."""
 ```
 
+### macOS CI Headless Testing (Tkinter Segfault Guidelines)
+
+Tkinter is extremely buggy and unstable on macOS GitHub Action runners.
+Without a physical display, forcing UI updates will cause Segmentation
+Faults (`AppKit`/`HIToolbox` crashes) which instantly kill the MacOS Pytest runner.
+To prevent this, please follow these rules:
+
+1. **Never use `.update()`**: It forces a full event loop evaluation and will crash macOS.
+Always use `.update_idletasks()` instead.
+2. Preventing CI Crashes During Setup: Whenever you create a Tkinter window in a test,
+you must block the main tkinter library from trying to render to a physical screen.
+Make sure your yield statement stays inside the with patch(...) block so that
+these overrides don't expire before the test finishes running.
+
+```python
+@pytest.fixture
+def safe_window_fixture(tk_root) -> Generator[MyWindow, None, None]:
+    with (
+        # Prevent Tkinter DPI scaling calculations from crashing macOS
+        patch.object(tk.Toplevel, "winfo_fpixels", side_effect=tk.TclError("no display")),
+        # Block macOS C-level screen rendering universally
+        patch("tkinter.Misc.update"),
+        patch("tkinter.Misc.update_idletasks"),
+        patch("tkinter.Misc.wait_visibility"),
+        patch("tkinter.Misc.wait_window"),
+    ):
+        window = MyWindow(tk_root)
+
+        # Follow Point 2
+        yield window
+
+- GUI Tests (gui_*.py): Any test simulating physical interaction (e.g., PyAutoGUI) must
+explicitly load the CI environment setup at the very top of the file:
+
+from tests.conftest import gui_test_environment  # noqa: F401 # pylint: disable=unused-import
+pytestmark = pytest.mark.gui
+
 ## 📋 Test Categories
 
 ### Required Test Types

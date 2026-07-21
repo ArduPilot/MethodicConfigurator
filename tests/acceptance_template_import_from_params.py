@@ -1120,6 +1120,7 @@ class TestParameterDerivationValidation:
             "SID_F_START_HZ",
             "SID_F_STOP_HZ",
             "SID_T_FADE_IN",
+            "SID_T_FADE_OUT",
             "ATC_RATE_FF_ENAB",
             "ATC_RAT_RLL_I",
             "ATC_RAT_PIT_I",
@@ -1183,42 +1184,48 @@ class TestParameterDerivationValidation:
 
         return {
             # System ID test files evolve these parameters across different axis tests
-            "42_system_id_roll.param": system_id_params,
-            "43_system_id_pitch.param": system_id_params,
-            "44_system_id_yaw.param": system_id_params,
-            "45_system_id_thrust.param": system_id_params | {"PSC_ACCZ_I"},
+            "50_system_id_input_roll.param": system_id_params,
+            "51_system_id_input_pitch.param": system_id_params,
+            "52_system_id_input_yaw.param": system_id_params,
+            "53_system_id_mixer_roll.param": system_id_params,
+            "54_system_id_mixer_pitch.param": system_id_params,
+            "55_system_id_mixer_yaw.param": system_id_params,
+            "56_system_id_mixer_thrust.param": system_id_params | {"PSC_ACCZ_I"},
             # PID adjustment file has initial values that get refined later
-            "16_pid_adjustment.param": pid_tuning_params,
-            # Quick tune files progressively refine PID parameters
-            "23_quick_tune_results.param": pid_tuning_params,
-            "27_quick_tune_results.param": pid_tuning_params,
+            "23_optional_pid_adjustment.param": pid_tuning_params,
+            "30_quick_tune_results.param": pid_tuning_params,
             # Autotune result files progressively improve PIDs
-            "31_autotune_roll_results.param": pid_tuning_params,
-            "33_autotune_pitch_results.param": pid_tuning_params,
-            "35_autotune_yaw_results.param": pid_tuning_params,
-            "37_autotune_yawd_results.param": {"ATC_ANG_YAW_P"},
-            "39_autotune_roll_pitch_retune_results.param": {"ATC_ANG_RLL_P", "ATC_ANG_PIT_P"},
+            "36_autotune_roll_results.param": pid_tuning_params,
+            "38_autotune_pitch_results.param": pid_tuning_params,
+            "40_autotune_yaw_results.param": pid_tuning_params,
+            "42_autotune_yawd_results.param": {"ATC_ANG_YAW_P"},
+            "44_autotune_roll_pitch_retune_results.param": {"ATC_ANG_RLL_P", "ATC_ANG_PIT_P"},
             # Remote controller option assignments evolve
-            "05_remote_controller.param": rc_params,
+            "07_remote_controller_controller.param": rc_params,
             # Initial configuration files have values that get refined
-            "11_initial_atc.param": config_params | pid_tuning_params | {"MOT_THST_EXPO"},
-            "12_mp_setup_mandatory_hardware.param": config_params
+            "13_initial_atc.param": config_params | pid_tuning_params | {"MOT_THST_EXPO"},
+            "14_mp_setup_mandatory_hardware.param": config_params
             | pid_tuning_params
             | {"FLTMODE5", "FLTMODE6", "MOT_THST_EXPO"},
-            "13_general_configuration.param": config_params,
+            "15_general_configuration.param": config_params,
             # Quick tune and autotune setup may modify logging
-            "26_quick_tune_setup.param": {"LOG_BITMASK"},
+            "29_quick_tune_setup.param": {"LOG_BITMASK"},
             # Notch filter setup parameters are tuning-specific
-            "18_notch_filter_setup.param": {"INS_HNTCH_FREQ", "INS_HNTCH_BW", "INS_HNTCH_ATT", "INS_HNTCH_HMNCS"},
+            "21_motor_notch_filter_setup.param": {"INS_HNTCH_FREQ", "INS_HNTCH_BW", "INS_HNTCH_ATT", "INS_HNTCH_HMNCS"},
             # Optical flow parameters that may evolve
-            "50_optical_flow_setup.param": {"EK3_SRC1_POSXY", "EK3_SRC1_VELXY", "EK3_SRC1_VELZ", "RC8_OPTION", "RC9_OPTION"},
+            "63_optical_flow_setup.param": {
+                "EK3_SRC1_POSXY",
+                "EK3_SRC1_VELXY",
+                "EK3_SRC1_VELZ",
+                "FLOW_TYPE",
+                "RC8_OPTION",
+                "RC9_OPTION",
+            },
             # Temperature calibration parameters may vary based on specific calibration runs
             "02_imu_temperature_calibration_setup.param": {"INS_TCAL1_TMAX", "INS_TCAL2_TMAX", "INS_TCAL3_TMAX"},
             "03_imu_temperature_calibration_results.param": {"INS_TCAL1_TMAX", "INS_TCAL2_TMAX", "INS_TCAL3_TMAX"},
-            # Optical flow type may vary
-            "11_optical_flow.param": {"FLOW_TYPE"},
             # Precision landing enable status
-            "49_precision_land.param": {"PLND_ENABLED"},
+            "62_precision_land.param": {"PLND_ENABLED"},
         }
 
     @staticmethod

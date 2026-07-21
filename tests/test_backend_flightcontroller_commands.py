@@ -769,14 +769,16 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         mock_msg = MagicMock()
         mock_msg.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
         mock_msg.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
-        mock_master.recv_match.return_value = mock_msg
+        # Return the message once, then None to terminate the drain loop
+        mock_master.recv_match.side_effect = [mock_msg, None]
 
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         position = commands_mgr.poll_accel_cal_vehicle_pos()
 
         assert position == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
-        mock_master.recv_match.assert_called_once_with(type="COMMAND_LONG", blocking=False)
+        assert mock_master.recv_match.call_count == 2
+        mock_master.recv_match.assert_called_with(type="COMMAND_LONG", blocking=False)
 
     def test_poll_accel_cal_vehicle_pos_returns_none_without_connection(self) -> None:
         """
@@ -907,7 +909,8 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         mock_master, mock_conn_mgr = mock_connected_master
         mock_msg = MagicMock()
         mock_msg.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
-        mock_master.recv_match.return_value = mock_msg
+        # Return the unrelated message once, then None to terminate the drain loop
+        mock_master.recv_match.side_effect = [mock_msg, None]
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         assert commands_mgr.poll_accel_cal_vehicle_pos() is None
@@ -943,6 +946,73 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
+    def test_poll_accel_cal_vehicle_pos_drains_duplicate_messages(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        Polling drains all duplicate position messages and returns only the latest.
+
+        GIVEN: ArduPilot sends the same position request multiple times (every second while waiting)
+        WHEN: poll_accel_cal_vehicle_pos is called
+        THEN: All stale duplicates are consumed and only the latest position is returned
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        # Simulate FC sending LEVEL position 3 times, then nothing
+        msg1 = MagicMock()
+        msg1.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        msg1.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        msg2 = MagicMock()
+        msg2.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        msg2.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        msg3 = MagicMock()
+        msg3.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        msg3.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        mock_master.recv_match.side_effect = [msg1, msg2, msg3, None]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.poll_accel_cal_vehicle_pos()
+
+        # Should drain all 3 duplicates and return the position once
+        assert result == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+        # Next poll should return None (queue is drained)
+        mock_master.recv_match.side_effect = [None]
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
+    def test_poll_accel_cal_vehicle_pos_suppresses_stale_position_after_confirmation(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Polling returns None when the FC re-sends the already-confirmed position.
+
+        GIVEN: A position was already returned to the caller (user confirmed it)
+        WHEN: poll_accel_cal_vehicle_pos is called and the FC sends the same position again
+        THEN: None is returned so the UI does not re-enable Continue for the same orientation
+
+        This is the core fix for #1801: after the user confirms LEVEL, ArduPilot keeps
+        sending LEVEL every second.  Without deduplication the UI would immediately
+        re-show the LEVEL instruction; with it, polling returns None until the FC
+        advances to the next position.
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        level_msg = MagicMock()
+        level_msg.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        level_msg.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+
+        # First poll: FC sends LEVEL → caller receives LEVEL and confirms it
+        mock_master.recv_match.side_effect = [level_msg, None]
+        assert commands_mgr.poll_accel_cal_vehicle_pos() == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL
+
+        # Second poll: FC re-sends stale LEVEL while waiting → should be suppressed
+        mock_master.recv_match.side_effect = [level_msg, None]
+        assert commands_mgr.poll_accel_cal_vehicle_pos() is None
+
+        # Third poll: FC advances to the next position → new value must be returned
+        left_msg = MagicMock()
+        left_msg.command = mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS
+        left_msg.param1 = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
+        mock_master.recv_match.side_effect = [left_msg, None]
+        assert commands_mgr.poll_accel_cal_vehicle_pos() == mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
 
     def test_user_can_confirm_accelerometer_calibration_position(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """

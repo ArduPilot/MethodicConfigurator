@@ -1211,3 +1211,489 @@ class TestSelectionAndSortEdgeCases:
         # Source calls self._sort_by_column(col, not reverse) positionally, so check args tuple
         assert mock_sort.call_count == 1
         assert mock_sort.call_args.args == ("firmware", True)
+
+
+class TestUserMadeSelectionFlag:
+    """Test the user_made_selection flag that tracks whether the user confirmed a choice."""
+
+    def test_user_made_selection_is_false_on_init(self, template_window) -> None:
+        """
+        The user_made_selection flag starts as False when the window opens.
+
+        GIVEN: A newly opened TemplateOverviewWindow
+        WHEN: No user interaction has occurred
+        THEN: user_made_selection should be False
+        """
+        # Arrange / Act: window is freshly created via fixture
+
+        # Assert: flag is False by default
+        assert template_window.user_made_selection is False
+
+    def test_original_template_relative_path_is_empty_on_init(self, template_window) -> None:
+        """
+        _original_template_relative_path starts as an empty string when the window opens.
+
+        GIVEN: A newly opened TemplateOverviewWindow with no current_template_dir
+        WHEN: No preselection has occurred
+        THEN: _original_template_relative_path should be an empty string
+        """
+        # Arrange / Act: window is freshly created via fixture
+
+        # Assert: original path is empty because no preselection happened
+        assert template_window._original_template_relative_path == ""
+
+    def test_double_clicking_sets_user_made_selection_true(self, template_window) -> None:
+        """
+        Double-clicking a row marks the selection as confirmed.
+
+        GIVEN: A user views the template list
+        WHEN: They double-click on a valid template row
+        THEN: user_made_selection should be True
+        """
+        # Arrange
+        template_window.tree.identify_row.return_value = "item_1"
+        template_window.tree.item.return_value = {"text": "ArduCopter/empty_4.7.x"}
+        mock_event = MagicMock(y=50)
+
+        # Act
+        template_window._on_row_double_click(mock_event)
+
+        # Assert
+        assert template_window.user_made_selection is True
+
+    def test_single_click_does_not_set_user_made_selection(self, template_window) -> None:
+        """
+        Single-clicking a row (for preview) does not count as a confirmed selection.
+
+        GIVEN: A user is browsing templates
+        WHEN: They single-click a row to preview its image
+        THEN: user_made_selection should remain False
+        AND: _single_click_path should be updated to the clicked row
+        """
+        # Arrange
+        template_window.tree.selection.return_value = ["item_1"]
+        template_window.tree.item.return_value = {"text": "ArduCopter/empty_4.7.x"}
+
+        with patch.object(template_window, "_display_vehicle_image"):
+            # Act
+            template_window._update_selection()
+
+        # Assert: preview only — not a confirmed selection
+        assert template_window.user_made_selection is False
+        assert template_window._single_click_path == "ArduCopter/empty_4.7.x"
+
+    def test_double_click_on_empty_area_does_not_set_user_made_selection(self, template_window) -> None:
+        """
+        Double-clicking on a blank area of the treeview does not confirm a selection.
+
+        GIVEN: A user double-clicks on an empty part of the list (no row at that position)
+        WHEN: identify_row returns an empty string
+        THEN: user_made_selection should remain False
+        """
+        # Arrange
+        template_window.tree.identify_row.return_value = ""
+        mock_event = MagicMock(y=999)
+
+        # Act
+        template_window._on_row_double_click(mock_event)
+
+        # Assert
+        assert template_window.user_made_selection is False
+
+
+class TestWindowCloseConfirmationDialog:
+    """Test the confirmation dialog shown when closing after a single-click selection."""
+
+    def test_closing_after_single_click_shows_confirmation_dialog(self, template_window) -> None:
+        """
+        Closing the window after a single-click highlights prompts the user to confirm.
+
+        GIVEN: The user single-clicked a template row to preview it
+        WHEN: They close the window without double-clicking
+        THEN: A yes/no dialog should appear asking whether to apply the selection
+        """
+        # Arrange: simulate a prior single-click
+        template_window._single_click_path = "ArduCopter/empty_4.7.x"
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno") as mock_dlg,
+            patch.object(template_window, "close_window"),
+        ):
+            mock_dlg.return_value = False  # user says No
+
+            # Act
+            template_window._on_window_close()
+
+        # Assert: dialog was shown
+        mock_dlg.assert_called_once()
+
+    def test_answering_yes_sets_user_made_selection_true(self, template_window) -> None:
+        """
+        Answering 'Yes' to the confirmation dialog marks the selection as confirmed.
+
+        GIVEN: The user single-clicked a template and closes the window
+        WHEN: They answer Yes to 'Apply the highlighted template?'
+        THEN: user_made_selection is set to True
+        """
+        # Arrange
+        template_window._single_click_path = "ArduCopter/empty_4.7.x"
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno", return_value=True),
+            patch.object(template_window, "close_window"),
+        ):
+            # Act
+            template_window._on_window_close()
+
+        # Assert
+        assert template_window.user_made_selection is True
+
+    def test_answering_no_leaves_user_made_selection_false(self, template_window) -> None:
+        """
+        Answering 'No' keeps user_made_selection False so the original template is preserved.
+
+        GIVEN: The user single-clicked a template and closes the window
+        WHEN: They answer No to the confirmation dialog
+        THEN: user_made_selection remains False
+        """
+        # Arrange
+        template_window._single_click_path = "ArduCopter/empty_4.7.x"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno", return_value=False
+            ),
+            patch.object(template_window, "close_window"),
+        ):
+            # Act
+            template_window._on_window_close()
+
+        # Assert
+        assert template_window.user_made_selection is False
+
+    def test_no_dialog_when_closing_without_any_single_click(self, template_window) -> None:
+        """
+        No dialog appears when the user closes without ever clicking a row.
+
+        GIVEN: The user opened the window but never clicked any row
+        WHEN: They close the window
+        THEN: No confirmation dialog is shown
+        """
+        # Arrange: no single-click happened
+        template_window._single_click_path = ""
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno") as mock_dlg,
+            patch.object(template_window, "close_window"),
+        ):
+            # Act
+            template_window._on_window_close()
+
+        # Assert
+        mock_dlg.assert_not_called()
+
+    def test_no_dialog_after_double_click_confirmation(self, template_window) -> None:
+        """
+        No dialog appears when the user already confirmed via double-click.
+
+        GIVEN: The user double-clicked a row (user_made_selection is True)
+        WHEN: The window close handler fires (edge case)
+        THEN: No confirmation dialog is shown
+        """
+        # Arrange: double-click was the last action
+        template_window._single_click_path = "ArduCopter/empty_4.7.x"
+        template_window.user_made_selection = True
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno") as mock_dlg,
+            patch.object(template_window, "close_window"),
+        ):
+            # Act
+            template_window._on_window_close()
+
+        # Assert: dialog skipped because already confirmed
+        mock_dlg.assert_not_called()
+
+    def test_window_is_always_closed_regardless_of_dialog_answer(self, template_window) -> None:
+        """
+        The window is always closed after the dialog, whether Yes or No was chosen.
+
+        GIVEN: The user single-clicked a row and closes the window
+        WHEN: They answer the confirmation dialog (either way)
+        THEN: close_window() is always called exactly once
+        """
+        # Arrange
+        template_window._single_click_path = "ArduCopter/empty_4.6.x"
+
+        for answer in (True, False):
+            template_window.user_made_selection = False
+            with (
+                patch(
+                    "ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno",
+                    return_value=answer,
+                ),
+                patch.object(template_window, "close_window") as mock_close,
+            ):
+                template_window._on_window_close()
+
+            mock_close.assert_called_once()
+
+    def test_answering_no_restores_original_template_in_settings(self, template_window) -> None:
+        """
+        Answering 'No' restores the original template directory in persisted settings.
+
+        GIVEN: The user preselected ArduCopter/empty_4.6.x (original), then single-clicked ArduCopter/empty_4.7.x
+        AND: The single-click already persisted the new path via store_template_dir
+        WHEN: The user closes the window and answers 'No' to the confirmation dialog
+        THEN: store_template_dir is called with the original path to undo the single-click persistence
+        """
+        # Arrange: simulate preselection followed by a single-click on a different row
+        template_window._original_template_relative_path = "ArduCopter/empty_4.6.x"
+        template_window._single_click_path = "ArduCopter/empty_4.7.x"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno",
+                return_value=False,  # user says No
+            ),
+            patch.object(template_window, "close_window"),
+            patch.object(template_window, "store_template_dir") as mock_store,
+        ):
+            # Act
+            template_window._on_window_close()
+
+        # Assert: original template is restored in settings
+        mock_store.assert_called_once_with("ArduCopter/empty_4.6.x")
+
+    def test_answering_no_without_original_preselection_does_not_restore(self, template_window) -> None:
+        """
+        Answering 'No' does not attempt to restore when no original preselection was made.
+
+        GIVEN: The user opened the window without a current_template_dir (no preselection)
+        AND: They single-clicked a row, which was persisted
+        WHEN: They close the window and answer 'No' to the confirmation dialog
+        THEN: store_template_dir is NOT called (nothing to restore)
+        """
+        # Arrange: no original path (window opened without current_template_dir)
+        template_window._original_template_relative_path = ""
+        template_window._single_click_path = "ArduCopter/empty_4.7.x"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno",
+                return_value=False,  # user says No
+            ),
+            patch.object(template_window, "close_window"),
+            patch.object(template_window, "store_template_dir") as mock_store,
+        ):
+            # Act
+            template_window._on_window_close()
+
+        # Assert: no restore attempted because there was no pre-existing original
+        mock_store.assert_not_called()
+
+    def test_answering_yes_does_not_restore_original_template(self, template_window) -> None:
+        """
+        Answering 'Yes' does not restore the original template — the new choice is kept.
+
+        GIVEN: The user preselected ArduCopter/empty_4.6.x, then single-clicked ArduCopter/empty_4.7.x
+        WHEN: They close the window and answer 'Yes' to the confirmation dialog
+        THEN: store_template_dir is NOT called with the original path (the new choice stays)
+        """
+        # Arrange
+        template_window._original_template_relative_path = "ArduCopter/empty_4.6.x"
+        template_window._single_click_path = "ArduCopter/empty_4.7.x"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_template_overview.messagebox.askyesno",
+                return_value=True,  # user says Yes
+            ),
+            patch.object(template_window, "close_window"),
+            patch.object(template_window, "store_template_dir") as mock_store,
+        ):
+            # Act
+            template_window._on_window_close()
+
+        # Assert: original path is NOT restored; the confirmed single-click selection is kept
+        mock_store.assert_not_called()
+
+
+class TestPreselectionOfCurrentTemplate:
+    """Test that the window preselects and scrolls to the currently active template."""
+
+    def _make_tree_with_items(self, template_window: TemplateOverviewWindow, keys: list[str]) -> None:
+        """Helper: configure the mock tree so get_children returns item IDs and item() returns texts."""
+        item_ids = [f"item_{i}" for i in range(len(keys))]
+        template_window.tree.get_children.return_value = item_ids
+        template_window.tree.item.side_effect = lambda iid, **_: {"text": keys[item_ids.index(iid)]}
+
+    def test_matching_row_is_selected_and_scrolled_into_view(self, template_window) -> None:
+        """
+        The row matching the current template is highlighted and scrolled into view.
+
+        GIVEN: A template list containing ArduCopter/empty_4.7.x
+        AND: The currently active template is the absolute path ending with ArduCopter/empty_4.7.x
+        WHEN: The window opens with that current_template_dir
+        THEN: The matching row is selected and made visible via tree.see()
+        """
+        # Arrange
+        self._make_tree_with_items(
+            template_window,
+            ["ArduCopter/empty_4.5.x", "ArduCopter/empty_4.6.x", "ArduCopter/empty_4.7.x"],
+        )
+
+        # Act
+        template_window._preselect_current_template("/full/path/to/templates/ArduCopter/empty_4.7.x")
+
+        # Assert: correct item selected and scrolled to
+        template_window.tree.selection_set.assert_called_once_with("item_2")
+        template_window.tree.see.assert_called_once_with("item_2")
+
+    def test_no_selection_when_current_template_not_in_list(self, template_window) -> None:
+        """
+        No row is selected when the current template does not appear in the filtered list.
+
+        GIVEN: A template list filtered to ArduCopter entries only
+        AND: The currently active template is an ArduPlane path not shown
+        WHEN: _preselect_current_template is called
+        THEN: selection_set and see are NOT called
+        """
+        # Arrange
+        self._make_tree_with_items(template_window, ["ArduCopter/empty_4.6.x", "ArduCopter/empty_4.7.x"])
+
+        # Act
+        template_window._preselect_current_template("/templates/ArduPlane/empty_4.6.x")
+
+        # Assert
+        template_window.tree.selection_set.assert_not_called()
+        template_window.tree.see.assert_not_called()
+
+    def test_windows_backslash_path_matches_correctly(self, template_window) -> None:
+        """
+        Paths with Windows backslash separators are matched correctly.
+
+        GIVEN: The current template dir uses backslashes (Windows path)
+        WHEN: _preselect_current_template is called
+        THEN: The correct row is still found and selected
+        """
+        # Arrange
+        self._make_tree_with_items(template_window, ["ArduCopter/empty_4.6.x", "ArduCopter/empty_4.7.x"])
+
+        # Act — Windows-style absolute path
+        template_window._preselect_current_template(r"C:\templates\ArduCopter\empty_4.6.x")
+
+        # Assert: backslashes normalised and matched
+        template_window.tree.selection_set.assert_called_once_with("item_0")
+        template_window.tree.see.assert_called_once_with("item_0")
+
+    def test_only_first_matching_row_is_selected(self, template_window) -> None:
+        """
+        Only the first matching row is selected when duplicates exist.
+
+        GIVEN: A treeview containing two rows with identical text (edge case)
+        WHEN: _preselect_current_template is called
+        THEN: Only the first row is selected and scrolled to
+        """
+        # Arrange: two rows with the same key
+        self._make_tree_with_items(template_window, ["ArduCopter/empty_4.6.x", "ArduCopter/empty_4.6.x"])
+
+        # Act
+        template_window._preselect_current_template("/templates/ArduCopter/empty_4.6.x")
+
+        # Assert: only called once (breaks after first match)
+        template_window.tree.selection_set.assert_called_once_with("item_0")
+
+    def test_current_template_dir_parameter_triggers_preselection(self, mock_vehicle_provider, mock_program_provider) -> None:
+        """
+        Passing current_template_dir to __init__ causes the matching row to be preselected.
+
+        GIVEN: A TemplateOverviewWindow is opened with a current_template_dir argument
+        WHEN: The window initialises
+        THEN: _preselect_current_template is called with the provided path
+        """
+        # Arrange: patch all heavy init steps but let _preselect_current_template run
+        with (
+            patch("tkinter.Toplevel"),
+            patch.object(BaseWindow, "__init__", return_value=None),
+            patch.object(TemplateOverviewWindow, "_configure_window"),
+            patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+            patch.object(TemplateOverviewWindow, "_setup_layout"),
+            patch.object(TemplateOverviewWindow, "_configure_treeview"),
+            patch.object(TemplateOverviewWindow, "_bind_events"),
+            patch.object(TemplateOverviewWindow, "_preselect_current_template") as mock_preselect,
+        ):
+            window = TemplateOverviewWindow(
+                vehicle_components_provider=mock_vehicle_provider,
+                program_settings_provider=mock_program_provider,
+                current_template_dir="/templates/ArduCopter/empty_4.7.x",
+            )
+            window.root = MagicMock()
+
+        # Assert: preselect was called with the provided path
+        mock_preselect.assert_called_once_with("/templates/ArduCopter/empty_4.7.x")
+
+    def test_no_preselection_when_current_template_dir_is_none(self, mock_vehicle_provider, mock_program_provider) -> None:
+        """
+        No pre-selection occurs when current_template_dir is not provided.
+
+        GIVEN: A TemplateOverviewWindow is opened without specifying a current template
+        WHEN: The window initialises
+        THEN: _preselect_current_template is NOT called
+        """
+        with (
+            patch("tkinter.Toplevel"),
+            patch.object(BaseWindow, "__init__", return_value=None),
+            patch.object(TemplateOverviewWindow, "_configure_window"),
+            patch.object(TemplateOverviewWindow, "_initialize_ui_components"),
+            patch.object(TemplateOverviewWindow, "_setup_layout"),
+            patch.object(TemplateOverviewWindow, "_configure_treeview"),
+            patch.object(TemplateOverviewWindow, "_bind_events"),
+            patch.object(TemplateOverviewWindow, "_preselect_current_template") as mock_preselect,
+        ):
+            window = TemplateOverviewWindow(
+                vehicle_components_provider=mock_vehicle_provider,
+                program_settings_provider=mock_program_provider,
+            )
+            window.root = MagicMock()
+
+        # Assert: preselect was never called
+        mock_preselect.assert_not_called()
+
+    def test_preselect_records_original_template_relative_path(self, template_window) -> None:
+        """
+        _preselect_current_template stores the matched key as _original_template_relative_path.
+
+        GIVEN: A template list containing several entries
+        AND: The current template dir ends with one of the keys
+        WHEN: _preselect_current_template is called
+        THEN: _original_template_relative_path is set to the matched relative key
+        """
+        # Arrange
+        self._make_tree_with_items(
+            template_window,
+            ["ArduCopter/empty_4.5.x", "ArduCopter/empty_4.6.x", "ArduCopter/empty_4.7.x"],
+        )
+
+        # Act
+        template_window._preselect_current_template("/full/path/to/templates/ArduCopter/empty_4.6.x")
+
+        # Assert: original path is recorded using the relative tree key
+        assert template_window._original_template_relative_path == "ArduCopter/empty_4.6.x"
+
+    def test_original_template_relative_path_not_set_when_no_match(self, template_window) -> None:
+        """
+        _original_template_relative_path stays empty when no tree row matches.
+
+        GIVEN: A template list that does not contain the current template dir
+        WHEN: _preselect_current_template is called
+        THEN: _original_template_relative_path remains an empty string
+        """
+        # Arrange
+        self._make_tree_with_items(template_window, ["ArduCopter/empty_4.6.x", "ArduCopter/empty_4.7.x"])
+
+        # Act
+        template_window._preselect_current_template("/templates/ArduPlane/empty_4.6.x")
+
+        # Assert: no match found so original path is still empty
+        assert template_window._original_template_relative_path == ""

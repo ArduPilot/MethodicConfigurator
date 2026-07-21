@@ -62,7 +62,8 @@ class VehicleProjectCreatorWindow(BaseWindow):
         self.new_project_settings_vars: dict[str, tk.BooleanVar] = {}
         self.new_project_settings_widgets: dict[str, ttk.Checkbutton] = {}
 
-        template_dir, new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
+        recent_template_dir, new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
+        template_dir = self.project_manager.get_fc_default_template_dir() if fc_connected else recent_template_dir
         logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
         logging_debug("new_base_dir: %s", new_base_dir)  # this string is intentionally left untranslated
         logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
@@ -106,8 +107,15 @@ class VehicleProjectCreatorWindow(BaseWindow):
         def template_selection_callback(_widget: "DirectorySelectionWidgets") -> str:
             # Template selection logic
             if isinstance(self.root, tk.Tk):  # this keeps mypy and pyright happy
-                to = TemplateOverviewWindow(self.root, connected_fc_vehicle_type=connected_fc_vehicle_type)
+                to = TemplateOverviewWindow(
+                    self.root,
+                    connected_fc_vehicle_type=connected_fc_vehicle_type,
+                    current_template_dir=_widget.get_selected_directory(),
+                )
                 to.run_app()
+                if not to.user_made_selection:
+                    # User closed the window without confirming - keep the current widget value
+                    return _widget.get_selected_directory()
             # Get recently used template directory from project manager
             template_dir, _nbd, _vd = self.project_manager.get_recently_used_dirs()
             logging_info(_("Selected template directory: %s"), template_dir)

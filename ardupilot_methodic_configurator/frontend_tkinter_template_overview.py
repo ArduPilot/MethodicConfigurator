@@ -16,7 +16,7 @@ from logging import basicConfig as logging_basicConfig
 from logging import getLevelName as logging_getLevelName
 from logging import info as logging_info
 from tkinter import font as tkfont
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from typing import Protocol
 
 from ardupilot_methodic_configurator import _, __version__
@@ -73,12 +73,13 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         parent: tk.Tk | None = None,
         vehicle_components_provider: VehicleComponentsProviderProtocol | None = None,
         program_settings_provider: ProgramSettingsProviderProtocol | None = None,
         connected_fc_vehicle_type: str | None = None,
+        current_template_dir: str | None = None,
     ) -> None:
         """
         Initialize the TemplateOverviewWindow.
@@ -88,6 +89,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
             vehicle_components_provider: Optional provider for vehicle components (for dependency injection)
             program_settings_provider: Optional provider for program settings (for dependency injection)
             connected_fc_vehicle_type: Optional firmware type of connected flight controller for filtering templates
+            current_template_dir: Optional currently selected template directory to preselect in the list
 
         """
         super().__init__(parent)
@@ -99,6 +101,12 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         self.image_label: ttk.Label
         # Initialize sorting state
         self.sort_column: str = ""
+        # True only when the user confirmed a selection via double-click
+        self.user_made_selection: bool = False
+        # Template that was selected when the window opened (used to revert on cancel)
+        self._original_template_relative_path: str = ""
+        # Last template path highlighted via single-click (empty if none)
+        self._single_click_path: str = ""
 
         # Initialize UI configuration
         self._configure_window()
@@ -106,6 +114,8 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         self._setup_layout()
         self._configure_treeview(connected_fc_vehicle_type or "")
         self._bind_events()
+        if current_template_dir:
+            self._preselect_current_template(current_template_dir)
 
     def _configure_window(self) -> None:
         """Configure the main window properties."""
@@ -246,6 +256,23 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
                 continue
             self.tree.insert("", "end", text=key, values=values)
 
+    def _preselect_current_template(self, current_template_dir: str) -> None:
+        """
+        Select and scroll to the row that matches the currently active template directory.
+
+        Args:
+            current_template_dir: Absolute or relative path of the currently selected template
+
+        """
+        norm = current_template_dir.replace("\\", "/")
+        for item_id in self.tree.get_children():
+            key = self.tree.item(item_id)["text"].replace("\\", "/")
+            if norm.endswith(key):
+                self._original_template_relative_path = key
+                self.tree.selection_set(item_id)
+                self.tree.see(item_id)
+                break
+
     def _adjust_treeview_column_widths(self) -> None:
         """Adjusts the column widths of the Treeview to fit the contents of each column."""
         # Use the actual Treeview style font so measurements match what is rendered.
@@ -273,6 +300,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         self.tree.bind("<Up>", self._on_row_selection_change)
         self.tree.bind("<Down>", self._on_row_selection_change)
         self.tree.bind("<Double-1>", self._on_row_double_click)
+        self.root.protocol("WM_DELETE_WINDOW", self._on_window_close)
 
         for col in self.tree["columns"]:
             col_str = str(col)
@@ -292,6 +320,7 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         if selected_item:
             item_id = selected_item[0]
             selected_template_relative_path = self.tree.item(item_id)["text"]
+            self._single_click_path = selected_template_relative_path
             self.store_template_dir(selected_template_relative_path)
             self._display_vehicle_image(selected_template_relative_path)
 
@@ -313,7 +342,21 @@ class TemplateOverviewWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         if item_id:
             selected_template_relative_path = self.tree.item(item_id)["text"]
             self.store_template_dir(selected_template_relative_path)
+            self.user_made_selection = True
             self.close_window()
+
+    def _on_window_close(self) -> None:
+        """Handle window close via the title-bar X button."""
+        if self._single_click_path and not self.user_made_selection:
+            if messagebox.askyesno(
+                _("Confirm template selection"),
+                _("Apply the highlighted template?\n\n{path}").format(path=self._single_click_path),
+            ):
+                self.user_made_selection = True
+            elif self._original_template_relative_path:
+                # Restore the original template since the user declined the highlighted selection
+                self.store_template_dir(self._original_template_relative_path)
+        self.close_window()
 
     def close_window(self) -> None:
         """Close the window - separated for testability."""

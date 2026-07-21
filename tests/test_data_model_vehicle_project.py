@@ -1402,3 +1402,172 @@ class TestCreateNewVehicleFromBinLog:
         assert manager._settings.use_fc_params is True
         # Assert: configuration_template is the leaf directory name of the template path
         assert manager.configuration_template == "empty_4.6.x"
+
+
+class TestGetFcDefaultTemplateDir:
+    """Test VehicleProjectManager.get_fc_default_template_dir."""
+
+    def _make_connected_manager(self, vehicle_type: str = "ArduCopter", fw_version: str = "4.6.0") -> "VehicleProjectManager":
+        """Return a manager whose FC is connected with the given vehicle type and firmware version."""
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_fc = MagicMock()
+        mock_fc.master = MagicMock()  # marks as connected
+        mock_fc.info.vehicle_type = vehicle_type
+        mock_fc.info.flight_sw_version = fw_version
+        return VehicleProjectManager(mock_filesystem, mock_fc)
+
+    def test_user_gets_fc_derived_template_when_directory_exists(self) -> None:
+        """
+        User gets a template directory derived from the FC's vehicle type and firmware version.
+
+        GIVEN: An FC is connected reporting ArduCopter 4.6.0
+        AND: The directory ArduCopter/empty_4.6.x exists in the templates base
+        WHEN: get_fc_default_template_dir is called
+        THEN: The path to that directory is returned
+        """
+        manager = self._make_connected_manager("ArduCopter", "4.6.0")
+
+        with (
+            patch.object(LocalFilesystem, "get_templates_base_dir", return_value="/templates"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.Path.is_dir", return_value=True),
+        ):
+            result = manager.get_fc_default_template_dir()
+
+        assert result.replace("\\", "/").endswith("ArduCopter/empty_4.6.x")
+
+    def test_user_gets_fallback_when_fc_derived_directory_does_not_exist(self) -> None:
+        """
+        User gets the recently-used fallback when the FC-derived template directory is missing.
+
+        GIVEN: An FC is connected reporting Rover 4.5.7
+        AND: The directory Rover/empty_4.5.x does NOT exist
+        WHEN: get_fc_default_template_dir is called
+        THEN: The recently-used template directory is returned instead
+        """
+        manager = self._make_connected_manager("Rover", "4.5.7")
+
+        with (
+            patch.object(LocalFilesystem, "get_templates_base_dir", return_value="/templates"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.Path.is_dir", return_value=False),
+            patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")),
+        ):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_user_gets_fallback_when_fc_vehicle_type_is_empty(self) -> None:
+        """
+        User gets the recently-used fallback when the FC has no vehicle type information.
+
+        GIVEN: An FC is connected but vehicle_type is an empty string
+        WHEN: get_fc_default_template_dir is called
+        THEN: The recently-used template directory is returned
+        """
+        manager = self._make_connected_manager(vehicle_type="", fw_version="4.6.0")
+
+        with patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_user_gets_fallback_when_fc_firmware_version_is_empty(self) -> None:
+        """
+        User gets the recently-used fallback when the FC has no firmware version information.
+
+        GIVEN: An FC is connected but flight_sw_version is an empty string
+        WHEN: get_fc_default_template_dir is called
+        THEN: The recently-used template directory is returned
+        """
+        manager = self._make_connected_manager(vehicle_type="ArduCopter", fw_version="")
+
+        with patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_user_gets_fallback_when_firmware_version_has_no_dot(self) -> None:
+        """
+        User gets the recently-used fallback when the firmware version string is unparsable.
+
+        GIVEN: An FC is connected but flight_sw_version contains no '.' separator
+        WHEN: get_fc_default_template_dir is called
+        THEN: The recently-used template directory is returned
+        """
+        manager = self._make_connected_manager(vehicle_type="ArduCopter", fw_version="46")
+
+        with patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_user_gets_fallback_when_firmware_version_is_non_numeric(self) -> None:
+        """
+        User gets the recently-used fallback when firmware version parts are non-numeric.
+
+        GIVEN: An FC is connected but flight_sw_version contains non-integer parts
+        WHEN: get_fc_default_template_dir is called
+        THEN: The recently-used template directory is returned
+        """
+        manager = self._make_connected_manager(vehicle_type="ArduCopter", fw_version="X.Y.Z")
+
+        with patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_user_gets_fallback_when_fc_is_disconnected(self) -> None:
+        """
+        User gets the recently-used fallback when the FC is present but not connected.
+
+        GIVEN: A project manager with a flight controller whose master is None
+        WHEN: get_fc_default_template_dir is called
+        THEN: The recently-used template directory is returned
+        """
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_fc = MagicMock()
+        mock_fc.master = None  # disconnected
+        manager = VehicleProjectManager(mock_filesystem, mock_fc)
+
+        with patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_user_gets_fallback_when_no_fc_is_present(self) -> None:
+        """
+        User gets the recently-used fallback when no flight controller is attached.
+
+        GIVEN: A project manager initialised without any flight controller
+        WHEN: get_fc_default_template_dir is called
+        THEN: The recently-used template directory is returned
+        """
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        manager = VehicleProjectManager(mock_filesystem)
+
+        with patch.object(LocalFilesystem, "get_recently_used_dirs", return_value=("/fallback/template", "/base", "/vehicle")):
+            result = manager.get_fc_default_template_dir()
+
+        assert result == "/fallback/template"
+
+    def test_fallback_uses_manager_wrapper_not_direct_localfilesystem_call(self) -> None:
+        """
+        get_fc_default_template_dir falls back via self.get_recently_used_dirs().
+
+        GIVEN: A subclass of VehicleProjectManager that overrides get_recently_used_dirs
+        AND: No FC is connected (so the FC-derived path is not attempted)
+        WHEN: get_fc_default_template_dir is called
+        THEN: The subclass override is used for the fallback, not the base LocalFilesystem method
+        """
+
+        class _ManagerWithOverride(VehicleProjectManager):
+            def get_recently_used_dirs(self) -> tuple[str, str, str]:
+                return ("/overridden/template", "/base", "/vehicle")
+
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        manager = _ManagerWithOverride(mock_filesystem)
+
+        # Ensure the base LocalFilesystem is NOT patched — if the code still calls
+        # LocalFilesystem.get_recently_used_dirs() directly the override would be bypassed.
+        result = manager.get_fc_default_template_dir()
+
+        assert result == "/overridden/template"
