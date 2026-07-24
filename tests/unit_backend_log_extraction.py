@@ -280,10 +280,10 @@ class TestExtractSchemas:  # pylint: disable=too-few-public-methods
             units=["V"],
             msg_mults=[1.0],
         )
-        mock_mlog = SimpleNamespace(formats={"PARM": mock_fmt})
+        mock_mlog = SimpleNamespace(formats={"PARM": mock_fmt}, mult_lookup={})
         empty_log_data.msg_count["PARM"] = 5
 
-        extract_schemas(mock_mlog, empty_log_data)
+        extract_schemas(mock_mlog, empty_log_data, {})
 
         schema = empty_log_data.schemas["PARM"]
         assert isinstance(schema, MessageSchema)
