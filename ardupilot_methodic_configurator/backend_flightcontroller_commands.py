@@ -770,6 +770,24 @@ class FlightControllerCommands:
                 "p3": 1,
             },
         )
+        if self.master is None:
+            return False, "Not connected to flight controller"
+
+        # Force the FC to stream MAG_CAL_PROGRESS (Message ID 191)
+        # Param 2 is the interval in microseconds (100000 us = 10Hz)
+        self.master.mav.command_long_send(
+            self.master.target_system,
+            self.master.target_component,
+            mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+            0,
+            191,  # Param 1: Message ID
+            100000,  # Param 2: Interval in us
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
         success, error_msg = self.send_command_and_wait_ack(
             mavutil.mavlink.MAV_CMD_DO_START_MAG_CAL,
             param1=0,  # All compasses
@@ -836,6 +854,19 @@ class FlightControllerCommands:
             return []
 
         results: list[CompassCalibrationUpdate] = []
+        cached_msg = self.master.messages.get("MAG_CAL_PROGRESS")
+        if cached_msg:
+            results.append(
+                {
+                    "type": "PROGRESS",
+                    "compass_id": getattr(cached_msg, "compass_id", 0),
+                    "status": getattr(cached_msg, "cal_status", 0),
+                    "completion_pct": getattr(cached_msg, "completion_pct", 0),
+                    "direction_x": getattr(cached_msg, "direction_x", 0),
+                    "direction_y": getattr(cached_msg, "direction_y", 0),
+                    "direction_z": getattr(cached_msg, "direction_z", 0),
+                }
+            )
         try:
             while True:
                 msg = self.master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]

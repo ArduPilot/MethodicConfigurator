@@ -381,6 +381,10 @@
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "Propellers",
             "auto_changed_by": "",
+            "plugin": {
+                "name": "compass_calibration",
+                "placement": "top"
+            },
             "forced_parameters": {
                 "ATC_RAT_PIT_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },
                 "ATC_RAT_RLL_FLTE": { "New Value": "0", "Change Reason": "Initial value, will be improved at a later step" },

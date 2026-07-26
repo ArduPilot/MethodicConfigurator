@@ -60,21 +60,19 @@ class CompassCalibrationDataModel:
                 continue
 
             suffix = param_name.removeprefix("COMPASS_USE")
+            dev_id_param = f"COMPASS_DEV_ID{suffix}"
+            if params.get(dev_id_param, 0) == 0:
+                continue
+
             if suffix == "":
                 active_compass_ids.append(0)
-                continue
-            if suffix.isdigit():
+            elif suffix.isdigit():
                 active_compass_ids.append(int(suffix) - 1)
 
         active_compass_ids = sorted(set(active_compass_ids))
         logging_debug(
-            _("Compass calibration preflight: enabled compass ids=%(compasses)s, raw flags=%(flags)s"),
-            {
-                "compasses": active_compass_ids,
-                "flags": {
-                    key: value for key, value in params.items() if key == "COMPASS_ENABLE" or key.startswith("COMPASS_USE")
-                },
-            },
+            _("Compass calibration preflight: enabled compass ids=%(compasses)s"),
+            {"compasses": active_compass_ids},
         )
         return active_compass_ids
 

@@ -348,6 +348,8 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
             data: dict[str, Any] = cast("dict", raw_data)
             cid_raw = data.get("compass_id")
             cid = int(cid_raw) if cid_raw is not None else 0
+            if cid not in self._expected_compass_ids:
+                continue
             logging_debug(
                 _("Compass calibration update received for compass %(compass_id)s: type=%(update_type)s"),
                 {"compass_id": cid_raw, "update_type": data.get("type")},
@@ -394,8 +396,11 @@ class CompassCalibrationPopup(tk.Toplevel):  # pylint: disable=too-many-instance
             if data["type"] == "PROGRESS":
                 progress_bar.stop()
                 progress_bar.configure(mode="determinate")
+                progress_bar["maximum"] = 100
                 pct = data.get("completion_pct", 0)
                 progress_bar["value"] = int(pct)
+                progress_bar.update_idletasks()
+
                 logging_debug(
                     _("Compass calibration progress bar updated for compass %(compass_id)s to %(pct)s%%"),
                     {"compass_id": cid_raw, "pct": int(pct)},
