@@ -32,8 +32,8 @@ class FilesystemJSONWithSchema:
     def __init__(self, json_filename: str, schema_filename: str) -> None:
         self.json_filename = json_filename
         self.schema_filename = schema_filename
-        self.data: None | dict[str, Any] = None
-        self.schema: None | dict[Any, Any] = None
+        self.data: dict[str, Any] | None = None
+        self.schema: dict[Any, Any] | None = None
         self._data_on_disk: dict[str, Any] = {}
 
     def load_schema(self) -> dict:

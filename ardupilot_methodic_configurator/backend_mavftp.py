@@ -166,7 +166,7 @@ class ParamData:
 
     def __init__(self) -> None:
         self.params: list[tuple[bytes, float, int]] = []  # params as (name, value, ptype)
-        self.defaults: None | list[tuple[bytes, float, int]] = None  # defaults as (name, value, ptype)
+        self.defaults: list[tuple[bytes, float, int]] | None = None  # defaults as (name, value, ptype)
 
     def add_param(self, name: bytes, value: float, ptype: int) -> None:
         self.params.append((name, value, ptype))
@@ -381,9 +381,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.seq = 0
         self.session = 0
         self.network = 0
-        self.last_op: None | FTP_OP = None
-        self.fh: None | SIO | BufferedReader | BufferedWriter = None
-        self.filename: None | str = None
+        self.last_op: FTP_OP | None = None
+        self.fh: SIO | BufferedReader | BufferedWriter | None = None
+        self.filename: str | None = None
         self.callback: Callable[..., Any] | None = None
         self.callback_progress: Callable[..., Any] | None = None
         self.put_callback: Callable[..., Any] | None = None
@@ -397,8 +397,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.remote_file_size: int | None = None
         self.duplicates = 0
         self.last_read = None
-        self.last_burst_read: None | float = None
-        self.op_start: None | float = None
+        self.last_burst_read: float | None = None
+        self.op_start: float | None = None
         self.dir_offset = 0
         self.last_op_time = time.time()
         self.last_send_time = time.time()

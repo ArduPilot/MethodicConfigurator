@@ -1017,7 +1017,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if not retry:
                 return False
 
-    def on_param_file_combobox_change(self, _event: Union[None, tk.Event], forced: bool = False) -> None:  # noqa: UP007
+    def on_param_file_combobox_change(self, _event: Union[tk.Event, None], forced: bool = False) -> None:  # noqa: UP007
         if not self.file_selection_combobox["values"]:
             return
         selected_file = self.file_selection_combobox.get()
@@ -1259,7 +1259,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             self.skip_button.configure(state=skip_button_state)
 
-    def on_skip_click(self, _event: Union[None, tk.Event] = None) -> None:  # noqa: UP007
+    def on_skip_click(self, _event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
         self.write_changes_to_intermediate_parameter_file()
 
         # Use ParameterEditor to get the next non-optional file
