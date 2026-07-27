@@ -53,13 +53,13 @@ class ConnectionSelectionWidgets:  # pylint: disable=too-many-instance-attribute
         self.destroy_parent_on_connect = destroy_parent_on_connect
         self.download_params_on_connect = download_params_on_connect
         self.default_baudrate = default_baudrate
-        self.previous_selection: None | str = (
+        self.previous_selection: str | None = (
             flight_controller.comport.device
             if flight_controller.comport and hasattr(flight_controller.comport, "device")
             else None
         )
         self.connection_progress_window: ProgressWindow
-        self._refresh_timer_id: None | str = None
+        self._refresh_timer_id: str | None = None
         self._is_refreshing = False
 
         # Create a new frame for the flight controller connection selection label and combobox

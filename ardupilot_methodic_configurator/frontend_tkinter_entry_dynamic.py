@@ -71,7 +71,7 @@ class EntryWithDynamicalyFilteredListbox(Entry):  # pylint: disable=too-many-anc
 
         self._trace_id = self._entry_var.trace_add("write", self._on_change_entry_var)
 
-        self._listbox: None | Listbox = None
+        self._listbox: Listbox | None = None
 
         self.bind("<Up>", self._previous)
         self.bind("<Down>", self._next)

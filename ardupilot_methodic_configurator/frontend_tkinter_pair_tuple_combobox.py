@@ -298,7 +298,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         **kwargs,
     ) -> None:
         super().__init__(master, list_pair_tuple, selected_element, cb_name, *args, **kwargs)
-        self.tooltip: None | Toplevel = None
+        self.tooltip: Toplevel | None = None
 
         # Bind events related to the dropdown
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
