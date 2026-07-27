@@ -78,7 +78,7 @@ dev = [
     "pytest-mock==3.15.1",
     "python-gettext==5.0",
     "ruff==0.15.20",
-    "types-requests==2.33.0.20260518",
+    "types-requests==2.33.0.20260712",
     "ty==0.0.56",
 ]
 
