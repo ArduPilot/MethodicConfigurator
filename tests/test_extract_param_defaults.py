@@ -635,7 +635,7 @@ class TestExtractFirmwareVersionAndVehicleType:
         THEN: Data is from the second (parseable) MSG message
         """
         msg1 = self._make_msg_msg("Boot started")
-        msg2 = self._make_msg_msg("ArduCopter V4.6.3 (hash1)")
+        msg2 = self._make_msg_msg("ArduCopter V4.6.3 (abcdef12)")
         mock_conn.return_value = self._make_mlog([msg1, msg2])
 
         vehicle_type, _major, _minor, patchv = extract_firmware_version_and_vehicle_type("log.bin")

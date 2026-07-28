@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import contextlib
 import logging
+import re
 from typing import Any
 
 import argcomplete
@@ -29,6 +30,12 @@ NO_DEFAULT_VALUES_MESSAGE = (
 MAVLINK_SYSID_MAX = 2**24
 MAVLINK_COMPID_MAX = 2**8
 MAV_PARAM_TYPE_REAL32 = 9
+
+# Matches lines like "ArduCopter V4.5.5 (142aece2)", and as a fallback when, no VER message present in the log (old firmware).
+_MSG_VERSION_PATTERN = re.compile(
+    r"^(ArduCopter|ArduPlane|ArduRover|ArduSub|AntennaTracker|Blimp) "
+    r"V(\d+)\.(\d+)(?:\.(\d+))? \(([0-9a-fA-F]+)\)$"
+)
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -143,6 +150,27 @@ def close_log(mlog: mavutil.mavfile) -> None:
         mlog.close()
 
 
+def parse_ver_fields(fws: str, maj: Any, mini: Any, pat: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+    """
+    Parse a VER message's core fields into (vehicle_type, major, minor, patch).
+
+    fws is the raw FWS string (e.g. "ArduCopter V4.6.3"); maj/mini/pat are the
+    raw Maj/Min/Pat field values or None.
+    """
+    fws = fws.strip()
+    if not fws:
+        return None
+    parts = fws.split(maxsplit=1)
+    vehicle_type = parts[0] if parts else ""
+    if not vehicle_type:
+        return None
+
+    if maj is None or mini is None or pat is None:
+        return None
+
+    return vehicle_type, int(maj), int(mini), int(pat)
+
+
 def _process_ver(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
     """
     Extract firmware version from a VER DataFlash log entry.
@@ -154,19 +182,25 @@ def _process_ver(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
         fws = fws.decode("utf-8", errors="replace")
     elif not isinstance(fws, str):
         return None
-    fws = fws.strip()  # e.g. "ArduCopter V4.6.3"
-    if not fws:
+
+    return parse_ver_fields(fws, getattr(msg, "Maj", None), getattr(msg, "Min", None), getattr(msg, "Pat", None))
+
+
+def parse_msg_ver_string(message: str) -> tuple[str, int, int, int, str] | None:
+    """
+    Parse a firmware version line from MSG text, e.g. "ArduCopter V4.5.5 (142aece2)".
+
+    Also accepts a version with no patch number, e.g. "ArduCopter V4.6 (hash)", defaulting patch to 0.
+
+    Returns (vehicle_type, major, minor, patch, firmware_hash) or None.
+    """
+    matched = _MSG_VERSION_PATTERN.match(message.strip())
+    if matched is None:
         return None
-    parts = fws.split(maxsplit=1)
-    vehicle_type = parts[0] if parts else ""
-    if not vehicle_type:
-        return None
-    maj = getattr(msg, "Maj", None)
-    mini = getattr(msg, "Min", None)
-    pat = getattr(msg, "Pat", None)
-    if maj is None or mini is None or pat is None:
-        return None
-    return (vehicle_type, int(maj), int(mini), int(pat))
+
+    vehicle_type, major, minor, patch, firm_hash = matched.groups()
+    patch_val = int(patch) if patch is not None else 0
+    return vehicle_type, int(major), int(minor), patch_val, firm_hash
 
 
 def _parse_msg_version(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
@@ -181,14 +215,11 @@ def _parse_msg_version(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: A
         message = message.decode("utf-8", errors="replace")
     elif not isinstance(message, str):
         return None
-    parts = message.split()
-    if len(parts) >= 2 and parts[1].startswith("V"):
-        version_parts = parts[1][1:].split(".")  # Remove "V" prefix, split by "."
-        if len(version_parts) >= 2:
-            with contextlib.suppress(ValueError):
-                patch_val = int(version_parts[2]) if len(version_parts) >= 3 else 0
-                return (parts[0], int(version_parts[0]), int(version_parts[1]), patch_val)
-    return None
+    parsed = parse_msg_ver_string(message)
+    if parsed is None:
+        return None
+    vehicle_type, major, minor, patch, _firm_hash = parsed
+    return vehicle_type, major, minor, patch
 
 
 def _get_parm_value(m: object, pname: str, param_type: str) -> float | None:
