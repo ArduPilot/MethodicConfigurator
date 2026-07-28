@@ -20,6 +20,7 @@ from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check impo
     load_configuration_steps,
     validate_configuration_steps,
 )
+from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import HardwareReport, extract_hardware_report
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import LogQualityResult
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
@@ -40,6 +41,7 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     pm_status: PMStatus | None
     quality_results: list[LogQualityResult]
     step_results: list[StepValidationResult]
+    hardware_report: HardwareReport
 
 
 def analyze_log(
@@ -73,6 +75,7 @@ def analyze_log(
     ]
 
     step_results = validate_configuration_steps(log_data, configuration_steps, vehicle_type="ArduCopter")
+    hardware_report = extract_hardware_report(log_data, parameters, apm_doc)
 
     return LogSummary(
         flight_duration_sec=log_data.flight_duration_sec,
@@ -83,4 +86,5 @@ def analyze_log(
         pm_status=pm_status,
         quality_results=quality_results,
         step_results=step_results,
+        hardware_report=hardware_report,
     )
