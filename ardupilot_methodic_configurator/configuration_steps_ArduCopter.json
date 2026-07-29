@@ -585,7 +585,7 @@
                 "MOT_HOVER_LEARN": { "if": "fc_parameters['MOT_THST_HOVER'] > 0.125", "New Value": 2, "Change Reason": "So that it can tune the throttle controller on 24_throttle_controller.param file" }
             },
             "derived_parameters": {
-                "INS_LOG_BAT_MASK": { "New Value": "1 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use acc and gyro batch logging on F4 processors or big props, gyro raw logging on others" },
+                "INS_LOG_BAT_MASK": { "New Value": "2**fc_parameters['EK3_PRIMARY'] if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "'Use EKF primary acc and gyro batch logging on F4 processors or big props' if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 'EKF primary gyro raw logging'" },
                 "INS_LOG_BAT_OPT": { "New Value": "4 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" },
                 "INS_RAW_LOG_OPT": { "New Value": "0 if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 9", "Change Reason": "Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others" }
             },
@@ -670,10 +670,12 @@
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["INS_LOG_BAT_.+", "LOG_FILE_.+"],
             "forced_parameters": {
-                "INS_LOG_BAT_MASK": { "New Value": "1", "Change Reason": "PID notch filters require batch logging, not raw logging" },
                 "INS_LOG_BAT_OPT": { "New Value": "4", "Change Reason": "PID notch filters require batch pre- and post- filters logging" },
                 "INS_RAW_LOG_OPT": { "New Value": "0", "Change Reason": "PID notch filters require batch logging, not raw logging" },
                 "LOG_BITMASK": { "New Value": 407517, "Change Reason": "Log relevant data for PID notch filters tuning. Later on we'll change this to other subsystems" }
+            },
+            "derived_parameters": {
+                "INS_LOG_BAT_MASK": { "New Value": "2**fc_parameters['EK3_PRIMARY']", "Change Reason": "PID notch filters require EKF primary batch logging, not raw logging" }
             },
             "old_filenames": []
         },
