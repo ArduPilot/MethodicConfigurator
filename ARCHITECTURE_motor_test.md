@@ -517,17 +517,21 @@ Following project pytest guidelines with BDD structure:
 def mock_flight_controller() -> MagicMock:
     """Fixture providing mocked flight controller with realistic responses."""
 
+
 @pytest.fixture
 def motor_test_data_model(mock_flight_controller) -> MotorTestDataModel:
     """Fixture providing configured motor test data model with dependency injection support."""
+
 
 @pytest.fixture
 def motor_test_view_setup() -> tuple[MagicMock, ...]:
     """Fixture providing complete mock setup for testing MotorTestView without full window creation."""
 
+
 @pytest.fixture
 def motor_test_window(motor_test_data_model) -> MotorTestWindow:
     """Fixture providing configured motor test GUI window for integration testing."""
+
 
 def test_user_can_test_individual_motor(self, motor_test_view_setup) -> None:
     """
@@ -538,6 +542,7 @@ def test_user_can_test_individual_motor(self, motor_test_view_setup) -> None:
     THEN: The corresponding motor should activate with proper validation and feedback
     """
 
+
 def test_spinbox_values_initialize_from_data_model(self, motor_test_view_setup) -> None:
     """
     Spinbox values are properly initialized from the data model.
@@ -546,6 +551,7 @@ def test_spinbox_values_initialize_from_data_model(self, motor_test_view_setup) 
     WHEN: The view is updated
     THEN: Spinbox values should reflect the current model values
     """
+
 
 def test_spinbox_changes_update_data_model(self, motor_test_view_setup) -> None:
     """

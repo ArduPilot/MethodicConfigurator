@@ -380,8 +380,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self,
         param_name: str,
         value: float,
-        reset_progress_callback: None | Callable[[int, int], None] = None,
-        connection_progress_callback: None | Callable[[int, int], None] = None,
+        reset_progress_callback: Callable[[int, int], None] | None = None,
+        connection_progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = 0,
     ) -> None:
         """
@@ -536,8 +536,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def set_motor_spin_arm_value(
         self,
         value: float,
-        reset_progress_callback: None | Callable[[int, int], None] = None,
-        connection_progress_callback: None | Callable[[int, int], None] = None,
+        reset_progress_callback: Callable[[int, int], None] | None = None,
+        connection_progress_callback: Callable[[int, int], None] | None = None,
     ) -> None:
         """Set MOT_SPIN_ARM ensuring a 0.02 margin relative to MOT_SPIN_MIN."""
         spin_min = self.get_parameter("MOT_SPIN_MIN")
@@ -1148,8 +1148,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def update_frame_type_from_selection(
         self,
         selected_text: str,
-        reset_progress_callback: None | Callable[[int, int], None] = None,
-        connection_progress_callback: None | Callable[[int, int], None] = None,
+        reset_progress_callback: Callable[[int, int], None] | None = None,
+        connection_progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = None,
     ) -> bool:
         """
@@ -1216,8 +1216,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def update_frame_type_by_key(
         self,
         selected_key: str,
-        reset_progress_callback: None | Callable[[int, int], None] = None,
-        connection_progress_callback: None | Callable[[int, int], None] = None,
+        reset_progress_callback: Callable[[int, int], None] | None = None,
+        connection_progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = None,
     ) -> bool:
         """Update frame configuration using the combobox key directly."""

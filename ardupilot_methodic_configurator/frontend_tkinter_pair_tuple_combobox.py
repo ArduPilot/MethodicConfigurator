@@ -87,7 +87,7 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         self,
         master,  # noqa: ANN001
         list_pair_tuple: list[tuple[str, str]],
-        selected_element: None | str,
+        selected_element: str | None,
         cb_name: str,
         *args,
         **kwargs,
@@ -109,13 +109,13 @@ class PairTupleCombobox(ttk.Combobox):  # pylint: disable=too-many-ancestors
         # Apply mouse wheel handling to this combobox instance
         setup_combobox_mousewheel_handling(self)
 
-    def set_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: None | str) -> None:
+    def set_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: str | None) -> None:
         # Clear existing entries before setting new ones
         self.list_keys.clear()
         self.list_shows.clear()
         self.append_entries_tuple(list_pair_tuple, selected_element)
 
-    def append_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: None | str) -> None:
+    def append_entries_tuple(self, list_pair_tuple: list[tuple[str, str]], selected_element: str | None) -> None:
         if isinstance(list_pair_tuple, list):
             for tpl in list_pair_tuple:
                 self.list_keys.append(tpl[0])
@@ -292,7 +292,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         self,
         master,  # noqa: ANN001
         list_pair_tuple: list[tuple[str, str]],
-        selected_element: None | str,
+        selected_element: str | None,
         cb_name: str,
         *args,
         **kwargs,
@@ -308,7 +308,7 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
         self._bind(("bind", lb), "<Escape>", self.on_escape_press, None)  # type: ignore[attr-defined]
         self.bind("<<ComboboxSelected>>", self.on_combobox_selected, None)
 
-    def on_key_release(self, _event: None | tk.Event) -> None:
+    def on_key_release(self, _event: tk.Event | None) -> None:
         """Get the keyboard highlighted index and create a tooltip for it."""
         pd = self.tk.call("ttk::combobox::PopdownWindow", self)
         lb = pd + ".f.l"
@@ -342,10 +342,10 @@ class PairTupleComboboxTooltip(PairTupleCombobox):  # pylint: disable=too-many-a
             # If there's no active item, we don't need to update the tooltip
             pass
 
-    def on_combobox_selected(self, _event: None | tk.Event) -> None:
+    def on_combobox_selected(self, _event: tk.Event | None) -> None:
         self.destroy_tooltip()
 
-    def on_escape_press(self, _event: None | tk.Event) -> None:
+    def on_escape_press(self, _event: tk.Event | None) -> None:
         self.destroy_tooltip()
 
     def destroy_tooltip(self) -> None:

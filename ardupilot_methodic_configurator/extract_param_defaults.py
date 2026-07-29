@@ -84,7 +84,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_arguments(args: None | list[str] = None) -> argparse.Namespace:
+def parse_arguments(args: list[str] | None = None) -> argparse.Namespace:
     """
     Parses command line arguments for the script.
 

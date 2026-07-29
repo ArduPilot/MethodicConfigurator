@@ -420,7 +420,7 @@ def create_and_configure_component_editor(
     local_filesystem: LocalFilesystem,
     flight_controller: FlightController,
     vehicle_type: str,
-    vehicle_project_manager: None | VehicleProjectManager,
+    vehicle_project_manager: VehicleProjectManager | None,
 ) -> ComponentEditorWindow:
     """
     Create and configure the component editor window.

@@ -193,7 +193,7 @@ class ParDict(dict[str, Par]):
         parameter_dict: "ParDict",
         i: int,
         original_line: str,
-        comment: None | str,
+        comment: str | None,
         parameter_name: str,
         value: str,
     ) -> None:

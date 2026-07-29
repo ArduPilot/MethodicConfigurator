@@ -276,8 +276,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def reset_and_reconnect(
         self,
-        reset_progress_callback: None | Callable[[int, int], None] = None,
-        connection_progress_callback: None | Callable[[int, int], None] = None,
+        reset_progress_callback: Callable[[int, int], None] | None = None,
+        connection_progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = None,
     ) -> str:
         """
@@ -372,7 +372,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
     def connect(
         self,
         device: str,
-        progress_callback: None | Callable[[int, int], None] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         log_errors: bool = True,
         baudrate: int | None = None,
     ) -> str:
@@ -402,7 +402,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        progress_callback: None | Callable[[int, int], None],
+        progress_callback: Callable[[int, int], None] | None,
         retries: int = 3,
         timeout: int = 5,
         baudrate: int = DEFAULT_BAUDRATE,
@@ -447,7 +447,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def download_params(
         self,
-        progress_callback: None | Callable[[int, int], None] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
     ) -> tuple[dict[str, float], ParDict]:
@@ -539,13 +539,13 @@ class FlightController:  # pylint: disable=too-many-public-methods
     # File operations - Delegated to files manager
 
     def upload_file(
-        self, local_filename: str, remote_filename: str, progress_callback: None | Callable[[int, int], None] = None
+        self, local_filename: str, remote_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """Upload a file to the flight controller - delegates to files manager."""
         return self._files_manager.upload_file(local_filename, remote_filename, progress_callback)
 
     def download_last_flight_log(
-        self, local_filename: str, progress_callback: None | Callable[[int, int], None] = None
+        self, local_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """Download the last flight log from the flight controller - delegates to files manager."""
         return self._files_manager.download_last_flight_log(local_filename, progress_callback)

@@ -192,6 +192,7 @@ lint.select = ["ALL"]
 lint.ignore = [
     "ERA",     # eradicate
     "BLE",     # flake8-blind-except
+    "CPY001",  # Missing copyright notice at top of file
     "PTH",     # flake8-use-pathlib
     "TRY",     # tryceratops
     "ISC001",  # to let formatter run
