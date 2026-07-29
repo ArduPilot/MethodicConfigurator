@@ -29,6 +29,7 @@ ArduPilot Methodic Configurator adheres to multiple compliance standards and bes
 - Maintains high code quality through automated linting (static code analysis), all using strict settings:
   - [Pylint](https://www.pylint.org/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pylint.yml),
   - [Ruff](https://docs.astral.sh/ruff/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/ruff.yml),
+  - [ty](https://docs.astral.sh/ty/) [automated workflow (together with pylint)](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pylint.yml),
   - [mypy](https://www.mypy-lang.org/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/mypy.yml) and
   - [pyright](https://microsoft.github.io/pyright/#/) [automated workflow](https://github.com/ArduPilot/MethodicConfigurator/actions/workflows/pyright.yml)
 - Implements comprehensive error handling and logging, with 5 verbosity levels

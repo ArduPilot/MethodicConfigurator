@@ -289,6 +289,7 @@ We tested using **automated static tests** in both pre-commit hooks and on githu
 - markdown-link-check
 - codespell, grammarly
 - shellcheck
+- ty
 
 We tested using **automated dynamic tests** on github CI including automated test coverage reports.
 We use [unittest](https://docs.python.org/3/library/unittest.html) to write unit tests for the code.
