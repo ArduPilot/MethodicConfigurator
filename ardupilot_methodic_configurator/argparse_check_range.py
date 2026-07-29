@@ -57,7 +57,7 @@ class CheckRange(Action):
         parser: ArgumentParser,  # noqa: ARG002
         namespace: Namespace,
         values: str | Sequence[Any] | None,
-        option_string: None | str = None,  # noqa: ARG002
+        option_string: str | None = None,  # noqa: ARG002
     ) -> None:
         if not isinstance(values, (int, float)):
             raise ArgumentError(self, _("Value must be a number."))

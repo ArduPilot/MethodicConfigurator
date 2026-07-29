@@ -485,7 +485,7 @@ def show_no_connection_error(_error_string: str) -> None:
     show_error_message(_("No Connection to the Flight Controller"), error_message.format(**locals()))
 
 
-def calculate_tooltip_position(  # noqa: PLR0913 # pylint: disable=too-many-arguments, too-many-positional-arguments
+def calculate_tooltip_position(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
     widget_x: int,
     widget_y: int,
     widget_width: int,

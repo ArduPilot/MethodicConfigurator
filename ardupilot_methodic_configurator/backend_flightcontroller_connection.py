@@ -256,7 +256,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     def _register_and_try_connect(
         self,
         comport: mavutil.SerialPort | serial.tools.list_ports_common.ListPortInfo,
-        progress_callback: None | Callable[[int, int], None],
+        progress_callback: Callable[[int, int], None] | None,
         baudrate: int,
         log_errors: bool,
         retries: int = 3,
@@ -292,7 +292,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     def connect(
         self,
         device: str,
-        progress_callback: None | Callable[[int, int], None] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         log_errors: bool = True,
         baudrate: int | None = None,
     ) -> str:
@@ -390,7 +390,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         baudrate: int = 115200,
         timeout: int = 5,
         retries: int = 3,
-        progress_callback: None | Callable[[int, int], None] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> Union["MavlinkConnection", None]:
         """
         Factory method for creating MAVLink connections.
@@ -803,7 +803,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        progress_callback: None | Callable[[int, int], None],
+        progress_callback: Callable[[int, int], None] | None,
         retries: int = 3,
         timeout: int = 5,
         baudrate: int = DEFAULT_BAUDRATE,

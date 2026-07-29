@@ -140,21 +140,25 @@ class TestExtractMissingTranslations(unittest.TestCase):
 
         # Verify specific entries that should be identified as missing
         expected_missing = [
-            "ArduPilot methodic configurator is a simple GUI with a table that lists parameters. "
-            "The GUI reads intermediate parameter files from a directory and displays their parameters in a table. "
-            "Each row displays the parameter name, its current value on the flight controller, its new value from "
-            'the selected intermediate parameter file, and an "Upload" checkbox. The GUI includes "Upload selected '
-            'params to FC" and "Skip" buttons at the bottom. When "Upload Selected to FC" is clicked, it uploads '
-            'the selected parameters to the flight controller. When "Skip" is pressed, it skips to the next '
-            "intermediate parameter file. The process gets repeated for each intermediate parameter file.",
+            (
+                "ArduPilot methodic configurator is a simple GUI with a table that lists parameters. "
+                "The GUI reads intermediate parameter files from a directory and displays their parameters in a table. "
+                "Each row displays the parameter name, its current value on the flight controller, its new value from "
+                'the selected intermediate parameter file, and an "Upload" checkbox. The GUI includes "Upload selected '
+                'params to FC" and "Skip" buttons at the bottom. When "Upload Selected to FC" is clicked, it uploads '
+                'the selected parameters to the flight controller. When "Skip" is pressed, it skips to the next '
+                "intermediate parameter file. The process gets repeated for each intermediate parameter file."
+            ),
             "No serial ports found",
             "Vehicle type not set explicitly, auto-detected %s.",
             "Vehicle type explicitly set to %s.",
             "Unknown",
-            "ArduPilot Methodic Configurator Version: {_version}\n\n"
-            "A clear configuration sequence for ArduPilot vehicles.\n\n"
-            "Copyright © 2024-2025 Amilcar do Carmo Lucas and ArduPilot.org\n\n"
-            "Licensed under the GNU General Public License v3.0",
+            (
+                "ArduPilot Methodic Configurator Version: {_version}\n\n"
+                "A clear configuration sequence for ArduPilot vehicles.\n\n"
+                "Copyright © 2024-2025 Amilcar do Carmo Lucas and ArduPilot.org\n\n"
+                "Licensed under the GNU General Public License v3.0"
+            ),
         ]
 
         for expected in expected_missing:

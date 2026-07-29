@@ -82,7 +82,7 @@ class FlightControllerFiles:
         return self._connection_manager.info
 
     def upload_file(  # noqa: PLR0911 # pylint: disable=too-many-return-statements
-        self, local_filename: str, remote_filename: str, progress_callback: None | Callable[[int, int], None] = None
+        self, local_filename: str, remote_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """
         Upload a file to the flight controller.
@@ -172,7 +172,7 @@ class FlightControllerFiles:
         return parent_directories
 
     def download_last_flight_log(
-        self, local_filename: str, progress_callback: None | Callable[[int, int], None] = None
+        self, local_filename: str, progress_callback: Callable[[int, int], None] | None = None
     ) -> bool:
         """
         Download the last flight log from the flight controller.

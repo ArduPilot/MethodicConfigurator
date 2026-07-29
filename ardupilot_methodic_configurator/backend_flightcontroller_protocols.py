@@ -111,14 +111,14 @@ class FlightControllerConnectionProtocol(Protocol):
     def connect(
         self,
         device: str,
-        progress_callback: None | Callable[[int, int], None],
+        progress_callback: Callable[[int, int], None] | None,
         log_errors: bool,
         baudrate: int | None,
     ) -> str: ...
 
     def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        progress_callback: None | Callable[[int, int], None],
+        progress_callback: Callable[[int, int], None] | None,
         retries: int,
         timeout: int,
         baudrate: int,
@@ -185,7 +185,7 @@ class FlightControllerParamsProtocol(Protocol):
 
     def download_params(
         self,
-        progress_callback: None | Callable[[int, int], None],
+        progress_callback: Callable[[int, int], None] | None,
         parameter_values_filename: Path | None,
         parameter_defaults_filename: Path | None,
     ) -> tuple[dict[str, float], ParDict]: ...
@@ -281,7 +281,7 @@ class FlightControllerFilesProtocol(Protocol):
     """
 
     def upload_file(
-        self, local_filename: str, remote_filename: str, progress_callback: None | Callable[[int, int], None]
+        self, local_filename: str, remote_filename: str, progress_callback: Callable[[int, int], None] | None
     ) -> bool: ...
 
-    def download_last_flight_log(self, local_filename: str, progress_callback: None | Callable[[int, int], None]) -> bool: ...
+    def download_last_flight_log(self, local_filename: str, progress_callback: Callable[[int, int], None] | None) -> bool: ...

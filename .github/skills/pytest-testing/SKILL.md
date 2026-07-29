@@ -82,6 +82,7 @@ def mock_vehicle_provider() -> MagicMock:
     }
     return provider
 
+
 @pytest.fixture
 def configured_window(mock_vehicle_provider) -> ComponentWindow:
     """Fixture providing a properly configured window for behavior testing."""
@@ -185,6 +186,7 @@ def test_template_selection(self) -> None:
 def test_ui_behavior(self, template_overview_window_setup) -> None:
     """Test UI behavior without full window creation."""
 
+
 # Use template_window fixture for component testing
 def test_component_behavior(self, template_window) -> None:
     """Test component behavior with configured window."""
@@ -197,8 +199,9 @@ def test_component_behavior(self, template_window) -> None:
 def test_business_logic(self, mock_data_provider) -> None:
     """Test core logic with realistic data."""
 
+
 # Mock only external dependencies
-@patch('module.external_api_call')
+@patch("module.external_api_call")
 def test_integration_behavior(self, mock_api) -> None:
     """Test integration points."""
 ```

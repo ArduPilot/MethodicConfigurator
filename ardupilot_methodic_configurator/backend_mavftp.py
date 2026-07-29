@@ -1311,7 +1311,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def ftp_param_decode(data: bytes) -> None | ParamData:  # pylint: disable=too-many-locals
+    def ftp_param_decode(data: bytes) -> ParamData | None:  # pylint: disable=too-many-locals
         """Decode parameter data, returning ParamData."""
         pdata = ParamData()
 

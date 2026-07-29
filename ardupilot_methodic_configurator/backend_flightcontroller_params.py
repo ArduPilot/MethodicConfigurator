@@ -88,7 +88,7 @@ class FlightControllerParams:
 
     def download_params(
         self,
-        progress_callback: None | Callable[[int, int], None] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
     ) -> tuple[dict[str, float], ParDict]:
@@ -133,7 +133,7 @@ class FlightControllerParams:
         self.fc_parameters = param_dict
         return param_dict, ParDict()
 
-    def _download_params_via_mavlink(self, progress_callback: None | Callable[[int, int], None] = None) -> dict[str, float]:
+    def _download_params_via_mavlink(self, progress_callback: Callable[[int, int], None] | None = None) -> dict[str, float]:
         """
         Requests all flight controller parameters via MAVLink PARAM_REQUEST_LIST.
 
@@ -183,7 +183,7 @@ class FlightControllerParams:
 
     def _download_params_via_mavftp(
         self,
-        progress_callback: None | Callable[[int, int], None] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
     ) -> tuple[dict[str, float], ParDict]:

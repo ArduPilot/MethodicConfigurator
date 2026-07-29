@@ -44,7 +44,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table imp
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods, too-many-lines
 
 
-def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: PLR0913
+def create_mock_data_model_ardupilot_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: PLR0913, PLR0917
     name: str = "TEST_PARAM",
     value: float = 1.0,
     comment: str = "test comment",

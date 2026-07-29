@@ -480,7 +480,7 @@ class ComponentEditorWindow(ComponentEditorWindowBase):
         combobox.configure(style="comb_input_valid.TCombobox")
         return True
 
-    def _validate_entry_limits_ui(self, event: None | tk.Event, entry: ttk.Entry, path: ComponentPath) -> bool:
+    def _validate_entry_limits_ui(self, event: tk.Event | None, entry: ttk.Entry, path: ComponentPath) -> bool:
         """UI wrapper for entry limits validation."""
         is_focusout_event = event and event.type in {
             tk.EventType.FocusOut,

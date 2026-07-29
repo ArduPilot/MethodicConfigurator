@@ -478,7 +478,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return False
 
-    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913
+    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913, PLR0917
         self,
         selected_file: str,
         forced: bool,

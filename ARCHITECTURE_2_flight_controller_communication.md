@@ -219,6 +219,7 @@ This architecture provides:
 
   ```python
   from typing import TYPE_CHECKING
+
   if TYPE_CHECKING:
       from backend_flightcontroller_protocols import FlightControllerConnectionProtocol
   ```

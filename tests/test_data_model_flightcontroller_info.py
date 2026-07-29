@@ -693,7 +693,7 @@ class TestFlightcontrollerInfoFormatting:
 
     @pytest.mark.parametrize("empty_value", [None, "", {}])
     def test_user_sees_na_for_empty_values(
-        self, flight_controller_info: FlightControllerInfo, empty_value: None | str | dict
+        self, flight_controller_info: FlightControllerInfo, empty_value: str | dict | None
     ) -> None:
         """
         Test that empty values are displayed as "N/A".

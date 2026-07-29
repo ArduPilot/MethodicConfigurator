@@ -198,7 +198,7 @@ def create_dicts(  # pylint: disable=too-many-locals
 
 
 def pretty_print_dict(
-    d: dict, indent: int = 4, format_int_in_hex: bool = True, board_name: None | dict[int, list[str]] = None
+    d: dict, indent: int = 4, format_int_in_hex: bool = True, board_name: dict[int, list[str]] | None = None
 ) -> str:
     """Pretty prints a dictionary, formatting integers in hexadecimal to a string."""
     output = io.StringIO()
