@@ -109,6 +109,7 @@ Position enum values (`ACCELCAL_VEHICLE_POS_*`):
 
 **Constants** (all available in `mavutil.mavlink` from pymavlink):
 
+<!-- fmt:off -->
 ```python
 mavutil.mavlink.MAV_CMD_ACCELCAL_VEHICLE_POS    # = 42429
 mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEVEL      # = 1
@@ -120,6 +121,7 @@ mavutil.mavlink.ACCELCAL_VEHICLE_POS_BACK       # = 6
 mavutil.mavlink.ACCELCAL_VEHICLE_POS_SUCCESS    # = 16777215
 mavutil.mavlink.ACCELCAL_VEHICLE_POS_FAILED     # = 16777216
 ```
+<!-- fmt:on -->
 
 **Simple and level modes** use `send_command_and_wait_ack()` (existing shared helper) with
 timeouts of 30 s and 15 s respectively, relying on the standard `COMMAND_ACK` response.
