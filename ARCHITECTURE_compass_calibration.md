@@ -223,7 +223,7 @@ Configured as a plugin entry in the relevant configuration step JSON.
 plugin_factory.register(PLUGIN_COMPASS_CALIBRATION, _create_compass_calibration_view)
 ```
 
-`register_plugins()` in [`__main__.py`](ardupilot_methodic_configurator\__main__.py) imports and invokes `register_compass_calibration_plugin()`.
+`register_plugins()` in [`__main__.py`](ardupilot_methodic_configurator/__main__.py) imports and invokes `register_compass_calibration_plugin()`.
 
 ### Backend Integration
 
