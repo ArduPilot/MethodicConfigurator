@@ -210,7 +210,7 @@ The following source files are the authoritative reference:
 
 - **`MAVLink.cs`** — MAVLink message definitions and enum values including
   `MAV_CMD.ACCELCAL_VEHICLE_POS` and `MAV_CMD.PREFLIGHT_CALIBRATION`:
-  <https://github.com/ArduPilot/MissionPlanner/blob/master/ExtLibs/Mavlink/MAVLink.cs>
+  <https://github.com/ArduPilot/MissionPlanner/blob/master/ExtLibs/Mavlink/Mavlink.cs>
 
 - **ArduPilot firmware `AP_AccelCal.cpp`** — firmware side of the protocol; sends the
   per-position `COMMAND_LONG` requests and the final SUCCESS/FAILED signals:
