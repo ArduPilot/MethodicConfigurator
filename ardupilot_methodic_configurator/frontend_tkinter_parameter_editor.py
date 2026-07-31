@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import contextlib
+import threading
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 
@@ -48,10 +49,11 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
+from ardupilot_methodic_configurator.frontend_tkinter_log_quality import LogQualityReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
-from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
+from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
@@ -59,6 +61,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
     display_parameter_editor_usage_popup,
     only_upload_changed_parameters_usage_popup,
 )
+from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import extract_firmware_version_and_vehicle_type
+from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log
+from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
@@ -518,6 +523,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No flight controller connected or MAVFTP not supported"),
         )
 
+        # Create analyse flight log button
+        analyse_log_button = ttk.Button(
+            buttons_frame,
+            text=_("Analyse a .bin log"),
+            command=self.on_analyse_log_click,
+        )
+        analyse_log_button.pack(side=tk.LEFT, padx=(8, 8))
+        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its quality"))
+
         # Create Zip file for forum button
         zip_vehicle_for_forum_button = ttk.Button(
             buttons_frame,
@@ -554,6 +568,85 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 "controller\nIf changes have been made to the current file it will ask if you want to save them"
             ),
         )
+
+    def on_analyse_log_click(self) -> None:
+        """Handle the analyse log button click."""
+        filepath = self.ui.askopenfilename(
+            title=_("Select a flight log"),
+            filetypes=[(_("ArduPilot binary log files"), "*.bin"), (_("All files"), "*.*")],
+        )
+        if not filepath:
+            return
+
+        progress = ProgressWindow(
+            self.root,
+            _(".bin Log Analysis"),
+            _("Analysing flight log, please wait..."),
+        )
+        progress.progress_bar.configure(mode="indeterminate")
+        progress.progress_bar.start(10)
+
+        result_container: list = []
+        error_container: list = []
+
+        def run_analysis() -> None:
+            try:
+                vehicle_type, *_ = extract_firmware_version_and_vehicle_type(filepath)
+                log_data = extract_log(filepath)
+                parameters = {
+                    record["Name"]: float(record["Value"])
+                    for record in log_data.iter_message_records("PARM")
+                    if record.get("Name") and record.get("Value") is not None
+                }
+                vehicle_components = (
+                    self.parameter_editor.get_component_editor_deps().local_filesystem.vehicle_components_fs.data or {}
+                )
+                result_container.append(analyze_log(log_data, parameters, vehicle_components, vehicle_type=vehicle_type))
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                error_container.append(e)
+
+        def check_done() -> None:
+            if thread.is_alive():
+                self.root.after(100, check_done)
+                return
+            progress.destroy()
+            if error_container:
+                self.ui.show_error(_("Log Analysis Error"), str(error_container[0]))
+            elif result_container:
+                report_window = LogQualityReportWindow(self.root, result_container[0])
+                if UsagePopupWindow.should_display("log_quality_report"):
+                    display_log_quality_report_usage_popup(report_window.root)
+                report_window.run()
+
+        thread = threading.Thread(target=run_analysis, daemon=True)
+        thread.start()
+        self.root.after(100, check_done)
+
+        def display_log_quality_report_usage_popup(parent: tk.Tk) -> None:
+            usage_popup_window = BaseWindow(parent)
+            usage_popup_window.root.withdraw()
+            instructions_text = RichText(usage_popup_window.main_frame, height=12, width=80)
+            instructions_text.insert(tk.END, _("Log Quality Report\n\n"), "title")
+            instructions_text.insert(
+                tk.END,
+                _(
+                    "Analysis is only as good as the data in your log.\n\n"
+                    "If a subsystem is not logging, or its parameters are misconfigured, "
+                    "the analyser cannot give you reliable results for that subsystem.\n\n"
+                    "This report tells you exactly what your ArduPilot .bin log can and cannot support for analysis, "
+                    "and points you to the configuration step that fixes each gap.\n\n"
+                    "Hover over any issue count to see the details.\n"
+                    "Issues link back to the configuration step that fixes them."
+                ),
+            )
+            UsagePopupWindow.display(
+                parent,
+                usage_popup_window,
+                _("Log Quality Report"),
+                "log_quality_report",
+                "520x320",
+                instructions_text,
+            )
 
     def _cleanup_plugin_views(self) -> None:
         """Clean up existing plugin views and UI elements."""
