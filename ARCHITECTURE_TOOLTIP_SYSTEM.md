@@ -77,6 +77,7 @@ The tooltip system uses three types of timers:
 
 This is the **critical safety mechanism** that prevents timer leaks:
 
+<!-- fmt:off -->
 ```python
 def _on_widget_destroy(self, event: Optional[tk.Event] = None) -> None:
     """Stop any active timers if the widget is destroyed."""
@@ -88,6 +89,7 @@ def _on_widget_destroy(self, event: Optional[tk.Event] = None) -> None:
             self.tooltip.destroy()
         self.tooltip = None
 ```
+<!-- fmt:on -->
 
 **Why this is critical**:
 
@@ -148,15 +150,10 @@ The `create_show()` method validates pointer position before creating tooltip:
 def create_show(self, _event: Optional[tk.Event] = None) -> None:
     """Create and show the tooltip when the pointer is still over the widget."""
     try:
-        pointed = self.widget.winfo_containing(
-            self.widget.winfo_pointerx(), self.widget.winfo_pointery()
-        )
+        pointed = self.widget.winfo_containing(self.widget.winfo_pointerx(), self.widget.winfo_pointery())
         widget_path = str(self.widget)
         pointed_path = "" if pointed is None else str(pointed)
-        if pointed is None or (
-            pointed_path != widget_path
-            and not pointed_path.startswith(widget_path + ".")
-        ):
+        if pointed is None or (pointed_path != widget_path and not pointed_path.startswith(widget_path + ".")):
             return  # Pointer no longer over widget
     except tk.TclError:
         return  # Widget destroyed during timer execution
