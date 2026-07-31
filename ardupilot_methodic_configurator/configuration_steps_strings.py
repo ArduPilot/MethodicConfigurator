@@ -267,6 +267,7 @@ you can skip some steps now.
 Jump to '60_position_controller.param' file?""")
 
     # change_reasons
+    _config_steps_strings = _("'Use EKF primary acc and gyro batch logging on F4 processors or big props' if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 'EKF primary gyro raw logging'")
     _config_steps_strings = _("'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'")
     _config_steps_strings = _("Activates the logging of the MAGH.Active message")
     _config_steps_strings = _("Activates the temperature calibration for IMU 1 at the next start")
@@ -314,6 +315,7 @@ Jump to '60_position_controller.param' file?""")
     _config_steps_strings = _("One .bin log file per flight, not per battery/reboot")
     _config_steps_strings = _("Only arm above this voltage, to avoid taking off with insufficient battery capacity")
     _config_steps_strings = _("Only for IMU and Raw-IMU")
+    _config_steps_strings = _("PID notch filters require EKF primary batch logging, not raw logging")
     _config_steps_strings = _("PID notch filters require batch logging, not raw logging")
     _config_steps_strings = _("PID notch filters require batch pre- and post- filters logging")
     _config_steps_strings = _("Perform all arming checks. If you have a problem fix its source. Do NOT change this")
