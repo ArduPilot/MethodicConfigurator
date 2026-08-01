@@ -27,6 +27,7 @@ SAFE_FUNCTIONS = MappingProxyType(
         "len": len,
         "log": log,
         "Version": Version,
+        "int": int,
     }
 )
 
