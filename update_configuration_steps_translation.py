@@ -17,11 +17,52 @@ import glob
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from typing import Any
 
 # Set up a proper logger
 logger = logging.getLogger(__name__)
+
+
+def extract_result_strings_from_conditional(change_reason: str) -> list[str]:
+    """
+    Extract individual result strings from a ternary conditional Change Reason expression.
+
+    When a Change Reason is a Python ternary expression of the form::
+
+        'result1' if <condition> else 'result2'
+
+    the result strings ('result1' and 'result2') are what actually get passed to the
+    translation function ``_()`` at runtime (after ``safe_evaluate`` evaluates the
+    expression).  This helper pulls those result strings out so they can be registered
+    as separate msgids in the translation catalog.
+
+    The full conditional expression is kept as a msgid too (fallback path when
+    ``safe_evaluate`` fails at runtime).
+
+    Args:
+        change_reason: The raw Change Reason string from a configuration step JSON file.
+
+    Returns:
+        A list of individual result strings found in the expression.
+        Returns an empty list when the string is not a ternary conditional or when
+        no quoted result strings are found.
+
+    """
+    stripped = change_reason.strip()
+    if " if " not in stripped or " else " not in stripped:
+        return []
+    result_strings: list[str] = []
+    # Extract the first single-quoted string (before the leading ' if ')
+    first_match = re.match(r"^'([^']+)'\s+if\s+", stripped)
+    if first_match:
+        result_strings.append(first_match.group(1))
+    # Extract the last single-quoted string (after the trailing ' else ')
+    last_match = re.search(r"\s+else\s+'([^']+)'\s*$", stripped)
+    if last_match:
+        result_strings.append(last_match.group(1))
+    return result_strings
 
 
 def process_configuration_steps(text_fields: list[str], extracted_strings: dict[str, set[str]], data: dict[str, Any]) -> None:
@@ -43,8 +84,13 @@ def process_configuration_steps(text_fields: list[str], extracted_strings: dict[
                 for param_data in step_data[param_type].values():
                     if "Change Reason" in param_data and isinstance(param_data["Change Reason"], str):
                         extracted_strings["change_reasons"] = extracted_strings.get("change_reasons", set())
-                        if param_data["Change Reason"].strip():
-                            extracted_strings["change_reasons"].add(param_data["Change Reason"])
+                        change_reason = param_data["Change Reason"]
+                        if change_reason.strip():
+                            extracted_strings["change_reasons"].add(change_reason)
+                            # Also register individual result strings from ternary expressions
+                            # so that the translated output of safe_evaluate() is also in the catalog
+                            for result_str in extract_result_strings_from_conditional(change_reason):
+                                extracted_strings["change_reasons"].add(result_str)
 
 
 def extract_strings_from_config_steps(config_file: str) -> dict[str, set[str]]:
