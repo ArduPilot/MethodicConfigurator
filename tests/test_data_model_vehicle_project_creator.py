@@ -1132,7 +1132,7 @@ class TestBinLogImportHelpers:
         THEN: Returns ("ArduCopter", 4, 6, 3)
         """
         with patch(
-            "ardupilot_methodic_configurator.extract_param_defaults.extract_firmware_version_and_vehicle_type",
+            "ardupilot_methodic_configurator.log_analysis.backend_firmware_version.extract_firmware_version_and_vehicle_type",
             return_value=("ArduCopter", 4, 6, 3),
         ):
             result = VehicleProjectCreator.extract_firmware_version_from_bin_log("any.bin")
@@ -1149,7 +1149,7 @@ class TestBinLogImportHelpers:
         """
         with (
             patch(
-                "ardupilot_methodic_configurator.extract_param_defaults.extract_firmware_version_and_vehicle_type",
+                "ardupilot_methodic_configurator.log_analysis.backend_firmware_version.extract_firmware_version_and_vehicle_type",  # pylint: disable=line-too-long
                 side_effect=SystemExit("No VER or MSG message found"),
             ),
             pytest.raises(VehicleProjectCreationError) as exc_info,

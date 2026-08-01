@@ -454,7 +454,7 @@ class VehicleProjectCreator:
             (vehicle_type, major, minor, patch) e.g. ("ArduCopter", 4, 6, 3)
 
         """
-        from ardupilot_methodic_configurator.extract_param_defaults import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+        from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
             extract_firmware_version_and_vehicle_type,
         )
 
