@@ -27,6 +27,7 @@ SAFE_FUNCTIONS = MappingProxyType(
         "len": len,
         "log": log,
         "Version": Version,
+        "int": int,
     }
 )
 
@@ -49,7 +50,7 @@ def safe_evaluate(expression: str, variables: dict) -> int | float | str:
     Evaluate a parameter expression safely using simpleeval.
 
     Only arithmetic, comparisons, ternary conditionals, dict lookups,
-    and whitelisted functions (max, min, round, abs, len, log, Version) are allowed.
+    and whitelisted functions (max, min, round, abs, len, log, Version, int) are allowed.
     Use Version() for robust firmware version comparisons (e.g. Version('4.10') > Version('4.6')).
     Any attempt to call __import__, access dunder attributes, or use
     disallowed constructs will raise an exception.
