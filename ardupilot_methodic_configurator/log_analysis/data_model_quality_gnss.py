@@ -50,16 +50,13 @@ class GPSLogQualityModel(BaseLogQualityAnalysisModel):
 
     def check_status(self) -> list[QualityIssue]:
         """Validate GPS fix status."""
-        issues: list[QualityIssue] = []
-
-        if not self.field_available("GPS", "Status"):
-            issues.append(QualityIssue(_("Status field not present in this firmware's GPS schema")))
-            return issues
-
-        status = self.log_data.get_field("GPS", "Status")
-        if len(status) == 0:
-            issues.append(QualityIssue(_("GPS fix status missing from GPS records")))
-        elif max(status) < 3:
+        status, issues = self.field_values_or_issue(
+            "GPS",
+            "Status",
+            missing_field_message=_("Status field not present in this firmware's GPS schema"),
+            missing_values_message=_("GPS fix status missing from GPS records"),
+        )
+        if status is not None and max(status) < 3:
             issues.append(QualityIssue(_("GPS never achieved a 3D fix")))
         return issues
 

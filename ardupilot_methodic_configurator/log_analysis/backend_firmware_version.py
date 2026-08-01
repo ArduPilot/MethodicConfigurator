@@ -118,7 +118,12 @@ def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, i
         A tuple of (vehicle_type, major, minor, patch), e.g. ("ArduCopter", 4, 6, 3).
 
     """
-    mlog = open_log(logfile)
+    try:
+        mlog = open_log(logfile)
+    except OSError as error:
+        msg = f"Error opening the {logfile} logfile: {error!s}"
+        raise SystemExit(msg) from error
+
     try:
         msg_fallback_result: tuple[str, int, int, int] | None = None
         while True:

@@ -12,11 +12,11 @@ from dataclasses import dataclass
 from ardupilot_methodic_configurator.data_model_fc_ids import APJ_BOARD_ID_NAME_DICT
 from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import parse_first_msg_version, parse_ver_fields
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
-from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import find_matching_param_values
 from ardupilot_methodic_configurator.log_analysis.decode_devid_lib import (
     decode_device_id,
     get_device_type_name,
 )
+from ardupilot_methodic_configurator.log_analysis.utils import APMDoc, find_matching_param_values
 
 _STARTUP_ANCHOR_LINE = "Param space used:"
 
@@ -126,7 +126,7 @@ class HardwareReport:
     airspeed_sensors: list[AirspeedInfo]
 
 
-def extract_hardware_report(log_data: LogData, params: dict[str, float], apm_doc: dict | None) -> HardwareReport:
+def extract_hardware_report(log_data: LogData, params: dict[str, float], apm_doc: APMDoc | None) -> HardwareReport:
     """Build the complete hardware overview for a parsed log."""
     vehicle = extract_vehicle_info(log_data)
     board_name = resolve_board_name(vehicle.board_id)
@@ -265,14 +265,14 @@ def resolve_board_name(board_id: int | None) -> str | None:
     return names[0] if names else None
 
 
-def _tcal_enabled_codes(apm_doc: dict | None, instance: int) -> set[str]:
+def _tcal_enabled_codes(apm_doc: APMDoc | None, instance: int) -> set[str]:
     """Return the INS_TCAL{n}_ENABLE codes meaning from apm.pdef.xml."""
     if apm_doc is None:
         return set()
     return find_matching_param_values(apm_doc, f"INS_TCAL{instance}_ENABLE", "Enabled")
 
 
-def build_imu_info(apm_doc: dict | None, log_data: LogData, params: dict[str, float], instance: int) -> ImuInfo:  # pylint: disable=too-many-locals
+def build_imu_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> ImuInfo:  # pylint: disable=too-many-locals
     """Build ImuInfo for one IMU instance."""
     suffix = "" if instance == 1 else str(instance)
 
@@ -345,7 +345,7 @@ def _compass_external(params: dict[str, float], instance: int) -> bool | None:
 
 # Note: COMPASS_MOTCT (motor interference compensation) is not yet cross-checked here.
 # Every test log so far has it at 0.0 (disabled).
-def build_compass_info(apm_doc: dict | None, log_data: LogData, params: dict[str, float], instance: int) -> CompassInfo:  # pylint: disable=too-many-locals
+def build_compass_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> CompassInfo:  # pylint: disable=too-many-locals
     """Build CompassInfo for one compass instance (1-indexed, matching ArduPilot's numbering)."""
     suffix = "" if instance == 1 else str(instance)
 
@@ -399,7 +399,7 @@ def build_compass_info(apm_doc: dict | None, log_data: LogData, params: dict[str
     )
 
 
-def build_baro_info(apm_doc: dict | None, log_data: LogData, params: dict[str, float], instance: int) -> BaroInfo:  # pylint: disable=too-many-locals
+def build_baro_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> BaroInfo:  # pylint: disable=too-many-locals
     """Build BaroInfo for one barometer instance (1-indexed, matching ArduPilot's numbering)."""
     dev_id = params.get(f"BARO{instance}_DEVID")
     name = bus_type = None
@@ -440,7 +440,7 @@ def build_baro_info(apm_doc: dict | None, log_data: LogData, params: dict[str, f
     return BaroInfo(instance=instance, name=name, bus_type=bus_type, wind_compensation=wind_compensation, healthy=healthy)
 
 
-def build_airspeed_info(apm_doc: dict | None, log_data: LogData, params: dict[str, float], instance: int) -> AirspeedInfo:  # pylint: disable=too-many-locals
+def build_airspeed_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> AirspeedInfo:  # pylint: disable=too-many-locals
     """Build AirspeedInfo for one airspeed sensor instance."""
     suffix = "" if instance == 1 else str(instance)
 

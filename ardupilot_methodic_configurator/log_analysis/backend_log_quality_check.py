@@ -10,22 +10,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import dataclass, field
-from json import JSONDecodeError
-from json import load as json_load
 from logging import error as logging_error
-from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.annotate_params import (
-    PARAM_DEFINITION_XML_FILE,
-    create_doc_dict,
-    get_xml_data,
-    get_xml_url,
-)
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData, MessageSchema
+from ardupilot_methodic_configurator.log_analysis.data_sources import load_configuration_steps
+from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 _MAX_HEALTHY_AVG_CPU = 80.0  # percent
 _MAX_HEALTHY_PEAK_CPU = 95.0  # percent
@@ -59,27 +52,6 @@ def find_step_for_parameter(configuration_steps: dict[str, Any], param_name: str
         msg = f"Parameter '{param_name}' is set by multiple steps: {matches}"
         raise ValueError(msg)
     return matches[0] if matches else None
-
-
-def load_configuration_steps(vehicle_type: str = "ArduCopter") -> dict[str, Any] | None:
-    """
-    Load the Methodic Configurator configuration steps for the given vehicle type.
-
-    Returns None on any I/O or JSON error so callers can distinguish file errors
-    from a legitimately empty configuration.
-    """
-    config_file = Path(__file__).parent.parent / f"configuration_steps_{vehicle_type}.json"
-
-    try:
-        with open(config_file, encoding="utf-8") as file:
-            data: dict[str, Any] = json_load(file)
-            return data
-    except FileNotFoundError:
-        logging_error(_("Configuration file '{config_file}' not found").format(config_file=config_file))
-    except JSONDecodeError as e:
-        logging_error(_("Error in configuration file '{config_file}': {error}").format(config_file=config_file, error=e))
-
-    return None
 
 
 @dataclass
@@ -125,49 +97,32 @@ def find_log_bit_in_apm_file(bitmask: str, bit_name: str) -> int | None:
         The bit if found, otherwise None.
 
     """
+    normalized_name = bit_name.strip().lower()
     entries = bitmask.split(",")
 
     for entry in entries:
-        code, name = entry.split(":", 1)
-        if name == bit_name:
-            return int(code)
+        item = entry.strip()
+        if ":" not in item:
+            continue
+
+        code, name = item.split(":", 1)
+        try:
+            bit = int(code.strip())
+        except ValueError:
+            continue
+
+        if name.strip().lower() == normalized_name:
+            return bit
     return None
 
 
-def load_apm_pdef(vehicle_dir: str, vehicle_type: str = "ArduCopter") -> dict[str, Any] | None:
-    """
-    Fetch (or use cached if already downloaded) apm.pdef.xml and return LOG_BITMASK's raw Bitmask string.
-
-    Args:
-        vehicle_dir: Directory where apm.pdef.xml is cached, or should be downloaded.
-        vehicle_type: Vehicle type, e.g. "ArduCopter".
-
-    Returns:
-        Parameter dictionary, or None if the file cannot be obtained.
-
-    """
-    xml_url = get_xml_url(vehicle_type, firmware_version="")
-
-    try:
-        xml_root = get_xml_data(xml_url, vehicle_dir, PARAM_DEFINITION_XML_FILE, vehicle_type)
-    except (OSError, SystemExit):
-        return None
-
-    return create_doc_dict(xml_root, vehicle_type)
-
-
-def get_log_bitmask(doc: dict) -> str | None:
+def get_log_bitmask(doc: APMDoc) -> str | None:
     """Get the LOGBITMASK field from xml file."""
     bit_value = doc.get("LOG_BITMASK", {}).get("fields", {}).get("Bitmask")
-    if bit_value is None:
+    if not isinstance(bit_value, str):
         logging_error(_("No BitMask value found."))
+        return None
     return bit_value
-
-
-def find_matching_param_values(doc: dict, param_name: str, name_substring: str) -> set[str]:
-    """Find all value codes for any parameter that contains a substring."""
-    values = doc.get(param_name, {}).get("values", {})
-    return {code for code, name in values.items() if name_substring in name}
 
 
 def get_pm_status(log_data: LogData) -> PMStatus | None:

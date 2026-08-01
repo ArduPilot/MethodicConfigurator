@@ -17,6 +17,7 @@ from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check impo
     find_step_for_message,
     find_step_for_parameter,
 )
+from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 
 @dataclass
@@ -46,7 +47,7 @@ class BaseLogQualityAnalysisModel:
         log_data: LogData,
         parameters: dict[str, float],
         configuration_steps: dict[str, Any],
-        apm_doc: str | None,
+        apm_doc: APMDoc | None,
         vehicle_components: dict[str, Any] | None = None,
     ) -> None:
         self.log_data = log_data
@@ -54,6 +55,11 @@ class BaseLogQualityAnalysisModel:
         self.vehicle_components = vehicle_components or {}
         self.configuration_steps = configuration_steps
         self.apm_doc = apm_doc
+
+    def check(self) -> LogQualityResult:
+        """Run the model-specific quality analysis and return a result."""
+        msg = f"{self.__class__.__name__} must implement check()"
+        raise NotImplementedError(msg)
 
     def step_for_parameter(self, param_name: str) -> str:
         return find_step_for_parameter(self.configuration_steps, param_name) or ""
@@ -85,3 +91,25 @@ class BaseLogQualityAnalysisModel:
         """Check whether a field exists in this log's schema for a message type, before reading it."""
         columns = self.log_data.get_message_columns(message_name)
         return columns is not None and field_name in (columns.dtype.names or ())
+
+    def field_values_or_issue(  # pylint: disable=too-many-arguments
+        self,
+        message_name: str,
+        field_name: str,
+        *,
+        scaled: bool = True,
+        missing_field_message: str,
+        missing_values_message: str,
+    ) -> tuple[Any | None, list[QualityIssue]]:
+        """Return field values or a single issue explaining why values are unavailable."""
+        issues: list[QualityIssue] = []
+        if not self.field_available(message_name, field_name):
+            issues.append(QualityIssue(missing_field_message))
+            return None, issues
+
+        values = self.log_data.get_field(message_name, field_name, scaled=scaled)
+        if len(values) == 0:
+            issues.append(QualityIssue(missing_values_message))
+            return None, issues
+
+        return values, issues
