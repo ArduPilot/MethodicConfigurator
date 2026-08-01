@@ -10,7 +10,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
 from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import (
@@ -22,12 +21,11 @@ from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check impo
     validate_configuration_steps,
 )
 from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import HardwareReport, extract_hardware_report
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogQualityAnalysisModel, LogQualityResult
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_sources import load_configuration_steps
-from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 QUALITY_MODELS = [BatteryLogQualityModel, GPSLogQualityModel, EscLogQualityModel]
 
@@ -48,12 +46,9 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     hardware_report: HardwareReport
 
 
-def analyze_log(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def analyze_log(
     log_data: LogData,
-    parameters: dict[str, float],
-    vehicle_components: dict[str, Any] | None = None,
-    apm_doc: APMDoc | None = None,
-    vehicle_type: str = "ArduCopter",
+    context: LogAnalysisContext,
     quality_models: list[type[BaseLogQualityAnalysisModel]] | None = None,
 ) -> LogSummary:
     """
@@ -61,33 +56,28 @@ def analyze_log(  # pylint: disable=too-many-arguments,too-many-positional-argum
 
     Args:
         log_data: Parsed log.
-        parameters: Vehicle parameters extracted from the log.
-        vehicle_components: Optional vehicle component database.
-        apm_doc: Parameter-definition dictionary from apm.pdef.xml.
-        vehicle_type: Vehicle type used to load corresponding configuration steps.
+        context: Typed analysis inputs (parameters, configuration steps,
+            optional component metadata and apm.pdef definitions).
         quality_models: Optional model classes to run instead of the default registry.
 
     Returns:
         Complete log analysis summary.
 
     """
-    if vehicle_components is None:
-        vehicle_components = {}
     resolved_quality_models: list[type[BaseLogQualityAnalysisModel]] = (
         QUALITY_MODELS if quality_models is None else quality_models
     )
 
-    configuration_steps = load_configuration_steps(vehicle_type) or {}
+    parameters = context.parameters
+    configuration_steps = context.configuration_steps
+    apm_doc = context.apm_doc
 
     pm_status = get_pm_status(log_data)
     pm_validation = check_cpu_performance_message(log_data)
 
-    quality_results: list[LogQualityResult] = [
-        model(log_data, parameters, configuration_steps, apm_doc, vehicle_components).check()
-        for model in resolved_quality_models
-    ]
+    quality_results: list[LogQualityResult] = [model(log_data, context).check() for model in resolved_quality_models]
 
-    step_results = validate_configuration_steps(log_data, configuration_steps, vehicle_type=vehicle_type)
+    step_results = validate_configuration_steps(log_data, configuration_steps)
     hardware_report = extract_hardware_report(log_data, parameters, apm_doc)
 
     return LogSummary(
