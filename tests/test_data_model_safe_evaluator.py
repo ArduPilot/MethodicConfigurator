@@ -135,3 +135,75 @@ class TestSafeEvaluateWrapsExceptions:
         """
         with pytest.raises(ConfigurationStepEvalError):
             safe_evaluate("open('/etc/passwd')", {})
+
+
+class TestSafeEvaluateIntAndBitshift:
+    """Test that int() and bitshift expressions work correctly."""
+
+    def test_int_converts_float_fc_parameter(self) -> None:
+        """
+        int() applied to a float fc_parameter value returns the integer part.
+
+        GIVEN: fc_parameters contains EK3_PRIMARY as a float (as returned by ArduPilot)
+        WHEN: safe_evaluate evaluates int(fc_parameters['EK3_PRIMARY'])
+        THEN: The integer value 0 is returned
+        """
+        result = safe_evaluate("int(fc_parameters['EK3_PRIMARY'])", {"fc_parameters": {"EK3_PRIMARY": 0.0}})
+        assert result == 0
+        assert isinstance(result, int)
+
+    def test_int_converts_nonzero_float_fc_parameter(self) -> None:
+        """
+        int() converts a non-zero float fc_parameter value to an integer.
+
+        GIVEN: fc_parameters contains EK3_PRIMARY as 2.0
+        WHEN: safe_evaluate evaluates int(fc_parameters['EK3_PRIMARY'])
+        THEN: The integer value 2 is returned
+        """
+        result = safe_evaluate("int(fc_parameters['EK3_PRIMARY'])", {"fc_parameters": {"EK3_PRIMARY": 2.0}})
+        assert result == 2
+        assert isinstance(result, int)
+
+    def test_bitshift_with_int_fc_parameter(self) -> None:
+        """
+        A left bitshift using int() on an fc_parameter produces the correct bitmask.
+
+        GIVEN: fc_parameters contains EK3_PRIMARY as 0.0 (primary EKF index 0)
+        WHEN: safe_evaluate evaluates 1 << int(fc_parameters['EK3_PRIMARY'])
+        THEN: The bitmask 1 (bit 0 set) is returned
+        """
+        result = safe_evaluate("1 << int(fc_parameters['EK3_PRIMARY'])", {"fc_parameters": {"EK3_PRIMARY": 0.0}})
+        assert result == 1
+
+    def test_bitshift_with_nonzero_int_fc_parameter(self) -> None:
+        """
+        A left bitshift by a non-zero integer index produces the correct bitmask.
+
+        GIVEN: fc_parameters contains EK3_PRIMARY as 2.0 (primary EKF index 2)
+        WHEN: safe_evaluate evaluates 1 << int(fc_parameters['EK3_PRIMARY'])
+        THEN: The bitmask 4 (bit 2 set) is returned
+        """
+        result = safe_evaluate("1 << int(fc_parameters['EK3_PRIMARY'])", {"fc_parameters": {"EK3_PRIMARY": 2.0}})
+        assert result == 4
+
+    def test_bitshift_conditional_expression(self) -> None:
+        """
+        A full INS_LOG_BAT_MASK conditional expression evaluates to the correct bitmask.
+
+        GIVEN: fc_parameters has EK3_PRIMARY=1.0 and vehicle_components indicates an F4 processor
+        WHEN: safe_evaluate evaluates the full derived parameter expression
+        THEN: The bitmask 2 (1 << 1) is returned
+        """
+        variables = {
+            "fc_parameters": {"EK3_PRIMARY": 1.0},
+            "vehicle_components": {
+                "Flight Controller": {"Specifications": {"MCU Series": "STM32F4"}},
+                "Propellers": {"Specifications": {"Diameter_inches": 10}},
+            },
+        }
+        expression = (
+            "1 << int(fc_parameters['EK3_PRIMARY']) if 'F4' in "
+            "vehicle_components['Flight Controller']['Specifications']['MCU Series'] or "
+            "vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 0"
+        )
+        assert safe_evaluate(expression, variables) == 2

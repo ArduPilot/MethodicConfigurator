@@ -287,6 +287,7 @@ Jump to '60_position_controller.param' file?""")
     _config_steps_strings = _("Digital ESC protocol maximum is per definition 2000")
     _config_steps_strings = _("Digital ESC protocol minimum is per definition 1000")
     _config_steps_strings = _("Disable fast harmonic notch logging")
+    _config_steps_strings = _("EKF primary gyro raw logging")
     _config_steps_strings = _("ESC RPM telemetry requires lua scripting")
     _config_steps_strings = _("ExpressLRS requires FLTMODE_CH != 5")
     _config_steps_strings = _("ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)")
@@ -333,6 +334,8 @@ Jump to '60_position_controller.param' file?""")
     _config_steps_strings = _("Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned")
     _config_steps_strings = _("Use 1.4 * INS_GYRO_FILTER as a first guess")
     _config_steps_strings = _("Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned")
+    _config_steps_strings = _("Use EKF primary acc and gyro batch logging on F4 processors or big props")
+    _config_steps_strings = _("Use ESC telemetry RPM to dynamically adjust the propeller notch filter")
     _config_steps_strings = _("Use INS_GYRO_FILTER / 4 as a first guess")
     _config_steps_strings = _("Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned")
     _config_steps_strings = _("Use VTOL-Quicktune lua script to estimate a good PID starting values")
@@ -341,6 +344,7 @@ Jump to '60_position_controller.param' file?""")
     _config_steps_strings = _("Use lua scripting for VTOL-Quicktune")
     _config_steps_strings = _("Use pre and post filters acc and gyro batch logging on F4 processors or big props, pre-post gyro raw logging on others")
     _config_steps_strings = _("Use the first notch filter to filter the noise created by the motors/propellers")
+    _config_steps_strings = _("Use throttle-based dynamic notch filter to reduce propeller noise")
     _config_steps_strings = _("Value for the first couple of flights will be changed later once MOT_THST_HOVER is learned")
     _config_steps_strings = _("allow post flight tuning with Replay")
     _config_steps_strings = _("re-enable normal operation, activate input shaping")
@@ -387,9 +391,7 @@ def configuration_steps_descriptions() -> None:
 
     For pygettext to extract them, they have no other function
     """
-    _config_steps_descriptions = _(
-        "A list of regular expressions to match parameters for automatic import if they have non-default values."
-    )
+    _config_steps_descriptions = _("A list of regular expressions to match parameters for automatic import if they have non-default values.")
     _config_steps_descriptions = _("ArduPilot log messages related to this configuration step")
     _config_steps_descriptions = _("Computed value: evaluate New Value expression and set the parameter")
     _config_steps_descriptions = _("Description of the phase")
@@ -398,30 +400,20 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _("Expression to derive new parameter value")
     _config_steps_descriptions = _("Expression to rename connection")
     _config_steps_descriptions = _("Human readable name of the log message")
-    _config_steps_descriptions = _(
-        "If not already present, add parameter to the file: use 'New Value' if provided, otherwise copy the current FC value. Optionally conditioned on a Python expression."
-    )
+    _config_steps_descriptions = _("If not already present, add parameter to the file: use 'New Value' if provided, otherwise copy the current FC value. Optionally conditioned on a Python expression.")
     _config_steps_descriptions = _("Message about possible jump to another step")
     _config_steps_descriptions = _("Name of the vehicle component edited inline for this configuration step")
     _config_steps_descriptions = _("Name of tool/process that automatically changes these parameters")
     _config_steps_descriptions = _("Name/description of external tool needed")
     _config_steps_descriptions = _("New value for the parameter")
-    _config_steps_descriptions = _(
-        "Optional Python expression; if present, the parameter is only applied when this expression evaluates to true"
-    )
-    _config_steps_descriptions = _(
-        "Optional Python expression; if present, the parameter is only deleted when this expression evaluates to true"
-    )
+    _config_steps_descriptions = _("Optional Python expression; if present, the parameter is only applied when this expression evaluates to true")
+    _config_steps_descriptions = _("Optional Python expression; if present, the parameter is only deleted when this expression evaluates to true")
     _config_steps_descriptions = _("Optional Python expression; the parameter is only added when this evaluates to true")
     _config_steps_descriptions = _("Optional expression for the parameter value; if absent, the current FC value is used")
     _config_steps_descriptions = _("Optional instructions to display as a popup when entering this step")
     _config_steps_descriptions = _("Optional reason for the parameter value")
-    _config_steps_descriptions = _(
-        "Parameters to add to the configuration file, if not already present, editable in the UI. Value comes from 'New Value' expression if given, otherwise copied from the FC."
-    )
-    _config_steps_descriptions = _(
-        "Parameters to remove from the configuration file, optionally conditioned on a Python expression"
-    )
+    _config_steps_descriptions = _("Parameters to add to the configuration file, if not already present, editable in the UI. Value comes from 'New Value' expression if given, otherwise copied from the FC.")
+    _config_steps_descriptions = _("Parameters to remove from the configuration file, optionally conditioned on a Python expression")
     _config_steps_descriptions = _("Parameters whose values are derived from vehicle component data or FC state.")
     _config_steps_descriptions = _("Phases of the configuration process")
     _config_steps_descriptions = _("Previous filenames for this step")
