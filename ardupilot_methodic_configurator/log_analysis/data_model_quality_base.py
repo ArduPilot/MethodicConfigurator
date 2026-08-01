@@ -13,11 +13,11 @@ from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
-from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import (
-    find_step_for_message,
-    find_step_for_parameter,
+from ardupilot_methodic_configurator.log_analysis.utils import (
+    APMDoc,
+    find_configuration_step_for_message,
+    find_configuration_step_for_parameter,
 )
-from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 
 @dataclass
@@ -62,7 +62,7 @@ class BaseLogQualityAnalysisModel:
         raise NotImplementedError(msg)
 
     def step_for_parameter(self, param_name: str) -> str:
-        return find_step_for_parameter(self.configuration_steps, param_name) or ""
+        return find_configuration_step_for_parameter(self.configuration_steps, param_name) or ""
 
     def build_result(self, issues: list[QualityIssue], name: str) -> LogQualityResult:
         return LogQualityResult(
@@ -81,7 +81,7 @@ class BaseLogQualityAnalysisModel:
 
         Returns: config_step, name.
         """
-        resolved = find_step_for_message(self.configuration_steps, message_name)
+        resolved = find_configuration_step_for_message(self.configuration_steps, message_name)
         if resolved is None:
             return "", fallback_name
         step, related = resolved

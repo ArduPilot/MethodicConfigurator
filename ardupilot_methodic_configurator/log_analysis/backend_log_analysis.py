@@ -22,7 +22,7 @@ from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check impo
     validate_configuration_steps,
 )
 from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import HardwareReport, extract_hardware_report
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import LogQualityResult
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogQualityAnalysisModel, LogQualityResult
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
@@ -48,12 +48,13 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     hardware_report: HardwareReport
 
 
-def analyze_log(
+def analyze_log(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     log_data: LogData,
     parameters: dict[str, float],
     vehicle_components: dict[str, Any] | None = None,
     apm_doc: APMDoc | None = None,
     vehicle_type: str = "ArduCopter",
+    quality_models: list[type[BaseLogQualityAnalysisModel]] | None = None,
 ) -> LogSummary:
     """
     Run all log quality analyses and return a summary suitable for the frontend.
@@ -64,6 +65,7 @@ def analyze_log(
         vehicle_components: Optional vehicle component database.
         apm_doc: Parameter-definition dictionary from apm.pdef.xml.
         vehicle_type: Vehicle type used to load corresponding configuration steps.
+        quality_models: Optional model classes to run instead of the default registry.
 
     Returns:
         Complete log analysis summary.
@@ -71,6 +73,9 @@ def analyze_log(
     """
     if vehicle_components is None:
         vehicle_components = {}
+    resolved_quality_models: list[type[BaseLogQualityAnalysisModel]] = (
+        QUALITY_MODELS if quality_models is None else quality_models
+    )
 
     configuration_steps = load_configuration_steps(vehicle_type) or {}
 
@@ -78,7 +83,8 @@ def analyze_log(
     pm_validation = check_cpu_performance_message(log_data)
 
     quality_results: list[LogQualityResult] = [
-        model(log_data, parameters, configuration_steps, apm_doc, vehicle_components).check() for model in QUALITY_MODELS
+        model(log_data, parameters, configuration_steps, apm_doc, vehicle_components).check()
+        for model in resolved_quality_models
     ]
 
     step_results = validate_configuration_steps(log_data, configuration_steps, vehicle_type=vehicle_type)

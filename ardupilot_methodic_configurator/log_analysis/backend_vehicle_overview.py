@@ -272,6 +272,29 @@ def _tcal_enabled_codes(apm_doc: APMDoc | None, instance: int) -> set[str]:
     return find_matching_param_values(apm_doc, f"INS_TCAL{instance}_ENABLE", "Enabled")
 
 
+def _instance_health_from_message_field(
+    log_data: LogData,
+    message_name: str,
+    instance: int,
+    health_field: str,
+) -> bool | None:
+    """Return health for one message instance, where 0 means unhealthy and non-zero means healthy."""
+    columns = log_data.get_message_columns(message_name)
+    names = columns.dtype.names if columns is not None else None
+    if columns is None or columns.size == 0 or names is None:
+        return None
+    if "I" not in names or health_field not in names:
+        return None
+
+    instance_numbers = log_data.get_field(message_name, "I")
+    mask = instance_numbers == (instance - 1)
+    if not mask.any():
+        return None
+
+    health_values = log_data.get_field(message_name, health_field)[mask]
+    return bool((health_values == 0).sum() == 0)
+
+
 def build_imu_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> ImuInfo:  # pylint: disable=too-many-locals
     """Build ImuInfo for one IMU instance."""
     suffix = "" if instance == 1 else str(instance)
@@ -307,18 +330,8 @@ def build_imu_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, 
     position_offsets = [params.get(f"INS_POS{instance}_{axis}") for axis in ("X", "Y", "Z")]
     position_offset_set = None if any(v is None for v in position_offsets) else any(v != 0 for v in position_offsets)
 
-    accel_healthy = gyro_healthy = None
-    imu_columns = log_data.get_message_columns("IMU")
-    names = imu_columns.dtype.names if imu_columns is not None else None
-    if imu_columns is not None and imu_columns.size > 0 and names is not None and {"I", "AH", "GH"}.issubset(names):
-        instance_numbers = log_data.get_field("IMU", "I")
-        mask = instance_numbers == (instance - 1)
-
-        if mask.any():
-            ah_values = log_data.get_field("IMU", "AH")[mask]
-            gh_values = log_data.get_field("IMU", "GH")[mask]
-            accel_healthy = bool((ah_values == 0).sum() == 0)
-            gyro_healthy = bool((gh_values == 0).sum() == 0)
+    accel_healthy = _instance_health_from_message_field(log_data, "IMU", instance, "AH")
+    gyro_healthy = _instance_health_from_message_field(log_data, "IMU", instance, "GH")
 
     return ImuInfo(
         instance=instance,
@@ -379,13 +392,7 @@ def build_compass_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[s
     healthy = None
     mag_schema = log_data.schemas.get("MAG")
     if mag_schema is not None and "I" in mag_schema.fields and "Health" in mag_schema.fields:
-        mag_columns = log_data.get_message_columns("MAG")
-        if mag_columns is not None and mag_columns.size > 0:
-            instance_numbers = log_data.get_field("MAG", "I")
-            mask = instance_numbers == (instance - 1)
-            if mask.any():
-                health_values = log_data.get_field("MAG", "Health")[mask]
-                healthy = bool((health_values == 0).sum() == 0)
+        healthy = _instance_health_from_message_field(log_data, "MAG", instance, "Health")
 
     return CompassInfo(
         instance=instance,
@@ -399,7 +406,7 @@ def build_compass_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[s
     )
 
 
-def build_baro_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> BaroInfo:  # pylint: disable=too-many-locals
+def build_baro_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> BaroInfo:
     """Build BaroInfo for one barometer instance (1-indexed, matching ArduPilot's numbering)."""
     dev_id = params.get(f"BARO{instance}_DEVID")
     name = bus_type = None
@@ -422,25 +429,13 @@ def build_baro_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str,
     baro_schema = log_data.schemas.get("BARO")
     if baro_schema is not None:
         health_field = "Health" if "Health" in baro_schema.fields else "H" if "H" in baro_schema.fields else None
-        baro_columns = log_data.get_message_columns("BARO")
-        names = baro_columns.dtype.names if baro_columns is not None else None
-        if (
-            health_field is not None
-            and baro_columns is not None
-            and baro_columns.size > 0
-            and names is not None
-            and "I" in names
-        ):
-            instance_numbers = log_data.get_field("BARO", "I")
-            mask = instance_numbers == (instance - 1)
-            if mask.any():
-                health_values = log_data.get_field("BARO", health_field)[mask]
-                healthy = bool((health_values == 0).sum() == 0)
+        if health_field is not None:
+            healthy = _instance_health_from_message_field(log_data, "BARO", instance, health_field)
 
     return BaroInfo(instance=instance, name=name, bus_type=bus_type, wind_compensation=wind_compensation, healthy=healthy)
 
 
-def build_airspeed_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> AirspeedInfo:  # pylint: disable=too-many-locals
+def build_airspeed_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[str, float], instance: int) -> AirspeedInfo:
     """Build AirspeedInfo for one airspeed sensor instance."""
     suffix = "" if instance == 1 else str(instance)
 
@@ -457,15 +452,6 @@ def build_airspeed_info(apm_doc: APMDoc | None, log_data: LogData, params: dict[
         use_name = use_values.get(str(int(use_code)))
         use = use_name in ("Use", "UseWhenZeroThrottle")
 
-    healthy = None
-    arsp_columns = log_data.get_message_columns("ARSP")
-    if arsp_columns is not None and arsp_columns.size > 0:
-        names = arsp_columns.dtype.names
-        if names is not None and "H" in names and "I" in names:
-            instance_numbers = log_data.get_field("ARSP", "I")
-            mask = instance_numbers == (instance - 1)
-            if mask.any():
-                health_values = log_data.get_field("ARSP", "H")[mask]
-                healthy = bool((health_values == 0).sum() == 0)
+    healthy = _instance_health_from_message_field(log_data, "ARSP", instance, "H")
 
     return AirspeedInfo(instance=instance, sensor_type=sensor_type, use=use, healthy=healthy)
