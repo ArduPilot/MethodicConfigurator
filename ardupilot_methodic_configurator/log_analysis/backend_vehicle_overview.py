@@ -6,10 +6,11 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import contextlib
 from dataclasses import dataclass
 
 from ardupilot_methodic_configurator.data_model_fc_ids import APJ_BOARD_ID_NAME_DICT
-from ardupilot_methodic_configurator.extract_param_defaults import parse_msg_ver_string, parse_ver_fields
+from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import parse_first_msg_version, parse_ver_fields
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
 from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import find_matching_param_values
 from ardupilot_methodic_configurator.log_analysis.decode_devid_lib import (
@@ -169,6 +170,11 @@ def _vehicle_info_from_ver(log_data: LogData) -> VehicleInfo | None:
     if ver_columns is None or ver_columns.size == 0:
         return None
 
+    names = ver_columns.dtype.names or ()
+    required = {"FWS", "Maj", "Min", "Pat"}
+    if not required.issubset(names):
+        return None
+
     fws = log_data.get_field("VER", "FWS")[0]
     result = parse_ver_fields(
         fws, log_data.get_field("VER", "Maj")[0], log_data.get_field("VER", "Min")[0], log_data.get_field("VER", "Pat")[0]
@@ -178,11 +184,19 @@ def _vehicle_info_from_ver(log_data: LogData) -> VehicleInfo | None:
 
     vehicle_type, major, minor, patch = result
 
-    gh = int(log_data.get_field("VER", "GH")[0])
-    firmware_hash = f"{gh:08x}" if gh != 0 else None
+    firmware_hash = None
+    if "GH" in names:
+        with contextlib.suppress(TypeError, ValueError):
+            gh = int(log_data.get_field("VER", "GH")[0])
+            if gh != 0:
+                firmware_hash = f"{gh:08x}"
 
-    apj = int(log_data.get_field("VER", "APJ")[0])
-    board_id = apj if apj != 0 else None
+    board_id = None
+    if "APJ" in names:
+        with contextlib.suppress(TypeError, ValueError):
+            apj = int(log_data.get_field("VER", "APJ")[0])
+            if apj != 0:
+                board_id = apj
 
     return VehicleInfo(
         vehicle_type=vehicle_type,
@@ -202,11 +216,8 @@ def _vehicle_info_from_msg_fallback(log_data: LogData) -> VehicleInfo | None:
     if columns is None or columns.size == 0:
         return None
 
-    for message in log_data.get_field("MSG", "Message"):
-        parsed = parse_msg_ver_string(message)
-        if parsed is None:
-            continue
-
+    parsed = parse_first_msg_version(log_data.get_field("MSG", "Message"))
+    if parsed is not None:
         vehicle_type, major, minor, patch, firmware_hash = parsed
         return VehicleInfo(
             vehicle_type=vehicle_type,

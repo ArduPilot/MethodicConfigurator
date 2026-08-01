@@ -31,10 +31,10 @@ def open_log(logfile: str) -> mavutil.mavfile:
     Open an ArduPilot .bin log file.
 
     Args:
-        logfile: Path to the .bin log file.
+        logfile: The path to the ArduPilot .bin log file.
 
     Returns:
-        An open pymavlink connection object.
+        A mavutil.mavfile connection object.
 
     """
     try:
