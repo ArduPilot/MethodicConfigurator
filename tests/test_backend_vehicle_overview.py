@@ -9,9 +9,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import numpy as np
+import pytest
 
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData, MessageSchema
 from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import (
+    _instance_health_from_message_field,
     build_baro_info,
     build_imu_info,
     extract_vehicle_info,
@@ -96,3 +98,37 @@ def test_build_baro_info_handles_missing_instance_field_without_crashing() -> No
     )
 
     assert info.healthy is None
+
+
+@pytest.mark.parametrize(
+    ("message_name", "rows", "dtype", "instance", "health_field", "expected"),
+    [
+        ("IMU", [(1,)], [("AH", "i4")], 1, "AH", None),
+        ("ARSP", [(0, 1), (0, 1)], [("I", "i4"), ("H", "i4")], 2, "H", None),
+        ("MAG", [(0, 1), (0, 0), (1, 1)], [("I", "i4"), ("Health", "i4")], 1, "Health", False),
+        ("BARO", [(1, 1), (1, 2), (0, 0)], [("I", "i4"), ("H", "i4")], 2, "H", True),
+    ],
+)
+def test_instance_health_helper_behaviour(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    message_name: str,
+    rows: list[tuple[int, ...]],
+    dtype: list[tuple[str, str]],
+    instance: int,
+    health_field: str,
+    expected: bool | None,
+) -> None:
+    """Helper should return expected health state across representative edge cases."""
+    data = np.array(rows, dtype=dtype)
+    log_data = LogData(
+        _raw_messages={message_name: data},
+        msg_count={message_name: len(rows)},
+    )
+
+    result = _instance_health_from_message_field(
+        log_data,
+        message_name,
+        instance=instance,
+        health_field=health_field,
+    )
+
+    assert result is expected
