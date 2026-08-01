@@ -14,8 +14,10 @@ import pytest
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData, MessageSchema
 from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import (
     _instance_health_from_message_field,
+    build_airspeed_info,
     build_baro_info,
     build_imu_info,
+    extract_hardware_report,
     extract_vehicle_info,
 )
 
@@ -98,6 +100,48 @@ def test_build_baro_info_handles_missing_instance_field_without_crashing() -> No
     )
 
     assert info.healthy is None
+
+
+def test_extract_hardware_report_ignores_zero_placeholder_hardware_ids() -> None:
+    """Zero-valued placeholder parameters must not create phantom hardware entries."""
+    report = extract_hardware_report(
+        log_data=LogData(),
+        params={
+            "INS_ACC_ID": 123.0,
+            "INS_GYR_ID": 456.0,
+            "INS_ACC2_ID": 0.0,
+            "COMPASS_DEV_ID": 789.0,
+            "COMPASS_DEV_ID2": 0.0,
+            "BARO1_DEVID": 321.0,
+            "BARO2_DEVID": 0.0,
+            "ARSPD_TYPE": 1.0,
+            "ARSPD2_TYPE": 0.0,
+        },
+        apm_doc=None,
+    )
+
+    assert [imu.instance for imu in report.imus] == [1]
+    assert [compass.instance for compass in report.compasses] == [1]
+    assert [baro.instance for baro in report.baros] == [1]
+    assert [airspeed.instance for airspeed in report.airspeed_sensors] == [1]
+
+
+def test_build_airspeed_info_uses_instance_specific_parameter_metadata() -> None:
+    """Second airspeed sensor metadata should come from ARSPD2_* definitions, not ARSPD_* ones."""
+    info = build_airspeed_info(
+        apm_doc={
+            "ARSPD_TYPE": {"values": {"1": "Primary"}},
+            "ARSPD2_TYPE": {"values": {"2": "Secondary"}},
+            "ARSPD_USE": {"values": {"0": "DoNotUse"}},
+            "ARSPD2_USE": {"values": {"2": "UseWhenZeroThrottle"}},
+        },
+        log_data=LogData(),
+        params={"ARSPD2_TYPE": 2.0, "ARSPD2_USE": 2.0},
+        instance=2,
+    )
+
+    assert info.sensor_type == "Secondary"
+    assert info.use is True
 
 
 @pytest.mark.parametrize(

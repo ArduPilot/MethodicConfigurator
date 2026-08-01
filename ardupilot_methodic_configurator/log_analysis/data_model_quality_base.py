@@ -13,8 +13,8 @@ from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.utils import (
-    APMDoc,
     find_configuration_step_for_message,
     find_configuration_step_for_parameter,
 )
@@ -42,19 +42,16 @@ class LogQualityResult:
 class BaseLogQualityAnalysisModel:
     """Base class for log analysis models."""
 
-    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def __init__(
         self,
         log_data: LogData,
-        parameters: dict[str, float],
-        configuration_steps: dict[str, Any],
-        apm_doc: APMDoc | None,
-        vehicle_components: dict[str, Any] | None = None,
+        context: LogAnalysisContext,
     ) -> None:
         self.log_data = log_data
-        self.parameters = parameters or {}
-        self.vehicle_components = vehicle_components or {}
-        self.configuration_steps = configuration_steps
-        self.apm_doc = apm_doc
+        self.parameters = context.parameters
+        self.vehicle_components = context.vehicle_components
+        self.configuration_steps = context.configuration_steps
+        self.apm_doc = context.apm_doc
 
     def check(self) -> LogQualityResult:
         """Run the model-specific quality analysis and return a result."""
