@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-07-14 20:22+0000\n"
+"POT-Creation-Date: 2026-08-01 13:51+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -2799,6 +2799,14 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:270
 msgid ""
+"'Use EKF primary acc and gyro batch logging on F4 processors or big props' "
+"if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU "
+"Series'] or vehicle_components['Propellers']['Specifications']"
+"['Diameter_inches'] >= 15 else 'EKF primary gyro raw logging'"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:271
+msgid ""
 "'Use throttle-based dynamic notch filter to reduce propeller noise' if "
 "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else "
 "'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'"
@@ -2807,99 +2815,103 @@ msgstr ""
 "['ESC->FC Telemetry']['Protocol'] == 'None' else '使用ESC遥测RPM动态调整螺旋"
 "桨陷波滤波器'"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:271
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:272
 msgid "Activates the logging of the MAGH.Active message"
 msgstr "激活MAGH.Active消息的日志记录"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:272
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:273
 msgid "Activates the temperature calibration for IMU 1 at the next start"
 msgstr "激活下次启动时IMU 1的温度校准"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:273
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:274
 msgid "Activates the temperature calibration for IMU 2 at the next start"
 msgstr "激活下次启动时IMU 2的温度校准"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:274
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:275
 msgid "Activates the temperature calibration for IMU 3 at the next start"
 msgstr "激活下次启动时IMU 3的温度校准"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:275
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:276
 msgid "Add Navigation logging"
 msgstr "添加导航日志"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:276
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:277
 msgid "Autotune pitch axis"
 msgstr "自动调谐俯仰轴"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:277
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:278
 msgid "Autotune roll and pitch axis"
 msgstr "自动调谐横滚和俯仰轴"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:278
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:279
 msgid "Autotune roll axis"
 msgstr "自动调谐横滚轴"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:279
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:280
 msgid "Autotune yaw D axis"
 msgstr "自动调谐偏航D轴"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:280
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:281
 msgid "Autotune yaw axis"
 msgstr "自动调谐偏航轴"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:281
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:282
 msgid ""
 "Because ALTHOLD flight mode was used for more than 30 seconds to correctly "
 "learn the MOT_THST_HOVER value"
 msgstr "因为ALTHOLD飞行模式被使用超过30秒，正确学习了MOT_THST_HOVER值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:282
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:283
 msgid "Critical failsafe voltage x nr. of cells"
 msgstr "故障保护临界电压 x 电池单体数量"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:283
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:284
 msgid "Defined in ESC specifications above"
 msgstr "如上方ESC规格中定义"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:284
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:285
 msgid "Defined in component editor"
 msgstr "在组件编辑器中定义"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:285
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:286
 msgid "Derived from vehicle component editor propeller size"
 msgstr "从飞行器组件编辑器螺旋桨尺寸派生"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:286
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:287
 msgid "Digital ESC protocol maximum is per definition 2000"
 msgstr "数字ESC协议的最大值按定义为2000"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:287
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:288
 msgid "Digital ESC protocol minimum is per definition 1000"
 msgstr "数字ESC协议的最小值按定义为1000"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:288
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:289
 msgid "Disable fast harmonic notch logging"
 msgstr "禁用快速谐波陷波滤波器日志记录"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:289
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:290
+msgid "EKF primary gyro raw logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:291
 msgid "ESC RPM telemetry requires lua scripting"
 msgstr "ESC转速遥测需要lua脚本支持"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:290
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:292
 msgid "ExpressLRS requires FLTMODE_CH != 5"
 msgstr "ExpressLRS 需要 FLTMODE_CH != 5"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:291
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:293
 msgid "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)"
 msgstr "ExpressLRS 需要使用 RC5 进行解锁 (Arm/Disarm 功能)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:292
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:294
 msgid ""
 "Gather data for the offline IMU temperature calibration while the FC is "
 "disarmed"
 msgstr "在飞控解锁时收集离线IMU温度校准的数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:293
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:295
 msgid ""
 "Gyro raw logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
@@ -2907,11 +2919,11 @@ msgstr ""
 "不再需要陀螺仪原始日志记录，陷波滤波器设置已完成，这减少了处理器负载和日志文"
 "件大小"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:294
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:296
 msgid "Hover learn will improve this initial guess"
 msgstr "悬停学习将改进此初始猜测值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:295
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:297
 msgid ""
 "IMU batch logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
@@ -2919,186 +2931,199 @@ msgstr ""
 "不再需要IMU批量日志记录，陷波滤波器设置已完成，这减少了处理器负载和日志文件大"
 "小"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:296
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:298
 msgid ""
 "IMU temperature calibration is finished, we no longer need to log data when "
 "disarmed"
 msgstr "IMU温度校准已完成，解除锁定状态下无需再记录数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:297
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:299
 msgid "INS_GYRO_FILTER / 2"
 msgstr "INS_GYRO_FILTER / 2"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:298
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid "Initial value, will be improved at a later step"
 msgstr "初始值，将在后续步骤中改进"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:299
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:301
 msgid "Inject chip on the input pitch signal"
 msgstr "在输入俯仰信号上注入芯片"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:300
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:302
 msgid "Inject chip on the input roll signal"
 msgstr "在输入横滚信号上注入芯片"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:301
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Inject chip on the input yaw signal"
 msgstr "在输入偏航信号上注入芯片"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:302
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid "Inject chip on the mixer pitch signal"
 msgstr "在混控器俯仰信号上注入干扰信号"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:303
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:305
 msgid "Inject chip on the mixer roll signal"
 msgstr "在混控器横滚信号上注入干扰信号"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:304
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:306
 msgid "Inject chip on the mixer thrust signal"
 msgstr "在混控器推力信号上注入干扰信号"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:305
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid "Inject chip on the mixer yaw signal"
 msgstr "在混控器偏航信号上注入干扰信号"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:306
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid "Land ASAP"
 msgstr "尽快着陆"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:307
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid ""
 "Log relevant data for PID notch filters tuning. Later on we'll change this "
 "to other subsystems"
 msgstr "记录与PID带阻滤波器调试相关的数据，之后将更改为其他子系统"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:310
 msgid ""
 "Log relevant data for dynamic notch filter tuning. Later on we'll change "
 "this to other subsystems"
 msgstr "记录与动态陷波滤波器调谐相关的数据。之后我们会改为记录其他子系统的数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:311
 msgid "Low failsafe voltage x nr. of cells"
 msgstr "故障保护低电压 x 电池单体数量"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:310
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "Maximize attitude control authority at high throttle"
 msgstr "在高油门时最大化姿态控制权"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:311
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:313
 msgid "No more system identification chip injections"
 msgstr "不再需要系统识别干扰信号注入"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:312
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:314
 msgid "No need to log raw data for IMU temperature calibration"
 msgstr "IMU 温度校准无需记录原始数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:313
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:315
 msgid "Normal state for everyday use"
 msgstr "日常使用的正常状态"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:314
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:316
 msgid "One .bin log file per flight, not per battery/reboot"
 msgstr "每次飞行一个.bin日志文件，而非每次电池更换/重启一个"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:315
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid ""
 "Only arm above this voltage, to avoid taking off with insufficient battery "
 "capacity"
 msgstr "只有在高于该电压时才可解锁，以避免在电池容量不足时起飞"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:316
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:318
 msgid "Only for IMU and Raw-IMU"
 msgstr "仅用于IMU和原始IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:317
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:319
+msgid "PID notch filters require EKF primary batch logging, not raw logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:320
 msgid "PID notch filters require batch logging, not raw logging"
 msgstr "PID带阻滤波器需要批量日志记录，不是原始日志记录"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:318
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:321
 msgid "PID notch filters require batch pre- and post- filters logging"
 msgstr "PID带阻滤波器需要批量过滤前后的日志记录"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:319
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:322
 msgid ""
 "Perform all arming checks. If you have a problem fix its source. Do NOT "
 "change this"
 msgstr "执行所有解锁检查。如果有问题请修复源头。不要更改此项"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:320
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:323
 msgid "Restore value now that system identification is done"
 msgstr "系统识别完成后恢复原值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:321
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid "Return and land at home or rally point"
 msgstr "返回并在家或集结点着陆"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:322
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:325
 msgid "Scale the PIDs up when battery voltage is above this threshold"
 msgstr "当电池电压高于该阈值时，提升PID参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:323
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:326
 msgid "Scale the PIDs up when battery voltage is below this threshold"
 msgstr "当电池电压低于该阈值时，提升PID参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:327
 msgid "Selected in component editor window"
 msgstr "在组件编辑器窗口中选择"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:325
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:328
 msgid "Selected in the component editor"
 msgstr "在组件编辑器中选择"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:326
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:329
 msgid ""
 "So that it can tune the throttle controller on 24_throttle_controller.param "
 "file"
 msgstr "这样它可以在24_throttle_controller.param文件中调谐油门控制器"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:327
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:330
 msgid "Specified in component editor window"
 msgstr "在组件编辑器窗口中指定"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:328
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:331
 msgid "The default is 20Hz but that is too high in most situations"
 msgstr "默认值为20Hz但在大多数情况下太高"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:329
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid "Total battery capacity specified in the component editor"
 msgstr "在组件编辑器中指定的总电池容量"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:330
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:333
 msgid ""
 "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr "假设已正确学习MOT_THST_HOVER，则使用 0.1 * MOT_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:331
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:334
 msgid ""
 "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr "假设已正确学习 MOT_THST_HOVER，则使用 0.2 * MOT_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:332
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
 msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
 msgstr "使用1.4 * INS_GYRO_FILTER作为第一个猜测值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:333
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid ""
 "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr "假设MOT_THST_HOVER已被正确学习，使用2 * MOT_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:334
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:337
+msgid ""
+"Use EKF primary acc and gyro batch logging on F4 processors or big props"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
+msgid "Use ESC telemetry RPM to dynamically adjust the propeller notch filter"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Use INS_GYRO_FILTER / 4 as a first guess"
 msgstr "使用INS_GYRO_FILTER / 4作为第一个猜测值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr "假设MOT_THST_HOVER已被正确学习，使用MOT_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:341
 msgid "Use VTOL-Quicktune lua script to estimate a good PID starting values"
 msgstr "使用VTOL-Quicktune lua脚本估算良好的PID起始值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:337
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:342
 msgid ""
 "Use acc and gyro batch logging on F4 processors or big props, gyro raw "
 "logging on others"
@@ -3106,15 +3131,15 @@ msgstr ""
 "在 F4 处理器或大螺旋桨上使用 acc 和 gyro 批量日志记录，在其他情况下使用 gyro "
 "raw 日志记录"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:343
 msgid "Use lua scripting for MagFit flight path automation"
 msgstr "使用lua脚本进行MagFit飞行路径自动化"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:344
 msgid "Use lua scripting for VTOL-Quicktune"
 msgstr "使用lua脚本进行VTOL快速调节"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:345
 msgid ""
 "Use pre and post filters acc and gyro batch logging on F4 processors or big "
 "props, pre-post gyro raw logging on others"
@@ -3122,164 +3147,168 @@ msgstr ""
 "在 F4 处理器或大螺旋桨上使用预和后过滤器的 acc 和 gyro 批量日志记录，在其他情"
 "况下使用预-后 gyro raw 日志记录"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:341
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:346
 msgid ""
 "Use the first notch filter to filter the noise created by the motors/"
 "propellers"
 msgstr "使用第一个陷波滤波器来过滤电机/螺旋桨产生的噪声"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:342
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:347
+msgid "Use throttle-based dynamic notch filter to reduce propeller noise"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:348
 msgid ""
 "Value for the first couple of flights will be changed later once "
 "MOT_THST_HOVER is learned"
 msgstr "前几次飞行的值将在MOT_THST_HOVER学习后进行更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:343
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:349
 msgid "allow post flight tuning with Replay"
 msgstr "允许使用Replay进行飞行后调谐"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:344
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:350
 msgid "re-enable normal operation, activate input shaping"
 msgstr "重新启用正常操作，激活输入整形"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:345
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:351
 msgid "test the stabilization loops independent of the input shaping"
 msgstr "独立于输入整形测试稳定循环"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:346
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:352
 msgid "was only needed for wind speed estimation"
 msgstr "仅用于风速估计"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:349
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:355
 msgid "Analytical PID optimization"
 msgstr "分析性PID优化"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:350
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:364
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:356
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:370
 msgid "Assemble all components except the propellers"
 msgstr "组装除螺旋桨外的所有组件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:351
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:365
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:357
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid "Assemble the propellers and perform the first flight"
 msgstr "安装螺旋桨并执行首次飞行"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:352
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:358
 msgid "Basic mandatory configuration"
 msgstr "基本必要配置"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:353
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:359
 msgid "Everyday use"
 msgstr "日常使用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:354
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:373
 msgid "Guided operation"
 msgstr "引导操作"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:355
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:235
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:246
 msgid "IMU temperature calibration"
 msgstr "IMU 温度校准"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:356
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:362
 msgid "Improve altitude control"
 msgstr "改进高度控制"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:357
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:363
 msgid "Minimalistic mandatory tuning"
 msgstr "最小必要调参"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:358
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:364
 msgid "Optical flow calibration"
 msgstr "光流校准"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:359
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:365
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:378
 msgid "Position controller tuning"
 msgstr "位置控制器调谐"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:373
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:366
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:379
 msgid "Precision landing"
 msgstr "精确着陆"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
 msgid "Standard tuning"
 msgstr "标准调参"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:366
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:372
 msgid "Calibrate the IMU sensors for at different temperatures"
 msgstr "在不同温度下校准IMU传感器"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:368
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:374
 msgid "Improve altitude under windy conditions"
 msgstr "改善大风条件下的高度控制"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:369
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:375
 msgid "Improve tuning with more test flight data"
 msgstr "通过更多测试飞行数据改进调谐"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:370
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:376
 msgid "Minimalistic mandatory tuning using test flight data"
 msgstr "使用测试飞行数据进行最低限度的必要调谐"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:371
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:377
 msgid "Optical flow sensor calibration"
 msgstr "光流传感器校准"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:374
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:380
 msgid "Set up the basic parameters for the vehicle"
 msgstr "为飞行器设置基本参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:375
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:381
 msgid "Switch tests off, configure for productive work"
 msgstr "关闭测试，配置用于实际工作"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:376
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:382
 msgid "System identification and analytical PID optimization"
 msgstr "系统识别和分析性PID优化"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:388
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
 msgid ""
 "A list of regular expressions to match parameters for automatic import if "
 "they have non-default values."
 msgstr "用于自动导入参数的正则表达式列表，如果这些参数具有非默认值则匹配。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
 msgid "ArduPilot log messages related to this configuration step"
 msgstr "与此配置步骤相关的ArduPilot日志消息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
 msgid "Computed value: evaluate New Value expression and set the parameter"
 msgstr "计算值：评估新值表达式并设置参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:393
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
 msgid "Description of the phase"
 msgstr "阶段描述"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:400
 msgid "Explanation of why this step is needed"
 msgstr "解释为什么需要此步骤"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:395
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:401
 msgid "Explanation of why this step needs to be done at this point"
 msgstr "解释为什么需要在此时执行此步骤"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
 msgid "Expression to derive new parameter value"
 msgstr "派生新参数值的表达式"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
 msgid "Expression to rename connection"
 msgstr "重命名连接的表达式"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
 msgid "Human readable name of the log message"
 msgstr "日志消息的可读名称"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
 msgid ""
 "If not already present, add parameter to the file: use 'New Value' if "
 "provided, otherwise copy the current FC value. Optionally conditioned on a "
@@ -3288,59 +3317,59 @@ msgstr ""
 "如果尚未存在，请将参数添加到文件：如果提供了“新值”，则使用“新值”，否则复制当"
 "前飞控值。可选择根据 Python 表达式进行条件判断。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:408
 msgid "Message about possible jump to another step"
 msgstr "关于可能跳到另一步骤的消息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:409
 msgid "Name of the vehicle component edited inline for this configuration step"
 msgstr "为本配置步骤内联编辑的车辆组件名称"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
 msgid "Name of tool/process that automatically changes these parameters"
 msgstr "自动更改这些参数的工具/过程名称"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:411
 msgid "Name/description of external tool needed"
 msgstr "所需外部工具的名称/描述"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:406
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:412
 msgid "New value for the parameter"
 msgstr "参数的新值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:407
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
 msgid ""
 "Optional Python expression; if present, the parameter is only applied when "
 "this expression evaluates to true"
 msgstr "可选的Python表达式；如存在，则只有当此表达式评估为真时才会应用该参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:416
 msgid ""
 "Optional Python expression; if present, the parameter is only deleted when "
 "this expression evaluates to true"
 msgstr "可选的Python表达式；如果存在，只有在此表达式计算为真时才删除该参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:419
 msgid ""
 "Optional Python expression; the parameter is only added when this evaluates "
 "to true"
 msgstr "可选的 Python 表达式；仅当该表达式结果为真时才添加参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:414
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:420
 msgid ""
 "Optional expression for the parameter value; if absent, the current FC value "
 "is used"
 msgstr "参数值的可选表达式；如未提供，则使用当前飞控值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:415
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:421
 msgid "Optional instructions to display as a popup when entering this step"
 msgstr "在进入此步骤时显示为弹窗的可选说明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:416
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:422
 msgid "Optional reason for the parameter value"
 msgstr "参数值的可选原因"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:417
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
 msgid ""
 "Parameters to add to the configuration file, if not already present, "
 "editable in the UI. Value comes from 'New Value' expression if given, "
@@ -3349,84 +3378,84 @@ msgstr ""
 "要添加到配置文件中的参数（如果尚未存在），可在 UI 中编辑。值来源于“新值”表达"
 "式（如果提供），否则从飞控复制。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:420
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
 msgid ""
 "Parameters to remove from the configuration file, optionally conditioned on "
 "a Python expression"
 msgstr "要从配置文件中移除的参数，可以选择基于Python表达式进行条件判断"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
 msgid ""
 "Parameters whose values are derived from vehicle component data or FC state."
 msgstr "其参数值由车辆组件数据或飞控状态派生的参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:424
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
 msgid "Phases of the configuration process"
 msgstr "配置过程的阶段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:425
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
 msgid "Previous filenames for this step"
 msgstr "此步骤的先前文件名"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
 msgid "Reason for changing the parameter"
 msgstr "更改参数的原因"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:427
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
 msgid "Reason for the derived parameter"
 msgstr "派生参数的原因"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:428
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
 msgid "Short description for blog reference"
 msgstr "博客参考的简短描述"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
 msgid "Short description for wiki reference"
 msgstr "维基参考的简短描述"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
 msgid "Starting step number of this phase"
 msgstr "此阶段的起始步骤编号"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
 msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr "指示步骤是否必须或可选的文本（带百分比）"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:438
 msgid "The instruction message to display to the user"
 msgstr "向用户显示的说明信息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
 msgid "The name of the plugin to load"
 msgstr "要加载的插件名称"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
 msgid "The type of popup dialog to display (info or warning)"
 msgstr "要显示的弹窗对话框类型（信息或警告）"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:441
 msgid "URL to blog documentation"
 msgstr "博客文档链接"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:442
 msgid "URL to external tool"
 msgstr "外部工具链接"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:443
 msgid "URL to wiki documentation"
 msgstr "维基文档链接"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:438
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:444
 msgid ""
 "Where to place the plugin: 'left' for left of scrollable frame, 'top' for "
 "above contents"
 msgstr "放置插件的位置: 'left'表示可滚动框架左侧,'top'表示内容上方"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:445
 msgid "Whether this message is required for the step"
 msgstr "此消息是否为该步骤所需"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:446
 msgid "Whether this phase is optional"
 msgstr "此阶段是否可选"
 
@@ -8212,77 +8241,290 @@ msgstr "上传到飞控的内容"
 msgid "[Image not found: what_gets_uploaded.png]"
 msgstr "[找不到图像: what_gets_uploaded.png]"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:39
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:43
 msgid "Error opening logfile {logfile}: {error}"
 msgstr "打开日志文件 {logfile} 时出错：{error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:163
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:345
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:189
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:395
 msgid "Structured array for {message_type} is missing field metadata"
 msgstr "{message_type} 的结构化数组缺少字段元数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:237
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:263
 msgid "Schema {name} has mismatched field and format counts"
 msgstr "模式 {name} 的字段和格式数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:248
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:274
 msgid "Unsupported log format character {format_char!r} in schema {name}"
 msgstr "模式 {name} 中不支持的日志格式字符 {format_char!r}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:298
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:324
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
 msgstr "{name} 的字段不匹配。缺少: {missing}，多余: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:335
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:385
 msgid "Message count for {message_type} exceeded the preallocated array size"
 msgstr "{message_type} 的消息数量超过了预分配数组大小"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:362
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:412
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
 msgstr ""
 "{message_name} 的消息数量不匹配：预期为 {expected}，实际写入为 {written}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:39
-msgid "Configuration file '{config_file}' not found"
-msgstr "未找到配置文件 '{config_file}'"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:488
+msgid "{message_name} log ends while still armed, no trailing disarm found"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:41
-msgid "Error in configuration file '{config_file}': {error}"
-msgstr "配置文件 '{config_file}' 错误：{error}"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:495
+msgid "Could not compute flight duration: {error}"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:79
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:123
+msgid "No BitMask value found."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:182
+msgid "PM message not logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:191
+msgid "Internal firmware errors were detected (InE)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:198
+msgid "Internal error count: {count}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:204
+msgid "An internal error line was recorded (ErrL)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:212
+msgid "Detected {count} scheduler long loops"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:232
 msgid "Missing field definitions"
 msgstr "缺少字段定义"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:81
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:234
 msgid "Missing format string"
 msgstr "缺少格式字符串"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:83
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:236
 msgid "Invalid message length"
 msgstr "消息长度无效"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:85
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:238
 msgid "Unit count mismatch"
 msgstr "单位数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:87
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:240
 msgid "Multiplier count mismatch"
 msgstr "乘数数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:90
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:243
 msgid "{message} has no logging data"
 msgstr "{message} 没有日志数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:251
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
 msgstr "字段不匹配。缺少: {missing}，多余: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:153
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:306
 msgid "Schema not found"
 msgstr "未找到模式"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:71
+msgid "{name} data present and good for analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:73
+msgid "{name} data has quality issues"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:43
+msgid "Battery logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
+msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:46
+msgid "Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:48
+msgid "Set BATT_MONITOR to enable the battery monitor"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:51
+msgid ""
+"Battery logging enabled but no data, monitor may not be configured properly"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:52
+msgid "No BAT messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:60
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:132
+msgid "Volt field not present in this firmware's BAT schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:61
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:133
+msgid "Voltage values missing from BAT records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:67
+msgid "Voltage is zero throughout, sensor may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:74
+msgid "Voltage spike, or MOT_BAT_VOLT_MAX misconfigured"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:79
+msgid "Voltage sag, or MOT_BAT_VOLT_MIN misconfigured"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:88
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:138
+msgid "Curr field not present in this firmware's BAT schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:89
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:139
+msgid "Current values missing from BAT records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:97
+msgid "CurrTot field not present in this firmware's BAT schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:98
+msgid "CurrTot missing from BAT records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:110
+msgid "Battery low-voltage failsafe threshold disabled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:115
+msgid "Battery critical-voltage failsafe threshold disabled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:148
+msgid ""
+"Power efficiency < 200W/Kg. Current is miscalibrated or take off weight is "
+"incorrect or the efficiency is really good."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:157
+msgid ""
+"Power efficiency > 500W/Kg. Current is miscalibrated or take off weight is "
+"incorrect or the efficiency is really bad."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:42
+msgid "ESC telemetry not logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:45
+msgid "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:50
+msgid "ESC telemetry not logged, scripting is disabled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:53
+msgid "Enable SCR_ENABLE if using scripted ESC telemetry"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:58
+msgid ""
+"ESC telemetry not logged, check ESC hardware supports telemetry and is wired "
+"correctly"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:59
+msgid "No ESC messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:68
+msgid "RPM field not present in this firmware's ESC schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:69
+msgid "RPM values missing from ESC records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:78
+msgid "Curr field not present in this firmware's ESC schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:79
+msgid "Current values missing from ESC records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:88
+msgid "Err field not present in this firmware's ESC schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:89
+msgid "ESC error values missing from ESC records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:92
+msgid "ESC error rate detected on at least one ESC instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:43
+msgid "GPS logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:44
+msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:46
+msgid ""
+"GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
+"connection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:47
+msgid "No GPS messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:56
+msgid "Status field not present in this firmware's GPS schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:57
+msgid "GPS fix status missing from GPS records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:60
+msgid "GPS never achieved a 3D fix"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:68
+msgid "GPS type not configured (set to None)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_sources.py:42
+msgid "Configuration file '{config_file}' not found"
+msgstr "未找到配置文件 '{config_file}'"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_sources.py:44
+msgid "Error in configuration file '{config_file}': {error}"
+msgstr "配置文件 '{config_file}' 错误：{error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugin_factory.py:116
 msgid "none"
