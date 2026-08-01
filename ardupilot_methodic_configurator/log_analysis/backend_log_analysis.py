@@ -14,10 +14,11 @@ from typing import Any
 
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
 from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import (
+    MessageValidation,
     PMStatus,
     StepValidationResult,
+    check_cpu_performance_message,
     get_pm_status,
-    load_configuration_steps,
     validate_configuration_steps,
 )
 from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import HardwareReport, extract_hardware_report
@@ -25,6 +26,8 @@ from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_sources import load_configuration_steps
+from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 QUALITY_MODELS = [BatteryLogQualityModel, GPSLogQualityModel, EscLogQualityModel]
 
@@ -39,6 +42,7 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     message_types: int
     parameter_count: int
     pm_status: PMStatus | None
+    pm_validation: MessageValidation | None
     quality_results: list[LogQualityResult]
     step_results: list[StepValidationResult]
     hardware_report: HardwareReport
@@ -48,7 +52,8 @@ def analyze_log(
     log_data: LogData,
     parameters: dict[str, float],
     vehicle_components: dict[str, Any] | None = None,
-    apm_doc: dict | None = None,
+    apm_doc: APMDoc | None = None,
+    vehicle_type: str = "ArduCopter",
 ) -> LogSummary:
     """
     Run all log quality analyses and return a summary suitable for the frontend.
@@ -57,7 +62,8 @@ def analyze_log(
         log_data: Parsed log.
         parameters: Vehicle parameters extracted from the log.
         vehicle_components: Optional vehicle component database.
-        apm_doc: Raw "Bitmask" field string from apm.pdef.xml
+        apm_doc: Parameter-definition dictionary from apm.pdef.xml.
+        vehicle_type: Vehicle type used to load corresponding configuration steps.
 
     Returns:
         Complete log analysis summary.
@@ -66,15 +72,16 @@ def analyze_log(
     if vehicle_components is None:
         vehicle_components = {}
 
-    configuration_steps = load_configuration_steps("ArduCopter") or {}
+    configuration_steps = load_configuration_steps(vehicle_type) or {}
 
     pm_status = get_pm_status(log_data)
+    pm_validation = check_cpu_performance_message(log_data)
 
     quality_results: list[LogQualityResult] = [
         model(log_data, parameters, configuration_steps, apm_doc, vehicle_components).check() for model in QUALITY_MODELS
     ]
 
-    step_results = validate_configuration_steps(log_data, configuration_steps, vehicle_type="ArduCopter")
+    step_results = validate_configuration_steps(log_data, configuration_steps, vehicle_type=vehicle_type)
     hardware_report = extract_hardware_report(log_data, parameters, apm_doc)
 
     return LogSummary(
@@ -84,6 +91,7 @@ def analyze_log(
         message_types=len(log_data.schemas),
         parameter_count=len(parameters),
         pm_status=pm_status,
+        pm_validation=pm_validation,
         quality_results=quality_results,
         step_results=step_results,
         hardware_report=hardware_report,

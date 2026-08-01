@@ -54,16 +54,13 @@ class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
         return LogQualityResult(available=False, state="warning", reason=reason, issues=issues, name=name)
 
     def check_voltage(self) -> list[QualityIssue]:
-        issues: list[QualityIssue] = []
-
-        if not self.field_available("BAT", "Volt"):
-            issues.append(QualityIssue(_("Volt field not present in this firmware's BAT schema")))
-            return issues
-
-        volts = self.log_data.get_field("BAT", "Volt")
-
-        if len(volts) == 0:
-            issues.append(QualityIssue(_("Voltage values missing from BAT records")))
+        volts, issues = self.field_values_or_issue(
+            "BAT",
+            "Volt",
+            missing_field_message=_("Volt field not present in this firmware's BAT schema"),
+            missing_values_message=_("Voltage values missing from BAT records"),
+        )
+        if volts is None:
             return issues
 
         if volts.max() == 0:
@@ -85,27 +82,21 @@ class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
         return issues
 
     def check_current(self) -> list[QualityIssue]:
-        issues: list[QualityIssue] = []
-
-        if not self.field_available("BAT", "Curr"):
-            issues.append(QualityIssue(_("Curr field not present in this firmware's BAT schema")))
-            return issues
-
-        current = self.log_data.get_field("BAT", "Curr")
-        if len(current) == 0:
-            issues.append(QualityIssue(_("Current values missing from BAT records")))
+        _current, issues = self.field_values_or_issue(
+            "BAT",
+            "Curr",
+            missing_field_message=_("Curr field not present in this firmware's BAT schema"),
+            missing_values_message=_("Current values missing from BAT records"),
+        )
         return issues
 
     def check_curr_total(self) -> list[QualityIssue]:
-        issues: list[QualityIssue] = []
-
-        if not self.field_available("BAT", "CurrTot"):
-            issues.append(QualityIssue(_("CurrTot field not present in this firmware's BAT schema")))
-            return issues
-
-        cur_tot = self.log_data.get_field("BAT", "CurrTot")
-        if len(cur_tot) == 0:
-            issues.append(QualityIssue(_("CurrTot missing from BAT records")))
+        _cur_tot, issues = self.field_values_or_issue(
+            "BAT",
+            "CurrTot",
+            missing_field_message=_("CurrTot field not present in this firmware's BAT schema"),
+            missing_values_message=_("CurrTot missing from BAT records"),
+        )
         return issues
 
     def check_parameters(self) -> list[QualityIssue]:
@@ -135,9 +126,19 @@ class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
         if tow is None or tow <= 0:
             return issues
 
-        volts = self.log_data.get_field("BAT", "Volt")
-        curr = self.log_data.get_field("BAT", "Curr")
-        if len(volts) == 0 or len(curr) == 0:
+        volts, _volts_issues = self.field_values_or_issue(
+            "BAT",
+            "Volt",
+            missing_field_message=_("Volt field not present in this firmware's BAT schema"),
+            missing_values_message=_("Voltage values missing from BAT records"),
+        )
+        curr, _curr_issues = self.field_values_or_issue(
+            "BAT",
+            "Curr",
+            missing_field_message=_("Curr field not present in this firmware's BAT schema"),
+            missing_values_message=_("Current values missing from BAT records"),
+        )
+        if volts is None or curr is None:
             return issues
 
         efficiency = (volts.mean() * curr.mean()) / tow

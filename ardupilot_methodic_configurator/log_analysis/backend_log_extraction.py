@@ -16,7 +16,7 @@ import os
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from logging import error as logging_error
-from typing import Any
+from typing import Any, Protocol, cast
 
 import numpy as np
 from pymavlink import mavutil
@@ -103,6 +103,25 @@ class MessageSchema:  # pylint: disable=too-many-instance-attributes
     multipliers: list[float | None]
 
     records: int = 0
+
+
+class _MavFmt(Protocol):  # pylint: disable=too-few-public-methods
+    """Protocol for pymavlink FMT metadata objects used by extract_schemas."""
+
+    name: str
+    type: int
+    len: int
+    format: str
+    columns: list[str]
+    units: list[str] | None
+    msg_mults: list[float | None]
+
+
+class _SchemaSource(Protocol):  # pylint: disable=too-few-public-methods
+    """Protocol for dynamic pymavlink attributes needed during schema extraction."""
+
+    formats: dict[Any, _MavFmt]
+    mult_lookup: dict[str, float]
 
 
 _FORMAT_TO_DTYPE: dict[str, Any] = {
@@ -408,7 +427,8 @@ def extract_schemas(mlog: mavutil.mavfile, log_data: LogData, mult_ids_by_type: 
         mult_ids_by_type: Per message type, the MultIds string from that type's FMTU message.
 
     """
-    for fmt in mlog.formats.values():
+    schema_source = cast("_SchemaSource", mlog)
+    for fmt in schema_source.formats.values():
         log_data.schemas[fmt.name] = MessageSchema(
             name=fmt.name,
             msg_type=fmt.type,
@@ -416,7 +436,7 @@ def extract_schemas(mlog: mavutil.mavfile, log_data: LogData, mult_ids_by_type: 
             format=fmt.format,
             fields=list(fmt.columns),
             units=list(fmt.units) if fmt.units is not None else [],
-            multipliers=_resolve_multipliers(fmt, mult_ids_by_type.get(fmt.type), mlog.mult_lookup),
+            multipliers=_resolve_multipliers(fmt, mult_ids_by_type.get(fmt.type), schema_source.mult_lookup),
             records=log_data.msg_count.get(fmt.name, 0),
         )
 
