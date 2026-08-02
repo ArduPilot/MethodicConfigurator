@@ -50,6 +50,7 @@ class SystemMavlinkConnectionFactory:  # pylint: disable=too-few-public-methods
                 timeout=timeout,
                 retries=retries,
                 progress_callback=progress_callback,
+                autoreconnect=True,
             )
         except (OSError, TimeoutError, ValueError) as exc:
             # Preserve the root cause in a ConnectionError so callers can display
