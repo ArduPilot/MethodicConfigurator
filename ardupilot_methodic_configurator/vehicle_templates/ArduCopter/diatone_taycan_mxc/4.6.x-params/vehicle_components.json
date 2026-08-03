@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.6.0"
+                "Version": "4.6.3 beta"
             },
             "Specifications": {
                 "MCU Series": "STM32H7xx"
@@ -190,5 +190,5 @@
             "Notes": "A cheap WiFi alternative to the more commonly used 3DR and RFDesigns telemetry modems"
         }
     },
-    "Program version": "4.1.0"
+    "Program version": "4.3.2"
 }
