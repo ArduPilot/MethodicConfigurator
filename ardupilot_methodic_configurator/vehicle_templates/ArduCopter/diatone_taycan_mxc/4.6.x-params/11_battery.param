@@ -4,17 +4,20 @@ BATT_CRT_MAH,450  # When only 450mAh out of the total 1800mAh remain, trigger cr
 BATT_CRT_VOLT,14.2  # Critical failsafe voltage x nr. of cells
 BATT_FS_CRT_ACT,1  # Land ASAP
 BATT_FS_LOW_ACT,2  # Return and land at home or rally point
-BATT_FS_VOLTSRC,1  # Let the firmware handle the nasty business of variable and battery dependent internal resistance
+BATT_FS_VOLTSRC,0
 BATT_LOW_MAH,600  # When only 450mAh out of the total 1800mAh remain, trigger low failsafe
 BATT_LOW_VOLT,14.4  # Low failsafe voltage x nr. of cells
+BATT2_AMP_PERVLT,17.73
 BATT2_ARM_VOLT,15  # In our build this is a redundant monitor for batt1 so == BATT_ARM_VOLT
 BATT2_CAPACITY,1800  # In our build this is a redundant monitor for batt1 so == BATT_CAPACITY
 BATT2_CRT_MAH,450  # In our build this is a redundant monitor for batt1 so == BATT_CRT_MAH
 BATT2_CRT_VOLT,14  # In our build this is a redundant monitor for batt1 so == BATT_CRT_VOLT
 BATT2_FS_CRT_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
 BATT2_FS_LOW_ACT,1  # flying indoors, just land ASAP, no need to hit the ceiling while doing RTL
-BATT2_FS_VOLTSRC,1  # In our build this is a redundant monitor for batt1 so == BATT_FS_VOLTSRC
+BATT2_FS_VOLTSRC,0  # In our build this is a redundant monitor for batt1 so == BATT_FS_VOLTSRC
 BATT2_LOW_MAH,600  # In our build this is a redundant monitor for batt1 so == BATT_LOW_MAH
 BATT2_LOW_VOLT,14.4  # In our build this is a redundant monitor for batt1 so == BATT_LOW_VOLT
+BATT2_MONITOR,4
+BATT2_VOLT_MULT,228.341995
 MOT_BAT_VOLT_MAX,16.8  # Scale the PIDs up when battery voltage is below this threshold
 MOT_BAT_VOLT_MIN,13.2  # Scale the PIDs up when battery voltage is above this threshold
