@@ -1,0 +1,15 @@
+QUIK_AUTO_FILTER,1  # I enable this complex lua script!
+QUIK_AUTO_SAVE,7  # Will autosave in 7 seconds. As i am using a 2 mode switch.
+QUIK_AXES,7  # -
+QUIK_DOUBLE_TIME,10  # -
+QUIK_ENABLE,1  # Use VTOL-Quicktune lua script to estimate a good PID starting values
+QUIK_GAIN_MARGIN,60  # -
+QUIK_MAX_REDUCE,20  # -
+QUIK_OPTIONS,1  # Use a 2 Pos switch
+QUIK_OSC_SMAX,5  # -
+QUIK_RC_FUNC,301  # Use scripting2, as scripting1 is being used by my led control lua script on M10 servo out.
+QUIK_RP_PI_RATIO,1  # -
+QUIK_Y_PI_RATIO,10  # -
+QUIK_YAW_D_MAX,0.01  # -
+QUIK_YAW_P_MAX,0.5  # -
+SCR_ENABLE,1  # Use lua scripting for VTOL-Quicktune

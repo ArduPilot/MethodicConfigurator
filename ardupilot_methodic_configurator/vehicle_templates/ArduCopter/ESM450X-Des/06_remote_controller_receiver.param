@@ -1,0 +1,10 @@
+ARMING_RUDDER,2  # Arm with rudder, at least for now
+BRD_ALT_CONFIG,0  # Use the R6 pin as RCIN. So This should NOT be set to 1.
+RC_OPTIONS,32  # -
+RC_PROTOCOLS,2  # Selected in the component editor
+RC10_OPTION,0  # -
+RC6_OPTION,0  # -
+RC7_OPTION,301  # Will be using this 2 Mode Switch to activate Quicktune lua script on scripting2
+RC8_OPTION,0  # -
+RC9_OPTION,0  # -
+RSSI_TYPE,0  # FS IA6B does not support sending RSSI. And I don't require the drone to monitor RSSI. Low throttle Radio Failsafe will be sufficient for me.

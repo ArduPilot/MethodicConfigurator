@@ -1,0 +1,4 @@
+BRD_SER1_RTSCTS,0  # Not using RTS/CTS 
+SERIAL1_BAUD,115  # Set up Serial communication with ESP32 at 115200
+SERIAL1_OPTIONS,0  # -
+SERIAL1_PROTOCOL,2  # Will use MAVLink 2

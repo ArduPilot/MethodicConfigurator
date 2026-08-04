@@ -1,0 +1,195 @@
+{
+    "Format version": 1,
+    "Components": {
+        "Flight Controller": {
+            "Product": {
+                "Manufacturer": "Kakute,
+                "Model": "KakuteH7-Wing",
+                "Version": "1.0",
+                "URL": "https://holybro.com/products/pixhawk-6c?srsltid=AfmBOoqx6fEclM8l4wICaZcGtR5ecABosliproB7TozPMEdYY7SG0A_t"
+            },
+            "Firmware": {
+                "Type": "ArduCopter",
+                "Version": "4.6.3 official"
+            },
+            "Specifications": {
+                "MCU Series": "STM32H7xx"
+            },
+            "Notes": "The Kakute H743 Wing FC"
+        },
+        "Frame": {
+            "Product": {
+                "Manufacturer": "Robu",
+                "Model": "ESM450",
+                "Version": "Revised F450 Frame",
+                "URL": ""
+            },
+            "Specifications": {
+                "TOW min Kg": 1.0,
+                "TOW max Kg": 2.0,
+                "Frame class": "Quad"
+            },
+            "Notes": ""
+        },
+        "Battery Monitor": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Wing-PWR",
+                "Version": "V1.1",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "Analog",
+                "Protocol": "Analog Voltage and Current"
+            },
+            "Notes": "Supplies 5.2V to FC, providing current consumption and battery voltage measurements"
+        },
+        "Battery": {
+            "Product": {
+                "Manufacturer": "ProRange",
+                "Model": "3S 5000mAh",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Chemistry": "Lipo",
+                "Volt per cell max": 4.2,
+                "Volt per cell arm": 3.6,
+                "Volt per cell low": 3.5,
+                "Volt per cell crit": 3.3,
+                "Volt per cell min": 3.3,
+                "Number of cells": 3,
+                "Capacity mAh": 5000
+            },
+            "Notes": "Normal battery 0.5 kg."
+        },
+        "ESC": {
+            "Product": {
+                "Manufacturer": "Speedybee",
+                "Model": "50A BLS 4 in 1 ESC",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "Bluejay",
+                "Version": ""
+            },
+            "FC->ESC Connection": {
+                "Type": "Main Out",
+                "Protocol": "DShot600"
+            },
+            "ESC->FC Telemetry": {
+                "Type": "Main Out",
+                "Protocol": "BDShotOnly"
+            },
+            "Notes": ""
+        },
+        "Motors": {
+            "Product": {
+                "Manufacturer": "Ready To Sky",
+                "Model": "RS2212-920KV",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Poles": 14
+            },
+            "Notes": "Normal Thrust motors for 450mm quad"
+        },
+        "Propellers": {
+            "Product": {
+                "Manufacturer": "--",
+                "Model": "1045 Props",
+                "Version": "",
+                "URL": ""
+            },
+            "Specifications": {
+                "Diameter_inches": 10.0
+            },
+            "Notes": "10X4.5 Carbon Fibre balanced Propellers"
+        },
+        "GNSS Receiver": {
+            "Product": {
+                "Manufacturer": "Holybro",
+                "Model": "Micro M10",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "Ublox",
+                "Version": "Micro M10"
+            },
+            "FC Connection": {
+                "Type": "SERIAL3",
+                "Protocol": "uBlox"
+            },
+            "Notes": "uBlox Micro M10 GNSS"
+        },
+        "RC Controller": {
+            "Product": {
+                "Manufacturer": "FlySky",
+                "Model": "FS-i6",
+                "Version": "1.0",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "AFHDS 2A",
+                "Version": "V1.0.52"
+            },
+            "Notes": "It has 14 Channels, But only 8 can be used by receiver"
+        },
+        "RC Transmitter": {
+            "Product": {
+                "Manufacturer": "FlySky",
+                "Model": "FS-i6",
+                "Version": "1.0",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "AFHDS 2A",
+                "Version": "V1.0.52"
+            },
+            "Notes": "integrated in RC controller"
+        },
+        "RC Receiver": {
+            "Product": {
+                "Manufacturer": "FlySky",
+                "Model": "FS-IA6B",
+                "Version": "V1.0",
+                "URL": "https://www.flysky-cn.com/ia6b-canshu"
+            },
+            "Firmware": {
+                "Type": "AFHDS 2A",
+                "Version": "V1.0.52"
+            },
+            "FC Connection": {
+                "Type": "RCin/SBUS",
+                "Protocol": "PPM"
+            },
+            "Notes": "This receiver is connected to the pixhawk 6C PPM/SBUS RC entrance and uses PPM protocol"
+        },
+        "Telemetry": {
+            "Product": {
+                "Manufacturer": "",
+                "Model": "",
+                "Version": "",
+                "URL": ""
+            },
+            "Firmware": {
+                "Type": "",
+                "Version": ""
+            },
+            "FC Connection": {
+                "Type": "SERIAL1",
+                "Protocol": "MAVLink2"
+            },
+            "Notes": ""
+        }
+    },
+    "Program version": "4.3.1",
+    "Configuration template": "Holybro_X500_V2"
+}

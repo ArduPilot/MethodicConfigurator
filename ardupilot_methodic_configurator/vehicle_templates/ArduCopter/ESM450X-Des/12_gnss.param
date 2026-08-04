@@ -1,0 +1,11 @@
+BRD_SAFETY_DEFLT,0  # My Micro M10 GNSS Module even lacks a basic safety switch!! what can i do in it.....
+CAN_D1_PROTOCOL,0  # Will never use a CAN GNSS Module! That is so expensive and will empty my all pocket money!
+CAN_P1_DRIVER,0  # No CAN drivers are required for now
+GPS1_GNSS_MODE,77  # Micro M10 GNSS can receive 4 concurrent GNSS with update @10Hz, i.e., above 5Hz.
+GPS1_POS_X,0  # -
+GPS1_POS_Y,0  # -
+GPS1_POS_Z,0  # -
+GPS1_TYPE,2  # Defined in component editor
+NTF_LED_TYPES,257  # Enable the Neopixel WS2812 LED
+SERIAL3_PROTOCOL,5  # Obviously It should be set to detect the GNSS Module?!?
+WPNAV_RADIUS,200  # The accuracy of the GPS is only 2.0m CEP, ranges 5 are maximum (1000 cm to waypoint). 400cm is fine

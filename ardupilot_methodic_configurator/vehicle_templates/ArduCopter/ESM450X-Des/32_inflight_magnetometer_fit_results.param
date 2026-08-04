@@ -1,0 +1,43 @@
+COMPASS_DIA_X,0.991966
+COMPASS_DIA_Y,1.029412
+COMPASS_DIA_Z,0.978622
+COMPASS_DIA2_X,1  # Copied from the connected flight controller
+COMPASS_DIA2_Y,1  # Copied from the connected flight controller
+COMPASS_DIA2_Z,1  # Copied from the connected flight controller
+COMPASS_DIA3_X,1  # Copied from the connected flight controller
+COMPASS_DIA3_Y,1  # Copied from the connected flight controller
+COMPASS_DIA3_Z,1  # Copied from the connected flight controller
+COMPASS_MOT_X,0
+COMPASS_MOT_Y,0
+COMPASS_MOT_Z,0
+COMPASS_MOT2_X,0  # Copied from the connected flight controller
+COMPASS_MOT2_Y,0  # Copied from the connected flight controller
+COMPASS_MOT2_Z,0  # Copied from the connected flight controller
+COMPASS_MOT3_X,0  # Copied from the connected flight controller
+COMPASS_MOT3_Y,0  # Copied from the connected flight controller
+COMPASS_MOT3_Z,0  # Copied from the connected flight controller
+COMPASS_MOTCT,0
+COMPASS_ODI_X,-0.000352
+COMPASS_ODI_Y,0.061419
+COMPASS_ODI_Z,0.132432
+COMPASS_ODI2_X,0  # Copied from the connected flight controller
+COMPASS_ODI2_Y,0  # Copied from the connected flight controller
+COMPASS_ODI2_Z,0  # Copied from the connected flight controller
+COMPASS_ODI3_X,0  # Copied from the connected flight controller
+COMPASS_ODI3_Y,0  # Copied from the connected flight controller
+COMPASS_ODI3_Z,0  # Copied from the connected flight controller
+COMPASS_OFS_X,-15.064505
+COMPASS_OFS_Y,-9.533522
+COMPASS_OFS_Z,-24.180574
+COMPASS_OFS2_X,0  # Copied from the connected flight controller
+COMPASS_OFS2_Y,0  # Copied from the connected flight controller
+COMPASS_OFS2_Z,0  # Copied from the connected flight controller
+COMPASS_OFS3_X,0  # Copied from the connected flight controller
+COMPASS_OFS3_Y,0  # Copied from the connected flight controller
+COMPASS_OFS3_Z,0  # Copied from the connected flight controller
+COMPASS_ORIENT,6
+COMPASS_ORIENT2,0  # Copied from the connected flight controller
+COMPASS_ORIENT3,0  # Copied from the connected flight controller
+COMPASS_SCALE,1.030592
+COMPASS_SCALE2,0  # Copied from the connected flight controller
+COMPASS_SCALE3,0  # Copied from the connected flight controller

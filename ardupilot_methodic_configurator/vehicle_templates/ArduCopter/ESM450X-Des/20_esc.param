@@ -1,0 +1,16 @@
+ATC_RAT_PIT_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_RLL_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+ATC_RAT_YAW_SMAX,25  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+MOT_PWM_MAX,2000  # Digital ESC protocol maximum is per definition 2000
+MOT_PWM_MIN,1000  # Digital ESC protocol minimum is per definition 1000
+MOT_SPIN_ARM,0.07  # I liked spinning at 7% when armed.
+MOT_SPIN_MAX,0.95  # The ESC will probably saturate at 95%.
+MOT_SPIN_MIN,0.1  # 10% min spin is MOT_SPIN_ARM + 3%
+MOT_THST_EXPO,0.6  # I don't have thrust stand so use Ardupilot suggestion.
+NTF_BUZZ_TYPES,5  # Yess! Our FC has buzzer connection pins!
+NTF_LED_TYPES,257  # Will enable Neopixel WS2812 LED type for our LED strip connected to drone.
+SERVO_BLH_AUTO,1  # Keep it enabled so that I can upload hellotunes to ESC directly.
+SERVO_BLH_BDMASK,15  # Channels 1-4
+SERVO_DSHOT_ESC,4  # I use this ESC
+PSC_ACCZ_SMAX,1000  # limit the slew rate to prevent possible ESC desync - https://ardupilot.org/copter/docs/common-servo-limit-cycle-detection.html
+TKOFF_RPM_MIN,400  # ESC Telemetry available through BiDirDShot. We will use this feature.
