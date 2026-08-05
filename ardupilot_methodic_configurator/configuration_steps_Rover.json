@@ -260,7 +260,11 @@
                 "SERVO_FTW_POLES": {}
             },
             "rename_connection": "vehicle_components['ESC']['ESC->FC Telemetry']['Type']",
-            "old_filenames": ["07_esc.param"]
+            "old_filenames": ["07_esc.param"],
+            "plugin": {
+                "name": "esc_rpm_scale",
+                "placement": "left"
+            }
         },
         "10_battery_monitor.param": {
             "why": "The battery monitor must be configured to match the hardware connection type so that the autopilot correctly reads battery voltage and current",

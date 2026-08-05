@@ -25,6 +25,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
 from ardupilot_methodic_configurator.plugin_constants import (
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
+    PLUGIN_ESC_RPM_SCALE,
     PLUGIN_MOTOR_TEST,
 )
 
@@ -3436,6 +3437,16 @@ class TestDerivedParameterApplication:
             mock_compass_model.assert_not_called()
             assert result is None
 
+    def test_user_can_create_esc_rpm_scale_data_model_when_fc_is_connected(self, parameter_editor) -> None:
+        """The editor creates the ESC RPM scale model with FC and filesystem dependencies."""
+        parameter_editor._flight_controller.master = MagicMock()
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.EscRpmScaleDataModel") as mock_esc_rpm_model:
+            result = parameter_editor.create_plugin_data_model(PLUGIN_ESC_RPM_SCALE)
+
+            mock_esc_rpm_model.assert_called_once_with(parameter_editor._flight_controller, parameter_editor._local_filesystem)
+            assert result == mock_esc_rpm_model.return_value
+
     @pytest.mark.parametrize("plugin_name", ["unknown_plugin", "", None])
     def test_user_sees_an_error_for_unsupported_plugin_name(self, parameter_editor, plugin_name) -> None:
         """
@@ -3486,7 +3497,9 @@ class TestEditorStateInitialization:
         # Assert
         assert mavftp_support is False
 
-    @pytest.mark.parametrize("plugin_name", [PLUGIN_MOTOR_TEST, PLUGIN_BATTERY_MONITOR, PLUGIN_COMPASS_CALIBRATION])
+    @pytest.mark.parametrize(
+        "plugin_name", [PLUGIN_MOTOR_TEST, PLUGIN_BATTERY_MONITOR, PLUGIN_COMPASS_CALIBRATION, PLUGIN_ESC_RPM_SCALE]
+    )
     def test_system_returns_none_for_known_plugin_when_fc_is_disconnected(self, parameter_editor, plugin_name: str) -> None:
         """
         System refuses to create a plugin data model when the Flight Controller is disconnected.

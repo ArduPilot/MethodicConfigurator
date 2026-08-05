@@ -48,6 +48,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import 
 from ardupilot_methodic_configurator.plugin_constants import (
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
+    PLUGIN_ESC_RPM_SCALE,
     PLUGIN_MOTOR_TEST,
 )
 from ardupilot_methodic_configurator.plugin_factory import PluginFactory
@@ -1436,6 +1437,9 @@ class TestRegisterPluginsInternals:
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.register_compass_calibration_plugin"
             ) as mock_compass,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_esc_rpm_scale.register_esc_rpm_scale_plugin"
+            ) as mock_esc_rpm_scale,
         ):
             register_plugins()
 
@@ -1443,6 +1447,7 @@ class TestRegisterPluginsInternals:
             mock_motor.assert_called_once()
             mock_battery.assert_called_once()
             mock_compass.assert_called_once()
+            mock_esc_rpm_scale.assert_called_once()
 
 
 class TestValidatePluginRegistry:
@@ -1477,6 +1482,7 @@ class TestValidatePluginRegistry:
         factory = PluginFactory()
         factory.register(PLUGIN_BATTERY_MONITOR, MagicMock())
         factory.register(PLUGIN_COMPASS_CALIBRATION, MagicMock())
+        factory.register(PLUGIN_ESC_RPM_SCALE, MagicMock())
         factory.register(PLUGIN_MOTOR_TEST, MagicMock())
 
         with patch("ardupilot_methodic_configurator.plugin_factory.logging_error") as mock_err:
@@ -1489,6 +1495,7 @@ class TestValidatePluginRegistry:
             assert "unknown_plugin" in combined
             assert PLUGIN_BATTERY_MONITOR in combined
             assert PLUGIN_COMPASS_CALIBRATION in combined
+            assert PLUGIN_ESC_RPM_SCALE in combined
             assert PLUGIN_MOTOR_TEST in combined
 
 
