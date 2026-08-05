@@ -66,7 +66,7 @@ No visible menus, no hidden menus, no complicated options, what you see is what 
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/chart?repos=ArduPilot/MethodicConfigurator&type=date&legend=top-left)](https://www.star-history.com/?repos=ArduPilot%2FMethodicConfigurator&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/chart?repos=ArduPilot/MethodicConfigurator&type=date&legend=top-left&sealed_token=mVQBTb1Yx9PvsoRodF1P5omVr_oxCrUmB_QdIk7zbRIBq_2WLMfzVxBjkbyzgb6_MVjHRVYda-7RMWDHpc7vfaaWRXkPBYG1Lvh1zyZWQfRLTlK9ccCWCw)](https://www.star-history.com/?repos=ArduPilot%2FMethodicConfigurator&type=date&legend=top-left)
 
 ## Table of Contents
 
