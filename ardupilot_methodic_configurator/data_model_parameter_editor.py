@@ -16,6 +16,7 @@ import contextlib
 import platform
 import subprocess
 from collections.abc import Callable
+from copy import deepcopy
 from csv import writer as csv_writer
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -26,7 +27,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
 from time import time
-from typing import Literal
+from typing import Any, Literal
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
@@ -44,6 +45,7 @@ from ardupilot_methodic_configurator.data_model_compass_calibration import Compa
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 from ardupilot_methodic_configurator.plugin_constants import (
     PLUGIN_ACCELEROMETER_CALIBRATION,
     PLUGIN_BATTERY_MONITOR,
@@ -70,6 +72,17 @@ class ComponentEditorDeps:
 
     local_filesystem: LocalFilesystem
     fc_parameters: dict[str, float]
+
+
+@dataclass(frozen=True)
+class LogAnalysisInputs:
+    """Immutable snapshot of project data needed to analyse a selected log."""
+
+    project_vehicle_type: str
+    project_firmware_version: str
+    vehicle_components: dict[str, Any]
+    configuration_steps: dict[str, Any]
+    apm_doc: APMDoc | None
 
 
 # Type aliases for callback functions used in workflow methods
@@ -2282,6 +2295,28 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return ComponentEditorDeps(
             local_filesystem=self._local_filesystem,
             fc_parameters=self.fc_parameters,
+        )
+
+    def get_log_analysis_context_inputs(
+        self,
+        *,
+        apm_doc: APMDoc | None = None,
+    ) -> LogAnalysisInputs:
+        """
+        Return a defensive snapshot of project data needed by log analysis.
+
+        ``apm_doc`` lets the frontend/backend orchestration pass metadata that
+        was already loaded for a selected log. The data model only snapshots
+        already available values; it does not fetch files or network resources.
+        """
+        resolved_apm_doc = apm_doc if apm_doc is not None else self._local_filesystem.doc_dict or None
+
+        return LogAnalysisInputs(
+            project_vehicle_type=str(self._local_filesystem.vehicle_type),
+            project_firmware_version=str(self._local_filesystem.fw_version),
+            vehicle_components=deepcopy(self._local_filesystem.vehicle_components_fs.data or {}),
+            configuration_steps=deepcopy(self._local_filesystem.configuration_steps or {}),
+            apm_doc=deepcopy(resolved_apm_doc) if resolved_apm_doc is not None else None,
         )
 
     def get_current_component(self) -> str | None:

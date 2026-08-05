@@ -9,8 +9,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 
 from ardupilot_methodic_configurator.data_model_fc_ids import APJ_BOARD_ID_NAME_DICT
-from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import parse_first_msg_version, parse_ver_fields
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
+from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import parse_first_msg_version, parse_ver_fields
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import StartupInfo, VehicleInfo
 
 _STARTUP_ANCHOR_LINE = "Param space used:"

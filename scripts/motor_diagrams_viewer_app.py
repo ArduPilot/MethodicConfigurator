@@ -29,6 +29,8 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 
+from ardupilot_methodic_configurator.formatting import format_filesize
+
 DEFAULT_IMAGE_WIDTH: int = 200
 DEFAULT_IMAGE_HEIGHT: int = 200
 
@@ -252,11 +254,7 @@ class SVGViewerApp:  # pylint: disable=too-many-instance-attributes
 
     def format_file_size(self, size_bytes: int) -> str:
         """Format file size in human readable format."""
-        if size_bytes < 1024:
-            return f"{size_bytes} B"
-        if size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.1f} KB"
-        return f"{size_bytes / (1024 * 1024):.1f} MB"
+        return format_filesize(size_bytes)
 
     def update_size_info(self, svg_path: Path, original_png_path: Path, processed_png_path: Path, ppm_path: Path) -> None:
         """Update the file size information display."""

@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
     BaseLogQualityAnalysisModel,
     LogQualityResult,
@@ -58,7 +59,7 @@ class EscLogQualityModel(BaseLogQualityAnalysisModel):
             reason = _("ESC telemetry not logged, check ESC hardware supports telemetry and is wired correctly")
             issues = [QualityIssue(_("No ESC messages found"), step)]
 
-        return LogQualityResult(available=False, state="warning", reason=reason, issues=issues, name=name)
+        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
 
     def check_rpm(self) -> list[QualityIssue]:
         """Validate logged ESC RPM values."""

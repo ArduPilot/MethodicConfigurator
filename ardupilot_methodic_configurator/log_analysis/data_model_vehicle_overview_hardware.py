@@ -6,35 +6,42 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_compass_rules import (
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import (
+    AirspeedInfo,
+    BaroInfo,
+    CompassInfo,
+    HardwareReport,
+    ImuInfo,
+)
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_compass_rules import (
     compass_external,
     compass_motor_calibrated,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_feature_flags import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_feature_flags import (
     airspeed_use_enabled_from_name,
     wind_compensation_enabled_from_name,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_health import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_health import (
     instance_health_from_message_field,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_health_rules import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_health_rules import (
     airspeed_health,
     baro_health,
     compass_health,
     imu_health,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_identity import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_identity import (
     extract_vehicle_info,
     resolve_board_name,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_imu_rules import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_imu_rules import (
     imu_axes_offsets,
     imu_axes_offsets_by_instance,
     imu_calibration_from_offsets,
     imu_temp_calibrated,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_instances import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_instances import (
     airspeed_type_param,
     airspeed_use_param,
     baro_device_id_param,
@@ -43,21 +50,14 @@ from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_insta
     imu_device_id_param,
     instance_suffix,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_param_metadata import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_param_metadata import (
     enum_value_name,
     tcal_enabled_codes,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_sensor_rules import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_sensor_rules import (
     any_nonzero,
     decode_name_and_bus,
     parameter_enabled,
-)
-from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import (
-    AirspeedInfo,
-    BaroInfo,
-    CompassInfo,
-    HardwareReport,
-    ImuInfo,
 )
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 

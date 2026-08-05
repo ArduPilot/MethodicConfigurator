@@ -6,8 +6,8 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_health import (
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_health import (
     instance_health_from_message_field,
 )
 

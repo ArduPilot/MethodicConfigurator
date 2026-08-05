@@ -208,52 +208,52 @@ class TestExtractFirmwareVersionAndVehicleType:
         assert extract_firmware_version_and_vehicle_type("log.bin") == ("ArduCopter", 4, 6, 3)
 
     @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
-    def test_raises_system_exit_when_logfile_cannot_be_opened(self, mock_conn: MagicMock) -> None:
+    def test_raises_os_error_when_logfile_cannot_be_opened(self, mock_conn: MagicMock) -> None:
         """
-        A SystemExit is raised with an informative message when the logfile cannot be opened.
+        An OSError is raised with an informative message when the logfile cannot be opened.
 
         GIVEN: A logfile path that causes mavlink_connection to raise an exception
         WHEN: extract_firmware_version_and_vehicle_type is called
-        THEN: SystemExit is raised with a message mentioning the logfile path
+        THEN: OSError is raised with a message mentioning the logfile path
         """
         mock_conn.side_effect = OSError("file not found")
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(OSError, match="Error opening") as exc_info:
             extract_firmware_version_and_vehicle_type("missing.bin")
 
         assert "missing.bin" in str(exc_info.value)
         assert "Error opening" in str(exc_info.value)
 
     @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
-    def test_raises_system_exit_when_no_version_information_found(self, mock_conn: MagicMock) -> None:
+    def test_raises_value_error_when_no_version_information_found(self, mock_conn: MagicMock) -> None:
         """
-        A SystemExit is raised when neither VER nor parseable MSG is found.
+        A ValueError is raised when neither VER nor parseable MSG is found.
 
         GIVEN: A .bin log that contains no VER or MSG messages
         WHEN: extract_firmware_version_and_vehicle_type is called
-        THEN: SystemExit is raised with a message mentioning the logfile and "No firmware version"
+        THEN: ValueError is raised with a message mentioning the logfile and "No firmware version"
         """
         mock_conn.return_value = self._make_mlog([])  # No messages at all
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(ValueError, match="No firmware version") as exc_info:
             extract_firmware_version_and_vehicle_type("empty.bin")
 
         assert "empty.bin" in str(exc_info.value)
         assert "No firmware version" in str(exc_info.value)
 
     @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
-    def test_raises_system_exit_when_msg_version_format_is_unparseable(self, mock_conn: MagicMock) -> None:
+    def test_raises_value_error_when_msg_version_format_is_unparseable(self, mock_conn: MagicMock) -> None:
         """
-        A SystemExit is raised when the MSG version string cannot be parsed.
+        A ValueError is raised when the MSG version string cannot be parsed.
 
         GIVEN: A MSG record whose text contains no recognisable "Vx.y" pattern
         WHEN: extract_firmware_version_and_vehicle_type is called
-        THEN: SystemExit is raised
+        THEN: ValueError is raised
         """
         msg = self._make_msg_msg("Boot started")
         mock_conn.return_value = self._make_mlog([msg])
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(ValueError, match="No firmware version") as exc_info:
             extract_firmware_version_and_vehicle_type("bad.bin")
 
         assert "bad.bin" in str(exc_info.value)
