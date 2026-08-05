@@ -64,6 +64,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
 from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import extract_firmware_version_and_vehicle_type
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_sources import load_configuration_steps
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
@@ -592,6 +594,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         def run_analysis() -> None:
             try:
                 vehicle_type, *_ = extract_firmware_version_and_vehicle_type(filepath)
+                configuration_steps = load_configuration_steps(vehicle_type) or {}
                 log_data = extract_log(filepath)
                 parameters = {
                     record["Name"]: float(record["Value"])
@@ -601,7 +604,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 vehicle_components = (
                     self.parameter_editor.get_component_editor_deps().local_filesystem.vehicle_components_fs.data or {}
                 )
-                result_container.append(analyze_log(log_data, parameters, vehicle_components, vehicle_type=vehicle_type))
+                configuration_steps = load_configuration_steps("ArduCopter") or {}
+                context = LogAnalysisContext(
+                    parameters=parameters,
+                    configuration_steps=configuration_steps,
+                    vehicle_components=vehicle_components,
+                )
+                result_container.append(analyze_log(log_data, context))
             except Exception as e:  # pylint: disable=broad-exception-caught
                 error_container.append(e)
 
@@ -615,14 +624,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             elif result_container:
                 report_window = LogQualityReportWindow(self.root, result_container[0])
                 if UsagePopupWindow.should_display("log_quality_report"):
-                    display_log_quality_report_usage_popup(report_window.root)
+                    display_log_quality_report_usage_popup(cast("tk.Tk", report_window.root))
                 report_window.run()
 
         thread = threading.Thread(target=run_analysis, daemon=True)
         thread.start()
         self.root.after(100, check_done)
 
-        def display_log_quality_report_usage_popup(parent: tk.Tk) -> None:
+        def display_log_quality_report_usage_popup(parent: tk.Tk | tk.Toplevel) -> None:
             usage_popup_window = BaseWindow(parent)
             usage_popup_window.root.withdraw()
             instructions_text = RichText(usage_popup_window.main_frame, height=12, width=80)
@@ -640,7 +649,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 ),
             )
             UsagePopupWindow.display(
-                parent,
+                cast("tk.Tk", parent),
                 usage_popup_window,
                 _("Log Quality Report"),
                 "log_quality_report",

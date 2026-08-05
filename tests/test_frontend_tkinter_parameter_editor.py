@@ -576,6 +576,128 @@ class TestWidgetFactoryMethods:
         mock_button.return_value.configure.assert_called_with(state="disabled")
 
 
+class TestAnalyseLogClick:
+    """Cover the on_analyse_log_click."""
+
+    def test_user_cancels_file_dialog_returns_early(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="")
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread") as mock_thread:
+            parameter_editor_window.on_analyse_log_click()
+
+        # Assert
+        mock_thread.assert_not_called()
+        parameter_editor_window.ui.show_error.assert_not_called()
+
+    def test_analysis_failure_shows_error_dialog(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        # Arrange
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
+        progress_mock = MagicMock()
+
+        # Capture the run_analysis closure from the thread constructor
+        captured_targets: list = []
+
+        def fake_thread(target: object, **_kwargs: object) -> MagicMock:
+            captured_targets.append(target)
+            t = MagicMock()
+            t.is_alive.return_value = False
+            return t
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgressWindow",
+                return_value=progress_mock,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+                side_effect=fake_thread,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.extract_firmware_version_and_vehicle_type",
+                side_effect=RuntimeError("bad log"),
+            ),
+        ):
+            parameter_editor_window.on_analyse_log_click()
+
+            # run_analysis runs in a thread normally
+            assert len(captured_targets) == 1
+            captured_targets[0]()
+
+            # check_done was scheduled via root.after
+            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+            check_done()
+
+        # Assert
+        parameter_editor_window.ui.show_error.assert_called_once()
+        assert "Log Analysis Error" in parameter_editor_window.ui.show_error.call_args.args[0]
+        progress_mock.destroy.assert_called_once()
+
+    def test_analysis_success_opens_report_window(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        # Arrange
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
+        progress_mock = MagicMock()
+        fake_summary = MagicMock()
+
+        captured_targets: list = []
+
+        def fake_thread(target: object, **_kwargs: object) -> MagicMock:
+            captured_targets.append(target)
+            t = MagicMock()
+            t.is_alive.return_value = False
+            return t
+
+        mock_log_data = MagicMock()
+        mock_log_data.iter_message_records.return_value = []
+
+        local_fs = parameter_editor_window.parameter_editor.get_component_editor_deps.return_value.local_filesystem
+        local_fs.vehicle_components_fs.data = {}
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgressWindow",
+                return_value=progress_mock,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+                side_effect=fake_thread,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.extract_firmware_version_and_vehicle_type",
+                return_value=("ArduCopter", 4, 5, 5),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.extract_log",
+                return_value=mock_log_data,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.load_configuration_steps",
+                return_value={},
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.analyze_log",
+                return_value=fake_summary,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogQualityReportWindow") as mock_report,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
+                return_value=False,
+            ),
+        ):
+            parameter_editor_window.on_analyse_log_click()
+
+            assert len(captured_targets) == 1
+            captured_targets[0]()
+
+            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+            check_done()
+
+        # Assert — report window opened with correct args
+        mock_report.assert_called_once_with(parameter_editor_window.root, fake_summary)
+        mock_report.return_value.run.assert_called_once()
+        progress_mock.destroy.assert_called_once()
+        parameter_editor_window.ui.show_error.assert_not_called()
+
+
 class TestTemperatureCalibrationWorkflows:
     """Ensure IMU temperature calibration callbacks stay healthy."""
 
