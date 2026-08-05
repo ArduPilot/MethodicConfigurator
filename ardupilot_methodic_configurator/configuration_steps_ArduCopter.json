@@ -261,6 +261,10 @@
             },
             "rename_connection": "vehicle_components['ESC']['ESC->FC Telemetry']['Type']",
             "old_filenames": ["07_esc.param"],
+            "plugin": {
+                "name": "esc_rpm_scale",
+                "placement": "left"
+            },
             "related_bin_messages": {
                 "ESC": { "name": "ESC telemetry", "required": true },
                 "ESCX": { "name": "ESC extended status", "required": false },
