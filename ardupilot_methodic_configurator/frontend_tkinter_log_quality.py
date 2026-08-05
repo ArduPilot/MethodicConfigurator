@@ -11,17 +11,27 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
-import webbrowser
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
+from ardupilot_methodic_configurator.formatting import format_filesize
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_log_hardware_quality import build_hardware_tab
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
-from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import LogSummary
-from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import StepValidationResult
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import LogQualityResult
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
+from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
+    LogQualityResult,
+    LogQualityState,
+    StepValidationResult,
+)
+from ardupilot_methodic_configurator.log_analysis.data_model_log_report import (
+    build_report_status,
+    firmware_release_link,
+    format_duration,
+    step_display_name,
+)
 
 
 class LogQualityReportWindow(BaseWindow):
@@ -42,19 +52,11 @@ class LogQualityReportWindow(BaseWindow):
 
     @staticmethod
     def _fmt_duration(sec: float | None) -> str:
-        if sec is None:
-            return "-"
-        m = int(sec) // 60
-        s = int(sec) % 60
-        return f"{m}m {s}s"
+        return format_duration(sec)
 
     @staticmethod
     def _fmt_filesize(size_bytes: int) -> str:  # pylint: disable=duplicate-code
-        if size_bytes < 1024:
-            return f"{size_bytes} B"
-        if size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.1f} KB"
-        return f"{size_bytes / (1024 * 1024):.1f} MB"
+        return format_filesize(size_bytes)
 
     @staticmethod
     def _add_key_value(parent: ttk.Frame | ttk.LabelFrame, key: str, value: str) -> None:
@@ -77,7 +79,7 @@ class LogQualityReportWindow(BaseWindow):
             font=("TkDefaultFont", self.default_font_size, "underline"),
         )
         link.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        link.bind("<Button-1>", lambda _e, u=url: webbrowser.open(u))
+        link.bind("<Button-1>", lambda _e, u=url: webbrowser_open_url(u))
         show_tooltip(link, _("Open release page on GitHub"))
 
     def _build_header_summary(self) -> None:
@@ -85,18 +87,13 @@ class LogQualityReportWindow(BaseWindow):
         header_frame = ttk.Frame(self.main_frame)
         header_frame.pack(side=tk.TOP, fill=tk.X, padx=14, pady=(14, 6))
 
-        issues_count = sum(len(res.issues) for res in self.summary.quality_results)
-        failed_steps = sum(1 for res in self.summary.step_results if not res.valid)
-        total_problems = issues_count + failed_steps
-
-        if total_problems == 0:
-            status_text = _("Status: Log looks healthy. No major issues detected.")
-            color = "darkgreen"
-        else:
-            status_text = _("Status: Found {n} potential issue(s) to review.").format(n=total_problems)
-            color = "darkorange"
-
-        ttk.Label(header_frame, text=status_text, foreground=color, font=("TkDefaultFont", 13, "bold")).pack(side=tk.LEFT)
+        status = build_report_status(self.summary)
+        ttk.Label(
+            header_frame,
+            text=status.text,
+            foreground=status.color,
+            font=("TkDefaultFont", 13, "bold"),
+        ).pack(side=tk.LEFT)
 
     def _build_stats_cards(self) -> None:
         card_container = ttk.Frame(self.main_frame)
@@ -113,12 +110,14 @@ class LogQualityReportWindow(BaseWindow):
         card = ttk.LabelFrame(parent, text=_("Vehicle & Firmware"))
         card.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6))
 
-        if v and v.vehicle_type and v.major is not None:
-            firmware_base = f"{v.vehicle_type} {v.major}.{v.minor}.{v.patch}"
-            short_type = v.vehicle_type.replace("Ardu", "")
-            version_str = f"{short_type}-{v.major}.{v.minor}.{v.patch}"
-            release_url = f"https://github.com/ArduPilot/ardupilot/tree/{version_str}"
-            self._add_clickable_key_value(card, _("Firmware:"), f"{firmware_base} ({version_str})", release_url)
+        release = firmware_release_link(v)
+        if release is not None:
+            self._add_clickable_key_value(
+                card,
+                _("Firmware:"),
+                f"{release.base_text} ({release.version_tag})",
+                release.url,
+            )
         else:
             self._add_key_value(card, _("Firmware:"), "-")
 
@@ -170,7 +169,7 @@ class LogQualityReportWindow(BaseWindow):
         passed_checks: list[tuple[str, object]] = []
 
         for q in self.summary.quality_results:
-            (passed_checks if q.state == "info" else needs_attention).append(("quality", q))
+            (passed_checks if q.state == LogQualityState.INFO else needs_attention).append(("quality", q))
         for s in self.summary.step_results:
             (passed_checks if s.valid else needs_attention).append(("step", s))
 
@@ -199,8 +198,8 @@ class LogQualityReportWindow(BaseWindow):
         card = ttk.Frame(parent)
         card.pack(fill=tk.X, padx=14, pady=6)
 
-        tag = "OK" if result.state == "info" else "WARN"
-        color = "darkgreen" if result.state == "info" else "red3"
+        tag = "OK" if result.state == LogQualityState.INFO else "WARN"
+        color = "darkgreen" if result.state == LogQualityState.INFO else "red3"
 
         icon_lbl = ttk.Label(card, text=tag, foreground=color, font=("TkDefaultFont", 12, "bold"), width=8)
         icon_lbl.pack(side=tk.LEFT)
@@ -235,8 +234,7 @@ class LogQualityReportWindow(BaseWindow):
         icon_lbl = ttk.Label(card, text=tag, foreground=color, font=("TkDefaultFont", 12, "bold"), width=8)
         icon_lbl.pack(side=tk.LEFT)
 
-        display_name = result.step.removesuffix(".param").replace("_", " ").strip()
-        lbl = ttk.Label(card, text=display_name, font=("TkDefaultFont", 12), wraplength=500)
+        lbl = ttk.Label(card, text=step_display_name(result.step), font=("TkDefaultFont", 12), wraplength=500)
         lbl.pack(side=tk.LEFT, anchor=tk.W, fill=tk.X, expand=True)
         card.bind("<Configure>", lambda e, l=lbl: l.configure(wraplength=max(10, e.width - 90)))  # noqa: E741
         if result.name:

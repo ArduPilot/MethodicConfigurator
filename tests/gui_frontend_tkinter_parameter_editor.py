@@ -288,6 +288,9 @@ class TestParameterEditorWindow:
             asksaveasfilename=lambda *_a, **_k: "",
             askopenfilename=lambda *_a, **_k: "",
             exit_callback=lambda _code: None,
+            extract_log_data=lambda _filepath, _progress_callback=None: MagicMock(),
+            analyze_log_data_callback=lambda *_a, **_k: MagicMock(),
+            load_apm_doc=lambda *_a, **_k: None,
         )
 
         monkeypatch.setattr(

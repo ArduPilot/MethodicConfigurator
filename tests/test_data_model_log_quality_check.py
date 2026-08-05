@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py.
+Tests for ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -11,9 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import numpy as np
 import pytest
 
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData, MessageSchema
-from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import (
-    validate_configuration_steps,
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
+from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check import (
+    validate_configuration_steps_data,
     validate_fmt_schema,
 )
 
@@ -102,7 +102,7 @@ class TestValidateConfigurationSteps:
         """
         log_data = LogData()
 
-        assert not validate_configuration_steps(log_data, configuration_steps={})
+        assert not validate_configuration_steps_data(log_data, configuration_steps={})
 
     def test_required_message_missing_invalidates_step(self) -> None:
         """
@@ -114,20 +114,17 @@ class TestValidateConfigurationSteps:
         THEN the step should be marked invalid.
         """
         log_data = LogData()
-        log_data.schemas["TEST"] = _make_schema(["A"])
-        log_data._raw_messages["TEST"] = np.array([(1,)], dtype=[("A", np.int32)])  # pylint: disable=protected-access
+        log_data.add_message_columns("TEST", np.array([(1,)], dtype=[("A", np.int32)]), _make_schema(["A"]))
 
-        results = validate_configuration_steps(
+        results = validate_configuration_steps_data(
             log_data,
-            configuration_steps={
-                "steps": {
-                    "demo.step": {
-                        "blog_text": "Demo",
-                        "related_bin_messages": {
-                            "TEST": {"name": "Demo message", "required": True},
-                            "MISSING": {"name": "Missing message", "required": True},
-                        },
-                    }
+            {
+                "demo.step": {
+                    "blog_text": "Demo",
+                    "related_bin_messages": {
+                        "TEST": {"name": "Demo message", "required": True},
+                        "MISSING": {"name": "Missing message", "required": True},
+                    },
                 }
             },
         )
@@ -148,19 +145,16 @@ class TestValidateConfigurationSteps:
         THEN the step should remain valid.
         """
         log_data = LogData()
-        log_data.schemas["TEST"] = _make_schema(["A"])
-        log_data._raw_messages["TEST"] = np.array([(1,)], dtype=[("A", np.int32)])  # pylint: disable=protected-access
+        log_data.add_message_columns("TEST", np.array([(1,)], dtype=[("A", np.int32)]), _make_schema(["A"]))
 
-        results = validate_configuration_steps(
+        results = validate_configuration_steps_data(
             log_data,
-            configuration_steps={
-                "steps": {
-                    "demo.step": {
-                        "blog_text": "Demo",
-                        "related_bin_messages": {
-                            "TEST": {"name": "Demo message", "required": True},
-                        },
-                    }
+            {
+                "demo.step": {
+                    "blog_text": "Demo",
+                    "related_bin_messages": {
+                        "TEST": {"name": "Demo message", "required": True},
+                    },
                 }
             },
         )
@@ -180,16 +174,14 @@ class TestValidateConfigurationSteps:
         """
         log_data = LogData()
 
-        results = validate_configuration_steps(
+        results = validate_configuration_steps_data(
             log_data,
-            configuration_steps={
-                "steps": {
-                    "demo.step": {
-                        "blog_text": "Demo",
-                        "related_bin_messages": {
-                            "OPTIONAL": {"name": "Optional message", "required": False},
-                        },
-                    }
+            {
+                "demo.step": {
+                    "blog_text": "Demo",
+                    "related_bin_messages": {
+                        "OPTIONAL": {"name": "Optional message", "required": False},
+                    },
                 }
             },
         )

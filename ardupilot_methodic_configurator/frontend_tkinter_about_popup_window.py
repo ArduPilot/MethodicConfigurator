@@ -28,7 +28,7 @@ class AboutWindow(BaseWindow):
     def __init__(self, root_tk: tk.Tk | tk.Toplevel, version: str) -> None:
         super().__init__(root_tk)
         self.root.title(_("About"))
-        self.root.geometry(self.calculate_scaled_geometry(650, 340))
+        self.root.geometry(self.calculate_scaled_geometry(650, 390))
 
         # Add the "About" message
         about_message = _(

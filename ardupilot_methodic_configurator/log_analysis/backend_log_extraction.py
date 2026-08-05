@@ -13,8 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import os
-from collections.abc import Iterator
-from dataclasses import dataclass, field
+from collections.abc import Callable, Iterator
 from logging import error as logging_error
 from typing import Any, Protocol, cast
 
@@ -22,6 +21,8 @@ import numpy as np
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.log_analysis import data_model_log_data
+from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import parse_first_msg_version, parse_ver_fields
 
 _NO_ID_ASSIGNED = "-"  # ArduPilot's FMTU convention: '-' marks a field with no unit/multiplier ID assigned
 
@@ -89,22 +90,6 @@ def parse_log(logfile: str) -> Iterator[Any]:
         close_log(mlog)
 
 
-@dataclass
-class MessageSchema:  # pylint: disable=too-many-instance-attributes
-    """Message types's FMT schema: fields, units, multipliers, types."""
-
-    name: str
-    msg_type: int
-    length: int
-
-    format: str
-    fields: list[str]
-    units: list[str]
-    multipliers: list[float | None]
-
-    records: int = 0
-
-
 class _MavFmt(Protocol):  # pylint: disable=too-few-public-methods
     """Protocol for pymavlink FMT metadata objects used by extract_schemas."""
 
@@ -149,115 +134,7 @@ _FORMAT_TO_DTYPE: dict[str, Any] = {
 _ARRAY_FIELD_LENGTH = 32
 
 
-@dataclass
-class LogData:
-    """
-    Storing parsed log metadata and one structured numpy array per message type.
-
-    Attributes:
-        schemas: Raw message definitions extracted from FMT/FMTU/UNIT/MULT,
-            keyed by message name. Each holds columns, units, multipliers and
-            types exactly as pymavlink reports them.
-        _raw_messages: Per message type, a structured numpy array containing all
-            decoded values for that message type. Access via get_message_columns(),
-            get_field() or iter_message_records().
-        msg_count: Total number of decoded messages for each message type name.
-
-    """
-
-    schemas: dict[str, MessageSchema] = field(default_factory=dict)
-    _raw_messages: dict[str, np.ndarray] = field(default_factory=dict, repr=False)
-    msg_count: dict[str, int] = field(default_factory=dict)
-
-    flight_duration_sec: float | None = None
-    log_file_size: int = 0
-
-    def get_message_columns(self, message_name: str) -> np.ndarray | None:
-        """Return the structured numpy array for one message type, if present."""
-        return self._raw_messages.get(message_name)
-
-    def get_field(self, message_name: str, field_name: str, scaled: bool = True) -> np.ndarray:
-        """
-        Return one field as an array.
-
-        If scaled is True, apply the schema multiplier for that field before
-        returning the data. Fixed-width byte strings are decoded to text.
-        """
-        array = self._raw_messages[message_name]
-        field_info = array.dtype.fields
-        if field_info is None:
-            error_message = _("Structured array for {message_type} is missing field metadata").format(
-                message_type=message_name
-            )
-            raise ValueError(error_message)
-
-        values = array[field_name]
-        if values.dtype.kind == "S":
-            return np.char.decode(values, "ascii", errors="ignore")
-
-        if not scaled:
-            return values
-
-        multiplier, format_char = self._field_multiplier_and_format(message_name, field_name)
-        return _scale_field_values(values, multiplier, format_char)
-
-    def iter_message_records(self, message_name: str, scaled: bool = True) -> Iterator[dict[str, Any]]:
-        """
-        Yield decoded records for one message type.
-
-        When scaled is True, apply schema multipliers before returning each
-        record. String fields are decoded to text and fixed-size array fields are
-        converted to lists.
-        """
-        array = self._raw_messages.get(message_name)
-        if array is None:
-            return
-
-        schema = self.schemas.get(message_name)
-        if schema is None:
-            return
-
-        for row in array:
-            record: dict[str, Any] = {}
-            for field_name in schema.fields:
-                value = row[field_name]
-                if isinstance(value, np.ndarray):
-                    value = value.tolist()
-                elif isinstance(value, np.generic):
-                    value = value.item()
-
-                if isinstance(value, bytes):
-                    value = value.decode("ascii", "ignore")
-
-                if scaled:
-                    multiplier, format_char = self._field_multiplier_and_format(message_name, field_name)
-                    if multiplier is not None and multiplier != 1 and not isinstance(value, str):
-                        if isinstance(value, list):
-                            value = _scale_field_values(np.asarray(value), multiplier, format_char).tolist()
-                        else:
-                            value = _scale_field_values(np.asarray(value), multiplier, format_char)[()]
-
-                record[field_name] = value
-            yield record
-
-    def _field_multiplier_and_format(self, message_name: str, field_name: str) -> tuple[float | None, str | None]:
-        schema = self.schemas.get(message_name)
-        if schema is None:
-            return None, None
-
-        try:
-            field_index = schema.fields.index(field_name)
-        except ValueError:
-            return None, None
-
-        if field_index >= len(schema.multipliers):
-            return None, None
-
-        format_char = schema.format[field_index] if field_index < len(schema.format) else None
-        return schema.multipliers[field_index], format_char
-
-
-def _schema_numpy_dtype(schema: MessageSchema) -> np.dtype[Any]:
+def _schema_numpy_dtype(schema: data_model_log_data.MessageSchema) -> np.dtype[Any]:
     """Build a structured numpy dtype that mirrors a message schema."""
     if len(schema.fields) != len(schema.format):
         msg = _("Schema {name} has mismatched field and format counts").format(name=schema.name)
@@ -281,39 +158,7 @@ def _schema_numpy_dtype(schema: MessageSchema) -> np.dtype[Any]:
     return np.dtype(dtype_fields)
 
 
-def _promoted_integer_dtype(dtype: np.dtype[Any]) -> np.dtype[Any]:
-    """Return a wider integer dtype suitable for fixed-point scaled fields."""
-    if dtype.kind == "i":
-        if dtype.itemsize <= 2:
-            return np.dtype(np.int32)
-        return np.dtype(np.int64)
-
-    if dtype.kind == "u":
-        if dtype.itemsize <= 2:
-            return np.dtype(np.uint32)
-        return np.dtype(np.uint64)
-
-    return dtype
-
-
-def _is_integer_multiplier(multiplier: float | None) -> bool:
-    """Return True when a multiplier can be applied without leaving integer space."""
-    return multiplier is not None and float(multiplier).is_integer()
-
-
-def _scale_field_values(values: np.ndarray, multiplier: float | None, format_char: str | None = None) -> np.ndarray:
-    """Apply a field multiplier while preserving integer width for fixed-point fields."""
-    if multiplier is None or multiplier == 1:
-        return values
-
-    if format_char in {"c", "C", "e", "E"} and values.dtype.kind in {"i", "u"} and _is_integer_multiplier(multiplier):
-        promoted_dtype = _promoted_integer_dtype(values.dtype)
-        return values.astype(promoted_dtype, copy=False) * int(multiplier)
-
-    return values * multiplier
-
-
-def _validate_message_fields(schema: MessageSchema, payload: dict[str, Any]) -> None:
+def _validate_message_fields(schema: data_model_log_data.MessageSchema, payload: dict[str, Any]) -> None:
     """Ensure a decoded message exposes exactly the fields defined by its schema."""
     expected_fields = set(schema.fields)
     actual_fields = {field_name for field_name in payload if field_name != "mavpackettype"}
@@ -327,19 +172,61 @@ def _validate_message_fields(schema: MessageSchema, payload: dict[str, Any]) -> 
         raise ValueError(msg)
 
 
-def _record_message_counts_and_fields(mlog: mavutil.mavfile, log_data: LogData) -> dict[int, str]:
+def _process_ver_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+    """Extract firmware identity from a VER message, if possible."""
+    fws = getattr(msg, "FWS", None)
+    if isinstance(fws, bytes):
+        fws = fws.decode("utf-8", errors="replace")
+    elif not isinstance(fws, str):
+        return None
+    return parse_ver_fields(fws, getattr(msg, "Maj", None), getattr(msg, "Min", None), getattr(msg, "Pat", None))
+
+
+def _process_msg_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+    """Extract firmware identity from an old-style MSG firmware line, if possible."""
+    message = getattr(msg, "Message", "")
+    if isinstance(message, bytes):
+        message = message.decode("utf-8", errors="replace")
+    elif not isinstance(message, str):
+        return None
+    parsed = parse_first_msg_version([message])
+    if parsed is None:
+        return None
+    vehicle_type, major, minor, patch, _firmware_hash = parsed
+    return vehicle_type, major, minor, patch
+
+
+def _set_log_identity(log_data: data_model_log_data.LogData, identity: tuple[str, int, int, int]) -> None:
+    """Store parsed firmware identity on the in-memory log data."""
+    vehicle_type, major, minor, patch = identity
+    log_data.vehicle_type = vehicle_type
+    log_data.firmware_version = (major, minor, patch)
+
+
+def _record_message_counts_fields_and_identity(mlog: mavutil.mavfile, log_data: data_model_log_data.LogData) -> dict[int, str]:
     """
-    First pass: count message occurrences and capture each type's FMTU MultIds string.
+    First pass: count message occurrences, capture each type's FMTU MultIds string, and find log identity.
 
     MultIds maps each field position to a single-character multiplier ID,
     resolved later against mlog.mult_lookup.
     """
     mult_ids_by_type: dict[int, str] = {}
+    msg_fallback_identity: tuple[str, int, int, int] | None = None
     for msg in _iter_messages(mlog):
         msg_type = msg.get_type()
         log_data.msg_count[msg_type] = log_data.msg_count.get(msg_type, 0) + 1
         if msg_type == "FMTU":
             mult_ids_by_type[int(msg.FmtType)] = msg.MultIds
+        elif msg_type == "VER" and log_data.vehicle_type is None:
+            identity = _process_ver_identity(msg)
+            if identity is not None:
+                _set_log_identity(log_data, identity)
+        elif msg_type == "MSG" and msg_fallback_identity is None:
+            msg_fallback_identity = _process_msg_identity(msg)
+
+    if log_data.vehicle_type is None and msg_fallback_identity is not None:
+        _set_log_identity(log_data, msg_fallback_identity)
+
     return mult_ids_by_type
 
 
@@ -358,13 +245,17 @@ def _resolve_multipliers(fmt: Any, mult_ids: str | None, mult_lookup: dict[str, 
     return resolved
 
 
-def _allocate_message_arrays(log_data: LogData) -> None:
+def _allocate_message_arrays(log_data: data_model_log_data.LogData) -> None:
     """Allocate one structured numpy array per message type."""
     for message_name, schema in log_data.schemas.items():
         log_data._raw_messages[message_name] = np.empty(schema.records, dtype=_schema_numpy_dtype(schema))  # pylint: disable=protected-access # noqa: SLF001
 
 
-def _fill_message_arrays(mlog: mavutil.mavfile, log_data: LogData) -> None:  # pylint: disable=too-many-locals
+def _fill_message_arrays(  # pylint: disable=too-many-locals
+    mlog: mavutil.mavfile,
+    log_data: data_model_log_data.LogData,
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> None:
     """
     Second pass: validate each decoded record and populate the preallocated arrays.
 
@@ -372,8 +263,14 @@ def _fill_message_arrays(mlog: mavutil.mavfile, log_data: LogData) -> None:  # p
     once schemas are known and before values are stored into the numpy arrays.
     """
     write_positions: dict[str, int] = dict.fromkeys(log_data._raw_messages, 0)  # pylint: disable=protected-access # noqa: SLF001
+    parsed_messages = 0
+    total_messages = sum(log_data.msg_count.values())
 
     for msg in _iter_messages(mlog):
+        parsed_messages += 1
+        if progress_callback is not None:
+            progress_callback(parsed_messages, total_messages)
+
         msg_type = msg.get_type()
         array = log_data._raw_messages.get(msg_type)  # pylint: disable=protected-access # noqa: SLF001
         schema = log_data.schemas.get(msg_type)
@@ -415,7 +312,11 @@ def _fill_message_arrays(mlog: mavutil.mavfile, log_data: LogData) -> None:  # p
             raise ValueError(msg)
 
 
-def extract_schemas(mlog: mavutil.mavfile, log_data: LogData, mult_ids_by_type: dict[int, str]) -> None:
+def extract_schemas(
+    mlog: mavutil.mavfile,
+    log_data: data_model_log_data.LogData,
+    mult_ids_by_type: dict[int, str],
+) -> None:
     """
     Copy pymavlink's discovered FMT/FMTU schemas into log_data.schemas.
 
@@ -429,7 +330,7 @@ def extract_schemas(mlog: mavutil.mavfile, log_data: LogData, mult_ids_by_type: 
     """
     schema_source = cast("_SchemaSource", mlog)
     for fmt in schema_source.formats.values():
-        log_data.schemas[fmt.name] = MessageSchema(
+        log_data.schemas[fmt.name] = data_model_log_data.MessageSchema(
             name=fmt.name,
             msg_type=fmt.type,
             length=fmt.len,
@@ -441,13 +342,13 @@ def extract_schemas(mlog: mavutil.mavfile, log_data: LogData, mult_ids_by_type: 
         )
 
 
-def extract_log_metadata(log_data: LogData, logfile: str) -> None:
+def extract_log_metadata(log_data: data_model_log_data.LogData, logfile: str) -> None:
     """Extract generic metadata from a parsed log."""
     log_data.log_file_size = os.path.getsize(logfile)
     log_data.flight_duration_sec = compute_flight_duration(log_data)
 
 
-def compute_flight_duration(log_data: LogData) -> float | None:
+def compute_flight_duration(log_data: data_model_log_data.LogData) -> float | None:
     """
     Compute the total flight duration in seconds.
 
@@ -497,7 +398,10 @@ def compute_flight_duration(log_data: LogData) -> float | None:
     return None
 
 
-def extract_log(logfile: str) -> LogData:
+def extract_log(
+    logfile: str,
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> data_model_log_data.LogData:
     """
     Parse a complete ArduPilot .bin log into a generic LogData object.
 
@@ -509,17 +413,18 @@ def extract_log(logfile: str) -> LogData:
 
     Args:
         logfile: Path to the .bin log file.
+        progress_callback: Optional callback receiving second-pass parser progress as (current, total).
 
     Returns:
         A populated LogData object.
 
     """
-    log_data = LogData()
+    log_data = data_model_log_data.LogData()
 
-    # first pass: count messages per message-type so that second pass can read data into known-sized arrays
+    # first pass: count messages, capture identity, and let pymavlink discover schemas for preallocated arrays
     mlog = open_log(logfile)
     try:
-        mult_ids_by_type = _record_message_counts_and_fields(mlog, log_data)
+        mult_ids_by_type = _record_message_counts_fields_and_identity(mlog, log_data)
         # extract_schemas should not raise any exception if it does it should fail
         extract_schemas(mlog, log_data, mult_ids_by_type)
     finally:
@@ -530,7 +435,7 @@ def extract_log(logfile: str) -> LogData:
     # second pass: validate data and read it into static sized numpy arrays
     mlog = open_log(logfile)
     try:
-        _fill_message_arrays(mlog, log_data)
+        _fill_message_arrays(mlog, log_data, progress_callback)
     finally:
         close_log(mlog)
 

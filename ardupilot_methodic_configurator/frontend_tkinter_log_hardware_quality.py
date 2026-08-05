@@ -16,6 +16,7 @@ from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.log_analysis.data_model_log_report import clean_devtype, format_optional_value
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import (
     AirspeedInfo,
     BaroInfo,
@@ -23,24 +24,6 @@ from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview im
     HardwareReport,
     ImuInfo,
 )
-
-
-def _clean_devtype(name: str | None) -> str:
-    """Strip DEVTYPE_ prefix and category prefix from device type names."""
-    if not name or name == "Unknown":
-        return "-"
-    for prefix in ("DEVTYPE_INS_", "DEVTYPE_BARO_", "DEVTYPE_AIRSPEED_", "DEVTYPE_"):
-        if name.startswith(prefix):
-            return name[len(prefix) :]
-    return name
-
-
-def _fmt_val(val: object) -> str:
-    """Format values — replace None or unknown strings with a dash."""
-    if val is None:
-        return "-"
-    s = str(val)
-    return "-" if s in ("Unknown", "None", "") else s
 
 
 def _add_kv(parent: ttk.Frame, key: str, value: str) -> None:
@@ -60,14 +43,14 @@ def _build_imu_cards(parent: ttk.Frame, imus: list[ImuInfo]) -> None:
         col1.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4, pady=4)
         col2 = ttk.Frame(card)
         col2.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4, pady=4)
-        _add_kv(col1, _("Accel:"), _clean_devtype(imu.accel_name))
-        _add_kv(col1, _("Gyro:"), _clean_devtype(imu.gyro_name))
-        _add_kv(col1, _("Bus type:"), _fmt_val(imu.accel_bus_type))
-        _add_kv(col1, _("Accel ok:"), _fmt_val(imu.accel_healthy))
-        _add_kv(col2, _("Accel cal:"), _fmt_val(imu.accel_calibrated))
-        _add_kv(col2, _("Gyro cal:"), _fmt_val(imu.gyro_calibrated))
-        _add_kv(col2, _("Temp cal:"), _fmt_val(imu.accel_temp_calibrated))
-        _add_kv(col2, _("Gyro ok:"), _fmt_val(imu.gyro_healthy))
+        _add_kv(col1, _("Accel:"), clean_devtype(imu.accel_name))
+        _add_kv(col1, _("Gyro:"), clean_devtype(imu.gyro_name))
+        _add_kv(col1, _("Bus type:"), format_optional_value(imu.accel_bus_type))
+        _add_kv(col1, _("Accel ok:"), format_optional_value(imu.accel_healthy))
+        _add_kv(col2, _("Accel cal:"), format_optional_value(imu.accel_calibrated))
+        _add_kv(col2, _("Gyro cal:"), format_optional_value(imu.gyro_calibrated))
+        _add_kv(col2, _("Temp cal:"), format_optional_value(imu.accel_temp_calibrated))
+        _add_kv(col2, _("Gyro ok:"), format_optional_value(imu.gyro_healthy))
 
 
 def _build_compass_cards(parent: ttk.Frame, compasses: list[CompassInfo]) -> None:
@@ -79,12 +62,12 @@ def _build_compass_cards(parent: ttk.Frame, compasses: list[CompassInfo]) -> Non
         col1.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4, pady=4)
         col2 = ttk.Frame(card)
         col2.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4, pady=4)
-        _add_kv(col1, _("Chip:"), _clean_devtype(compass.name))
-        _add_kv(col1, _("Bus type:"), _fmt_val(compass.bus_type))
-        _add_kv(col1, _("External:"), _fmt_val(compass.external))
-        _add_kv(col2, _("Calibrated:"), _fmt_val(compass.calibrated))
-        _add_kv(col2, _("Motor cal:"), _fmt_val(compass.motor_calibrated))
-        _add_kv(col2, _("Healthy:"), _fmt_val(compass.healthy))
+        _add_kv(col1, _("Chip:"), clean_devtype(compass.name))
+        _add_kv(col1, _("Bus type:"), format_optional_value(compass.bus_type))
+        _add_kv(col1, _("External:"), format_optional_value(compass.external))
+        _add_kv(col2, _("Calibrated:"), format_optional_value(compass.calibrated))
+        _add_kv(col2, _("Motor cal:"), format_optional_value(compass.motor_calibrated))
+        _add_kv(col2, _("Healthy:"), format_optional_value(compass.healthy))
 
 
 def _build_baro_cards(parent: ttk.Frame, baros: list[BaroInfo]) -> None:
@@ -96,10 +79,10 @@ def _build_baro_cards(parent: ttk.Frame, baros: list[BaroInfo]) -> None:
         col1.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4, pady=4)
         col2 = ttk.Frame(card)
         col2.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4, pady=4)
-        _add_kv(col1, _("Chip:"), _clean_devtype(baro.name))
-        _add_kv(col1, _("Bus type:"), _fmt_val(baro.bus_type))
-        _add_kv(col2, _("Wind comp:"), _fmt_val(baro.wind_compensation))
-        _add_kv(col2, _("Healthy:"), _fmt_val(baro.healthy))
+        _add_kv(col1, _("Chip:"), clean_devtype(baro.name))
+        _add_kv(col1, _("Bus type:"), format_optional_value(baro.bus_type))
+        _add_kv(col2, _("Wind comp:"), format_optional_value(baro.wind_compensation))
+        _add_kv(col2, _("Healthy:"), format_optional_value(baro.healthy))
 
 
 def _build_airspeed_cards(parent: ttk.Frame, airspeeds: list[AirspeedInfo]) -> None:
@@ -109,9 +92,9 @@ def _build_airspeed_cards(parent: ttk.Frame, airspeeds: list[AirspeedInfo]) -> N
         card.pack(side=tk.TOP, fill=tk.X, padx=14, pady=6)
         col1 = ttk.Frame(card)
         col1.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4, pady=4)
-        _add_kv(col1, _("Type:"), _fmt_val(arspd.sensor_type))
-        _add_kv(col1, _("In use:"), _fmt_val(arspd.use))
-        _add_kv(col1, _("Healthy:"), _fmt_val(arspd.healthy))
+        _add_kv(col1, _("Type:"), format_optional_value(arspd.sensor_type))
+        _add_kv(col1, _("In use:"), format_optional_value(arspd.use))
+        _add_kv(col1, _("Healthy:"), format_optional_value(arspd.healthy))
 
 
 def build_hardware_tab(parent: ttk.Frame, hw: HardwareReport | None) -> None:
@@ -123,6 +106,10 @@ def build_hardware_tab(parent: ttk.Frame, hw: HardwareReport | None) -> None:
     scroll_container = ScrollFrame(parent)
     scroll_container.pack(fill=tk.BOTH, expand=True)
     inner = scroll_container.view_port
+
+    if not any((hw.imus, hw.compasses, hw.baros, hw.airspeed_sensors)):
+        ttk.Label(inner, text=_("No hardware data available"), foreground="gray").pack(padx=24, pady=24)
+        return
 
     if hw.imus:
         _build_imu_cards(inner, hw.imus)

@@ -7,12 +7,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.log_analysis.backend_log_quality_check import find_log_bit_in_apm_file, get_log_bitmask
+from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
     BaseLogQualityAnalysisModel,
     LogQualityResult,
     QualityIssue,
 )
+from ardupilot_methodic_configurator.log_analysis.utils import find_log_bit_in_apm_file, get_log_bitmask
 
 
 class GPSLogQualityModel(BaseLogQualityAnalysisModel):
@@ -46,7 +47,7 @@ class GPSLogQualityModel(BaseLogQualityAnalysisModel):
             reason = _("GPS/GNSS telemetry not logged but logging enabled; check the GPS physical connection")
             issues = [QualityIssue(_("No GPS messages found"), step)]
 
-        return LogQualityResult(available=False, state="warning", reason=reason, issues=issues, name=name)
+        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
 
     def check_status(self) -> list[QualityIssue]:
         """Validate GPS fix status."""

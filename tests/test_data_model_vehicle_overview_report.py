@@ -11,8 +11,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import numpy as np
 import pytest
 
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData, MessageSchema
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import (
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_report import (
     _instance_health_from_message_field,
     build_airspeed_info,
     build_baro_info,
@@ -33,10 +33,9 @@ def test_extract_vehicle_info_falls_back_to_msg_when_ver_fields_are_invalid() ->
         dtype=[("Message", "U64")],
     )
 
-    log_data = LogData(
-        _raw_messages={"VER": ver_data, "MSG": msg_data},
-        msg_count={"VER": 1, "MSG": 1},
-    )
+    log_data = LogData()
+    log_data.add_message_columns("VER", ver_data)
+    log_data.add_message_columns("MSG", msg_data)
 
     info = extract_vehicle_info(log_data)
 
@@ -53,10 +52,8 @@ def test_build_imu_info_handles_missing_health_fields_without_crashing() -> None
         dtype=[("I", "i4")],
     )
 
-    log_data = LogData(
-        _raw_messages={"IMU": imu_data},
-        msg_count={"IMU": 1},
-    )
+    log_data = LogData()
+    log_data.add_message_columns("IMU", imu_data)
 
     info = build_imu_info(
         apm_doc=None,
@@ -86,11 +83,8 @@ def test_build_baro_info_handles_missing_instance_field_without_crashing() -> No
         records=1,
     )
 
-    log_data = LogData(
-        schemas={"BARO": baro_schema},
-        _raw_messages={"BARO": baro_data},
-        msg_count={"BARO": 1},
-    )
+    log_data = LogData()
+    log_data.add_message_columns("BARO", baro_data, baro_schema)
 
     info = build_baro_info(
         apm_doc=None,
@@ -163,10 +157,8 @@ def test_instance_health_helper_behaviour(  # pylint: disable=too-many-arguments
 ) -> None:
     """Helper should return expected health state across representative edge cases."""
     data = np.array(rows, dtype=dtype)
-    log_data = LogData(
-        _raw_messages={message_name: data},
-        msg_count={message_name: len(rows)},
-    )
+    log_data = LogData()
+    log_data.add_message_columns(message_name, data)
 
     result = _instance_health_from_message_field(
         log_data,

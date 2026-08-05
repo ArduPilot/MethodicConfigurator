@@ -21,11 +21,13 @@ from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
     ParameterEditorUiServices,
     ParameterEditorWindow,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -92,6 +94,9 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:
         asksaveasfilename=MagicMock(return_value=""),
         askopenfilename=MagicMock(return_value=""),
         exit_callback=MagicMock(),
+        extract_log_data=MagicMock(return_value=_log_data("ArduPlane", (4, 5, 5))),
+        analyze_log_data_callback=MagicMock(),
+        load_apm_doc=MagicMock(return_value={"LOG_BITMASK": {"fields": {"Bitmask": "9:Battery Monitor"}}}),
     )
     editor.current_plugin = None
     editor.current_plugin_view = None
@@ -121,6 +126,13 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:
     return editor
 
 
+def _log_data(vehicle_type: str = "ArduPlane", firmware_version: tuple[int, int, int] = (4, 5, 5)) -> LogData:
+    log_data = LogData()
+    log_data.vehicle_type = vehicle_type
+    log_data.firmware_version = firmware_version
+    return log_data
+
+
 @pytest.fixture
 def parameter_editor() -> MagicMock:
     """Provide a realistic parameter editor data model double."""
@@ -144,6 +156,15 @@ def parameter_editor() -> MagicMock:
     manager.download_last_flight_log_workflow = MagicMock()
     manager.write_summary_files_workflow = MagicMock()
     manager.last_upload_progress_callback = None
+    manager.get_log_analysis_context_inputs = MagicMock(
+        return_value=LogAnalysisInputs(
+            project_vehicle_type="ArduPlane",
+            project_firmware_version="4.5.5",
+            vehicle_components={},
+            configuration_steps={"project_step.param": {}},
+            apm_doc={"LOG_BITMASK": {"fields": {"Bitmask": "9:Battery Monitor"}}},
+        )
+    )
 
     def _should_upload_file_to_fc(
         _selected_file: str,
@@ -592,7 +613,6 @@ class TestAnalyseLogClick:
     def test_analysis_failure_shows_error_dialog(self, parameter_editor_window: ParameterEditorWindow) -> None:
         # Arrange
         parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
-        progress_mock = MagicMock()
 
         # Capture the run_analysis closure from the thread constructor
         captured_targets: list = []
@@ -605,18 +625,11 @@ class TestAnalyseLogClick:
 
         with (
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgressWindow",
-                return_value=progress_mock,
-            ),
-            patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
                 side_effect=fake_thread,
             ),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.extract_firmware_version_and_vehicle_type",
-                side_effect=RuntimeError("bad log"),
-            ),
         ):
+            parameter_editor_window.ui.extract_log_data = MagicMock(side_effect=RuntimeError("bad log"))
             parameter_editor_window.on_analyse_log_click()
 
             # run_analysis runs in a thread normally
@@ -630,12 +643,11 @@ class TestAnalyseLogClick:
         # Assert
         parameter_editor_window.ui.show_error.assert_called_once()
         assert "Log Analysis Error" in parameter_editor_window.ui.show_error.call_args.args[0]
-        progress_mock.destroy.assert_called_once()
+        parameter_editor_window._test_progress_windows[0].destroy.assert_called_once()  # type: ignore[attr-defined]
 
     def test_analysis_success_opens_report_window(self, parameter_editor_window: ParameterEditorWindow) -> None:
         # Arrange
         parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
-        progress_mock = MagicMock()
         fake_summary = MagicMock()
 
         captured_targets: list = []
@@ -646,36 +658,10 @@ class TestAnalyseLogClick:
             t.is_alive.return_value = False
             return t
 
-        mock_log_data = MagicMock()
-        mock_log_data.iter_message_records.return_value = []
-
-        local_fs = parameter_editor_window.parameter_editor.get_component_editor_deps.return_value.local_filesystem
-        local_fs.vehicle_components_fs.data = {}
-
         with (
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ProgressWindow",
-                return_value=progress_mock,
-            ),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
                 side_effect=fake_thread,
-            ),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.extract_firmware_version_and_vehicle_type",
-                return_value=("ArduCopter", 4, 5, 5),
-            ),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.extract_log",
-                return_value=mock_log_data,
-            ),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.load_configuration_steps",
-                return_value={},
-            ),
-            patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.analyze_log",
-                return_value=fake_summary,
             ),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogQualityReportWindow") as mock_report,
             patch(
@@ -683,6 +669,9 @@ class TestAnalyseLogClick:
                 return_value=False,
             ),
         ):
+            log_data = _log_data()
+            parameter_editor_window.ui.extract_log_data = MagicMock(return_value=log_data)
+            parameter_editor_window.ui.analyze_log_data = MagicMock(return_value=fake_summary)
             parameter_editor_window.on_analyse_log_click()
 
             assert len(captured_targets) == 1
@@ -693,9 +682,221 @@ class TestAnalyseLogClick:
 
         # Assert — report window opened with correct args
         mock_report.assert_called_once_with(parameter_editor_window.root, fake_summary)
-        mock_report.return_value.run.assert_called_once()
-        progress_mock.destroy.assert_called_once()
+        mock_report.return_value.run.assert_not_called()
+        parameter_editor_window._test_progress_windows[0].destroy.assert_called_once()  # type: ignore[attr-defined]
         parameter_editor_window.ui.show_error.assert_not_called()
+        parameter_editor_window.ui.extract_log_data.assert_called_once()
+        assert parameter_editor_window.ui.extract_log_data.call_args.args[0] == "/fake/log.bin"
+        parameter_editor_window.ui.analyze_log_data.assert_called_once_with(
+            log_data,
+            project_vehicle_type="ArduPlane",
+            project_firmware_version="4.5.5",
+            vehicle_components={},
+            configuration_steps={"project_step.param": {}},
+            apm_doc={"LOG_BITMASK": {"fields": {"Bitmask": "9:Battery Monitor"}}},
+            validate_project=False,
+        )
+
+    def test_analysis_progress_switches_to_determinate_mode(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """The extraction progress callback should turn the scan window into a standard progress bar."""
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
+        fake_summary = MagicMock()
+        log_data = _log_data()
+        captured_progress_callbacks: list = []
+
+        def fake_extract(_filepath: str, progress_callback: Callable[[int, int], None] | None = None) -> LogData:
+            captured_progress_callbacks.append(progress_callback)
+            if progress_callback is not None:
+                progress_callback(2, 10)
+            return log_data
+
+        captured_targets: list = []
+
+        def fake_thread(target: object, **_kwargs: object) -> MagicMock:
+            captured_targets.append(target)
+            t = MagicMock()
+            t.is_alive.return_value = False
+            return t
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+                side_effect=fake_thread,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogQualityReportWindow"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
+                return_value=False,
+            ),
+        ):
+            parameter_editor_window.ui.extract_log_data = MagicMock(side_effect=fake_extract)
+            parameter_editor_window.ui.analyze_log_data = MagicMock(return_value=fake_summary)
+            parameter_editor_window.on_analyse_log_click()
+            captured_targets[0]()
+            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+            check_done()
+
+        progress = parameter_editor_window._test_progress_windows[0]  # type: ignore[attr-defined]
+        progress.progress_bar.stop.assert_called_once()
+        progress.progress_bar.configure.assert_any_call(mode="determinate")
+        progress.update_progress_bar.assert_called_once_with(2, 10)
+        assert captured_progress_callbacks[0] is not None
+
+    def test_analysis_rejects_log_from_different_vehicle_type(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """A log from a different vehicle type should stop before full log extraction."""
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
+        parameter_editor_window.ui.ask_yesno = MagicMock(return_value=False)
+        parameter_editor_window.parameter_editor.get_log_analysis_context_inputs.return_value = LogAnalysisInputs(
+            project_vehicle_type="ArduCopter",
+            project_firmware_version="4.5.5",
+            vehicle_components={},
+            configuration_steps={},
+            apm_doc=None,
+        )
+
+        captured_targets: list = []
+
+        def fake_thread(target: object, **_kwargs: object) -> MagicMock:
+            captured_targets.append(target)
+            t = MagicMock()
+            t.is_alive.return_value = False
+            return t
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+            side_effect=fake_thread,
+        ):
+            parameter_editor_window.on_analyse_log_click()
+            captured_targets[0]()
+            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+            check_done()
+
+        parameter_editor_window._test_progress_windows[0].destroy.assert_called_once()  # type: ignore[attr-defined]
+        parameter_editor_window.ui.ask_yesno.assert_called_once()
+        message = parameter_editor_window.ui.ask_yesno.call_args.args[1]
+        assert "selected log is from ArduPlane" in message
+        assert "currently open vehicle is ArduCopter" in message
+        parameter_editor_window.ui.analyze_log_data.assert_not_called()
+
+    def test_analysis_rejects_log_from_different_firmware_version(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """A log from a different firmware version should stop before full log extraction."""
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
+        parameter_editor_window.ui.ask_yesno = MagicMock(return_value=False)
+        parameter_editor_window.parameter_editor.get_log_analysis_context_inputs.return_value = LogAnalysisInputs(
+            project_vehicle_type="ArduPlane",
+            project_firmware_version="4.6.0",
+            vehicle_components={},
+            configuration_steps={},
+            apm_doc=None,
+        )
+
+        captured_targets = []
+
+        def fake_thread(target: object, **_kwargs: object) -> MagicMock:
+            captured_targets.append(target)
+            t = MagicMock()
+            t.is_alive.return_value = False
+            return t
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+            side_effect=fake_thread,
+        ):
+            parameter_editor_window.on_analyse_log_click()
+            captured_targets[0]()
+            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+            check_done()
+
+        parameter_editor_window._test_progress_windows[0].destroy.assert_called_once()  # type: ignore[attr-defined]
+        parameter_editor_window.ui.ask_yesno.assert_called_once()
+        message = parameter_editor_window.ui.ask_yesno.call_args.args[1]
+        assert "selected log firmware version is 4.5.5" in message
+        assert "currently open vehicle firmware version is 4.6.0" in message
+        parameter_editor_window.ui.analyze_log_data.assert_not_called()
+
+    def test_analysis_mismatch_loads_log_metadata_before_analysis(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """A user-approved mismatch should load log firmware metadata through UI services."""
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
+        parameter_editor_window.ui.ask_yesno = MagicMock(return_value=True)
+        parameter_editor_window.ui.extract_log_data = MagicMock(return_value=_log_data("ArduCopter", (4, 6, 3)))
+        parameter_editor_window.ui.load_apm_doc = MagicMock(return_value={"LOG_BITMASK": {"fields": {"Bitmask": "9:Battery"}}})
+        parameter_editor_window.ui.analyze_log_data = MagicMock(return_value=MagicMock())
+        parameter_editor_window.parameter_editor.get_vehicle_directory.return_value = "C:/vehicle"
+        parameter_editor_window.parameter_editor.get_log_analysis_context_inputs.side_effect = [
+            LogAnalysisInputs("ArduPlane", "4.5.5", {}, {}, None),
+            LogAnalysisInputs("ArduPlane", "4.5.5", {}, {}, {"LOG_BITMASK": {}}),
+        ]
+
+        captured_targets = []
+
+        def fake_thread(target: object, **_kwargs: object) -> MagicMock:
+            captured_targets.append(target)
+            t = MagicMock()
+            t.is_alive.return_value = False
+            return t
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+                side_effect=fake_thread,
+            ) as mock_thread,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogQualityReportWindow"),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
+                return_value=False,
+            ),
+        ):
+            parameter_editor_window.on_analyse_log_click()
+            captured_targets[0]()
+            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+            check_done()
+
+        parameter_editor_window.ui.load_apm_doc.assert_called_once_with("C:/vehicle", "ArduCopter", "4.6.3")
+        parameter_editor_window.parameter_editor.get_log_analysis_context_inputs.assert_any_call(
+            apm_doc={"LOG_BITMASK": {"fields": {"Bitmask": "9:Battery"}}}
+        )
+        assert parameter_editor_window._test_progress_windows[0].destroy.call_count == 1  # type: ignore[attr-defined]
+        assert parameter_editor_window._test_progress_windows[1].destroy.call_count == 1  # type: ignore[attr-defined]
+        mock_thread.assert_called_once()
+
+    def test_analysis_mismatch_metadata_failure_destroys_each_progress_once(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """Metadata load failures should not double-destroy the replaced progress window."""
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="/fake/log.bin")
+        parameter_editor_window.ui.ask_yesno = MagicMock(return_value=True)
+        parameter_editor_window.ui.extract_log_data = MagicMock(return_value=_log_data("ArduCopter", (4, 6, 3)))
+        parameter_editor_window.ui.load_apm_doc = MagicMock(side_effect=RuntimeError("metadata unavailable"))
+        parameter_editor_window.parameter_editor.get_vehicle_directory.return_value = "C:/vehicle"
+        parameter_editor_window.parameter_editor.get_log_analysis_context_inputs.return_value = LogAnalysisInputs(
+            "ArduPlane", "4.5.5", {}, {}, None
+        )
+
+        captured_targets = []
+
+        def fake_thread(target: object, **_kwargs: object) -> MagicMock:
+            captured_targets.append(target)
+            t = MagicMock()
+            t.is_alive.return_value = False
+            return t
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
+            side_effect=fake_thread,
+        ):
+            parameter_editor_window.on_analyse_log_click()
+            captured_targets[0]()
+            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+            check_done()
+
+        assert parameter_editor_window._test_progress_windows[0].destroy.call_count == 1  # type: ignore[attr-defined]
+        assert parameter_editor_window._test_progress_windows[1].destroy.call_count == 1  # type: ignore[attr-defined]
+        parameter_editor_window.ui.show_error.assert_called_once()
+        parameter_editor_window.ui.analyze_log_data.assert_not_called()
 
 
 class TestTemperatureCalibrationWorkflows:

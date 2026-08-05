@@ -77,6 +77,9 @@ USAGE_POPUP_WINDOWS: dict[str, UsagePopupWindowDefinition] = {
     "only_changed_get_uploaded": UsagePopupWindowDefinition(
         description=_("Only changed parameters get upload explanation"),
     ),
+    "log_quality_report": UsagePopupWindowDefinition(
+        description=_("Log quality report explanation"),
+    ),
 }
 
 

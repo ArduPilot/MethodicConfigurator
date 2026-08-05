@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import contextlib
+import tempfile
 import threading
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
@@ -35,7 +36,12 @@ from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeD
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_parameter_editor import ComponentEditorDeps, ExperimentChoice, ParameterEditor
+from ardupilot_methodic_configurator.data_model_parameter_editor import (
+    ComponentEditorDeps,
+    ExperimentChoice,
+    LogAnalysisInputs,
+    ParameterEditor,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
@@ -61,17 +67,18 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
     display_parameter_editor_usage_popup,
     only_upload_changed_parameters_usage_popup,
 )
-from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import extract_firmware_version_and_vehicle_type
-from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log
+from ardupilot_methodic_configurator.log_analysis.backend_data_sources import load_apm_pdef
+from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
-from ardupilot_methodic_configurator.log_analysis.data_sources import load_configuration_steps
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary, validate_log_matches_vehicle
 from ardupilot_methodic_configurator.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from ardupilot_methodic_configurator.data_model_par_dict import ParDict
+    from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+    from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
     from ardupilot_methodic_configurator.plugin_protocol import PluginView
 
 # pylint: disable=too-many-lines
@@ -86,7 +93,7 @@ class _PaneConfigurable(Protocol):  # pylint: disable=too-few-public-methods
 class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
     """Container for UI dependencies injected into the parameter editor window."""
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         create_progress_window: Callable[[tk.Misc, str, str, bool], ProgressWindow],
         ask_yesno: Callable[[str, str], bool],
@@ -97,6 +104,9 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         asksaveasfilename: Callable[..., str],
         askopenfilename: Callable[..., str],
         exit_callback: Callable[[int], None],
+        extract_log_data: Callable[[str, Callable[[int, int], None] | None], LogData],
+        analyze_log_data_callback: Callable[..., LogSummary],
+        load_apm_doc: Callable[[str, str, str], APMDoc | None],
     ) -> None:
         self.create_progress_window = create_progress_window
         self.ask_yesno = ask_yesno
@@ -107,6 +117,9 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         self.asksaveasfilename = asksaveasfilename
         self.askopenfilename = askopenfilename
         self.sys_exit = exit_callback
+        self.extract_log_data = extract_log_data
+        self.analyze_log_data = analyze_log_data_callback
+        self.load_apm_doc = load_apm_doc
 
     @classmethod
     def default(cls) -> ParameterEditorUiServices:
@@ -120,6 +133,11 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         ) -> ProgressWindow:
             return ProgressWindow(parent, title, template, only_show_when_update_progress_called=only_show_when_update_called)
 
+        def _load_apm_doc(vehicle_dir: str, vehicle_type: str, firmware_version: str) -> APMDoc | None:
+            temp_parent = vehicle_dir if isinstance(vehicle_dir, str) else None
+            with tempfile.TemporaryDirectory(dir=temp_parent) as temp_dir:
+                return load_apm_pdef(temp_dir, vehicle_type, firmware_version)
+
         return cls(
             create_progress_window=_create_progress_window,
             ask_yesno=ask_yesno_popup,
@@ -130,6 +148,9 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             asksaveasfilename=filedialog.asksaveasfilename,
             askopenfilename=filedialog.askopenfilename,
             exit_callback=sys_exit,
+            extract_log_data=extract_log,
+            analyze_log_data_callback=analyze_log_data,
+            load_apm_doc=_load_apm_doc,
         )
 
     def upload_params_with_progress(
@@ -571,6 +592,69 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             ),
         )
 
+    def _create_log_analysis_progress(self, message: str) -> ProgressWindow:
+        show_only_when_update_called = False
+        progress = self.ui.create_progress_window(
+            self.root,
+            _(".bin Log Analysis"),
+            message,
+            show_only_when_update_called,
+        )
+        progress.progress_bar.configure(mode="indeterminate")
+        progress.progress_bar.start(10)
+        return progress
+
+    def _resolve_log_analysis_inputs(
+        self,
+        log_vehicle_type: str,
+        log_firmware_version: tuple[int, int, int],
+        inputs: LogAnalysisInputs,
+    ) -> LogAnalysisInputs | None:
+        """Validate log identity and return project or log-specific analysis inputs."""
+        try:
+            validate_log_matches_vehicle(
+                log_vehicle_type,
+                log_firmware_version,
+                inputs.project_vehicle_type,
+                inputs.project_firmware_version,
+            )
+            return inputs
+        except ValueError as error:
+            mismatch_error = str(error)
+
+        version_text = ".".join(str(part) for part in log_firmware_version)
+        if not self.ui.ask_yesno(
+            _("Log Mismatch"),
+            _("{error}\n\nAnalyse this log anyway using ArduPilot metadata for {vehicle_type} {version}?").format(
+                error=mismatch_error,
+                vehicle_type=log_vehicle_type,
+                version=version_text,
+            ),
+        ):
+            return None
+
+        progress = self._create_log_analysis_progress(_("Downloading parameter metadata for this log, please wait..."))
+        try:
+            apm_doc = self.ui.load_apm_doc(self.parameter_editor.get_vehicle_directory(), log_vehicle_type, version_text)
+            return self.parameter_editor.get_log_analysis_context_inputs(apm_doc=apm_doc)
+        finally:
+            progress.destroy()
+
+    @staticmethod
+    def _set_log_analysis_progress_mode(progress: ProgressWindow) -> Callable[[int, int], None]:
+        """Return a callback that turns the indeterminate scan into a determinate parse progress bar."""
+        is_determinate = False
+
+        def update_progress(current: int, total: int) -> None:
+            nonlocal is_determinate
+            if not is_determinate:
+                progress.progress_bar.stop()
+                progress.progress_bar.configure(mode="determinate")
+                is_determinate = True
+            progress.update_progress_bar(current, total)
+
+        return update_progress
+
     def on_analyse_log_click(self) -> None:
         """Handle the analyse log button click."""
         filepath = self.ui.askopenfilename(
@@ -580,37 +664,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not filepath:
             return
 
-        progress = ProgressWindow(
-            self.root,
-            _(".bin Log Analysis"),
-            _("Analysing flight log, please wait..."),
-        )
-        progress.progress_bar.configure(mode="indeterminate")
-        progress.progress_bar.start(10)
+        try:
+            inputs = self.parameter_editor.get_log_analysis_context_inputs()
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self.ui.show_error(_("Log Analysis Error"), str(e))
+            return
+
+        progress = self._create_log_analysis_progress(_("Reading flight log, please wait..."))
+        progress_callback = self._set_log_analysis_progress_mode(progress)
 
         result_container: list = []
         error_container: list = []
 
-        def run_analysis() -> None:
+        def run_extraction() -> None:
             try:
-                vehicle_type, *_ = extract_firmware_version_and_vehicle_type(filepath)
-                configuration_steps = load_configuration_steps(vehicle_type) or {}
-                log_data = extract_log(filepath)
-                parameters = {
-                    record["Name"]: float(record["Value"])
-                    for record in log_data.iter_message_records("PARM")
-                    if record.get("Name") and record.get("Value") is not None
-                }
-                vehicle_components = (
-                    self.parameter_editor.get_component_editor_deps().local_filesystem.vehicle_components_fs.data or {}
-                )
-                configuration_steps = load_configuration_steps("ArduCopter") or {}
-                context = LogAnalysisContext(
-                    parameters=parameters,
-                    configuration_steps=configuration_steps,
-                    vehicle_components=vehicle_components,
-                )
-                result_container.append(analyze_log(log_data, context))
+                result_container.append(self.ui.extract_log_data(filepath, progress_callback))
             except Exception as e:  # pylint: disable=broad-exception-caught
                 error_container.append(e)
 
@@ -622,12 +690,36 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if error_container:
                 self.ui.show_error(_("Log Analysis Error"), str(error_container[0]))
             elif result_container:
-                report_window = LogQualityReportWindow(self.root, result_container[0])
+                log_data = result_container[0]
+                if log_data.vehicle_type is None or log_data.firmware_version is None:
+                    self.ui.show_error(_("Log Analysis Error"), _("No firmware version information found in parsed log"))
+                    return
+                try:
+                    resolved_inputs = self._resolve_log_analysis_inputs(
+                        log_data.vehicle_type,
+                        log_data.firmware_version,
+                        inputs,
+                    )
+                    if resolved_inputs is None:
+                        return
+                    summary = self.ui.analyze_log_data(
+                        log_data,
+                        project_vehicle_type=resolved_inputs.project_vehicle_type,
+                        project_firmware_version=resolved_inputs.project_firmware_version,
+                        vehicle_components=resolved_inputs.vehicle_components,
+                        configuration_steps=resolved_inputs.configuration_steps,
+                        apm_doc=resolved_inputs.apm_doc,
+                        validate_project=False,
+                    )
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    self.ui.show_error(_("Log Analysis Error"), str(e))
+                    return
+
+                report_window = LogQualityReportWindow(self.root, summary)
                 if UsagePopupWindow.should_display("log_quality_report"):
                     display_log_quality_report_usage_popup(cast("tk.Tk", report_window.root))
-                report_window.run()
 
-        thread = threading.Thread(target=run_analysis, daemon=True)
+        thread = threading.Thread(target=run_extraction, daemon=True)
         thread.start()
         self.root.after(100, check_done)
 

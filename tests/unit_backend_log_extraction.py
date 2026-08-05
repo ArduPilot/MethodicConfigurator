@@ -14,9 +14,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
+from ardupilot_methodic_configurator.log_analysis import backend_log_extraction
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import (
-    LogData,
-    MessageSchema,
     _allocate_message_arrays,
     _fill_message_arrays,
     _schema_numpy_dtype,
@@ -24,6 +23,7 @@ from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import 
     extract_schemas,
     open_log,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
 
 # pylint: disable=redefined-outer-name, protected-access
 
@@ -34,6 +34,8 @@ class MessageStub:
     def __init__(self, msg_type: str, **payload: object) -> None:
         self._msg_type = msg_type
         self._payload = payload
+        for key, value in payload.items():
+            setattr(self, key, value)
 
     def get_type(self) -> str:
         return self._msg_type
@@ -86,6 +88,11 @@ def populated_log_data_with_float_field() -> LogData:
 
 class TestOpenLog:
     """Tests for open_log()."""
+
+    def test_parser_does_not_reexport_data_model_types(self) -> None:
+        """LogData and MessageSchema belong to the data-model module, not the backend parser API."""
+        assert not hasattr(backend_log_extraction, "LogData")
+        assert not hasattr(backend_log_extraction, "MessageSchema")
 
     def test_valid_bin_file_path_yields_connection(self) -> None:
         """GIVEN a valid log path, WHEN open_log is called, THEN the connection is returned."""
@@ -257,6 +264,45 @@ class TestNumpyAllocation:
 
         with pytest.raises(ValueError, match="Field mismatch for PARM"):
             _fill_message_arrays(mock_mlog, log_data)
+
+    def test_first_pass_records_log_identity_from_ver_message(self) -> None:
+        """The counting pass also captures firmware identity without a separate scan."""
+        log_data = LogData()
+        mlog = FakeMavLog([MessageStub("VER", FWS="ArduCopter V4.6.3", Maj=4, Min=6, Pat=3)])
+
+        backend_log_extraction._record_message_counts_fields_and_identity(mlog, log_data)
+
+        assert log_data.vehicle_type == "ArduCopter"
+        assert log_data.firmware_version == (4, 6, 3)
+        assert log_data.msg_count["VER"] == 1
+
+    def test_second_pass_reports_progress_against_known_message_count(self) -> None:
+        """The fill pass can report determinate progress from counted messages."""
+        log_data = LogData()
+        log_data.schemas["PARM"] = MessageSchema(
+            name="PARM",
+            msg_type=1,
+            length=4,
+            format="f",
+            fields=["Value"],
+            units=["V"],
+            multipliers=[None],
+            records=2,
+        )
+        log_data.msg_count = {"PARM": 2, "MSG": 1}
+        _allocate_message_arrays(log_data)
+        mlog = FakeMavLog(
+            [
+                MessageStub("MSG", Message="ArduCopter V4.6.3 (abc123)"),
+                MessageStub("PARM", Value=1.0),
+                MessageStub("PARM", Value=2.0),
+            ]
+        )
+        progress_calls: list[tuple[int, int]] = []
+
+        _fill_message_arrays(mlog, log_data, lambda current, total: progress_calls.append((current, total)))
+
+        assert progress_calls == [(1, 3), (2, 3), (3, 3)]
 
 
 class TestExtractSchemas:  # pylint: disable=too-few-public-methods

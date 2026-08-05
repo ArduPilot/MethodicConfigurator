@@ -8,35 +8,22 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
+    LogQualityResult,
+    LogQualityState,
+    QualityIssue,
+)
 from ardupilot_methodic_configurator.log_analysis.utils import (
     find_configuration_step_for_message,
     find_configuration_step_for_parameter,
 )
 
-
-@dataclass
-class QualityIssue:
-    """One detected issue, paired with the configuration step that would fix it."""
-
-    message: str
-    config_step: str = ""
-
-
-@dataclass
-class LogQualityResult:
-    """Result produced by a subsystem quality model (battery, GPS, etc.)."""
-
-    available: bool
-    state: str
-    reason: str
-    issues: list[QualityIssue]
-    name: str
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
 
 class BaseLogQualityAnalysisModel:
@@ -44,7 +31,7 @@ class BaseLogQualityAnalysisModel:
 
     def __init__(
         self,
-        log_data: LogData,
+        log_data: "LogData",
         context: LogAnalysisContext,
     ) -> None:
         self.log_data = log_data
@@ -59,12 +46,15 @@ class BaseLogQualityAnalysisModel:
         raise NotImplementedError(msg)
 
     def step_for_parameter(self, param_name: str) -> str:
-        return find_configuration_step_for_parameter(self.configuration_steps, param_name) or ""
+        try:
+            return find_configuration_step_for_parameter(self.configuration_steps, param_name) or ""
+        except ValueError:
+            return ""
 
     def build_result(self, issues: list[QualityIssue], name: str) -> LogQualityResult:
         return LogQualityResult(
             available=True,
-            state="info" if not issues else "warning",
+            state=LogQualityState.INFO if not issues else LogQualityState.WARNING,
             reason=_("{name} data present and good for analysis").format(name=name)
             if not issues
             else _("{name} data has quality issues").format(name=name),
@@ -78,7 +68,10 @@ class BaseLogQualityAnalysisModel:
 
         Returns: config_step, name.
         """
-        resolved = find_configuration_step_for_message(self.configuration_steps, message_name)
+        try:
+            resolved = find_configuration_step_for_message(self.configuration_steps, message_name)
+        except ValueError:
+            return "", fallback_name
         if resolved is None:
             return "", fallback_name
         step, related = resolved

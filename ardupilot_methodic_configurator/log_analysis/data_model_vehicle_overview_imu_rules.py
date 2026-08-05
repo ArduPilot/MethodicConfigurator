@@ -6,7 +6,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview_sensor_rules import any_nonzero
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_sensor_rules import any_nonzero
 
 
 def imu_axes_offsets(params: dict[str, float], prefix: str, suffix: str) -> list[float | None]:
