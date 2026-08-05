@@ -16,7 +16,7 @@ from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
-from ardupilot_methodic_configurator.log_analysis.backend_vehicle_overview import (
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import (
     AirspeedInfo,
     BaroInfo,
     CompassInfo,

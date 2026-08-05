@@ -27,6 +27,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import
 class LogQualityReportWindow(BaseWindow):
     """Displays log analysis results as a beginner-friendly, detailed dashboard."""
 
+    # pylint: disable=duplicate-code
     def __init__(self, root_tk: tk.Tk | tk.Toplevel, summary: LogSummary) -> None:
         super().__init__(root_tk)
         self.summary = summary
@@ -39,8 +40,6 @@ class LogQualityReportWindow(BaseWindow):
         self._build_stats_cards()
         self._build_tabs()
 
-    # ------------------------------------------------------------------ helpers
-
     @staticmethod
     def _fmt_duration(sec: float | None) -> str:
         if sec is None:
@@ -50,7 +49,7 @@ class LogQualityReportWindow(BaseWindow):
         return f"{m}m {s}s"
 
     @staticmethod
-    def _fmt_filesize(size_bytes: int) -> str:
+    def _fmt_filesize(size_bytes: int) -> str:  # pylint: disable=duplicate-code
         if size_bytes < 1024:
             return f"{size_bytes} B"
         if size_bytes < 1024 * 1024:
@@ -58,14 +57,14 @@ class LogQualityReportWindow(BaseWindow):
         return f"{size_bytes / (1024 * 1024):.1f} MB"
 
     @staticmethod
-    def _add_key_value(parent: ttk.Frame, key: str, value: str) -> None:
+    def _add_key_value(parent: ttk.Frame | ttk.LabelFrame, key: str, value: str) -> None:
         """Pack a key-value pair inside a card."""
         row = ttk.Frame(parent)
         row.pack(fill=tk.X, padx=10, pady=3)
         ttk.Label(row, text=key, foreground="gray", font=("TkDefaultFont", 11), width=14).pack(side=tk.LEFT)
         ttk.Label(row, text=value, font=("TkDefaultFont", 11, "bold")).pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-    def _add_clickable_key_value(self, parent: ttk.Frame, key: str, value: str, url: str) -> None:
+    def _add_clickable_key_value(self, parent: ttk.Frame | ttk.LabelFrame, key: str, value: str, url: str) -> None:
         """Pack a clickable key-value pair that opens a URL."""
         row = ttk.Frame(parent)
         row.pack(fill=tk.X, padx=10, pady=3)
@@ -80,8 +79,6 @@ class LogQualityReportWindow(BaseWindow):
         link.pack(side=tk.LEFT, fill=tk.X, expand=True)
         link.bind("<Button-1>", lambda _e, u=url: webbrowser.open(u))
         show_tooltip(link, _("Open release page on GitHub"))
-
-    # ------------------------------------------------------------------ header
 
     def _build_header_summary(self) -> None:
         """Quick TL;DR banner."""
@@ -100,8 +97,6 @@ class LogQualityReportWindow(BaseWindow):
             color = "darkorange"
 
         ttk.Label(header_frame, text=status_text, foreground=color, font=("TkDefaultFont", 13, "bold")).pack(side=tk.LEFT)
-
-    # ------------------------------------------------------------------ stats cards
 
     def _build_stats_cards(self) -> None:
         card_container = ttk.Frame(self.main_frame)
@@ -165,8 +160,6 @@ class LogQualityReportWindow(BaseWindow):
         hardware_frame = ttk.Frame(notebook)
         notebook.add(hardware_frame, text=_("  Hardware Overview  "))
         build_hardware_tab(hardware_frame, self.summary.hardware_report)
-
-    # ------------------------------------------------------------------ quality tab
 
     def _build_quality_tab(self, parent: ttk.Frame) -> None:
         scroll_container = ScrollFrame(parent)
@@ -242,10 +235,12 @@ class LogQualityReportWindow(BaseWindow):
         icon_lbl = ttk.Label(card, text=tag, foreground=color, font=("TkDefaultFont", 12, "bold"), width=8)
         icon_lbl.pack(side=tk.LEFT)
 
-        display_name = result.name or result.step
+        display_name = result.step.removesuffix(".param").replace("_", " ").strip()
         lbl = ttk.Label(card, text=display_name, font=("TkDefaultFont", 12), wraplength=500)
         lbl.pack(side=tk.LEFT, anchor=tk.W, fill=tk.X, expand=True)
         card.bind("<Configure>", lambda e, l=lbl: l.configure(wraplength=max(10, e.width - 90)))  # noqa: E741
+        if result.name:
+            show_tooltip(lbl, result.name)
 
         if not result.valid:
             issues_lines = [i for mr in result.message_results.values() for i in mr.issues]
@@ -254,8 +249,6 @@ class LogQualityReportWindow(BaseWindow):
                 show_tooltip(icon_lbl, tooltip)
                 show_tooltip(lbl, tooltip)
                 show_tooltip(card, tooltip)
-
-    # ------------------------------------------------------------------ run
 
     def run(self) -> None:
         self.root.mainloop()
