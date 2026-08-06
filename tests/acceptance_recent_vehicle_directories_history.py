@@ -4,7 +4,7 @@
 Acceptance tests for Recent Vehicle Directories History feature.
 
 This file contains BDD-style acceptance tests that validate the requirements
-for maintaining a history of the 5 most recently opened vehicle directories.
+for maintaining a history of the most recently opened vehicle directories.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -111,51 +111,37 @@ class TestRecentVehicleDirectoriesHistorySelection:
 
 
 class TestRecentVehicleDirectoriesHistoryLimit:
-    """AC3: History Maintains Maximum of 5 Entries."""
+    """AC3: History Maintains Maximum of MAX_RECENT_DIRS Entries."""
 
-    def test_history_maintains_maximum_of_five_entries(self) -> None:
+    def test_history_maintains_maximum_entries(self) -> None:
         """
-        History is limited to 5 entries, oldest is removed when adding 6th.
+        History is limited to MAX_RECENT_DIRS entries; the oldest is removed when one more is added.
 
-        GIVEN: User already has 5 directories in history [Dir_A, Dir_B, Dir_C, Dir_D, Dir_E]
-        WHEN: User successfully opens a new directory Dir_F
-        THEN: The history should contain [Dir_F, Dir_A, Dir_B, Dir_C, Dir_D]
-        AND: The oldest entry (Dir_E) should be removed
+        GIVEN: User already has MAX_RECENT_DIRS directories in history (at capacity)
+        WHEN: User successfully opens one more new directory
+        THEN: The history is still capped at MAX_RECENT_DIRS, the new directory is first,
+              and the previously-oldest entry has been dropped.
         """
-        # Arrange: Use platform-appropriate paths
-        if platform_system() == "Windows":
-            test_paths = [
-                "C:\\path\\to\\Dir_A",  # Most recent
-                "C:\\path\\to\\Dir_B",
-                "C:\\path\\to\\Dir_C",
-                "C:\\path\\to\\Dir_D",
-                "C:\\path\\to\\Dir_E",  # Oldest - should be removed
-            ]
-            new_path = "C:\\path\\to\\Dir_F"
-        else:
-            test_paths = [
-                "/path/to/Dir_A",  # Most recent
-                "/path/to/Dir_B",
-                "/path/to/Dir_C",
-                "/path/to/Dir_D",
-                "/path/to/Dir_E",  # Oldest - should be removed
-            ]
-            new_path = "/path/to/Dir_F"
+        # Arrange: fill the history exactly to capacity with platform-appropriate paths
+        max_dirs = ProgramSettings.MAX_RECENT_DIRS
+        prefix = "C:\\path\\to\\Dir_" if platform_system() == "Windows" else "/path/to/Dir_"
+        test_paths = [f"{prefix}{i}" for i in range(max_dirs)]  # index 0 = most recent, last = oldest
+        new_path = f"{prefix}new"
 
-        # Arrange: Mock settings with 5 directories (at max capacity)
+        # Arrange: Mock settings with the history at max capacity
         with (
             patch.object(ProgramSettings, "_get_settings_as_dict") as mock_get_settings,
             patch.object(ProgramSettings, "_set_settings_from_dict") as mock_set_settings,
         ):
             mock_get_settings.return_value = {"recent_vehicle_history": test_paths.copy()}
 
-            # Act: User opens a new directory Dir_F
+            # Act: User opens a new directory
             ProgramSettings.store_recently_used_vehicle_dir(new_path)
 
-            # Assert: History limited to MAX_RECENT_DIRS, oldest removed
+            # Assert: History capped at MAX_RECENT_DIRS, new entry first, oldest removed
             mock_set_settings.assert_called_once()
             saved_settings = mock_set_settings.call_args[0][0]
-            assert len(saved_settings["recent_vehicle_history"]) <= ProgramSettings.MAX_RECENT_DIRS
+            assert len(saved_settings["recent_vehicle_history"]) == max_dirs
             assert normalize_for_comparison(saved_settings["recent_vehicle_history"][0]) == normalize_for_comparison(new_path)
             assert not path_in_list(test_paths[-1], saved_settings["recent_vehicle_history"])
 

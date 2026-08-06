@@ -394,7 +394,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def store_recently_used_vehicle_dir(vehicle_dir: str) -> None:
-        """Store a vehicle directory in recent history (most recent first, max 5 entries)."""
+        """Store a vehicle directory in recent history (most recent first, capped at MAX_RECENT_DIRS entries)."""
         settings = ProgramSettings._get_settings_as_dict()
         settings = ProgramSettings._recent_vehicle_history.store_item(vehicle_dir, settings)
         ProgramSettings._set_settings_from_dict(settings)
