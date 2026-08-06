@@ -29,12 +29,12 @@ msgid ""
 "intermediate parameter file. The process gets repeated for each intermediate "
 "parameter file."
 msgstr ""
-"ArduPilot 方法配置器是一個簡單的圖形用戶界面，包含一個列出參數的表格。該圖形"
-"用戶界面從目錄中讀取中間參數文件，並在表格中顯示其參數。每行顯示參數名稱、飛"
-"行控制器上的當前值、所選中間參數文件中的新值以及一個「上傳」複選框。圖形用戶"
-"界面底部包括「上傳選定參數到 FC」和「跳過」按鈕。當點擊「上傳選定到 FC」時，"
-"它會將選定的參數上傳到飛行控制器。當按下「跳過」時，它會跳到下一個中間參數文"
-"件。這個過程會對每個中間參數文件重複進行。ArduPilot系统化调参助手是一个简单的"
+"ArduPilot 方法配置器是一个简单的图形用户界面，包含一个列出参数的表格。该图形"
+"用户界面从目录中读取中间参数文件，并在表格中显示其参数。每行显示参数名称、飞"
+"行控制器上的当前值、所选中间参数文件中的新值以及一个「上传」复选框。图形用户"
+"界面底部包括「上传选定参数到 FC」和「跳过」按钮。当点击「上传选定到 FC」时，"
+"它会将选定的参数上传到飞行控制器。当按下「跳过」时，它会跳到下一个中间参数文"
+"件。这个过程会对每个中间参数文件重复进行。ArduPilot系统化调参助手是一个简单的"
 "图形化配置工具。它会读取一个参数模版，并显示对应的配置项。表格中每一行显示参"
 "数名称、飞控上的当前值、来自所选模版文件的新值，以及一个“上传”复选框。界面底"
 "部包括“将所选参数上传到飞控”和“跳过”按钮。当点击“将所选参数上传到飞控”时，它"
@@ -197,7 +197,7 @@ msgstr "有效范围: {_lo}, {_up}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/argparse_check_range.py:63
 msgid "Value must be a number."
-msgstr "值必須是數字。"
+msgstr "值必须是数字。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:113
 msgid "Could not detect vehicle type. Defaulting to %s."
@@ -205,7 +205,7 @@ msgstr "无法检测载具类型，默认设置为 %s。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:172
 msgid "File %s already exists. Will not rename file %s to %s."
-msgstr "文件 %s 已經存在。將不會將文件 %s 重命名為 %s。"
+msgstr "文件 %s 已经存在。将不会将文件 %s 重命名为 %s。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:301
 msgid "Could not convert values to int or float for %s"
@@ -1194,9 +1194,9 @@ msgid ""
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
 "Make sure parameter SERIAL0_PROTOCOL is set to 2"
 msgstr ""
-"未收到 AUTOPILOT_VERSION MAVLink 消息，連接失敗。\n"
-"僅支持 4.3.8 以上版本的 ArduPilot。\n"
-"請確保參數 SERIAL0_PROTOCOL 設置為 2未收到 AUTOPILOT_VERSION MAVLink 消息，连"
+"未收到 AUTOPILOT_VERSION MAVLink 消息，连接失败。\n"
+"仅支持 4.3.8 以上版本的 ArduPilot。\n"
+"请确保参数 SERIAL0_PROTOCOL 设置为 2未收到 AUTOPILOT_VERSION MAVLink 消息，连"
 "接失败。\n"
 "仅支持 4.3.8 版本之后的 ArduPilot。\n"
 "请确保参数 SERIAL0_PROTOCOL 设置为 2。"
@@ -3739,8 +3739,8 @@ msgid ""
 "to obey the flight controller connection defined in the component editor "
 "window."
 msgstr ""
-"參數 '' 已重命名為 ''。\n"
-"以遵守組件編輯器窗口中定義的飛行控制器連接。参数 '{old_name}' 已重命名为 "
+"参数 '' 已重命名为 ''。\n"
+"以遵守组件编辑器窗口中定义的飞行控制器连接。参数 '{old_name}' 已重命名为 "
 "'{new_name}'。\n"
 "以遵循组件编辑器窗口中定义的飞控连接。"
 
@@ -3750,15 +3750,15 @@ msgstr "参数已重命名"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:90
 msgid "USB Vendor"
-msgstr "USB 廠商"
+msgstr "USB 厂商"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:91
 msgid "USB Product"
-msgstr "USB 產品"
+msgstr "USB 产品"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:92
 msgid "Board Type"
-msgstr "板類型"
+msgstr "板类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:93
 msgid "Hardware Version"
@@ -3766,19 +3766,19 @@ msgstr "硬件版本"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:94
 msgid "Autopilot Type"
-msgstr "自動駕駛儀類型"
+msgstr "自动驾驶仪类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:95
 msgid "ArduPilot Vehicle Type"
-msgstr "ArduPilot 車輛類型"
+msgstr "ArduPilot 车辆类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:96
 msgid "ArduPilot FW Type"
-msgstr "ArduPilot 固件類型"
+msgstr "ArduPilot 固件类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:97
 msgid "MAV Type"
-msgstr "MAV 類型"
+msgstr "MAV 类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:98
 msgid "Firmware Version"
@@ -3790,7 +3790,7 @@ msgstr "Git 哈希"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:100
 msgid "OS Git Hash"
-msgstr "操作系統 Git 哈希"
+msgstr "操作系统 Git 哈希"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:101
 msgid "Capabilities"
@@ -3798,11 +3798,11 @@ msgstr "功能"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:102
 msgid "System ID"
-msgstr "系統 ID"
+msgstr "系统 ID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:103
 msgid "Component ID"
-msgstr "組件 ID"
+msgstr "组件 ID"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:104
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:37
@@ -4233,10 +4233,10 @@ msgid ""
 "Do you want to provide a .bin log file and\n"
 "run the IMU temperature calibration using it?"
 msgstr ""
-"如果您繼續，\n"
-"將被新校準結果覆蓋。\n"
-"您是否要提供 .bin 日誌文件並\n"
-"使用它運行 IMU 溫度校準？如果继续操作，{tempcal_imu_result_param_filename}\n"
+"如果您继续，\n"
+"将被新校准结果覆盖。\n"
+"您是否要提供 .bin 日志文件并\n"
+"使用它运行 IMU 温度校准？如果继续操作，{tempcal_imu_result_param_filename}\n"
 "将被新的校准结果覆盖。\n"
 "您是否想提供一个 .bin 日志文件并\n"
 "使用它运行 IMU 温度校准？"
@@ -4250,8 +4250,8 @@ msgid ""
 "Please wait, this can take a really long time and\n"
 "the GUI will be unresponsive until it finishes."
 msgstr ""
-"請稍候，這可能需要很長時間，\n"
-"在完成之前圖形用戶界面將無響應。请稍等，这可能需要很长时间，\n"
+"请稍候，这可能需要很长时间，\n"
+"在完成之前图形用户界面将无响应。请稍等，这可能需要很长时间，\n"
 "界面将在完成之前可能没有响应。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:326
@@ -4346,8 +4346,8 @@ msgid ""
 "Should the {local_filename} file be downloaded from the URL\n"
 "{url}?"
 msgstr ""
-"是否應從 URL\n"
-" 下載  文件？"
+"是否应从 URL\n"
+" 下载  文件？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:589
 msgid "Download file from URL"
@@ -4398,22 +4398,22 @@ msgstr "上传失败"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:664
 msgid "No parameter was selected for upload, will not upload any parameter"
-msgstr "未選擇任何參數進行上傳，將不會上傳任何參數"
+msgstr "未选择任何参数进行上传，将不会上传任何参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:665
 msgid "No parameter was selected for upload"
-msgstr "未選擇任何參數進行上傳"
+msgstr "未选择任何参数进行上传"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:665
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:670
 msgid "Will not upload any parameter"
-msgstr "將不會上傳任何參數"
+msgstr "将不会上传任何参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:669
 msgid ""
 "No parameters were yet downloaded from the flight controller, will not "
 "upload any parameter"
-msgstr "尚未從飛行控制器下載任何參數，將不會上傳任何參數"
+msgstr "尚未从飞行控制器下载任何参数，将不会上传任何参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:756
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:778
@@ -4490,7 +4490,7 @@ msgstr "%d个FC参数已经具有此配置步骤中定义的值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1065
 msgid "Uploading %d selected %s parameters to flight controller..."
-msgstr "正在將 %d 個選定的 %s 參數上傳到飛行控制器..."
+msgstr "正在将 %d 个选定的 %s 参数上传到飞行控制器..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1103
 msgid "Parameter upload error"
@@ -4498,7 +4498,7 @@ msgstr "参数上传错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1104
 msgid "Failed to upload the following parameters to the flight controller:\n"
-msgstr "未能將以下參數上傳到飛行控制器：\n"
+msgstr "未能将以下参数上传到飞行控制器：\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1110
 msgid "All parameters uploaded to the flight controller successfully"
@@ -4628,8 +4628,8 @@ msgid ""
 "{} file already exists.\n"
 "Do you want to overwrite it?"
 msgstr ""
-"文件已經存在。\n"
-"您是否要覆蓋它？{} 文件已存在。\n"
+"文件已经存在。\n"
+"您是否要覆盖它？{} 文件已存在。\n"
 "您想覆盖它吗？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1555
@@ -4649,10 +4649,10 @@ msgid ""
 "You can now upload this file to the ArduPilot Methodic\n"
 "Configuration Blog post on discuss.ardupilot.org."
 msgstr ""
-"所有相關文件已壓縮到 \n"
+"所有相关文件已压缩到 \n"
 " 文件中。\n"
 "\n"
-"您現在可以將此文件上傳到 ArduPilot 方法\n"
+"您现在可以将此文件上传到 ArduPilot 方法\n"
 "配置博客文章 discuss.ardupilot.org。所有相关文件已压缩为 \n"
 "{zip_file_path} 文件。\n"
 "\n"
@@ -4990,30 +4990,30 @@ msgstr "此main()仅用于测试和开发，通常从其他脚本调用check_for
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:40
 msgid "Template path"
-msgstr "模板路徑"
+msgstr "模板路径"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:41
 msgid ""
 "FC\n"
 "Manufacturer"
 msgstr ""
-"飛行控制器\n"
-"製造商"
+"飞行控制器\n"
+"制造商"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:42
 msgid ""
 "FC\n"
 "Model"
 msgstr ""
-"飛行控制器\n"
-"型號"
+"飞行控制器\n"
+"型号"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:43
 msgid ""
 "TOW Max\n"
 "[Kg]"
 msgstr ""
-"最大起飛重量\n"
+"最大起飞重量\n"
 "[Kg]"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:44
@@ -5021,7 +5021,7 @@ msgid ""
 "Prop Diameter\n"
 "[inches]"
 msgstr ""
-"螺旋槳直徑\n"
+"螺旋桨直径\n"
 "[英寸]"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:45
@@ -5030,23 +5030,23 @@ msgid ""
 "Protocol"
 msgstr ""
 "RC\n"
-"協議"
+"协议"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:46
 msgid ""
 "Telemetry\n"
 "Model"
 msgstr ""
-"遙測\n"
-"型號"
+"遥测\n"
+"型号"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:47
 msgid ""
 "ESC\n"
 "Protocol"
 msgstr ""
-"電子調速器\n"
-"協議"
+"电子调速器\n"
+"协议"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:48
 msgid ""
@@ -5054,7 +5054,7 @@ msgid ""
 "Model"
 msgstr ""
 "GNSS\n"
-"型號"
+"型号"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_template_overview.py:49
 msgid ""
@@ -5298,13 +5298,13 @@ msgstr "{paths_str} 的整数值无效"
 msgid ""
 "No intermediate parameter files found\n"
 "in current working directory."
-msgstr "在當前工作目錄中未找到中間參數文件。"
+msgstr "在当前工作目录中未找到中间参数文件。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:418
 msgid ""
 "No intermediate parameter files found\n"
 "in the --vehicle-dir specified directory."
-msgstr "在 --vehicle-dir 指定的目錄中未找到中間參數文件。"
+msgstr "在 --vehicle-dir 指定的目录中未找到中间参数文件。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:438
 msgid "MyVehicleName"
@@ -5506,8 +5506,8 @@ msgid ""
 "No last opened vehicle configuration directory was found.\n"
 "Please select a directory manually."
 msgstr ""
-"未找到最後打開的車輛配置目錄。\n"
-"請手動選擇一個目錄。"
+"未找到最后打开的车辆配置目录。\n"
+"请手动选择一个目录。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:151
@@ -5545,8 +5545,8 @@ msgid ""
 "Please do not edit the files provided 'vehicle_templates' directory\n"
 "as those are used as a template for new vehicles"
 msgstr ""
-"請不要編輯 'vehicle_templates' 目錄中提供的文件\n"
-"因為這些文件用作新車輛的模板请不要编辑 'vehicle_templates' 目录中提供的文件\n"
+"请不要编辑 'vehicle_templates' 目录中提供的文件\n"
+"因为这些文件用作新车辆的模板请不要编辑 'vehicle_templates' 目录中提供的文件\n"
 "因为这些文件是用于新载具的模板"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:158
@@ -5597,7 +5597,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_about_popup_window.py:46
 msgid "Display usage popup"
-msgstr "顯示使用彈出窗口"
+msgstr "显示使用弹出窗口"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_about_popup_window.py:66
 msgid "User Manual"
@@ -5769,7 +5769,7 @@ msgstr "从 %s 加载图像时出错: %s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:93
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:21
 msgid "Battery Monitor"
-msgstr "電池監控"
+msgstr "电池监控"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:99
 msgid ""
@@ -6262,8 +6262,8 @@ msgid ""
 "Select the flight controller connection\n"
 "You can add a custom connection to the existing ones"
 msgstr ""
-"選擇飛行控制器連接\n"
-"您可以向現有連接中添加自定義連接选择飞控连接\n"
+"选择飞行控制器连接\n"
+"您可以向现有连接中添加自定义连接选择飞控连接\n"
 "您可以将自定义连接添加到现有连接中"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:103
@@ -6358,9 +6358,9 @@ msgid ""
 "wait 7 seconds for it to fully boot and\n"
 "press the Auto-connect button below to connect to it"
 msgstr ""
-"將飛行控制器連接到 PC，\n"
-"等待 7 秒鐘讓其完全啟動，然後\n"
-"按下面的自動連接按鈕連接到它将飞控连接到 PC，\n"
+"将飞行控制器连接到 PC，\n"
+"等待 7 秒钟让其完全启动，然后\n"
+"按下面的自动连接按钮连接到它将飞控连接到 PC，\n"
 "等待 7 秒钟让它完全启动，\n"
 "然后按下下面的自动连接按钮进行连接"
 
@@ -6382,9 +6382,9 @@ msgid ""
 "wait 7 seconds for it to fully boot and\n"
 "manually select the fight controller connection or add a new one"
 msgstr ""
-"將飛行控制器連接到 PC，\n"
-"等待 7 秒鐘讓其完全啟動，然後\n"
-"手動選擇飛行控制器連接或添加新連接"
+"将飞行控制器连接到 PC，\n"
+"等待 7 秒钟让其完全启动，然后\n"
+"手动选择飞行控制器连接或添加新连接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_connection_selection.py:385
 msgid "No connection"
@@ -6401,8 +6401,8 @@ msgid ""
 "instead (if '00_default.param' file is present) and just edit the "
 "intermediate '.param' files on disk"
 msgstr ""
-"不會從飛行控制器中獲取參數值，將使用磁盤上的默認參數值\n"
-"（如果存在 '00_default.param' 文件），並僅編輯磁盤上的中間 '.param' 文件不会"
+"不会从飞行控制器中获取参数值，将使用磁盘上的默认参数值\n"
+"（如果存在 '00_default.param' 文件），并仅编辑磁盘上的中间 '.param' 文件不会"
 "从飞控获取参数值，将使用磁盘上的默认参数值\n"
 "（如果存在 '00_default.param' 文件），并仅编辑磁盘上的中间 '.param' 文件"
 
@@ -6475,7 +6475,7 @@ msgid ""
 "Vehicle-specific directory containing the intermediate\n"
 "parameter files to be uploaded to the flight controller"
 msgstr ""
-"包含要上傳到飛行控制器的中間參數文件的特定車輛目錄载具特定的目录，包含需要上"
+"包含要上传到飞行控制器的中间参数文件的特定车辆目录载具特定的目录，包含需要上"
 "传到飞控的模版\n"
 "参数文件"
 
@@ -6484,7 +6484,7 @@ msgid ""
 "Select the vehicle-specific configuration directory containing the\n"
 "intermediate parameter files to be uploaded to the flight controller"
 msgstr ""
-"選擇包含要上傳到飛行控制器的中間參數文件的特定車輛配置目錄选择包含需要上传到"
+"选择包含要上传到飞行控制器的中间参数文件的特定车辆配置目录选择包含需要上传到"
 "飞控的中间参数文件的\n"
 "载具特定配置目录"
 
@@ -6683,7 +6683,7 @@ msgstr "未选择框架类型"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:591
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:171
 msgid "Resetting Flight Controller"
-msgstr "重置飛行控制器"
+msgstr "重置飞行控制器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:498
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:504
@@ -6885,14 +6885,14 @@ msgid ""
 "A GUI for testing the PairTupleCombobox. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
 msgstr ""
-"用於測試 PairTupleCombobox 的圖形用戶界面。不應直接使用，而應通過主 "
-"ArduPilot 方法配置器腳本使用。"
+"用于测试 PairTupleCombobox 的图形用户界面。不应直接使用，而应通过主 "
+"ArduPilot 方法配置器脚本使用。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:382
 msgid ""
 "This main is for testing and development only, usually the PairTupleCombobox "
 "is called from another script"
-msgstr "此主程序僅用於測試和開發，通常 PairTupleCombobox 是從另一個腳本調用的"
+msgstr "此主程序仅用于测试和开发，通常 PairTupleCombobox 是从另一个脚本调用的"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:159
 msgid "Uploading FC parameters"
@@ -6930,8 +6930,8 @@ msgid ""
 "It will automatically advance to the next file once the current file is "
 "uploaded to the fight controller"
 msgstr ""
-"從所選車輛目錄中的可用文件列表中選擇中間參數文件\n"
-"當前文件上傳到飛行控制器後，它將自動前進到下一個文件从选定载具目录中的可用文"
+"从所选车辆目录中的可用文件列表中选择中间参数文件\n"
+"当前文件上传到飞行控制器后，它将自动前进到下一个文件从选定载具目录中的可用文"
 "件列表中选择模版文件\n"
 "一旦当前文件上传到飞控，它将自动跳转到下一个文件"
 
@@ -6953,7 +6953,7 @@ msgstr "普通参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:382
 msgid "Normal parameter - reusable in similar vehicles"
-msgstr "普通參數 - 可在類似車輛中重用"
+msgstr "普通参数 - 可在类似车辆中重用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:384
 msgid "Calibration param"
@@ -6961,7 +6961,7 @@ msgstr "标定参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:385
 msgid "Calibration parameter - not-reusable, even in similar vehicles"
-msgstr "校準參數 - 即使在類似車輛中也不可重用"
+msgstr "校准参数 - 即使在类似车辆中也不可重用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:387
 msgid "Read-only param"
@@ -6969,7 +6969,7 @@ msgstr "只读参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:388
 msgid "Read-only parameter - not writable nor changeable"
-msgstr "只讀參數 - 不可寫入或更改"
+msgstr "只读参数 - 不可写入或更改"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:390
 msgid "Below limit"
@@ -6985,7 +6985,7 @@ msgstr "默认值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:396
 msgid "This is the default value of this parameter"
-msgstr "這是此參數的默認值"
+msgstr "这是此参数的默认值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:398
 msgid "Not available"
@@ -6993,7 +6993,7 @@ msgstr "不可用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:399
 msgid "This parameter is not available on the connected flight controller"
-msgstr "此參數在連接的飛行控制器上不可用"
+msgstr "此参数在连接的飞行控制器上不可用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:401
 msgid "Not editable"
@@ -7004,8 +7004,8 @@ msgid ""
 "This value has been automatically calculated by the software using data\n"
 "from the component editor window or from the 'configuration_steps.json' file"
 msgstr ""
-"此值已由軟件自動計算，使用來自組件編輯器窗口或 'configuration_steps.json' 文"
-"件中的數據"
+"此值已由软件自动计算，使用来自组件编辑器窗口或 'configuration_steps.json' 文"
+"件中的数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:411
 msgid "Above limit"
@@ -7036,8 +7036,8 @@ msgid ""
 "The files will be bigger, but all the existing parameter documentation will "
 "be included inside"
 msgstr ""
-"將 ArduPilot 參數文檔元數據註釋到中間參數文件中\n"
-"文件將變得更大，但所有現有的參數文檔都將包含在內将 ArduPilot 参数文档元数据注"
+"将 ArduPilot 参数文档元数据注释到中间参数文件中\n"
+"文件将变得更大，但所有现有的参数文档都将包含在内将 ArduPilot 参数文档元数据注"
 "释到中间参数文件中\n"
 "文件会变大，但所有现有的参数文档将包含在内"
 
@@ -7058,9 +7058,9 @@ msgid ""
 "It will reset the FC if necessary, re-download all parameters and validate "
 "their value"
 msgstr ""
-"將選定的參數上傳到飛行控制器並前進到下一個中間參數文件\n"
-"如果對當前文件進行了更改，它會詢問您是否要保存它們\n"
-"如果需要，它將重置 FC，重新下載所有參數並驗證其值"
+"将选定的参数上传到飞行控制器并前进到下一个中间参数文件\n"
+"如果对当前文件进行了更改，它会询问您是否要保存它们\n"
+"如果需要，它将重置 FC，重新下载所有参数并验证其值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:494
 msgid "No flight controller connected, upload not available"
@@ -7101,7 +7101,7 @@ msgstr "没有可用的中间参数文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:539
 msgid "Skip parameter file"
-msgstr "跳過參數文件"
+msgstr "跳过参数文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:552
 msgid ""
@@ -7110,8 +7110,8 @@ msgid ""
 "If changes have been made to the current file it will ask if you want to "
 "save them"
 msgstr ""
-"跳到下一個中間參數文件而不將任何更改上傳到飛行控制器\n"
-"如果對當前文件進行了更改，它會詢問您是否要保存它們"
+"跳到下一个中间参数文件而不将任何更改上传到飞行控制器\n"
+"如果对当前文件进行了更改，它会询问您是否要保存它们"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:565
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:643
@@ -7292,13 +7292,13 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:101
 msgid "Automatically open documentation links in browser"
-msgstr "自動在瀏覽器中打開文檔鏈接"
+msgstr "自动在浏览器中打开文档链接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:107
 msgid ""
 "Automatically open all the above documentation links in a browser\n"
 "whenever the current intermediate parameter file changes"
-msgstr "每當當前中間參數文件更改時，自動在瀏覽器中打開所有上述文檔鏈接"
+msgstr "每当当前中间参数文件更改时，自动在浏览器中打开所有上述文档链接"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:152
 msgid "Documentation URL not available"
@@ -7614,14 +7614,14 @@ msgid ""
 "Existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
 msgstr ""
-"包含要複製到新車輛配置目錄的中間參數文件的現有車輛模板目錄现有的包含模版参数"
+"包含要复制到新车辆配置目录的中间参数文件的现有车辆模板目录现有的包含模版参数"
 "文件的载具模板目录, 这些文件将被复制到新的载具配置目录"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:102
 msgid ""
 "Select the existing vehicle template directory containing the intermediate\n"
 "parameter files to be copied to the new vehicle configuration directory"
-msgstr "選擇包含要複製到新車輛配置目錄的中間參數文件的現有車輛模板目錄"
+msgstr "选择包含要复制到新车辆配置目录的中间参数文件的现有车辆模板目录"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:121
 msgid "Selected template directory: %s"
@@ -7669,9 +7669,9 @@ msgid ""
 "copy the template files from the (source) template directory to it and\n"
 "load the newly created files into the application"
 msgstr ""
-"在（目標）基目錄上創建一個新的車輛配置目錄，\n"
-"將模板文件從（源）模板目錄複製到其中，\n"
-"並將新創建的文件加載到應用程序中在（目标）基础目录中创建一个新的载具配置目"
+"在（目标）基目录上创建一个新的车辆配置目录，\n"
+"将模板文件从（源）模板目录复制到其中，\n"
+"并将新创建的文件加载到应用程序中在（目标）基础目录中创建一个新的载具配置目"
 "录，\n"
 "将模板文件从（源）模板目录复制到该目录，并\n"
 "将新创建的文件加载到应用程序中"
@@ -7723,8 +7723,8 @@ msgid ""
 "Use an existing vehicle configuration directory with\n"
 "intermediate parameter files, apm.pdef.xml and vehicle_components.json"
 msgstr ""
-"使用包含中間參數文件、apm.pdef.xml 和 vehicle_components.json 的現有車輛配置"
-"目錄使用现有的包含模版文件、apm.pdef.xml 和 vehicle_components.json的载具配置"
+"使用包含中间参数文件、apm.pdef.xml 和 vehicle_components.json 的现有车辆配置"
+"目录使用现有的包含模版文件、apm.pdef.xml 和 vehicle_components.json的载具配置"
 "目录"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:143
@@ -7849,10 +7849,10 @@ msgid ""
 "\n"
 "Make sure to step inside the directory (double-click) and not just select it."
 msgstr ""
-"在所選的 '' 車輛目錄中未找到中間參數文件。\n"
-"請選擇並進入包含有效 ArduPilot 中間參數文件的車輛目錄。\n"
+"在所选的 '' 车辆目录中未找到中间参数文件。\n"
+"请选择并进入包含有效 ArduPilot 中间参数文件的车辆目录。\n"
 "\n"
-"請確保進入目錄（雙擊）而不僅僅是選擇它。在选定的 '{_dirname}' 载具目录中未找"
+"请确保进入目录（双击）而不仅仅是选择它。在选定的 '{_dirname}' 载具目录中未找"
 "到模版文件。\n"
 "请选中并进入一个包含有效 ArduPilot 模版文件的车辆目录。\n"
 "\n"
@@ -7869,8 +7869,8 @@ msgid ""
 "Please connect a flight controller to the PC,\n"
 "wait at least 7 seconds and retry."
 msgstr ""
-"請將飛行控制器連接到 PC，\n"
-"等待至少 7 秒鐘，然後重試。{_error_string}\n"
+"请将飞行控制器连接到 PC，\n"
+"等待至少 7 秒钟，然后重试。{_error_string}\n"
 "\n"
 "请将飞控连接到电脑，\n"
 "并等待至少 7 秒钟后再重试。"
@@ -8004,7 +8004,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:79
 msgid "Show this usage popup again"
-msgstr "再次顯示此使用彈出窗口"
+msgstr "再次显示此使用弹出窗口"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:182
 msgid "I understand this"
@@ -8080,7 +8080,7 @@ msgstr "再点击按钮。\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:118
 msgid "How to use the component editor window"
-msgstr "如何使用組件編輯器窗口"
+msgstr "如何使用组件编辑器窗口"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:143
 msgid ""
@@ -8110,7 +8110,7 @@ msgstr "所有"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:177
 msgid " the documentation on top of the parameter table\n"
-msgstr "參數表頂部的文檔\n"
+msgstr "参数表顶部的文档\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:178
 msgid "2. Edit the parameter "
@@ -8138,7 +8138,7 @@ msgstr "3. 使用 "
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:201
 msgid " buttons to delete and add parameters if necessary\n"
-msgstr "必要時刪除和添加參數的按鈕\n"
+msgstr "必要时删除和添加参数的按钮\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:202
 msgid "4. Press the "
@@ -8146,11 +8146,11 @@ msgstr "4. 按下 "
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:205
 msgid "Upload selected params to FC, and advance to next param file"
-msgstr "將選定的參數上傳到 FC，並前進到下一個參數文件"
+msgstr "将选定的参数上传到 FC，并前进到下一个参数文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:208
 msgid " button\n"
-msgstr "按鈕\n"
+msgstr "按钮\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:209
 msgid "5. Repeat from the top until the program automatically closes"
@@ -8158,7 +8158,7 @@ msgstr "5. 从头开始重复，直到程序自动关闭"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:215
 msgid "How to use the parameter file editor and uploader window"
-msgstr "如何使用參數文件編輯器和上傳器窗口"
+msgstr "如何使用参数文件编辑器和上传器窗口"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:235
 msgid "Bitmask parameters are editable in four different ways:\n"
@@ -8296,7 +8296,7 @@ msgstr "插件 '%(plugin_name)s' 已配置但未注册。可用插件: %(availab
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:20
 msgid "Battery"
-msgstr "電池"
+msgstr "电池"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:22
 msgid "Capacity mAh"
@@ -8304,7 +8304,7 @@ msgstr "容量 mAh"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:23
 msgid "Chemistry"
-msgstr "化學成分"
+msgstr "化学成分"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:24
 msgid "Components"
@@ -8316,11 +8316,11 @@ msgstr "配置模板"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:26
 msgid "Diameter_inches"
-msgstr "直徑_英寸"
+msgstr "直径_英寸"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:27
 msgid "ESC"
-msgstr "電子調速器"
+msgstr "电子调速器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:28
 msgid "ESC->FC Telemetry"
@@ -8340,7 +8340,7 @@ msgstr "固件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:32
 msgid "Flight Controller"
-msgstr "飛行控制器"
+msgstr "飞行控制器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:33
 msgid "Format version"
@@ -8360,31 +8360,31 @@ msgstr "GNSS 接收器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:38
 msgid "Manufacturer"
-msgstr "製造商"
+msgstr "制造商"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:39
 msgid "Model"
-msgstr "型號"
+msgstr "型号"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:40
 msgid "Motors"
-msgstr "電機"
+msgstr "电机"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:41
 msgid "Notes"
-msgstr "備註"
+msgstr "备注"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:42
 msgid "Number of cells"
-msgstr "電池數量"
+msgstr "电池数量"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:43
 msgid "Poles"
-msgstr "極數"
+msgstr "极数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:44
 msgid "Product"
-msgstr "產品"
+msgstr "产品"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:45
 msgid "Program version"
@@ -8392,11 +8392,11 @@ msgstr "程序版本"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:46
 msgid "Propellers"
-msgstr "螺旋槳"
+msgstr "螺旋桨"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:47
 msgid "Protocol"
-msgstr "協議"
+msgstr "协议"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:48
 msgid "RC Controller"
@@ -8404,31 +8404,31 @@ msgstr "RC 控制器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:49
 msgid "RC Receiver"
-msgstr "RC 接收機"
+msgstr "RC 接收机"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:50
 msgid "RC Transmitter"
-msgstr "RC 發射機"
+msgstr "RC 发射机"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:51
 msgid "Specifications"
-msgstr "規格"
+msgstr "规格"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:52
 msgid "TOW max Kg"
-msgstr "最大起飛重量 Kg"
+msgstr "最大起飞重量 Kg"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:53
 msgid "TOW min Kg"
-msgstr "最小起飛重量 Kg"
+msgstr "最小起飞重量 Kg"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:54
 msgid "Telemetry"
-msgstr "遙測"
+msgstr "遥测"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:55
 msgid "Type"
-msgstr "類型"
+msgstr "类型"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:56
 msgid "URL"
@@ -8444,15 +8444,15 @@ msgstr "单体电压解锁"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:59
 msgid "Volt per cell crit"
-msgstr "每個電池的臨界電壓"
+msgstr "每个电池的临界电压"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:60
 msgid "Volt per cell low"
-msgstr "每個電池的低電壓"
+msgstr "每个电池的低电压"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:61
 msgid "Volt per cell max"
-msgstr "每個電池的最大電壓"
+msgstr "每个电池的最大电压"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:62
 msgid "Volt per cell min"
@@ -8920,7 +8920,7 @@ msgstr "产品页面或文档的网页链接"
 #~ "Choose one of the following three options:"
 #~ msgstr ""
 #~ "\n"
-#~ "選擇以下三個選項之一：\n"
+#~ "选择以下三个选项之一：\n"
 #~ "选择以下三种选项之一："
 
 #~ msgid ""
@@ -9015,7 +9015,7 @@ msgstr "产品页面或文档的网页链接"
 #~ "tcp:127.0.0.1:5761\n"
 #~ "udp:127.0.0.1:14551"
 #~ msgstr ""
-#~ "輸入飛行控制器的連接字符串。示例如下：\n"
+#~ "输入飞行控制器的连接字符串。示例如下：\n"
 #~ "\n"
 #~ "COM4（在 Windows 上）\n"
 #~ "/dev/serial/by-id/usb-xxx（在 Linux 上）\n"
