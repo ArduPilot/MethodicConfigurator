@@ -23,7 +23,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_data import Log
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 
-def analyze_log_data(  # pylint: disable=too-many-arguments, too-many-locals
+def analyze_log_data(  # pylint: disable=too-many-arguments
     log_data: LogData,
     *,
     project_vehicle_type: object,
@@ -59,7 +59,7 @@ def analyze_log_data(  # pylint: disable=too-many-arguments, too-many-locals
     return analyze_log(log_data, context)
 
 
-def analyze_log_file(  # noqa: PLR0913 # pylint: disable=too-many-arguments, too-many-locals
+def analyze_log_file(  # noqa: PLR0913 # pylint: disable=too-many-arguments
     filepath: str,
     *,
     project_vehicle_type: object,

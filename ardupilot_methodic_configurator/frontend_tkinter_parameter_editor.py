@@ -640,20 +640,39 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         finally:
             progress.destroy()
 
-    @staticmethod
-    def _set_log_analysis_progress_mode(progress: ProgressWindow) -> Callable[[int, int], None]:
-        """Return a callback that turns the indeterminate scan into a determinate parse progress bar."""
-        is_determinate = False
+    def _set_log_analysis_progress_mode(
+        self, progress: ProgressWindow
+    ) -> tuple[Callable[[int, int], None], Callable[[], None]]:
+        """Return a thread-safe recorder and a main-thread flush callable."""
+        state: dict[str, object] = {"pct": -1, "current": 0, "total": 0, "is_determinate": False}
+        lock = threading.Lock()
 
-        def update_progress(current: int, total: int) -> None:
-            nonlocal is_determinate
-            if not is_determinate:
+        def record_progress(current: int, total: int) -> None:
+            """Background thread only — zero Tk calls."""
+            if total == 0:
+                return
+            pct = int(current * 100 / total)
+            with lock:
+                if pct != state["pct"]:
+                    state.update({"pct": pct, "current": current, "total": total})
+
+        def flush_to_ui() -> None:
+            """Main thread only — reads state and updates widgets."""
+            with lock:
+                pct = int(state["pct"])  # type: ignore[arg-type]
+                current = int(state["current"])  # type: ignore[arg-type]
+                total = int(state["total"])  # type: ignore[arg-type]
+                is_det = bool(state["is_determinate"])
+            if pct < 0:
+                return
+            if not is_det:
                 progress.progress_bar.stop()
                 progress.progress_bar.configure(mode="determinate")
-                is_determinate = True
+                with lock:
+                    state["is_determinate"] = True
             progress.update_progress_bar(current, total)
 
-        return update_progress
+        return record_progress, flush_to_ui
 
     def on_analyse_log_click(self) -> None:
         """Handle the analyse log button click."""
@@ -671,10 +690,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         progress = self._create_log_analysis_progress(_("Reading flight log, please wait..."))
-        progress_callback = self._set_log_analysis_progress_mode(progress)
 
         result_container: list = []
         error_container: list = []
+
+        progress_callback, flush_progress = self._set_log_analysis_progress_mode(progress)
 
         def run_extraction() -> None:
             try:
@@ -683,6 +703,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 error_container.append(e)
 
         def check_done() -> None:
+            flush_progress()
             if thread.is_alive():
                 self.root.after(100, check_done)
                 return

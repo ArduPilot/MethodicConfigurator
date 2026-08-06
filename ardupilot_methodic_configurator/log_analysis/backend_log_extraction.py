@@ -172,7 +172,7 @@ def _validate_message_fields(schema: data_model_log_data.MessageSchema, payload:
         raise ValueError(msg)
 
 
-def _process_ver_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+def process_ver_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
     """Extract firmware identity from a VER message, if possible."""
     fws = getattr(msg, "FWS", None)
     if isinstance(fws, bytes):
@@ -182,7 +182,7 @@ def _process_ver_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa
     return parse_ver_fields(fws, getattr(msg, "Maj", None), getattr(msg, "Min", None), getattr(msg, "Pat", None))
 
 
-def _process_msg_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+def process_msg_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
     """Extract firmware identity from an old-style MSG firmware line, if possible."""
     message = getattr(msg, "Message", "")
     if isinstance(message, bytes):
@@ -218,11 +218,11 @@ def _record_message_counts_fields_and_identity(mlog: mavutil.mavfile, log_data: 
         if msg_type == "FMTU":
             mult_ids_by_type[int(msg.FmtType)] = msg.MultIds
         elif msg_type == "VER" and log_data.vehicle_type is None:
-            identity = _process_ver_identity(msg)
+            identity = process_ver_identity(msg)
             if identity is not None:
                 _set_log_identity(log_data, identity)
         elif msg_type == "MSG" and msg_fallback_identity is None:
-            msg_fallback_identity = _process_msg_identity(msg)
+            msg_fallback_identity = process_msg_identity(msg)
 
     if log_data.vehicle_type is None and msg_fallback_identity is not None:
         _set_log_identity(log_data, msg_fallback_identity)

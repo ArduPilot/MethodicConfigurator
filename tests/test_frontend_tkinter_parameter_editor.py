@@ -733,7 +733,10 @@ class TestAnalyseLogClick:
             parameter_editor_window.ui.analyze_log_data = MagicMock(return_value=fake_summary)
             parameter_editor_window.on_analyse_log_click()
             captured_targets[0]()
-            check_done = parameter_editor_window.root.after.call_args_list[-1].args[1]
+
+            check_done = next(
+                c.args[1] for c in reversed(parameter_editor_window.root.after.call_args_list) if c.args[0] == 100
+            )
             check_done()
 
         progress = parameter_editor_window._test_progress_windows[0]  # type: ignore[attr-defined]
