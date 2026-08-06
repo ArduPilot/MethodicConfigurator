@@ -146,7 +146,7 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
     validation of directory names according to specific rules.
     """
 
-    MAX_RECENT_DIRS = 5  # Maximum number of recent vehicle directories to store
+    MAX_RECENT_DIRS = 10  # Maximum number of recent vehicle directories to store
     MAX_CONNECTION_HISTORY = 10  # Maximum number of connection strings to store
 
     def __init__(self) -> None:
