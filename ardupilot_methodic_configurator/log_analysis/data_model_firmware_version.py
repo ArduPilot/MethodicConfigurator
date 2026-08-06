@@ -66,3 +66,49 @@ def parse_first_msg_version(messages: Iterable[str]) -> tuple[str, int, int, int
         if parsed is not None:
             return parsed
     return None
+
+
+def _decode_field(value: Any, default: str = "") -> str | None:  # noqa: ANN401
+    """
+    Normalise a DataFlash log field to str.
+
+    Returns the decoded string for bytes/str values (replacing invalid bytes),
+    or None when the field is neither bytes nor str.
+    """
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    if isinstance(value, str):
+        return value
+    if value is None and default:
+        return default
+    return None
+
+
+def extract_ver_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+    """
+    Extract (vehicle_type, major, minor, patch) from a VER DataFlash log message.
+
+    Reads the FWS/Maj/Min/Pat attributes, decoding FWS if needed, and returns
+    None when the message is missing fields or not parseable.
+    """
+    fws = _decode_field(getattr(msg, "FWS", None))
+    if fws is None:
+        return None
+    return parse_ver_fields(fws, getattr(msg, "Maj", None), getattr(msg, "Min", None), getattr(msg, "Pat", None))
+
+
+def extract_msg_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
+    """
+    Extract (vehicle_type, major, minor, patch) from an old-style MSG firmware line.
+
+    Reads the Message attribute, decoding it if needed, and returns None when the
+    line is missing or not a parseable firmware version string.
+    """
+    message = _decode_field(getattr(msg, "Message", ""), default="")
+    if message is None:
+        return None
+    parsed = parse_first_msg_version([message])
+    if parsed is None:
+        return None
+    vehicle_type, major, minor, patch, _firmware_hash = parsed
+    return vehicle_type, major, minor, patch

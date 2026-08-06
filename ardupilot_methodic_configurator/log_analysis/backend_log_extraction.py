@@ -22,7 +22,7 @@ from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis import data_model_log_data
-from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import parse_first_msg_version, parse_ver_fields
+from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import extract_msg_identity, extract_ver_identity
 
 _NO_ID_ASSIGNED = "-"  # ArduPilot's FMTU convention: '-' marks a field with no unit/multiplier ID assigned
 
@@ -174,26 +174,12 @@ def _validate_message_fields(schema: data_model_log_data.MessageSchema, payload:
 
 def _process_ver_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
     """Extract firmware identity from a VER message, if possible."""
-    fws = getattr(msg, "FWS", None)
-    if isinstance(fws, bytes):
-        fws = fws.decode("utf-8", errors="replace")
-    elif not isinstance(fws, str):
-        return None
-    return parse_ver_fields(fws, getattr(msg, "Maj", None), getattr(msg, "Min", None), getattr(msg, "Pat", None))
+    return extract_ver_identity(msg)
 
 
 def _process_msg_identity(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
     """Extract firmware identity from an old-style MSG firmware line, if possible."""
-    message = getattr(msg, "Message", "")
-    if isinstance(message, bytes):
-        message = message.decode("utf-8", errors="replace")
-    elif not isinstance(message, str):
-        return None
-    parsed = parse_first_msg_version([message])
-    if parsed is None:
-        return None
-    vehicle_type, major, minor, patch, _firmware_hash = parsed
-    return vehicle_type, major, minor, patch
+    return extract_msg_identity(msg)
 
 
 def _set_log_identity(log_data: data_model_log_data.LogData, identity: tuple[str, int, int, int]) -> None:

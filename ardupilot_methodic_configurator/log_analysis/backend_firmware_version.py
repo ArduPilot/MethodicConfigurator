@@ -10,8 +10,8 @@ from typing import Any
 
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import close_log, open_log
 from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import (
-    parse_first_msg_version,
-    parse_ver_fields,
+    extract_msg_identity,
+    extract_ver_identity,
 )
 
 
@@ -21,13 +21,7 @@ def _process_ver(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
 
     Returns (vehicle_type, major, minor, patch) or None if any field is missing.
     """
-    fws = getattr(msg, "FWS", None)
-    if isinstance(fws, bytes):
-        fws = fws.decode("utf-8", errors="replace")
-    elif not isinstance(fws, str):
-        return None
-
-    return parse_ver_fields(fws, getattr(msg, "Maj", None), getattr(msg, "Min", None), getattr(msg, "Pat", None))
+    return extract_ver_identity(msg)
 
 
 def _parse_msg_version(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: ANN401
@@ -37,16 +31,7 @@ def _parse_msg_version(msg: Any) -> tuple[str, int, int, int] | None:  # noqa: A
     Returns (vehicle_type, major, minor, patch) or None if the entry is not parseable.
     The caller is responsible for not calling this once a result has already been found.
     """
-    message = getattr(msg, "Message", "")
-    if isinstance(message, bytes):
-        message = message.decode("utf-8", errors="replace")
-    elif not isinstance(message, str):
-        return None
-    parsed = parse_first_msg_version([message])
-    if parsed is None:
-        return None
-    vehicle_type, major, minor, patch, _firm_hash = parsed
-    return vehicle_type, major, minor, patch
+    return extract_msg_identity(msg)
 
 
 def extract_firmware_version_and_vehicle_type(logfile: str) -> tuple[str, int, int, int]:
