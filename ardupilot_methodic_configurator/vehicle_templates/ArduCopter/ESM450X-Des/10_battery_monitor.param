@@ -1,4 +1,4 @@
 BATT_AMP_PERVLT,36.363998
+BATT_FS_VOLTSRC,0  # Will monitor raw voltage only. So battery is not pushed to its limits in failsafes.
 BATT_MONITOR,4  # Selected in component editor window
 BATT_VOLT_MULT,18.181999
-BATT_FS_VOLTSRC,0  # Will monitor raw voltage only. So battery is not pushed to its limits in failsafes.
