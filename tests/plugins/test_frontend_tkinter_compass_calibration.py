@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.frontend_tkinter_compass_calibration import (
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration import (
     CompassCalibrationInstructionsPopup,
     CompassCalibrationPopup,
     CompassCalibrationView,
@@ -25,7 +25,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_compass_calibration import
     _create_compass_calibration_view,
     register_compass_calibration_plugin,
 )
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_COMPASS_CALIBRATION
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_COMPASS_CALIBRATION
 
 # pylint: disable=protected-access, redefined-outer-name, too-few-public-methods
 
@@ -93,7 +93,8 @@ class TestCompassCalibrationInstructionsPopup:
 
         with (
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.tk.Toplevel.__init__", return_value=None
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Toplevel.__init__",
+                return_value=None,
             ),
             patch.object(CompassCalibrationInstructionsPopup, "_setup_ui"),
             patch.object(CompassCalibrationInstructionsPopup, "_resize_and_center"),
@@ -144,7 +145,8 @@ class TestCompassCalibrationPopupFlows:
 
         with (
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.tk.Toplevel.__init__", return_value=None
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Toplevel.__init__",
+                return_value=None,
             ),
             patch.object(CompassCalibrationPopup, "_setup_style"),
             patch.object(CompassCalibrationPopup, "_setup_ui"),
@@ -217,7 +219,7 @@ class TestCompassCalibrationViewStartFlow:
         popup = MagicMock()
 
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.CompassCalibrationInstructionsPopup",
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.CompassCalibrationInstructionsPopup",
             return_value=popup,
         ) as mock_popup:
             calibration_view._on_start()
@@ -237,7 +239,7 @@ class TestCompassCalibrationViewStartFlow:
         calibration_view.model.start_calibration.return_value = (True, "")
 
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.CompassCalibrationPopup",
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.CompassCalibrationPopup",
             return_value=popup,
         ) as mock_popup:
             calibration_view._begin_calibration()
@@ -255,7 +257,9 @@ class TestCompassCalibrationViewStartFlow:
         """
         calibration_view.model.start_calibration.return_value = (False, "Not connected")
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showerror") as mock_error:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showerror"
+        ) as mock_error:
             calibration_view._begin_calibration()
 
         mock_error.assert_called_once_with("Failed to Start", "Not connected", parent=calibration_view)
@@ -279,7 +283,8 @@ class TestCompassCalibrationViewSetupAndRegistration:
 
         with (
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Frame.__init__", return_value=None
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Frame.__init__",
+                return_value=None,
             ),
             patch.object(CompassCalibrationView, "_setup_ui"),
         ):
@@ -297,7 +302,7 @@ class TestCompassCalibrationViewSetupAndRegistration:
         THEN: The compass calibration plugin is registered with the factory
         """
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.plugin_factory.register"
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.plugin_factory.register"
         ) as mock_register:
             register_compass_calibration_plugin()
 
@@ -316,7 +321,7 @@ class TestCompassCalibrationViewSetupAndRegistration:
         base_window = MagicMock()
 
         with patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.CompassCalibrationView",
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.CompassCalibrationView",
             return_value=MagicMock(),
         ) as mock_view:
             result = _create_compass_calibration_view(parent, model, base_window)

@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 import pytest
 from pymavlink import mavutil
 
-from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 
 # pylint: disable=protected-access,redefined-outer-name
 

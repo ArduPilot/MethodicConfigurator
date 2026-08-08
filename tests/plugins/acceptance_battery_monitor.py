@@ -20,14 +20,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (
+from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import (
     BatteryMonitorView,
     _create_battery_monitor_view,
     register_battery_monitor_plugin,
 )
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 # pylint: disable=redefined-outer-name,protected-access,too-many-lines
 

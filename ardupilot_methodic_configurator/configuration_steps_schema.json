@@ -231,6 +231,10 @@
               "type": "object",
               "required": ["name", "placement"],
               "properties": {
+                "if": {
+                  "type": "string",
+                  "description": "Optional Python expression; if present, the plugin is only shown when this expression evaluates to true"
+                },
                 "name": {
                   "type": "string",
                   "enum": ["motor_test", "battery_monitor", "compass_calibration", "accelerometer_calibration", "esc_rpm_scale", "rc_calibration"],
@@ -241,7 +245,8 @@
                   "enum": ["left", "top"],
                   "description": "Where to place the plugin: 'left' for left of scrollable frame, 'top' for above contents"
                 }
-              }
+              },
+              "additionalProperties": false
             },
             "instructions_popup": {
               "type": "object",

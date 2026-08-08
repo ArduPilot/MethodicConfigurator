@@ -19,14 +19,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (
+from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import (
     BatteryMonitorView,
     _create_battery_monitor_view,
     register_battery_monitor_plugin,
 )
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 # pylint: disable=redefined-outer-name,protected-access
 
@@ -76,7 +76,7 @@ class TestUploadButtonErrorHandling:
         tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
+        with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.showerror") as mock_error:
             view._on_upload_button_clicked()
             mock_error.assert_called_once()
             assert "UI services not available" in str(mock_error.call_args)
@@ -104,7 +104,7 @@ class TestUploadButtonErrorHandling:
         tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
+        with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.showerror") as mock_error:
             view._on_upload_button_clicked()
             mock_error.assert_called_once()
             assert "Parameter editor not available" in str(mock_error.call_args)
@@ -133,7 +133,7 @@ class TestUploadButtonErrorHandling:
         tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
+        with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.showerror") as mock_error:
             view._on_upload_button_clicked()
             mock_error.assert_called_once()
             assert "Table error" in str(mock_error.call_args)
@@ -165,7 +165,7 @@ class TestUploadButtonErrorHandling:
         tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
+        with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.showerror") as mock_error:
             view._on_upload_button_clicked()
             mock_error.assert_called_once()
             assert "Parameter editor not available" in str(mock_error.call_args)
@@ -290,8 +290,8 @@ class TestUploadSelectedParamsMethod:
 
         # Act & Assert: Call upload_selected_params
         with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.showerror"),
+            patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.logging_error") as mock_log,
         ):
             view.upload_selected_params(ParDict())
             mock_log.assert_called_once()
@@ -315,8 +315,8 @@ class TestUploadSelectedParamsMethod:
 
         # Act & Assert: Call upload_selected_params
         with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror"),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.showerror"),
+            patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.logging_error") as mock_log,
         ):
             view.upload_selected_params(ParDict())
             mock_log.assert_called_once()
@@ -342,7 +342,7 @@ class TestUploadSelectedParamsMethod:
         tk_root.update_idletasks()
 
         # Act & Assert: Call upload_selected_params
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.logging_error") as mock_log:
+        with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.logging_error") as mock_log:
             view.upload_selected_params(ParDict({"BATT_CAPACITY": Par(5200)}))
             mock_log.assert_called_once()
             mock_ui_services.show_error.assert_called_once()
@@ -540,7 +540,7 @@ class TestParameterTableRefresh:
         tk_root.update_idletasks()
 
         # Act & Assert: Click upload button - should show error
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.showerror") as mock_error:
+        with patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.showerror") as mock_error:
             view._on_upload_button_clicked()
             mock_error.assert_called_once()
             assert "Parameter editor not available" in str(mock_error.call_args)

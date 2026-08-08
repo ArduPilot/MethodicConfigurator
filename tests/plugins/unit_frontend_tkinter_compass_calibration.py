@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.frontend_tkinter_compass_calibration import (
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration import (
     CompassCalibrationInstructionsPopup,
     CompassCalibrationPopup,
     CompassCalibrationView,
@@ -112,9 +112,13 @@ class TestCompassCalibrationInstructionsPopupInternals:
         button.winfo_reqheight.return_value = 32
 
         with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.tk.Canvas", return_value=canvas),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.tk.Label", return_value=label),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Button", return_value=button),
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Canvas", return_value=canvas
+            ),
+            patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Label", return_value=label),
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Button", return_value=button
+            ),
         ):
             popup._setup_ui()
 
@@ -182,7 +186,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         """
         popup = progress_popup
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.tk.Toplevel.destroy") as mock_destroy:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Toplevel.destroy"
+        ) as mock_destroy:
             CompassCalibrationPopup.destroy(popup)
 
         popup._stop_polling.assert_called_once()
@@ -201,7 +207,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         style = MagicMock()
         style.lookup.return_value = ""
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Style", return_value=style):
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Style", return_value=style
+        ):
             popup._setup_style()
 
         assert popup._bg_color == "#202020"
@@ -241,17 +249,24 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
 
         with (
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.tk.Frame",
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Frame",
                 side_effect=[outer_frame, title_bar],
             ),
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Frame",
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Frame",
                 side_effect=[content_frame, bars_frame, rows_container],
             ),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.tk.Label", return_value=title_label),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Label", return_value=hint_label),
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Button", return_value=cancel_button
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Label",
+                return_value=title_label,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Label",
+                return_value=hint_label,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Button",
+                return_value=cancel_button,
             ),
         ):
             popup._setup_ui()
@@ -283,7 +298,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         popup.model.cancel_calibration = MagicMock(return_value=(True, ""))
         popup.model.finish_calibration = MagicMock()
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showinfo") as mock_info:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showinfo"
+        ) as mock_info:
             popup._on_cancel()
 
         popup.after_cancel.assert_called_once_with("after-id")
@@ -309,7 +326,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         popup.model.cancel_calibration = MagicMock(return_value=(False, "Cancel rejected"))
         popup.model.finish_calibration = MagicMock()
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showerror") as mock_error:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showerror"
+        ) as mock_error:
             popup._on_cancel()
 
         mock_error.assert_called_once_with("Failed to Cancel", "Cancel rejected", parent=popup)
@@ -357,7 +376,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
             {"type": "STATUS_TEXT", "compass_id": 0, "status": 2, "text": "Compass calibrated requires reboot"}
         ]
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showinfo") as mock_info:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showinfo"
+        ) as mock_info:
             popup._check_progress()
 
         assert popup.completion_status[0] is True
@@ -383,7 +404,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         popup.model.get_progress.return_value = [{"type": "REPORT", "compass_id": 0, "status": 2, "saved": False}]
         popup.model.cancel_calibration.return_value = (True, "")
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showerror") as mock_error:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showerror"
+        ) as mock_error:
             popup._check_progress()
 
         popup._stop_polling.assert_called_once()
@@ -500,10 +523,10 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         progress_bar.start = MagicMock()
 
         with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Frame", return_value=row),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Label"),
+            patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Frame", return_value=row),
+            patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Label"),
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Progressbar",
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Progressbar",
                 return_value=progress_bar,
             ),
         ):
@@ -578,7 +601,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         popup._timer_id = None
         popup.after = MagicMock(return_value="next-after-id")
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.logging_warning") as mock_warning:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.logging_warning"
+        ) as mock_warning:
             for _ in range(50):
                 popup._check_progress()
 
@@ -627,7 +652,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
             {"type": "STATUS_TEXT", "status": 2, "text": "Compass calibrated requires reboot"}
         ]
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showinfo") as mock_info:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showinfo"
+        ) as mock_info:
             popup._check_progress()
 
         assert popup.completion_status == {0: True, 1: True}
@@ -655,7 +682,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
             {"type": "REPORT", "compass_id": 1, "status": 4, "saved": True},
         ]
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.messagebox.showinfo") as mock_info:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.messagebox.showinfo"
+        ) as mock_info:
             popup._check_progress()
 
         assert popup.completion_status == {0: True, 1: True}
@@ -681,8 +710,12 @@ class TestCompassCalibrationViewInternals:
         button = MagicMock()
 
         with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Frame", return_value=frame),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.ttk.Button", return_value=button),
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Frame", return_value=frame
+            ),
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.ttk.Button", return_value=button
+            ),
         ):
             popup._setup_ui()
 

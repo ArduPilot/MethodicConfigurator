@@ -18,7 +18,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.data_model_compass_calibration import CompassCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
 
 # pylint: disable=redefined-outer-name,protected-access
 

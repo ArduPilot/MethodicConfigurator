@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_rc_calibration import (
+from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import (
     _RC_CENTER_PWM,
     _RC_INVALID_PWM,
     RCCalibrationDataModel,

@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ardupilot_methodic_configurator.plugin_protocol import PluginView
+from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginView
 
 # pylint: disable=unused-argument
 

@@ -2446,6 +2446,9 @@ class TestInlineComponentEditorCallbacks:
         """
         editor = _create_editor(parameter_editor)
         editor.repopulate_parameter_table = MagicMock()
+        editor._update_plugin_layout = MagicMock()
+        parameter_editor.current_file = "09_esc_telemetry.param"
+        parameter_editor.get_plugin.return_value = {"name": "esc_rpm_scale", "placement": "left"}
 
         updated_components = {"Battery": {"Specifications": {"Volt per cell max": 4.2}}}
         mock_inline_editor = MagicMock()
@@ -2456,6 +2459,8 @@ class TestInlineComponentEditorCallbacks:
 
         parameter_editor.update_vehicle_components.assert_called_once_with(updated_components)
         parameter_editor.refresh_current_step_computed_parameters.assert_called_once()
+        parameter_editor.get_plugin.assert_called_once_with("09_esc_telemetry.param")
+        editor._update_plugin_layout.assert_called_once_with({"name": "esc_rpm_scale", "placement": "left"})
         editor.repopulate_parameter_table.assert_called_once()
 
     def test_component_data_change_returns_early_when_no_inline_editor(self, parameter_editor: MagicMock) -> None:

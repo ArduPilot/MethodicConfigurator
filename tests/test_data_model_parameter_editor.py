@@ -22,7 +22,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterEditor,
     ParameterValueUpdateStatus,
 )
-from ardupilot_methodic_configurator.plugin_constants import (
+from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
     PLUGIN_ESC_RPM_SCALE,
@@ -4340,6 +4340,67 @@ class TestComponentEditorIntegration:
         parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = False
 
         assert parameter_editor._has_component_unsaved_changes() is False
+
+
+class TestPluginSelection:
+    """Tests for plugin selection and conditional plugin evaluation."""
+
+    def test_system_returns_plugin_without_condition_when_guard_is_true(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System returns plugin metadata when plugin 'if' condition evaluates to true.
+
+        GIVEN: A step plugin with an 'if' condition based on vehicle_components
+        WHEN: get_plugin() is called and the condition evaluates to true
+        THEN: The plugin metadata is returned without the 'if' key
+        """
+        parameter_editor._local_filesystem.get_plugin.return_value = {
+            "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'",
+            "name": "esc_rpm_scale",
+            "placement": "left",
+        }
+        parameter_editor._config_step_processor.variables = {
+            "vehicle_components": {"ESC": {"ESC->FC Telemetry": {"Protocol": "Scripting"}}}
+        }
+
+        result = parameter_editor.get_plugin("09_esc_telemetry.param")
+
+        assert result == {"name": "esc_rpm_scale", "placement": "left"}
+
+    def test_system_returns_none_when_plugin_guard_is_false(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System hides plugin when plugin 'if' condition evaluates to false.
+
+        GIVEN: A step plugin with an 'if' condition based on vehicle_components
+        WHEN: get_plugin() is called and the condition evaluates to false
+        THEN: None is returned
+        """
+        parameter_editor._local_filesystem.get_plugin.return_value = {
+            "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'",
+            "name": "esc_rpm_scale",
+            "placement": "left",
+        }
+        parameter_editor._config_step_processor.variables = {
+            "vehicle_components": {"ESC": {"ESC->FC Telemetry": {"Protocol": "ESC Telemetry"}}}
+        }
+
+        result = parameter_editor.get_plugin("09_esc_telemetry.param")
+
+        assert result is None
+
+    def test_system_returns_unconditional_plugin_as_is(self, parameter_editor: ParameterEditor) -> None:
+        """
+        System keeps backwards compatibility for plugins without an 'if' condition.
+
+        GIVEN: A step plugin without an 'if' condition
+        WHEN: get_plugin() is called
+        THEN: The plugin metadata is returned unchanged
+        """
+        plugin = {"name": "motor_test", "placement": "left"}
+        parameter_editor._local_filesystem.get_plugin.return_value = plugin
+
+        result = parameter_editor.get_plugin("20_esc.param")
+
+        assert result == plugin
 
     def test_system_skips_derived_refresh_when_no_current_file(self, parameter_editor: ParameterEditor) -> None:
         """

@@ -45,13 +45,13 @@ from ardupilot_methodic_configurator.__main__ import (
 from ardupilot_methodic_configurator.backend_flightcontroller import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
-from ardupilot_methodic_configurator.plugin_constants import (
+from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
     PLUGIN_ESC_RPM_SCALE,
     PLUGIN_MOTOR_TEST,
 )
-from ardupilot_methodic_configurator.plugin_factory import PluginFactory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory
 
 # pylint: disable=too-many-lines,redefined-outer-name,too-few-public-methods
 
@@ -1430,15 +1430,17 @@ class TestRegisterPluginsInternals:
         """
         # Arrange
         with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.register_motor_test_plugin") as mock_motor,
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_battery_monitor.register_battery_monitor_plugin"
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.register_motor_test_plugin"
+            ) as mock_motor,
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.register_battery_monitor_plugin"
             ) as mock_battery,
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_compass_calibration.register_compass_calibration_plugin"
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.register_compass_calibration_plugin"
             ) as mock_compass,
             patch(
-                "ardupilot_methodic_configurator.frontend_tkinter_esc_rpm_scale.register_esc_rpm_scale_plugin"
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale.register_esc_rpm_scale_plugin"
             ) as mock_esc_rpm_scale,
         ):
             register_plugins()
@@ -1465,7 +1467,7 @@ class TestValidatePluginRegistry:
         factory = PluginFactory()
         factory.register("motor_test", MagicMock())
 
-        with patch("ardupilot_methodic_configurator.plugin_factory.logging_error") as mock_err:
+        with patch("ardupilot_methodic_configurator.plugins.plugin_factory.logging_error") as mock_err:
             factory.validate_configuration_steps(configuration_steps)
 
             mock_err.assert_not_called()
@@ -1485,7 +1487,7 @@ class TestValidatePluginRegistry:
         factory.register(PLUGIN_ESC_RPM_SCALE, MagicMock())
         factory.register(PLUGIN_MOTOR_TEST, MagicMock())
 
-        with patch("ardupilot_methodic_configurator.plugin_factory.logging_error") as mock_err:
+        with patch("ardupilot_methodic_configurator.plugins.plugin_factory.logging_error") as mock_err:
             factory.validate_configuration_steps(configuration_steps)
 
             mock_err.assert_called_once()

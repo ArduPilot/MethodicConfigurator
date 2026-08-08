@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest.mock import MagicMock, patch
 
-from ardupilot_methodic_configurator.plugin_factory import PluginFactory, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, plugin_factory
 
 # pylint: disable=protected-access
 
@@ -71,7 +71,7 @@ class TestPluginFactory:
         factory.register("test_plugin", old_creator)
 
         # Act: Register new creator with same name
-        with patch("ardupilot_methodic_configurator.plugin_factory.logging_error") as mock_log:
+        with patch("ardupilot_methodic_configurator.plugins.plugin_factory.logging_error") as mock_log:
             factory.register("test_plugin", new_creator)
 
             # Assert: Error is logged about overwrite

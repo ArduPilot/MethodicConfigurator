@@ -32,15 +32,15 @@ from ardupilot_methodic_configurator.__main__ import (
     setup_logging,
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_battery_monitor import (
-    BATTERY_UPDATE_INTERVAL_MS,
-    BatteryMonitorDataModel,
-)
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_BATTERY_MONITOR
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import (
+    BATTERY_UPDATE_INTERVAL_MS,
+    BatteryMonitorDataModel,
+)
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_BATTERY_MONITOR
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (

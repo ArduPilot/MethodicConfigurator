@@ -15,10 +15,10 @@ from tkinter.messagebox import showerror, showinfo
 from tkinter.simpledialog import askfloat
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.data_model_esc_rpm_scale import EscRpmScaleDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_ESC_RPM_SCALE
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.data_model_esc_rpm_scale import EscRpmScaleDataModel
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ESC_RPM_SCALE
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 
 class EscRpmScaleView(Frame):
@@ -36,6 +36,9 @@ class EscRpmScaleView(Frame):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        if not self.model.is_scripting_telemetry_protocol():
+            return
+
         main_frame = ttk.Frame(self)
         main_frame.pack(fill="both", expand=True)
 

@@ -20,15 +20,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import ardupilot_methodic_configurator.frontend_tkinter_motor_test as motor_test_module
-from ardupilot_methodic_configurator.data_model_motor_test import (  # pylint: disable=unused-import
+import ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test as motor_test_module
+from ardupilot_methodic_configurator.plugins.data_model_motor_test import (  # pylint: disable=unused-import
     MotorTestDataModel,
     MotorTestExecutionError,
     MotorTestSafetyError,
     ParameterError,
     ValidationError,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_motor_test import (
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test import (
     DelayedProgressCallback,
     MotorStatusEvent,
     MotorTestView,
@@ -400,7 +400,7 @@ class TestMotorTestView:
 
         progress_stub = SimpleNamespace(update_progress_bar=lambda *_a: None, destroy=lambda: None)
         mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.ProgressWindow",
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.ProgressWindow",
             return_value=progress_stub,
         )
 
@@ -437,7 +437,7 @@ class TestMotorTestView:
         motor_view.frame_type_combobox.current(0)
         progress_stub = SimpleNamespace(update_progress_bar=lambda *_a: None, destroy=lambda: None)
         mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.ProgressWindow",
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.ProgressWindow",
             side_effect=[progress_stub, progress_stub, progress_stub, progress_stub],
         )
         motor_view._on_frame_type_change(object())
@@ -747,11 +747,11 @@ class TestMotorTestWindow:
             self.calculate_scaled_image_size = lambda value: value
             self.dpi_scaling_factor = 1.0
 
-        mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.BaseWindow.__init__", fake_base_init)
+        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.BaseWindow.__init__", fake_base_init)
         view_mock = MagicMock()
         view_mock.model = fake_model
         mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.MotorTestView",
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.MotorTestView",
             return_value=view_mock,
         )
 
@@ -783,12 +783,12 @@ class TestMotorTestWindow:
             self.calculate_scaled_image_size = lambda value: value
             self.dpi_scaling_factor = 1.0
 
-        mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.BaseWindow.__init__", fake_base_init)
+        mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.BaseWindow.__init__", fake_base_init)
         view_mock = MagicMock()
         view_mock.model = fake_model
         mocker.patch.object(fake_model, "stop_all_motors", side_effect=RuntimeError("boom"))
         mocker.patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_motor_test.MotorTestView",
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.MotorTestView",
             return_value=view_mock,
         )
 
@@ -826,7 +826,7 @@ class TestCommandLineWorkflow:
                 self.calls.append((name, creator))
 
         dummy_factory = DummyFactory()
-        module = import_module("ardupilot_methodic_configurator.frontend_tkinter_motor_test")
+        module = import_module("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test")
         module_with_attr = cast("Any", module)
         original_factory = module_with_attr.plugin_factory
         module_with_attr.plugin_factory = dummy_factory
@@ -911,7 +911,7 @@ class TestMotorTestViewMotorSwapping:
         THEN: A success info dialog is shown and comboboxes are cleared
         """
         dialog_spies.askyesno.return_value = True
-        mock_showinfo = mocker.patch("ardupilot_methodic_configurator.frontend_tkinter_motor_test.showinfo")
+        mock_showinfo = mocker.patch("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.showinfo")
         fake_model.swap_motor_functions = MagicMock()
         motor_view.detected_comboboxes[0].set("B")
 

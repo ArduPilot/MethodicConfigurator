@@ -41,7 +41,13 @@ from ardupilot_methodic_configurator.__main__ import (
     setup_logging,
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_motor_test import (
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
+    BaseWindow,
+)
+from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
+from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
     DURATION_S_MAX,
     DURATION_S_MIN,
     THROTTLE_PCT_MAX,
@@ -54,14 +60,8 @@ from ardupilot_methodic_configurator.data_model_motor_test import (
     ParameterError,
     ValidationError,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
-    BaseWindow,
-)
-from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
-from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_MOTOR_TEST
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 
 class DelayedProgressCallback:  # pylint: disable=too-few-public-methods

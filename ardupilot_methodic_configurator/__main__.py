@@ -62,7 +62,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
 )
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import PopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_workflow_explanation
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 
 def register_plugins() -> None:
@@ -83,20 +83,20 @@ def register_plugins() -> None:
     # Imports are intentionally deferred to avoid circular imports: the frontend_tkinter_* modules
     # import plugin_factory at module level, so top-level imports here would form a cycle.
     # pylint: disable=import-outside-toplevel, cyclic-import
-    from ardupilot_methodic_configurator.frontend_tkinter_accelerometer_calibration import (  # noqa: PLC0415
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import (  # noqa: PLC0415
         register_accelerometer_calibration_plugin,
     )
-    from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import (  # noqa: PLC0415
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import (  # noqa: PLC0415
         register_battery_monitor_plugin,
     )
-    from ardupilot_methodic_configurator.frontend_tkinter_compass_calibration import (  # noqa: PLC0415
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration import (  # noqa: PLC0415
         register_compass_calibration_plugin,
     )
-    from ardupilot_methodic_configurator.frontend_tkinter_esc_rpm_scale import (  # noqa: PLC0415
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale import (  # noqa: PLC0415
         register_esc_rpm_scale_plugin,
     )
-    from ardupilot_methodic_configurator.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
-    from ardupilot_methodic_configurator.frontend_tkinter_rc_calibration import (  # noqa: PLC0415
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration import (  # noqa: PLC0415
         register_rc_calibration_plugin,
     )
     # pylint: enable=import-outside-toplevel, cyclic-import
