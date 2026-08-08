@@ -3,6 +3,8 @@ Data model for GPS/GNSS quality check.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
+SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
+
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
@@ -13,7 +15,6 @@ from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import
     LogQualityResult,
     QualityIssue,
 )
-from ardupilot_methodic_configurator.log_analysis.utils import find_log_bit_in_apm_file, get_log_bitmask
 
 
 class GPSLogQualityModel(BaseLogQualityAnalysisModel):
@@ -34,19 +35,8 @@ class GPSLogQualityModel(BaseLogQualityAnalysisModel):
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why GPS data is absent using LOG_BITMASK."""
-        bitmask = self.parameters.get("LOG_BITMASK")
-        bitmask_field = get_log_bitmask(self.apm_doc) if self.apm_doc else None
-        log_bit = find_log_bit_in_apm_file(bitmask_field, "GPS") if bitmask_field else None
-
-        step, name = self.resolve_message_step("GPS", "GPS")
-
-        if log_bit is not None and bitmask is not None and (int(bitmask) & (1 << log_bit)) == 0:
-            reason = _("GPS logging is disabled in LOG_BITMASK")
-            issues = [QualityIssue(_("Enable GPS logging (LOG_BITMASK bit) to record GPS data"), step)]
-        else:
-            reason = _("GPS/GNSS telemetry not logged but logging enabled; check the GPS physical connection")
-            issues = [QualityIssue(_("No GPS messages found"), step)]
-
+        name = self.resolve_message_step("GPS", "GPS")[1]
+        reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence("GPS", "GPS", "GPS")
         return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
 
     def check_status(self) -> list[QualityIssue]:

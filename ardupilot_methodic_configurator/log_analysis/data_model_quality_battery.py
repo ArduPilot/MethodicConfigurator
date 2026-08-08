@@ -3,6 +3,8 @@ Data model for battery quality check.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
+SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
+
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
@@ -13,7 +15,6 @@ from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import
     LogQualityResult,
     QualityIssue,
 )
-from ardupilot_methodic_configurator.log_analysis.utils import find_log_bit_in_apm_file, get_log_bitmask
 
 
 class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
@@ -33,24 +34,19 @@ class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
         return self.build_result(issues, name)
 
     def _diagnose_absence(self) -> LogQualityResult:
-        bitmask = self.parameters.get("LOG_BITMASK")
-        monitor = self.parameters.get("BATT_MONITOR")
-        bitmask_field = get_log_bitmask(self.apm_doc) if self.apm_doc else None
-        log_bit = find_log_bit_in_apm_file(bitmask_field, "Battery Monitor") if bitmask_field else None
+        name = self.resolve_message_step("BAT", "Battery")[1]
+        reason, issues, bitmask_disabled = self.diagnose_bitmask_absence("BAT", "Battery Monitor", "Battery")
 
-        step, name = self.resolve_message_step("BAT", "Battery")
-
-        if log_bit is not None and bitmask is not None and (int(bitmask) & (1 << log_bit)) == 0:
-            reason = _("Battery logging is disabled in LOG_BITMASK")
-            issues = [QualityIssue(_("Enable battery logging (LOG_BITMASK bit) to record BAT data"), step)]
-        elif monitor == 0:
-            reason = _("Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)")
-            issues = [
-                QualityIssue(_("Set BATT_MONITOR to enable the battery monitor"), self.step_for_parameter("BATT_MONITOR"))
-            ]
-        else:
-            reason = _("Battery logging enabled but no data, monitor may not be configured properly")
-            issues = [QualityIssue(_("No BAT messages found"), step)]
+        if not bitmask_disabled:
+            step, name = self.resolve_message_step("BAT", "Battery")
+            if self.parameters.get("BATT_MONITOR") == 0:
+                reason = _("Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)")
+                issues = [
+                    QualityIssue(_("Set BATT_MONITOR to enable the battery monitor"), self.step_for_parameter("BATT_MONITOR"))
+                ]
+            else:
+                reason = _("Battery logging enabled but no data, monitor may not be configured properly")
+                issues = [QualityIssue(_("No BAT messages found"), step)]
 
         return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
 
