@@ -46,8 +46,8 @@ from ardupilot_methodic_configurator.data_model_configuration_step import Config
 from ardupilot_methodic_configurator.data_model_esc_rpm_scale import EscRpmScaleDataModel
 from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
-from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 from ardupilot_methodic_configurator.data_model_rc_calibration import RCCalibrationDataModel
+from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 from ardupilot_methodic_configurator.plugin_constants import (
     PLUGIN_ACCELEROMETER_CALIBRATION,
     PLUGIN_BATTERY_MONITOR,
