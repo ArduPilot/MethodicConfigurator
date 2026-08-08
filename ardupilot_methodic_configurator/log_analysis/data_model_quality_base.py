@@ -5,6 +5,8 @@ Defines the common result data model and the base class used by all subsystem qu
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
+SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
+
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
@@ -20,6 +22,8 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import 
 from ardupilot_methodic_configurator.log_analysis.utils import (
     find_configuration_step_for_message,
     find_configuration_step_for_parameter,
+    find_log_bit_in_apm_file,
+    get_log_bitmask,
 )
 
 if TYPE_CHECKING:
@@ -103,3 +107,34 @@ class BaseLogQualityAnalysisModel:
             return None, issues
 
         return values, issues
+
+    def diagnose_bitmask_absence(
+        self,
+        message_name: str,
+        bit_name: str,
+        fallback_name: str,
+    ) -> tuple[str, list[QualityIssue], bool]:
+        """
+        Diagnose absence of a message via LOG_BITMASK.
+
+        Returns (reason, issues, bitmask_disabled). bitmask_disabled tells the caller
+        whether this was actually a LOG_BITMASK-disabled case, so callers with extra
+        fallback branches (e.g. Battery's BATT_MONITOR check) know whether to layer
+        their own logic on top of the generic "not found" case.
+        """
+        bitmask = self.parameters.get("LOG_BITMASK")
+        bitmask_field = get_log_bitmask(self.apm_doc) if self.apm_doc else None
+        log_bit = find_log_bit_in_apm_file(bitmask_field, bit_name) if bitmask_field else None
+
+        step, _name = self.resolve_message_step(message_name, fallback_name)
+
+        if log_bit is not None and bitmask is not None and (int(bitmask) & (1 << log_bit)) == 0:
+            reason = _("{message} logging is disabled in LOG_BITMASK").format(message=fallback_name)
+            issues = [QualityIssue(_("Enable {message} logging (LOG_BITMASK bit)").format(message=fallback_name), step)]
+            return reason, issues, True
+
+        reason = _("{message} telemetry not logged but logging enabled; check the physical connection").format(
+            message=fallback_name
+        )
+        issues = [QualityIssue(_("No {message} messages found").format(message=message_name), step)]
+        return reason, issues, False

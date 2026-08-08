@@ -570,7 +570,15 @@
                 "INS_HNTCH_FREQ": { "New Value": "1.4*fc_parameters['INS_GYRO_FILTER']", "Change Reason": "Use 1.4 * INS_GYRO_FILTER as a first guess" },
                 "INS_HNTCH_MODE": { "New Value": "1 if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 3", "Change Reason": "'Use throttle-based dynamic notch filter to reduce propeller noise' if vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else 'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'" }
             },
-            "old_filenames": ["17_notch_filter_setup.param", "18_notch_filter_setup.param"]
+            "old_filenames": ["17_notch_filter_setup.param", "18_notch_filter_setup.param"],
+            "related_bin_messages": {
+                "IMU": { "name": "IMU", "required": true },
+                "VIBE": { "name": "VIBE", "required": false },
+                "POWR": { "name": "Power monitor", "required": false },
+                "ISBH": { "name": "Batch log header(ISBH)", "required": false },
+                "ISBD": { "name": "Batch log samples(ISBD)", "required": false }
+            }
+
         },
         "22_motor_notch_logging.param": {
             "why": "parameter values at later steps depend on data that is gathered by means of logging",

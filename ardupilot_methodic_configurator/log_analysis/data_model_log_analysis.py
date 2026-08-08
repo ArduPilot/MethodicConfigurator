@@ -6,6 +6,8 @@ vehicle metadata into a single summary object for presentation.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
+SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
+
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
@@ -30,11 +32,21 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check i
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogQualityAnalysisModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_fft import FftLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_imu import ImuLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_vibe import VibeLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import HardwareReport
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_report import extract_hardware_report
 
-QUALITY_MODELS = [BatteryLogQualityModel, GPSLogQualityModel, EscLogQualityModel]
+QUALITY_MODELS = [
+    BatteryLogQualityModel,
+    GPSLogQualityModel,
+    EscLogQualityModel,
+    ImuLogQualityModel,
+    VibeLogQualityModel,
+    FftLogQualityModel,
+]
 
 
 def parse_firmware_version(version: object) -> tuple[int, int, int] | None:

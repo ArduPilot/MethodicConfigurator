@@ -3,6 +3,8 @@ Data model for ESC quality check.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
+SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
+
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
@@ -90,5 +92,6 @@ class EscLogQualityModel(BaseLogQualityAnalysisModel):
             missing_values_message=_("ESC error values missing from ESC records"),
         )
         if err is not None and err.max() > 0:
-            issues.append(QualityIssue(_("ESC error rate detected on at least one ESC instance")))
+            step, _name = self.resolve_message_step("ESC", "ESC")
+            issues.append(QualityIssue(_("ESC error rate detected on at least one ESC instance"), step))
         return issues
