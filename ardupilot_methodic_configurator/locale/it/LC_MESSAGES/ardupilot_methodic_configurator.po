@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2026-07-14 20:22+0000\n"
+"POT-Creation-Date: 2026-08-08 16:57+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -16,7 +16,7 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.5\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:128
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:132
 msgid ""
 "ArduPilot methodic configurator is a simple GUI with a table that lists "
 "parameters. The GUI reads intermediate parameter files from a directory and "
@@ -41,50 +41,50 @@ msgstr ""
 "parametri intermedio successivo. Il processo viene ripetuto per ogni file di "
 "parametri intermedio."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:175
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:179
 msgid "Will now exit the old software version."
 msgstr "Ora uscirà dalla vecchia versione del software."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:238
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:242
 msgid "Vehicle type explicitly set to %s."
 msgstr "Tipo di veicolo impostato esplicitamente a %s."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:241
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:245
 msgid "Vehicle type not set explicitly, auto-detected %s."
 msgstr ""
 "Tipo di veicolo non impostato esplicitamente, rilevato automaticamente %s."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:260
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:264
 msgid "No serial ports found"
 msgstr "Nessuna porta seriale trovata"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:312
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:316
 msgid ""
 "Vehicle directory %(old_dir)s is not writable. Using %(new_dir)s instead."
 msgstr ""
 "La directory del veicolo %(old_dir)s non è scrivibile. Verrà utilizzata "
 "%(new_dir)s invece."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:336
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:340
 msgid "Using Vehicle directory %(new_dir)s for initial parameter download."
 msgstr ""
 "Uso la directory del veicolo %(new_dir)s per il download iniziale dei "
 "parametri."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:358
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:362
 msgid "Vehicle project migration to format version %d completed"
 msgstr ""
 "La migrazione del progetto veicolo alla versione di formato %d è stata "
 "completata"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:370
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:270
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:374
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:285
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:151
 msgid "Fatal error reading parameter files"
 msgstr "Errore fatale nella lettura dei file dei parametri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:394
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:398
 msgid ""
 "Will present all vehicle templates for all vehicle types since no FC "
 "connected and no explicit vehicle type set on the command line"
@@ -93,11 +93,11 @@ msgstr ""
 "c'è FC connesso e nessun tipo di veicolo esplicito impostato dalla riga di "
 "comando"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:408
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:412
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "Errore nel ripristino dei parametri ai valori predefiniti: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:476
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:480
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:128
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:131
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:133
@@ -110,12 +110,12 @@ msgstr "Errore nel ripristino dei parametri ai valori predefiniti: %(error)s"
 msgid "Unknown"
 msgstr "Sconosciuto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:572
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:576
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_configuration_step.py:112
 msgid "Error in derived parameters"
 msgstr "Errore nei parametri derivati"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:579
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:583
 msgid ""
 "The component or connection changes you just did will have repercussions on "
 "the following parameter files:\n"
@@ -125,7 +125,7 @@ msgstr ""
 "avranno ripercussioni sui seguenti file di parametri:\n"
 "\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:581
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:585
 msgid ""
 "Please review the changes, and upload the updated parameter files to the "
 "flight controller.\n"
@@ -133,7 +133,7 @@ msgstr ""
 "Ti preghiamo di verificare le modifiche e caricare i file di parametri "
 "aggiornati sul controllore di volo.\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:583
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:587
 msgid ""
 "If you already uploaded said parameters to the FC, switch to the normal GUI "
 "complexity mode\n"
@@ -141,23 +141,23 @@ msgstr ""
 "Se hai già caricato questi parametri sul FC, passa alla modalità di "
 "complessità GUI normale\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:587
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:591
 msgid "in order to be able to jump to those specific parameter files"
 msgstr "per poter accedere a quei specifici file di parametri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:590
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:594
 msgid "Component derived param changes"
 msgstr "Modifiche ai parametri derivati dal componente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:636
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:640
 msgid "Created backup file autobackup_%02d.param"
 msgstr "Creato file di backup autobackup_%02d.param"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:638
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:642
 msgid "Permission denied when creating backup files: %s"
 msgstr "Permesso negato durante la creazione dei file di backup: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:639
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:643
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
@@ -165,32 +165,32 @@ msgstr ""
 "Si prega di controllare i permessi del file e assicurarsi di avere accesso "
 "in scrittura alla directory del veicolo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:642
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:646
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "Spazio su disco insufficiente per creare i file di backup: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:643
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:647
 msgid "Please free up disk space and try again"
 msgstr "Si prega di liberare spazio su disco e riprovare"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:645
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:649
 msgid "Failed to create backup files: %s"
 msgstr "Impossibile creare i file di backup: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:647
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:651
 msgid "Unexpected error creating backup files: %s"
 msgstr "Errore imprevisto durante la creazione dei file di backup: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:727
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:731
 msgid "Parameter files firmware version from vehicle_components.json: %s"
 msgstr ""
 "Versione firmware dei file dei parametri da vehicle_components.json: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:736
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:740
 msgid "Incompatible parameter definition file detected"
 msgstr "Rilevato file di definizione parametri incompatibile"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:737
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:741
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -337,7 +337,7 @@ msgstr ""
 "disponibile e non è modificabile."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:937
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1850
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1865
 msgid "Deleting parameters %s from '%s'"
 msgstr "Eliminazione dei parametri %s da '%s'"
 
@@ -765,54 +765,58 @@ msgstr "Finestra di utilizzo dell'editor parametri bitmask"
 msgid "Only changed parameters get upload explanation"
 msgstr "Spiegazione del caricamento solo dei parametri modificati"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:127
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:81
+msgid "Log quality report explanation"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:130
 msgid "Connection string cannot be empty or whitespace-only"
 msgstr ""
 "La stringa di connessione non può essere vuota o contenere solo spazi bianchi"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:247
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:250
 msgid "Directory already exists, choose a different one"
 msgstr "La directory esiste già, sceglierne una diversa"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:252
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:255
 msgid "Error creating new vehicle directory: %s"
 msgstr "Errore durante la creazione della directory del nuovo veicolo: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:296
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:299
 msgid ""
 "The user configuration directory '{user_config_directory}' does not exist."
 msgstr ""
 "La directory di configurazione utente '{user_config_directory}' non esiste."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:299
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:302
 msgid "The path '{user_config_directory}' is not a directory."
 msgstr "Il percorso '{user_config_directory}' non è una directory."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:315
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:318
 msgid ""
 "The site configuration directory '{site_config_directory}' does not exist."
 msgstr ""
 "La directory di configurazione del sito '{site_config_directory}' non esiste."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:318
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:321
 msgid "The path '{site_config_directory}' is not a directory."
 msgstr "Il percorso '{site_config_directory}' non è una directory."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:504
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:507
 msgid "site_directory: %s"
 msgstr "directory_sito: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:541
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:544
 msgid "Usage popup type '%s' not found in settings dictionary"
 msgstr ""
 "Tipo di popup di utilizzo '%s' non trovato nel dizionario delle impostazioni"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:551
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:588
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:554
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:591
 msgid "Setting '%s' not found in settings dictionary"
 msgstr "Impostazione '%s' non trovata nel dizionario delle impostazioni"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:569
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:572
 msgid ""
 "Cannot set nested setting '%s': parent path '%s' not found or not a "
 "dictionary"
@@ -820,16 +824,16 @@ msgstr ""
 "Impossibile impostare l'impostazione nidificata '%s': percorso genitore '%s' "
 "non trovato o non è un dizionario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:582
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:585
 msgid "Setting path '%s' not found in settings dictionary"
 msgstr ""
 "Percorso impostazione '%s' non trovato nel dizionario delle impostazioni"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:621
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:624
 msgid "Multiple motor diagrams found for class %d and type %d"
 msgstr "Trovati più diagrammi motore per la classe %d e tipo %d"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:630
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:633
 msgid "Motor diagram not found for class %d and type %d"
 msgstr "Diagramma motore non trovato per la classe %d e tipo %d"
 
@@ -1375,12 +1379,12 @@ msgid "Failed to create remote directory %(directory)s"
 msgstr "Impossibile creare la directory remota %(directory)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:189
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1270
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1285
 msgid "No flight controller connected"
 msgstr "Nessun controllore di volo collegato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:193
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1274
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1289
 msgid "MAVFTP is not supported by the flight controller"
 msgstr "MAVFTP non è supportato dal controllore di volo"
 
@@ -3191,6 +3195,14 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:270
 msgid ""
+"'Use EKF primary acc and gyro batch logging on F4 processors or big props' "
+"if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU "
+"Series'] or vehicle_components['Propellers']['Specifications']"
+"['Diameter_inches'] >= 15 else 'EKF primary gyro raw logging'"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:271
+msgid ""
 "'Use throttle-based dynamic notch filter to reduce propeller noise' if "
 "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'None' else "
 "'Use ESC telemetry RPM to dynamically adjust the propeller notch filter'"
@@ -3200,47 +3212,47 @@ msgstr ""
 "== 'None' else 'Usa il RPM della telemetria ESC per regolare dinamicamente "
 "il filtro notch delle eliche'"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:271
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:272
 msgid "Activates the logging of the MAGH.Active message"
 msgstr "Attiva la registrazione del messaggio MAGH.Active"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:272
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:273
 msgid "Activates the temperature calibration for IMU 1 at the next start"
 msgstr "Attiva la calibrazione della temperatura per IMU 1 al prossimo avvio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:273
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:274
 msgid "Activates the temperature calibration for IMU 2 at the next start"
 msgstr "Attiva la calibrazione della temperatura per IMU 2 al prossimo avvio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:274
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:275
 msgid "Activates the temperature calibration for IMU 3 at the next start"
 msgstr "Attiva la calibrazione della temperatura per IMU 3 al prossimo avvio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:275
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:276
 msgid "Add Navigation logging"
 msgstr "Aggiungi registrazione di navigazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:276
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:277
 msgid "Autotune pitch axis"
 msgstr "Autotune asse di beccheggio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:277
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:278
 msgid "Autotune roll and pitch axis"
 msgstr "Autotune assi di rollio e beccheggio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:278
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:279
 msgid "Autotune roll axis"
 msgstr "Autotune asse di rollio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:279
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:280
 msgid "Autotune yaw D axis"
 msgstr "Autotune asse di imbardata D"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:280
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:281
 msgid "Autotune yaw axis"
 msgstr "Autotune asse di imbardata"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:281
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:282
 msgid ""
 "Because ALTHOLD flight mode was used for more than 30 seconds to correctly "
 "learn the MOT_THST_HOVER value"
@@ -3248,50 +3260,54 @@ msgstr ""
 "Perché la modalità di volo ALTHOLD è stata utilizzata per più di 30 secondi "
 "per apprendere correttamente il valore MOT_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:282
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:283
 msgid "Critical failsafe voltage x nr. of cells"
 msgstr "Tensione di sicurezza critica x numero di celle"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:283
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:284
 msgid "Defined in ESC specifications above"
 msgstr "Definito nelle specifiche ESC sopra"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:284
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:285
 msgid "Defined in component editor"
 msgstr "Definito nell'editor dei componenti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:285
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:286
 msgid "Derived from vehicle component editor propeller size"
 msgstr ""
 "Derivato dalla dimensione dell'elica nell'editor dei componenti del veicolo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:286
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:287
 msgid "Digital ESC protocol maximum is per definition 2000"
 msgstr "Il massimo del protocollo ESC digitale è per definizione 2000"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:287
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:288
 msgid "Digital ESC protocol minimum is per definition 1000"
 msgstr "Il minimo del protocollo ESC digitale è per definizione 1000"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:288
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:289
 msgid "Disable fast harmonic notch logging"
 msgstr "Disabilita la registrazione rapida del filtro notch armonico"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:289
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:290
+msgid "EKF primary gyro raw logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:291
 msgid "ESC RPM telemetry requires lua scripting"
 msgstr "La telemetria RPM ESC richiede script lua"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:290
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:292
 msgid "ExpressLRS requires FLTMODE_CH != 5"
 msgstr "ExpressLRS richiede FLTMODE_CH != 5"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:291
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:293
 msgid "ExpressLRS requires RC5 to be used for arming (Arm/Disarm function)"
 msgstr ""
 "ExpressLRS richiede RC5 per essere utilizzato per l'armamento (funzione Arm/"
 "Disarm)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:292
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:294
 msgid ""
 "Gather data for the offline IMU temperature calibration while the FC is "
 "disarmed"
@@ -3299,7 +3315,7 @@ msgstr ""
 "Raccogliere dati per la calibrazione offline della temperatura dell'IMU "
 "mentre l'FC è disarmato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:293
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:295
 msgid ""
 "Gyro raw logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
@@ -3308,11 +3324,11 @@ msgstr ""
 "filtro notch completa, questo riduce il carico del processore e la "
 "dimensione del file di log"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:294
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:296
 msgid "Hover learn will improve this initial guess"
 msgstr "L'apprendimento in volo stazionario migliorerà questa stima iniziale"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:295
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:297
 msgid ""
 "IMU batch logging no longer required, notch filter setup is complete, this "
 "reduces processor load and log file size"
@@ -3321,7 +3337,7 @@ msgstr ""
 "notch completa, questo riduce il carico del processore e la dimensione del "
 "file di log"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:296
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:298
 msgid ""
 "IMU temperature calibration is finished, we no longer need to log data when "
 "disarmed"
@@ -3329,47 +3345,47 @@ msgstr ""
 "La calibrazione della temperatura dell'IMU è terminata, non è più necessario "
 "registrare dati quando disarmato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:297
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:299
 msgid "INS_GYRO_FILTER / 2"
 msgstr "INS_GYRO_FILTER / 2"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:298
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:300
 msgid "Initial value, will be improved at a later step"
 msgstr "Valore iniziale, sarà migliorato in una fase successiva"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:299
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:301
 msgid "Inject chip on the input pitch signal"
 msgstr "Inietta chip sul segnale di pitch in ingresso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:300
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:302
 msgid "Inject chip on the input roll signal"
 msgstr "Inietta chip sul segnale di roll in ingresso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:301
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:303
 msgid "Inject chip on the input yaw signal"
 msgstr "Inietta chip sul segnale di yaw in ingresso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:302
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:304
 msgid "Inject chip on the mixer pitch signal"
 msgstr "Iniettare chip sul segnale mixer di beccheggio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:303
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:305
 msgid "Inject chip on the mixer roll signal"
 msgstr "Iniettare chip sul segnale mixer di rollio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:304
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:306
 msgid "Inject chip on the mixer thrust signal"
 msgstr "Iniettare chip sul segnale mixer di spinta"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:305
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:307
 msgid "Inject chip on the mixer yaw signal"
 msgstr "Iniettare chip sul segnale mixer di imbardata"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:306
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
 msgid "Land ASAP"
 msgstr "Atterrare il prima possibile"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:307
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
 msgid ""
 "Log relevant data for PID notch filters tuning. Later on we'll change this "
 "to other subsystems"
@@ -3377,7 +3393,7 @@ msgstr ""
 "Registra i dati rilevanti per la regolazione dei filtri notch PID. "
 "Successivamente li cambieremo per altri sottosistemi"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:308
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:310
 msgid ""
 "Log relevant data for dynamic notch filter tuning. Later on we'll change "
 "this to other subsystems"
@@ -3385,33 +3401,33 @@ msgstr ""
 "Registra i dati rilevanti per la regolazione dinamica del filtro notch. In "
 "seguito cambieremo questo per altri sottosistemi"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:311
 msgid "Low failsafe voltage x nr. of cells"
 msgstr "Tensione di sicurezza bassa x numero di celle"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:310
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:312
 msgid "Maximize attitude control authority at high throttle"
 msgstr "Massimizza l'autorità di controllo dell'assetto ad alto throttle"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:311
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:313
 msgid "No more system identification chip injections"
 msgstr "Nessuna ulteriore iniezione di chip per l'identificazione del sistema"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:312
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:314
 msgid "No need to log raw data for IMU temperature calibration"
 msgstr ""
 "Non è necessario registrare dati grezzi per la calibrazione della "
 "temperatura dell'IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:313
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:315
 msgid "Normal state for everyday use"
 msgstr "Stato normale per l'uso quotidiano"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:314
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:316
 msgid "One .bin log file per flight, not per battery/reboot"
 msgstr "Un file di log .bin per volo, non per batteria/riavvio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:315
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:317
 msgid ""
 "Only arm above this voltage, to avoid taking off with insufficient battery "
 "capacity"
@@ -3419,19 +3435,23 @@ msgstr ""
 "Consentire armo solo sopra questa tensione, per evitare il decollo con "
 "capacità della batteria insufficiente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:316
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:318
 msgid "Only for IMU and Raw-IMU"
 msgstr "Solo per IMU e Raw-IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:317
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:319
+msgid "PID notch filters require EKF primary batch logging, not raw logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:320
 msgid "PID notch filters require batch logging, not raw logging"
 msgstr "I filtri notch PID richiedono il logging batch, non il logging raw"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:318
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:321
 msgid "PID notch filters require batch pre- and post- filters logging"
 msgstr "I filtri notch PID richiedono il logging batch dei filtri pre e post"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:319
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:322
 msgid ""
 "Perform all arming checks. If you have a problem fix its source. Do NOT "
 "change this"
@@ -3439,36 +3459,36 @@ msgstr ""
 "Esegui tutti i controlli di armamento. Se hai un problema risolvine la "
 "causa. NON modificare questo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:320
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:323
 msgid "Restore value now that system identification is done"
 msgstr ""
 "Ripristina il valore ora che l'identificazione del sistema è completata"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:321
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid "Return and land at home or rally point"
 msgstr "Ritorna e atterra al punto home o punto di raduno"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:322
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:325
 msgid "Scale the PIDs up when battery voltage is above this threshold"
 msgstr ""
 "Scala i PID verso l'alto quando la tensione della batteria è sopra questa "
 "soglia"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:323
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:326
 msgid "Scale the PIDs up when battery voltage is below this threshold"
 msgstr ""
 "Scala i PID verso l'alto quando la tensione della batteria è sotto questa "
 "soglia"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:327
 msgid "Selected in component editor window"
 msgstr "Selezionato nella finestra dell'editor dei componenti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:325
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:328
 msgid "Selected in the component editor"
 msgstr "Selezionato nell'editor dei componenti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:326
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:329
 msgid ""
 "So that it can tune the throttle controller on 24_throttle_controller.param "
 "file"
@@ -3476,60 +3496,69 @@ msgstr ""
 "Così potrà regolare il controller del throttle nel file "
 "24_throttle_controller.param"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:327
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:330
 msgid "Specified in component editor window"
 msgstr "Specificato nella finestra dell'editor dei componenti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:328
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:331
 msgid "The default is 20Hz but that is too high in most situations"
 msgstr ""
 "Il valore predefinito è 20Hz ma è troppo alto nella maggior parte delle "
 "situazioni"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:329
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:332
 msgid "Total battery capacity specified in the component editor"
 msgstr "Capacità totale della batteria specificata nell'editor dei componenti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:330
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:333
 msgid ""
 "Use 0.1 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Utilizza 0.1 * MOT_THST_HOVER assumendo che MOT_THST_HOVER sia stato appreso "
 "correttamente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:331
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:334
 msgid ""
 "Use 0.2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Usa 0.2 * MOT_THST_HOVER assumendo che MOT_THST_HOVER sia stato appreso "
 "correttamente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:332
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
 msgid "Use 1.4 * INS_GYRO_FILTER as a first guess"
 msgstr "Usa 1.4 * INS_GYRO_FILTER come prima stima"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:333
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
 msgid ""
 "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Usa 2 * MOT_THST_HOVER assumendo che MOT_THST_HOVER sia stato correttamente "
 "appreso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:334
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:337
+msgid ""
+"Use EKF primary acc and gyro batch logging on F4 processors or big props"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
+msgid "Use ESC telemetry RPM to dynamically adjust the propeller notch filter"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Use INS_GYRO_FILTER / 4 as a first guess"
 msgstr "Usa INS_GYRO_FILTER / 4 come prima stima"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:335
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
 msgid "Use MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned"
 msgstr ""
 "Usa MOT_THST_HOVER assumendo che MOT_THST_HOVER sia stato correttamente "
 "appreso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:336
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:341
 msgid "Use VTOL-Quicktune lua script to estimate a good PID starting values"
 msgstr "Usa lo script lua VTOL-Quicktune per stimare buoni valori iniziali PID"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:337
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:342
 msgid ""
 "Use acc and gyro batch logging on F4 processors or big props, gyro raw "
 "logging on others"
@@ -3537,15 +3566,15 @@ msgstr ""
 "Usa registrazione batch acc e gyro sui processori F4 o eliche grandi, "
 "registrazione raw gyro su altri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:343
 msgid "Use lua scripting for MagFit flight path automation"
 msgstr "Usa lo scripting lua per l'automazione del percorso di volo MagFit"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:344
 msgid "Use lua scripting for VTOL-Quicktune"
 msgstr "Usa lo scripting lua per VTOL-Quicktune"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:340
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:345
 msgid ""
 "Use pre and post filters acc and gyro batch logging on F4 processors or big "
 "props, pre-post gyro raw logging on others"
@@ -3553,14 +3582,18 @@ msgstr ""
 "Usa filtri pre e post registrazione batch acc e gyro sui processori F4 o "
 "eliche grandi, registrazione raw pre-post gyro su altri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:341
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:346
 msgid ""
 "Use the first notch filter to filter the noise created by the motors/"
 "propellers"
 msgstr ""
 "Usa il primo filtro notch per filtrare il rumore creato dai motori/eliche"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:342
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:347
+msgid "Use throttle-based dynamic notch filter to reduce propeller noise"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:348
 msgid ""
 "Value for the first couple of flights will be changed later once "
 "MOT_THST_HOVER is learned"
@@ -3568,116 +3601,116 @@ msgstr ""
 "Il valore per i primi voli sarà modificato successivamente una volta appreso "
 "MOT_THST_HOVER"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:343
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:349
 msgid "allow post flight tuning with Replay"
 msgstr "consenti la messa a punto post-volo con Replay"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:344
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:350
 msgid "re-enable normal operation, activate input shaping"
 msgstr "riattiva il funzionamento normale, attiva la modellazione dell'input"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:345
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:351
 msgid "test the stabilization loops independent of the input shaping"
 msgstr ""
 "testa i cicli di stabilizzazione indipendentemente dalla modellazione "
 "dell'input"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:346
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:352
 msgid "was only needed for wind speed estimation"
 msgstr "era necessario solo per la stima della velocità del vento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:349
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:355
 msgid "Analytical PID optimization"
 msgstr "Ottimizzazione analitica PID"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:350
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:364
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:356
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:370
 msgid "Assemble all components except the propellers"
 msgstr "Assembla tutti i componenti eccetto le eliche"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:351
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:365
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:357
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:371
 msgid "Assemble the propellers and perform the first flight"
 msgstr "Assembla le eliche ed esegui il primo volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:352
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:358
 msgid "Basic mandatory configuration"
 msgstr "Configurazione obbligatoria di base"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:353
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:359
 msgid "Everyday use"
 msgstr "Uso quotidiano"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:354
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:373
 msgid "Guided operation"
 msgstr "Operazione guidata"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:355
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:235
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:246
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:250
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:261
 msgid "IMU temperature calibration"
 msgstr "Calibrazione temperatura IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:356
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:362
 msgid "Improve altitude control"
 msgstr "Migliorare il controllo dell'altitudine"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:357
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:363
 msgid "Minimalistic mandatory tuning"
 msgstr "Tuning obbligatorio minimale"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:358
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:364
 msgid "Optical flow calibration"
 msgstr "Calibrazione del flusso ottico"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:359
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:365
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:378
 msgid "Position controller tuning"
 msgstr "Messa a punto del controllore di posizione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:360
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:373
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:366
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:379
 msgid "Precision landing"
 msgstr "Atterraggio di precisione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:367
 msgid "Standard tuning"
 msgstr "Tuning standard"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:366
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:372
 msgid "Calibrate the IMU sensors for at different temperatures"
 msgstr "Calibra i sensori IMU a diverse temperature"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:368
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:374
 msgid "Improve altitude under windy conditions"
 msgstr "Migliora l'altitudine in condizioni di vento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:369
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:375
 msgid "Improve tuning with more test flight data"
 msgstr "Migliora la messa a punto con più dati di volo di prova"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:370
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:376
 msgid "Minimalistic mandatory tuning using test flight data"
 msgstr "Messa a punto minima obbligatoria usando dati di volo di prova"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:371
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:377
 msgid "Optical flow sensor calibration"
 msgstr "Calibrazione del sensore di flusso ottico"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:374
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:380
 msgid "Set up the basic parameters for the vehicle"
 msgstr "Imposta i parametri base per il veicolo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:375
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:381
 msgid "Switch tests off, configure for productive work"
 msgstr "Disattiva i test, configura per lavoro produttivo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:376
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:382
 msgid "System identification and analytical PID optimization"
 msgstr "Identificazione del sistema e ottimizzazione analitica del PID"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:388
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
 msgid ""
 "A list of regular expressions to match parameters for automatic import if "
 "they have non-default values."
@@ -3685,43 +3718,43 @@ msgstr ""
 "Una lista di espressioni regolari per individuare i parametri da importare "
 "automaticamente se hanno valori diversi da quelli predefiniti."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:391
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
 msgid "ArduPilot log messages related to this configuration step"
 msgstr ""
 "Messaggi di log ArduPilot relativi a questo passaggio di configurazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:392
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
 msgid "Computed value: evaluate New Value expression and set the parameter"
 msgstr ""
 "Valore calcolato: valuta l'espressione Nuovo Valore e imposta il parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:393
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
 msgid "Description of the phase"
 msgstr "Descrizione della fase"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:394
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:400
 msgid "Explanation of why this step is needed"
 msgstr "Spiegazione del motivo per cui questo passaggio è necessario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:395
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:401
 msgid "Explanation of why this step needs to be done at this point"
 msgstr ""
 "Spiegazione del motivo per cui questo passaggio deve essere fatto in questo "
 "punto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
 msgid "Expression to derive new parameter value"
 msgstr "Espressione per derivare un nuovo valore del parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:397
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
 msgid "Expression to rename connection"
 msgstr "Espressione per rinominare la connessione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:398
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
 msgid "Human readable name of the log message"
 msgstr "Nome leggibile del messaggio di log"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:399
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
 msgid ""
 "If not already present, add parameter to the file: use 'New Value' if "
 "provided, otherwise copy the current FC value. Optionally conditioned on a "
@@ -3731,30 +3764,30 @@ msgstr ""
 "fornito, altrimenti copia il valore attuale del FC. Facoltativamente "
 "condizionato da un'espressione Python."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:402
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:408
 msgid "Message about possible jump to another step"
 msgstr "Messaggio sulla possibilità di passare a un altro step"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:403
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:409
 msgid "Name of the vehicle component edited inline for this configuration step"
 msgstr ""
 "Nome del componente del veicolo modificato direttamente per questa fase di "
 "configurazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:404
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
 msgid "Name of tool/process that automatically changes these parameters"
 msgstr ""
 "Nome dello strumento/processo che modifica automaticamente questi parametri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:405
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:411
 msgid "Name/description of external tool needed"
 msgstr "Nome/descrizione dello strumento esterno necessario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:406
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:412
 msgid "New value for the parameter"
 msgstr "Nuovo valore per il parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:407
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
 msgid ""
 "Optional Python expression; if present, the parameter is only applied when "
 "this expression evaluates to true"
@@ -3762,7 +3795,7 @@ msgstr ""
 "Espressione Python opzionale; se presente, il parametro viene applicato solo "
 "quando questa espressione è valutata come vera"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:410
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:416
 msgid ""
 "Optional Python expression; if present, the parameter is only deleted when "
 "this expression evaluates to true"
@@ -3770,7 +3803,7 @@ msgstr ""
 "Espressione Python opzionale; se presente, il parametro viene eliminato solo "
 "quando questa espressione si valuta come vera"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:413
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:419
 msgid ""
 "Optional Python expression; the parameter is only added when this evaluates "
 "to true"
@@ -3778,7 +3811,7 @@ msgstr ""
 "Espressione Python facoltativa; il parametro viene aggiunto solo quando "
 "questa risulta vera"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:414
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:420
 msgid ""
 "Optional expression for the parameter value; if absent, the current FC value "
 "is used"
@@ -3786,17 +3819,17 @@ msgstr ""
 "Espressione opzionale per il valore del parametro; se assente, si usa il "
 "valore attuale del FC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:415
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:421
 msgid "Optional instructions to display as a popup when entering this step"
 msgstr ""
 "Istruzioni opzionali da visualizzare come popup all'ingresso di questo "
 "passaggio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:416
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:422
 msgid "Optional reason for the parameter value"
 msgstr "Motivo opzionale per il valore del parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:417
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
 msgid ""
 "Parameters to add to the configuration file, if not already present, "
 "editable in the UI. Value comes from 'New Value' expression if given, "
@@ -3806,7 +3839,7 @@ msgstr ""
 "modificabili nella UI. Il valore deriva dall'espressione 'Nuovo Valore' se "
 "fornita, altrimenti copiato dal FC."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:420
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
 msgid ""
 "Parameters to remove from the configuration file, optionally conditioned on "
 "a Python expression"
@@ -3814,70 +3847,70 @@ msgstr ""
 "Parametri da rimuovere dal file di configurazione, facoltativamente "
 "condizionati da un'espressione Python"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:423
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
 msgid ""
 "Parameters whose values are derived from vehicle component data or FC state."
 msgstr ""
 "Parametri i cui valori derivano dai dati del componente veicolo o dallo "
 "stato del FC."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:424
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
 msgid "Phases of the configuration process"
 msgstr "Fasi del processo di configurazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:425
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
 msgid "Previous filenames for this step"
 msgstr "Nomi file precedenti per questo passaggio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:426
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
 msgid "Reason for changing the parameter"
 msgstr "Motivo per la modifica del parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:427
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
 msgid "Reason for the derived parameter"
 msgstr "Motivo per il parametro derivato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:428
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
 msgid "Short description for blog reference"
 msgstr "Breve descrizione per riferimento blog"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
 msgid "Short description for wiki reference"
 msgstr "Breve descrizione per riferimento wiki"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:430
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
 msgid "Starting step number of this phase"
 msgstr "Numero di step iniziale di questa fase"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:431
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
 msgid "Text indicating if step is mandatory or optional with percentages"
 msgstr "Testo che indica se lo step è obbligatorio o opzionale con percentuali"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:432
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:438
 msgid "The instruction message to display to the user"
 msgstr "Il messaggio di istruzione da mostrare all'utente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:433
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
 msgid "The name of the plugin to load"
 msgstr "Il nome del plugin da caricare"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:434
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
 msgid "The type of popup dialog to display (info or warning)"
 msgstr "Il tipo di finestra popup da visualizzare (informativa o avviso)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:435
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:441
 msgid "URL to blog documentation"
 msgstr "URL alla documentazione del blog"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:436
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:442
 msgid "URL to external tool"
 msgstr "URL allo strumento esterno"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:437
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:443
 msgid "URL to wiki documentation"
 msgstr "URL alla documentazione wiki"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:438
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:444
 msgid ""
 "Where to place the plugin: 'left' for left of scrollable frame, 'top' for "
 "above contents"
@@ -3885,11 +3918,11 @@ msgstr ""
 "Dove posizionare il plugin: 'left' per la sinistra del frame scorrevole, "
 "'top' per sopra il contenuto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:439
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:445
 msgid "Whether this message is required for the step"
 msgstr "Se questo messaggio è richiesto per il passaggio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:440
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:446
 msgid "Whether this phase is optional"
 msgstr "Se questa fase è opzionale"
 
@@ -4233,6 +4266,18 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_configuration_step.py:263
 msgid "Parameter Renamed"
 msgstr "Parametro Rinominato"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_esc_rpm_scale.py:109
+msgid "RPM scale factor must be a finite positive number"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_esc_rpm_scale.py:112
+msgid "ESC output count must be positive"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_esc_rpm_scale.py:124
+msgid "Vehicle directory is not available"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:90
 msgid "USB Vendor"
@@ -4760,7 +4805,7 @@ msgstr "Può aggiungere solo un'altra istanza ParDict"
 msgid "Can only compare with another ParDict instance"
 msgstr "Può confrontare solo con un'altra istanza ParDict"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:228
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:243
 msgid ""
 "If you proceed the {tempcal_imu_result_param_filename}\n"
 "will be overwritten with the new calibration results.\n"
@@ -4772,11 +4817,11 @@ msgstr ""
 "Vuoi fornire un file .bin di log ed\n"
 "eseguire la calibrazione della temperatura IMU usando questo?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:239
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:254
 msgid "Select ArduPilot binary log file"
 msgstr "Seleziona file registro binario ArduPilot"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:247
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:262
 msgid ""
 "Please wait, this can take a really long time and\n"
 "the GUI will be unresponsive until it finishes."
@@ -4784,20 +4829,20 @@ msgstr ""
 "Attendere prego, questo può richiedere molto tempo e\n"
 "l'interfaccia grafica non risponderà fino al completamento."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:326
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:341
 msgid "Parameter %s not in current step parameters"
 msgstr "Il parametro %s non è nei parametri del passaggio corrente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:335
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:350
 msgid "Parameter %s value %s is out of range but accepted from FC"
 msgstr "Il valore %s del parametro %s è fuori intervallo ma accettato dall'FC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:338
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:353
 msgid "Failed to update in-memory value for %s after FC copy"
 msgstr ""
 "Impossibile aggiornare il valore in memoria per %s dopo la copia dall'FC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:362
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:377
 msgid ""
 "This configuration step requires external changes by: {auto_changed_by}\n"
 "\n"
@@ -4823,61 +4868,61 @@ msgstr ""
 "* NO - Continua senza copiare i valori (se non hai ancora eseguito "
 "l'esperimento, ma sai cosa stai facendo)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:387
 msgid "Close"
 msgstr "Chiudi"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:387
 msgid "Update file with values from FC?"
 msgstr "Aggiornare il file con i valori dal FC?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:387
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:273
 msgid "Yes"
 msgstr "Sì"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:387
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:276
 msgid "No"
 msgstr "No"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:378
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:393
 msgid "Parameters copied"
 msgstr "Parametri copiati"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:379
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:394
 msgid "FC values have been copied to {selected_file}"
 msgstr "I valori FC sono stati copiati in {selected_file}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:405
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:420
 msgid "Skip some steps?"
 msgstr "Saltare alcuni passaggi?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:405
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:420
 msgid "Skip to {dest_file}?"
 msgstr "Passare a {dest_file}?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:447
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:462
 msgid "Do you want to write the changes to the {current_filename} file?"
 msgstr "Vuoi scrivere le modifiche nel file {current_filename}?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:450
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:465
 msgid "One or more parameters have been edited"
 msgstr "Uno o più parametri sono stati modificati"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:458
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:469
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:473
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:484
 msgid ""
 "Do you want to save the component data changes to vehicle_components.json?"
 msgstr ""
 "Vuoi salvare le modifiche ai dati dei componenti in vehicle_components.json?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:459
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:470
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:474
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:485
 msgid "Component data has been edited"
 msgstr "I dati del componente sono stati modificati"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:588
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:603
 msgid ""
 "Should the {local_filename} file be downloaded from the URL\n"
 "{url}?"
@@ -4885,36 +4930,36 @@ msgstr ""
 "Scaricare il file {local_filename} dall'URL\n"
 "{url}?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:589
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:604
 msgid "Download file from URL"
 msgstr "Scarica file da URL"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:594
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:609
 msgid ""
 "Failed to download {local_filename} from {url}, please download it manually"
 msgstr ""
 "Download di {local_filename} da {url} fallito, si prega di scaricarlo "
 "manualmente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:595
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:610
 msgid "Download failed"
 msgstr "Download fallito"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:631
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:646
 msgid "Local file {local_filename} does not exist"
 msgstr "Il file locale {local_filename} non esiste"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:632
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:636
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:647
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:651
 msgid "Will not upload any file"
 msgstr "Non verrà caricato alcun file"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:636
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:670
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:651
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:685
 msgid "No flight controller connection"
 msgstr "Nessuna connessione al controller di volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:640
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:655
 msgid ""
 "Should the {local_filename} file be uploaded to the flight controller as "
 "{remote_filename}?"
@@ -4922,11 +4967,11 @@ msgstr ""
 "Il file {local_filename} dovrebbe essere caricato sul controller di volo "
 "come {remote_filename}?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:642
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:657
 msgid "Upload file to FC"
 msgstr "Carica file sul FC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:651
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:666
 msgid ""
 "Failed to upload {local_filename} to {remote_filename}, please upload it "
 "manually"
@@ -4934,26 +4979,26 @@ msgstr ""
 "Impossibile caricare {local_filename} in {remote_filename}, caricalo "
 "manualmente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:652
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:667
 msgid "Upload failed"
 msgstr "Caricamento fallito"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:664
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:679
 msgid "No parameter was selected for upload, will not upload any parameter"
 msgstr ""
 "Nessun parametro selezionato per il caricamento, non verrà caricato alcun "
 "parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:665
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:680
 msgid "No parameter was selected for upload"
 msgstr "Nessun parametro selezionato per il caricamento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:665
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:670
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:680
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:685
 msgid "Will not upload any parameter"
 msgstr "Non verrà caricato alcun parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:669
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:684
 msgid ""
 "No parameters were yet downloaded from the flight controller, will not "
 "upload any parameter"
@@ -4961,39 +5006,39 @@ msgstr ""
 "Nessun parametro è stato ancora scaricato dal controller di volo, non verrà "
 "caricato alcun parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:756
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:778
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:771
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:793
 msgid "Failed to set parameter %s: %s"
 msgstr "Impossibile impostare il parametro %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:761
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:776
 msgid "Parameter %s changed from %f to %f, reset required"
 msgstr "Parametro %s cambiato da %f a %f, reset necessario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:767
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:782
 msgid "Parameter %s changed to %f, reset required"
 msgstr "Parametro %s cambiato a %f, reset necessario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:783
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:798
 msgid "Parameter %s changed from %f to %f, possible reset required"
 msgstr "Parametro %s cambiato da %f a %f, possibile reset necessario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:789
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:804
 msgid "Parameter %s changed to %f, possible reset required"
 msgstr "Parametro %s cambiato a %f, possibile reset necessario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:792
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:807
 msgid "Failed to set parameter {param_name}: {e}"
 msgstr "Impossibile impostare il parametro {param_name}: {e}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:797
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:893
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:959
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:812
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:908
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:974
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:215
 msgid "ArduPilot methodic configurator"
 msgstr "Configuratore metodico ArduPilot"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:887
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:902
 msgid ""
 "{param_list_str} parameter(s) potentially require a reset\n"
 "Do you want to reset the ArduPilot?"
@@ -5001,69 +5046,69 @@ msgstr ""
 "{param_list_str} parametro(i) potrebbero richiedere un reset\n"
 "Vuoi resettare l'ArduPilot?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:888
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:903
 msgid "Possible reset required"
 msgstr "Possibile reset necessario"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:929
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:944
 msgid "Failed to set parameter %(name)s: %(error)s"
 msgstr "Impossibile impostare il parametro %(name)s: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:937
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:952
 msgid "Parameter %s changed from %f to %f"
 msgstr "Parametro %s cambiato da %f a %f"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:944
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:959
 msgid "Parameter %s changed to %f"
 msgstr "Parametro %s cambiato a %f"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:950
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:965
 msgid "Parameter %s unchanged from %f"
 msgstr "Parametro %s invariato da %f"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:953
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:968
 msgid "Failed to set parameter {param_name}: {_e}"
 msgstr "Impossibile impostare il parametro {param_name}: {_e}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:961
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:976
 msgid "%d FC parameter(s) changed value"
 msgstr "%d parametro(i) FC ha cambiato valore"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:963
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:978
 msgid ""
 "%d FC parameter(s) already had the value defined in this configuration step"
 msgstr ""
 "%d parametro(i) FC aveva già il valore definito in questo passaggio di "
 "configurazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1065
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1080
 msgid "Uploading %d selected %s parameters to flight controller..."
 msgstr "Caricamento di %d parametri %s selezionati sul controller di volo..."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1103
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1118
 msgid "Parameter upload error"
 msgstr "Errore caricamento parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1104
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1119
 msgid "Failed to upload the following parameters to the flight controller:\n"
 msgstr "Impossibile caricare i seguenti parametri sul controllore di volo:\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1110
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1125
 msgid "All parameters uploaded to the flight controller successfully"
 msgstr "Tutti i parametri caricati con successo sul controller di volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1119
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1134
 msgid "Re-downloaded all parameters from the flight controller"
 msgstr "Ri-scaricati tutti i parametri dal controllore di volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1130
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1145
 msgid ""
 "Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"
 msgstr ""
 "Caricamento del parametro %s sul controller di volo fallito. Atteso: %f, "
 "Attuale: %f"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1138
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1153
 msgid ""
 "Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/"
 "A"
@@ -5071,19 +5116,19 @@ msgstr ""
 "Caricamento del parametro %s sul controller di volo fallito. Atteso: %f, "
 "Attuale: N/D"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1234
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1249
 msgid "Exported %d FC parameters missing or different in AMC files to %s"
 msgstr "Esportati %d parametri FC mancanti o diversi nei file AMC a %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1239
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1254
 msgid "No FC parameters are missing or different from AMC parameter files"
 msgstr "Nessun parametro FC manca o è diverso dai file di parametri AMC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1270
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1274
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1285
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2075
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2088
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1289
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1300
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2090
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2103
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_accelerometer_calibration.py:367
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:192
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:201
@@ -5114,7 +5159,7 @@ msgstr "Nessun parametro FC manca o è diverso dai file di parametri AMC"
 msgid "Error"
 msgstr "Errore"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1283
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1298
 msgid ""
 "Flight log downloaded successfully to:\n"
 "%s"
@@ -5122,23 +5167,23 @@ msgstr ""
 "Registro di volo scaricato con successo in:\n"
 "%s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1283
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2058
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1298
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2073
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:336
 msgid "Success"
 msgstr "Successo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1285
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1300
 msgid "Failed to download flight log. Check the console for details."
 msgstr ""
 "Impossibile scaricare il registro di volo. Controlla la console per i "
 "dettagli."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1398
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1413
 msgid "No parameters available for summary."
 msgstr "Nessun parametro disponibile per il riepilogo."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1415
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1430
 msgid ""
 "Methodic configuration of {nr_total_params} parameters complete:\n"
 "\n"
@@ -5173,12 +5218,12 @@ msgstr ""
 "predefiniti che non sono calibrazioni dei sensori né ID - questi possono "
 "essere riutilizzati tra veicoli simili"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1468
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1483
 msgid "Last parameter file processed"
 msgstr "Ultimo file di parametri elaborato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1554
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1588
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1569
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1603
 msgid ""
 "{} file already exists.\n"
 "Do you want to overwrite it?"
@@ -5186,16 +5231,16 @@ msgstr ""
 "Il file {} esiste già.\n"
 "Vuoi sovrascriverlo?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1555
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1589
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1570
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1604
 msgid "Overwrite existing file"
 msgstr "Sovrascrivi file esistente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1560
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1575
 msgid "Summary file %s written"
 msgstr "File di riepilogo %s scritto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1594
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1609
 msgid ""
 "All relevant files have been zipped into the \n"
 "{zip_file_path} file.\n"
@@ -5209,15 +5254,15 @@ msgstr ""
 "Ora puoi caricare questo file nel post del Blog\n"
 "ArduPilot Methodic Configuration su discuss.ardupilot.org."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1599
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1614
 msgid "Parameter files zipped"
 msgstr "File di parametri compressi"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1713
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1728
 msgid "Zip file successfully created"
 msgstr "File zip creato con successo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1714
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1729
 msgid ""
 "Zipped all vehicle configuration files into the file \n"
 "{zip_fullpath}\n"
@@ -5240,51 +5285,51 @@ msgstr ""
 "link\n"
 "ad esso nel forum di supporto ArduPilot."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1728
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1743
 msgid "Failed to create zip file: {error}"
 msgstr "Impossibile creare il file zip: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1730
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1736
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1745
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1751
 msgid "Zip file creation failed"
 msgstr "Creazione del file zip fallita"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1734
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1749
 msgid "Failed to create zip file due to file system error: {error}"
 msgstr ""
 "Impossibile creare il file zip a causa di un errore del file system: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1774
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1789
 msgid "Failed to apply derived parameter %s: %s"
 msgstr "Impossibile applicare il parametro derivato %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1870
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1885
 msgid "Parameter not found"
 msgstr "Parametro non trovato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1871
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1886
 msgid "Parameter {param_name} could not be located."
 msgstr "Il parametro {param_name} non è stato trovato."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1883
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1889
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1898
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1904
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:419
 msgid "Out-of-range value"
 msgstr "Valore fuori intervallo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1886
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1901
 msgid "Parameter %s out of range: %s"
 msgstr "Parametro %s fuori dall'intervallo: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1893
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1908
 msgid "Invalid value for %s: %s"
 msgstr "Valore non valido per %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1896
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1911
 msgid "Invalid value"
 msgstr "Valore non valido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1934
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1949
 msgid ""
 "No apm.pdef.xml file and no FC connected. Not possible autocomplete "
 "parameter names."
@@ -5292,23 +5337,23 @@ msgstr ""
 "Nessun file apm.pdef.xml e nessun FC connesso. Impossibile completare "
 "automaticamente i nomi dei parametri."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1955
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1970
 msgid "Parameter name can not be empty."
 msgstr "Il nome del parametro non può essere vuoto."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1964
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1979
 msgid "Parameter already exists, edit it instead"
 msgstr "Il parametro esiste già, modificalo invece"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1982
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1997
 msgid "Parameter name not found in the flight controller."
 msgstr "Nome parametro non trovato nel controller di volo."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2000
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2015
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}' non trovato nel file apm.pdef.xml."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2005
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2020
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
@@ -5316,66 +5361,66 @@ msgstr ""
 "Impossibile aggiungere parametri quando nessun FC è connesso e nessun file "
 "apm.pdef.xml esiste."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2058
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2073
 msgid "Successfully added %d parameter(s)."
 msgstr "Aggiunti con successo %d parametro/i."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2062
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2077
 msgid "Added %d parameter(s)."
 msgstr "Aggiunti %d parametro/i."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2064
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2081
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2079
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2096
 msgid "Skipped %d parameter(s): %s"
 msgstr "Saltati %d parametro/i: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2066
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2083
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2081
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2098
 msgid "Failed %d parameter(s): %s"
 msgstr "Falliti %d parametro/i: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2067
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2082
 msgid "Partial Success"
 msgstr "Successo Parziale"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2071
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2086
 msgid "All %d parameter(s) already exist in the file."
 msgstr "Tutti i %d parametro/i esistono già nel file."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2071
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2086
 msgid "No Changes"
 msgstr "Nessuna Modifica"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2075
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2090
 msgid "Failed to add all %d parameter(s): %s"
 msgstr "Impossibile aggiungere tutti i %d parametro/i: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2084
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2099
 msgid "No Parameters Added"
 msgstr "Nessun Parametro Aggiunto"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2088
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2103
 msgid "Unexpected result during bulk parameter addition."
 msgstr "Risultato imprevisto durante l'aggiunta in blocco dei parametri."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2232
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2247
 msgid "Why: "
 msgstr "Perché: "
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2234
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2249
 msgid "Why now: "
 msgstr "Perché ora: "
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2239
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2254
 msgid "{current_file} Documentation"
 msgstr "Documentazione {current_file}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2241
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2256
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:62
 msgid "Documentation"
 msgstr "Documentazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2261
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2276
 msgid ""
 "This configuration step ({current_file} intermediate parameter file) is "
 "{percentage}% mandatory"
@@ -5383,33 +5428,33 @@ msgstr ""
 "Questo passaggio di configurazione (file di parametri intermedio "
 "{current_file}) è obbligatorio al {percentage}%"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2265
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2280
 msgid ""
 "Mandatory level not available for this configuration step ({current_file})"
 msgstr ""
 "Livello di obbligatorietà non disponibile per questo passaggio di "
 "configurazione ({current_file})"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2342
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2379
 msgid "Failed to patch derived parameter %s: %s"
 msgstr "Impossibile modificare il parametro derivato %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2376
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2413
 msgid "rename_connection eval failed for %s: %s"
 msgstr "la valutazione di rename_connection non è riuscita per %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2398
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2435
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2466
 msgid "Skipping connection rename %s → %s: target already exists"
 msgstr ""
 "Salto il rinominare della connessione %s → %s: la destinazione esiste già"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2411
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2442
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2448
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2479
 msgid "Renamed connection parameter %s → %s"
 msgstr "Parametro di connessione rinominato %s → %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2475
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2512
 msgid ""
 "vehicle_components evaluator reference is stale; re-syncing to the live "
 "object"
@@ -5417,11 +5462,11 @@ msgstr ""
 "Il riferimento dell’evaluator vehicle_components non è aggiornato; nuova "
 "sincronizzazione con l’oggetto live"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2486
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2523
 msgid "No vehicle component data loaded; save aborted."
 msgstr "Nessun dato del componente veicolo caricato; salvataggio annullato."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2525
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2564
 msgid "data_model_parameter_editor: Unsupported plugin name: {plugin_name}"
 msgstr ""
 "data_model_parameter_editor: Nome del plugin non supportato: {plugin_name}"
@@ -6470,12 +6515,12 @@ msgid "Parameter editor not available."
 msgstr "Editor parametri non disponibile."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:252
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1209
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1431
 msgid "Failed to upload parameters:"
 msgstr "Caricamento dei parametri non riuscito:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_battery_monitor.py:252
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1209
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1431
 msgid "Upload Error"
 msgstr "Errore di caricamento"
 
@@ -6782,7 +6827,7 @@ msgid " - Vehicle Component Editor"
 msgstr " - Editor Componenti Veicolo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:223
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:260
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:288
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:53
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:54
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
@@ -7155,12 +7200,14 @@ msgid "Select an ArduPilot .bin log file"
 msgstr "Seleziona un file registro .bin di ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:843
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:688
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1065
 msgid "ArduPilot binary log files"
 msgstr "File di log binari ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1231
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:688
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1453
 msgid "All files"
 msgstr "Tutti i file"
 
@@ -7187,6 +7234,51 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_entry_dynamic.py:50
 msgid "List_of_items can't be 'None'"
 msgstr "List_of_items non può essere 'None'"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:42
+msgid "ESC RPM scaling"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:46
+msgid ""
+"Hobbywing 6X SE detected. Its reported RPM requires a 0.714 scale factor. "
+"Generate and upload the Lua correction script before flight."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:51
+msgid ""
+"Generate an ArduPilot Lua script that applies an RPM scale factor to ESC "
+"telemetry outputs."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:55
+msgid "Generate and upload RPM scale script"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:61
+msgid "ESC RPM scale factor"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:62
+msgid "Enter the RPM scale factor to apply to ESC outputs:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:74
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:85
+msgid "ESC RPM script upload failed"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:79
+msgid "ESC RPM script uploaded"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:80
+msgid "The Lua script was uploaded to /APM/Scripts/esc_rpm_scale.lua."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_esc_rpm_scale.py:86
+msgid "A flight controller connection with MAVFTP support is required."
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py:47
 msgid "Initializing Flight Controller"
@@ -7221,8 +7313,8 @@ msgid "Lifting window: {_e}"
 msgstr "Sollevamento finestra: {_e}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:153
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:196
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1098
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:224
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1320
 msgid "Downloaded {} of {} parameters"
 msgstr "Scaricati {} di {} parametri"
 
@@ -7233,6 +7325,171 @@ msgstr "Avvio download parametri..."
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:180
 msgid "Failed to download parameters"
 msgstr "Download dei parametri non riuscito"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:38
+msgid "IMUs"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:46
+msgid "Accel:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:47
+msgid "Gyro:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:48
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:66
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:83
+msgid "Bus type:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:49
+msgid "Accel ok:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:50
+msgid "Accel cal:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:51
+msgid "Gyro cal:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:52
+msgid "Temp cal:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:53
+msgid "Gyro ok:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:57
+msgid "Compasses"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:65
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:82
+msgid "Chip:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:67
+msgid "External:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:68
+msgid "Calibrated:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:69
+msgid "Motor cal:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:70
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:85
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:97
+msgid "Healthy:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:74
+msgid "Barometers"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:84
+msgid "Wind comp:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:89
+msgid "Airspeed sensors"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:95
+msgid "Type:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:96
+msgid "In use:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:103
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:111
+msgid "No hardware data available"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:45
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:774
+msgid "Log Quality Report"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:96
+msgid "Open release page on GitHub"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:123
+msgid "Vehicle & Firmware"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:130
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:135
+msgid "Firmware:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:139
+msgid "FC:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:140
+msgid "Board:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:143
+msgid "Log Overview"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:146
+msgid "Flight Time:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:147
+msgid "Log Size:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
+msgid "Total Msgs:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:151
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:69
+msgid "System Performance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:155
+msgid "Avg CPU:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:156
+msgid "Peak CPU:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
+msgid "Long Loops:"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:169
+msgid "  Quality Report  "
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:173
+msgid "  Hardware Overview  "
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:190
+msgid "Requires Attention"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:201
+msgid "Passed Checks"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:132
 msgid ""
@@ -7386,14 +7643,14 @@ msgstr "Nessun tipo di telaio selezionato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:497
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:591
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:171
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:199
 msgid "Resetting Flight Controller"
 msgstr "Reset del Controller di Volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:498
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:504
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_motor_test.py:591
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:172
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:200
 msgid "Waiting for {} of {} seconds"
 msgstr "Attesa di {} di {} secondi"
 
@@ -7614,36 +7871,36 @@ msgstr ""
 "Questo main è solo per test e sviluppo, solitamente PairTupleCombobox viene "
 "chiamato da un altro script"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:159
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:187
 msgid "Uploading FC parameters"
 msgstr "Caricamento parametri FC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:160
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:188
 msgid "Uploaded {} of {} parameters"
 msgstr "Caricati {} di {} parametri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:183
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:211
 msgid "Reconnecting to Flight Controller"
 msgstr "Reconnettendo al Controller di Volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:184
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:212
 msgid "{} of {} percent"
 msgstr "{} su {} percento"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:195
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1090
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:223
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1312
 msgid "Re-downloading FC parameters"
 msgstr "Riscaricamento parametri FC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:260
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:288
 msgid " - Parameter file editor and uploader"
 msgstr " - Editor e uploader file parametri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:341
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:369
 msgid "Current intermediate parameter file:"
 msgstr "File parametri intermedio corrente:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:350
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:378
 msgid ""
 "Select the intermediate parameter file from the list of available files in "
 "the selected vehicle directory\n"
@@ -7655,73 +7912,73 @@ msgstr ""
 "Passerà automaticamente al file successivo una volta che il file corrente "
 "sarà caricato sul controllore di volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:369
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:397
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
 msgstr ""
 "Manuale Utente, Forum di Supporto, Segnala un Bug, Licenze, Codice Sorgente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:375
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:403
 msgid "Legend"
 msgstr "Legenda"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:378
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:406
 msgid "the meaning of the text background colors"
 msgstr "il significato dei colori di sfondo del testo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:381
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:409
 msgid "Normal parameter"
 msgstr "Parametro normale"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:382
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:410
 msgid "Normal parameter - reusable in similar vehicles"
 msgstr "Parametro normale - riutilizzabile in veicoli simili"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:384
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:412
 msgid "Calibration param"
 msgstr "Parametro di calibrazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:385
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:413
 msgid "Calibration parameter - not-reusable, even in similar vehicles"
 msgstr ""
 "Parametro di calibrazione - non riutilizzabile, anche in veicoli simili"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:387
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:415
 msgid "Read-only param"
 msgstr "Parametro in sola lettura"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:388
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:416
 msgid "Read-only parameter - not writable nor changeable"
 msgstr "Parametro in sola lettura - non scrivibile né modificabile"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:390
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:418
 msgid "Below limit"
 msgstr "Sotto il limite"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:391
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:419
 msgid "Parameter value below the minimum recommended value"
 msgstr "Valore del parametro sotto il valore minimo raccomandato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:395
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:423
 msgid "Default value"
 msgstr "Valore predefinito"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:424
 msgid "This is the default value of this parameter"
 msgstr "Questo è il valore predefinito di questo parametro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:398
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:426
 msgid "Not available"
 msgstr "Non disponibile"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:399
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:427
 msgid "This parameter is not available on the connected flight controller"
 msgstr "Questo parametro non è disponibile sul controller di volo connesso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:401
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:429
 msgid "Not editable"
 msgstr "Non modificabile"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:404
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:432
 msgid ""
 "This value has been automatically calculated by the software using data\n"
 "from the component editor window or from the 'configuration_steps.json' file"
@@ -7731,19 +7988,19 @@ msgstr ""
 "dalla finestra dell'editor dei componenti o dal file 'configuration_steps."
 "json'"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:411
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:439
 msgid "Above limit"
 msgstr "Sopra il limite"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:412
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:440
 msgid "Parameter value above the maximum recommended value"
 msgstr "Valore del parametro sopra il valore massimo raccomandato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:448
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:476
 msgid "See only changed parameters"
 msgstr "Mostra solo i parametri modificati"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:456
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:484
 msgid ""
 "Toggle to show only parameters that will change if/when uploaded to the "
 "flight controller"
@@ -7751,11 +8008,11 @@ msgstr ""
 "Attiva per mostrare solo i parametri che cambieranno se/quando caricati sul "
 "controller di volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:461
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:489
 msgid "Annotate docs into .param files"
 msgstr "Annota la documentazione nei file .param"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:472
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:500
 msgid ""
 "Annotate ArduPilot parameter documentation metadata into the intermediate "
 "parameter files\n"
@@ -7767,7 +8024,7 @@ msgstr ""
 "I file saranno più grandi, ma tutta la documentazione dei parametri "
 "esistente sarà inclusa all'interno"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:481
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:509
 msgid ""
 "Upload selected params to FC,\n"
 "and advance to next param file"
@@ -7775,7 +8032,7 @@ msgstr ""
 "Carica i parametri selezionati sull'FC\n"
 "e passa al file parametri successivo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:488
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:516
 msgid ""
 "Upload selected parameters to the flight controller and advance to the next "
 "intermediate parameter file\n"
@@ -7791,15 +8048,15 @@ msgstr ""
 "Resetterà il FC se necessario, riscaricherà tutti i parametri e ne "
 "convaliderà i valori"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:494
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:522
 msgid "No flight controller connected, upload not available"
 msgstr "Nessun controllore di volo connesso, caricamento non disponibile"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:500
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:528
 msgid "Download last flight log"
 msgstr "Scarica ultimo registro di volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:513
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:541
 msgid ""
 "Download the last flight log from the flight controller\n"
 "This will save the previous flight log to a file on your computer for "
@@ -7809,15 +8066,23 @@ msgstr ""
 "Questo salverà il registro di volo precedente in un file sul tuo computer "
 "per l'analisi"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:518
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:546
 msgid "No flight controller connected or MAVFTP not supported"
 msgstr "Nessun controllore di volo collegato o MAVFTP non supportato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:524
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:552
+msgid "Analyse a .bin log"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:556
+msgid "Open a .bin flight log and analyse its quality"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:561
 msgid "Zip Vehicle for Forum Help"
 msgstr "Comprimi veicolo per aiuto sul forum"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:533
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:570
 msgid ""
 "Creates a .zip file of the configuration files\n"
 "so that they can be easily shared for forum help"
@@ -7825,15 +8090,15 @@ msgstr ""
 "Crea un file .zip dei file di configurazione\n"
 "in modo che possano essere facilmente condivisi per l'aiuto sul forum"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:535
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:572
 msgid "No intermediate parameter files available"
 msgstr "Nessun file parametri intermedio disponibile"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:539
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:576
 msgid "Skip parameter file"
 msgstr "Salta file parametri"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:552
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:589
 msgid ""
 "Skip to the next intermediate parameter file without uploading any changes "
 "to the flight controller\n"
@@ -7845,87 +8110,147 @@ msgstr ""
 "Se sono state apportate modifiche al file corrente chiederà se si desidera "
 "salvarle"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:565
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:643
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:599
+msgid ".bin Log Analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:627
+msgid "Log Mismatch"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:628
+msgid ""
+"{error}\n"
+"\n"
+"Analyse this log anyway using ArduPilot metadata for {vehicle_type} "
+"{version}?"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:636
+msgid "Downloading parameter metadata for this log, please wait..."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:687
+msgid "Select a flight log"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:696
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:719
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:723
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:743
+msgid "Log Analysis Error"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:699
+msgid "Reading flight log, please wait..."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:723
+msgid "No firmware version information found in parsed log"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:758
+msgid ""
+"Log Quality Report\n"
+"\n"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:761
+msgid ""
+"Analysis is only as good as the data in your log.\n"
+"\n"
+"If a subsystem is not logging, or its parameters are misconfigured, the "
+"analyser cannot give you reliable results for that subsystem.\n"
+"\n"
+"This report tells you exactly what your ArduPilot .bin log can and cannot "
+"support for analysis, and points you to the configuration step that fixes "
+"each gap.\n"
+"\n"
+"Hover over any issue count to see the details.\n"
+"Issues link back to the configuration step that fixes them."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:787
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:865
 msgid "Error deactivating plugin: %s"
 msgstr "Errore nella disattivazione del plugin: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:572
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:648
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:794
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:870
 msgid "Error destroying plugin view: %s"
 msgstr "Errore nella distruzione della vista del plugin: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:584
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:806
 msgid "Error destroying paned window: %s"
 msgstr "Errore nella distruzione della finestra divisa: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:776
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:998
 msgid "Plugin configuration missing name"
 msgstr "Configurazione del plugin senza nome"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:781
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1003
 msgid "Unknown plugin: {plugin_name}"
 msgstr "Plugin sconosciuto: {plugin_name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:795
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1017
 msgid "Plugin requires flight controller connection"
 msgstr "Il plugin richiede la connessione al controllore di volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:804
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1026
 msgid "Failed to create plugin: {plugin_name}"
 msgstr "Impossibile creare il plugin: {plugin_name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:819
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1041
 msgid "Error activating plugin: %s"
 msgstr "Errore nell'attivazione del plugin: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:829
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1051
 msgid "Error loading plugin {plugin_name}: {error}"
 msgstr "Errore nel caricamento del plugin {plugin_name}: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:850
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1072
 msgid "Reading IMU calibration messages"
 msgstr "Lettura messaggi di calibrazione IMU"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:851
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1073
 msgid "Please wait, this can take a long time"
 msgstr "Attendere prego, questa operazione può richiedere molto tempo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:899
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1121
 msgid "Click here to open the Tuning Guide relevant Section"
 msgstr "Clicca qui per aprire la Sezione rilevante della Guida di Regolazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:983
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1205
 msgid "Uploading file"
 msgstr "Caricamento file"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:984
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1206
 msgid "Uploaded {} of {} %"
 msgstr "Caricato {} di {} %"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1001
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1008
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1223
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1230
 msgid "File Upload Error"
 msgstr "Errore di caricamento file"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1002
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1224
 msgid "Do you want to retry?"
 msgstr "Vuoi riprovare?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1002
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1224
 msgid "Failed to upload file to flight controller:"
 msgstr "Impossibile caricare il file sul controller di volo:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1009
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1231
 msgid "File upload failed. Do you want to retry?"
 msgstr "Caricamento del file non riuscito. Vuoi riprovare?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1076
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1078
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1298
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1300
 msgid "Step Instructions"
 msgstr "Istruzioni del passaggio"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1086
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1308
 msgid ""
 "Failed to update progress bar, {selected_file} does not start with two "
 "digits like it should: {_e}"
@@ -7933,27 +8258,27 @@ msgstr ""
 "Impossibile aggiornare la barra di avanzamento, {selected_file} non inizia "
 "con due cifre come dovrebbe: {_e}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1090
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1312
 msgid "Downloading FC parameters"
 msgstr "Download parametri FC in corso"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1220
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1442
 msgid "Downloading Flight Log"
 msgstr "Download Registro di Volo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1221
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1443
 msgid "Downloaded {}% from {}%"
 msgstr "Scaricato {}% da {}%"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1227
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1449
 msgid "Save flight log as"
 msgstr "Salva registro di volo come"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1230
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1452
 msgid "Binary log files"
 msgstr "File registro binari"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1302
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1524
 msgid ""
 "Export FC params that are missing or different in the configuration steps. "
 "Default is %(default)s"
@@ -7961,7 +8286,7 @@ msgstr ""
 "Esporta i parametri FC che mancano o sono diversi nei passaggi di "
 "configurazione. Il valore predefinito è %(default)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1318
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1540
 msgid ""
 "A GUI for editing ArduPilot param files. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
@@ -9023,35 +9348,43 @@ msgstr "Cosa viene caricato sull'FC"
 msgid "[Image not found: what_gets_uploaded.png]"
 msgstr "[Immagine non trovata: what_gets_uploaded.png]"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:39
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_data_sources.py:44
+msgid "Configuration file '{config_file}' not found"
+msgstr "File di configurazione '{config_file}' non trovato"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_data_sources.py:46
+msgid "Error in configuration file '{config_file}': {error}"
+msgstr "Errore nel file di configurazione '{config_file}': {error}"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:44
 msgid "Error opening logfile {logfile}: {error}"
 msgstr "Errore nell'apertura del logfile {logfile}: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:163
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:345
-msgid "Structured array for {message_type} is missing field metadata"
-msgstr "L'array strutturato per {message_type} manca dei metadata dei campi"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:237
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:140
 msgid "Schema {name} has mismatched field and format counts"
 msgstr "Lo schema {name} ha un numero di campi e formati non corrispondenti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:248
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:151
 msgid "Unsupported log format character {format_char!r} in schema {name}"
 msgstr ""
 "Carattere di formato log non supportato {format_char!r} nello schema {name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:298
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:169
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
 msgstr "Discrepanza nei campi per {name}. Mancanti: {missing}, extra: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:335
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:282
 msgid "Message count for {message_type} exceeded the preallocated array size"
 msgstr ""
 "Il conteggio dei messaggi per {message_type} ha superato la dimensione "
 "preallocata dell'array"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:362
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:292
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_data.py:82
+msgid "Structured array for {message_type} is missing field metadata"
+msgstr "L'array strutturato per {message_type} manca dei metadata dei campi"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:309
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
@@ -9059,45 +9392,274 @@ msgstr ""
 "Discrepanza nel conteggio dei messaggi per {message_name}: previsto "
 "{expected}, scritto {written}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:39
-msgid "Configuration file '{config_file}' not found"
-msgstr "File di configurazione '{config_file}' non trovato"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:389
+msgid "{message_name} log ends while still armed, no trailing disarm found"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:41
-msgid "Error in configuration file '{config_file}': {error}"
-msgstr "Errore nel file di configurazione '{config_file}': {error}"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:396
+msgid "Could not compute flight duration: {error}"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:79
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:65
+msgid "Performance monitor data present and good for analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:67
+msgid "Performance monitor data has quality issues"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:81
+msgid ""
+"The selected log is from {log_vehicle_type}, but the currently open vehicle "
+"is {project_vehicle_type}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:88
+msgid ""
+"The selected log firmware version is {log_version}, but the currently open "
+"vehicle firmware version is {project_version}."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:80
+msgid "Schema not found"
+msgstr "Schema non trovato"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:163
+msgid "PM message not logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:172
+msgid "Internal firmware errors were detected (InE)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:179
+msgid "Internal error count: {count}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:185
+msgid "An internal error line was recorded (ErrL)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:193
+msgid "Detected {count} scheduler long loops"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:213
 msgid "Missing field definitions"
 msgstr "Definizioni dei campi mancanti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:81
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:215
 msgid "Missing format string"
 msgstr "Stringa di formato mancante"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:83
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:217
 msgid "Invalid message length"
 msgstr "Lunghezza del messaggio non valida"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:85
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:219
 msgid "Unit count mismatch"
 msgstr "Conteggio delle unità non corrispondente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:87
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:221
 msgid "Multiplier count mismatch"
 msgstr "Conteggio dei moltiplicatori non corrispondente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:90
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:224
 msgid "{message} has no logging data"
 msgstr "{message} non contiene dati di registrazione"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:98
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:232
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
 msgstr "Discrepanza nei campi. Mancanti: {missing}, extra: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_quality_check.py:153
-msgid "Schema not found"
-msgstr "Schema non trovato"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:53
+msgid "Status: Log looks healthy. No major issues detected."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
+msgid "Status: Found {n} potential issue(s) to review."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:58
+msgid "{name} data present and good for analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:60
+msgid "{name} data has quality issues"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
+msgid "Battery logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:45
+msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:47
+msgid "Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
+msgid "Set BATT_MONITOR to enable the battery monitor"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:52
+msgid ""
+"Battery logging enabled but no data, monitor may not be configured properly"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:53
+msgid "No BAT messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:61
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:133
+msgid "Volt field not present in this firmware's BAT schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:62
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:134
+msgid "Voltage values missing from BAT records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:68
+msgid "Voltage is zero throughout, sensor may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:75
+msgid "Voltage spike, or MOT_BAT_VOLT_MAX misconfigured"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:80
+msgid "Voltage sag, or MOT_BAT_VOLT_MIN misconfigured"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:89
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:139
+msgid "Curr field not present in this firmware's BAT schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:90
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:140
+msgid "Current values missing from BAT records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:98
+msgid "CurrTot field not present in this firmware's BAT schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:99
+msgid "CurrTot missing from BAT records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:111
+msgid "Battery low-voltage failsafe threshold disabled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:116
+msgid "Battery critical-voltage failsafe threshold disabled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:149
+msgid ""
+"Power efficiency < 200W/Kg. Current is miscalibrated or take off weight is "
+"incorrect or the efficiency is really good."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:158
+msgid ""
+"Power efficiency > 500W/Kg. Current is miscalibrated or take off weight is "
+"incorrect or the efficiency is really bad."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:43
+msgid "ESC telemetry not logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:46
+msgid "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:51
+msgid "ESC telemetry not logged, scripting is disabled"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:54
+msgid "Enable SCR_ENABLE if using scripted ESC telemetry"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:59
+msgid ""
+"ESC telemetry not logged, check ESC hardware supports telemetry and is wired "
+"correctly"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:60
+msgid "No ESC messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:69
+msgid "RPM field not present in this firmware's ESC schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:70
+msgid "RPM values missing from ESC records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:79
+msgid "Curr field not present in this firmware's ESC schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:80
+msgid "Current values missing from ESC records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:89
+msgid "Err field not present in this firmware's ESC schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:90
+msgid "ESC error values missing from ESC records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:93
+msgid "ESC error rate detected on at least one ESC instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:44
+msgid "GPS logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:45
+msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:47
+msgid ""
+"GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
+"connection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:48
+msgid "No GPS messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:57
+msgid "Status field not present in this firmware's GPS schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:58
+msgid "GPS fix status missing from GPS records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
+msgid "GPS never achieved a 3D fix"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:69
+msgid "GPS type not configured (set to None)"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugin_factory.py:116
 msgid "none"
