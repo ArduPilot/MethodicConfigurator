@@ -13,9 +13,6 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import contextlib
-import tkinter as tk
-from collections.abc import Generator
 from tkinter import ttk
 from typing import cast
 from unittest.mock import Mock, patch
@@ -85,27 +82,19 @@ class TestParameterEditorTableUserWorkflows:
 
     @pytest.fixture
     def parameter_table(
-        self, test_param_editor: ParameterEditor, mock_parameter_editor: Mock
-    ) -> Generator[ParameterEditorTable, None, None]:
+        self,
+        test_param_editor: ParameterEditor,
+        mock_parameter_editor: Mock,
+        root: ttk.Widget,
+    ) -> ParameterEditorTable:
         """Create a ParameterEditorTable instance for testing."""
-        # Create a root window for the table
-        root = tk.Tk()
-        root.withdraw()  # Hide the root window
-
         dialog_mocks = ParameterEditorTableDialogs(
             show_error=Mock(),
             show_info=Mock(),
             ask_yes_no=Mock(return_value=True),
         )
 
-        # Create the table
-        table = ParameterEditorTable(root, test_param_editor, mock_parameter_editor, dialogs=dialog_mocks)
-
-        yield table
-
-        # Cleanup
-        with contextlib.suppress(tk.TclError):
-            root.destroy()
+        return ParameterEditorTable(root, test_param_editor, mock_parameter_editor, dialogs=dialog_mocks)
 
     def test_user_sees_pyautogui_environment_ready_for_testing(self, gui_test_environment) -> None:
         """
