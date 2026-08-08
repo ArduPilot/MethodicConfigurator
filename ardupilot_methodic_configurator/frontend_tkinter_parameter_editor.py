@@ -644,32 +644,39 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self, progress: ProgressWindow
     ) -> tuple[Callable[[int, int], None], Callable[[], None]]:
         """Return a thread-safe recorder and a main-thread flush callable."""
-        state: dict[str, object] = {"pct": -1, "current": 0, "total": 0, "is_determinate": False}
+        pct_state = -1
+        current_state = 0
+        total_state = 0
+        is_determinate_state = False
         lock = threading.Lock()
 
         def record_progress(current: int, total: int) -> None:
             """Background thread only — zero Tk calls."""
+            nonlocal pct_state, current_state, total_state
             if total == 0:
                 return
             pct = int(current * 100 / total)
             with lock:
-                if pct != state["pct"]:
-                    state.update({"pct": pct, "current": current, "total": total})
+                if pct != pct_state:
+                    pct_state = pct
+                    current_state = current
+                    total_state = total
 
         def flush_to_ui() -> None:
             """Main thread only — reads state and updates widgets."""
+            nonlocal is_determinate_state
             with lock:
-                pct = int(state["pct"])  # type: ignore[arg-type]
-                current = int(state["current"])  # type: ignore[arg-type]
-                total = int(state["total"])  # type: ignore[arg-type]
-                is_det = bool(state["is_determinate"])
+                pct = pct_state
+                current = current_state
+                total = total_state
+                is_det = is_determinate_state
             if pct < 0:
                 return
             if not is_det:
                 progress.progress_bar.stop()
                 progress.progress_bar.configure(mode="determinate")
                 with lock:
-                    state["is_determinate"] = True
+                    is_determinate_state = True
             progress.update_progress_bar(current, total)
 
         return record_progress, flush_to_ui
