@@ -71,7 +71,7 @@ from ardupilot_methodic_configurator.log_analysis.backend_data_sources import lo
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
 from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary, validate_log_matches_vehicle
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -79,7 +79,7 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.data_model_par_dict import ParDict
     from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
     from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
-    from ardupilot_methodic_configurator.plugin_protocol import PluginView
+    from ardupilot_methodic_configurator.plugins.plugin_protocol import PluginView
 
 # pylint: disable=too-many-lines
 
@@ -1357,6 +1357,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # see the updated values when refresh_current_step_computed_parameters() runs.
             self.parameter_editor.update_vehicle_components(editor_data["Components"])
             self.parameter_editor.refresh_current_step_computed_parameters()
+            if self.parameter_editor.current_file:
+                self._update_plugin_layout(self.parameter_editor.get_plugin(self.parameter_editor.current_file))
             self.repopulate_parameter_table()
         finally:
             self._updating_inline_editor = False

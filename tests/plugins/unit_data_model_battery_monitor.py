@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
 
 # pylint: disable=redefined-outer-name,protected-access
 

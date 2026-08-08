@@ -1,4 +1,5 @@
-# ruff: noqa: INP001
+#!/usr/bin/env python3
+
 """
 Tests for the ESC RPM scale plugin data model.
 
@@ -16,15 +17,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_esc_rpm_scale import (
+import ardupilot_methodic_configurator
+from ardupilot_methodic_configurator.plugins.data_model_esc_rpm_scale import (
     DEFAULT_HOBBYWING_6X_SE_SCALE,
     FALLBACK_ESC_OUTPUT_COUNT,
     SCRIPT_FILENAME,
     SCRIPT_REMOTE_PATH,
+    SCRIPTING_PROTOCOL,
     EscRpmScaleDataModel,
 )
-from ardupilot_methodic_configurator.frontend_tkinter_esc_rpm_scale import register_esc_rpm_scale_plugin
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_ESC_RPM_SCALE
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale import register_esc_rpm_scale_plugin
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ESC_RPM_SCALE
 
 
 @pytest.fixture
@@ -82,6 +85,24 @@ class TestHobbywingDetection:
         assert model.recommended_scale == 1.0
 
 
+class TestScriptingProtocolDetection:
+    """Verify ESC->FC telemetry protocol gate detection."""
+
+    def test_detects_scripting_esc_telemetry_protocol(self, model, filesystem) -> None:
+        filesystem.vehicle_components_fs.data["Components"]["ESC"] = {
+            "ESC->FC Telemetry": {"Type": "SERIAL1", "Protocol": SCRIPTING_PROTOCOL}
+        }
+
+        assert model.is_scripting_telemetry_protocol()
+
+    def test_returns_false_when_esc_telemetry_protocol_is_not_scripting(self, model, filesystem) -> None:
+        filesystem.vehicle_components_fs.data["Components"]["ESC"] = {
+            "ESC->FC Telemetry": {"Type": "SERIAL1", "Protocol": "ESC Telemetry"}
+        }
+
+        assert not model.is_scripting_telemetry_protocol()
+
+
 _MOTOR_DATA = {
     "layouts": [
         {"Class": 1, "Type": 0, "motors": [{}, {}, {}, {}]},
@@ -130,8 +151,8 @@ class TestEscCountDerivation:
 
     def test_real_motor_data_covers_every_frame_class(self) -> None:
         """The shipped motor layout data must resolve a count for each frame class."""
-        package_dir = Path(__file__).resolve().parents[1] / "ardupilot_methodic_configurator"
-        motor_data = json.loads((package_dir / "AP_Motors_test.json").read_text(encoding="utf-8"))
+        package_dir = Path(ardupilot_methodic_configurator.__file__).resolve().parent
+        motor_data = json.loads((package_dir / "plugins" / "AP_Motors_test.json").read_text(encoding="utf-8"))
         for layout in motor_data["layouts"]:
             count = EscRpmScaleDataModel.esc_count_for_frame_class(layout["Class"], motor_data)
             assert count == len(layout["motors"])
@@ -193,12 +214,17 @@ class TestConfigurationStepIntegration:
 
     @pytest.mark.parametrize("vehicle_type", ["ArduCopter", "ArduPlane", "Heli", "Rover"])
     def test_esc_telemetry_step_registers_plugin(self, vehicle_type: str) -> None:
-        package_dir = Path(__file__).resolve().parents[1] / "ardupilot_methodic_configurator"
+        package_dir = Path(ardupilot_methodic_configurator.__file__).resolve().parent
         config_path = package_dir / f"configuration_steps_{vehicle_type}.json"
         config = json.loads(config_path.read_text(encoding="utf-8"))
         step = config["steps"]["09_esc_telemetry.param"]
 
-        assert step["plugin"] == {"name": PLUGIN_ESC_RPM_SCALE, "placement": "left"}
+        assert step["plugin"]["name"] == PLUGIN_ESC_RPM_SCALE
+        assert step["plugin"]["placement"] == "left"
+        if vehicle_type == "ArduCopter":
+            assert step["plugin"].get("if") == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
+        else:
+            assert "if" not in step["plugin"]
         scripting_condition = step["derived_parameters"]["SCR_ENABLE"]["if"]
         assert scripting_condition == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
 
@@ -207,7 +233,9 @@ class TestPluginRegistration:
     """Verify factory registration wiring."""
 
     def test_registers_esc_rpm_scale_creator(self) -> None:
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_esc_rpm_scale.plugin_factory.register") as register:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale.plugin_factory.register"
+        ) as register:
             register_esc_rpm_scale_plugin()
 
         register.assert_called_once()

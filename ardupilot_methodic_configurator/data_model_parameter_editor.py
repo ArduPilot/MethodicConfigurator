@@ -34,21 +34,22 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
-from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
     ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
-from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
-from ardupilot_methodic_configurator.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.data_model_configuration_step import ConfigurationStepProcessor
-from ardupilot_methodic_configurator.data_model_esc_rpm_scale import EscRpmScaleDataModel
-from ardupilot_methodic_configurator.data_model_motor_test import MotorTestDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
-from ardupilot_methodic_configurator.data_model_rc_calibration import RCCalibrationDataModel
+from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError, safe_evaluate
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
-from ardupilot_methodic_configurator.plugin_constants import (
+from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.data_model_esc_rpm_scale import EscRpmScaleDataModel
+from ardupilot_methodic_configurator.plugins.data_model_motor_test import MotorTestDataModel
+from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_ACCELEROMETER_CALIBRATION,
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
@@ -2287,7 +2288,30 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     # plugin API begin
 
     def get_plugin(self, filename: str) -> dict | None:
-        return self._local_filesystem.get_plugin(filename)
+        plugin = self._local_filesystem.get_plugin(filename)
+        if plugin is None:
+            return None
+
+        condition = plugin.get("if")
+        if condition is None:
+            return plugin
+
+        variables = self._config_step_processor.variables.copy()
+        if self.fc_parameters:
+            variables["fc_parameters"] = self.fc_parameters
+
+        try:
+            if not bool(safe_evaluate(str(condition), variables)):
+                return None
+        except ConfigurationStepEvalError as e:
+            logging_warning(_("Plugin condition '%s' could not be evaluated: %s"), condition, e)
+            return None
+
+        # Keep plugin JSON as the single source of truth for conditions while
+        # returning only UI-facing plugin metadata to the frontend.
+        plugin_copy = dict(plugin)
+        plugin_copy.pop("if", None)
+        return plugin_copy
 
     def get_component_editor_deps(self) -> ComponentEditorDeps:
         """

@@ -23,7 +23,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import FilesystemJSONWithSchema
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
 
 # pylint: disable=too-many-lines
 
@@ -135,7 +135,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def _load_motor_data(self) -> None:
         """Load motor configuration data from AP_Motors_test.json file."""
         try:
-            # Get the directory where this module is located (contains the JSON files)
+            # Motor data JSON lives in the plugins directory.
             current_dir = os_path.dirname(__file__)
             self._motor_data = self._motor_data_loader.load_json_data(current_dir)
 

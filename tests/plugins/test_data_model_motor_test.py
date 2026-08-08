@@ -19,7 +19,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
-from ardupilot_methodic_configurator.data_model_motor_test import (
+from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
     FlightControllerConnectionError,
     FrameConfigurationError,
     MotorStatusEvent,
@@ -177,11 +177,11 @@ def program_settings_store(monkeypatch) -> dict[str, Any]:
         current[parts[-1]] = float(value)
 
     monkeypatch.setattr(
-        "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.get_setting",
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
         _get_setting,
     )
     monkeypatch.setattr(
-        "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.set_setting",
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.set_setting",
         _set_setting,
     )
     return store
@@ -196,7 +196,9 @@ def mock_settings() -> MagicMock:
 @pytest.fixture
 def motor_test_model(mock_flight_controller, mock_filesystem, mock_motor_data_json) -> MotorTestDataModel:
     """Fixture providing a properly configured motor test data model for behavior testing."""
-    with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_loader_class:
+    with patch(
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+    ) as mock_json_loader_class:
         # Configure the mock loader instance
         mock_loader_instance = MagicMock()
         mock_loader_instance.load_json_data.return_value = mock_motor_data_json
@@ -270,7 +272,9 @@ def mock_motor_data_json() -> dict:
 @pytest.fixture
 def motor_test_model_with_json_data(mock_flight_controller, mock_filesystem, mock_motor_data_json) -> MotorTestDataModel:
     """Fixture providing a motor test model with mocked JSON data loading."""
-    with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_loader_class:
+    with patch(
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+    ) as mock_json_loader_class:
         # Configure the mock loader instance
         mock_loader_instance = MagicMock()
         mock_loader_instance.load_json_data.return_value = mock_motor_data_json
@@ -287,7 +291,9 @@ def motor_test_model_with_json_data(mock_flight_controller, mock_filesystem, moc
 @pytest.fixture
 def motor_test_model_with_empty_json_data(mock_flight_controller, mock_filesystem) -> MotorTestDataModel:
     """Fixture providing a motor test model with empty/failed JSON data loading."""
-    with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_loader_class:
+    with patch(
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+    ) as mock_json_loader_class:
         # Configure the mock loader instance to return empty data
         mock_loader_instance = MagicMock()
         mock_loader_instance.load_json_data.return_value = {}
@@ -295,7 +301,9 @@ def motor_test_model_with_empty_json_data(mock_flight_controller, mock_filesyste
         mock_json_loader_class.return_value = mock_loader_instance
 
         # For empty JSON data, we need to bypass the frame configuration validation
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.MotorTestDataModel._update_frame_configuration"):
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.MotorTestDataModel._update_frame_configuration"
+        ):
             model = MotorTestDataModel(flight_controller=mock_flight_controller, filesystem=mock_filesystem)
             # Manually set the attributes since _update_frame_configuration was bypassed
             model._frame_class = 1
@@ -308,7 +316,9 @@ def motor_test_model_with_empty_json_data(mock_flight_controller, mock_filesyste
 @pytest.fixture
 def motor_test_model_with_corrupted_json_data(mock_flight_controller, mock_filesystem) -> MotorTestDataModel:
     """Fixture providing a motor test model with corrupted/invalid JSON data."""
-    with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_loader_class:
+    with patch(
+        "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+    ) as mock_json_loader_class:
         # Configure the mock loader instance to return invalid data
         mock_loader_instance = MagicMock()
         mock_loader_instance.load_json_data.return_value = {"invalid": "structure"}
@@ -316,7 +326,9 @@ def motor_test_model_with_corrupted_json_data(mock_flight_controller, mock_files
         mock_json_loader_class.return_value = mock_loader_instance
 
         # For corrupted JSON data, we need to bypass the frame configuration validation
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.MotorTestDataModel._update_frame_configuration"):
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.MotorTestDataModel._update_frame_configuration"
+        ):
             model = MotorTestDataModel(flight_controller=mock_flight_controller, filesystem=mock_filesystem)
             # Manually set the attributes since _update_frame_configuration was bypassed
             model._frame_class = 1
@@ -528,7 +540,9 @@ class TestMotorTestDataModelFrameConfiguration:
         """
         # Arrange: Create model with disconnected FC (will fail initialization)
         # We'll test this by mocking the model's flight controller directly
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.MotorTestDataModel._update_frame_configuration"):
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.MotorTestDataModel._update_frame_configuration"
+        ):
             model = MotorTestDataModel(flight_controller=disconnected_flight_controller, filesystem=mock_filesystem)
             model.flight_controller = disconnected_flight_controller
 
@@ -1258,7 +1272,7 @@ class TestErrorHandlingAndEdgeCases:
         motor_test_model.flight_controller.master = None
 
         # Act
-        with patch("ardupilot_methodic_configurator.data_model_battery_monitor.logging_warning") as mock_warning:
+        with patch("ardupilot_methodic_configurator.plugins.data_model_battery_monitor.logging_warning") as mock_warning:
             result = motor_test_model.get_battery_status()
 
             # Assert
@@ -1629,7 +1643,9 @@ class TestMotorTestDataModelJSONLoading:
         # Arrange: Mock successful JSON loading with matching frame layout
         mock_flight_controller.get_frame_info.return_value = (1, 1)  # QUAD_X frame
 
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_class:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+        ) as mock_json_class:
             mock_loader = MagicMock()
             mock_loader.load_json_data.return_value = {
                 "layouts": [
@@ -1667,7 +1683,9 @@ class TestMotorTestDataModelJSONLoading:
         # Arrange: Mock JSON loading with empty layouts
         mock_flight_controller.get_frame_info.return_value = (1, 1)  # QUAD_X frame
 
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_class:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+        ) as mock_json_class:
             mock_loader = MagicMock()
             mock_loader.load_json_data.return_value = {"layouts": []}
             mock_loader.data = mock_loader.load_json_data.return_value
@@ -1688,7 +1706,9 @@ class TestMotorTestDataModelJSONLoading:
         # Arrange: Mock JSON loading failure
         mock_flight_controller.get_frame_info.return_value = (1, 1)  # QUAD_X frame
 
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_class:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+        ) as mock_json_class:
             mock_loader = MagicMock()
             mock_loader.load_json_data.side_effect = Exception("JSON loading failed")
             mock_loader.data = None  # When loading fails, data is None
@@ -1709,7 +1729,9 @@ class TestMotorTestDataModelJSONLoading:
         # Arrange: Mock empty JSON response
         mock_flight_controller.get_frame_info.return_value = (1, 1)  # QUAD_X frame
 
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_class:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+        ) as mock_json_class:
             mock_loader = MagicMock()
             mock_loader.load_json_data.return_value = {}
             mock_loader.data = {}  # Empty data
@@ -1728,7 +1750,9 @@ class TestMotorTestDataModelJSONLoading:
         THEN: Should be configured with AP_Motors_test.json and schema files
         """
         # Arrange: Mock JSON loader to capture initialization parameters
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as mock_json_class:
+        with patch(
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema"
+        ) as mock_json_class:
             mock_loader = MagicMock()
             # Provide realistic mock data to allow initialization to succeed
             mock_data = {
@@ -1814,7 +1838,7 @@ class TestMotorTestDataModelSettingsManagement:
         # Arrange: Mock settings to raise exception
         with (
             patch.object(ProgramSettings, "set_setting", side_effect=Exception("Settings save failed")),
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
         ):
             # Act & Assert: Try to set duration should raise exception
             with pytest.raises(Exception, match="Settings save failed"):
@@ -1836,7 +1860,7 @@ class TestMotorTestDataModelSettingsManagement:
         # Arrange: Mock settings to raise exception
         with (
             patch.object(ProgramSettings, "set_setting", side_effect=Exception("Settings save failed")),
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
         ):
             # Act & Assert: Try to set throttle should raise exception
             with pytest.raises(Exception, match="Settings save failed"):
@@ -2096,7 +2120,7 @@ class TestMotorTestDataModelSettingsPersistence:
         duration = 2.5
 
         # Act: Save test duration
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.set_setting") as mock_set:
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.set_setting") as mock_set:
             motor_test_model.set_test_duration_s(duration)
 
             # Assert: Setting saved successfully (no exception raised)
@@ -2115,7 +2139,7 @@ class TestMotorTestDataModelSettingsGuards:
         THEN: ValidationError is raised and the error is logged
         """
         with (
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
             pytest.raises(ValueError, match="at least"),
         ):
             motor_test_model.set_test_duration_s(0)
@@ -2125,7 +2149,7 @@ class TestMotorTestDataModelSettingsGuards:
     def test_user_cannot_save_duration_above_maximum(self, motor_test_model) -> None:
         """Duration values above 60 seconds are rejected with a helpful message."""
         with (
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
             pytest.raises(ValueError, match="must not exceed"),
         ):
             motor_test_model.set_test_duration_s(120)
@@ -2135,7 +2159,7 @@ class TestMotorTestDataModelSettingsGuards:
     def test_user_cannot_save_throttle_below_minimum(self, motor_test_model) -> None:
         """Throttle percentages below 1% are invalid."""
         with (
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
             pytest.raises(ValueError, match="at least"),
         ):
             motor_test_model.set_test_throttle_pct(0)
@@ -2145,7 +2169,7 @@ class TestMotorTestDataModelSettingsGuards:
     def test_user_cannot_save_throttle_above_maximum(self, motor_test_model) -> None:
         """Throttle percentages above 100% trigger an error message."""
         with (
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
             pytest.raises(ValueError, match="must not exceed"),
         ):
             motor_test_model.set_test_throttle_pct(150)
@@ -2162,7 +2186,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
         mock_filesystem: LocalFilesystem,
         mock_motor_data_json: dict[str, object],
     ) -> MotorTestDataModel:
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.FilesystemJSONWithSchema") as loader_cls:
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.FilesystemJSONWithSchema") as loader_cls:
             loader = MagicMock()
             loader.load_json_data.return_value = mock_motor_data_json
             loader.data = mock_motor_data_json
@@ -2186,12 +2210,12 @@ class TestMotorTestDataModelSettingsEdgeCases:
             return 0
 
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.get_setting",
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
             fake_get,
         )
 
         with (
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
             pytest.raises(ReferenceError, match="duration setting not found"),
         ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
@@ -2215,7 +2239,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
             return 0
 
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.get_setting",
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
             fake_get,
         )
 
@@ -2239,12 +2263,12 @@ class TestMotorTestDataModelSettingsEdgeCases:
             return 0
 
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.get_setting",
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
             fake_get,
         )
 
         with (
-            patch("ardupilot_methodic_configurator.data_model_motor_test.logging_error") as mock_log,
+            patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.logging_error") as mock_log,
             pytest.raises(ReferenceError, match="throttle percentage setting not found"),
         ):
             self._build_model(mock_flight_controller, mock_filesystem, mock_motor_data_json)
@@ -2268,7 +2292,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
             return 0
 
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.get_setting",
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
             fake_get,
         )
 
@@ -2292,7 +2316,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
             return 0
 
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.get_setting",
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
             fake_get,
         )
 
@@ -2316,7 +2340,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
             return 0
 
         monkeypatch.setattr(
-            "ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.get_setting",
+            "ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.get_setting",
             fake_get,
         )
 
@@ -2335,7 +2359,7 @@ class TestMotorTestDataModelSettingsEdgeCases:
         throttle = 50
 
         # Act: Save throttle percentage
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings.set_setting") as mock_set:
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings.set_setting") as mock_set:
             motor_test_model.set_test_throttle_pct(throttle)
 
             # Assert: Setting saved successfully (no exception raised)
@@ -2354,7 +2378,7 @@ class TestSettingsExceptionHandling:
         THEN: Should return False and log error
         """
         # Arrange: Mock ProgramSettings to raise exception
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings") as mock_settings:
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings") as mock_settings:
             mock_settings.set_setting.side_effect = Exception("Settings error")
 
             # Act & Assert: Try to save test duration should raise exception
@@ -2370,7 +2394,7 @@ class TestSettingsExceptionHandling:
         THEN: Should return False and log error
         """
         # Arrange: Mock ProgramSettings to raise exception
-        with patch("ardupilot_methodic_configurator.data_model_motor_test.ProgramSettings") as mock_settings:
+        with patch("ardupilot_methodic_configurator.plugins.data_model_motor_test.ProgramSettings") as mock_settings:
             mock_settings.set_setting.side_effect = Exception("Settings error")
 
             # Act & Assert: Try to save test throttle should raise exception

@@ -85,7 +85,7 @@ class RCCalibrationDataModel:
         self._channel_min.clear()
         self._channel_max.clear()
 
-    def get_rc_telemetry(self) -> dict[str, Any]:  # pylint: disable=too-many-branches
+    def get_rc_telemetry(self) -> dict[str, Any]:
         """
         Return live RC telemetry from the flight controller.
 
@@ -107,18 +107,12 @@ class RCCalibrationDataModel:
         telemetry: dict[str, Any] = {}
 
         try:
-            latest_rc_msg = None
-            latest_hb = None
-            while True:
-                msg = master.recv_msg()  # pyright: ignore[reportAttributeAccessIssue]
-                if msg is None:
-                    break
-
-                msg_type = msg.get_type()
-                if msg_type == "RC_CHANNELS":
-                    latest_rc_msg = msg
-                elif msg_type == "HEARTBEAT":
-                    latest_hb = msg
+            latest_rc_msg = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                type="RC_CHANNELS", blocking=False
+            )
+            latest_hb = master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                type="HEARTBEAT", blocking=False
+            )
 
             if latest_rc_msg:
                 n_channels = min(latest_rc_msg.chancount, _RC_MAX_CHANNELS)

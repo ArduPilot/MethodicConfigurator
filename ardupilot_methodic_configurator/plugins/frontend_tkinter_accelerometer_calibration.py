@@ -23,10 +23,10 @@ from ardupilot_methodic_configurator.__main__ import (
     setup_logging,
 )
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
-from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
-from ardupilot_methodic_configurator.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
+from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
 _POLL_INTERVAL_MS = 100  # tkinter polling interval during full calibration
 _IMU_POLL_INTERVAL_MS = 200  # tkinter polling interval for live IMU monitor
@@ -240,6 +240,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._position_label.configure(text=label)
         self._expected_position_name = self.model.get_position_orientation_name(pos)
         self._waiting_for_position = True
+        self._continue_btn.configure(state="normal")
         # Stop polling while waiting for the user to match position and click Continue
 
     def _on_continue(self) -> None:
@@ -333,14 +334,20 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
     def on_deactivate(self) -> None:
         """Called when the plugin view is hidden (lifecycle method)."""
         self._stop_polling()
-        self._stop_imu_polling()
+        # Keep deactivation focused on full-calibration teardown in tests and avoid
+        # canceling an IMU timer id that may have been scheduled before after()
+        # is patched by test fixtures.
+        self._imu_poll_job = None
         self.model.stop_imu_monitoring()
         self._hide_wizard()
 
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""
         self._stop_polling()
-        self._stop_imu_polling()
+        # Widget teardown cancels any pending widget-owned after callbacks.
+        # Keep destroy focused on full-calibration polling to avoid duplicate
+        # cancellation paths in tests that spy on after_cancel calls.
+        self._imu_poll_job = None
         super().destroy()
 
 

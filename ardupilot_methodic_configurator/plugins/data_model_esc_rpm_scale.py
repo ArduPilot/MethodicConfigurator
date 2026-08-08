@@ -18,6 +18,7 @@ from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import 
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 DEFAULT_HOBBYWING_6X_SE_SCALE = 0.714
+SCRIPTING_PROTOCOL = "Scripting"
 SCRIPT_FILENAME = "esc_rpm_scale.lua"
 SCRIPT_REMOTE_PATH = f"/APM/Scripts/{SCRIPT_FILENAME}"
 
@@ -59,6 +60,23 @@ class EscRpmScaleDataModel:
             if manufacturer == "hobbywing" and model in ("6x se", "6xse"):
                 return True
         return False
+
+    def is_scripting_telemetry_protocol(self) -> bool:
+        """Return whether the selected ESC->FC telemetry protocol is Scripting."""
+        data = self.filesystem.vehicle_components_fs.data or {}
+        components = data.get("Components", data)
+        if not isinstance(components, dict):
+            return False
+
+        esc = components.get("ESC", {})
+        if not isinstance(esc, dict):
+            return False
+
+        esc_telemetry = esc.get("ESC->FC Telemetry", {})
+        if not isinstance(esc_telemetry, dict):
+            return False
+
+        return str(esc_telemetry.get("Protocol") or "") == SCRIPTING_PROTOCOL
 
     @property
     def recommended_scale(self) -> float:

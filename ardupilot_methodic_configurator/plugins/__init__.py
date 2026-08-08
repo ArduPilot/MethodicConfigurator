@@ -1,0 +1,1 @@
+"""ArduPilot methodic configurator plugins."""

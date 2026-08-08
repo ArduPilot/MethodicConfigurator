@@ -20,8 +20,8 @@ from unittest.mock import MagicMock
 import pytest
 from pymavlink import mavutil
 
-from ardupilot_methodic_configurator.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
-from ardupilot_methodic_configurator.frontend_tkinter_accelerometer_calibration import (
+from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import (
     AccelerometerCalibrationView,
     _create_accelerometer_calibration_view,
 )
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 # pylint: disable=protected-access,redefined-outer-name
 
-_FRONTEND = "ardupilot_methodic_configurator.frontend_tkinter_accelerometer_calibration"
+_FRONTEND = "ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration"
 
 
 @pytest.fixture

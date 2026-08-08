@@ -262,6 +262,7 @@
             "rename_connection": "vehicle_components['ESC']['ESC->FC Telemetry']['Type']",
             "old_filenames": ["07_esc.param"],
             "plugin": {
+                "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'",
                 "name": "esc_rpm_scale",
                 "placement": "left"
             },

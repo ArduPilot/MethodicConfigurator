@@ -20,9 +20,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.frontend_tkinter_battery_monitor import BatteryMonitorView
+from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import BatteryMonitorView
 
 # pylint: disable=redefined-outer-name,protected-access
 
