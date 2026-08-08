@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from functools import partial
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
@@ -66,6 +67,18 @@ class LogQualityReportWindow(BaseWindow):
         ttk.Label(row, text=key, foreground="gray", font=("TkDefaultFont", 11), width=14).pack(side=tk.LEFT)
         ttk.Label(row, text=value, font=("TkDefaultFont", 11, "bold")).pack(side=tk.LEFT, fill=tk.X, expand=True)
 
+    @staticmethod
+    def _open_url(url: str, _event: tk.Event | None = None) -> None:
+        webbrowser_open_url(url)
+
+    @staticmethod
+    def _set_wraplength(label: ttk.Label, event: tk.Event | None) -> None:
+        label.configure(wraplength=max(10, (event.width if event is not None else 0) - 15))
+
+    @staticmethod
+    def _set_step_wraplength(label: ttk.Label, event: tk.Event | None) -> None:
+        label.configure(wraplength=max(10, (event.width if event is not None else 0) - 90))
+
     def _add_clickable_key_value(self, parent: ttk.Frame | ttk.LabelFrame, key: str, value: str, url: str) -> None:
         """Pack a clickable key-value pair that opens a URL."""
         row = ttk.Frame(parent)
@@ -79,7 +92,7 @@ class LogQualityReportWindow(BaseWindow):
             font=("TkDefaultFont", self.default_font_size, "underline"),
         )
         link.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        link.bind("<Button-1>", lambda _e, u=url: webbrowser_open_url(u))
+        link.bind("<Button-1>", partial(self._open_url, url))
         show_tooltip(link, _("Open release page on GitHub"))
 
     def _build_header_summary(self) -> None:
@@ -209,10 +222,7 @@ class LogQualityReportWindow(BaseWindow):
         ttk.Label(text_frame, text=result.name, font=("TkDefaultFont", 12, "bold")).pack(anchor=tk.W)
         reason_lbl = ttk.Label(text_frame, text=result.reason, foreground="gray", font=("TkDefaultFont", 11), wraplength=500)
         reason_lbl.pack(anchor=tk.W, fill=tk.X)
-        text_frame.bind(
-            "<Configure>",
-            lambda e, l=reason_lbl: l.configure(wraplength=max(10, e.width - 15)),  # noqa: E741
-        )
+        text_frame.bind("<Configure>", partial(self._set_wraplength, reason_lbl))
 
         if result.issues:
             tooltip = "\n".join(f"- {i.message}" for i in result.issues)
@@ -236,7 +246,7 @@ class LogQualityReportWindow(BaseWindow):
 
         lbl = ttk.Label(card, text=step_display_name(result.step), font=("TkDefaultFont", 12), wraplength=500)
         lbl.pack(side=tk.LEFT, anchor=tk.W, fill=tk.X, expand=True)
-        card.bind("<Configure>", lambda e, l=lbl: l.configure(wraplength=max(10, e.width - 90)))  # noqa: E741
+        card.bind("<Configure>", partial(self._set_step_wraplength, lbl))
         if result.name:
             show_tooltip(lbl, result.name)
 
