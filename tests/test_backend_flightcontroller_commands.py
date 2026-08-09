@@ -1440,7 +1440,7 @@ class TestFlightControllerCommandsPollScaledImu:
         mock_master, mock_conn_mgr = mock_connected_master
         mock_msg = MagicMock()
         mock_msg.xacc, mock_msg.yacc, mock_msg.zacc = 10, -20, 1000
-        mock_master.recv_match.return_value = mock_msg
+        mock_master.recv_match.side_effect = [mock_msg, None]
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         # When: Poll SCALED_IMU
@@ -1466,6 +1466,28 @@ class TestFlightControllerCommandsPollScaledImu:
 
         # When/Then
         assert commands_mgr.poll_scaled_imu() is None
+
+    def test_poll_scaled_imu_returns_last_message_when_buffer_has_stale_data(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Polling SCALED_IMU drains the buffer and returns only the most recent message.
+
+        GIVEN: A connected FC whose receive buffer contains two stale messages followed by a fresh one
+        WHEN: User polls SCALED_IMU
+        THEN: The values from the last (freshest) message are returned
+        """
+        mock_master, mock_conn_mgr = mock_connected_master
+        stale_msg = MagicMock()
+        stale_msg.xacc, stale_msg.yacc, stale_msg.zacc = 0, 0, -1000
+        fresh_msg = MagicMock()
+        fresh_msg.xacc, fresh_msg.yacc, fresh_msg.zacc = -1000, 0, 0
+        mock_master.recv_match.side_effect = [stale_msg, stale_msg, fresh_msg, None]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        result = commands_mgr.poll_scaled_imu()
+
+        assert result == (-1000.0, 0.0, 0.0)
 
     def test_poll_scaled_imu_returns_none_without_connection(self) -> None:
         """

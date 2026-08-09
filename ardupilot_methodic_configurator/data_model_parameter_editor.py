@@ -44,6 +44,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileEr
 from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError, safe_evaluate
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import AhrsOrientationDataModel
 from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
 from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.data_model_esc_rpm_scale import EscRpmScaleDataModel
@@ -51,6 +52,7 @@ from ardupilot_methodic_configurator.plugins.data_model_motor_test import MotorT
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_ACCELEROMETER_CALIBRATION,
+    PLUGIN_AHRS_ORIENTATION,
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
     PLUGIN_ESC_RPM_SCALE,
@@ -2590,21 +2592,23 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             ValueError when plugin name is unknown/unsupported
 
         """
-        if plugin_name == PLUGIN_MOTOR_TEST:
-            return MotorTestDataModel(self._flight_controller, self._local_filesystem) if self.is_fc_connected else None
-        if plugin_name == PLUGIN_BATTERY_MONITOR:
-            return BatteryMonitorDataModel(self._flight_controller, self) if self.is_fc_connected else None
-        if plugin_name == PLUGIN_COMPASS_CALIBRATION:
-            return CompassCalibrationDataModel(self._flight_controller) if self.is_fc_connected else None
-        if plugin_name == PLUGIN_ACCELEROMETER_CALIBRATION:
-            return AccelerometerCalibrationDataModel(self._flight_controller) if self.is_fc_connected else None
-        if plugin_name == PLUGIN_ESC_RPM_SCALE:
-            return EscRpmScaleDataModel(self._flight_controller, self._local_filesystem) if self.is_fc_connected else None
-        if plugin_name == PLUGIN_RC_CALIBRATION:
-            return RCCalibrationDataModel(self._flight_controller) if self.is_fc_connected else None
-        # Add more plugins here in the future
-        raise ValueError(
-            _("data_model_parameter_editor: Unsupported plugin name: {plugin_name}").format(plugin_name=plugin_name)
-        )
+        plugin_factories: dict[str, Callable[[], object]] = {
+            PLUGIN_MOTOR_TEST: lambda: MotorTestDataModel(self._flight_controller, self._local_filesystem),
+            PLUGIN_BATTERY_MONITOR: lambda: BatteryMonitorDataModel(self._flight_controller, self),
+            PLUGIN_COMPASS_CALIBRATION: lambda: CompassCalibrationDataModel(self._flight_controller),
+            PLUGIN_ACCELEROMETER_CALIBRATION: lambda: AccelerometerCalibrationDataModel(self._flight_controller),
+            PLUGIN_AHRS_ORIENTATION: lambda: AhrsOrientationDataModel(self._flight_controller),
+            PLUGIN_ESC_RPM_SCALE: lambda: EscRpmScaleDataModel(self._flight_controller, self._local_filesystem),
+            PLUGIN_RC_CALIBRATION: lambda: RCCalibrationDataModel(self._flight_controller),
+        }
+
+        factory = plugin_factories.get(plugin_name)
+        if factory is None:
+            raise ValueError(
+                _("data_model_parameter_editor: Unsupported plugin name: {plugin_name}").format(plugin_name=plugin_name)
+            )
+        if not self.is_fc_connected:
+            return None
+        return factory()
 
     # plugin API end

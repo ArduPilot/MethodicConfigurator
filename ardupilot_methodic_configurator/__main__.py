@@ -86,6 +86,9 @@ def register_plugins() -> None:
     from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import (  # noqa: PLC0415
         register_accelerometer_calibration_plugin,
     )
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation import (  # noqa: PLC0415
+        register_ahrs_orientation_plugin,
+    )
     from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import (  # noqa: PLC0415
         register_battery_monitor_plugin,
     )
@@ -102,6 +105,7 @@ def register_plugins() -> None:
     # pylint: enable=import-outside-toplevel, cyclic-import
 
     register_accelerometer_calibration_plugin()
+    register_ahrs_orientation_plugin()
     register_battery_monitor_plugin()
     register_compass_calibration_plugin()
     register_esc_rpm_scale_plugin()
