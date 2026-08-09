@@ -1315,7 +1315,7 @@ class TestFlightControllerCommandsBatteryEdgeCases:
 class TestFlightControllerCommandsAccelCalibrationCancel:
     """Test cancelling an in-progress accelerometer calibration (hardware-free)."""
 
-    def test_user_can_cancel_accel_calibration_when_connected(self, mock_connected_master) -> None:
+    def test_user_can_cancel_accel_calibration_when_connected(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         User can cancel an ongoing accelerometer calibration.
 
@@ -1336,12 +1336,12 @@ class TestFlightControllerCommandsAccelCalibrationCancel:
         assert error == ""
         mock_master.mav.command_long_send.assert_called_once()
         sent_args = mock_master.mav.command_long_send.call_args.args
-        # target_system, target_component, command, then 8 params
+        # args layout: target_system, target_component, command, confirmation, param1..param7
         assert sent_args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
-        # every calibration param must be 0 (abort signal)
-        assert all(param == 0 for param in sent_args[3:])
+        # all 7 calibration params (args[4:]) must be 0 (abort signal)
+        assert all(param == 0 for param in sent_args[4:])
 
-    def test_cancel_accel_calibration_resets_vehicle_position(self, mock_connected_master) -> None:
+    def test_cancel_accel_calibration_resets_vehicle_position(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Cancelling calibration clears any cached vehicle-position state.
 
@@ -1380,9 +1380,9 @@ class TestFlightControllerCommandsAccelCalibrationCancel:
 
         # Then: Graceful failure
         assert success is False
-        assert error != ""
+        assert "connection" in error.lower()
 
-    def test_cancel_accel_calibration_handles_send_exception(self, mock_connected_master) -> None:
+    def test_cancel_accel_calibration_handles_send_exception(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Cancelling calibration reports failure if the MAVLink send raises.
 
@@ -1402,11 +1402,33 @@ class TestFlightControllerCommandsAccelCalibrationCancel:
         assert success is False
         assert "link down" in error
 
+    def test_cancel_accel_calibration_preserves_position_on_failure(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Cancelling calibration does NOT clear the cached position when the send fails.
+
+        GIVEN: A connected FC with a cached vehicle position whose send raises
+        WHEN: User attempts to cancel the calibration
+        THEN: The cached position is left unchanged
+        """
+        # Given: Connected FC with stale cached position that raises on send
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.mav.command_long_send.side_effect = RuntimeError("link down")
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        commands_mgr._last_accel_cal_vehicle_pos = 3  # pylint: disable=protected-access
+
+        # When: Cancel calibration
+        commands_mgr.cancel_accel_calibration()
+
+        # Then: Cached position unchanged because send never succeeded
+        assert commands_mgr._last_accel_cal_vehicle_pos == 3  # pylint: disable=protected-access
+
 
 class TestFlightControllerCommandsPollScaledImu:
     """Test polling SCALED_IMU accelerometer readings (hardware-free)."""
 
-    def test_poll_scaled_imu_returns_accelerations(self, mock_connected_master) -> None:
+    def test_poll_scaled_imu_returns_accelerations(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Polling SCALED_IMU returns the three axis accelerations.
 
@@ -1424,11 +1446,12 @@ class TestFlightControllerCommandsPollScaledImu:
         # When: Poll SCALED_IMU
         result = commands_mgr.poll_scaled_imu()
 
-        # Then: Triple of floats returned
+        # Then: Triple of floats returned, correct MAVLink message type requested
         assert result == (10.0, -20.0, 1000.0)
         assert all(isinstance(v, float) for v in result)
+        mock_master.recv_match.assert_called_with(type="SCALED_IMU", blocking=False)
 
-    def test_poll_scaled_imu_returns_none_when_no_message(self, mock_connected_master) -> None:
+    def test_poll_scaled_imu_returns_none_when_no_message(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Polling SCALED_IMU returns None when no message has arrived.
 
@@ -1460,7 +1483,7 @@ class TestFlightControllerCommandsPollScaledImu:
         # When/Then
         assert commands_mgr.poll_scaled_imu() is None
 
-    def test_poll_scaled_imu_returns_none_on_exception(self, mock_connected_master) -> None:
+    def test_poll_scaled_imu_returns_none_on_exception(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Polling SCALED_IMU returns None if reading raises.
 
@@ -1480,7 +1503,7 @@ class TestFlightControllerCommandsPollScaledImu:
 class TestFlightControllerCommandsRequestScaledImu:
     """Test requesting a periodic SCALED_IMU stream (hardware-free)."""
 
-    def test_request_scaled_imu_stream_succeeds_on_ack(self, mock_connected_master) -> None:
+    def test_request_scaled_imu_stream_succeeds_on_ack(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         Requesting the SCALED_IMU stream succeeds when the FC acknowledges.
 
@@ -1505,13 +1528,13 @@ class TestFlightControllerCommandsRequestScaledImu:
         assert error == ""
         mock_master.mav.command_long_send.assert_called_once()
 
-    def test_request_scaled_imu_stream_passes_requested_interval(self, mock_connected_master) -> None:
+    def test_request_scaled_imu_stream_passes_requested_interval(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
         The requested interval is forwarded to the FC as a command parameter.
 
         GIVEN: A connected FC that ACKs the command
         WHEN: User requests the stream with a custom interval
-        THEN: That interval (µs) appears in the command parameters
+        THEN: That interval (µs) appears as param2 in the command
         """
         # Given: Connected FC that accepts the command
         mock_master, mock_conn_mgr = mock_connected_master
@@ -1524,10 +1547,10 @@ class TestFlightControllerCommandsRequestScaledImu:
         # When: Request stream at 10 Hz (100 000 µs)
         success, _error = commands_mgr.request_scaled_imu_messages(interval_microseconds=100_000)
 
-        # Then: Interval forwarded in the sent command params
+        # Then: Interval forwarded as param2 (args[5]: target_sys, target_comp, cmd, confirmation, param1, param2, ...)
         assert success is True
         sent_args = mock_master.mav.command_long_send.call_args.args
-        assert float(100_000) in [float(a) for a in sent_args[3:]]
+        assert float(sent_args[5]) == float(100_000)
 
     def test_request_scaled_imu_stream_fails_without_connection(self) -> None:
         """
@@ -1547,4 +1570,51 @@ class TestFlightControllerCommandsRequestScaledImu:
 
         # Then: Graceful failure
         assert success is False
-        assert error != ""
+        assert "connection" in error.lower()
+
+    def test_request_scaled_imu_stream_fails_on_denied_ack(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        Requesting the SCALED_IMU stream fails when the FC denies the command.
+
+        GIVEN: A connected FC that NACKs SET_MESSAGE_INTERVAL
+        WHEN: User requests the SCALED_IMU stream
+        THEN: The call reports failure with a descriptive message
+        """
+        # Given: Connected FC that denies the command
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_DENIED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Request stream
+        success, error = commands_mgr.request_scaled_imu_messages()
+
+        # Then: Failure propagated from the denied ACK
+        assert success is False
+        assert "denied" in error.lower()
+
+    def test_request_scaled_imu_stream_uses_default_interval(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """
+        The default 200 000 µs interval is used when none is supplied.
+
+        GIVEN: A connected FC that ACKs the command
+        WHEN: User requests the stream without specifying an interval
+        THEN: The default interval (200 000 µs) is sent as param2
+        """
+        # Given: Connected FC that accepts the command
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_ack = MagicMock()
+        mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
+        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = mock_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # When: Request stream with default interval
+        success, _error = commands_mgr.request_scaled_imu_messages()
+
+        # Then: Default interval (200 000 µs) forwarded as param2
+        assert success is True
+        sent_args = mock_master.mav.command_long_send.call_args.args
+        assert float(sent_args[5]) == float(200_000)
