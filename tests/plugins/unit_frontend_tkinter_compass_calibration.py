@@ -27,27 +27,24 @@ from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibratio
 
 
 @pytest.fixture
-def instructions_popup() -> CompassCalibrationInstructionsPopup:
+def instructions_popup(attach_basewindow_shell) -> CompassCalibrationInstructionsPopup:
     """Fixture providing a lightweight instructions popup shell."""
     popup = object.__new__(CompassCalibrationInstructionsPopup)
+    root = attach_basewindow_shell(popup)
     popup.canvas = MagicMock()
-    popup.configure = MagicMock()
-    popup.wm_attributes = MagicMock()
+    root.configure = MagicMock()
+    root.wm_attributes = MagicMock()
     popup._draw_rounded_rect = MagicMock()
     popup._resize_and_center = MagicMock()
     popup.destroy = MagicMock()
-    popup.lift = MagicMock()
-    popup.focus_force = MagicMock()
-    popup.grab_set = MagicMock()
-    popup.transient = MagicMock()
-    popup.overrideredirect = MagicMock()
     return popup
 
 
 @pytest.fixture
-def progress_popup() -> CompassCalibrationPopup:
+def progress_popup(attach_basewindow_shell) -> CompassCalibrationPopup:
     """Fixture providing a minimally configured popup for helper-level tests."""
     popup = object.__new__(CompassCalibrationPopup)
+    root = attach_basewindow_shell(popup)
     popup._timer_id = "after-id"
     popup._polls_without_updates = 0
     popup._no_telemetry_warning_emitted = False
@@ -58,20 +55,23 @@ def progress_popup() -> CompassCalibrationPopup:
     popup.model.get_active_compass_ids = MagicMock(return_value=[0, 1])
     popup.model.cancel_calibration = MagicMock(return_value=(True, ""))
     popup.model.finish_calibration = MagicMock()
-    popup.after_cancel = MagicMock()
-    popup.after = MagicMock(return_value="new-after-id")
+    root.after_cancel = MagicMock()
+    root.after = MagicMock(return_value="new-after-id")
+    root.update_idletasks = MagicMock()
+    root.minsize = MagicMock()
+    root.geometry = MagicMock()
+    root.configure = MagicMock()
+    root.cget = MagicMock(return_value="#202020")
+    root.winfo_x = MagicMock(return_value=100)
+    root.winfo_y = MagicMock(return_value=200)
+    root.winfo_reqwidth = MagicMock(return_value=640)
+    root.winfo_reqheight = MagicMock(return_value=360)
     popup.destroy = MagicMock()
     popup.progress_bars = {0: MagicMock(), 1: MagicMock()}
     popup.completion_status = {0: False, 1: False}
     popup.rows_container = MagicMock()
     popup.hint_label = MagicMock()
-    popup.configure = MagicMock()
     popup._resize_and_center = MagicMock()
-    popup.update_idletasks = MagicMock()
-    popup.minsize = MagicMock()
-    popup.geometry = MagicMock()
-    popup._start_move = MagicMock()
-    popup._do_move = MagicMock()
     popup._stop_polling = MagicMock()
     return popup
 
@@ -122,7 +122,7 @@ class TestCompassCalibrationInstructionsPopupInternals:
         ):
             popup._setup_ui()
 
-        popup.configure.assert_called_once_with(bg="#fffef0")
+        popup.root.configure.assert_called_once_with(bg="#fffef0")
         canvas.pack.assert_called_once_with(fill="both", expand=True)
         canvas.configure.assert_called_once_with(width=320, height=200)
         popup._draw_rounded_rect.assert_any_call((0, 0, 320, 200), radius=22, fill="#ffffe0", outline="")
@@ -147,7 +147,7 @@ class TestCompassCalibrationInstructionsPopupInternals:
         assert result == 123
         popup.canvas.create_polygon.assert_called_once()
 
-    def test_user_sees_the_instructions_popup_centered_on_the_parent(self) -> None:
+    def test_user_sees_the_instructions_popup_centered_on_the_parent(self, attach_basewindow_shell) -> None:
         """
         The popup centers itself on top of its parent window.
 
@@ -156,19 +156,20 @@ class TestCompassCalibrationInstructionsPopupInternals:
         THEN: The popup geometry uses the computed center coordinates
         """
         popup = object.__new__(CompassCalibrationInstructionsPopup)
+        root = attach_basewindow_shell(popup)
         popup._width = 320
         popup._height = 192
-        popup.update_idletasks = MagicMock()
         popup._parent = MagicMock()
         popup._parent.winfo_rootx.return_value = 100
         popup._parent.winfo_rooty.return_value = 200
         popup._parent.winfo_width.return_value = 500
         popup._parent.winfo_height.return_value = 400
-        popup.geometry = MagicMock()
 
         popup._resize_and_center()
 
-        popup.geometry.assert_called_once_with("320x192+190+304")
+        root.update_idletasks.assert_any_call()
+        root.geometry.assert_any_call("320x192")
+        root.geometry.assert_any_call("320x192+190+304")
 
 
 class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-methods
@@ -186,15 +187,12 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         """
         popup = progress_popup
 
-        with patch(
-            "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Toplevel.destroy"
-        ) as mock_destroy:
-            CompassCalibrationPopup.destroy(popup)
+        CompassCalibrationPopup.destroy(popup)
 
         popup._stop_polling.assert_called_once()
-        mock_destroy.assert_called_once()
+        popup.root.destroy.assert_called_once()
 
-    def test_user_sees_the_progress_popup_style_configured(self) -> None:
+    def test_user_sees_the_progress_popup_style_configured(self, attach_basewindow_shell) -> None:
         """
         The popup configures the progress bar styles used by the calibration view.
 
@@ -203,7 +201,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         THEN: The base and completed progressbar styles are configured
         """
         popup = object.__new__(CompassCalibrationPopup)
-        popup.cget = MagicMock(return_value="#202020")
+        attach_basewindow_shell(popup).cget.return_value = "#202020"
         style = MagicMock()
         style.lookup.return_value = ""
 
@@ -223,17 +221,16 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
             troughcolor=style.lookup.return_value,
         )
 
-    def test_user_sees_the_progress_popup_layout_created(self) -> None:
+    def test_user_sees_the_progress_popup_layout_created(self, attach_basewindow_shell) -> None:
         """
         The popup builds its title bar, hint label, and cancel control.
 
-        GIVEN: A popup instance with a configured background color
         WHEN: The UI setup helper runs
         THEN: The expected widgets are created and packed
         """
         popup = object.__new__(CompassCalibrationPopup)
+        attach_basewindow_shell(popup)
         popup._bg_color = "#202020"
-        popup.configure = MagicMock()
         popup._start_move = MagicMock()
         popup._do_move = MagicMock()
         popup._on_cancel = MagicMock()
@@ -271,7 +268,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         ):
             popup._setup_ui()
 
-        popup.configure.assert_called_once_with(bg="#202020")
+        popup.root.configure.assert_called_once_with(bg="#202020")
         outer_frame.pack.assert_called_once_with(fill="both", expand=True)
         title_bar.pack.assert_called_once_with(fill="x", side="top")
         content_frame.pack.assert_called_once_with(fill="both", expand=True, padx=20, pady=20)
@@ -281,7 +278,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         assert popup.rows_container is rows_container
         assert popup.cancel_button is cancel_button
 
-    def test_user_can_cancel_calibration_from_the_popup(self) -> None:
+    def test_user_can_cancel_calibration_from_the_popup(self, attach_basewindow_shell) -> None:
         """
         The cancel action stops polling and closes the popup when the backend accepts it.
 
@@ -290,9 +287,10 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         THEN: The backend cancel request is sent and the popup closes
         """
         popup = object.__new__(CompassCalibrationPopup)
+        root = attach_basewindow_shell(popup)
         popup._timer_id = "after-id"
-        popup.after_cancel = MagicMock()
-        popup.after = MagicMock(return_value="new-after-id")
+        root.after_cancel = MagicMock()
+        root.after = MagicMock(return_value="new-after-id")
         popup.destroy = MagicMock()
         popup.model = MagicMock()
         popup.model.cancel_calibration = MagicMock(return_value=(True, ""))
@@ -303,13 +301,13 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         ) as mock_info:
             popup._on_cancel()
 
-        popup.after_cancel.assert_called_once_with("after-id")
+        root.after_cancel.assert_called_once_with("after-id")
         popup.model.cancel_calibration.assert_called_once()
         popup.model.finish_calibration.assert_called_once()
-        mock_info.assert_called_once()
+        mock_info.assert_called_once_with("Cancelled", "Compass calibration was cancelled.", parent=root)
         popup.destroy.assert_called_once()
 
-    def test_user_sees_backend_rejection_when_cancel_fails(self) -> None:
+    def test_user_sees_backend_rejection_when_cancel_fails(self, attach_basewindow_shell) -> None:
         """
         The popup keeps polling when the backend rejects cancel.
 
@@ -318,9 +316,10 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         THEN: An error dialog is shown and polling resumes
         """
         popup = object.__new__(CompassCalibrationPopup)
+        root = attach_basewindow_shell(popup)
         popup._timer_id = "after-id"
-        popup.after_cancel = MagicMock()
-        popup.after = MagicMock(return_value="new-after-id")
+        root.after_cancel = MagicMock()
+        root.after = MagicMock(return_value="new-after-id")
         popup.destroy = MagicMock()
         popup.model = MagicMock()
         popup.model.cancel_calibration = MagicMock(return_value=(False, "Cancel rejected"))
@@ -331,9 +330,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         ) as mock_error:
             popup._on_cancel()
 
-        mock_error.assert_called_once_with("Failed to Cancel", "Cancel rejected", parent=popup)
-        popup.after_cancel.assert_called_once_with("after-id")
-        popup.after.assert_called_once_with(100, popup._check_progress)
+        mock_error.assert_called_once_with("Failed to Cancel", "Cancel rejected", parent=root)
+        root.after_cancel.assert_called_once_with("after-id")
+        root.after.assert_called_once_with(100, popup._check_progress)
         popup.destroy.assert_not_called()
 
     def test_user_sees_progress_updates_when_telemetry_arrives(self, progress_popup: CompassCalibrationPopup) -> None:
@@ -355,7 +354,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         progress_bar.stop.assert_called_once()
         progress_bar.configure.assert_any_call(mode="determinate")
         progress_bar.__setitem__.assert_called_with("value", 33)
-        popup.after.assert_called_once_with(100, popup._check_progress)
+        popup.root.after.assert_called_once_with(100, popup._check_progress)
         popup.destroy.assert_not_called()
 
     def test_user_sees_completion_when_status_text_reports_reboot_required(
@@ -540,7 +539,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         assert popup.progress_bars[7] is progress_bar
         assert popup.completion_status[7] is False
 
-    def test_user_can_drag_the_popup_window(self) -> None:
+    def test_user_can_drag_the_popup_window(self, attach_basewindow_shell) -> None:
         """
         The popup tracks drag origin and updates its geometry accordingly.
 
@@ -549,20 +548,20 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         THEN: The popup geometry is updated relative to the drag origin
         """
         popup = object.__new__(CompassCalibrationPopup)
+        root = attach_basewindow_shell(popup)
         popup._drag_x = 0
         popup._drag_y = 0
         popup._start_move(MagicMock(x=12, y=18))
-        popup.winfo_x = MagicMock(return_value=100)
-        popup.winfo_y = MagicMock(return_value=200)
-        popup.geometry = MagicMock()
+        root.winfo_x.return_value = 100
+        root.winfo_y.return_value = 200
 
         popup._do_move(MagicMock(x=30, y=40))
 
         assert popup._drag_x == 12
         assert popup._drag_y == 18
-        popup.geometry.assert_called_once_with("+118+222")
+        root.geometry.assert_called_once_with("+118+222")
 
-    def test_user_sees_the_progress_popup_resized_and_centered_on_the_parent(self) -> None:
+    def test_user_sees_the_progress_popup_resized_and_centered_on_the_parent(self, attach_basewindow_shell) -> None:
         """
         The popup sizes itself and centers over the main window.
 
@@ -571,11 +570,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         THEN: The popup applies a centered geometry string
         """
         popup = object.__new__(CompassCalibrationPopup)
-        popup.update_idletasks = MagicMock()
-        popup.minsize = MagicMock()
-        popup.winfo_reqwidth = MagicMock(return_value=640)
-        popup.winfo_reqheight = MagicMock(return_value=360)
-        popup.geometry = MagicMock()
+        root = attach_basewindow_shell(popup)
+        root.winfo_reqwidth.return_value = 640
+        root.winfo_reqheight.return_value = 360
         popup._parent = MagicMock()
         popup._parent.winfo_rootx.return_value = 50
         popup._parent.winfo_rooty.return_value = 75
@@ -584,9 +581,9 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
 
         popup._resize_and_center()
 
-        popup.minsize.assert_called_once_with(560, 320)
-        popup.geometry.assert_any_call("640x360")
-        popup.geometry.assert_any_call("640x360+130+195")
+        root.minsize.assert_called_once_with(560, 320)
+        root.geometry.assert_any_call("640x360")
+        root.geometry.assert_any_call("640x360+130+195")
 
     def test_user_sees_a_telemetry_warning_after_long_silence(self, progress_popup: CompassCalibrationPopup) -> None:
         """
@@ -599,7 +596,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         popup = progress_popup
         popup.model.get_progress.return_value = []
         popup._timer_id = None
-        popup.after = MagicMock(return_value="next-after-id")
+        popup.root.after = MagicMock(return_value="next-after-id")
 
         with patch(
             "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.logging_warning"
@@ -610,7 +607,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
         mock_warning.assert_called_once()
         assert popup._polls_without_updates == 50
         assert popup._no_telemetry_warning_emitted is True
-        assert popup.after.call_count == 50
+        assert popup.root.after.call_count == 50
 
     def test_user_sees_generic_status_text_without_creating_a_progress_row(
         self, progress_popup: CompassCalibrationPopup
@@ -688,7 +685,7 @@ class TestCompassCalibrationPopupInternals:  # pylint: disable=too-many-public-m
             popup._check_progress()
 
         assert popup.completion_status == {0: True, 1: True}
-        popup.after_cancel.assert_called_once_with("after-id")
+        popup.root.after_cancel.assert_called_once_with("after-id")
         popup.model.finish_calibration.assert_called_once()
         mock_info.assert_called_once()
         popup.destroy.assert_called_once()

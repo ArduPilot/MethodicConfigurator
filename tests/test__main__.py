@@ -1437,7 +1437,8 @@ class TestRegisterPluginsInternals:
                 "ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor.register_battery_monitor_plugin"
             ) as mock_battery,
             patch(
-                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.register_compass_calibration_plugin"
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration."
+                "register_compass_calibration_plugin"
             ) as mock_compass,
             patch(
                 "ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale.register_esc_rpm_scale_plugin"

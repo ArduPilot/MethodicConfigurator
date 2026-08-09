@@ -22,7 +22,7 @@ import time
 import tkinter as tk
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Protocol
 from unittest.mock import MagicMock, Mock, patch
 
 import pyautogui
@@ -68,6 +68,14 @@ class MockConfiguration(NamedTuple):
     patch_dpi_detection: bool = True
     dpi_scaling_factor: float = 1.0
     patch_monitor_bounds: bool = True
+
+
+class _BaseWindowShell(Protocol):
+    """Minimal attributes attached to mocked BaseWindow instances in tests."""
+
+    root: MagicMock
+    main_frame: MagicMock
+    dpi_scaling_factor: float
 
 
 # ==================== SHARED TKINTER FIXTURES ====================
@@ -178,6 +186,20 @@ def mock_tkinter_context() -> Callable[[MockConfiguration | None], tuple[context
         return contextlib.ExitStack(), patches
 
     return _mock_context
+
+
+@pytest.fixture
+def attach_basewindow_shell() -> Callable[[Any, MagicMock | None], MagicMock]:
+    """Attach a minimal BaseWindow-like shell to a test double."""
+
+    def _attach(instance: _BaseWindowShell, root: MagicMock | None = None) -> MagicMock:
+        shell_root = root or MagicMock()
+        instance.root = shell_root
+        instance.main_frame = MagicMock()
+        instance.dpi_scaling_factor = 1.0
+        return shell_root
+
+    return _attach
 
 
 # ==================== VEHICLE COMPONENTS DATA MODEL FIXTURES ====================
