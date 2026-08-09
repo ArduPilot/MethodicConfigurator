@@ -256,7 +256,7 @@ jobs:
         id: ai_translate
         uses: actions/ai-inference@2c43c91ae16266ca159d311430343c67a5ffa222 # v3
         with:
-          system-prompt-file: .github/prompts/ai-translation-system.prompt.yml
+          system-prompt-file: .github/prompts/ai-translation-system.prompt.txt
           prompt-file: .github/prompts/ai-translation-user.prompt.yml
           input: |
             language: ${{ matrix.language }}
