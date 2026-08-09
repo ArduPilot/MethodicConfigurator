@@ -70,7 +70,7 @@ class MockConfiguration(NamedTuple):
     patch_monitor_bounds: bool = True
 
 
-class _BaseWindowShell(Protocol):
+class _BaseWindowShell(Protocol):  # pylint: disable=too-few-public-methods
     """Minimal attributes attached to mocked BaseWindow instances in tests."""
 
     root: MagicMock
@@ -192,7 +192,7 @@ def mock_tkinter_context() -> Callable[[MockConfiguration | None], tuple[context
 def attach_basewindow_shell() -> Callable[[Any, MagicMock | None], MagicMock]:
     """Attach a minimal BaseWindow-like shell to a test double."""
 
-    def _attach(instance: _BaseWindowShell, root: MagicMock | None = None) -> MagicMock:
+    def _attach(instance: _BaseWindowShell, root: MagicMock | None = None) -> MagicMock:  # pylint: disable=redefined-outer-name
         shell_root = root or MagicMock()
         instance.root = shell_root
         instance.main_frame = MagicMock()
