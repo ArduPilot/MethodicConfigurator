@@ -338,8 +338,9 @@ class TestPluginLifecycle:
 
             view.on_deactivate()
 
-            after_cancel_spy.assert_called_once_with("after-id")
+            after_cancel_spy.assert_any_call("after-id")
             assert view._poll_job is None
+            assert view._imu_poll_job is None
             assert view._wizard_frame.winfo_manager() == ""
             assert str(view._simple_btn.cget("state")) == "normal"
             assert str(view._level_btn.cget("state")) == "normal"
@@ -368,8 +369,9 @@ class TestPluginLifecycle:
 
         view.destroy()
 
-        after_cancel_spy.assert_called_once_with("after-id")
+        after_cancel_spy.assert_any_call("after-id")
         assert view._poll_job is None
+        assert view._imu_poll_job is None
         parent.destroy()
 
 

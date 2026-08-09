@@ -10,12 +10,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from logging import debug as logging_debug
 from logging import info as logging_info
-from math import sqrt
 
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.plugins.imu_helpers import (
+    compute_detected_position as _compute_detected_position,
+)
+from ardupilot_methodic_configurator.plugins.imu_helpers import (
+    compute_movement_magnitude_ms2 as _compute_movement_magnitude_ms2,
+)
+from ardupilot_methodic_configurator.plugins.imu_helpers import (
+    poll_scaled_imu as _poll_scaled_imu,
+)
 
 # Human-readable instructions for each calibration position,
 # matching the STATUSTEXT messages ArduPilot sends during calibration.
@@ -37,19 +45,6 @@ POSITION_ORIENTATION_NAMES: dict[int, str] = {
     mavutil.mavlink.ACCELCAL_VEHICLE_POS_NOSEUP: _("NOSE UP"),
     mavutil.mavlink.ACCELCAL_VEHICLE_POS_BACK: _("BACK"),
 }
-
-# Body frame: X=forward, Y=right, Z=down.
-# Specific force = -gravity_in_body when stationary.
-# Each entry is (unit_vector, display_name).
-_ORIENTATIONS: list[tuple[tuple[float, float, float], str]] = [
-    ((0.0, 0.0, -1.0), _("LEVEL")),  # belly down
-    ((0.0, 1.0, 0.0), _("LEFT")),  # left side down
-    ((0.0, -1.0, 0.0), _("RIGHT")),  # right side down
-    ((-1.0, 0.0, 0.0), _("NOSE DOWN")),  # nose pointing toward ground
-    ((1.0, 0.0, 0.0), _("NOSE UP")),  # nose pointing upward
-    ((0.0, 0.0, 1.0), _("BACK")),  # belly up / upside-down
-]
-_COS_20_DEG: float = 0.9397  # cos(20°) — threshold for a "definite" orientation
 
 
 class AccelerometerCalibrationDataModel:
@@ -231,11 +226,8 @@ class AccelerometerCalibrationDataModel:
             tuple[float, float, float] | None: (xacc, yacc, zacc) in milli-g, or None if no data arrived.
 
         """
-        if not self._got_imu_stream:
-            success, _ = self.flight_controller.request_scaled_imu_messages()
-            if success:
-                self._got_imu_stream = True
-        return self.flight_controller.poll_scaled_imu()
+        imu_sample, self._got_imu_stream = _poll_scaled_imu(self.flight_controller, self._got_imu_stream)
+        return imu_sample
 
     def stop_imu_monitoring(self) -> None:
         """Stop SCALED_IMU streaming. Call on deactivation so the stream is re-requested on next activation."""
@@ -258,8 +250,7 @@ class AccelerometerCalibrationDataModel:
             float: magnitude in m/s²
 
         """
-        mg_to_ms2 = 9.80665 / 1000.0
-        return sqrt(xacc_mg**2 + yacc_mg**2 + zacc_mg**2) * mg_to_ms2
+        return _compute_movement_magnitude_ms2(xacc_mg, yacc_mg, zacc_mg)
 
     @staticmethod
     def compute_detected_position(xacc_mg: float, yacc_mg: float, zacc_mg: float) -> str:
@@ -279,11 +270,4 @@ class AccelerometerCalibrationDataModel:
             str: One of LEVEL, BACK, NOSE DOWN, NOSE UP, LEFT, RIGHT, or INDEFINITE.
 
         """
-        mag = sqrt(xacc_mg**2 + yacc_mg**2 + zacc_mg**2)
-        if mag < 1.0:
-            return _("INDEFINITE")
-        nx, ny, nz = xacc_mg / mag, yacc_mg / mag, zacc_mg / mag
-        for (ex, ey, ez), name in _ORIENTATIONS:
-            if nx * ex + ny * ey + nz * ez > _COS_20_DEG:
-                return name
-        return _("INDEFINITE")
+        return _compute_detected_position(xacc_mg, yacc_mg, zacc_mg)
