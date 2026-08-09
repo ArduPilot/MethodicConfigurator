@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration import (
     CompassCalibrationInstructionsPopup,
     CompassCalibrationPopup,
@@ -31,21 +32,23 @@ from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_COMP
 
 
 @pytest.fixture
-def instructions_popup() -> CompassCalibrationInstructionsPopup:
+def instructions_popup(attach_basewindow_shell) -> CompassCalibrationInstructionsPopup:
     """Fixture providing a lightweight instructions popup shell."""
     popup = object.__new__(CompassCalibrationInstructionsPopup)
+    attach_basewindow_shell(popup)
     popup.destroy = MagicMock()
     return popup
 
 
 @pytest.fixture
-def calibration_popup() -> CompassCalibrationPopup:
+def calibration_popup(attach_basewindow_shell) -> CompassCalibrationPopup:
     """Fixture providing a lightweight calibration popup shell."""
     popup = object.__new__(CompassCalibrationPopup)
     popup._timer_id = "after-id"
     popup._stop_polling = MagicMock()
-    popup.after_cancel = MagicMock()
-    popup.after = MagicMock(return_value="new-after-id")
+    root = attach_basewindow_shell(popup)
+    root.after_cancel = MagicMock()
+    root.after = MagicMock(return_value="new-after-id")
     popup.destroy = MagicMock()
     popup.model = MagicMock()
     popup.model.get_progress = MagicMock()
@@ -80,7 +83,7 @@ def calibration_view() -> CompassCalibrationView:
 class TestCompassCalibrationInstructionsPopup:
     """Verify the instructions flow is modal and continues into calibration."""
 
-    def test_user_sees_a_modal_instructions_popup(self) -> None:
+    def test_user_sees_a_modal_instructions_popup(self, attach_basewindow_shell) -> None:
         """
         The instructions dialog is created as a modal popup.
 
@@ -90,24 +93,25 @@ class TestCompassCalibrationInstructionsPopup:
         """
         parent = MagicMock(spec=tk.Widget)
         on_continue = MagicMock()
+        root_mock = MagicMock()
+
+        def fake_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
+            attach_basewindow_shell(self, root_mock)
 
         with (
-            patch(
-                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Toplevel.__init__",
-                return_value=None,
-            ),
+            patch.object(BaseWindow, "__init__", fake_basewindow_init),
             patch.object(CompassCalibrationInstructionsPopup, "_setup_ui"),
             patch.object(CompassCalibrationInstructionsPopup, "_resize_and_center"),
-            patch.object(CompassCalibrationInstructionsPopup, "lift"),
-            patch.object(CompassCalibrationInstructionsPopup, "focus_force"),
-            patch.object(CompassCalibrationInstructionsPopup, "overrideredirect"),
-            patch.object(CompassCalibrationInstructionsPopup, "transient"),
-            patch.object(CompassCalibrationInstructionsPopup, "grab_set"),
         ):
             popup = CompassCalibrationInstructionsPopup(parent, on_continue)
 
         assert popup._parent is parent
         assert popup._on_continue is on_continue
+        root_mock.overrideredirect.assert_called_once_with(boolean=True)
+        root_mock.transient.assert_called_once_with(parent)
+        root_mock.grab_set.assert_called_once_with()
+        root_mock.lift.assert_called_once_with()
+        root_mock.focus_force.assert_called_once_with()
 
     def test_user_can_continue_from_the_instructions_popup(
         self, instructions_popup: CompassCalibrationInstructionsPopup
@@ -124,14 +128,14 @@ class TestCompassCalibrationInstructionsPopup:
 
         popup._on_continue_clicked()
 
-        popup.destroy.assert_called_once()
+        popup.root.destroy.assert_called_once()
         popup._on_continue.assert_called_once()
 
 
 class TestCompassCalibrationPopupFlows:
     """Verify calibration popup lifecycle and telemetry handling."""
 
-    def test_user_sees_the_progress_popup_initialized_and_polling_scheduled(self) -> None:
+    def test_user_sees_the_progress_popup_initialized_and_polling_scheduled(self, attach_basewindow_shell) -> None:
         """
         The progress popup loads compass ids and starts polling immediately.
 
@@ -142,27 +146,27 @@ class TestCompassCalibrationPopupFlows:
         parent = MagicMock(spec=tk.Widget)
         model = MagicMock()
         model.get_active_compass_ids.return_value = [1, 0]
+        root_mock = MagicMock()
+        root_mock.after = MagicMock(return_value="after-id")
+
+        def fake_basewindow_init(self, root_tk=None) -> None:  # noqa: ARG001 # pylint: disable=unused-argument
+            attach_basewindow_shell(self, root_mock)
 
         with (
-            patch(
-                "ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration.tk.Toplevel.__init__",
-                return_value=None,
-            ),
+            patch.object(BaseWindow, "__init__", fake_basewindow_init),
             patch.object(CompassCalibrationPopup, "_setup_style"),
             patch.object(CompassCalibrationPopup, "_setup_ui"),
             patch.object(CompassCalibrationPopup, "_precreate_progress_rows"),
             patch.object(CompassCalibrationPopup, "_resize_and_center"),
-            patch.object(CompassCalibrationPopup, "lift"),
-            patch.object(CompassCalibrationPopup, "focus_force"),
-            patch.object(CompassCalibrationPopup, "overrideredirect"),
-            patch.object(CompassCalibrationPopup, "transient"),
-            patch.object(CompassCalibrationPopup, "grab_set"),
-            patch.object(CompassCalibrationPopup, "after", return_value="after-id") as mock_after,
         ):
             popup = CompassCalibrationPopup(parent, model)
 
         model.get_active_compass_ids.assert_called_once()
-        mock_after.assert_called_once_with(100, popup._check_progress)
+        root_mock.overrideredirect.assert_called_once_with(boolean=True)
+        root_mock.transient.assert_called_once_with(parent)
+        root_mock.lift.assert_called_once_with()
+        root_mock.focus_force.assert_called_once_with()
+        root_mock.after.assert_called_once_with(100, popup._check_progress)
         assert popup._expected_compass_ids == [0, 1]
         assert popup._timer_id == "after-id"
 
