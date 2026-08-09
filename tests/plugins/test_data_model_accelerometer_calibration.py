@@ -17,23 +17,7 @@ from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 
-# pylint: disable=protected-access,redefined-outer-name
-
-
-@pytest.fixture
-def connected_flight_controller() -> MagicMock:
-    """Fixture providing a mock flight controller that reports a live MAVLink link."""
-    flight_controller = MagicMock()
-    flight_controller.master = MagicMock()
-    return flight_controller
-
-
-@pytest.fixture
-def disconnected_flight_controller() -> MagicMock:
-    """Fixture providing a mock flight controller with no MAVLink link."""
-    flight_controller = MagicMock()
-    flight_controller.master = None
-    return flight_controller
+# pylint: disable=protected-access
 
 
 class TestAccelerometerCalibrationDataModelConnection:

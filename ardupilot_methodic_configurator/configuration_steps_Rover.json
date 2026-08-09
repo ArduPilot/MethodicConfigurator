@@ -169,6 +169,10 @@
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
             "component": "Frame",
+            "plugin": {
+                "name": "ahrs_orientation",
+                "placement": "left"
+            },
             "auto_changed_by": "",
             "derived_parameters": {
                 "FRAME_CLASS": { "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }

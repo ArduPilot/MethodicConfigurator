@@ -202,6 +202,25 @@ def attach_basewindow_shell() -> Callable[[Any, MagicMock | None], MagicMock]:
     return _attach
 
 
+# ==================== SHARED FLIGHT CONTROLLER FIXTURES ====================
+
+
+@pytest.fixture
+def connected_flight_controller() -> MagicMock:
+    """Fixture providing a mock flight controller that reports a live MAVLink link."""
+    flight_controller = MagicMock()
+    flight_controller.master = MagicMock()
+    return flight_controller
+
+
+@pytest.fixture
+def disconnected_flight_controller() -> MagicMock:
+    """Fixture providing a mock flight controller with no MAVLink link."""
+    flight_controller = MagicMock()
+    flight_controller.master = None
+    return flight_controller
+
+
 # ==================== VEHICLE COMPONENTS DATA MODEL FIXTURES ====================
 
 

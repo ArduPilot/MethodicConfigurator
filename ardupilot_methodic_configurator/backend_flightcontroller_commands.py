@@ -664,12 +664,18 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         if self.master is None:
             return None
         try:
-            msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                type="SCALED_IMU", blocking=False
-            )
-            if msg is None:
+            # Drain the receive buffer and keep only the most recent message.
+            latest = None
+            while True:
+                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type="SCALED_IMU", blocking=False
+                )
+                if msg is None:
+                    break
+                latest = msg
+            if latest is None:
                 return None
-            return float(msg.xacc), float(msg.yacc), float(msg.zacc)
+            return float(latest.xacc), float(latest.yacc), float(latest.zacc)
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_debug(_("Exception while polling SCALED_IMU: %(error)s"), {"error": str(e)})
             return None

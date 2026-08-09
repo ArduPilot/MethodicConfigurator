@@ -25,6 +25,10 @@ from ardupilot_methodic_configurator.__main__ import (
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.imu_helpers import (
+    poll_imu_periodically,
+    stop_periodic_polling,
+)
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 
@@ -274,11 +278,8 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _stop_polling(self) -> None:
         """Cancel any pending after() poll job."""
-        if self._poll_job is not None:
-            poll_job = self._poll_job
-            self._poll_job = None
-            with suppress(tk.TclError):
-                self.after_cancel(poll_job)
+        stop_periodic_polling(self.after_cancel, self._poll_job)
+        self._poll_job = None
 
     def _hide_wizard(self) -> None:
         """Hide the wizard panel and re-enable the top-level buttons."""
@@ -295,33 +296,40 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _start_imu_polling(self) -> None:
         """Start (or restart) the live IMU monitor polling loop."""
-        if self._imu_poll_job is None:
-            self._imu_poll_job = self.after(_IMU_POLL_INTERVAL_MS, self._imu_poll_tick)
+        self._imu_poll_job = poll_imu_periodically(
+            self.after,
+            self._imu_poll_job,
+            _IMU_POLL_INTERVAL_MS,
+            self.model.poll_imu_raw,
+            self._handle_live_imu_sample,
+            self._handle_no_live_imu_sample,
+            self._store_imu_poll_job,
+        )
 
     def _stop_imu_polling(self) -> None:
         """Cancel any pending IMU poll job."""
-        if self._imu_poll_job is not None:
-            job = self._imu_poll_job
-            self._imu_poll_job = None
-            with suppress(tk.TclError):
-                self.after_cancel(job)
-
-    def _imu_poll_tick(self) -> None:
-        """Poll the latest IMU data and update the live status labels."""
+        stop_periodic_polling(self.after_cancel, self._imu_poll_job)
         self._imu_poll_job = None
-        imu = self.model.poll_imu_raw()
-        if imu is not None:
-            x, y, z = imu
-            magnitude = self.model.compute_movement_magnitude_ms2(x, y, z)
-            position = self.model.compute_detected_position(x, y, z)
-            self._imu_magnitude_var.set(f"{magnitude:.2f} m/s²  (≈9.81 when still)")
-            self._imu_position_var.set(position)
-            if self._waiting_for_position:
-                matches = position == self._expected_position_name
-                self._continue_btn.configure(state="normal" if matches else "disabled")
-        elif self._waiting_for_position:
+
+    def _handle_live_imu_sample(self, imu: tuple[float, float, float]) -> None:
+        """Update the live status labels when a new IMU sample arrives."""
+        x, y, z = imu
+        magnitude = self.model.compute_movement_magnitude_ms2(x, y, z)
+        position = self.model.compute_detected_position(x, y, z)
+        self._imu_magnitude_var.set(f"{magnitude:.2f} m/s²  (≈9.81 when still)")
+        self._imu_position_var.set(position)
+        if self._waiting_for_position:
+            matches = position == self._expected_position_name
+            self._continue_btn.configure(state="normal" if matches else "disabled")
+
+    def _handle_no_live_imu_sample(self) -> None:
+        """Disable Continue while waiting for the next live IMU sample."""
+        if self._waiting_for_position:
             self._continue_btn.configure(state="disabled")
-        self._imu_poll_job = self.after(_IMU_POLL_INTERVAL_MS, self._imu_poll_tick)
+
+    def _store_imu_poll_job(self, job_id: str) -> None:
+        """Keep the currently scheduled timer id available for cancellation."""
+        self._imu_poll_job = job_id
 
     # ------------------------------------------------------------------
     # Plugin lifecycle
@@ -334,20 +342,14 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
     def on_deactivate(self) -> None:
         """Called when the plugin view is hidden (lifecycle method)."""
         self._stop_polling()
-        # Keep deactivation focused on full-calibration teardown in tests and avoid
-        # canceling an IMU timer id that may have been scheduled before after()
-        # is patched by test fixtures.
-        self._imu_poll_job = None
+        self._stop_imu_polling()
         self.model.stop_imu_monitoring()
         self._hide_wizard()
 
     def destroy(self) -> None:
         """Cleanup resources when plugin is removed (lifecycle method)."""
         self._stop_polling()
-        # Widget teardown cancels any pending widget-owned after callbacks.
-        # Keep destroy focused on full-calibration polling to avoid duplicate
-        # cancellation paths in tests that spy on after_cancel calls.
-        self._imu_poll_job = None
+        self._stop_imu_polling()
         super().destroy()
 
 
