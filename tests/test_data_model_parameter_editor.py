@@ -23,6 +23,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterValueUpdateStatus,
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
+    PLUGIN_AHRS_ORIENTATION,
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
     PLUGIN_ESC_RPM_SCALE,
@@ -3447,6 +3448,18 @@ class TestDerivedParameterApplication:
             mock_esc_rpm_model.assert_called_once_with(parameter_editor._flight_controller, parameter_editor._local_filesystem)
             assert result == mock_esc_rpm_model.return_value
 
+    def test_user_can_create_ahrs_orientation_data_model_when_fc_is_connected(self, parameter_editor) -> None:
+        """The editor creates the AHRS orientation model when the flight controller is connected."""
+        parameter_editor._flight_controller.master = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.AhrsOrientationDataModel"
+        ) as mock_ahrs_orientation_model:
+            result = parameter_editor.create_plugin_data_model(PLUGIN_AHRS_ORIENTATION)
+
+            mock_ahrs_orientation_model.assert_called_once_with(parameter_editor._flight_controller)
+            assert result == mock_ahrs_orientation_model.return_value
+
     @pytest.mark.parametrize("plugin_name", ["unknown_plugin", "", None])
     def test_user_sees_an_error_for_unsupported_plugin_name(self, parameter_editor, plugin_name) -> None:
         """
@@ -3498,7 +3511,14 @@ class TestEditorStateInitialization:
         assert mavftp_support is False
 
     @pytest.mark.parametrize(
-        "plugin_name", [PLUGIN_MOTOR_TEST, PLUGIN_BATTERY_MONITOR, PLUGIN_COMPASS_CALIBRATION, PLUGIN_ESC_RPM_SCALE]
+        "plugin_name",
+        [
+            PLUGIN_MOTOR_TEST,
+            PLUGIN_BATTERY_MONITOR,
+            PLUGIN_COMPASS_CALIBRATION,
+            PLUGIN_AHRS_ORIENTATION,
+            PLUGIN_ESC_RPM_SCALE,
+        ],
     )
     def test_system_returns_none_for_known_plugin_when_fc_is_disconnected(self, parameter_editor, plugin_name: str) -> None:
         """
@@ -4053,6 +4073,46 @@ class TestParameterManagementBehavior:
         assert "P1" in result
         assert "P2" in result
         assert result == sorted(result)
+
+    def test_add_parameter_falls_back_to_docs_when_fc_lacks_parameter(self, parameter_editor) -> None:
+        """
+        Adding a parameter should still work from docs when the live FC cache does not contain it.
+
+        GIVEN: A connected FC whose cached parameters omit CUST_ROT1_ROLL
+        WHEN: The parameter is added to the current file
+        THEN: The editor creates it from the default documented value instead of raising
+        """
+        parameter_editor.current_file = "f.param"
+        parameter_editor._local_filesystem.file_parameters = {"f.param": ParDict()}
+        parameter_editor._added_parameters = set()
+        parameter_editor._deleted_parameters = set()
+        parameter_editor._flight_controller.fc_parameters = {"AHRS_ORIENTATION": 0.0}
+        parameter_editor._local_filesystem.doc_dict = {"CUST_ROT1_ROLL": {"min": -180.0, "max": 180.0}}
+        parameter_editor._local_filesystem.param_default_dict = ParDict({"CUST_ROT1_ROLL": Par(123.45, "")})
+
+        added = parameter_editor.add_parameter_to_current_file("CUST_ROT1_ROLL")
+
+        assert added is True
+        assert "CUST_ROT1_ROLL" in parameter_editor.current_step_parameters
+        assert parameter_editor.current_step_parameters["CUST_ROT1_ROLL"].get_new_value() == pytest.approx(123.45)
+
+    def test_add_parameter_raises_combined_error_when_fc_connected_and_docs_missing(self, parameter_editor) -> None:
+        """
+        Adding an unknown parameter should raise a combined FC/docs error when both sources are present.
+
+        GIVEN: A connected FC and a loaded apm.pdef.xml that both lack UNKNOWN_PARAM
+        WHEN: The parameter is added to the current file
+        THEN: InvalidParameterNameError mentions both FC and apm.pdef.xml
+        """
+        parameter_editor.current_file = "f.param"
+        parameter_editor._local_filesystem.file_parameters = {"f.param": ParDict()}
+        parameter_editor._added_parameters = set()
+        parameter_editor._deleted_parameters = set()
+        parameter_editor._flight_controller.fc_parameters = {"AHRS_ORIENTATION": 0.0}
+        parameter_editor._local_filesystem.doc_dict = {"CUST_ROT1_ROLL": {"min": -180.0, "max": 180.0}}
+
+        with pytest.raises(InvalidParameterNameError, match=r"flight controller or apm\.pdef\.xml"):
+            parameter_editor.add_parameter_to_current_file("UNKNOWN_PARAM")
 
     def test_add_parameters_classifies_outcomes_into_added_skipped_and_failed(self, parameter_editor) -> None:
         """
