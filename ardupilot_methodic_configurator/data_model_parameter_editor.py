@@ -1999,22 +1999,20 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             raise InvalidParameterNameError(_("Parameter already exists, edit it instead"))
 
         fc_parameters = self.fc_parameters
-        if fc_parameters:
-            if param_name in fc_parameters:
-                # Create the parameter in domain model
-                par = Par(fc_parameters[param_name], "")
-                self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
-                    param_name, par, self.current_file, fc_parameters
-                )
+        if fc_parameters and param_name in fc_parameters:
+            # Create the parameter in domain model
+            par = Par(fc_parameters[param_name], "")
+            self.current_step_parameters[param_name] = self._config_step_processor.create_ardupilot_parameter(
+                param_name, par, self.current_file, fc_parameters
+            )
 
-                # Track addition
-                if not is_in_original:
-                    self._added_parameters.add(param_name)
-                # If was previously deleted, remove from deleted set
-                self._deleted_parameters.discard(param_name)
+            # Track addition
+            if not is_in_original:
+                self._added_parameters.add(param_name)
+            # If was previously deleted, remove from deleted set
+            self._deleted_parameters.discard(param_name)
 
-                return True
-            raise InvalidParameterNameError(_("Parameter name not found in the flight controller."))
+            return True
 
         if self._local_filesystem.doc_dict:
             if param_name in self._local_filesystem.doc_dict:
@@ -2031,9 +2029,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 self._deleted_parameters.discard(param_name)
 
                 return True
+            if fc_parameters:
+                raise InvalidParameterNameError(_("Parameter name not found in the flight controller or apm.pdef.xml."))
             raise InvalidParameterNameError(
                 _("'{param_name}' not found in the apm.pdef.xml file.").format(param_name=param_name)
             )
+
+        if fc_parameters:
+            raise InvalidParameterNameError(_("Parameter name not found in the flight controller."))
 
         if not fc_parameters and not self._local_filesystem.doc_dict:
             raise OperationNotPossibleError(
