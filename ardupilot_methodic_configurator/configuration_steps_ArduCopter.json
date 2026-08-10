@@ -309,7 +309,7 @@
             "why": "Ensures the vehicle operates within safe voltage limits and can trigger appropriate failsafe actions to protect the vehicle and its surroundings. It also helps by scaling the PIDs to provide a constant flight behavior, independent of the battery state-of-charge",
             "why_now": "The failsafe configuration step requires this. During flight tests PID scaling depends on the battery voltage",
             "blog_text": "Configure parameters for the first battery, including health monitoring thresholds and failsafe behavior",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#65-configure-the-primary-battery-monitor",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#652-configure-the-batteryes",
             "wiki_text": "Battery Monitors (aka Power Monitors/Modules) - BATT_* parameters",
             "wiki_url": "https://ardupilot.org/copter/docs/common-powermodule-landingpage.html",
             "external_tool_text": "",

@@ -1,5 +1,5 @@
 """
-Data model for VIBE (vibration) quality check.
+Data model for VIBE quality check.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -47,23 +47,17 @@ class VibeLogQualityModel(BaseLogQualityAnalysisModel):
         "not logged" branch here rather than a bitmask-specific one.
         """
         name = self.resolve_message_step("VIBE", "VIBE")[1]
-        reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence("VIBE", "VIBE", "VIBE")
+        reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
+            "VIBE",
+            "VIBE",
+            "VIBE",
+            not_logged_hint=_("check that IMU data is being logged, since VIBE is derived from it"),
+        )
         return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
 
     def check_vibe_levels(self) -> list[QualityIssue]:
         """Check that VibeX/Y/Z fields are present and have readable data."""
-        issues: list[QualityIssue] = []
-
-        for axis_field in ("VibeX", "VibeY", "VibeZ"):
-            _values, field_issues = self.field_values_or_issue(
-                "VIBE",
-                axis_field,
-                missing_field_message=_("{field} field not present in this firmware's VIBE schema").format(field=axis_field),
-                missing_values_message=_("{field} values missing from VIBE records").format(field=axis_field),
-            )
-            issues += field_issues
-
-        return issues
+        return self.check_fields_present("VIBE", ("VibeX", "VibeY", "VibeZ"))
 
     def check_clipping(self) -> list[QualityIssue]:
         """Check that the Clip field is present and has readable data."""

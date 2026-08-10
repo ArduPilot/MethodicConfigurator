@@ -35,8 +35,9 @@ class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
 
     def _diagnose_absence(self) -> LogQualityResult:
         name = self.resolve_message_step("BAT", "Battery")[1]
-        reason, issues, bitmask_disabled = self.diagnose_bitmask_absence("BAT", "Battery Monitor", "Battery")
-
+        reason, issues, bitmask_disabled = self.diagnose_bitmask_absence(
+            "BAT", "Battery Monitor", "Battery", not_logged_hint=_("check the battery monitor physical connection")
+        )
         if not bitmask_disabled:
             step, name = self.resolve_message_step("BAT", "Battery")
             if self.parameters.get("BATT_MONITOR") == 0:

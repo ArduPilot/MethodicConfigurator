@@ -29,12 +29,16 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check i
     get_pm_status,
     validate_configuration_steps_data,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_arm import ArmLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogQualityAnalysisModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_err import ErrLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_fft import FftLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_imu import ImuLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_mode import ModeLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_pm import PmLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_vibe import VibeLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import HardwareReport
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_report import extract_hardware_report
@@ -46,6 +50,10 @@ QUALITY_MODELS = [
     ImuLogQualityModel,
     VibeLogQualityModel,
     FftLogQualityModel,
+    ErrLogQualityModel,
+    PmLogQualityModel,
+    ArmLogQualityModel,
+    ModeLogQualityModel,
 ]
 
 

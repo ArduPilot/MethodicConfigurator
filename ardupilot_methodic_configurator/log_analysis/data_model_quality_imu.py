@@ -35,7 +35,9 @@ class ImuLogQualityModel(BaseLogQualityAnalysisModel):
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why IMU data is absent using LOG_BITMASK."""
         name = self.resolve_message_step("IMU", "IMU")[1]
-        reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence("IMU", "IMU", "IMU")
+        reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
+            "IMU", "IMU", "IMU", not_logged_hint=_("check firmware build supports IMU logging")
+        )
         return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
 
     def check_gyro_error(self) -> list[QualityIssue]:
