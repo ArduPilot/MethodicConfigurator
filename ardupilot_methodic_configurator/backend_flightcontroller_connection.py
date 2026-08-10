@@ -792,7 +792,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
         serial_list.sort(key=lambda x: x.device)
 
-        if not serial_list and os_name == "posix":
+        if serial_list:
+            return serial_list
+        if os_name == "posix":
             serial_list = [
                 mavutil.SerialPort(
                     device=port.device,
@@ -802,12 +804,6 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 if port.description and port.description.lower() != "n/a"
             ]
             serial_list.sort(key=lambda x: x.device)
-
-            if serial_list:
-                return serial_list
-
-        serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
-        serial_list.sort(key=lambda x: x.device)
 
         # remove OTG2 ports for dual CDC
         if (

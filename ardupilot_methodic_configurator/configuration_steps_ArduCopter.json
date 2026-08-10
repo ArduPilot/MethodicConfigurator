@@ -654,7 +654,7 @@
             "why": "Sometimes the weights of the barometer vs. GNSS altitude need to be adjusted.",
             "why_now": "Before the second flight so that the EKF can be used to estimate the vehicle's position",
             "blog_text": "Configure Extended Kalman Filter (EKF) noise weights",
-            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#84-configure-the-ekf-altitude-source-weights",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#83-configure-the-ekf-altitude-source-weights",
             "wiki_text": "Extended Kalman filter tuning",
             "wiki_url": "https://ardupilot.org/dev/docs/extended-kalman-filter.html",
             "external_tool_text": "",
