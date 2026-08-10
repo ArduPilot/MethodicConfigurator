@@ -54,18 +54,7 @@ class FftLogQualityModel(BaseLogQualityAnalysisModel):
 
     def check_header_fields(self) -> list[QualityIssue]:
         """Check that ISBH's key fields are present and have readable data."""
-        issues: list[QualityIssue] = []
-
-        for field_name in ("type", "instance", "smp_cnt", "smp_rate"):
-            _values, field_issues = self.field_values_or_issue(
-                "ISBH",
-                field_name,
-                missing_field_message=_("{field} field not present in this firmware's ISBH schema").format(field=field_name),
-                missing_values_message=_("{field} values missing from ISBH records").format(field=field_name),
-            )
-            issues += field_issues
-
-        return issues
+        return self.check_fields_present("ISBH", ("type", "instance", "smp_cnt", "smp_rate"))
 
     def check_batch_data_present(self) -> list[QualityIssue]:
         """Check that ISBD and ISBH header."""

@@ -113,14 +113,13 @@ class BaseLogQualityAnalysisModel:
         message_name: str,
         bit_name: str,
         fallback_name: str,
+        *,
+        not_logged_hint: str,
     ) -> tuple[str, list[QualityIssue], bool]:
         """
         Diagnose absence of a message via LOG_BITMASK.
 
-        Returns (reason, issues, bitmask_disabled). bitmask_disabled tells the caller
-        whether this was actually a LOG_BITMASK-disabled case, so callers with extra
-        fallback branches (e.g. Battery's BATT_MONITOR check) know whether to layer
-        their own logic on top of the generic "not found" case.
+        Returns: reason, issues, bitmask_disabled.
         """
         bitmask = self.parameters.get("LOG_BITMASK")
         bitmask_field = get_log_bitmask(self.apm_doc) if self.apm_doc else None
@@ -133,8 +132,32 @@ class BaseLogQualityAnalysisModel:
             issues = [QualityIssue(_("Enable {message} logging (LOG_BITMASK bit)").format(message=fallback_name), step)]
             return reason, issues, True
 
-        reason = _("{message} telemetry not logged but logging enabled; check the physical connection").format(
-            message=fallback_name
+        reason = _("{message} telemetry not logged but logging enabled; {hint}").format(
+            message=fallback_name, hint=not_logged_hint
         )
         issues = [QualityIssue(_("No {message} messages found").format(message=message_name), step)]
         return reason, issues, False
+
+    def check_fields_present(
+        self,
+        message_name: str,
+        field_names: tuple[str, ...],
+        *,
+        scaled: bool = True,
+    ) -> list[QualityIssue]:
+        """Check that each field in field_names exists on message_name and has readable data."""
+        issues: list[QualityIssue] = []
+        for field_name in field_names:
+            _values, field_issues = self.field_values_or_issue(
+                message_name,
+                field_name,
+                missing_field_message=_("{field} field not present in this firmware's {msg} schema").format(
+                    field=field_name, msg=message_name
+                ),
+                missing_values_message=_("{field} values missing from {msg} records").format(
+                    field=field_name, msg=message_name
+                ),
+                scaled=scaled,
+            )
+            issues += field_issues
+        return issues
