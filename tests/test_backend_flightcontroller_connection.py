@@ -261,6 +261,42 @@ class TestFlightControllerConnectionPortDiscovery:
         assert len(tuples) > 0
         assert tuples[-1] == ("Add another", "Add another")
 
+    def test_auto_detect_serial_uses_serial_discovery_on_posix_when_pymavlink_finds_none(self) -> None:
+        """
+        Auto-detection falls back to system serial discovery on POSIX when pymavlink does not find any serial ports.
+
+        GIVEN: pymavlink auto-detection returns no ports
+        AND: system serial discovery finds a flight controller
+        WHEN: _auto_detect_serial is called on POSIX
+        THEN: the system-discovered flight controller should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        mock_port = Mock()
+        mock_port.device = "/dev/cu.usbmodem1401"
+        mock_port.description = "MatekH743-bdshot"
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
+                "posix",
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.mavutil.auto_detect_serial",
+                return_value=[],
+            ),
+            patch.object(
+                connection._serial_port_discovery,
+                "get_available_ports",
+                return_value=[mock_port],
+            ),
+        ):
+            ports = connection._auto_detect_serial()
+
+        assert len(ports) == 1
+        assert ports[0].device == "/dev/cu.usbmodem1401"
+        assert ports[0].description == "MatekH743-bdshot"
+
 
 class TestFlightControllerConnectionLifecycle:
     """Test connection lifecycle management."""
