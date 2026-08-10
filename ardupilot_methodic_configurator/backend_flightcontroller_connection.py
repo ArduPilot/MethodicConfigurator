@@ -776,15 +776,35 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             "*Serial*",
             "*CubePilot*",
             "*Qiotek*",
+            "*Matek*",
         ]
+
         serial_list: list[mavutil.SerialPort] = [
             mavutil.SerialPort(device=connection[0], description=connection[1])
             for connection in self._connection_tuples
             if connection[1] and "mavlink" in connection[1].lower()
         ]
+
         if len(serial_list) == 1:
             # selected automatically if unique
             return serial_list
+
+        serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
+        serial_list.sort(key=lambda x: x.device)
+
+        if not serial_list and os_name == "posix":
+            serial_list = [
+                mavutil.SerialPort(
+                    device=port.device,
+                    description=port.description,
+                )
+                for port in self._serial_port_discovery.get_available_ports()
+                if port.description and port.description.lower() != "n/a"
+            ]
+            serial_list.sort(key=lambda x: x.device)
+
+            if serial_list:
+                return serial_list
 
         serial_list = mavutil.auto_detect_serial(preferred_list=preferred_ports)
         serial_list.sort(key=lambda x: x.device)
