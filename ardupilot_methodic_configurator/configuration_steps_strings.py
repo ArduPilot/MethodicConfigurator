@@ -416,6 +416,9 @@ def configuration_steps_descriptions() -> None:
     _config_steps_descriptions = _(
         "Optional Python expression; if present, the parameter is only deleted when this expression evaluates to true"
     )
+    _config_steps_descriptions = _(
+        "Optional Python expression; if present, the plugin is only shown when this expression evaluates to true"
+    )
     _config_steps_descriptions = _("Optional Python expression; the parameter is only added when this evaluates to true")
     _config_steps_descriptions = _("Optional expression for the parameter value; if absent, the current FC value is used")
     _config_steps_descriptions = _("Optional instructions to display as a popup when entering this step")
