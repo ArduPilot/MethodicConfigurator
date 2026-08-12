@@ -16,6 +16,7 @@ concurrency:
 
 permissions:
   contents: read
+  copilot-requests: write
 
 jobs:
   extract_strings:
@@ -256,7 +257,7 @@ jobs:
         id: ai_translate
         uses: actions/ai-inference@2c43c91ae16266ca159d311430343c67a5ffa222 # v3
         with:
-          system-prompt-file: .github/prompts/ai-translation-system.prompt.txt
+          system-prompt-file: .github/prompts/ai-translation-system.prompt.yml
           prompt-file: .github/prompts/ai-translation-user.prompt.yml
           input: |
             language: ${{ matrix.language }}
@@ -264,10 +265,15 @@ jobs:
             translation_file: ${{ matrix.file }}
             translation_content: |
               ${{ steps.translation_content.outputs.content }}
-          model: gpt-4.1
+          model: gpt-5.4
         continue-on-error: true
+        # This explicit, step-scoped credential takes precedence over the
+        # repository's GITHUB_TOKEN, so Copilot usage is billed to the personal
+        # Copilot seat that created COPILOT_AMC_I18N_PAT rather than to the ArduPilot org.
+        # COPILOT_AMC_I18N_PAT must be a fine-grained PAT (github_pat_) owned by
+        # amilcarlucas with the account-level "Copilot Requests" permission.
         env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.AMC_COPILOT_TOKEN_CLASSIC }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_AMC_I18N_PAT }}
 
       - name: Check AI translation success
         id: check_translation
