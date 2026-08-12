@@ -82,11 +82,23 @@ class TestScrollFrameUserExperience:
         """
         # Mock overflowing content
         scrollable_frame.canvas.bbox.return_value = (0, 0, 100, 300)  # Content bounds
+        scrollable_frame.canvas.winfo_height.return_value = 100
 
         scrollable_frame.on_frame_configure(None)
 
         # Verify scrollbar region is configured
         scrollable_frame.canvas.configure.assert_called_once_with(scrollregion=(0, 0, 100, 300))
+        scrollable_frame.vsb.pack.assert_called_once_with(side="right", fill="y")
+
+    def test_user_does_not_see_scrollbar_when_content_fits(self, scrollable_frame) -> None:
+        """The scrollbar is hidden when all of the content is visible."""
+        scrollable_frame._scrollbar_visible = True
+        scrollable_frame.canvas.bbox.return_value = (0, 0, 100, 200)
+        scrollable_frame.canvas.winfo_height.return_value = 500
+
+        scrollable_frame.on_frame_configure(None)
+
+        scrollable_frame.vsb.pack_forget.assert_called_once_with()
 
     def test_user_content_resizes_when_container_changes_size(self, scrollable_frame) -> None:
         """

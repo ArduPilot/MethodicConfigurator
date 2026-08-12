@@ -62,6 +62,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documenta
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
+from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_stage_progress import StageProgressBar
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
@@ -279,6 +280,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.parameter_area_container: ttk.Frame
         self.current_plugin: dict | None = None
         self.current_plugin_view: PluginView | None = None
+        self.plugin_scroll_frame: ScrollFrame | None = None
         self.parameter_area_paned: tk.PanedWindow | None = None
         self.parameter_container: ttk.Frame
         self._tempcal_imu_progress_window: ProgressWindow | None = None
@@ -830,6 +832,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             finally:
                 self.current_plugin_view = None
 
+        self.plugin_scroll_frame = None
+
         # Note: parameter_editor_table doesn't need explicit destroy()
         # It will be automatically destroyed when its parent container is destroyed
 
@@ -906,34 +910,12 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             finally:
                 self.current_plugin_view = None
 
-        # Locate the existing plugin parent frame based on placement strategy.
-        # This avoids full layout rebuild when only the plugin content needs updating.
-        placement = plugin.get("placement")
-        plugin_parent: ttk.Frame | None = None
-
-        if placement == "left" and self.parameter_area_paned is not None:
-            # Left placement uses a PanedWindow with plugin in the first (left) pane
-            panes: tuple[str, ...] = self.parameter_area_paned.panes()  # type: ignore[no-untyped-call]
-            if panes:
-                # Convert Tcl pane path to widget reference
-                plugin_parent = self.parameter_area_paned.nametowidget(panes[0])
-        elif placement == "top":
-            # Top placement uses a vertical stack with plugin frame at the top
-            # Navigate the widget tree to find the plugin container
-            for child in self.parameter_area_container.winfo_children():
-                if isinstance(child, ttk.Frame):
-                    # Located the top_container frame
-                    children = child.winfo_children()
-                    if children and isinstance(children[0], ttk.Frame):
-                        plugin_parent = children[0]
-                    break
-
-        if plugin_parent:
-            # Clear the plugin parent frame
+        if self.plugin_scroll_frame is not None:
+            plugin_parent = self.plugin_scroll_frame.view_port
             for widget in plugin_parent.winfo_children():
                 widget.destroy()
 
-            # Load new plugin into existing frame
+            self.plugin_scroll_frame.scroll_to_top()
             self._load_plugin(plugin_parent, plugin)
 
         self.current_plugin = plugin
@@ -973,7 +955,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self._set_pane_sticky(self.parameter_area_paned, left_frame)
 
             # Instantiate and display the plugin in the left frame
-            self._load_plugin(left_frame, plugin)
+            self.plugin_scroll_frame = ScrollFrame(left_frame)
+            self.plugin_scroll_frame.pack(side="top", fill="both", expand=True)
+            self._load_plugin(self.plugin_scroll_frame.view_port, plugin)
 
             # Create right pane for parameter table (gets remaining space)
             right_frame = ttk.Frame(self.parameter_area_paned)
@@ -990,7 +974,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Create top frame for plugin (fixed height, expands horizontally only)
             top_plugin_frame = ttk.Frame(top_container)
             top_plugin_frame.pack(side="top", fill="both", expand=True)
-            self._load_plugin(top_plugin_frame, plugin)
+            self.plugin_scroll_frame = ScrollFrame(top_plugin_frame)
+            self.plugin_scroll_frame.pack(side="top", fill="both", expand=True)
+            self._load_plugin(self.plugin_scroll_frame.view_port, plugin)
 
             # Visual separator between plugin and parameter table
             ttk.Separator(top_container, orient="horizontal").pack(side="top", fill="x", pady=2)

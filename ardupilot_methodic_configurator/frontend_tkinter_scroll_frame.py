@@ -42,10 +42,10 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
 
         # place a tk.scrollbar on self. ttk.scrollbar will not work here
         self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self._scrollbar_visible = False
         # attach scrollbar action to scroll of canvas
         self.canvas.configure(yscrollcommand=self.vsb.set)
 
-        self.vsb.pack(side="right", fill="y")  # pack scrollbar to right of self
         # pack canvas to left of self and expand to fill
         self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas_window = self.canvas.create_window(
@@ -72,12 +72,33 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         """Reset the scroll region to encompass the inner frame."""
         # Whenever the size of the frame changes, alter the scroll region respectively.
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self._update_scrollbar_visibility()
 
     def on_canvas_configure(self, event: tk.Event) -> None:
         """Reset the canvas window to encompass inner frame when required."""
         canvas_width = event.width
         # Whenever the size of the canvas changes alter the window region respectively.
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
+        self._update_scrollbar_visibility()
+
+    def _update_scrollbar_visibility(self) -> None:
+        """Show the scrollbar only when the view port content overflows the canvas."""
+        try:
+            bbox = self.canvas.bbox("all")
+            canvas_height = self.canvas.winfo_height()
+        except tk.TclError:
+            return
+
+        if bbox is None or not isinstance(canvas_height, int) or canvas_height <= 1:
+            return
+
+        should_show = bbox[3] > canvas_height
+        if should_show and not self._scrollbar_visible:
+            self.vsb.pack(side="right", fill="y")
+            self._scrollbar_visible = True
+        elif not should_show and self._scrollbar_visible:
+            self.vsb.pack_forget()
+            self._scrollbar_visible = False
 
     def on_mouse_wheel(self, event: tk.Event) -> None:  # cross platform scroll wheel event
         try:

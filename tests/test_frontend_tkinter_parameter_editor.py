@@ -118,7 +118,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:
     parameter_area_container = _build_parameter_area_container()
     editor.parameter_area_container = parameter_area_container
     editor.parameter_container = parameter_area_container
-    editor.parameter_area_paned = None
+    editor.parameter_area_paned, editor.plugin_scroll_frame = None, None
     editor.inline_component_editor = None
     editor._inline_component_name = None
     editor._updating_inline_editor = False
@@ -1466,12 +1466,11 @@ class TestPluginLayoutLifecycle:
     def test_user_swaps_left_plugin_updates_existing_container(self, parameter_editor_window: ParameterEditorWindow) -> None:
         plugin_view = MagicMock()
         parameter_editor_window.current_plugin_view = plugin_view
-        parameter_editor_window.parameter_area_paned = MagicMock()
-        parameter_editor_window.parameter_area_paned.panes.return_value = ("pane",)
         plugin_parent = MagicMock()
         existing_child = MagicMock()
         plugin_parent.winfo_children.return_value = [existing_child]
-        parameter_editor_window.parameter_area_paned.nametowidget.return_value = plugin_parent
+        plugin_scroll_frame = MagicMock(view_port=plugin_parent)
+        parameter_editor_window.plugin_scroll_frame = plugin_scroll_frame
         plugin = {"name": "beta", "placement": "left"}
 
         with patch.object(parameter_editor_window, "_load_plugin") as mock_load:
@@ -1479,34 +1478,23 @@ class TestPluginLayoutLifecycle:
 
         plugin_view.destroy.assert_called_once()
         existing_child.destroy.assert_called_once()
+        plugin_scroll_frame.scroll_to_top.assert_called_once()
         mock_load.assert_called_once_with(plugin_parent, plugin)
         assert parameter_editor_window.current_plugin == plugin
 
     def test_user_swaps_top_plugin_updates_existing_container(self, parameter_editor_window: ParameterEditorWindow) -> None:
-        class DummyFrame:  # pylint: disable=too-few-public-methods
-            """Minimal container that mimics ttk.Frame for plugin layout tests."""
-
-            def __init__(self) -> None:
-                self._children: list[object] = []
-
-            def winfo_children(self) -> list[object]:
-                return self._children
-
-        top_container = DummyFrame()
-        plugin_holder = DummyFrame()
+        plugin_holder = MagicMock()
         child = MagicMock()
-        plugin_holder._children = [child]
-        top_container._children = [plugin_holder]
-        parameter_editor_window.parameter_area_container.winfo_children = MagicMock(return_value=[top_container])
+        plugin_holder.winfo_children.return_value = [child]
+        plugin_scroll_frame = MagicMock(view_port=plugin_holder)
+        parameter_editor_window.plugin_scroll_frame = plugin_scroll_frame
         plugin = {"name": "gamma", "placement": "top"}
 
-        with (
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame", DummyFrame),
-            patch.object(parameter_editor_window, "_load_plugin") as mock_load,
-        ):
+        with patch.object(parameter_editor_window, "_load_plugin") as mock_load:
             parameter_editor_window._swap_plugin_in_place(plugin)
 
         child.destroy.assert_called_once()
+        plugin_scroll_frame.scroll_to_top.assert_called_once()
         mock_load.assert_called_once_with(plugin_holder, plugin)
         assert parameter_editor_window.current_plugin == plugin
 
@@ -1532,6 +1520,8 @@ class TestPluginLayoutRebuild:
         paned.paneconfigure = MagicMock()
         table = MagicMock()
         table.pack = MagicMock()
+        plugin_scroll_frame = MagicMock()
+        plugin_scroll_frame.view_port = MagicMock()
         plugin = {"name": "alpha", "placement": "left"}
 
         with (
@@ -1547,12 +1537,17 @@ class TestPluginLayoutRebuild:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorTable",
                 return_value=table,
             ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ScrollFrame",
+                return_value=plugin_scroll_frame,
+            ),
             patch.object(parameter_editor_window, "_load_plugin") as mock_load,
         ):
             parameter_editor_window._rebuild_plugin_layout(plugin)
 
         assert parameter_editor_window.parameter_container is created_frames[2]
-        mock_load.assert_called_once_with(created_frames[1], plugin)
+        plugin_scroll_frame.pack.assert_called_once_with(side="top", fill="both", expand=True)
+        mock_load.assert_called_once_with(plugin_scroll_frame.view_port, plugin)
         table.pack.assert_called_once_with(side="top", fill="both", expand=True)
 
     def test_user_rebuilds_top_layout_with_separator(self, parameter_editor_window: ParameterEditorWindow) -> None:
@@ -1569,6 +1564,8 @@ class TestPluginLayoutRebuild:
 
         table = MagicMock()
         table.pack = MagicMock()
+        plugin_scroll_frame = MagicMock()
+        plugin_scroll_frame.view_port = MagicMock()
         plugin = {"name": "beta", "placement": "top"}
         separator = MagicMock(pack=MagicMock())
 
@@ -1585,12 +1582,17 @@ class TestPluginLayoutRebuild:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterEditorTable",
                 return_value=table,
             ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ScrollFrame",
+                return_value=plugin_scroll_frame,
+            ),
             patch.object(parameter_editor_window, "_load_plugin") as mock_load,
         ):
             parameter_editor_window._rebuild_plugin_layout(plugin)
 
         assert parameter_editor_window.parameter_container is created_frames[3]
-        mock_load.assert_called_once_with(created_frames[2], plugin)
+        plugin_scroll_frame.pack.assert_called_once_with(side="top", fill="both", expand=True)
+        mock_load.assert_called_once_with(plugin_scroll_frame.view_port, plugin)
         separator.pack.assert_called_once_with(side="top", fill="x", pady=2)
 
     def test_user_rebuilds_simple_layout_when_no_plugin(self, parameter_editor_window: ParameterEditorWindow) -> None:
