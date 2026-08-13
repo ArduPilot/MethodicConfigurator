@@ -751,7 +751,7 @@ msgstr "変更されたパラメータのみがアップロードされる説明
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:81
 msgid "Log quality report explanation"
-msgstr ""
+msgstr "ログ品質レポートの説明"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:130
 msgid "Connection string cannot be empty or whitespace-only"
@@ -1072,31 +1072,31 @@ msgstr "位置確認の送信に失敗しました: %(error)s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:628
 msgid ""
 "No flight controller connection available to cancel accelerometer calibration"
-msgstr ""
+msgstr "加速度計キャリブレーションをキャンセルするためのフライトコントローラー接続を利用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:649
 msgid "Accelerometer calibration cancel command sent"
-msgstr ""
+msgstr "加速度計キャリブレーションのキャンセルコマンドを送信しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:652
 msgid "Failed to send accelerometer calibration cancel command: %(error)s"
-msgstr ""
+msgstr "加速度計キャリブレーションのキャンセルコマンドの送信に失敗しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:674
 msgid "Exception while polling SCALED_IMU: %(error)s"
-msgstr ""
+msgstr "SCALED_IMU のポーリング中に例外が発生しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:693
 msgid "No flight controller connection available for SCALED_IMU stream request"
-msgstr ""
+msgstr "SCALED_IMU ストリームを要求するためのフライトコントローラー接続を利用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:705
 msgid "SCALED_IMU stream requested at %(interval)d µs interval"
-msgstr ""
+msgstr "SCALED_IMU ストリームを %(interval)d µs 間隔で要求しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:709
 msgid "SCALED_IMU stream request failed: %(error)s"
-msgstr ""
+msgstr "SCALED_IMU ストリームの要求に失敗しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:725
 msgid "No flight controller connection available for battery status request"
@@ -3064,7 +3064,7 @@ msgid ""
 "if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU "
 "Series'] or vehicle_components['Propellers']['Specifications']"
 "['Diameter_inches'] >= 15 else 'EKF primary gyro raw logging'"
-msgstr ""
+msgstr "'F4 プロセッサまたは大径プロペラでは EKF プライマリ加速度計・ジャイロのバッチログを使用' if 'F4' in vehicle_components['Flight Controller']['Specifications']['MCU Series'] or vehicle_components['Propellers']['Specifications']['Diameter_inches'] >= 15 else 'EKF プライマリジャイロの生ログ'"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:271
 msgid ""
@@ -3154,7 +3154,7 @@ msgstr "高速ハーモニックノッチロギングを無効化"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:290
 msgid "EKF primary gyro raw logging"
-msgstr ""
+msgstr "EKF プライマリジャイロの生ログ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:291
 msgid "ESC RPM telemetry requires lua scripting"
@@ -3296,7 +3296,7 @@ msgstr "IMUとRaw-IMUのみ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:319
 msgid "PID notch filters require EKF primary batch logging, not raw logging"
-msgstr ""
+msgstr "PID ノッチフィルターには、生ログではなく EKF プライマリのバッチログが必要です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:320
 msgid "PID notch filters require batch logging, not raw logging"
@@ -3385,11 +3385,11 @@ msgstr "MOT_THST_HOVERが正しく学習されていると仮定して2 * MOT_TH
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:337
 msgid ""
 "Use EKF primary acc and gyro batch logging on F4 processors or big props"
-msgstr ""
+msgstr "F4 プロセッサまたは大径プロペラでは EKF プライマリ加速度計・ジャイロのバッチログを使用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:338
 msgid "Use ESC telemetry RPM to dynamically adjust the propeller notch filter"
-msgstr ""
+msgstr "ESC テレメトリー RPM を使用してプロペラのノッチフィルターを動的に調整"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:339
 msgid "Use INS_GYRO_FILTER / 4 as a first guess"
@@ -3437,7 +3437,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:347
 msgid "Use throttle-based dynamic notch filter to reduce propeller noise"
-msgstr ""
+msgstr "スロットルベースの動的ノッチフィルターを使用してプロペラノイズを低減"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:348
 msgid ""
@@ -3642,7 +3642,7 @@ msgstr ""
 msgid ""
 "Optional Python expression; if present, the plugin is only shown when this "
 "expression evaluates to true"
-msgstr ""
+msgstr "任意の Python 式です。指定されている場合、この式が true と評価されたときにのみプラグインが表示されます"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:422
 msgid ""
@@ -4672,7 +4672,7 @@ msgstr "この設定ステップ（{current_file}）では必須レベルは利�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2307
 msgid "Plugin condition '%s' could not be evaluated: %s"
-msgstr ""
+msgstr "プラグイン条件 '%s' を評価できませんでした: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2405
 msgid "Failed to patch derived parameter %s: %s"
@@ -6071,168 +6071,168 @@ msgstr "パラメータのダウンロードに失敗しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:38
 msgid "IMUs"
-msgstr ""
+msgstr "IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:46
 msgid "Accel:"
-msgstr ""
+msgstr "加速度計:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:47
 msgid "Gyro:"
-msgstr ""
+msgstr "ジャイロ:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:48
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:66
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:83
 msgid "Bus type:"
-msgstr ""
+msgstr "バスタイプ:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:49
 msgid "Accel ok:"
-msgstr ""
+msgstr "加速度計OK:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:50
 msgid "Accel cal:"
-msgstr ""
+msgstr "加速度計校正:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:51
 msgid "Gyro cal:"
-msgstr ""
+msgstr "ジャイロ校正:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:52
 msgid "Temp cal:"
-msgstr ""
+msgstr "温度校正:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:53
 msgid "Gyro ok:"
-msgstr ""
+msgstr "ジャイロOK:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:57
 msgid "Compasses"
-msgstr ""
+msgstr "コンパス"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:65
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:82
 msgid "Chip:"
-msgstr ""
+msgstr "チップ:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:67
 msgid "External:"
-msgstr ""
+msgstr "外部:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:68
 msgid "Calibrated:"
-msgstr ""
+msgstr "校正済み:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:69
 msgid "Motor cal:"
-msgstr ""
+msgstr "モーター校正:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:70
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:85
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:97
 msgid "Healthy:"
-msgstr ""
+msgstr "正常:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:74
 msgid "Barometers"
-msgstr ""
+msgstr "気圧計"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:84
 msgid "Wind comp:"
-msgstr ""
+msgstr "風補正:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:89
 msgid "Airspeed sensors"
-msgstr ""
+msgstr "対気速度センサー"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:95
 msgid "Type:"
-msgstr ""
+msgstr "種類:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:96
 msgid "In use:"
-msgstr ""
+msgstr "使用中:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:103
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_quality.py:111
 msgid "No hardware data available"
-msgstr ""
+msgstr "ハードウェアデータはありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:45
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:775
 msgid "Log Quality Report"
-msgstr ""
+msgstr "ログ品質レポート"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:96
 msgid "Open release page on GitHub"
-msgstr ""
+msgstr "GitHubでリリースページを開く"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:123
 msgid "Vehicle & Firmware"
-msgstr ""
+msgstr "機体とファームウェア"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:130
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:135
 msgid "Firmware:"
-msgstr ""
+msgstr "ファームウェア:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:139
 msgid "FC:"
-msgstr ""
+msgstr "FC:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:140
 msgid "Board:"
-msgstr ""
+msgstr "ボード:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:143
 msgid "Log Overview"
-msgstr ""
+msgstr "ログ概要"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:146
 msgid "Flight Time:"
-msgstr ""
+msgstr "飛行時間:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:147
 msgid "Log Size:"
-msgstr ""
+msgstr "ログサイズ:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
 msgid "Total Msgs:"
-msgstr ""
+msgstr "総メッセージ数:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:151
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:69
 msgid "System Performance"
-msgstr ""
+msgstr "システム性能"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:155
 msgid "Avg CPU:"
-msgstr ""
+msgstr "平均CPU:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:156
 msgid "Peak CPU:"
-msgstr ""
+msgstr "最大CPU:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
 msgid "Long Loops:"
-msgstr ""
+msgstr "長いループ:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:169
 msgid "  Quality Report  "
-msgstr ""
+msgstr "品質レポート"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:173
 msgid "  Hardware Overview  "
-msgstr ""
+msgstr "ハードウェア概要"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:190
 msgid "Requires Attention"
-msgstr ""
+msgstr "要対応"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:201
 msgid "Passed Checks"
-msgstr ""
+msgstr "通過したチェック"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_pair_tuple_combobox.py:128
 msgid "list_pair_tuple must be a list of tuples or a dictionary, not %s"
@@ -6477,11 +6477,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:553
 msgid "Analyse a .bin log"
-msgstr ""
+msgstr ".binログを解析"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:557
 msgid "Open a .bin flight log and analyse its quality"
-msgstr ""
+msgstr ".binフライトログを開いて品質を解析"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:562
 msgid "Zip Vehicle for Forum Help"
@@ -6516,11 +6516,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:600
 msgid ".bin Log Analysis"
-msgstr ""
+msgstr ".binログ解析"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:628
 msgid "Log Mismatch"
-msgstr ""
+msgstr "ログの不一致"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:629
 msgid ""
@@ -6528,36 +6528,36 @@ msgid ""
 "\n"
 "Analyse this log anyway using ArduPilot metadata for {vehicle_type} "
 "{version}?"
-msgstr ""
+msgstr "{error}\n\nそれでも {vehicle_type} {version} 用のArduPilotメタデータを使用してこのログを解析しますか？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:637
 msgid "Downloading parameter metadata for this log, please wait..."
-msgstr ""
+msgstr "このログのパラメータメタデータをダウンロードしています。お待ちください..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:688
 msgid "Select a flight log"
-msgstr ""
+msgstr "フライトログを選択"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:697
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:720
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:724
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:744
 msgid "Log Analysis Error"
-msgstr ""
+msgstr "ログ解析エラー"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:700
 msgid "Reading flight log, please wait..."
-msgstr ""
+msgstr "フライトログを読み込んでいます。お待ちください..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:724
 msgid "No firmware version information found in parsed log"
-msgstr ""
+msgstr "解析済みログにファームウェアのバージョン情報が見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:759
 msgid ""
 "Log Quality Report\n"
 "\n"
-msgstr ""
+msgstr "ログ品質レポート\n\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:762
 msgid ""
@@ -6572,7 +6572,7 @@ msgid ""
 "\n"
 "Hover over any issue count to see the details.\n"
 "Issues link back to the configuration step that fixes them."
-msgstr ""
+msgstr "解析結果は、ログに含まれるデータの質に依存します。\n\nサブシステムがログを記録していない、またはそのパラメータ設定が誤っている場合、アナライザーはそのサブシステムについて信頼できる結果を提供できません。\n\nこのレポートは、ArduPilot の .bin ログで解析できる内容とできない内容を正確に示し、それぞれの不足を修正するための設定ステップを案内します。\n\n問題件数にカーソルを合わせると詳細が表示されます。\n問題は、それを修正する設定ステップにリンクしています。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:788
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:866
@@ -7767,31 +7767,31 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:389
 msgid "{message_name} log ends while still armed, no trailing disarm found"
-msgstr ""
+msgstr "{message_name} ログは武装状態のまま終了しており、末尾にディスアームが見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:396
 msgid "Could not compute flight duration: {error}"
-msgstr ""
+msgstr "飛行時間を計算できませんでした: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:65
 msgid "Performance monitor data present and good for analysis"
-msgstr ""
+msgstr "パフォーマンスモニターデータがあり、解析に適しています"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:67
 msgid "Performance monitor data has quality issues"
-msgstr ""
+msgstr "パフォーマンスモニターデータに品質上の問題があります"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:81
 msgid ""
 "The selected log is from {log_vehicle_type}, but the currently open vehicle "
 "is {project_vehicle_type}."
-msgstr ""
+msgstr "選択したログは {log_vehicle_type} のものですが、現在開いている機体は {project_vehicle_type} です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:88
 msgid ""
 "The selected log firmware version is {log_version}, but the currently open "
 "vehicle firmware version is {project_version}."
-msgstr ""
+msgstr "選択したログのファームウェアバージョンは {log_version} ですが、現在開いている機体のファームウェアバージョンは {project_version} です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:80
 msgid "Schema not found"
@@ -7799,23 +7799,23 @@ msgstr "スキーマが見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:163
 msgid "PM message not logged"
-msgstr ""
+msgstr "PMメッセージが記録されていません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:172
 msgid "Internal firmware errors were detected (InE)"
-msgstr ""
+msgstr "内部ファームウェアエラーが検出されました (InE)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:179
 msgid "Internal error count: {count}"
-msgstr ""
+msgstr "内部エラー数: {count}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:185
 msgid "An internal error line was recorded (ErrL)"
-msgstr ""
+msgstr "内部エラー行が記録されました (ErrL)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:193
 msgid "Detected {count} scheduler long loops"
-msgstr ""
+msgstr "スケジューラの長時間ループを {count} 件検出しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:213
 msgid "Missing field definitions"
@@ -7847,192 +7847,192 @@ msgstr "フィールドの不一致。欠落: {missing}、余分: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:53
 msgid "Status: Log looks healthy. No major issues detected."
-msgstr ""
+msgstr "状態: ログは健全です。重大な問題は検出されませんでした。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
 msgid "Status: Found {n} potential issue(s) to review."
-msgstr ""
+msgstr "状態: 確認が必要な潜在的な問題を {n} 件検出しました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:58
 msgid "{name} data present and good for analysis"
-msgstr ""
+msgstr "{name} データが存在し、分析に適しています"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:60
 msgid "{name} data has quality issues"
-msgstr ""
+msgstr "{name} データに品質上の問題があります"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
 msgid "Battery logging is disabled in LOG_BITMASK"
-msgstr ""
+msgstr "LOG_BITMASK でバッテリーログが無効になっています"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:45
 msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
-msgstr ""
+msgstr "BAT データを記録するには、バッテリーログ (LOG_BITMASK ビット) を有効にしてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:47
 msgid "Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)"
-msgstr ""
+msgstr "バッテリーログは有効ですが、BATT_MONITOR が 0 です (モニター無効)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
 msgid "Set BATT_MONITOR to enable the battery monitor"
-msgstr ""
+msgstr "バッテリーモニターを有効にするには BATT_MONITOR を設定してください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:52
 msgid ""
 "Battery logging enabled but no data, monitor may not be configured properly"
-msgstr ""
+msgstr "バッテリーログは有効ですがデータがありません。モニターが正しく設定されていない可能性があります"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:53
 msgid "No BAT messages found"
-msgstr ""
+msgstr "BAT メッセージが見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:61
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:133
 msgid "Volt field not present in this firmware's BAT schema"
-msgstr ""
+msgstr "このファームウェアの BAT スキーマには Volt フィールドがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:62
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:134
 msgid "Voltage values missing from BAT records"
-msgstr ""
+msgstr "BAT レコードに電圧値がありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:68
 msgid "Voltage is zero throughout, sensor may not be reading"
-msgstr ""
+msgstr "電圧が全体を通して 0 です。センサーが読み取れていない可能性があります"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:75
 msgid "Voltage spike, or MOT_BAT_VOLT_MAX misconfigured"
-msgstr ""
+msgstr "電圧スパイク、または MOT_BAT_VOLT_MAX の設定不良"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:80
 msgid "Voltage sag, or MOT_BAT_VOLT_MIN misconfigured"
-msgstr ""
+msgstr "電圧低下、または MOT_BAT_VOLT_MIN の設定不良"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:89
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:139
 msgid "Curr field not present in this firmware's BAT schema"
-msgstr ""
+msgstr "このファームウェアの BAT スキーマには Curr フィールドがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:90
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:140
 msgid "Current values missing from BAT records"
-msgstr ""
+msgstr "BAT レコードに電流値がありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:98
 msgid "CurrTot field not present in this firmware's BAT schema"
-msgstr ""
+msgstr "このファームウェアの BAT スキーマには CurrTot フィールドがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:99
 msgid "CurrTot missing from BAT records"
-msgstr ""
+msgstr "BAT レコードに CurrTot がありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:111
 msgid "Battery low-voltage failsafe threshold disabled"
-msgstr ""
+msgstr "バッテリー低電圧フェイルセーフのしきい値が無効です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:116
 msgid "Battery critical-voltage failsafe threshold disabled"
-msgstr ""
+msgstr "バッテリーのクリティカル低電圧フェイルセーフしきい値が無効です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:149
 msgid ""
 "Power efficiency < 200W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really good."
-msgstr ""
+msgstr "電力効率 < 200W/Kg。電流の較正が不正確か、離陸重量が不正確か、または効率が非常に良好です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:158
 msgid ""
 "Power efficiency > 500W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really bad."
-msgstr ""
+msgstr "電力効率が 500W/Kg を超えています。電流の較正が不正確か、離陸重量が正しくないか、効率が実際に非常に悪い可能性があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:43
 msgid "ESC telemetry not logged"
-msgstr ""
+msgstr "ESC テレメトリが記録されていません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:46
 msgid "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
-msgstr ""
+msgstr "ESC テレメトリをサポートするには、MOT_PWM_TYPE を DShot 系の値に設定してください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:51
 msgid "ESC telemetry not logged, scripting is disabled"
-msgstr ""
+msgstr "ESC テレメトリが記録されていません。スクリプト機能が無効です"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:54
 msgid "Enable SCR_ENABLE if using scripted ESC telemetry"
-msgstr ""
+msgstr "スクリプト化された ESC テレメトリを使用する場合は、SCR_ENABLE を有効にしてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:59
 msgid ""
 "ESC telemetry not logged, check ESC hardware supports telemetry and is wired "
 "correctly"
-msgstr ""
+msgstr "ESC テレメトリが記録されていません。ESC ハードウェアがテレメトリに対応しており、正しく配線されているか確認してください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:60
 msgid "No ESC messages found"
-msgstr ""
+msgstr "ESC メッセージが見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:69
 msgid "RPM field not present in this firmware's ESC schema"
-msgstr ""
+msgstr "このファームウェアの ESC スキーマには RPM フィールドがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:70
 msgid "RPM values missing from ESC records"
-msgstr ""
+msgstr "ESC レコードに RPM 値がありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:79
 msgid "Curr field not present in this firmware's ESC schema"
-msgstr ""
+msgstr "このファームウェアの ESC スキーマには Curr フィールドがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:80
 msgid "Current values missing from ESC records"
-msgstr ""
+msgstr "ESC レコードに電流値がありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:89
 msgid "Err field not present in this firmware's ESC schema"
-msgstr ""
+msgstr "このファームウェアの ESC スキーマには Err フィールドがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:90
 msgid "ESC error values missing from ESC records"
-msgstr ""
+msgstr "ESC レコードに ESC エラー値がありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:93
 msgid "ESC error rate detected on at least one ESC instance"
-msgstr ""
+msgstr "少なくとも 1 つの ESC インスタンスで ESC エラー率が検出されました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:44
 msgid "GPS logging is disabled in LOG_BITMASK"
-msgstr ""
+msgstr "LOG_BITMASK で GPS ロギングが無効になっています"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:45
 msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
-msgstr ""
+msgstr "GPS データを記録するには、GPS ロギング（LOG_BITMASK ビット）を有効にしてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:47
 msgid ""
 "GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
 "connection"
-msgstr ""
+msgstr "ロギングは有効ですが GPS/GNSS テレメトリが記録されていません。GPS の物理接続を確認してください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:48
 msgid "No GPS messages found"
-msgstr ""
+msgstr "GPS メッセージが見つかりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:57
 msgid "Status field not present in this firmware's GPS schema"
-msgstr ""
+msgstr "このファームウェアの GPS スキーマには Status フィールドがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:58
 msgid "GPS fix status missing from GPS records"
-msgstr ""
+msgstr "GPS レコードに GPS 測位ステータスがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
 msgid "GPS never achieved a 3D fix"
-msgstr ""
+msgstr "GPS は一度も 3D Fix を取得していません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:69
 msgid "GPS type not configured (set to None)"
-msgstr ""
+msgstr "GPS タイプが設定されていません（None に設定されています）"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:23
 msgid "Place vehicle LEVEL and click Continue"
@@ -8061,32 +8061,32 @@ msgstr "機体を背面にして、「続行」をクリックしてください
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:33
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:45
 msgid "LEVEL"
-msgstr ""
+msgstr "水平"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:34
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:46
 msgid "LEFT"
-msgstr ""
+msgstr "左"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:35
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:47
 msgid "RIGHT"
-msgstr ""
+msgstr "右"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:36
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:48
 msgid "NOSE DOWN"
-msgstr ""
+msgstr "機首下げ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:37
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:49
 msgid "NOSE UP"
-msgstr ""
+msgstr "機首上げ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:38
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:50
 msgid "BACK"
-msgstr ""
+msgstr "後方"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:97
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:116
@@ -8156,20 +8156,20 @@ msgstr "位置確認の送信に失敗しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:222
 msgid "Full accelerometer calibration cancelled"
-msgstr ""
+msgstr "加速度計の完全キャリブレーションがキャンセルされました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:223
 msgid "Calibration cancelled"
-msgstr ""
+msgstr "キャリブレーションがキャンセルされました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:224
 msgid "Failed to cancel calibration"
-msgstr ""
+msgstr "キャリブレーションのキャンセルに失敗しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:284
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:289
 msgid "INDEFINITE"
-msgstr ""
+msgstr "不定"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_battery_monitor.py:77
 msgid ""
@@ -8273,15 +8273,15 @@ msgstr "切断中にコンパス校正進捗が要求されました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_esc_rpm_scale.py:127
 msgid "RPM scale factor must be a finite positive number"
-msgstr ""
+msgstr "RPMスケール係数は有限の正の数でなければなりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_esc_rpm_scale.py:130
 msgid "ESC output count must be positive"
-msgstr ""
+msgstr "ESC出力数は正の数でなければなりません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_esc_rpm_scale.py:142
 msgid "Vehicle directory is not available"
-msgstr ""
+msgstr "機体ディレクトリを利用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:146
 msgid "Failed to load motor test data from AP_Motors_test.json"
@@ -8647,35 +8647,35 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:43
 msgid "RC calibration started — move all sticks and switches to their extremes"
-msgstr ""
+msgstr "RCキャリブレーションを開始しました — すべてのスティックとスイッチを端まで動かしてください"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:51
 msgid "RC calibration cancelled"
-msgstr ""
+msgstr "RCキャリブレーションがキャンセルされました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:63
 msgid "No RC calibration data recorded — nothing to save"
-msgstr ""
+msgstr "RCキャリブレーションデータが記録されていません — 保存するものがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:78
 msgid "Failed to set RC%(ch)d_%(suffix)s: %(error)s"
-msgstr ""
+msgstr "RC%(ch)d_%(suffix)s の設定に失敗しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:82
 msgid "RC%(ch)d: MIN=%(min)d MAX=%(max)d TRIM=%(trim)d"
-msgstr ""
+msgstr "RC%(ch)d: 最小=%(min)d 最大=%(max)d トリム=%(trim)d"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:160
 msgid "Error reading MAVLink telemetry: %(error)s"
-msgstr ""
+msgstr "MAVLinkテレメトリの読み取りエラー: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:167
 msgid "Not connected"
-msgstr ""
+msgstr "未接続"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:175
 msgid "Error reading HEARTBEAT: %(error)s"
-msgstr ""
+msgstr "HEARTBEATの読み取りエラー: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_rc_calibration.py:176
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:46
@@ -8685,7 +8685,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:248
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:311
 msgid "No Data"
-msgstr ""
+msgstr "データなし"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:72
 msgid "Accelerometer Calibration"
@@ -8702,7 +8702,7 @@ msgid ""
 "\n"
 "Level Calibration — Trims roll and pitch only (not yaw). Must be performed "
 "AFTER a Simple or Full calibration."
-msgstr ""
+msgstr "簡易キャリブレーション — 動かしにくい大型または重量のある機体向けです。機体を水平に置いてボタンをクリックしてください。精度はわずかに低下します。\n\n完全キャリブレーション — 最も高精度です。指示に従って機体を6つの姿勢に動かしてください。各ステップで［続行］を押すときは、機体を完全に静止させてください（手で支えないでください）— 正確な角度よりも静止していることの方が重要です。\n\nレベルキャリブレーション — ロールとピッチのみを補正します（ヨーは補正しません）。簡易または完全キャリブレーションの後に実行する必要があります。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:94
 msgid "Simple Calibration (Level)"
@@ -8718,15 +8718,15 @@ msgstr "レベルキャリブレーション（トリム）"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:117
 msgid "Live Sensor Status"
-msgstr ""
+msgstr "リアルタイムセンサー状態"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:123
 msgid "Detected position:"
-msgstr ""
+msgstr "検出された姿勢:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:131
 msgid "Movement amplitude:"
-msgstr ""
+msgstr "動きの大きさ:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:135
 msgid "6-Position Calibration"
@@ -8737,7 +8737,7 @@ msgid ""
 "Rest the vehicle in each position — do not hold it. Keep it completely still "
 "when pressing Continue. Positions need only be within ~20° of exact, except "
 "the first (level)."
-msgstr ""
+msgstr "各姿勢では機体を置いた状態にし — 手で持たないでください。［続行］を押すときは完全に静止させてください。姿勢は最初の1つ目（水平）を除き、正確な角度から約20°以内であれば十分です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:163
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_compass_calibration.py:77
@@ -9117,48 +9117,48 @@ msgstr "コンパスキャリブレーションの開始に失敗しました：
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:45
 msgid "ESC RPM scaling"
-msgstr ""
+msgstr "ESC RPMスケーリング"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:49
 msgid ""
 "Hobbywing 6X SE detected. Its reported RPM requires a 0.714 scale factor. "
 "Generate and upload the Lua correction script before flight."
-msgstr ""
+msgstr "Hobbywing 6X SE が検出されました。報告された RPM には 0.714 のスケール係数が必要です。飛行前に Lua 補正スクリプトを生成してアップロードしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:54
 msgid ""
 "Generate an ArduPilot Lua script that applies an RPM scale factor to ESC "
 "telemetry outputs."
-msgstr ""
+msgstr "ESC テレメトリ出力に RPM スケール係数を適用する ArduPilot Lua スクリプトを生成します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:58
 msgid "Generate and upload RPM scale script"
-msgstr ""
+msgstr "RPM スケールスクリプトを生成してアップロード"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:64
 msgid "ESC RPM scale factor"
-msgstr ""
+msgstr "ESC RPM スケール係数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:65
 msgid "Enter the RPM scale factor to apply to ESC outputs:"
-msgstr ""
+msgstr "ESC 出力に適用する RPM スケール係数を入力してください:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:77
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:88
 msgid "ESC RPM script upload failed"
-msgstr ""
+msgstr "ESC RPM スクリプトのアップロードに失敗しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:82
 msgid "ESC RPM script uploaded"
-msgstr ""
+msgstr "ESC RPM スクリプトをアップロードしました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:83
 msgid "The Lua script was uploaded to /APM/Scripts/esc_rpm_scale.lua."
-msgstr ""
+msgstr "Lua スクリプトを /APM/Scripts/esc_rpm_scale.lua にアップロードしました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_esc_rpm_scale.py:89
 msgid "A flight controller connection with MAVFTP support is required."
-msgstr ""
+msgstr "MAVFTP をサポートするフライトコントローラ接続が必要です。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:132
 msgid ""
@@ -9496,82 +9496,82 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:56
 msgid "RC calibration progress popup created and polling scheduled."
-msgstr ""
+msgstr "RC キャリブレーション進捗ポップアップを作成し、ポーリングをスケジュールしました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:59
 msgid "Live Monitor"
-msgstr ""
+msgstr "ライブモニター"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:62
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:224
 msgid "Preview Stages"
-msgstr ""
+msgstr "プレビュー段階"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:66
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:228
 msgid "Waiting for live RC input..."
-msgstr ""
+msgstr "ライブ RC 入力を待機しています..."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:70
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:232
 msgid "Stick Preview"
-msgstr ""
+msgstr "スティックプレビュー"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:85
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:247
 msgid "Flight Mode:"
-msgstr ""
+msgstr "フライトモード:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:90
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:252
 msgid "Channels"
-msgstr ""
+msgstr "チャンネル"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:104
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:302
 msgid "No RC telemetry has arrived after %(polls)d polls."
-msgstr ""
+msgstr "%(polls)d 回ポーリングしましたが、RC テレメトリはまだ届いていません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:196
 msgid "Start Calibration"
-msgstr ""
+msgstr "キャリブレーション開始"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:203
 msgid "Finish Calibration"
-msgstr ""
+msgstr "キャリブレーション完了"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:217
 msgid "Move sticks to monitor RC input."
-msgstr ""
+msgstr "RC 入力を監視するにはスティックを動かしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:265
 msgid ""
 "Calibrating — move all sticks and switches to their extremes, then click "
 "Finish."
-msgstr ""
+msgstr "キャリブレーション中 — すべてのスティックとスイッチを端まで動かしてから、「完了」をクリックしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:277
 msgid "Calibration saved. You may re-calibrate or close this panel."
-msgstr ""
+msgstr "キャリブレーションを保存しました。再度キャリブレーションするか、このパネルを閉じることができます。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:286
 msgid "Calibration cancelled."
-msgstr ""
+msgstr "キャリブレーションをキャンセルしました。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:398
 msgid "ArduPilot RC Calibration"
-msgstr ""
+msgstr "ArduPilot RC キャリブレーション"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:422
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:445
 msgid ""
 "This main is for testing and development only. Usually, the "
 "RCCalibrationView is called from another script"
-msgstr ""
+msgstr "この main はテストと開発専用です。通常、RCCalibrationView は別のスクリプトから呼び出されます"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_rc_calibration.py:457
 msgid "Failed to start RC calibration: %(error)s"
-msgstr ""
+msgstr "RCキャリブレーションの開始に失敗しました: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/plugin_factory.py:116
 msgid "none"
