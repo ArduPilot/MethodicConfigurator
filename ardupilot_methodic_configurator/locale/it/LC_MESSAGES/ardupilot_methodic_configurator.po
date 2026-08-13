@@ -4820,7 +4820,7 @@ msgstr "Il parametro esiste già, modificalo invece"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2018
 msgid "Parameter name not found in the flight controller or apm.pdef.xml."
-msgstr ""
+msgstr "Nome del parametro non trovato nel controllore di volo o in apm.pdef.xml."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2020
 msgid "'{param_name}' not found in the apm.pdef.xml file."
@@ -4955,7 +4955,7 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2587
 msgid ""
 "data_model_parameter_editor: Plugin has no data model factory: {plugin_name}"
-msgstr ""
+msgstr "data_model_parameter_editor: Il plugin non ha una factory del modello dati: {plugin_name}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:236
 msgid ""
@@ -8551,50 +8551,50 @@ msgid ""
 "AHRS_ORIENTATION could not be read or is a custom/unsupported rotation. Set "
 "it to 0, upload it, reboot the flight controller, and reconnect before "
 "starting auto-detection."
-msgstr ""
+msgstr "Impossibile leggere AHRS_ORIENTATION oppure la rotazione è personalizzata/non supportata. Impostalo a 0, caricalo, riavvia il controllore di volo e riconnettiti prima di avviare il rilevamento automatico."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:169
 msgid "Unknown capture step: %(step)s"
-msgstr ""
+msgstr "Passaggio di acquisizione sconosciuto: %(step)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:171
 msgid "No IMU sample is available yet. Keep the vehicle still and try again."
-msgstr ""
+msgstr "Nessun campione IMU è ancora disponibile. Tieni fermo il veicolo e riprova."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:178
 msgid ""
 "IMU magnitude %(value).2f m/s^2 is outside the expected still range. Keep "
 "the vehicle still and try again."
-msgstr ""
+msgstr "Il modulo IMU %(value).2f m/s^2 è fuori dall'intervallo previsto a veicolo fermo. Tieni fermo il veicolo e riprova."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:191
 msgid ""
 "%(step)s pose too similar to %(other)s. Reposition the vehicle further and "
 "try again."
-msgstr ""
+msgstr "La posa %(step)s è troppo simile a %(other)s. Riposiziona ulteriormente il veicolo e riprova."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:196
 msgid "Captured %(step)s sample"
-msgstr ""
+msgstr "Campione %(step)s acquisito"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:201
 msgid "Missing required samples. Capture LEVEL, NOSE DOWN, and RIGHT first."
-msgstr ""
+msgstr "Mancano i campioni richiesti. Acquisisci prima LEVEL, NOSE DOWN e RIGHT."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:205
 msgid ""
 "Unable to estimate orientation from samples. Capture the sequence again."
-msgstr ""
+msgstr "Impossibile stimare l'orientamento dai campioni. Acquisisci di nuovo la sequenza."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:212
 msgid ""
 "The captured poses are inconsistent with LEVEL, NOSE DOWN, and RIGHT. Place "
 "the vehicle accurately and capture the sequence again."
-msgstr ""
+msgstr "Le pose acquisite non sono coerenti con LEVEL, NOSE DOWN e RIGHT. Posiziona con precisione il veicolo e acquisisci di nuovo la sequenza."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:244
 msgid "Estimation complete"
-msgstr ""
+msgstr "Stima completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_battery_monitor.py:77
 msgid ""
@@ -9275,17 +9275,17 @@ msgstr "Impossibile avviare la calibrazione dell'accelerometro: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:72
 msgid "Option 1 - Set AHRS_ORIENTATION manually"
-msgstr ""
+msgstr "Opzione 1 - Imposta AHRS_ORIENTATION manualmente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:78
 msgid ""
 "Use this option if you know the vehicle orientation.\n"
 "Set AHRS_ORIENTATION manually in the parameter list on the right."
-msgstr ""
+msgstr "Usa questa opzione se conosci l'orientamento del veicolo.\nImposta AHRS_ORIENTATION manualmente nell'elenco dei parametri a destra."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:88
 msgid "Option 2 - Determine AHRS_ORIENTATION automatically"
-msgstr ""
+msgstr "Opzione 2 - Determina AHRS_ORIENTATION automaticamente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:92
 msgid ""
@@ -9295,51 +9295,51 @@ msgid ""
 "\n"
 "It compensates for the current preset AHRS_ORIENTATION. If a custom\n"
 "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
-msgstr ""
+msgstr "Usa questa opzione se non conosci l'orientamento del veicolo.\nQuesto assistente stima AHRS_ORIENTATION da tre posizioni del veicolo:\nLEVEL, NOSE DOWN e RIGHT SIDE DOWN.\n\nCompensa il valore preimpostato attuale di AHRS_ORIENTATION. Se è attivo un orientamento\npersonalizzato, imposta prima AHRS_ORIENTATION a 0 e carica i parametri."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:128
 msgid "Not Connected"
-msgstr ""
+msgstr "Non connesso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:133
 msgid "Auto-detection Not Ready"
-msgstr ""
+msgstr "Rilevamento automatico non pronto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:151
 msgid "Capture Failed"
-msgstr ""
+msgstr "Acquisizione non riuscita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:161
 msgid "Auto-detection complete."
-msgstr ""
+msgstr "Rilevamento automatico completato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:162
 msgid "Review the recommendation below or press Continue to start again."
-msgstr ""
+msgstr "Esamina il suggerimento qui sotto oppure premi Continua per ricominciare."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:167
 msgid "Estimation Failed"
-msgstr ""
+msgstr "Stima non riuscita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:172
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:175
 msgid "Could not write AHRS_ORIENTATION into the parameter table."
-msgstr ""
+msgstr "Impossibile scrivere AHRS_ORIENTATION nella tabella dei parametri."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:174
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:220
 msgid "Parameter Update Failed"
-msgstr ""
+msgstr "Aggiornamento del parametro non riuscito"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:179
 msgid ""
 "AHRS_ORIENTATION was set to %(code)d (%(name)s). Match score: "
 "%(match_score).1f%%. Press upload to apply the changes."
-msgstr ""
+msgstr "AHRS_ORIENTATION è stato impostato su %(code)d (%(name)s). Punteggio di corrispondenza: %(match_score).1f%%. Premi Carica per applicare le modifiche."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:188
 msgid "AHRS Orientation Estimate"
-msgstr ""
+msgstr "Stima dell'orientamento AHRS"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:190
 msgid ""
@@ -9349,52 +9349,52 @@ msgid ""
 "Yes: use CUST_ROT1_ROLL/PITCH/YAW and set AHRS_ORIENTATION to 101 (Custom "
 "1).\n"
 "No: re-do the estimation process."
-msgstr ""
+msgstr "Impossibile identificare un orientamento preimpostato sufficientemente distinto (migliore: %(code)d %(name)s, punteggio di corrispondenza %(match_score).1f%%).\n\nSì: usa CUST_ROT1_ROLL/PITCH/YAW e imposta AHRS_ORIENTATION a 101 (Custom 1).\nNo: ripeti il processo di stima."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:202
 msgid "Low Confidence Estimate"
-msgstr ""
+msgstr "Stima a bassa affidabilità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:205
 msgid ""
 "Set CUST_ROT_ENABLE=1, Applied CUST_ROT1_ROLL=%(roll).1f, "
 "CUST_ROT1_PITCH=%(pitch).1f, CUST_ROT1_YAW=%(yaw).1f and set "
 "AHRS_ORIENTATION=101 (Custom 1). Upload the changes to use Custom 1 rotation."
-msgstr ""
+msgstr "Imposta CUST_ROT_ENABLE=1, applicati CUST_ROT1_ROLL=%(roll).1f, CUST_ROT1_PITCH=%(pitch).1f, CUST_ROT1_YAW=%(yaw).1f e imposta AHRS_ORIENTATION=101 (Custom 1). Carica le modifiche per utilizzare la rotazione Custom 1."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:216
 msgid "Custom Orientation Applied"
-msgstr ""
+msgstr "Orientamento personalizzato applicato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:218
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:221
 msgid "Could not apply Custom 1 orientation parameters in the parameter table."
-msgstr ""
+msgstr "Impossibile applicare i parametri di orientamento Custom 1 nella tabella dei parametri."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:231
 msgid "Press Continue to start the auto-detection wizard."
-msgstr ""
+msgstr "Premi Continua per avviare la procedura guidata di rilevamento automatico."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:291
 msgid ""
 "Place the vehicle LEVEL, keep it perfectly still, then click Continue to "
 "begin automatic detection."
-msgstr ""
+msgstr "Posiziona il veicolo in PIANO, tienilo perfettamente fermo, quindi fai clic su Continua per avviare il rilevamento automatico."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:295
 msgid ""
 "Place the vehicle NOSE DOWN, keep it perfectly still, then click Continue."
-msgstr ""
+msgstr "Posiziona il veicolo con il MUSO VERSO IL BASSO, tienilo perfettamente fermo, quindi fai clic su Continua."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:297
 msgid ""
 "Place the vehicle on its RIGHT side, keep it perfectly still, then click "
 "Continue."
-msgstr ""
+msgstr "Posiziona il veicolo sul lato DESTRO, tienilo perfettamente fermo, quindi fai clic su Continua."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:301
 msgid "Step %(current)d/%(total)d: %(name)s"
-msgstr ""
+msgstr "Passo %(current)d/%(total)d: %(name)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:93
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:21
