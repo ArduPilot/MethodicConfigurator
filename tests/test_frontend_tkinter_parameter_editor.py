@@ -186,6 +186,7 @@ def parameter_editor() -> MagicMock:
     manager.is_fc_connected = True
     manager.is_configuration_step_optional.return_value = False
     manager.get_next_non_optional_file.return_value = None
+    manager.get_previous_non_optional_file.return_value = None
     manager.fc_parameters = {"ROLL_P": 0.12}
     return manager
 
@@ -2286,6 +2287,87 @@ class TestSkipButtonWorkflows:
 
         skip_button_mock = cast("MagicMock", parameter_editor_window.skip_button)
         skip_button_mock.configure.assert_called_once_with(state="normal")
+
+    def test_user_returns_to_previous_file_when_available(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        User can return to the preceding configuration step.
+
+        GIVEN: The current file is not the first configuration step
+        WHEN: The user clicks the previous button
+        THEN: Pending edits are saved and the preceding file is selected
+        """
+        # Arrange
+        parameter_editor_window.previous_button = MagicMock()
+        combobox_mock = cast("MagicMock", parameter_editor_window.file_selection_combobox)
+        combobox_mock.get.return_value = "02_current.param"
+        parameter_editor_window.parameter_editor.get_previous_non_optional_file.return_value = "01_first.param"
+
+        # Act
+        with (
+            patch.object(parameter_editor_window, "write_changes_to_intermediate_parameter_file") as mock_write,
+            patch.object(parameter_editor_window, "on_param_file_combobox_change") as mock_change,
+        ):
+            parameter_editor_window.on_previous_click()
+
+        # Assert
+        mock_write.assert_called_once()
+        parameter_editor_window.parameter_editor.get_previous_non_optional_file.assert_called_once_with(
+            current_file="02_current.param", gui_complexity=parameter_editor_window.gui_complexity
+        )
+        combobox_mock.set.assert_called_once_with("01_first.param")
+        mock_change.assert_called_once_with(None)
+
+    def test_previous_button_disabled_for_first_file(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        User cannot navigate before the first configuration step.
+
+        GIVEN: The first parameter file is selected
+        WHEN: The navigation controls refresh
+        THEN: The previous button is disabled
+        """
+        # Arrange
+        parameter_editor_window.previous_button = MagicMock()
+        combobox_mock = cast("MagicMock", parameter_editor_window.file_selection_combobox)
+        combobox_mock.get.return_value = "01_first.param"
+        parameter_editor_window.parameter_editor.get_previous_non_optional_file.return_value = None
+
+        # Act
+        parameter_editor_window._update_previous_button_state()
+
+        # Assert
+        previous_button_mock = parameter_editor_window.previous_button
+        previous_button_mock.configure.assert_called_once_with(state="disabled")
+
+    def test_previous_navigation_skips_optional_steps_in_simple_mode(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """
+        User returns to the preceding required configuration step in simple mode.
+
+        GIVEN: The current step follows an optional configuration step
+        WHEN: The user clicks the Previous button
+        THEN: The editor selects the preceding required step
+        """
+        # Arrange (Given): Model the required step returned by simple-mode navigation.
+        parameter_editor_window.gui_complexity = "simple"
+        combobox_mock = cast("MagicMock", parameter_editor_window.file_selection_combobox)
+        combobox_mock.get.return_value = "03_current.param"
+        parameter_editor_window.parameter_editor.get_previous_non_optional_file.return_value = "01_required.param"
+
+        # Act (When): Navigate to the preceding configuration step.
+        with (
+            patch.object(parameter_editor_window, "write_changes_to_intermediate_parameter_file") as mock_write,
+            patch.object(parameter_editor_window, "on_param_file_combobox_change") as mock_change,
+        ):
+            parameter_editor_window.on_previous_click()
+
+        # Assert (Then): The optional step is not selected or shown.
+        parameter_editor_window.parameter_editor.get_previous_non_optional_file.assert_called_once_with(
+            current_file="03_current.param", gui_complexity="simple"
+        )
+        mock_write.assert_called_once()
+        combobox_mock.set.assert_called_once_with("01_required.param")
+        mock_change.assert_called_once_with(None)
 
 
 class TestZipVehicleForForumHelpButton:

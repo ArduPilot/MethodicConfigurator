@@ -563,8 +563,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No intermediate parameter files available"),
         )
 
-        # Create skip button
-        self.skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
+        # Create skip buttons
+        self.skip_button = ttk.Button(buttons_frame, text=_("Skip >"), command=self.on_skip_click)
         self.skip_button.configure(
             state=(
                 "normal"
@@ -578,7 +578,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         show_tooltip(
             self.skip_button,
             _(
-                "Skip to the next intermediate parameter file without uploading any changes to the flight "
+                "Go to the next configuration step parameter file without uploading any changes to the flight "
+                "controller\nIf changes have been made to the current file it will ask if you want to save them"
+            ),
+        )
+
+        self.previous_button = ttk.Button(buttons_frame, text=_("< Skip"), command=self.on_previous_click)
+        self._update_previous_button_state()
+        self.previous_button.pack(side=tk.RIGHT, padx=(8, 0))
+        show_tooltip(
+            self.previous_button,
+            _(
+                "Go to the previous configuration step parameter file without uploading any changes to the flight "
                 "controller\nIf changes have been made to the current file it will ask if you want to save them"
             ),
         )
@@ -1275,6 +1286,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Repopulate parameter table with new file
             self.repopulate_parameter_table()
             self._update_skip_button_state()
+            self._update_previous_button_state()
 
             # Update inline component editor for the current step
             self._update_inline_component_editor(self.parameter_editor.get_current_component())
@@ -1473,6 +1485,27 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 else "disabled"
             )
             self.skip_button.configure(state=skip_button_state)
+
+    def _update_previous_button_state(self) -> None:
+        """Enable the previous button when an earlier parameter file is available."""
+        if not hasattr(self, "previous_button"):
+            return
+        previous_file = self.parameter_editor.get_previous_non_optional_file(
+            current_file=self.file_selection_combobox.get(), gui_complexity=self.gui_complexity
+        )
+        self.previous_button.configure(state="normal" if previous_file is not None else "disabled")
+
+    def on_previous_click(self, _event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
+        """Select the preceding parameter file, saving any pending edits first."""
+        previous_file = self.parameter_editor.get_previous_non_optional_file(
+            current_file=self.file_selection_combobox.get(), gui_complexity=self.gui_complexity
+        )
+        if previous_file is None:
+            return
+
+        self.write_changes_to_intermediate_parameter_file()
+        self.file_selection_combobox.set(previous_file)
+        self.on_param_file_combobox_change(None)
 
     def on_skip_click(self, _event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
         self.write_changes_to_intermediate_parameter_file()

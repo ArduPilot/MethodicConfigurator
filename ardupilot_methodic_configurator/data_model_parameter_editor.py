@@ -1329,6 +1329,28 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return percentage <= threshold_pct
 
+    def _get_adjacent_non_optional_file(self, current_file: str | None, gui_complexity: str, direction: int) -> str | None:
+        """Find the nearest non-optional file in the requested direction."""
+        files = list(self._local_filesystem.file_parameters.keys())
+        if not files:
+            return None
+
+        if current_file is None:
+            current_file = self.current_file
+
+        try:
+            file_index = files.index(current_file) + direction
+        except ValueError:
+            return None
+
+        while 0 <= file_index < len(files):
+            candidate_file = files[file_index]
+            if not self.is_configuration_step_optional(candidate_file, threshold_pct=20 if gui_complexity == "simple" else -1):
+                return candidate_file
+            file_index += direction
+
+        return None
+
     def get_next_non_optional_file(self, current_file: str | None = None, gui_complexity: str = "simple") -> str | None:
         """
         Get the next non-optional configuration file in sequence.
@@ -1341,28 +1363,21 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             str | None: Next non-optional file name, or None if at the end.
 
         """
-        files = list(self._local_filesystem.file_parameters.keys())
-        if not files:
-            return None
+        return self._get_adjacent_non_optional_file(current_file, gui_complexity, direction=1)
 
-        if current_file is None:
-            current_file = self.current_file
+    def get_previous_non_optional_file(self, current_file: str | None = None, gui_complexity: str = "simple") -> str | None:
+        """
+        Get the previous non-optional configuration file in sequence.
 
-        try:
-            next_file_index = files.index(current_file) + 1
+        Args:
+            current_file: The current parameter file being processed, defaults to self.current_file.
+            gui_complexity: The GUI complexity setting ("simple" or other).
 
-            while next_file_index < len(files):
-                next_file = files[next_file_index]
-                if not self.is_configuration_step_optional(next_file, threshold_pct=20 if gui_complexity == "simple" else -1):
-                    return next_file
-                next_file_index += 1
+        Returns:
+            str | None: Previous non-optional file name, or None if at the beginning.
 
-            # If we've reached the end, return None to indicate completion
-            return None
-
-        except ValueError:
-            # Current file not found in list
-            return None
+        """
+        return self._get_adjacent_non_optional_file(current_file, gui_complexity, direction=-1)
 
     def _generate_parameter_summary(self) -> dict[str, ParDict]:
         """
