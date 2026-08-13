@@ -33,6 +33,7 @@ class ScrollFrame(ttk.Frame):  # pylint: disable=too-many-ancestors
         self.canvas = tk.Canvas(
             self,
             borderwidth=0,
+            highlightthickness=0,
             background=ttk.Style(master).lookup("TFrame", "background"),
         )
 
