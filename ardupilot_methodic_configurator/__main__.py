@@ -72,12 +72,11 @@ def register_plugins() -> None:
     This function explicitly imports and registers plugins, avoiding
     side-effect imports and potential race conditions.
 
-    To add a new plugin, you must touch five places:
+    To add a new plugin, you must touch four places:
       1. ``plugin_constants.py``                          - add a PLUGIN_* constant.
       2. Here (``register_plugins``)                      - import and call its register function.
-      3. ``data_model_parameter_editor.create_plugin_data_model``  - instantiate its data model.
-      4. The plugin's ``frontend_tkinter_*.py`` module    - implement and call ``plugin_factory.register``.
-      5. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
+      3. The plugin's ``frontend_tkinter_*.py`` module    - register its view and data-model factories.
+      4. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
          ``plugin > properties > enum`` in the configuration steps schema.
     """
     # Imports are intentionally deferred to avoid circular imports: the frontend_tkinter_* modules

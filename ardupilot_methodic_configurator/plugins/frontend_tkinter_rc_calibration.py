@@ -25,7 +25,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
 from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_RC_CALIBRATION
-from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 from ardupilot_methodic_configurator.plugins.renderer_3d_quadcopter import QuadcopterRenderer
 
 
@@ -380,9 +380,14 @@ def _create_rc_calibration_view(
     return RCCalibrationView(parent, model, base_window)  # type: ignore[arg-type]
 
 
+def _create_rc_calibration_model(context: PluginModelContext) -> RCCalibrationDataModel:
+    """Create the plugin data model from registered application dependencies."""
+    return RCCalibrationDataModel(context.flight_controller)
+
+
 def register_rc_calibration_plugin() -> None:
     """Register the RC calibration plugin with the factory."""
-    plugin_factory.register(PLUGIN_RC_CALIBRATION, _create_rc_calibration_view)
+    plugin_factory.register(PLUGIN_RC_CALIBRATION, _create_rc_calibration_view, _create_rc_calibration_model)
 
 
 class RCCalibrationWindow(BaseWindow):  # pragma: no cover

@@ -822,8 +822,9 @@ class TestCommandLineWorkflow:
             def __init__(self) -> None:
                 self.calls: list[tuple[str, Callable]] = []
 
-            def register(self, name: str, creator: Callable) -> None:
+            def register(self, name: str, creator: Callable, model_creator: Callable) -> None:
                 self.calls.append((name, creator))
+                assert callable(model_creator)
 
         dummy_factory = DummyFactory()
         module = import_module("ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test")

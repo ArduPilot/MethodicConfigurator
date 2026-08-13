@@ -31,7 +31,7 @@ from ardupilot_methodic_configurator.plugins.imu_helpers import (
     stop_periodic_polling,
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ACCELEROMETER_CALIBRATION
-from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 _POLL_INTERVAL_MS = 100  # tkinter polling interval during full calibration
 _IMU_POLL_INTERVAL_MS = 200  # tkinter polling interval for live IMU monitor
@@ -372,9 +372,18 @@ def _create_accelerometer_calibration_view(
     return AccelerometerCalibrationView(parent, model, base_window)  # type: ignore[arg-type]
 
 
+def _create_accelerometer_calibration_model(context: PluginModelContext) -> AccelerometerCalibrationDataModel:
+    """Create the plugin data model from registered application dependencies."""
+    return AccelerometerCalibrationDataModel(context.flight_controller)
+
+
 def register_accelerometer_calibration_plugin() -> None:
     """Register the accelerometer calibration plugin with the factory."""
-    plugin_factory.register(PLUGIN_ACCELEROMETER_CALIBRATION, _create_accelerometer_calibration_view)
+    plugin_factory.register(
+        PLUGIN_ACCELEROMETER_CALIBRATION,
+        _create_accelerometer_calibration_view,
+        _create_accelerometer_calibration_model,
+    )
 
 
 class AccelerometerCalibrationWindow(BaseWindow):  # pragma: no cover

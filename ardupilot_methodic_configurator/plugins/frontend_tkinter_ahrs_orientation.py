@@ -27,7 +27,7 @@ from ardupilot_methodic_configurator.plugins.imu_helpers import (
     stop_periodic_polling,
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_AHRS_ORIENTATION
-from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
@@ -349,6 +349,15 @@ def _create_ahrs_orientation_view(
     return AhrsOrientationView(parent, model, base_window)  # type: ignore[arg-type]
 
 
+def _create_ahrs_orientation_model(context: PluginModelContext) -> AhrsOrientationDataModel:
+    """Create the plugin data model from registered application dependencies."""
+    from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import (  # noqa: PLC0415
+        AhrsOrientationDataModel,
+    )
+
+    return AhrsOrientationDataModel(context.flight_controller)
+
+
 def register_ahrs_orientation_plugin() -> None:
     """Register the AHRS orientation plugin with the factory."""
-    plugin_factory.register(PLUGIN_AHRS_ORIENTATION, _create_ahrs_orientation_view)
+    plugin_factory.register(PLUGIN_AHRS_ORIENTATION, _create_ahrs_orientation_view, _create_ahrs_orientation_model)
