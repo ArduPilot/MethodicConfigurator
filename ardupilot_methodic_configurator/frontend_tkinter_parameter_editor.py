@@ -546,16 +546,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No flight controller connected or MAVFTP not supported"),
         )
 
-        # Create analyse flight log button
-        if 0:
-            analyse_log_button = ttk.Button(
-                buttons_frame,
-                text=_("Analyse a .bin log"),
-                command=self.on_analyse_log_click,
-            )
-            analyse_log_button.pack(side=tk.LEFT, padx=(8, 8))
-            show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its quality"))
-
         # Create Zip file for forum button
         zip_vehicle_for_forum_button = ttk.Button(
             buttons_frame,
