@@ -6756,7 +6756,7 @@ msgstr "Keine Zwischen-Parameterdateien verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:567
 msgid "Skip >"
-msgstr ""
+msgstr "Überspringen >"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:580
 msgid ""
@@ -6764,11 +6764,11 @@ msgid ""
 "changes to the flight controller\n"
 "If changes have been made to the current file it will ask if you want to "
 "save them"
-msgstr ""
+msgstr "Zur nächsten Parameterdatei des Konfigurationsschritts wechseln, ohne Änderungen auf den Flugcontroller hochzuladen\nWenn Änderungen an der aktuellen Datei vorgenommen wurden, werden Sie gefragt, ob Sie sie speichern möchten"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:586
 msgid "< Skip"
-msgstr ""
+msgstr "< Überspringen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:591
 msgid ""
@@ -6776,7 +6776,7 @@ msgid ""
 "changes to the flight controller\n"
 "If changes have been made to the current file it will ask if you want to "
 "save them"
-msgstr ""
+msgstr "Zur vorherigen Parameterdatei des Konfigurationsschritts wechseln, ohne Änderungen auf den Flugcontroller hochzuladen\nWenn Änderungen an der aktuellen Datei vorgenommen wurden, werden Sie gefragt, ob Sie sie speichern möchten"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:601
 msgid ".bin Log Analysis"
