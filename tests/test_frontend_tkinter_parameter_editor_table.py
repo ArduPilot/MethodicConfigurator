@@ -2198,6 +2198,40 @@ class TestWidgetFactoryHelpers:
         label = parameter_editor_table._create_value_different_label(param)
         assert NEW_VALUE_DIFFERENT_STR in label.cget("text")
 
+    def test_external_manual_entries_bind_value_change_handlers_when_initially_disabled(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        """
+        User can edit an initially disabled external numeric or bitmask parameter after enabling Manual.
+
+        GIVEN: An external parameter row whose Manual checkbox is initially clear
+        WHEN: The row is created before Manual has been selected
+        THEN: Its value-change handler is ready for Manual to enable the widget
+        AND: Bitmask rows retain their bitmask-selection handler.
+        """
+        # Arrange: An external row starts disabled until the user selects Manual.
+        parameter_editor_table.options.values_editable = False
+        parameter_editor_table.options.manually_editable_parameters = set()
+
+        # Act: Build disabled numeric and bitmask value widgets.
+        numeric_entry = parameter_editor_table._create_new_value_entry(
+            create_mock_data_model_ardupilot_parameter(name="NUMERIC"),
+            None,
+            ttk.Label(parameter_editor_table.view_port),
+        )
+        bitmask_entry = parameter_editor_table._create_new_value_entry(
+            create_mock_data_model_ardupilot_parameter(name="BITMASK", is_bitmask=True),
+            None,
+            ttk.Label(parameter_editor_table.view_port),
+        )
+
+        # Assert: Enabling either existing widget can use these handlers without rebuilding the table.
+        for entry in (numeric_entry, bitmask_entry):
+            assert entry.instate(("disabled",))
+            assert entry.bind("<FocusOut>")
+            assert entry.bind("<Return>")
+        assert bitmask_entry.bind("<Double-Button-1>")
+
     def test_create_unit_label_sets_tooltip(self, parameter_editor_table: ParameterEditorTable) -> None:
         param = create_mock_data_model_ardupilot_parameter(metadata={"unit": "m/s", "unit_tooltip": "unit"})
         with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tip:

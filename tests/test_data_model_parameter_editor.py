@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -119,6 +119,169 @@ def mock_local_filesystem() -> MagicMock:
 def parameter_editor(mock_flight_controller, mock_local_filesystem) -> ParameterEditor:
     """Fixture providing a properly configured ParameterEditor for behavior testing."""
     return ParameterEditor("00_default.param", mock_flight_controller, mock_local_filesystem)
+
+
+class TestExternalParameterFiles:
+    """Validate loading external files without adding them to the AMC project."""
+
+    def test_loads_external_parameter_file_with_fc_context(self, parameter_editor, mock_local_filesystem, tmp_path) -> None:
+        parameter_file = tmp_path / "external.parm"
+        parameter_file.write_text("PARAM1,2.5\nPARAM3,4\n", encoding="utf-8")
+
+        parameters = parameter_editor.load_external_parameter_file(str(parameter_file))
+
+        assert list(parameters) == ["PARAM1", "PARAM3"]
+        assert parameters["PARAM1"].get_new_value() == 2.5
+        assert parameters["PARAM1"].fc_value_as_string == "1"
+        assert not parameters["PARAM3"].has_fc_value
+        assert "external.parm" not in mock_local_filesystem.file_parameters
+
+    def test_converts_edited_external_parameters_for_upload(self, parameter_editor) -> None:
+        parameter = ArduPilotParameter("PARAM1", Par(2.5), fc_value=1.0)
+        update_result = parameter_editor.update_parameter_object(parameter, "3.5")
+
+        selected_params = parameter_editor.parameters_as_par_dict({"PARAM1": parameter})
+
+        assert update_result.status is ParameterValueUpdateStatus.UPDATED
+        assert selected_params == {"PARAM1": Par(3.5, "")}
+
+
+class TestExternalParameterUploadWorkflow:
+    """Protect the boundary between one-off FC uploads and AMC project progress."""
+
+    def test_successful_external_upload_does_not_persist_project_state(self, parameter_editor, tmp_path) -> None:
+        """
+        Upload external values without persisting AMC project state.
+
+        GIVEN a changed parameter loaded outside the AMC project
+        WHEN the external upload succeeds and validates against the FC
+        THEN no step marker, tuning report, or FC-difference export is written.
+        """
+        parameter_editor._local_filesystem.vehicle_dir = tmp_path
+        parameter_editor._flight_controller.fc_parameters = {"P1": 1.0}
+        parameter_editor._local_filesystem.doc_dict = {"P1": {"RebootRequired": False}}
+        parameter_editor._should_export_fc_params_diff = True
+
+        def accept_parameter(name: str, value: float) -> tuple[bool, str]:
+            parameter_editor._flight_controller.fc_parameters[name] = value
+            return True, ""
+
+        parameter_editor._flight_controller.set_param.side_effect = accept_parameter
+        parameter_editor._flight_controller.download_params.side_effect = lambda *_args: (
+            dict(parameter_editor._flight_controller.fc_parameters),
+            ParDict({"P1": Par(0.0)}),
+        )
+
+        with (
+            patch.object(parameter_editor, "_update_tuning_report") as update_report,
+            patch.object(parameter_editor, "_export_fc_params_missing_or_different") as export_difference,
+        ):
+            result = parameter_editor.upload_external_params_workflow(
+                {"P1": Par(2.0)},
+                ask_confirmation=MagicMock(return_value=True),
+                ask_retry_cancel=MagicMock(return_value=False),
+                show_error=MagicMock(),
+            )
+
+        assert result is True
+        assert parameter_editor._flight_controller.fc_parameters["P1"] == 2.0
+        parameter_editor._flight_controller.download_params.assert_called_once_with(None, None, None)
+        parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
+        parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
+        update_report.assert_not_called()
+        export_difference.assert_not_called()
+
+    def test_external_upload_requiring_reset_does_not_persist_redownloads(self, parameter_editor, tmp_path) -> None:
+        """
+        Keep AMC files unchanged when an external parameter upload requires a reboot.
+
+        GIVEN: An external parameter whose upload requires a flight-controller reset
+        WHEN: The upload re-downloads parameters after reconnecting and for validation
+        THEN: Both downloads run without AMC project filenames
+        AND: Returned defaults are not written to the AMC project.
+        """
+        # Arrange: The reboot-required parameter changes the simulated FC state.
+        parameter_editor._local_filesystem.vehicle_dir = tmp_path
+        parameter_editor._flight_controller.fc_parameters = {"P1": 1.0}
+        parameter_editor._local_filesystem.doc_dict = {"P1": {"RebootRequired": True}}
+        parameter_editor._flight_controller.reset_and_reconnect.return_value = None
+
+        def accept_parameter(name: str, value: float) -> tuple[bool, str]:
+            parameter_editor._flight_controller.fc_parameters[name] = value
+            return True, ""
+
+        parameter_editor._flight_controller.set_param.side_effect = accept_parameter
+        parameter_editor._flight_controller.download_params.side_effect = lambda *_args: (
+            dict(parameter_editor._flight_controller.fc_parameters),
+            ParDict({"P1": Par(0.0)}),
+        )
+
+        # Act: Upload an external parameter that triggers reset and validation downloads.
+        result = parameter_editor.upload_external_params_workflow(
+            {"P1": Par(2.0)},
+            ask_confirmation=MagicMock(return_value=True),
+            ask_retry_cancel=MagicMock(return_value=False),
+            show_error=MagicMock(),
+        )
+
+        # Assert: Neither the post-reset nor validation download can write AMC-managed files.
+        assert result is True
+        assert parameter_editor._flight_controller.download_params.call_args_list == [
+            call(None, None, None),
+            call(None, None, None),
+        ]
+        parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
+        parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
+
+    def test_failed_external_upload_returns_failure_after_validation(self, parameter_editor, tmp_path) -> None:
+        """
+        Propagate external upload validation failures.
+
+        GIVEN an FC that rejects an external parameter write
+        WHEN re-download confirms that the requested value was not applied
+        THEN the workflow reports failure so the modal can remain open.
+        """
+        parameter_editor._local_filesystem.vehicle_dir = tmp_path
+        parameter_editor._flight_controller.fc_parameters = {"P1": 1.0}
+        parameter_editor._local_filesystem.doc_dict = {"P1": {"RebootRequired": False}}
+        parameter_editor._flight_controller.set_param.return_value = (False, "rejected")
+        parameter_editor._flight_controller.download_params.return_value = ({"P1": 1.0}, {})
+        ask_retry_cancel = MagicMock(return_value=False)
+
+        result = parameter_editor.upload_external_params_workflow(
+            {"P1": Par(2.0)},
+            ask_confirmation=MagicMock(return_value=True),
+            ask_retry_cancel=ask_retry_cancel,
+            show_error=MagicMock(),
+        )
+
+        assert result is False
+        ask_retry_cancel.assert_called_once()
+        parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
+
+    def test_external_boot_delay_controls_reset_wait(self, parameter_editor) -> None:
+        """
+        Calculate reset timing from the external upload payload.
+
+        GIVEN an external payload with a longer BRD_BOOT_DELAY than the current AMC step and FC
+        WHEN a reset-required parameter is uploaded
+        THEN reconnect waits for the external boot delay plus its safety second.
+        """
+        parameter_editor.current_step_parameters = {
+            "BRD_BOOT_DELAY": ArduPilotParameter("BRD_BOOT_DELAY", Par(1000), fc_value=2000),
+        }
+        parameter_editor._flight_controller.fc_parameters = {"BRD_BOOT_DELAY": 2000}
+        parameter_editor._local_filesystem.doc_dict = {"BRD_BOOT_DELAY": {"RebootRequired": True}}
+        parameter_editor._flight_controller.reset_and_reconnect.return_value = None
+
+        reset_happened, uploaded, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
+            {"BRD_BOOT_DELAY": Par(7000)}, MagicMock(return_value=True), MagicMock()
+        )
+
+        assert reset_happened is True
+        assert reset_succeeded is True
+        assert uploaded == {"BRD_BOOT_DELAY"}
+        parameter_editor._flight_controller.reset_and_reconnect.assert_called_once_with(None, None, 8)
 
 
 class TestParameterFilteringWorkflows:
@@ -583,12 +746,13 @@ class TestParameterUploadWorkflows:
         parameter_editor._reset_and_reconnect_flight_controller = MagicMock(return_value=None)
 
         # Act: Upload parameters requiring reset
-        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_required, uploaded_params, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: Reset required and both parameters were uploaded
         assert reset_required is True
+        assert reset_succeeded is True
         assert "PARAM_RESET_REQ" in uploaded_params
         assert "PARAM_TYPE" in uploaded_params
         mock_show_error.assert_not_called()
@@ -612,12 +776,13 @@ class TestParameterUploadWorkflows:
         mock_show_error = MagicMock()
 
         # Act: Upload parameters with errors
-        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_required, uploaded_params, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: Errors handled via callback
         assert reset_required is False  # No successful uploads
+        assert reset_succeeded is True
         assert len(uploaded_params) == 0  # No parameters were uploaded
         mock_ask_confirmation.assert_not_called()
         mock_show_error.assert_called_once()
@@ -642,12 +807,13 @@ class TestParameterUploadWorkflows:
         mock_show_error = MagicMock()
 
         # Act
-        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_happened, uploaded_params, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: Possible reset triggered and parameter uploaded
         assert reset_happened is True
+        assert reset_succeeded is True
         assert "SID_AXIS" in uploaded_params
         mock_ask_confirmation.assert_called_once()
         mock_show_error.assert_not_called()
@@ -670,13 +836,14 @@ class TestParameterUploadWorkflows:
         mock_show_error = MagicMock()
 
         # Act
-        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_happened, uploaded_params, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: No reset triggered; SID_AXIS is NOT in uploaded_params because it fell through
         # to the normal upload path (not handled by this workflow)
         assert reset_happened is False
+        assert reset_succeeded is True
         assert "SID_AXIS" not in uploaded_params
         mock_ask_confirmation.assert_not_called()
         mock_show_error.assert_not_called()
@@ -699,12 +866,13 @@ class TestParameterUploadWorkflows:
         mock_show_error = MagicMock()
 
         # Act
-        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_happened, uploaded_params, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: No reset triggered
         assert reset_happened is False
+        assert reset_succeeded is True
         assert "SID_AXIS" not in uploaded_params
         mock_ask_confirmation.assert_not_called()
         mock_show_error.assert_not_called()
@@ -727,12 +895,13 @@ class TestParameterUploadWorkflows:
         mock_show_error = MagicMock()
 
         # Act
-        reset_happened, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_happened, uploaded_params, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
             selected_params, mock_ask_confirmation, mock_show_error
         )
 
         # Assert: Possible reset triggered and parameter uploaded
         assert reset_happened is True
+        assert reset_succeeded is True
         assert "SID_AXIS" in uploaded_params
         mock_ask_confirmation.assert_called_once()
         mock_show_error.assert_not_called()
@@ -3831,7 +4000,7 @@ class TestParameterUploadNavigation:
 
         with patch.multiple(
             parameter_editor,
-            upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, {})),
+            upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
             _upload_parameters_to_fc=MagicMock(return_value=1),
             download_flight_controller_parameters=MagicMock(),
             _write_current_file=mock_write,
@@ -3839,7 +4008,7 @@ class TestParameterUploadNavigation:
             _validate_uploaded_parameters=MagicMock(return_value=[]),
         ):
             # Act
-            parameter_editor.upload_selected_params_workflow(
+            result = parameter_editor.upload_selected_params_workflow(
                 {"P1": Par(1.0)},
                 ask_confirmation=MagicMock(return_value=True),
                 ask_retry_cancel=mock_retry,
@@ -3848,6 +4017,7 @@ class TestParameterUploadNavigation:
 
         # Assert: no retry dialog shown, file was written
         mock_retry.assert_not_called()
+        assert result is True
         mock_write.assert_called_once()
 
     def test_system_prompts_retry_when_parameter_validation_finds_mismatch(self, parameter_editor) -> None:
@@ -3867,7 +4037,7 @@ class TestParameterUploadNavigation:
 
         with patch.multiple(
             parameter_editor,
-            upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, {})),
+            upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
             _upload_parameters_to_fc=MagicMock(return_value=1),
             download_flight_controller_parameters=MagicMock(),
             _write_current_file=mock_write,
@@ -3875,7 +4045,7 @@ class TestParameterUploadNavigation:
             _validate_uploaded_parameters=MagicMock(return_value=["P1"]),
         ):
             # Act
-            parameter_editor.upload_selected_params_workflow(
+            result = parameter_editor.upload_selected_params_workflow(
                 {"P1": Par(1.0)},
                 ask_confirmation=MagicMock(return_value=True),
                 ask_retry_cancel=mock_retry,
@@ -3884,8 +4054,39 @@ class TestParameterUploadNavigation:
 
         # Assert: retry dialog was presented exactly once
         mock_retry.assert_called_once()
+        assert result is False
         mock_write.assert_not_called()
-        assert parameter_editor._at_least_one_changed is True
+        assert parameter_editor._at_least_one_changed is False
+
+    def test_system_fails_upload_when_all_parameter_writes_fail(self, parameter_editor) -> None:
+        """
+        Do not mark a configuration step uploaded after every write fails.
+
+        GIVEN a selected parameter whose FC write fails
+        WHEN the managed upload workflow validates the FC state
+        THEN it reports failure and does not persist the upload marker
+        """
+        mock_retry = MagicMock(return_value=False)
+        mock_write = MagicMock()
+
+        with patch.multiple(
+            parameter_editor,
+            upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
+            _upload_parameters_to_fc=MagicMock(return_value=0),
+            download_flight_controller_parameters=MagicMock(),
+            _write_current_file=mock_write,
+            _validate_uploaded_parameters=MagicMock(return_value=["P1"]),
+        ):
+            result = parameter_editor.upload_selected_params_workflow(
+                {"P1": Par(1.0)},
+                ask_confirmation=MagicMock(return_value=True),
+                ask_retry_cancel=mock_retry,
+                show_error=MagicMock(),
+            )
+
+        assert result is False
+        mock_retry.assert_called_once()
+        mock_write.assert_not_called()
 
     @pytest.mark.parametrize(
         ("fc_val", "upload_val", "expect_mismatch"),
@@ -3973,12 +4174,13 @@ class TestParameterUploadNavigation:
         parameter_editor._flight_controller.set_param.return_value = (False, "err")
 
         # Act
-        reset_required, uploaded_params = parameter_editor.upload_parameters_that_require_reset_workflow(
+        reset_required, uploaded_params, reset_succeeded = parameter_editor.upload_parameters_that_require_reset_workflow(
             {"FMT": Par(1.0)}, MagicMock(), MagicMock()
         )
 
         # Assert
         assert reset_required is False
+        assert reset_succeeded is True
         assert "FMT" not in uploaded_params
 
 
