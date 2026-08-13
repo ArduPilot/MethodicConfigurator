@@ -35,7 +35,8 @@ class EscRpmScaleDataModel:
         self.flight_controller = flight_controller
         self.filesystem = filesystem
         self._motor_data_loader = FilesystemJSONWithSchema(
-            json_filename="AP_Motors_test.json", schema_filename="AP_Motors_test_schema.json"
+            json_filename="AP_Motors_test.json",
+            schema_filename=str(Path("plugins", "AP_Motors_test_schema.json")),
         )
 
     @staticmethod

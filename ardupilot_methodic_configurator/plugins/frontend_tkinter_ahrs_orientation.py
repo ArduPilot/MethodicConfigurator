@@ -351,7 +351,7 @@ def _create_ahrs_orientation_view(
 
 def _create_ahrs_orientation_model(context: PluginModelContext) -> AhrsOrientationDataModel:
     """Create the plugin data model from registered application dependencies."""
-    from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import (  # noqa: PLC0415
+    from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
         AhrsOrientationDataModel,
     )
 

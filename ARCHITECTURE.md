@@ -106,8 +106,8 @@ Each sub-application has detailed architecture documentation covering requiremen
      - [`frontend_tkinter_stage_progress.py`](ardupilot_methodic_configurator/frontend_tkinter_stage_progress.py)
 
 6. **[Motor Test](ARCHITECTURE_motor_test.md)** - Provides motor testing functionality with visual diagram display
-   - [`frontend_tkinter_motor_test.py`](ardupilot_methodic_configurator/frontend_tkinter_motor_test.py)
-   - [`data_model_motor_test.py`](ardupilot_methodic_configurator/data_model_motor_test.py)
+   - [`frontend_tkinter_motor_test.py`](ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py)
+   - [`data_model_motor_test.py`](ardupilot_methodic_configurator/plugins/data_model_motor_test.py)
 
 Each sub-application can be run in isolation, so it is easier to test and develop them.
 

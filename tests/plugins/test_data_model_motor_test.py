@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -1783,7 +1784,8 @@ class TestMotorTestDataModelJSONLoading:
 
             # Assert: JSON loader configured with correct files
             mock_json_class.assert_called_once_with(
-                json_filename="AP_Motors_test.json", schema_filename="AP_Motors_test_schema.json"
+                json_filename="AP_Motors_test.json",
+                schema_filename=str(Path("plugins", "AP_Motors_test_schema.json")),
             )
 
 
