@@ -6508,7 +6508,7 @@ msgstr "中間パラメータファイルが利用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:567
 msgid "Skip >"
-msgstr ""
+msgstr "スキップ >"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:580
 msgid ""
@@ -6516,11 +6516,11 @@ msgid ""
 "changes to the flight controller\n"
 "If changes have been made to the current file it will ask if you want to "
 "save them"
-msgstr ""
+msgstr "フライトコントローラーに変更をアップロードせずに、次の設定ステップのパラメーターファイルへ移動します\n現在のファイルに変更がある場合は、保存するかどうかを確認します"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:586
 msgid "< Skip"
-msgstr ""
+msgstr "< スキップ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:591
 msgid ""
@@ -6528,7 +6528,7 @@ msgid ""
 "changes to the flight controller\n"
 "If changes have been made to the current file it will ask if you want to "
 "save them"
-msgstr ""
+msgstr "フライトコントローラーに変更をアップロードせずに、前の設定ステップのパラメーターファイルへ移動します\n現在のファイルに変更がある場合は、保存するかどうかを確認します"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:601
 msgid ".bin Log Analysis"

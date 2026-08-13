@@ -6132,7 +6132,7 @@ msgstr "没有可用的中间参数文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:567
 msgid "Skip >"
-msgstr ""
+msgstr "跳过 >"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:580
 msgid ""
@@ -6140,11 +6140,11 @@ msgid ""
 "changes to the flight controller\n"
 "If changes have been made to the current file it will ask if you want to "
 "save them"
-msgstr ""
+msgstr "转到下一个配置步骤参数文件，而不将任何更改上传到飞控\n如果当前文件已被修改，它会询问您是否要保存这些更改"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:586
 msgid "< Skip"
-msgstr ""
+msgstr "< 跳过"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:591
 msgid ""
@@ -6152,7 +6152,7 @@ msgid ""
 "changes to the flight controller\n"
 "If changes have been made to the current file it will ask if you want to "
 "save them"
-msgstr ""
+msgstr "转到上一个配置步骤参数文件，而不将任何更改上传到飞控\n如果当前文件已被修改，它会询问您是否要保存这些更改"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:601
 msgid ".bin Log Analysis"
