@@ -40,7 +40,7 @@ from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import (
     BatteryMonitorDataModel,
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_BATTERY_MONITOR
-from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import (
@@ -324,9 +324,14 @@ def _create_battery_monitor_view(
     return BatteryMonitorView(parent, model, base_window)  # type: ignore[arg-type]
 
 
+def _create_battery_monitor_model(context: PluginModelContext) -> BatteryMonitorDataModel:
+    """Create the plugin data model from registered application dependencies."""
+    return BatteryMonitorDataModel(context.flight_controller, context.parameter_editor)
+
+
 def register_battery_monitor_plugin() -> None:
     """Register the battery monitor plugin with the factory."""
-    plugin_factory.register(PLUGIN_BATTERY_MONITOR, _create_battery_monitor_view)
+    plugin_factory.register(PLUGIN_BATTERY_MONITOR, _create_battery_monitor_view, _create_battery_monitor_model)
 
 
 class BatteryMonitorWindow(BaseWindow):  # pragma: no cover

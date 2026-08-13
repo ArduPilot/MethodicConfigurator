@@ -12,17 +12,36 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from __future__ import annotations
+
 import tkinter as tk
 from collections.abc import Callable
+from dataclasses import dataclass
 from logging import error as logging_error
 from tkinter import ttk
+from typing import TYPE_CHECKING
 
 from ardupilot_methodic_configurator import _
+
+if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+    from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+    from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 
 # Note: PluginView is defined in plugin_protocol for documentation purposes
 # Type alias for plugin creator functions
 # Note: We use object types to allow plugin creators to be more specific with their types
 PluginCreator = Callable[[tk.Frame | ttk.Frame, object, object], object]
+PluginModelCreator = Callable[["PluginModelContext"], object]
+
+
+@dataclass(frozen=True)
+class PluginModelContext:
+    """Dependencies available to a registered plugin data-model factory."""
+
+    flight_controller: FlightController
+    local_filesystem: LocalFilesystem
+    parameter_editor: ParameterEditor
 
 
 class PluginFactory:
@@ -37,8 +56,14 @@ class PluginFactory:
     def __init__(self) -> None:
         """Initialize the plugin factory with an empty registry."""
         self._creators: dict[str, PluginCreator] = {}
+        self._model_creators: dict[str, PluginModelCreator] = {}
 
-    def register(self, plugin_name: str, creator_func: PluginCreator) -> None:
+    def register(
+        self,
+        plugin_name: str,
+        creator_func: PluginCreator,
+        model_creator_func: PluginModelCreator | None = None,
+    ) -> None:
         """
         Register a plugin creator function.
 
@@ -46,11 +71,16 @@ class PluginFactory:
             plugin_name: Unique identifier for the plugin
             creator_func: Function that creates a plugin instance.
                          Should accept (parent, model, base_window) and return PluginView
+            model_creator_func: Function that creates the plugin data model from shared dependencies
 
         """
         if plugin_name in self._creators:
             logging_error("Plugin '%s' is already registered, overwriting", plugin_name)
         self._creators[plugin_name] = creator_func
+        if model_creator_func is not None:
+            self._model_creators[plugin_name] = model_creator_func
+        else:
+            self._model_creators.pop(plugin_name, None)
 
     def create(
         self,
@@ -76,6 +106,13 @@ class PluginFactory:
         if creator:
             return creator(parent, model, base_window)
         return None
+
+    def create_model(self, plugin_name: str, context: PluginModelContext) -> object | None:
+        """Create a registered plugin's data model, or return None if no model factory exists."""
+        creator = self._model_creators.get(plugin_name)
+        if creator is None:
+            return None
+        return creator(context)
 
     def is_registered(self, plugin_name: str) -> bool:
         """

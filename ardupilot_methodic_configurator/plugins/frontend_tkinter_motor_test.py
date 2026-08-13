@@ -61,7 +61,7 @@ from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
     ValidationError,
 )
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
-from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 
 class DelayedProgressCallback:  # pylint: disable=too-few-public-methods
@@ -924,9 +924,14 @@ def _create_motor_test_view(
     return MotorTestView(parent, model, base_window)  # type: ignore[arg-type]
 
 
+def _create_motor_test_model(context: PluginModelContext) -> MotorTestDataModel:
+    """Create the plugin data model from registered application dependencies."""
+    return MotorTestDataModel(context.flight_controller, context.local_filesystem)
+
+
 def register_motor_test_plugin() -> None:
     """Register the motor test plugin with the factory."""
-    plugin_factory.register(PLUGIN_MOTOR_TEST, _create_motor_test_view)
+    plugin_factory.register(PLUGIN_MOTOR_TEST, _create_motor_test_view, _create_motor_test_model)
 
 
 if __name__ == "__main__":  # pragma: no cover

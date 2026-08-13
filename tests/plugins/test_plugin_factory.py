@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest.mock import MagicMock, patch
 
-from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginFactory, PluginModelContext, plugin_factory
 
 # pylint: disable=protected-access
 
@@ -33,6 +33,7 @@ class TestPluginFactory:
 
         # Assert: Factory is initialized with empty registry
         assert not factory._creators
+        assert not factory._model_creators
         assert isinstance(factory._creators, dict)
 
     def test_user_can_register_plugin_creator_function(self) -> None:
@@ -125,6 +126,22 @@ class TestPluginFactory:
         # Assert: None is returned
         assert result is None
 
+    def test_registered_model_factory_receives_shared_dependency_context(self) -> None:
+        factory = PluginFactory()
+        model_creator = MagicMock(return_value="created_model")
+        context = PluginModelContext(MagicMock(), MagicMock(), MagicMock())
+        factory.register("test_plugin", MagicMock(), model_creator)
+
+        result = factory.create_model("test_plugin", context)
+
+        assert result == "created_model"
+        model_creator.assert_called_once_with(context)
+
+    def test_unregistered_model_factory_returns_none(self) -> None:
+        factory = PluginFactory()
+
+        assert factory.create_model("unknown", PluginModelContext(MagicMock(), MagicMock(), MagicMock())) is None
+
     def test_user_can_check_if_plugin_is_registered(self) -> None:
         """
         User can check if a plugin is registered.
@@ -154,6 +171,7 @@ class TestPluginFactory:
         assert hasattr(plugin_factory, "_creators")
         assert hasattr(plugin_factory, "register")
         assert hasattr(plugin_factory, "create")
+        assert hasattr(plugin_factory, "create_model")
         assert hasattr(plugin_factory, "is_registered")
         assert hasattr(plugin_factory, "available_plugins")
 

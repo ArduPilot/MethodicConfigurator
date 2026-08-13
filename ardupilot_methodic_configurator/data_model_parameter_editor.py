@@ -43,22 +43,7 @@ from ardupilot_methodic_configurator.data_model_configuration_step import Config
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict, is_within_tolerance
 from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError, safe_evaluate
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
-from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
-from ardupilot_methodic_configurator.plugins.data_model_ahrs_orientation import AhrsOrientationDataModel
-from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
-from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
-from ardupilot_methodic_configurator.plugins.data_model_esc_rpm_scale import EscRpmScaleDataModel
-from ardupilot_methodic_configurator.plugins.data_model_motor_test import MotorTestDataModel
-from ardupilot_methodic_configurator.plugins.data_model_rc_calibration import RCCalibrationDataModel
-from ardupilot_methodic_configurator.plugins.plugin_constants import (
-    PLUGIN_ACCELEROMETER_CALIBRATION,
-    PLUGIN_AHRS_ORIENTATION,
-    PLUGIN_BATTERY_MONITOR,
-    PLUGIN_COMPASS_CALIBRATION,
-    PLUGIN_ESC_RPM_SCALE,
-    PLUGIN_MOTOR_TEST,
-    PLUGIN_RC_CALIBRATION,
-)
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 from ardupilot_methodic_configurator.tempcal_imu import IMUfit
 
 # GNSS MAVLink protocol default value (ArduPilot GPS_TYPE value 5 = MAVLink GPS)
@@ -2574,44 +2559,35 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return self._local_filesystem.get_instructions_popup(filename)
 
     def create_plugin_data_model(self, plugin_name: str) -> object | None:
-        r"""
+        """
         Create and return a data model for the specified plugin.
-
-        To add a new plugin, you must touch five places:
-          1. ``plugin_constants.py``                                   - add a PLUGIN_* constant.
-          2. ``__main__.py -> register_plugins()``                     - import and call its register function.
-          3. Here                                                      - instantiate its data model.
-          4. The plugin's ``frontend_tkinter_*.py`` module             - implement and call ``plugin_factory.register``.
-          5. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
-             ``plugin > properties > enum`` in the configuration steps schema.
 
         Args:
             plugin_name: The name of the plugin to create a data model for
 
         Returns:
-            The data model instance, or None if plugin not supported or requirements not met
+            The data model instance, or None if the flight controller is disconnected.
 
         Raises:
             ValueError when plugin name is unknown/unsupported
 
         """
-        plugin_factories: dict[str, Callable[[], object]] = {
-            PLUGIN_MOTOR_TEST: lambda: MotorTestDataModel(self._flight_controller, self._local_filesystem),
-            PLUGIN_BATTERY_MONITOR: lambda: BatteryMonitorDataModel(self._flight_controller, self),
-            PLUGIN_COMPASS_CALIBRATION: lambda: CompassCalibrationDataModel(self._flight_controller),
-            PLUGIN_ACCELEROMETER_CALIBRATION: lambda: AccelerometerCalibrationDataModel(self._flight_controller),
-            PLUGIN_AHRS_ORIENTATION: lambda: AhrsOrientationDataModel(self._flight_controller),
-            PLUGIN_ESC_RPM_SCALE: lambda: EscRpmScaleDataModel(self._flight_controller, self._local_filesystem),
-            PLUGIN_RC_CALIBRATION: lambda: RCCalibrationDataModel(self._flight_controller),
-        }
-
-        factory = plugin_factories.get(plugin_name)
-        if factory is None:
+        if not plugin_factory.is_registered(plugin_name):
             raise ValueError(
                 _("data_model_parameter_editor: Unsupported plugin name: {plugin_name}").format(plugin_name=plugin_name)
             )
         if not self.is_fc_connected:
             return None
-        return factory()
+        model = plugin_factory.create_model(
+            plugin_name,
+            PluginModelContext(self._flight_controller, self._local_filesystem, self),
+        )
+        if model is None:
+            raise ValueError(
+                _("data_model_parameter_editor: Plugin has no data model factory: {plugin_name}").format(
+                    plugin_name=plugin_name
+                )
+            )
+        return model
 
     # plugin API end

@@ -11,12 +11,11 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-# To add a new plugin, you must touch five places:
+# To add a new plugin, you must touch four places:
 #   1. Here (``plugin_constants.py``)                            - add a PLUGIN_* constant.
 #   2. ``__main__.py -> register_plugins()``                     - import and call its register function.
-#   3. ``data_model_parameter_editor.create_plugin_data_model``  - instantiate its data model.
-#   4. The plugin's ``frontend_tkinter_*.py`` module             - implement and call ``plugin_factory.register``.
-#   5. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
+#   3. The plugin's ``frontend_tkinter_*.py`` module             - register its view and data-model factories.
+#   4. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
 #      ``plugin > properties > enum`` in the configuration steps schema.
 
 # Plugin name constants

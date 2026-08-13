@@ -18,7 +18,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugins.data_model_esc_rpm_scale import EscRpmScaleDataModel
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_ESC_RPM_SCALE
-from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 
 class EscRpmScaleView(Frame):
@@ -101,6 +101,11 @@ def _create_esc_rpm_scale_view(parent: object, model: object, base_window: objec
     return EscRpmScaleView(parent, model, base_window)  # type: ignore[arg-type]
 
 
+def _create_esc_rpm_scale_model(context: PluginModelContext) -> EscRpmScaleDataModel:
+    """Create the plugin data model from registered application dependencies."""
+    return EscRpmScaleDataModel(context.flight_controller, context.local_filesystem)
+
+
 def register_esc_rpm_scale_plugin() -> None:
     """Register the ESC RPM scale plugin with the factory."""
-    plugin_factory.register(PLUGIN_ESC_RPM_SCALE, _create_esc_rpm_scale_view)
+    plugin_factory.register(PLUGIN_ESC_RPM_SCALE, _create_esc_rpm_scale_view, _create_esc_rpm_scale_model)

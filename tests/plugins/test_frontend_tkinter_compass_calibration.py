@@ -310,7 +310,9 @@ class TestCompassCalibrationViewSetupAndRegistration:
         ) as mock_register:
             register_compass_calibration_plugin()
 
-        mock_register.assert_called_once_with(PLUGIN_COMPASS_CALIBRATION, _create_compass_calibration_view)
+        mock_register.assert_called_once()
+        assert mock_register.call_args.args[:2] == (PLUGIN_COMPASS_CALIBRATION, _create_compass_calibration_view)
+        assert callable(mock_register.call_args.args[2])
 
     def test_user_can_create_the_compass_calibration_view_via_helper(self) -> None:
         """

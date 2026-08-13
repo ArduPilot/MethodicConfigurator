@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_calibration_popup_base import CalibrationPopupBase
 from ardupilot_methodic_configurator.plugins.data_model_compass_calibration import CompassCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_COMPASS_CALIBRATION
-from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 
 class CompassCalibrationInstructionsPopup(BaseWindow):
@@ -425,8 +425,17 @@ def _create_compass_calibration_view(
     return CompassCalibrationView(parent, cast("CompassCalibrationDataModel", model), cast("BaseWindow", base_window))
 
 
+def _create_compass_calibration_model(context: PluginModelContext) -> CompassCalibrationDataModel:
+    """Create the plugin data model from registered application dependencies."""
+    return CompassCalibrationDataModel(context.flight_controller)
+
+
 def register_compass_calibration_plugin() -> None:
-    plugin_factory.register(PLUGIN_COMPASS_CALIBRATION, _create_compass_calibration_view)
+    plugin_factory.register(
+        PLUGIN_COMPASS_CALIBRATION,
+        _create_compass_calibration_view,
+        _create_compass_calibration_model,
+    )
 
 
 class CompassCalibrationWindow(BaseWindow):  # pragma: no cover
