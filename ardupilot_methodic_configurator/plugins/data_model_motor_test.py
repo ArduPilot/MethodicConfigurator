@@ -16,6 +16,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from math import nan
 from os import path as os_path
+from pathlib import Path
 from typing import Any
 
 from ardupilot_methodic_configurator import _
@@ -102,7 +103,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
         # Initialize motor data loader for motor directions and test order
         self._motor_data_loader = FilesystemJSONWithSchema(
-            json_filename="AP_Motors_test.json", schema_filename="AP_Motors_test_schema.json"
+            json_filename="AP_Motors_test.json",
+            schema_filename=str(Path("plugins", "AP_Motors_test_schema.json")),
         )
         self._motor_data: dict = {}
 
