@@ -1883,6 +1883,37 @@ class TestTableRefresh:
 class TestParameterUploads:
     """Validate user-facing behaviours while uploading parameters."""
 
+    def test_user_selects_external_parameter_file_for_preview(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """A selected external file is loaded and shown without changing the current AMC step."""
+        parameters = {"ROLL_P": MagicMock()}
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="C:/tmp/tune.parm")
+        parameter_editor_window.parameter_editor.load_external_parameter_file.return_value = parameters
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterFileUploadWindow"
+        ) as upload_window:
+            parameter_editor_window.on_upload_parameter_file_click()
+
+        parameter_editor_window.ui.askopenfilename.assert_called_once_with(
+            title="Select an ArduPilot parameter file",
+            filetypes=[("ArduPilot parameter files", "*.parm *.param"), ("All files", "*.*")],
+        )
+        parameter_editor_window.parameter_editor.load_external_parameter_file.assert_called_once_with("C:/tmp/tune.parm")
+        upload_window.assert_called_once_with(parameter_editor_window, "C:/tmp/tune.parm", parameters)
+
+    def test_external_parameter_file_parse_error_is_reported(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """Invalid external files produce an error and do not open the preview."""
+        parameter_editor_window.ui.askopenfilename = MagicMock(return_value="C:/tmp/bad.param")
+        parameter_editor_window.parameter_editor.load_external_parameter_file.side_effect = ValueError("bad value")
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ParameterFileUploadWindow"
+        ) as upload_window:
+            parameter_editor_window.on_upload_parameter_file_click()
+
+        parameter_editor_window.ui.show_error.assert_called_once_with("Parameter file error", "bad value")
+        upload_window.assert_not_called()
+
     def test_user_uploads_selected_parameters_when_fc_ready(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """
         User uploads selected parameters when a flight controller connection is available.

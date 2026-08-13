@@ -88,6 +88,10 @@ ExperimentChoice = Literal["close", True, False]
 ExperimentChoiceCallback = Callable[[str, str, list[str]], ExperimentChoice]
 
 
+def _create_progress_callback_factory(progress_callback: Callable | None) -> Callable[[], Callable | None]:
+    return lambda: progress_callback
+
+
 class OperationNotPossibleError(Exception):
     """Raised when an operation cannot be performed due to missing prerequisites or state."""
 
@@ -678,13 +682,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return True
 
     def download_flight_controller_parameters(
-        self, get_progress_callback: Callable[[], Callable | None] | None = None
+        self,
+        get_progress_callback: Callable[[], Callable | None] | None = None,
+        persist_project_state: bool = True,
     ) -> tuple[dict, dict]:
         """
         Download parameters from the flight controller.
 
         Args:
             get_progress_callback: Optional factory function that creates and returns a progress callback.
+            persist_project_state: Whether downloaded parameter and default files are written to the AMC project.
 
         Returns:
             tuple: (fc_parameters, param_default_values) downloaded from the flight controller.
@@ -696,8 +703,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Download all parameters from the flight controller
         fc_parameters, param_default_values = self._flight_controller.download_params(
             progress_callback,
-            Path(self._local_filesystem.vehicle_dir) / "complete.param",
-            Path(self._local_filesystem.vehicle_dir) / "00_default.param",
+            Path(self._local_filesystem.vehicle_dir) / "complete.param" if persist_project_state else None,
+            Path(self._local_filesystem.vehicle_dir) / "00_default.param" if persist_project_state else None,
         )
 
         # Note: fc_parameters are already updated internally in the flight controller
@@ -715,7 +722,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     param_obj.set_fc_value(fc_parameters[param_name])
 
         # Write default values to file if available
-        if param_default_values:
+        if persist_project_state and param_default_values:
             self._local_filesystem.write_param_default_values_to_file(param_default_values)
 
         return fc_parameters, param_default_values
@@ -727,7 +734,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         show_error: ShowErrorCallback,
         reset_progress_callback: Callable | None = None,
         connection_progress_callback: Callable | None = None,
-    ) -> tuple[bool, set[str]]:
+    ) -> tuple[bool, set[str], bool]:
         """
         Upload parameters that require reset to the flight controller.
 
@@ -737,10 +744,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_error: Callback to show error messages.
             reset_progress_callback: Optional callback for reset progress updates.
             connection_progress_callback: Optional callback for connection progress updates.
+            selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
         Returns:
-            tuple[bool, set[str]]: (reset_happened, uploaded_param_names) - reset_happened indicates if reset occurred,
-                                   uploaded_param_names contains names of parameters that were uploaded.
+            tuple[bool, set[str], bool]: Reset occurrence, names uploaded before reset, and workflow success.
 
         """
         reset_required = False
@@ -801,19 +808,20 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         for error_msg in error_messages:
             show_error(_("ArduPilot methodic configurator"), error_msg)
 
-        self.reset_and_reconnect_workflow(
+        reset_succeeded = self.reset_and_reconnect_workflow(
             reset_required,
             reset_unsure_params,
             ask_confirmation,
             show_error,
             reset_progress_callback,
             connection_progress_callback,
+            selected_params,
         )
 
         reset_happened = reset_required or bool(reset_unsure_params)
-        return reset_happened, uploaded_params
+        return reset_happened, uploaded_params, reset_succeeded
 
-    def _calculate_reset_time(self) -> int:
+    def _calculate_reset_time(self, selected_params: dict | None = None) -> int:
         """
         Calculate the extra sleep time needed for reset based on boot delay parameters.
 
@@ -821,11 +829,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             int: Extra sleep time in seconds.
 
         """
-        param_boot_delay = (
-            self.current_step_parameters["BRD_BOOT_DELAY"].get_new_value()
-            if "BRD_BOOT_DELAY" in self.current_step_parameters
-            else 0.0
-        )
+        if selected_params and "BRD_BOOT_DELAY" in selected_params:
+            param_boot_delay = float(selected_params["BRD_BOOT_DELAY"].value)
+        else:
+            param_boot_delay = (
+                self.current_step_parameters["BRD_BOOT_DELAY"].get_new_value()
+                if "BRD_BOOT_DELAY" in self.current_step_parameters
+                else 0.0
+            )
         flightcontroller_boot_delay = self._flight_controller.fc_parameters.get("BRD_BOOT_DELAY", 0)
         return int(max(param_boot_delay, flightcontroller_boot_delay) // 1000 + 1)  # round up
 
@@ -834,6 +845,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         reset_progress_callback: Callable | None = None,
         connection_progress_callback: Callable | None = None,
         sleep_time: int | None = None,
+        selected_params: dict | None = None,
     ) -> str | None:
         """
         Reset and reconnect to the flight controller.
@@ -842,13 +854,14 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             reset_progress_callback: Optional callback function for progress updates.
             connection_progress_callback: Optional callback function for connection progress updates.
             sleep_time: Optional sleep time override. If None, calculates based on boot delay parameters.
+            selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
         Returns:
             Optional[str]: Error message if reset failed, None if successful.
 
         """
         if sleep_time is None:
-            sleep_time = self._calculate_reset_time()
+            sleep_time = self._calculate_reset_time(selected_params)
 
         # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
         return self._flight_controller.reset_and_reconnect(
@@ -863,6 +876,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         show_error: ShowErrorCallback,
         reset_progress_callback: Callable | None = None,
         connection_progress_callback: Callable | None = None,
+        selected_params: dict | None = None,
     ) -> bool:
         """
         Complete workflow for resetting and reconnecting to flight controller with user interaction.
@@ -879,6 +893,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_error: Callback to show error messages
             reset_progress_callback: Optional callback for reset progress updates
             connection_progress_callback: Optional callback for connection progress updates
+            selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
         Returns:
             bool: True if reset was performed (or not needed), False if reset failed
@@ -893,7 +908,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             should_reset = ask_confirmation(_("Possible reset required"), msg.format(param_list_str=param_list_str))
 
         if should_reset:
-            error_message = self._reset_and_reconnect_flight_controller(reset_progress_callback, connection_progress_callback)
+            error_message = self._reset_and_reconnect_flight_controller(
+                reset_progress_callback,
+                connection_progress_callback,
+                selected_params=selected_params,
+            )
             if error_message:
                 show_error(_("ArduPilot methodic configurator"), error_message)
                 return False
@@ -906,6 +925,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         selected_params: dict,
         show_error: Callable[[str, str], None],
         progress_callback: Callable | None = None,
+        *,
+        update_tuning_report: bool = True,
     ) -> int:
         """
         Upload selected parameters to flight controller.
@@ -914,6 +935,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             selected_params: Dictionary of parameters to upload.
             show_error: Callback to show error messages to the user.
             progress_callback: Optional callback for progress updates.
+            update_tuning_report: Whether to update the AMC project tuning report.
 
         Returns:
             int: Number of changed parameters.
@@ -972,7 +994,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         msg = changed_msg + (", " if nr_changed and nr_unchanged else "") + unchanged_msg
         logging_info(msg)
 
-        self._update_tuning_report()
+        if update_tuning_report:
+            self._update_tuning_report()
         return nr_changed
 
     def _update_tuning_report(self) -> None:
@@ -1047,7 +1070,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         get_reset_progress_callback: Callable[[], Callable | None] | None = None,
         get_connection_progress_callback: Callable[[], Callable | None] | None = None,
         get_download_progress_callback: Callable[[], Callable | None] | None = None,
-    ) -> None:
+        *,
+        persist_project_state: bool = True,
+    ) -> bool:
         """
         Complete workflow for uploading selected parameters, including reset, upload, validation, and retry.
 
@@ -1060,6 +1085,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             get_reset_progress_callback: Optional factory function that creates and returns a reset progress callback.
             get_connection_progress_callback: Optional factory function that creates and returns a connection prog. callback.
             get_download_progress_callback: Optional factory function that creates and returns a download progress callback.
+            persist_project_state: Whether to write AMC step state, tuning reports, and FC-difference exports.
+
+        Returns:
+            True only when the upload and post-upload validation complete successfully.
 
         """
         should_retry = True
@@ -1078,18 +1107,29 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             progress_callback_for_connection = get_connection_progress_callback() if get_connection_progress_callback else None
             progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
             # Upload parameters that require reset
-            reset_happened, already_uploaded_params = self.upload_parameters_that_require_reset_workflow(
+            reset_happened, already_uploaded_params, reset_succeeded = self.upload_parameters_that_require_reset_workflow(
                 selected_params, ask_confirmation, show_error, progress_callback_for_reset, progress_callback_for_connection
             )
+            if not reset_succeeded:
+                self._at_least_one_changed = False
+                return False
 
             # If reset happened, fc_parameters cache was cleared during disconnect/reconnect
             # Re-download parameters now so _upload_parameters_to_fc has valid cache for comparison
             if reset_happened:
-                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)  # type: ignore[misc]
+                self.download_flight_controller_parameters(
+                    _create_progress_callback_factory(progress_callback_for_download),
+                    persist_project_state=persist_project_state,
+                )
 
             # Upload remaining parameters (excluding those already uploaded in reset workflow)
             remaining_params = {k: v for k, v in selected_params.items() if k not in already_uploaded_params}
-            nr_changed = self._upload_parameters_to_fc(remaining_params, show_error, progress_callback_for_upload)
+            nr_changed = self._upload_parameters_to_fc(
+                remaining_params,
+                show_error,
+                progress_callback_for_upload,
+                update_tuning_report=persist_project_state,
+            )
 
             # Add count of already uploaded params to total changed count
             nr_changed += len(already_uploaded_params)
@@ -1097,10 +1137,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             if reset_happened or nr_changed > 0:
                 self._at_least_one_changed = True
 
-            if self._at_least_one_changed:
+            if self._at_least_one_changed or not persist_project_state:
                 # Re-download all parameters to validate
                 # Note: Passing the callback directly, not the factory, since we already got it
-                self.download_flight_controller_parameters(lambda cb=progress_callback_for_download: cb)  # type: ignore[misc]
+                self.download_flight_controller_parameters(
+                    _create_progress_callback_factory(progress_callback_for_download),
+                    persist_project_state=persist_project_state,
+                )
                 param_upload_error = self._validate_uploaded_parameters(selected_params)
 
                 if param_upload_error:
@@ -1111,14 +1154,41 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     )
                     if should_retry:
                         continue
-                    return
+                    self._at_least_one_changed = False
+                    return False
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
 
-                if self._should_export_fc_params_diff:
+                if persist_project_state and self._should_export_fc_params_diff:
                     self._export_fc_params_missing_or_different()
 
-        self._write_current_file()
+        if persist_project_state:
+            self._write_current_file()
         self._at_least_one_changed = False
+        return True
+
+    def upload_external_params_workflow(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        selected_params: dict,
+        ask_confirmation: AskConfirmationCallback,
+        ask_retry_cancel: AskRetryCancelCallback,
+        show_error: ShowErrorCallback,
+        get_upload_progress_callback: Callable[[], Callable | None] | None = None,
+        get_reset_progress_callback: Callable[[], Callable | None] | None = None,
+        get_connection_progress_callback: Callable[[], Callable | None] | None = None,
+        get_download_progress_callback: Callable[[], Callable | None] | None = None,
+    ) -> bool:
+        """Upload external parameters without changing AMC project bookkeeping or reports."""
+        return self.upload_selected_params_workflow(
+            selected_params,
+            ask_confirmation,
+            ask_retry_cancel,
+            show_error,
+            get_upload_progress_callback,
+            get_reset_progress_callback,
+            get_connection_progress_callback,
+            get_download_progress_callback,
+            persist_project_state=False,
+        )
 
     def _validate_uploaded_parameters(self, selected_params: dict) -> list[str]:
         logging_info(_("Re-downloaded all parameters from the flight controller"))
@@ -1891,6 +1961,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 message=_("Parameter {param_name} could not be located.").format(param_name=param_name),
             )
 
+        return self.update_parameter_object(param, new_value, include_range_check=include_range_check)
+
+    @staticmethod
+    def update_parameter_object(
+        param: ArduPilotParameter,
+        new_value: str,
+        *,
+        include_range_check: bool = True,
+    ) -> ParameterValueUpdateResult:
+        """Update any parameter object and describe the outcome for a presenter."""
         try:
             param.set_new_value(new_value, ignore_out_of_range=not include_range_check)
             return ParameterValueUpdateResult(ParameterValueUpdateStatus.UPDATED)
@@ -1903,19 +1983,39 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     title=_("Out-of-range value"),
                     message=str(exc),
                 )
-            logging_exception(_("Parameter %s out of range: %s"), param_name, exc)
+            logging_exception(_("Parameter %s out of range: %s"), param.name, exc)
             return ParameterValueUpdateResult(
                 ParameterValueUpdateStatus.ERROR,
                 title=_("Out-of-range value"),
                 message=str(exc),
             )
         except (ValueError, TypeError) as exc:
-            logging_exception(_("Invalid value for %s: %s"), param_name, exc)
+            logging_exception(_("Invalid value for %s: %s"), param.name, exc)
             return ParameterValueUpdateResult(
                 ParameterValueUpdateStatus.ERROR,
                 title=_("Invalid value"),
                 message=str(exc),
             )
+
+    def load_external_parameter_file(self, filepath: str) -> dict[str, ArduPilotParameter]:
+        """Load a parameter file without adding it to the AMC-managed project files."""
+        file_parameters = ParDict.from_file(filepath)
+        return {
+            param_name: self._config_step_processor.create_ardupilot_parameter(
+                param_name,
+                par,
+                "",
+                self.fc_parameters,
+            )
+            for param_name, par in file_parameters.items()
+        }
+
+    @staticmethod
+    def parameters_as_par_dict(parameters: dict[str, ArduPilotParameter]) -> ParDict:
+        """Convert parameter objects to the values expected by the FC upload workflow."""
+        return ParDict(
+            {name: Par(parameter.get_new_value(), parameter.change_reason_for_file) for name, parameter in parameters.items()}
+        )
 
     def get_different_parameters(self) -> dict[str, ArduPilotParameter]:
         """

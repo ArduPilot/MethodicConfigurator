@@ -58,6 +58,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_
 from ardupilot_methodic_configurator.frontend_tkinter_log_quality import LogQualityReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
+from ardupilot_methodic_configurator.frontend_tkinter_parameter_file_upload import ParameterFileUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import RichText, get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
@@ -156,9 +157,9 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
     def upload_params_with_progress(
         self,
         parent_window: tk.Misc,
-        upload_callback: Callable[..., None],
+        upload_callback: Callable[..., bool],
         selected_params: dict,
-    ) -> None:
+    ) -> bool:
         """
         Handle parameter upload with progress windows.
 
@@ -227,15 +228,17 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             return download_progress_window.update_progress_bar
 
         try:
-            upload_callback(
-                selected_params,
-                ask_confirmation=self.ask_yesno,
-                ask_retry_cancel=self.ask_retry_cancel,
-                show_error=self.show_error,
-                get_upload_progress_callback=get_upload_progress_callback,
-                get_reset_progress_callback=get_reset_progress_callback,
-                get_connection_progress_callback=get_connection_progress_callback,
-                get_download_progress_callback=get_download_progress_callback,
+            return bool(
+                upload_callback(
+                    selected_params,
+                    ask_confirmation=self.ask_yesno,
+                    ask_retry_cancel=self.ask_retry_cancel,
+                    show_error=self.show_error,
+                    get_upload_progress_callback=get_upload_progress_callback,
+                    get_reset_progress_callback=get_reset_progress_callback,
+                    get_connection_progress_callback=get_connection_progress_callback,
+                    get_download_progress_callback=get_download_progress_callback,
+                )
             )
         finally:
             # Clean up progress windows if they were created
@@ -390,6 +393,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.file_selection_combobox.pack(side=tk.TOP, anchor=tk.NW, pady=(4, 0))
 
         self.legend_frame(config_subframe)
+
+        upload_parameter_file_button = ttk.Button(
+            config_subframe,
+            text=_("Upload parameter file ..."),
+            command=self.on_upload_parameter_file_click,
+        )
+        upload_parameter_file_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        upload_parameter_file_button.pack(side=tk.LEFT, padx=(6, 2), anchor=tk.NW)
+        show_tooltip(
+            upload_parameter_file_button,
+            _("Select and upload a .parm or .param file that is not managed by AMC")
+            if self.parameter_editor.is_fc_connected
+            else _("No flight controller connected, external parameter upload not available"),
+        )
 
         image_label = self.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
         image_label.pack(side=tk.RIGHT, anchor=tk.NE, padx=(4, 4), pady=(4, 0))
@@ -1409,6 +1426,26 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def on_show_only_changed_checkbox_change(self) -> None:
         self.repopulate_parameter_table()
 
+    def on_upload_parameter_file_click(self) -> None:
+        """Select an external parameter file and open its upload preview."""
+        filepath = self.ui.askopenfilename(
+            title=_("Select an ArduPilot parameter file"),
+            filetypes=[
+                (_("ArduPilot parameter files"), "*.parm *.param"),
+                (_("All files"), "*.*"),
+            ],
+        )
+        if not filepath:
+            return
+
+        try:
+            parameters = self.parameter_editor.load_external_parameter_file(filepath)
+        except (OSError, ValueError) as exc:
+            self.ui.show_error(_("Parameter file error"), str(exc))
+            return
+
+        ParameterFileUploadWindow(self, filepath, parameters)
+
     def on_upload_selected_click(self) -> None:
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
             only_upload_changed_parameters_usage_popup(self.root)
@@ -1426,17 +1463,24 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     # This function can recurse multiple times if there is an upload error
 
     def upload_selected_params(self, selected_params: dict) -> bool:
+        return self._upload_params(selected_params, self.parameter_editor.upload_selected_params_workflow)
+
+    def upload_external_params(self, selected_params: dict) -> bool:
+        """Upload parameters without recording progress for the current AMC configuration step."""
+        return self._upload_params(selected_params, self.parameter_editor.upload_external_params_workflow)
+
+    def _upload_params(self, selected_params: dict, upload_callback: Callable[..., bool]) -> bool:
+        """Run a parameter upload callback with shared progress and error handling."""
         try:
-            self.ui.upload_params_with_progress(
+            return self.ui.upload_params_with_progress(
                 self.root,
-                self.parameter_editor.upload_selected_params_workflow,
+                upload_callback,
                 selected_params,
             )
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {e}")
             logging_exception("Parameter upload failed")
             return False
-        return True
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""

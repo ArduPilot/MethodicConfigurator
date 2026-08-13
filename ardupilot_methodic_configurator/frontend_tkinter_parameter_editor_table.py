@@ -10,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from logging import critical as logging_critical
 from logging import debug as logging_debug
 from logging import exception as logging_exception
@@ -68,7 +68,21 @@ class ParameterEditorTableDialogs:
     ask_yes_no: Callable[[str, str], bool] = ask_yesno_popup
 
 
-class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
+@dataclass
+class ParameterTableOptions:  # pylint: disable=too-many-instance-attributes
+    """Configure which editor-specific controls are present in a parameter table."""
+
+    show_parameter_actions: bool = True
+    show_upload_column: bool | None = None
+    show_manual_override_column: bool = True
+    show_change_reason_column: bool = True
+    values_editable: bool = True
+    skip_when_no_differences: bool = True
+    manual_override_for_all_parameters: bool = False
+    manually_editable_parameters: set[str] = field(default_factory=set)
+
+
+class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
     """
     A class to manage and display the parameter editor table within the GUI.
 
@@ -77,12 +91,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     It uses the ArduPilotParameter domain model to handle parameter operations.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         master: tk.Misc,
         parameter_editor: ParameterEditor,
         parameter_editor_window: "ParameterEditorWindow",
         dialogs: ParameterEditorTableDialogs | None = None,
+        options: ParameterTableOptions | None = None,
+        parameters: dict[str, ArduPilotParameter] | None = None,
     ) -> None:
         super().__init__(master)
         self.main_frame = master
@@ -90,6 +106,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self.parameter_editor_window = parameter_editor_window  # the parent window that contains this table
         self.upload_checkbutton_var: dict[str, tk.BooleanVar] = {}
         self._dialogs = dialogs or ParameterEditorTableDialogs()
+        self.options = options or ParameterTableOptions()
+        self.parameters = parameters
+        self._show_only_differences = False
+        self._upload_selection_defaults: dict[str, bool] = {}
+        self._new_value_widgets: dict[str, PairTupleCombobox | ttk.Entry] = {}
+        self._value_is_different_labels: dict[str, ttk.Label] = {}
 
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
@@ -129,29 +151,41 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             True if upload column should be shown, False otherwise
 
         """
+        if self.options.show_upload_column is not None:
+            return self.options.show_upload_column
         if gui_complexity is None:
             gui_complexity = self.parameter_editor_window.gui_complexity
         return gui_complexity != "simple"
 
     def _create_headers_and_tooltips(self, show_upload_column: bool) -> tuple[tuple[str, ...], tuple[str, ...]]:
         """Create table headers and tooltips dynamically based on UI complexity."""
-        base_headers = [
-            _("-/+"),
-            _("Parameter"),
-            _("Current Value"),
-            NEW_VALUE_DIFFERENT_STR,
-            _("New Value"),
-            _("Unit"),
-        ]
+        base_headers = []
+        base_tooltips = []
+        if self.options.show_parameter_actions:
+            base_headers.append(_("-/+"))
+            base_tooltips.append(_("Delete or add a parameter"))
 
-        base_tooltips = [
-            _("Delete or add a parameter"),
-            _("Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"),
-            _("Current value on the flight controller"),
-            _("Is the new value different from the current FC value?"),
-            _("New value from the above selected intermediate parameter file"),
-            _("Parameter Unit"),
-        ]
+        base_headers.extend(
+            [
+                _("Parameter"),
+                _("Current Value"),
+                NEW_VALUE_DIFFERENT_STR,
+                _("New Value"),
+                _("Unit"),
+            ]
+        )
+
+        base_tooltips.extend(
+            [
+                _("Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"),
+                _("Current value on the flight controller"),
+                _("Is the new value different from the current FC value?"),
+                _("New value from the above selected intermediate parameter file")
+                if self.options.show_parameter_actions
+                else _("Parameter value to upload to the flight controller"),
+                _("Parameter Unit"),
+            ]
+        )
 
         change_reason_tooltip = (
             _("Reason why respective parameter changed.")
@@ -171,18 +205,27 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             base_headers.append(_("Upload"))
             base_tooltips.append(_("When selected, upload the new value to the flight controller"))
 
-        base_headers.append(_("Manual"))
-        base_tooltips.append(
-            _("When checked, allows manual editing of this forced or derived parameter.\n")
-            + _("When unchecked, reverts to the forced or derived value.")
-        )
+        if self.options.show_manual_override_column:
+            base_headers.append(_("Manual"))
+            base_tooltips.append(
+                _("When checked, allows this parameter value to be edited before upload.\n")
+                + _("When unchecked, restores the value loaded from the file.")
+                if self.options.manual_override_for_all_parameters
+                else _("When checked, allows manual editing of this forced or derived parameter.\n")
+                + _("When unchecked, reverts to the forced or derived value.")
+            )
 
-        base_headers.append(_("Why are you changing this parameter?"))
-        base_tooltips.append(change_reason_tooltip)
+        if self.options.show_change_reason_column:
+            base_headers.append(_("Why are you changing this parameter?"))
+            base_tooltips.append(change_reason_tooltip)
 
         return tuple(base_headers), tuple(base_tooltips)
 
     def repopulate_table(self, show_only_differences: bool, gui_complexity: str) -> None:
+        self._show_only_differences = show_only_differences
+        self._upload_selection_defaults.update(
+            {name: variable.get() for name, variable in self.upload_checkbutton_var.items()}
+        )
         for widget in self.view_port.winfo_children():
             widget.destroy()
         # Clear the last return values tracking dictionary when repopulating
@@ -202,12 +245,20 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             show_tooltip(label, tooltips[i])
 
         self.upload_checkbutton_var = {}
+        self._new_value_widgets = {}
 
+        parameters = self.parameters if self.parameters is not None else self.parameter_editor.current_step_parameters
         if show_only_differences:
             # Filter to show only different parameters
-            different_params = self.parameter_editor.get_different_parameters()
+            different_params = (
+                self.parameter_editor.get_different_parameters()
+                if self.parameters is None
+                else {
+                    name: param for name, param in parameters.items() if param.is_different_from_fc or not param.has_fc_value
+                }
+            )
             self._update_table(different_params, self.parameter_editor_window.gui_complexity)
-            if not different_params:
+            if not different_params and self.options.skip_when_no_differences:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(
                     selected_file=self.parameter_editor.current_file
                 )
@@ -216,7 +267,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 self.parameter_editor_window.on_skip_click()
                 return
         else:
-            self._update_table(self.parameter_editor.current_step_parameters, self.parameter_editor_window.gui_complexity)
+            self._update_table(parameters, self.parameter_editor_window.gui_complexity)
         self._apply_scroll_position(scroll_to_bottom)
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
@@ -236,17 +287,23 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 current_param_name = param_name
 
                 row_widgets: list[tk.Widget] = self._create_column_widgets(param_name, param, show_upload_column)
-                if self.parameter_editor.should_display_bitmask_parameter_editor_usage(param_name):
+                should_display_bitmask_usage = (
+                    param.is_editable and param.is_bitmask
+                    if self.parameters is not None
+                    else self.parameter_editor.should_display_bitmask_parameter_editor_usage(param_name)
+                )
+                if should_display_bitmask_usage:
                     should_try_to_display_bitmask_parameter_editor_usage = True
                 self._grid_column_widgets(row_widgets, i, show_upload_column)
                 if i % 20 == 0:
                     self.view_port.update_idletasks()  # yield to the event loop periodically to keep the UI responsive
 
-            # Add the "Add" button at the bottom of the table
-            add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
-            tooltip_msg = _("Add a parameter to the {self.parameter_editor.current_file} file")
-            show_tooltip(add_button, tooltip_msg.format(**locals()))
-            add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
+            if self.options.show_parameter_actions:
+                # Add the "Add" button at the bottom of the table
+                add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
+                tooltip_msg = _("Add a parameter to the {self.parameter_editor.current_file} file")
+                show_tooltip(add_button, tooltip_msg.format(**locals()))
+                add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
 
         except KeyError as e:
             logging_critical(
@@ -270,41 +327,38 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
         row_widgets: list[tk.Widget] = []
-        change_reason_widget = self._create_change_reason_entry(param)
+        change_reason_widget = self._create_change_reason_entry(param) if self.options.show_change_reason_column else None
         value_is_different_label = self._create_value_different_label(param)
-        row_widgets.append(self._create_delete_button(param_name))
+        if self.options.show_parameter_actions:
+            row_widgets.append(self._create_delete_button(param_name))
         row_widgets.append(self._create_parameter_name(param))
         row_widgets.append(self._create_flightcontroller_value(param))
         row_widgets.append(value_is_different_label)
+        self._value_is_different_labels[param_name] = value_is_different_label
         # update the change reason tooltip when the new value changes
-        row_widgets.append(self._create_new_value_entry(param, change_reason_widget, value_is_different_label))
+        new_value_widget = self._create_new_value_entry(param, change_reason_widget, value_is_different_label)
+        self._new_value_widgets[param_name] = new_value_widget
+        row_widgets.append(new_value_widget)
         row_widgets.append(self._create_unit_label(param))
 
         if show_upload_column:
             row_widgets.append(self._create_upload_checkbutton(param_name))
 
-        row_widgets.append(self._create_manual_override_widget(param))
-        row_widgets.append(change_reason_widget)
+        if self.options.show_manual_override_column:
+            row_widgets.append(self._create_manual_override_widget(param))
+        if change_reason_widget is not None:
+            row_widgets.append(change_reason_widget)
 
         return row_widgets
 
     def _grid_column_widgets(self, row_widgets: list[tk.Widget], row: int, show_upload_column: bool) -> None:
         """Grid all column widgets for a parameter row."""
-        row_widgets[0].grid(row=row, column=0, sticky="w", padx=0)
-        row_widgets[1].grid(row=row, column=1, sticky="w", padx=0)
-        row_widgets[2].grid(row=row, column=2, sticky="e", padx=0)
-        row_widgets[3].grid(row=row, column=3, sticky="e", padx=0)
-        row_widgets[4].grid(row=row, column=4, sticky="e", padx=0)
-        row_widgets[5].grid(row=row, column=5, sticky="e", padx=0)
-
-        if show_upload_column:
-            row_widgets[6].grid(row=row, column=6, sticky="e", padx=0)
-            row_widgets[7].grid(row=row, column=7, sticky="e", padx=0)  # manual
-        else:
-            row_widgets[6].grid(row=row, column=6, sticky="e", padx=0)  # manual
-
-        change_reason_column = self._get_change_reason_column_index(show_upload_column)
-        row_widgets[change_reason_column].grid(row=row, column=change_reason_column, sticky="ew", padx=(0, 5))
+        del show_upload_column  # column order is already represented by row_widgets
+        for column, widget in enumerate(row_widgets):
+            is_parameter_name = column == int(self.options.show_parameter_actions)
+            is_change_reason = self.options.show_change_reason_column and column == len(row_widgets) - 1
+            sticky = "ew" if is_change_reason else "w" if is_parameter_name or column == 0 else "e"
+            widget.grid(row=row, column=column, sticky=sticky, padx=(0, 5) if is_change_reason else 0)
 
     def _get_change_reason_column_index(self, show_upload_column: bool) -> int:
         """
@@ -317,29 +371,42 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             Column index for change reason entry
 
         """
-        # Base columns: Delete, Parameter, Current Value, ≠, New Value, Unit
-        base_column_count = 6
-        # Manual column is always present (column 6 without upload, 7 with upload)
-        if show_upload_column:
-            return base_column_count + 2  # Upload + Manual + Change Reason
-        return base_column_count + 1  # Manual + Change Reason
+        base_column_count = 5 + int(self.options.show_parameter_actions)
+        return base_column_count + int(show_upload_column) + int(self.options.show_manual_override_column)
 
     def _configure_table_columns(self, show_upload_column: bool) -> None:
         """Configure table column weights and sizes."""
-        self.view_port.columnconfigure(0, weight=0)  # Delete and Add buttons
-        self.view_port.columnconfigure(1, weight=0, minsize=120)  # Parameter name
-        self.view_port.columnconfigure(2, weight=0)  # Current Value
-        self.view_port.columnconfigure(3, weight=0)  # Different
-        self.view_port.columnconfigure(4, weight=0)  # New Value
-        self.view_port.columnconfigure(5, weight=0)  # Units
+        if (
+            self.options.show_parameter_actions
+            and self.options.show_manual_override_column
+            and self.options.show_change_reason_column
+        ):
+            self.view_port.columnconfigure(0, weight=0)
+            self.view_port.columnconfigure(1, weight=0, minsize=120)
+            self.view_port.columnconfigure(2, weight=0)
+            self.view_port.columnconfigure(3, weight=0)
+            self.view_port.columnconfigure(4, weight=0)
+            self.view_port.columnconfigure(5, weight=0)
+            if show_upload_column:
+                self.view_port.columnconfigure(6, weight=0)
+                self.view_port.columnconfigure(7, weight=0)
+            else:
+                self.view_port.columnconfigure(6, weight=0)
+            self.view_port.columnconfigure(self._get_change_reason_column_index(show_upload_column), weight=1)
+            return
 
-        if show_upload_column:
-            self.view_port.columnconfigure(6, weight=0)  # Upload to FC
-            self.view_port.columnconfigure(7, weight=0)  # Manual override
-        else:
-            self.view_port.columnconfigure(6, weight=0)  # Manual override
-
-        self.view_port.columnconfigure(self._get_change_reason_column_index(show_upload_column), weight=1)  # Change Reason
+        column_count = (
+            5
+            + int(self.options.show_parameter_actions)
+            + int(show_upload_column)
+            + int(self.options.show_manual_override_column)
+            + int(self.options.show_change_reason_column)
+        )
+        parameter_name_column = int(self.options.show_parameter_actions)
+        for column in range(column_count):
+            self.view_port.columnconfigure(column, weight=0, minsize=120 if column == parameter_name_column else 0)
+        if self.options.show_change_reason_column:
+            self.view_port.columnconfigure(self._get_change_reason_column_index(show_upload_column), weight=1)
 
     def _create_delete_button(self, param_name: str) -> ttk.Button:
         """Create a delete button for a parameter."""
@@ -396,10 +463,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self, param: ArduPilotParameter, new_value: str, include_range_check: bool = True
     ) -> bool:
         """Delegate parameter updates to the presenter and translate the result for the UI."""
-        result = self.parameter_editor.update_parameter_value(
-            param.name,
-            new_value,
-            include_range_check=include_range_check,
+        result = (
+            self.parameter_editor.update_parameter_object(param, new_value, include_range_check=include_range_check)
+            if self.parameters is not None
+            else self.parameter_editor.update_parameter_value(
+                param.name,
+                new_value,
+                include_range_check=include_range_check,
+            )
         )
         return self._handle_parameter_value_update_result(result, param, new_value)
 
@@ -417,10 +488,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         if result.status is ParameterValueUpdateStatus.CONFIRM_OUT_OF_RANGE:
             prompt = (result.message or "") + _(" Use out-of-range value?")
             if self._dialogs.ask_yes_no(result.title or _("Out-of-range value"), prompt):
-                forced_result = self.parameter_editor.update_parameter_value(
-                    param.name,
-                    new_value,
-                    include_range_check=False,
+                forced_result = (
+                    self.parameter_editor.update_parameter_object(param, new_value, include_range_check=False)
+                    if self.parameters is not None
+                    else self.parameter_editor.update_parameter_value(param.name, new_value, include_range_check=False)
                 )
                 return self._handle_parameter_value_update_result(forced_result, param, new_value)
             return False
@@ -431,7 +502,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         combobox_widget: PairTupleCombobox,
         param: ArduPilotParameter,
         event: tk.Event,
-        change_reason_widget: ttk.Entry,
+        change_reason_widget: ttk.Entry | None,
         value_is_different_label: ttk.Label,
     ) -> None:
         """Update the combobox style based on selection."""
@@ -440,7 +511,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         # Use centralized error handling for parameter value updates
         if self._handle_parameter_value_update(param, new_value_str, include_range_check=False):
             # Success: mark edited and sync the ArduPilotParameter back to filesystem
-            show_tooltip(change_reason_widget, param.tooltip_change_reason)
+            if change_reason_widget is not None:
+                show_tooltip(change_reason_widget, param.tooltip_change_reason)
             value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
         combobox_widget.configure(
@@ -467,11 +539,29 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             style = "TEntry"
         new_value_entry.configure(style=style)
 
+    def _set_external_value_widget_editability(self, param: ArduPilotParameter, editable: bool) -> None:
+        """Update one external row after its Manual checkbox changes."""
+        widget = self._new_value_widgets[param.name]
+        if isinstance(widget, PairTupleCombobox):
+            if not editable:
+                widget.set(param.get_selected_value_from_dict() or param.value_as_string)
+            widget.configure(state="readonly" if editable else "disabled")
+            return
+
+        widget.configure(state="normal")
+        self._update_new_value_entry_text(widget, param)
+        if not editable:
+            widget.configure(state="disabled")
+
     def _create_new_value_entry(  # pylint: disable=too-many-statements # noqa: PLR0915
-        self, param: ArduPilotParameter, change_reason_widget: ttk.Entry, value_is_different_label: ttk.Label
+        self,
+        param: ArduPilotParameter,
+        change_reason_widget: ttk.Entry | None,
+        value_is_different_label: ttk.Label,
     ) -> PairTupleCombobox | ttk.Entry:
         """Create an entry widget for editing the parameter value."""
         new_value_entry: PairTupleCombobox | ttk.Entry
+        value_is_editable = self.options.values_editable or param.name in self.options.manually_editable_parameters
 
         # Check if parameter has values dictionary
         if param.is_multiple_choice:
@@ -482,7 +572,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
                 param.value_as_string,
                 param.name,
                 style="TCombobox"
-                if not param.is_editable
+                if not param.is_editable or not value_is_editable
                 else "default_v.TCombobox"
                 if param.new_value_equals_default_value
                 else "readonly.TCombobox",
@@ -490,7 +580,11 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             new_value_entry.set(selected_value)
             font_family, font_size = get_widget_font_family_and_size(new_value_entry)
             font_size -= 2 if platform_system() == "Windows" else -1
-            new_value_entry.config(state="readonly", width=NEW_VALUE_WIDGET_WIDTH, font=(font_family, font_size))
+            new_value_entry.config(
+                state="readonly" if value_is_editable and param.is_editable else "disabled",
+                width=NEW_VALUE_WIDGET_WIDTH,
+                font=(font_family, font_size),
+            )
             new_value_entry.bind(  # type: ignore[call-overload] # workaround a mypy issue
                 "<<ComboboxSelected>>",
                 lambda event: self._update_combobox_style_on_selection(
@@ -561,7 +655,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
             if valid:
                 logging_debug(_("Parameter %s changed, will later ask if change(s) should be saved to file."), param.name)
-                show_tooltip(change_reason_widget, param.tooltip_change_reason)
+                if change_reason_widget is not None:
+                    show_tooltip(change_reason_widget, param.tooltip_change_reason)
                 value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update the displayed value in the Entry or Combobox
@@ -584,20 +679,19 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             new_value_entry.bind("<Button-1>", show_parameter_error)
             # Also bind to right-click for completeness
             new_value_entry.bind("<Button-3>", show_parameter_error)
-        elif param.is_bitmask:
-            new_value_entry.bind(
-                "<Double-Button-1>",
-                lambda event: self._open_bitmask_selection_window(
-                    event,
-                    param,
-                    change_reason_widget,
-                    value_is_different_label,
-                ),
-            )
-            new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
-            new_value_entry.bind("<Return>", _on_parameter_value_change)
-            new_value_entry.bind("<KP_Enter>", _on_parameter_value_change)
         else:
+            if not value_is_editable:
+                new_value_entry.config(state="disabled", background="light grey")
+            if param.is_bitmask:
+                new_value_entry.bind(
+                    "<Double-Button-1>",
+                    lambda event: self._open_bitmask_selection_window(
+                        event,
+                        param,
+                        change_reason_widget,
+                        value_is_different_label,
+                    ),
+                )
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
             new_value_entry.bind("<Return>", _on_parameter_value_change)
             new_value_entry.bind("<KP_Enter>", _on_parameter_value_change)
@@ -615,7 +709,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         self,
         event: tk.Event,
         param: ArduPilotParameter,
-        change_reason_widget: ttk.Entry,
+        change_reason_widget: ttk.Entry | None,
         value_is_different_label: ttk.Label,
     ) -> None:
         """Open a window to select bitmask options."""
@@ -634,8 +728,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
             bitmask_value = BitmaskHelper.get_value_from_keys(checked_keys)
             valid = self._handle_parameter_value_update(param, str(bitmask_value), include_range_check=True)
 
-            if valid:
+            if valid and change_reason_widget is not None:
                 show_tooltip(change_reason_widget, param.tooltip_change_reason)
+            if valid:
                 value_is_different_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
             # Update new_value_entry with the new decimal value
@@ -742,9 +837,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
     def _create_upload_checkbutton(self, param_name: str) -> ttk.Checkbutton:
         """Create a checkbutton for upload selection."""
         fc_connected: bool = self.parameter_editor.is_fc_connected
-        self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=fc_connected)
+        if self.parameters is not None:
+            param = self.parameters[param_name]
+            is_uploadable = not param.is_readonly
+            initially_selected = is_uploadable and fc_connected and (param.is_different_from_fc or not param.has_fc_value)
+        else:
+            is_uploadable = True
+            initially_selected = fc_connected
+        selected = self._upload_selection_defaults.get(param_name, initially_selected) if is_uploadable else False
+        self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=selected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
-        upload_checkbutton.configure(state="normal" if fc_connected else "disabled")
+        upload_checkbutton.configure(state="normal" if fc_connected and is_uploadable else "disabled")
         msg = _("When selected upload {param_name} new value to the flight controller")
         show_tooltip(upload_checkbutton, msg.format(**locals()))
         return upload_checkbutton
@@ -753,11 +856,34 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
         """
         Create a manual override checkbox for forced/derived params, or an empty label for others.
 
-        For forced or derived parameters the checkbox lets the user bypass the automatic
-        value management so they can set the value and change reason freely.  Toggling the
-        checkbox reverts the table by calling repopulate_parameter_table() while preserving
-        the current scroll position.
+        External rows use temporary per-row editing. Normal forced or derived rows retain
+        their persisted manual-override behavior.
         """
+        if self.options.manual_override_for_all_parameters:
+            if param.is_readonly:
+                return ttk.Label(self.view_port, text="")
+
+            var = tk.BooleanVar(value=param.name in self.options.manually_editable_parameters)
+
+            def on_external_toggle() -> None:
+                if var.get():
+                    self.options.manually_editable_parameters.add(param.name)
+                else:
+                    self.options.manually_editable_parameters.discard(param.name)
+                    param.reset_new_value_to_file_value()
+                    difference_label = getattr(self, "_value_is_different_labels", {}).get(param.name)
+                    if difference_label is not None:
+                        difference_label.config(text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
+                self._set_external_value_widget_editability(param, var.get())
+
+            checkbox = ttk.Checkbutton(self.view_port, variable=var, command=on_external_toggle)
+            checkbox._manual_override_var = var  # type: ignore[attr-defined]  # noqa: SLF001 # pylint: disable=protected-access
+            show_tooltip(
+                checkbox,
+                _("Allow this parameter value to be edited before upload. The file will not be changed."),
+            )
+            return checkbox
+
         if not (param.is_forced or param.is_derived) or param.is_readonly:
             return ttk.Label(self.view_port, text="")
 
@@ -1063,4 +1189,25 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors
 
         # Get only selected parameters
         selected_names = [name for name, checkbutton_state in self.upload_checkbutton_var.items() if checkbutton_state.get()]
+        if self.parameters is not None:
+            return self.parameter_editor.parameters_as_par_dict(
+                {
+                    name: self.parameters[name]
+                    for name in selected_names
+                    if name in self.parameters and not self.parameters[name].is_readonly
+                }
+            )
         return self.parameter_editor.get_parameters_as_par_dict(selected_names)
+
+    def get_unselected_manually_edited_different_parameter_names(self) -> list[str]:
+        """Return temporary manual edits that differ from the FC but are not selected for upload."""
+        if self.parameters is None:
+            return []
+        return [
+            name
+            for name in sorted(self.options.manually_editable_parameters)
+            if name in self.parameters
+            and self.parameters[name].is_dirty
+            and self.parameters[name].is_different_from_fc
+            and (name not in self.upload_checkbutton_var or not self.upload_checkbutton_var[name].get())
+        ]
