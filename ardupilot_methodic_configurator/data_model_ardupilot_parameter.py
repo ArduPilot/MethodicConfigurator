@@ -307,6 +307,10 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
         """Return the new value for this parameter (to be saved to file or uploaded to FC)."""
         return self._new_value
 
+    def reset_new_value_to_file_value(self) -> None:
+        """Discard an in-memory value edit and restore the value originally loaded from the file."""
+        self._new_value = self._value_on_file
+
     def get_selected_value_from_dict(self) -> str | None:
         """Return the string representation from the values dictionary for the new value."""
         if self.is_in_values_dict:
