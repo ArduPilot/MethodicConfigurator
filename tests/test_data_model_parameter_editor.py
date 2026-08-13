@@ -2875,6 +2875,47 @@ class TestParameterValueUpdatePresenter:
         assert result.status is ParameterValueUpdateStatus.ERROR
         assert "must be a number" in (result.message or "")
 
+    def test_atomic_update_applies_all_values_on_success(self, parameter_editor) -> None:
+        parameter_editor.current_step_parameters = {
+            "P1": ArduPilotParameter("P1", Par(1.0, "")),
+            "P2": ArduPilotParameter("P2", Par(2.0, "")),
+        }
+
+        result = parameter_editor.update_parameter_values_atomically({"P1": "10", "P2": "20"})
+
+        assert result.status is ParameterValueUpdateStatus.UPDATED
+        assert parameter_editor.current_step_parameters["P1"].get_new_value() == pytest.approx(10.0)
+        assert parameter_editor.current_step_parameters["P2"].get_new_value() == pytest.approx(20.0)
+
+    def test_atomic_update_restores_earlier_values_when_later_value_fails(self, parameter_editor) -> None:
+        parameter_editor.current_step_parameters = {
+            "P1": ArduPilotParameter("P1", Par(1.0, "")),
+            "P2": ArduPilotParameter("P2", Par(2.0, "")),
+        }
+
+        result = parameter_editor.update_parameter_values_atomically({"P1": "10", "P2": "invalid"})
+
+        assert result.status is ParameterValueUpdateStatus.ERROR
+        assert parameter_editor.current_step_parameters["P1"].get_new_value() == pytest.approx(1.0)
+        assert parameter_editor.current_step_parameters["P2"].get_new_value() == pytest.approx(2.0)
+
+    def test_atomic_update_removes_parameters_added_before_failure(self, parameter_editor) -> None:
+        parameter_editor.current_file = "step.param"
+        parameter_editor._local_filesystem.file_parameters = {"step.param": ParDict()}
+        parameter_editor._local_filesystem.doc_dict = {"NEW_PARAM": {}}
+        parameter_editor._local_filesystem.param_default_dict = ParDict({"NEW_PARAM": Par(0.0, "")})
+        parameter_editor.current_step_parameters = {"P1": ArduPilotParameter("P1", Par(1.0, ""))}
+
+        result = parameter_editor.update_parameter_values_atomically(
+            {"NEW_PARAM": "5", "P1": "invalid"},
+            add_missing=True,
+        )
+
+        assert result.status is ParameterValueUpdateStatus.ERROR
+        assert "NEW_PARAM" not in parameter_editor.current_step_parameters
+        assert "NEW_PARAM" not in parameter_editor._added_parameters
+        assert parameter_editor.current_step_parameters["P1"].get_new_value() == pytest.approx(1.0)
+
 
 class TestUnsavedChangesTracking:
     """Test unsaved changes detection for all types of modifications."""

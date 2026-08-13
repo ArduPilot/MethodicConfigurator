@@ -47,8 +47,10 @@ def view_with_model(tk_root, mocker) -> Generator[SimpleNamespace, None, None]:
 
     parameter_editor = MagicMock()
     parameter_editor.current_step_parameters = {}
-    parameter_editor.add_parameter_to_current_file.return_value = True
     parameter_editor.update_parameter_value.return_value = SimpleNamespace(status=ParameterValueUpdateStatus.UPDATED)
+    parameter_editor.update_parameter_values_atomically.return_value = SimpleNamespace(
+        status=ParameterValueUpdateStatus.UPDATED
+    )
 
     parameter_editor_table = MagicMock()
     base_window = SimpleNamespace(
@@ -230,20 +232,17 @@ class TestAhrsOrientationViewCustomOrientation:
         applied = view_with_model.view._apply_custom_orientation(estimate)
 
         assert applied is True
-        assert view_with_model.parameter_editor.add_parameter_to_current_file.call_args_list == [
-            (("CUST_ROT_ENABLE",),),
-            (("AHRS_ORIENTATION",),),
-            (("CUST_ROT1_ROLL",),),
-            (("CUST_ROT1_PITCH",),),
-            (("CUST_ROT1_YAW",),),
-        ]
-        assert view_with_model.parameter_editor.update_parameter_value.call_args_list == [
-            (("CUST_ROT_ENABLE", "1"), {"include_range_check": False}),
-            (("CUST_ROT1_ROLL", "12.3"), {"include_range_check": False}),
-            (("CUST_ROT1_PITCH", "-4.5"), {"include_range_check": False}),
-            (("CUST_ROT1_YAW", "67.8"), {"include_range_check": False}),
-            (("AHRS_ORIENTATION", "101"), {"include_range_check": False}),
-        ]
+        view_with_model.parameter_editor.update_parameter_values_atomically.assert_called_once_with(
+            {
+                "CUST_ROT_ENABLE": "1",
+                "CUST_ROT1_ROLL": "12.3",
+                "CUST_ROT1_PITCH": "-4.5",
+                "CUST_ROT1_YAW": "67.8",
+                "AHRS_ORIENTATION": "101",
+            },
+            add_missing=True,
+            include_range_check=False,
+        )
         view_with_model.parameter_editor_table.repopulate_table.assert_called_once_with(
             show_only_differences=False,
             gui_complexity="simple",

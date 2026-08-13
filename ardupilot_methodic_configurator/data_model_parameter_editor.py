@@ -1917,6 +1917,63 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 message=str(exc),
             )
 
+    def update_parameter_values_atomically(
+        self,
+        updates: dict[str, str],
+        *,
+        add_missing: bool = False,
+        include_range_check: bool = True,
+    ) -> ParameterValueUpdateResult:
+        """Apply a group of parameter updates, restoring all editor state if any update fails."""
+        original_parameters = {param_name: deepcopy(self.current_step_parameters.get(param_name)) for param_name in updates}
+        original_added_parameters = self._added_parameters.copy()
+        original_deleted_parameters = self._deleted_parameters.copy()
+
+        def rollback() -> None:
+            for param_name, original_parameter in original_parameters.items():
+                if original_parameter is None:
+                    self.current_step_parameters.pop(param_name, None)
+                else:
+                    self.current_step_parameters[param_name] = original_parameter
+            self._added_parameters.clear()
+            self._added_parameters.update(original_added_parameters)
+            self._deleted_parameters.clear()
+            self._deleted_parameters.update(original_deleted_parameters)
+
+        changed = False
+        for param_name, new_value in updates.items():
+            if param_name not in self.current_step_parameters and add_missing:
+                try:
+                    if not self.add_parameter_to_current_file(param_name):
+                        rollback()
+                        return ParameterValueUpdateResult(
+                            ParameterValueUpdateStatus.ERROR,
+                            title=_("Parameter update failed"),
+                            message=_("Could not add parameter {param_name}.").format(param_name=param_name),
+                        )
+                    changed = True
+                except (InvalidParameterNameError, OperationNotPossibleError) as exc:
+                    rollback()
+                    return ParameterValueUpdateResult(
+                        ParameterValueUpdateStatus.ERROR,
+                        title=_("Parameter update failed"),
+                        message=str(exc),
+                    )
+
+            result = self.update_parameter_value(
+                param_name,
+                new_value,
+                include_range_check=include_range_check,
+            )
+            if result.status not in (ParameterValueUpdateStatus.UPDATED, ParameterValueUpdateStatus.UNCHANGED):
+                rollback()
+                return result
+            changed = changed or result.status is ParameterValueUpdateStatus.UPDATED
+
+        return ParameterValueUpdateResult(
+            ParameterValueUpdateStatus.UPDATED if changed else ParameterValueUpdateStatus.UNCHANGED
+        )
+
     def get_different_parameters(self) -> dict[str, ArduPilotParameter]:
         """
         Get parameters that are different from FC values or missing from FC.

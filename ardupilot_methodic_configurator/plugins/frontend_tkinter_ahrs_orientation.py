@@ -230,32 +230,29 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
         self._wizard_progress_var.set("")
 
     def _apply_custom_orientation(self, estimate: AhrsOrientationEstimate) -> bool:
-        required_parameters = [
-            "CUST_ROT_ENABLE",
-            "AHRS_ORIENTATION",
-            "CUST_ROT1_ROLL",
-            "CUST_ROT1_PITCH",
-            "CUST_ROT1_YAW",
-        ]
-        for param_name in required_parameters:
-            if not self._ensure_parameter_exists(param_name):
-                return False
+        parameter_editor = getattr(self.base_window, "parameter_editor", None)
+        if parameter_editor is None:
+            return False
 
-        updates = [
-            ("CUST_ROT_ENABLE", "1"),
-            ("CUST_ROT1_ROLL", f"{estimate.custom_roll_deg:.1f}"),
-            ("CUST_ROT1_PITCH", f"{estimate.custom_pitch_deg:.1f}"),
-            ("CUST_ROT1_YAW", f"{estimate.custom_yaw_deg:.1f}"),
-            ("AHRS_ORIENTATION", "101"),
-        ]
-        for param_name, value in updates:
-            if not self._apply_parameter_value(param_name, value):
-                return False
+        result = parameter_editor.update_parameter_values_atomically(
+            {
+                "CUST_ROT_ENABLE": "1",
+                "CUST_ROT1_ROLL": f"{estimate.custom_roll_deg:.1f}",
+                "CUST_ROT1_PITCH": f"{estimate.custom_pitch_deg:.1f}",
+                "CUST_ROT1_YAW": f"{estimate.custom_yaw_deg:.1f}",
+                "AHRS_ORIENTATION": "101",
+            },
+            add_missing=True,
+            include_range_check=False,
+        )
+        if result.status not in (ParameterValueUpdateStatus.UPDATED, ParameterValueUpdateStatus.UNCHANGED):
+            return False
 
         self._refresh_parameter_table()
         return True
 
     def _ensure_parameter_exists(self, param_name: str) -> bool:
+        """Ensure a parameter is available in the current step file."""
         parameter_editor = getattr(self.base_window, "parameter_editor", None)
         if parameter_editor is None:
             return False
