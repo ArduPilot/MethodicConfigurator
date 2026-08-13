@@ -2403,6 +2403,76 @@ class TestFileNavigationMethods:
         # Assert: Should return None
         assert result is None
 
+    def test_get_previous_non_optional_file_skips_optional_steps_in_simple_mode(self, parameter_editor) -> None:
+        """
+        User returns to the preceding required step in simple mode.
+
+        GIVEN: An optional step between the current and preceding required steps
+        WHEN: The user requests the preceding configuration step
+        THEN: The optional step is skipped
+        """
+        # Arrange (Given): Create a sequence containing an optional intermediate step.
+        parameter_editor._local_filesystem.file_parameters = {
+            "01_required.param": {"PARAM1": Par(1.0)},
+            "02_optional.param": {"PARAM2": Par(2.0)},
+            "03_current.param": {"PARAM3": Par(3.0)},
+        }
+        parameter_editor.is_configuration_step_optional = MagicMock(
+            side_effect=lambda filename, threshold_pct=20: filename == "02_optional.param" and threshold_pct >= 0
+        )
+
+        # Act (When): Find the preceding step for the current configuration file.
+        result = parameter_editor.get_previous_non_optional_file("03_current.param")
+
+        # Assert (Then): The preceding required step is selected.
+        assert result == "01_required.param"
+
+    def test_get_previous_non_optional_file_at_beginning(self, parameter_editor) -> None:
+        """
+        User cannot navigate before the first configuration step.
+
+        GIVEN: The first configuration step is active
+        WHEN: The user requests the preceding step
+        THEN: No previous step is available
+        """
+        # Arrange (Given): Create a configuration sequence with the first step selected.
+        parameter_editor._local_filesystem.file_parameters = {
+            "01_first.param": {"PARAM1": Par(1.0)},
+            "02_second.param": {"PARAM2": Par(2.0)},
+        }
+
+        # Act (When): Find the preceding step from the first file.
+        result = parameter_editor.get_previous_non_optional_file("01_first.param")
+
+        # Assert (Then): There is no step before the first one.
+        assert result is None
+
+    def test_user_can_navigate_to_optional_steps_in_advanced_mode(self, parameter_editor) -> None:
+        """
+        User can navigate in either direction through optional steps in advanced mode.
+
+        GIVEN: An optional step sits between two required configuration steps
+        WHEN: The user navigates forward or backward in advanced mode
+        THEN: The adjacent optional step is available in both directions
+        """
+        # Arrange (Given): Create a sequence containing an optional intermediate step.
+        parameter_editor._local_filesystem.file_parameters = {
+            "01_first.param": {"PARAM1": Par(1.0)},
+            "02_optional.param": {"PARAM2": Par(2.0)},
+            "03_last.param": {"PARAM3": Par(3.0)},
+        }
+        parameter_editor.is_configuration_step_optional = MagicMock(
+            side_effect=lambda filename, threshold_pct=20: filename == "02_optional.param" and threshold_pct >= 0
+        )
+
+        # Act (When): Navigate from each required endpoint in advanced mode.
+        next_file = parameter_editor.get_next_non_optional_file("01_first.param", gui_complexity="advanced")
+        previous_file = parameter_editor.get_previous_non_optional_file("03_last.param", gui_complexity="advanced")
+
+        # Assert (Then): Advanced mode exposes the optional adjacent step in either direction.
+        assert next_file == "02_optional.param"
+        assert previous_file == "02_optional.param"
+
 
 class TestResetAndReconnectWorkflow:
     """Test class for reset and reconnect workflow methods."""
