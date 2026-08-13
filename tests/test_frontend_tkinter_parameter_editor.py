@@ -2287,6 +2287,53 @@ class TestSkipButtonWorkflows:
         skip_button_mock = cast("MagicMock", parameter_editor_window.skip_button)
         skip_button_mock.configure.assert_called_once_with(state="normal")
 
+    def test_user_returns_to_previous_file_when_available(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        User can return to the preceding configuration step.
+
+        GIVEN: The current file is not the first configuration step
+        WHEN: The user clicks the previous button
+        THEN: Pending edits are saved and the preceding file is selected
+        """
+        # Arrange
+        parameter_editor_window.previous_button = MagicMock()
+        combobox_mock = cast("MagicMock", parameter_editor_window.file_selection_combobox)
+        combobox_mock.__getitem__.return_value = ("01_first.param", "02_current.param")
+        combobox_mock.get.return_value = "02_current.param"
+
+        # Act
+        with (
+            patch.object(parameter_editor_window, "write_changes_to_intermediate_parameter_file") as mock_write,
+            patch.object(parameter_editor_window, "on_param_file_combobox_change") as mock_change,
+        ):
+            parameter_editor_window.on_previous_click()
+
+        # Assert
+        mock_write.assert_called_once()
+        combobox_mock.set.assert_called_once_with("01_first.param")
+        mock_change.assert_called_once_with(None)
+
+    def test_previous_button_disabled_for_first_file(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        User cannot navigate before the first configuration step.
+
+        GIVEN: The first parameter file is selected
+        WHEN: The navigation controls refresh
+        THEN: The previous button is disabled
+        """
+        # Arrange
+        parameter_editor_window.previous_button = MagicMock()
+        combobox_mock = cast("MagicMock", parameter_editor_window.file_selection_combobox)
+        combobox_mock.__getitem__.return_value = ("01_first.param", "02_second.param")
+        combobox_mock.get.return_value = "01_first.param"
+
+        # Act
+        parameter_editor_window._update_previous_button_state()
+
+        # Assert
+        previous_button_mock = cast("MagicMock", parameter_editor_window.previous_button)
+        previous_button_mock.configure.assert_called_once_with(state="disabled")
+
 
 class TestZipVehicleForForumHelpButton:
     """Test the 'Zip Vehicle for Forum Help' button functionality."""
