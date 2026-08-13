@@ -31,6 +31,26 @@ class TestScrollFrameUserExperience:
             frame.canvas_window = 1
             return frame
 
+    def test_user_sees_no_border_around_the_scrollable_table(self) -> None:
+        """
+        User sees the parameter table flush with its surrounding frame.
+
+        GIVEN a scrollable table rendered by Tk on Windows
+        WHEN its canvas is created
+        THEN both the canvas border and focus highlight are hidden.
+        """
+        with (
+            patch("tkinter.Canvas") as canvas,
+            patch("tkinter.ttk.Frame"),
+            patch("tkinter.Scrollbar"),
+            patch("tkinter.ttk.Style") as style,
+        ):
+            style.return_value.lookup.return_value = "#f0f0f0"
+            ScrollFrame(MagicMock())
+
+        assert canvas.call_args.kwargs["borderwidth"] == 0
+        assert canvas.call_args.kwargs["highlightthickness"] == 0
+
     def test_user_can_scroll_when_content_exceeds_visible_area(self, scrollable_frame) -> None:
         """
         User can scroll through content that doesn't fit in the visible area.
