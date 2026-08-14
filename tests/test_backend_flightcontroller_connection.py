@@ -1801,6 +1801,35 @@ class TestFlightControllerConnectionRetry:
         assert any("udp:127.0.0.1:14550" in c for c in info_calls)
         assert result != ""  # error from no heartbeat
 
+    def test_create_connection_closes_master_when_no_supported_autopilot(self) -> None:
+        """
+        Failed connection attempts release the serial port.
+
+        GIVEN: A MAVLink connection is created but no supported autopilot is found
+        WHEN: create_connection_with_retry returns the connection error
+        THEN: The created master connection should be closed
+        """
+        master = Mock()
+
+        class MasterFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
+            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
+            ) -> Mock:  # type: ignore[override]
+                return master
+
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=MasterFactory(),
+        )
+        connection.comport = mavutil.SerialPort(device="/dev/ttyACM0", description="Test")
+
+        with patch.object(connection, "_detect_vehicles_from_heartbeats", return_value={}):
+            result = connection.create_connection_with_retry(progress_callback=None, retries=1, timeout=1)
+
+        assert result == "No MAVLink heartbeat received, connection failed."
+        master.close.assert_called_once()
+        assert connection.master is None
+
     def test_create_connection_with_retry_raises_connection_error_when_master_is_none(self) -> None:
         """
         create_connection_with_retry raises ConnectionError when factory returns None.
