@@ -873,12 +873,17 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             # Select a supported autopilot
             error = self._select_supported_autopilot(detected_vehicles)
             if error:
+                self.disconnect()
                 return error
 
             # Retrieve autopilot version and banner information
-            return self._retrieve_autopilot_version_and_banner(timeout)
+            error = self._retrieve_autopilot_version_and_banner(timeout)
+            if error:
+                self.disconnect()
+            return error
 
         except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
+            self.disconnect()
             if log_errors:
                 logging_warning(_("Connection failed: %s"), e)
                 logging_error(_("Failed to connect after %d attempts."), retries)
