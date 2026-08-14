@@ -1514,8 +1514,7 @@ class TestFlightControllerConnectionErrorGuidance:
         """
         connection = FlightControllerConnection(info=FlightControllerInfo())
         error = ConnectionError(
-            "/dev/ttyACM1: [Errno 13] could not open port /dev/ttyACM1: "
-            "[Errno 13] Permission denied: '/dev/ttyACM1'"
+            "/dev/ttyACM1: [Errno 13] could not open port /dev/ttyACM1: [Errno 13] Permission denied: '/dev/ttyACM1'"
         )
 
         with patch(
