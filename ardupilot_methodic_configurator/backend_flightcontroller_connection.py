@@ -17,6 +17,7 @@ from logging import warning as logging_warning
 from os import name as os_name
 from os import path as os_path
 from os import readlink as os_readlink
+from sys import platform as sys_platform
 from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, Optional, Union, no_type_check
@@ -602,8 +603,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             str: Guidance message specific to the error type, or empty string if no specific guidance.
 
         """
-        # Check for permission denied errors on Linux
-        if isinstance(error, PermissionError) and os_name == "posix" and "/dev/" in device:
+        # PySerial can wrap the underlying PermissionError in SerialException before
+        # the MAVLink factory wraps it again in ConnectionError.
+        error_text = str(error).lower()
+        is_linux_serial_device = sys_platform == "linux" and "/dev/" in device
+        permission_denied = isinstance(error, PermissionError) or "permission denied" in error_text
+        if permission_denied and is_linux_serial_device:
             return _(
                 "Permission denied accessing the serial port. This is common on Linux systems.\n"
                 "To fix this issue, add your user to the 'dialout' group with the following command:\n"
@@ -611,7 +616,16 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 "Then log out and log back in for the changes to take effect."
             )
 
-        # Add more specific guidance for other error types as needed
+        device_busy = "device or resource busy" in error_text
+        if device_busy and is_linux_serial_device:
+            return _(
+                "The serial port is already in use by another application.\n"
+                "Close other ground-control or serial-monitoring applications, then try again.\n"
+                "To find the process using the port, run:\n"
+                "    lsof {device}\n"
+                "or:\n"
+                "    fuser {device}"
+            ).format(device=device)
 
         return ""
 

@@ -923,6 +923,25 @@ class TestConnectionErrorHandling:
         assert "Permission denied" in error
         assert "/dev/ttyACM0" in error
 
+    def test_permission_error_is_preserved_by_mavlink_factory(self) -> None:
+        """
+        The MAVLink factory preserves PermissionError for connection guidance.
+
+        GIVEN: PyMAVLink raises PermissionError while opening a device
+        WHEN: The system MAVLink factory creates a connection
+        THEN: The original PermissionError should be raised unchanged
+        """
+        factory = SystemMavlinkConnectionFactory()
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink.mavutil.mavlink_connection",
+                side_effect=PermissionError(13, "Permission denied"),
+            ),
+            pytest.raises(PermissionError),
+        ):
+            factory.create(device="/dev/ttyACM0", baudrate=115200)
+
     def test_connection_with_invalid_device_string(self) -> None:
         """
         Connection handles empty device strings gracefully.
@@ -1453,8 +1472,8 @@ class TestFlightControllerConnectionErrorGuidance:
         connection = FlightControllerConnection(info=FlightControllerInfo())
 
         with patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
-            "posix",
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.sys_platform",
+            "linux",
         ):
             guidance = connection._get_connection_error_guidance(
                 PermissionError("Permission denied"),
@@ -1484,6 +1503,68 @@ class TestFlightControllerConnectionErrorGuidance:
             )
 
         assert guidance == ""
+
+    def test_permission_error_on_macos_returns_empty_guidance(self) -> None:
+        """
+        PermissionError on macOS does not return Linux-specific guidance.
+
+        GIVEN: A PermissionError for a macOS serial device
+        WHEN: _get_connection_error_guidance is called on macOS
+        THEN: An empty string should be returned (no Linux guidance)
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.sys_platform",
+            "darwin",
+        ):
+            guidance = connection._get_connection_error_guidance(
+                PermissionError("Permission denied"),
+                "/dev/cu.usbmodem1401",
+            )
+
+        assert guidance == ""
+
+    def test_wrapped_permission_error_on_linux_dev_path_returns_guidance(self) -> None:
+        """
+        A wrapped PySerial permission error returns Linux guidance.
+
+        GIVEN: A ConnectionError containing PySerial's permission-denied message
+        WHEN: _get_connection_error_guidance is called on Linux
+        THEN: A non-empty guidance string about the dialout group should be returned
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        error = ConnectionError(
+            "/dev/ttyACM1: [Errno 13] could not open port /dev/ttyACM1: [Errno 13] Permission denied: '/dev/ttyACM1'"
+        )
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.sys_platform",
+            "linux",
+        ):
+            guidance = connection._get_connection_error_guidance(error, "/dev/ttyACM1")
+
+        assert "dialout" in guidance
+
+    def test_busy_serial_port_on_linux_dev_path_returns_guidance(self) -> None:
+        """
+        A busy Linux serial port returns guidance for finding its owner.
+
+        GIVEN: A connection error reports that a /dev/ serial device is busy
+        WHEN: _get_connection_error_guidance is called on Linux
+        THEN: Guidance should explain how to identify the process using it
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        error = ConnectionError("Device or resource busy")
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.sys_platform",
+            "linux",
+        ):
+            guidance = connection._get_connection_error_guidance(error, "/dev/ttyACM1")
+
+        assert "lsof /dev/ttyACM1" in guidance
+        assert "fuser /dev/ttyACM1" in guidance
 
     def test_non_permission_error_returns_empty_guidance(self) -> None:
         """
@@ -1847,8 +1928,8 @@ class TestFlightControllerConnectionRetry:
         connection.comport = mavutil.SerialPort(device="/dev/ttyACM0", description="Test")
 
         with patch(
-            "ardupilot_methodic_configurator.backend_flightcontroller_connection.os_name",
-            "posix",
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.sys_platform",
+            "linux",
         ):
             result = connection.create_connection_with_retry(progress_callback=None, retries=1, timeout=1, log_errors=False)
 
