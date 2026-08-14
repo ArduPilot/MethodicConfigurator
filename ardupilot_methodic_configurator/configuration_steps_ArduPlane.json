@@ -444,7 +444,7 @@
             "blog_text": "Configure safety parameters including arming checks, geofence, failsafe actions and ESC slew rate limits",
             "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduPlane#691-safety-setup",
             "wiki_text": "Arming Checks",
-            "wiki_url": "https://ardupilot.org/copter/docs/prearm_safety_check.html",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-prearm-safety-checks.html",
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
