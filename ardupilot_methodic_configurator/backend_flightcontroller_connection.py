@@ -602,8 +602,10 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             str: Guidance message specific to the error type, or empty string if no specific guidance.
 
         """
-        # Check for permission denied errors on Linux
-        if isinstance(error, PermissionError) and os_name == "posix" and "/dev/" in device:
+        # PySerial can wrap the underlying PermissionError in SerialException before
+        # the MAVLink factory wraps it again in ConnectionError.
+        permission_denied = isinstance(error, PermissionError) or "permission denied" in str(error).lower()
+        if permission_denied and os_name == "posix" and "/dev/" in device:
             return _(
                 "Permission denied accessing the serial port. This is common on Linux systems.\n"
                 "To fix this issue, add your user to the 'dialout' group with the following command:\n"
@@ -611,7 +613,16 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 "Then log out and log back in for the changes to take effect."
             )
 
-        # Add more specific guidance for other error types as needed
+        device_busy = "device or resource busy" in str(error).lower()
+        if device_busy and os_name == "posix" and "/dev/" in device:
+            return _(
+                "The serial port is already in use by another application.\n"
+                "Close other ground-control or serial-monitoring applications, then try again.\n"
+                "To find the process using the port, run:\n"
+                "    lsof {device}\n"
+                "or:\n"
+                "    fuser {device}"
+            ).format(device=device)
 
         return ""
 
