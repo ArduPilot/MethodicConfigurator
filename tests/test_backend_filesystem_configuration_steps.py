@@ -1651,6 +1651,21 @@ class TestAddFromFCShorthand:
 
         assert config_steps.add_parameters["test_file"]["INS_TCAL2_ENABLE"].comment != ""
 
+    def test_add_from_fc_uses_explicit_change_reason(self, config_steps: ConfigurationSteps) -> None:
+        """
+        An explicit Change Reason overrides the default FC-copy reason.
+
+        GIVEN: An add_parameters entry with a Change Reason and a parameter present in fc_parameters
+        WHEN: compute_add_parameters is called
+        THEN: The configured Change Reason is stored with the copied value
+        """
+        file_info = {"add_parameters": {"INS_TCAL2_ENABLE": {"Change Reason": "Required for DShot telemetry"}}}
+        variables: dict = {"doc_dict": {}, "fc_parameters": {"INS_TCAL2_ENABLE": 2.0}}
+
+        config_steps.compute_add_parameters("test_file", file_info, variables)
+
+        assert config_steps.add_parameters["test_file"]["INS_TCAL2_ENABLE"].comment == "Required for DShot telemetry"
+
 
 # ---------------------------------------------------------------------------
 # Configuration navigation helpers

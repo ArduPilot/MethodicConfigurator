@@ -731,6 +731,38 @@ In configuration step `20_esc.param` configure the frame type and after that tes
 Do this without propellers.
 Remember the **correct order is A, B, C, D** and not 1, 2, 3, 4.
 
+### DShot and bidirectional DShot
+
+If you use DShot ESCs, read the [DShot ESC documentation](https://ardupilot.org/copter/docs/common-dshot-escs.html) and
+the [ESC telemetry documentation](https://ardupilot.org/copter/docs/common-esc-telemetry.html) before configuring the outputs.
+Only use a protocol and frame rate supported by both the flight controller and the ESC firmware.
+
+If the flight controller has an IOMCU, which is indicated by the presence of the `BRD_IO_ENABLE` parameter, Main Out outputs 1-8 are controlled by the IOMCU.
+To use DShot on those outputs with firmware 4.5 or newer, set `BRD_IO_ENABLE` to `1` (IOMCU enabled) and `BRD_IO_DSHOT` to `1` (DShot IOMCU firmware), then upload.
+The alternative `BRD_IO_ENABLE=2` enables the IOMCU without attempting an IOMCU firmware update.
+`BRD_IO_DSHOT=0` selects standard IOMCU firmware.
+This is supported only on boards documented as supporting DShot on their IOMCU outputs.
+Before using Main Out outputs, check the board documentation for the supported output groups and their protocol limitations.
+
+If the flight controller has no IOMCU, outputs 1-8 are FMU outputs.
+Configure the motor functions on the required `SERVOx_FUNCTION` parameters and select the required DShot protocol with `FC->ESC connection, Protocol` in step `09_esc_telemetry.param` and upload;
+no `BRD_IO_ENABLE` or `BRD_IO_DSHOT` configuration is needed.
+On a flight controller with an IOMCU, the same outputs must not be treated as FMU outputs: use the IOMCU procedure above or use supported Aux outputs instead.
+
+If using only Aux, also called AIO, outputs 9-14, configure the corresponding `SERVOx_FUNCTION` parameters and select the required DShot protocol with `FC->ESC connection, Protocol` in step `09_esc_telemetry.param` and upload.
+These outputs are FMU outputs and do not require `BRD_IO_ENABLE` or `BRD_IO_DSHOT`.
+Check the board documentation because outputs in the same timer group must use the same advanced protocol, and bidirectional DShot is not available on every output.
+After uploading the output configuration, check the RC output banner.
+
+Select the DShot rate in `MOT_PWM_TYPE`: use DShot150 for long signal wires or electrically noisy installations, DShot600 for most small vehicles, and DShot300 or DShot600 when using bidirectional DShot.
+DShot does not require ESC calibration; `SERVOx_MIN`, `SERVOx_MAX` and `SERVOx_TRIM` are ignored and the output range is always 1000-2000.
+Do not perform the ESC calibration procedure for DShot.
+
+For bidirectional DShot, make sure the ESCs run compatible BLHeli32, AM32 or supported BLHeli_S firmware and that the autopilot supports bidirectional DShot.
+Set `SERVO_BLH_BDMASK` for the motor outputs, set `SERVO_DSHOT_ESC` to the installed ESC type, and verify the motor pole count configured in the previous step.
+Incorrect firmware, output masks or pole counts can cause unpredictable motor operation or incorrect RPM and harmonic-notch-filter results.
+Test with the propellers removed.
+
 ![Motor test](images/blog/parameter_editor_motor_test.png)
 
 Make sure the `MOT_SPIN_ARM` is high enough so that all motors spin reliably.
