@@ -535,12 +535,25 @@
             "wiki_url": "https://ardupilot.org/copter/docs/motor-thrust-scaling.html",
             "external_tool_text": "ArduPilot Thrust Expo",
             "external_tool_url": "https://firmware.ardupilot.org/Tools/WebTools/ThrustExpo/",
-            "mandatory_text": "40% mandatory (60% optional)",
+            "mandatory_text": "100% mandatory (0% optional)",
             "auto_changed_by": "",
             "autoimport_nondefault_regexp": ["BRD_IO_DSHOT", "BRD_IO_ENABLE", "SERVO_.*"],
             "derived_parameters": {
                 "MOT_PWM_MAX": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "2000", "Change Reason": "Digital ESC protocol maximum is per definition 2000" },
                 "MOT_PWM_MIN": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] not in ['Normal', 'Brushed', 'PWMAngle', 'PWMRange']", "New Value": "1000", "Change Reason": "Digital ESC protocol minimum is per definition 1000" }
+            },
+            "add_parameters": {
+                "BRD_IO_DSHOT": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'BRD_IO_DSHOT' in fc_parameters" },
+                "BRD_IO_ENABLE": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'BRD_IO_ENABLE' in fc_parameters" },
+                "MOT_SPIN_ARM": { "Change Reason": "The minimum value at which the motors start spinning reliably" },
+                "MOT_SPIN_MAX": { "Change Reason": "The maximum value at which the motors spin" },
+                "MOT_SPIN_MIN": { "Change Reason": "MOT_SPIN_ARM plus at least 0.03" },
+                "MOT_THST_EXPO": { "Change Reason": "Throttle exponential curve from datasheet or from motor thrust stand" },
+                "SERVO_BLH_AUTO": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
+                "SERVO_BLH_BDMASK": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200'] and 'SERVO_BLH_BDMASK' in fc_parameters" },
+                "SERVO_DSHOT_ESC": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
+                "SERVO_DSHOT_RATE": { "if": "vehicle_components['ESC']['FC->ESC Connection']['Protocol'] in ['DShot150', 'DShot300', 'DShot600', 'DShot1200']" },
+                "TKOFF_RPM_MIN": { "if": "vehicle_components['ESC']['ESC->FC Telemetry']['Type'] != 'None'", "Change Reason": "For safety reasons, only start takeoff if all motors spin above this RPM" }
             },
             "delete_parameters": {
                 "ESC_HW_POLES": {},

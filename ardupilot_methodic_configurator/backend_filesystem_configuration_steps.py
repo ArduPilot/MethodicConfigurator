@@ -598,7 +598,7 @@ class ConfigurationSteps:
                 self._ensure_file_entry(self.add_parameters, filename)
                 self.add_parameters[filename][parameter] = Par(
                     float(fc_params[parameter]),
-                    _("Copied from the connected flight controller"),
+                    parameter_info.get("Change Reason", _("Copied from the connected flight controller")),
                 )
 
     def compute_deletions(self, filename: str, file_info: dict, variables: dict) -> set[str]:
