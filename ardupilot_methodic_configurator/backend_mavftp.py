@@ -1311,7 +1311,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def ftp_param_decode(data: bytes) -> ParamData | None:  # pylint: disable=too-many-locals
+    def ftp_param_decode(data: bytes) -> ParamData | None:  # pylint: disable=too-many-locals  # noqa: PLR0911,PLR0915
         """Decode parameter data, returning ParamData."""
         pdata = ParamData()
 
@@ -1344,6 +1344,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
             if len(data) == 0:
                 break
+            if len(data) < 2:
+                logging.error("paramftp: truncated parameter header")
+                return None
 
             ptype, plen = struct.unpack("<BB", data[0:2])
             flags = (ptype >> 4) & 0x0F
@@ -1359,10 +1362,15 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
 
             name_len = ((plen >> 4) & 0x0F) + 1
             common_len = plen & 0x0F
+            value_len = type_len + default_len
+            record_len = 2 + name_len + value_len
+            if len(data) < record_len:
+                logging.error("paramftp: truncated parameter record")
+                return None
             name = last_name[0:common_len] + data[2 : 2 + name_len]
-            vdata = data[2 + name_len : 2 + name_len + type_len + default_len]
+            vdata = data[2 + name_len : record_len]
             last_name = name
-            data = data[2 + name_len + type_len + default_len :]
+            data = data[record_len:]
             if with_defaults:
                 if has_default:
                     (
@@ -1456,10 +1464,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                 data = fh.read()
             except OSError as exp:
                 logging.error("FTP: Failed to read file param.pck: %s", exp)
-                sys.exit(1)
+                return MAVFTPReturn("GetParams", ERR_Fail)
             pdata = MAVFTP.ftp_param_decode(data)
             if pdata is None:
-                sys.exit(1)
+                logging.error("FTP: Failed to decode parameter file param.pck")
+                return MAVFTPReturn("GetParams", ERR_Fail)
 
             param_values = MAVFTP.extract_params(pdata.params, sort_type)
             param_defaults = MAVFTP.extract_params(pdata.defaults, sort_type)

@@ -210,34 +210,48 @@ class FlightControllerParams:
         """
         if self.master is None:
             return {}, ParDict()
-        mavftp = create_mavftp(self.master)
+        try:
+            mavftp = create_mavftp(self.master)
 
-        def get_params_progress_callback(completion: float) -> None:
-            if progress_callback is not None and completion is not None:
-                progress_callback(int(completion * 100), 100)
+            def get_params_progress_callback(completion: float) -> None:
+                if progress_callback is not None and completion is not None:
+                    progress_callback(int(completion * 100), 100)
 
-        complete_param_filename = str(parameter_values_filename) if parameter_values_filename else "complete.param"
-        default_param_filename = str(parameter_defaults_filename) if parameter_defaults_filename else "00_default.param"
-        mavftp.cmd_getparams([complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback)
-        # on slow links parameter download might take a long time
-        ret = mavftp.process_ftp_reply("getparams", timeout=self.MAVFTP_GETPARAMS_TIMEOUT)
-        pdict: dict[str, float] = {}
-        defdict: ParDict = ParDict()
+            complete_param_filename = str(parameter_values_filename) if parameter_values_filename else "complete.param"
+            default_param_filename = str(parameter_defaults_filename) if parameter_defaults_filename else "00_default.param"
+            mavftp.cmd_getparams(
+                [complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback
+            )
+            # On slow links parameter download might take a long time.
+            ret = mavftp.process_ftp_reply("getparams", timeout=self.MAVFTP_GETPARAMS_TIMEOUT)
+            pdict: dict[str, float] = {}
+            defdict = ParDict()
 
-        # add a file sync operation to ensure the file is completely written
-        time_sleep(self.FILE_SYNC_DELAY)
-        if ret.error_code == 0:
-            # load the parameters from the file
-            par_dict = ParDict.from_file(complete_param_filename)
-            pdict = {name: data.value for name, data in par_dict.items()}
-            defdict = ParDict.from_file(default_param_filename)
-        else:
-            ret.display_message()
+            # Add a file sync operation to ensure the file is completely written.
+            time_sleep(self.FILE_SYNC_DELAY)
+            if ret.error_code == 0:
+                par_dict = ParDict.from_file(complete_param_filename)
+                pdict = {name: data.value for name, data in par_dict.items()}
+                defdict = ParDict.from_file(default_param_filename)
+            else:
+                ret.display_message()
 
-        if progress_callback is not None:
-            progress_callback(100, 100)
-
-        return pdict, defdict
+            return pdict, defdict
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_warning(
+                _("MAVFTP parameter download failed; falling back to MAVLink: %(error)s"),
+                {"error": str(error)},
+            )
+            return {}, ParDict()
+        finally:
+            if progress_callback is not None:
+                try:
+                    progress_callback(100, 100)
+                except Exception as error:  # pylint: disable=broad-exception-caught
+                    logging_warning(
+                        _("MAVFTP parameter download progress update failed: %(error)s"),
+                        {"error": str(error)},
+                    )
 
     def set_param(self, param_name: str, param_value: float) -> tuple[bool, str]:
         """
