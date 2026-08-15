@@ -47,7 +47,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 if TYPE_CHECKING:
     from pymavlink.dialects.v20.ardupilotmega import MAVLink_autopilot_version_message
 
-DEFAULT_REBOOT_TIME: int = 7
+DEFAULT_REBOOT_TIME: int = 8
 
 # Re-export constants for backwards compatibility
 __all__ = [
