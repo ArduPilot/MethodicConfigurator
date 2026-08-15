@@ -8163,11 +8163,11 @@ msgstr "Estado: Foram encontrados {n} problema(s) potencial(is) para rever."
 msgid ""
 "ARM messages not found, that is unexpected since arm/disarm events are "
 "always logged"
-msgstr ""
+msgstr "Mensagens ARM não encontradas; isto é inesperado, uma vez que os eventos de armar/desarmar são sempre registados"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:34
 msgid "No ARM messages found"
-msgstr ""
+msgstr "Não foram encontradas mensagens ARM"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:62
 msgid "{name} data present and good for analysis"
@@ -8179,31 +8179,31 @@ msgstr "Os dados de {name} têm problemas de qualidade"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:131
 msgid "{message} logging is disabled in LOG_BITMASK"
-msgstr ""
+msgstr "O registo de {message} está desativado em LOG_BITMASK"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:132
 msgid "Enable {message} logging (LOG_BITMASK bit)"
-msgstr ""
+msgstr "Ative o registo de {message} (bit LOG_BITMASK)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:135
 msgid "{message} telemetry not logged but logging enabled; {hint}"
-msgstr ""
+msgstr "A telemetria de {message} não foi registada, mas o registo está ativado; {hint}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:138
 msgid "No {message} messages found"
-msgstr ""
+msgstr "Não foram encontradas mensagens {message}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:154
 msgid "{field} field not present in this firmware's {msg} schema"
-msgstr ""
+msgstr "O campo {field} não está presente no esquema {msg} deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:157
 msgid "{field} values missing from {msg} records"
-msgstr ""
+msgstr "Faltam valores de {field} nos registos {msg}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:39
 msgid "check the battery monitor physical connection"
-msgstr ""
+msgstr "verifique a ligação física do monitor da bateria"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
 msgid "Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)"
@@ -8292,7 +8292,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_err.py:36
 msgid "No errors logged during this flight"
-msgstr ""
+msgstr "Não foram registados erros durante este voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:45
 msgid "ESC telemetry not logged"
@@ -8353,37 +8353,37 @@ msgstr "Taxa de erros do ESC detetada em pelo menos uma instância de ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:42
 msgid "Raw IMU batch logging is disabled (INS_LOG_BAT_MASK is 0)"
-msgstr ""
+msgstr "O registo em lote da IMU bruta está desativado (INS_LOG_BAT_MASK é 0)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:45
 msgid "Set INS_LOG_BAT_MASK to enable raw IMU batch logging for FFT analysis"
-msgstr ""
+msgstr "Defina INS_LOG_BAT_MASK para ativar o registo em lote da IMU bruta para análise FFT"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:50
 msgid ""
 "Raw IMU batch logging enabled but no data, check firmware build supports "
 "batch logging"
-msgstr ""
+msgstr "Registo em lote da IMU bruta ativado, mas sem dados; verifique se a compilação do firmware suporta o registo em lote"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:51
 msgid "No ISBH messages found"
-msgstr ""
+msgstr "Não foram encontradas mensagens ISBH"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:63
 msgid "ISBH header present but ISBD batch samples are missing"
-msgstr ""
+msgstr "Cabeçalho ISBH presente, mas faltam amostras em lote ISBD"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:71
 msgid "{field} field not present in this firmware's ISBD schema"
-msgstr ""
+msgstr "O campo {field} não está presente no esquema ISBD deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:72
 msgid "{field} values missing from ISBD records"
-msgstr ""
+msgstr "Faltam valores de {field} nos registos ISBD"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:40
 msgid "check the GPS physical connection"
-msgstr ""
+msgstr "verifique a ligação física do GPS"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:49
 msgid "Status field not present in this firmware's GPS schema"
@@ -8403,99 +8403,99 @@ msgstr "Tipo de GPS não configurado (definido como None)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:39
 msgid "check firmware build supports IMU logging"
-msgstr ""
+msgstr "verifique se a compilação do firmware suporta o registo da IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:48
 msgid "EG field not present in this firmware's IMU schema"
-msgstr ""
+msgstr "O campo EG não está presente no esquema IMU deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:49
 msgid "Gyroscope error count missing from IMU records"
-msgstr ""
+msgstr "Falta a contagem de erros do giroscópio nos registos IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:52
 msgid "Gyroscope error count detected on at least one IMU instance"
-msgstr ""
+msgstr "Foi detetada contagem de erros do giroscópio em pelo menos uma instância da IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:60
 msgid "EA field not present in this firmware's IMU schema"
-msgstr ""
+msgstr "O campo EA não está presente no esquema IMU deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:61
 msgid "Accelerometer error count missing from IMU records"
-msgstr ""
+msgstr "Falta a contagem de erros do acelerómetro nos registos IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:64
 msgid "Accelerometer error count detected on at least one IMU instance"
-msgstr ""
+msgstr "Foi detetada contagem de erros do acelerómetro em pelo menos uma instância da IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:74
 msgid "GH field not present in this firmware's IMU schema"
-msgstr ""
+msgstr "Campo GH não presente no esquema IMU deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:75
 msgid "Gyroscope health missing from IMU records"
-msgstr ""
+msgstr "Estado de saúde do giroscópio ausente dos registos IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:79
 msgid "Gyroscope reported unhealthy at some point during the flight"
-msgstr ""
+msgstr "Foi reportado que o giroscópio esteve em mau estado em algum momento durante o voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:84
 msgid "AH field not present in this firmware's IMU schema"
-msgstr ""
+msgstr "Campo AH não presente no esquema IMU deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:85
 msgid "Accelerometer health missing from IMU records"
-msgstr ""
+msgstr "Estado de saúde do acelerómetro ausente dos registos IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:89
 msgid "Accelerometer reported unhealthy at some point during the flight"
-msgstr ""
+msgstr "Foi reportado que o acelerómetro esteve em mau estado em algum momento durante o voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:101
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:114
 msgid "{field} field not present in this firmware's IMU schema"
-msgstr ""
+msgstr "Campo {field} não presente no esquema IMU deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:102
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:115
 msgid "{field} values missing from IMU records"
-msgstr ""
+msgstr "Valores de {field} ausentes dos registos IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:107
 msgid "{field} is zero throughout, gyroscope may not be reading"
-msgstr ""
+msgstr "{field} está a zero em todo o registo; o giroscópio pode não estar a ler"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:120
 msgid "{field} is zero throughout, accelerometer may not be reading"
-msgstr ""
+msgstr "{field} está a zero em todo o registo; o acelerómetro pode não estar a ler"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:43
 msgid ""
 "MODE messages not found, this is unexpected since mode changes are always "
 "logged"
-msgstr ""
+msgstr "Mensagens MODE não encontradas; isto é inesperado, uma vez que as alterações de modo são sempre registadas"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:44
 msgid "No MODE messages found"
-msgstr ""
+msgstr "Nenhuma mensagem MODE encontrada"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_pm.py:43
 msgid "check firmware build supports performance monitor logging"
-msgstr ""
+msgstr "verifique se a compilação do firmware suporta o registo do monitor de desempenho"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:54
 msgid "check that IMU data is being logged, since VIBE is derived from it"
-msgstr ""
+msgstr "verifique se os dados IMU estão a ser registados, uma vez que o VIBE é derivado deles"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:67
 msgid "Clip field not present in this firmware's VIBE schema"
-msgstr ""
+msgstr "Campo Clip não presente no esquema VIBE deste firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:68
 msgid "Clip values missing from VIBE records"
-msgstr ""
+msgstr "Valores de Clip ausentes dos registos VIBE"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:31
 msgid "Place vehicle LEVEL and click Continue"
