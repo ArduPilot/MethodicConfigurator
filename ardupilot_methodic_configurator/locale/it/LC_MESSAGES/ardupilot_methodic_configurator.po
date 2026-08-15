@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0.16\n"
-"POT-Creation-Date: 2026-08-15 09:48+0000\n"
+"POT-Creation-Date: 2026-08-15 14:48+0000\n"
 "PO-Revision-Date: 2025-02-05 01:24+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -1250,82 +1250,82 @@ msgstr ""
 msgid "Error reading compass calibration progress: %(error)s"
 msgstr "Errore nella lettura dell'avanzamento calibrazione bussola: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:195
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:203
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:196
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:204
 msgid "Add another"
 msgstr "Aggiungi altro"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:212
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:213
 msgid "Available connection ports are:"
 msgstr "Le porte di connessione disponibili sono:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:219
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:220
 msgid "Connection port added: %s - %s"
 msgstr "Porta di connessione aggiunta: %s - %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:221
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:222
 msgid "Connection port removed: %s - %s"
 msgstr "Porta di connessione rimossa: %s - %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:248
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:249
 msgid "Added connection %s"
 msgstr "Aggiunta connessione %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:250
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:251
 msgid "Did not add duplicated connection %s"
 msgstr "Non è stata aggiunta la connessione duplicata %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:252
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:253
 msgid "Did not add empty connection"
 msgstr "Non è stata aggiunta la connessione vuota"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:345
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:346
 msgid "Auto-detected device %s"
 msgstr "Dispositivo rilevato automaticamente %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:351
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:352
 msgid "Resolved soft link %s to %s"
 msgstr "Collegamento simbolico risolto da %s a %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:371
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:372
 msgid "Trying network port %s"
 msgstr "Tentativo porta di rete %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:385
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:386
 msgid "No auto-detected ports responded."
 msgstr "Nessuna delle porte rilevate automaticamente ha risposto."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:455
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:456
 msgid "Detected vehicle %u:%u (autopilot=%u, type=%u)"
 msgstr "Veicolo rilevato %u:%u (autopilot=%u, type=%u)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:471
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:472
 msgid "No MAVLink heartbeat received, connection failed."
 msgstr "Nessun heartbeat MAVLink ricevuto, connessione fallita."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:476
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:477
 msgid "Connection established with systemID %s, componentID %s."
 msgstr "Connessione stabilita con systemID %s, componentID %s."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:480
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:481
 msgid "Autopilot type {self.info.autopilot}"
 msgstr "Tipo di autopilota {self.info.autopilot}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:483
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:484
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
 "Tipo di veicolo: {self.info.mav_type} con firmware {self.info.vehicle_type}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:486
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:487
 msgid "Unsupported autopilot type {self.info.autopilot}"
 msgstr "Tipo di autopilota non supportato {self.info.autopilot}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:489
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:490
 msgid "No supported autopilots found"
 msgstr "Nessun autopilota supportato trovato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:607
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:612
 msgid ""
 "Permission denied accessing the serial port. This is common on Linux "
 "systems.\n"
@@ -1342,12 +1342,23 @@ msgstr ""
 "Dopo di che, disconnettiti e riconnettiti affinché le modifiche abbiano "
 "effetto."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:643
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:621
+msgid ""
+"The serial port is already in use by another application.\n"
+"Close other ground-control or serial-monitoring applications, then try "
+"again.\n"
+"To find the process using the port, run:\n"
+"    lsof {device}\n"
+"or:\n"
+"    fuser {device}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:657
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr ""
 "Incompatibilità versione ChibiOS: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:709
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:723
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -1357,29 +1368,29 @@ msgstr ""
 "Sono supportate solo versioni di ArduPilot più recenti di 4.3.8.\n"
 "Assicurarsi che il parametro SERIAL0_PROTOCOL sia impostato su 2"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:727
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:741
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr ""
 "Mancata corrispondenza tipo firmware FC: %s (BANNER) != %s "
 "(AUTOPILOT_VERSION)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:853
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:867
 msgid "Will connect to %s"
 msgstr "Si connetterà a %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:855
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:869
 msgid "Will connect to %s @ %u baud"
 msgstr "Connessione a %s @ %u baud"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:865
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:879
 msgid "Waiting for MAVLink heartbeats..."
 msgstr "In attesa di heartbeat MAVLink..."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:883
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:902
 msgid "Connection failed: %s"
 msgstr "Connessione fallita: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:884
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:903
 msgid "Failed to connect after %d attempts."
 msgstr "Impossibile connettersi dopo %d tentativi."
 
@@ -8221,7 +8232,9 @@ msgstr "Stato: trovati {n} potenziali problemi da esaminare."
 msgid ""
 "ARM messages not found, that is unexpected since arm/disarm events are "
 "always logged"
-msgstr "Messaggi ARM non trovati, cosa inaspettata poiché gli eventi di arm/disarm vengono sempre registrati"
+msgstr ""
+"Messaggi ARM non trovati, cosa inaspettata poiché gli eventi di arm/disarm "
+"vengono sempre registrati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:34
 msgid "No ARM messages found"
@@ -8245,7 +8258,9 @@ msgstr "Abilita la registrazione di {message} (bit LOG_BITMASK)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:135
 msgid "{message} telemetry not logged but logging enabled; {hint}"
-msgstr "La telemetria {message} non è registrata ma la registrazione è abilitata; {hint}"
+msgstr ""
+"La telemetria {message} non è registrata ma la registrazione è abilitata; "
+"{hint}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:138
 msgid "No {message} messages found"
@@ -8413,17 +8428,22 @@ msgstr "Rilevato un tasso di errore ESC su almeno un'istanza ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:42
 msgid "Raw IMU batch logging is disabled (INS_LOG_BAT_MASK is 0)"
-msgstr "La registrazione batch dell'IMU grezza è disabilitata (INS_LOG_BAT_MASK è 0)"
+msgstr ""
+"La registrazione batch dell'IMU grezza è disabilitata (INS_LOG_BAT_MASK è 0)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:45
 msgid "Set INS_LOG_BAT_MASK to enable raw IMU batch logging for FFT analysis"
-msgstr "Impostare INS_LOG_BAT_MASK per abilitare la registrazione batch dell'IMU grezza per l'analisi FFT"
+msgstr ""
+"Impostare INS_LOG_BAT_MASK per abilitare la registrazione batch dell'IMU "
+"grezza per l'analisi FFT"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:50
 msgid ""
 "Raw IMU batch logging enabled but no data, check firmware build supports "
 "batch logging"
-msgstr "Registrazione batch dell'IMU grezza abilitata ma nessun dato, verificare che la build del firmware supporti la registrazione batch"
+msgstr ""
+"Registrazione batch dell'IMU grezza abilitata ma nessun dato, verificare che "
+"la build del firmware supporti la registrazione batch"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:51
 msgid "No ISBH messages found"
@@ -8433,11 +8453,11 @@ msgstr "Nessun messaggio ISBH trovato"
 msgid "ISBH header present but ISBD batch samples are missing"
 msgstr "Intestazione ISBH presente ma i campioni batch ISBD sono mancanti"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:71
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:70
 msgid "{field} field not present in this firmware's ISBD schema"
 msgstr "Il campo {field} non è presente nello schema ISBD di questo firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:72
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:71
 msgid "{field} values missing from ISBD records"
 msgstr "Valori di {field} mancanti dai record ISBD"
 
@@ -8511,7 +8531,8 @@ msgstr "Stato dell'accelerometro mancante nei record IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:89
 msgid "Accelerometer reported unhealthy at some point during the flight"
-msgstr "L'accelerometro ha segnalato uno stato non valido in un momento del volo"
+msgstr ""
+"L'accelerometro ha segnalato uno stato non valido in un momento del volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:101
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:114
@@ -8535,7 +8556,9 @@ msgstr "{field} è zero ovunque, l'accelerometro potrebbe non leggere"
 msgid ""
 "MODE messages not found, this is unexpected since mode changes are always "
 "logged"
-msgstr "Messaggi MODE non trovati, cosa inaspettata poiché i cambi di modalità vengono sempre registrati"
+msgstr ""
+"Messaggi MODE non trovati, cosa inaspettata poiché i cambi di modalità "
+"vengono sempre registrati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:44
 msgid "No MODE messages found"
@@ -8543,11 +8566,14 @@ msgstr "Nessun messaggio MODE trovato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_pm.py:43
 msgid "check firmware build supports performance monitor logging"
-msgstr "verifica che la build del firmware supporti la registrazione del monitor delle prestazioni"
+msgstr ""
+"verifica che la build del firmware supporti la registrazione del monitor "
+"delle prestazioni"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:54
 msgid "check that IMU data is being logged, since VIBE is derived from it"
-msgstr "verifica che i dati IMU vengano registrati, poiché VIBE è derivato da essi"
+msgstr ""
+"verifica che i dati IMU vengano registrati, poiché VIBE è derivato da essi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:67
 msgid "Clip field not present in this firmware's VIBE schema"
