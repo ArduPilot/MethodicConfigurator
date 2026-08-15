@@ -54,6 +54,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
 )
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
+from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_log_quality import LogQualityReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
@@ -394,18 +395,33 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         self.legend_frame(config_subframe)
 
+        parameter_actions_frame = ttk.Frame(config_subframe)
+        parameter_actions_frame.pack(side=tk.LEFT, anchor=tk.NW)
+
         compare_and_upload_button = ttk.Button(
-            config_subframe,
+            parameter_actions_frame,
             text=_("Compare and upload"),
             command=self.on_compare_and_upload_parameter_file_click,
         )
         compare_and_upload_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
-        compare_and_upload_button.pack(side=tk.LEFT, padx=(6, 2), anchor=tk.NW)
+        compare_and_upload_button.grid(row=0, column=0, padx=(6, 2), sticky=tk.NW)
         show_tooltip(
             compare_and_upload_button,
             _("Select a .parm or .param file to compare with the FC and optionally upload")
             if self.parameter_editor.is_fc_connected
             else _("No flight controller connected, external parameter upload not available"),
+        )
+
+        fc_banner_button = ttk.Button(
+            parameter_actions_frame,
+            text=_("FC banner"),
+            command=self.on_fc_banner_click,
+        )
+        fc_banner_button.configure(state="normal" if self.parameter_editor.is_fc_connected else "disabled")
+        fc_banner_button.grid(row=1, column=0, padx=(8, 8), pady=(4, 0), sticky=tk.NW)
+        show_tooltip(
+            fc_banner_button,
+            _("Display the latest flight-controller banner"),
         )
 
         image_label = self.put_image_in_label(config_frame, LocalFilesystem.application_logo_filepath())
@@ -1510,6 +1526,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             progress_callback=progress_window.update_progress_bar,
         )
         progress_window.destroy()
+
+    def on_fc_banner_click(self) -> None:
+        """Display the latest flight-controller banner."""
+        FlightControllerBannerWindow(self.root, self.parameter_editor.get_fc_banner_text())
 
     def on_zip_vehicle_for_forum_help_click(self) -> None:
         """Handle the zip vehicle for forum help button click."""

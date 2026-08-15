@@ -735,6 +735,19 @@ class TestParameterEditorIntegration:
         assert fc_params is not None
         assert isinstance(fc_params, dict)
 
+    def test_user_can_read_the_flight_controller_banner(self, parameter_editor) -> None:
+        """
+        ParameterEditor exposes the banner captured by the flight controller.
+
+        GIVEN: The flight controller has captured banner messages
+        WHEN: The parameter editor requests the banner text
+        THEN: The same messages are returned to the frontend
+        """
+        banner_text = ["ArduCopter V4.5.0", "ChibiOS: abc1234"]
+        parameter_editor._flight_controller.banner_text_buffer = banner_text
+
+        assert parameter_editor.get_fc_banner_text() == banner_text
+
     def test_user_accesses_filesystem_through_parameter_editor(self, parameter_editor) -> None:
         """
         User accesses filesystem functionality through the ParameterEditor.

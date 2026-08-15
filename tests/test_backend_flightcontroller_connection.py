@@ -317,6 +317,7 @@ class TestFlightControllerConnectionLifecycle:
         connection = FlightControllerConnection(info=info)
         mock_master = Mock()
         connection.set_master_for_testing(mock_master)
+        connection._banner_text_buffer = ["stale banner"]
 
         # When: Disconnect
         connection.disconnect()
@@ -324,6 +325,7 @@ class TestFlightControllerConnectionLifecycle:
         # Then: Connection closed
         assert connection.master is None
         mock_master.close.assert_called_once()
+        assert not connection.banner_text_buffer
         assert info.system_id == ""
         assert not info.capabilities
 
@@ -378,12 +380,14 @@ class TestFlightControllerConnectionLifecycle:
         info.system_id = "11"
         info.capabilities["FTP"] = "supported"
         connection = FlightControllerConnection(info=info)
+        connection._banner_text_buffer = ["stale banner"]
 
         # When: Connect with device="none"
         result = connection.connect(device="none")
 
         # Then: Info reset and no error reported
         assert result == ""
+        assert not connection.banner_text_buffer
         assert info.system_id == ""
         assert not info.capabilities
 
@@ -1428,6 +1432,34 @@ class TestFlightControllerConnectionBannerMethods:
         result = connection._receive_banner_text()
         assert not result
 
+    def test_receive_banner_text_retains_banner_without_reset_capture(self) -> None:
+        """The latest banner is retained even when no reset capture is active."""
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_master = Mock()
+        msg = Mock()
+        msg.text = "ArduCopter V4.5.0"
+        call_count = 0
+
+        def recv_match_side_effect(**_kwargs) -> Mock | None:
+            nonlocal call_count
+            call_count += 1
+            return msg if call_count == 1 else None
+
+        mock_master.recv_match = recv_match_side_effect
+        connection.master = mock_master
+
+        start = real_time()
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time",
+                side_effect=[start, start, start, start + 9999],
+            ),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep"),
+        ):
+            connection._receive_banner_text()
+
+        assert connection.banner_text_buffer == ["ArduCopter V4.5.0"]
+
     def test_request_message_calls_command_long_send_when_master_is_set(self) -> None:
         """
         _request_message sends a MAVLink command for the given message IDs.
@@ -2390,11 +2422,13 @@ class TestFlightControllerConnectionSetMaster:
         mock_comport = Mock()
         mock_comport.device = "/dev/ttyUSB0"
         connection.comport = mock_comport
+        connection._banner_text_buffer = ["stale banner"]
 
         connection.set_master_for_testing(None)
 
         assert connection.comport is None
         assert connection.master is None
+        assert not connection.banner_text_buffer
 
     def test_set_master_for_testing_with_object_keeps_comport(self) -> None:
         """

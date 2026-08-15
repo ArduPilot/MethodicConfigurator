@@ -464,6 +464,78 @@ class TestRunLoop:  # pylint: disable=too-few-public-methods
 class TestWidgetFactoryMethods:
     """Cover the widget factory helpers inside the parameter editor window."""
 
+    @pytest.mark.parametrize(
+        ("is_fc_connected", "expected_state"),
+        [(True, "normal"), (False, "disabled")],
+    )
+    def test_fc_banner_button_reflects_connection_state(
+        self,
+        parameter_editor: MagicMock,
+        is_fc_connected: bool,
+        expected_state: str,
+    ) -> None:
+        """
+        FC banner button is available only when the flight controller is connected.
+
+        GIVEN: The parameter editor reports a connected or disconnected flight controller
+        WHEN: Configuration widgets are created
+        THEN: The FC banner button has the matching enabled state
+        """
+        editor = _create_editor(parameter_editor)
+        editor.main_frame = MagicMock()
+        parameter_editor.is_fc_connected = is_fc_connected
+        parameter_editor.parameter_files.return_value = ["01_initial.param"]
+        parameter_editor.get_vehicle_directory.return_value = "vehicle_dir"
+
+        directory_widget = MagicMock()
+        button_widgets = [MagicMock(), MagicMock()]
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Frame", return_value=MagicMock()),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Label", return_value=MagicMock()),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.VehicleDirectorySelectionWidgets",
+                return_value=directory_widget,
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.AutoResizeCombobox",
+                return_value=MagicMock(),
+            ),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.ttk.Button",
+                side_effect=button_widgets,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.show_tooltip"),
+            patch.object(
+                ParameterEditorWindow,
+                "put_image_in_label",
+                return_value=MagicMock(pack=MagicMock(), bind=MagicMock()),
+            ),
+        ):
+            editor._create_conf_widgets("__VERSION__")
+
+        button_widgets[1].configure.assert_called_once_with(state=expected_state)
+        button_widgets[0].grid.assert_called_once_with(row=0, column=0, padx=(6, 2), sticky=tk.NW)
+        button_widgets[1].grid.assert_called_once_with(row=1, column=0, padx=(8, 8), pady=(4, 0), sticky=tk.NW)
+
+    def test_user_can_open_the_flight_controller_banner(self, parameter_editor_window: ParameterEditorWindow) -> None:
+        """
+        User can open the latest flight-controller banner from the parameter editor.
+
+        GIVEN: Captured banner text is available in the data model
+        WHEN: User clicks the FC banner action
+        THEN: A banner window opens with the captured text
+        """
+        banner_text = ["ArduCopter V4.5.0", "ChibiOS: abc1234"]
+        parameter_editor_window.parameter_editor.get_fc_banner_text.return_value = banner_text
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.FlightControllerBannerWindow"
+        ) as banner_window:
+            parameter_editor_window.on_fc_banner_click()
+
+        banner_window.assert_called_once_with(parameter_editor_window.root, banner_text)
+
     def test_create_conf_widgets_configures_combobox(self, parameter_editor: MagicMock) -> None:
         editor = _create_editor(parameter_editor)
         editor.main_frame = MagicMock()

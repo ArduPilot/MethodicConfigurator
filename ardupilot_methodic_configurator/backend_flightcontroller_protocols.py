@@ -147,6 +147,9 @@ class FlightControllerConnectionProtocol(Protocol):
 
         """
 
+    @property
+    def banner_text_buffer(self) -> list[str]: ...
+
     def _detect_vehicles_from_heartbeats(self, timeout: int) -> dict[tuple[int, int], Any]: ...
 
     def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: int | None) -> str: ...

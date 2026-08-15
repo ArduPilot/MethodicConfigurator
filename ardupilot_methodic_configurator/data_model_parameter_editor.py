@@ -182,6 +182,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     def is_fc_connected(self) -> bool:
         return self._flight_controller.master is not None and bool(self._flight_controller.fc_parameters)
 
+    def get_fc_banner_text(self) -> list[str]:
+        """Return the latest flight-controller banner text."""
+        return self._flight_controller.banner_text_buffer
+
     @property
     def fc_parameters(self) -> dict[str, float]:
         return (
