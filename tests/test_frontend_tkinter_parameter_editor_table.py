@@ -1683,7 +1683,9 @@ class TestUIErrorInfoHandling:
         with (
             patch.object(parameter_editor_table, "_create_column_widgets") as mock_create_widgets,
             patch("tkinter.ttk.Button") as mock_button,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tooltip,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip_lazily"
+            ) as mock_tooltip,
         ):
             mock_create_widgets.return_value = [MagicMock() for _ in range(8)]  # Mock 8 column widgets
 
@@ -1729,6 +1731,39 @@ class TestUIErrorInfoHandling:
             parameter_editor_table._update_table(params, "simple")
 
         assert mock_update_idletasks.call_count == 2
+
+    def test_user_can_interact_while_a_large_external_file_renders_in_batches(self, parameter_editor_table) -> None:
+        """
+        User can use the window while a large external parameter file is rendered.
+
+        GIVEN: An external table configured to render twenty rows per batch
+        WHEN: It starts rendering twenty-one parameters
+        THEN: The first batch is created immediately and the remainder is queued for idle time
+        """
+        params = {
+            f"TEST_PARAM_{index:02d}": create_mock_data_model_ardupilot_parameter(
+                name=f"TEST_PARAM_{index:02d}", value=float(index)
+            )
+            for index in range(1, 22)
+        }
+        parameter_editor_table.options.render_batch_size = 20
+        parameter_editor_table.view_port = MagicMock()
+        parameter_editor_table.after_idle = MagicMock()
+
+        with (
+            patch.object(parameter_editor_table, "_create_column_widgets", return_value=[MagicMock()]) as mock_create_widgets,
+            patch.object(parameter_editor_table, "_grid_column_widgets"),
+            patch.object(parameter_editor_table, "_configure_table_columns"),
+            patch.object(parameter_editor_table, "_apply_scroll_position"),
+        ):
+            parameter_editor_table._update_table_in_batches(params, "simple", scroll_to_bottom=False)
+
+            assert mock_create_widgets.call_count == 20
+            parameter_editor_table.after_idle.assert_called_once()
+
+            parameter_editor_table.after_idle.call_args.args[0]()
+
+        assert mock_create_widgets.call_count == 21
 
     def test_create_flightcontroller_value_sets_correct_background_colors(self, parameter_editor_table) -> None:  # pylint: disable=too-many-statements # noqa: PLR0915
         """
@@ -2187,7 +2222,7 @@ class TestWidgetFactoryHelpers:
             metadata={"doc_tooltip": "tooltip"},
         )
 
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tip:
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip_lazily") as mock_tip:
             label = parameter_editor_table._create_parameter_name(param)
 
         assert isinstance(label, ttk.Label)
@@ -2234,7 +2269,7 @@ class TestWidgetFactoryHelpers:
 
     def test_create_unit_label_sets_tooltip(self, parameter_editor_table: ParameterEditorTable) -> None:
         param = create_mock_data_model_ardupilot_parameter(metadata={"unit": "m/s", "unit_tooltip": "unit"})
-        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip") as mock_tip:
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip_lazily") as mock_tip:
             label = parameter_editor_table._create_unit_label(param)
         assert isinstance(label, ttk.Label)
         mock_tip.assert_called_once_with(label, "unit")

@@ -44,7 +44,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import
 )
 from ardupilot_methodic_configurator.frontend_tkinter_rich_text import get_widget_font_family_and_size
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
-from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
+from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip, show_tooltip_lazily
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_window import UsagePopupWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import (  # pylint: disable=cyclic-import
     display_bitmask_parameters_editor_usage_popup,
@@ -80,6 +80,8 @@ class ParameterTableOptions:  # pylint: disable=too-many-instance-attributes
     skip_when_no_differences: bool = True
     manual_override_for_all_parameters: bool = False
     manually_editable_parameters: set[str] = field(default_factory=set)
+    render_batch_size: int | None = None
+    defer_tooltips: bool = True
 
 
 class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
@@ -112,6 +114,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self._upload_selection_defaults: dict[str, bool] = {}
         self._new_value_widgets: dict[str, PairTupleCombobox | ttk.Entry] = {}
         self._value_is_different_labels: dict[str, ttk.Label] = {}
+        self._table_render_generation = 0
+        self._reserved_table_rows = 0
 
         # Track last return values to prevent duplicate event processing
         self._last_return_values: dict[tk.Misc, str] = {}
@@ -126,6 +130,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         while widget is not None and not isinstance(widget, tk.Tk):
             widget = widget.master
         return widget if isinstance(widget, tk.Tk) else None
+
+    def _show_tooltip(self, widget: tk.Widget, text: str) -> None:
+        """Bind tooltips lazily when rendering parameter tables."""
+        if getattr(self, "options", None) is None or self.options.defer_tooltips:
+            show_tooltip_lazily(widget, text)
+        else:
+            show_tooltip(widget, text)
 
     def _get_parent_toplevel(self) -> tk.Tk | tk.Toplevel:
         """Return the closest Tk or Toplevel ancestor for centering dialogs."""
@@ -228,6 +239,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         )
         for widget in self.view_port.winfo_children():
             widget.destroy()
+        for row in range(1, self._reserved_table_rows + 1):
+            self.view_port.grid_rowconfigure(row, minsize=0)
+        self._reserved_table_rows = 0
         # Clear the last return values tracking dictionary when repopulating
         self._last_return_values.clear()
         scroll_to_bottom = self._pending_scroll_to_bottom
@@ -242,7 +256,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         for i, header in enumerate(headers):
             label = ttk.Label(self.view_port, text=header)
             label.grid(row=0, column=i, sticky="ew")  # Use sticky="ew" to make the label stretch horizontally
-            show_tooltip(label, tooltips[i])
+            self._show_tooltip(label, tooltips[i])
 
         self.upload_checkbutton_var = {}
         self._new_value_widgets = {}
@@ -257,7 +271,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                     name: param for name, param in parameters.items() if param.is_different_from_fc or not param.has_fc_value
                 }
             )
-            self._update_table(different_params, self.parameter_editor_window.gui_complexity)
+            self._render_table(different_params, self.parameter_editor_window.gui_complexity, scroll_to_bottom)
             if not different_params and self.options.skip_when_no_differences:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(
                     selected_file=self.parameter_editor.current_file
@@ -267,8 +281,15 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                 self.parameter_editor_window.on_skip_click()
                 return
         else:
-            self._update_table(parameters, self.parameter_editor_window.gui_complexity)
-        self._apply_scroll_position(scroll_to_bottom)
+            self._render_table(parameters, self.parameter_editor_window.gui_complexity, scroll_to_bottom)
+
+    def _render_table(self, params: dict[str, ArduPilotParameter], gui_complexity: str, scroll_to_bottom: bool) -> None:
+        """Render immediately or in UI-friendly batches according to the table options."""
+        if self.options.render_batch_size is None:
+            self._update_table(params, gui_complexity)
+            self._apply_scroll_position(scroll_to_bottom)
+            return
+        self._update_table_in_batches(params, gui_complexity, scroll_to_bottom)
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
         """Apply the requested scroll position to the canvas."""
@@ -302,7 +323,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                 # Add the "Add" button at the bottom of the table
                 add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
                 tooltip_msg = _("Add a parameter to the {self.parameter_editor.current_file} file")
-                show_tooltip(add_button, tooltip_msg.format(**locals()))
+                self._show_tooltip(add_button, tooltip_msg.format(**locals()))
                 add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
 
         except KeyError as e:
@@ -323,6 +344,77 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             and UsagePopupWindow.should_display("bitmask_parameter_editor")
         ):
             display_bitmask_parameters_editor_usage_popup(parent_root)
+
+    def _update_table_in_batches(
+        self, params: dict[str, ArduPilotParameter], gui_complexity: str, scroll_to_bottom: bool
+    ) -> None:
+        """Render rows in idle-time batches so a large external file stays responsive."""
+        batch_size = self.options.render_batch_size
+        if batch_size is None or batch_size < 1:
+            msg = "render_batch_size must be a positive integer"
+            raise ValueError(msg)
+
+        self._table_render_generation += 1
+        render_generation = self._table_render_generation
+        parameter_items = tuple(params.items())
+        show_upload_column = self._should_show_upload_column(gui_complexity)
+        should_try_to_display_bitmask_parameter_editor_usage = False
+
+        # Reserve the expected rows before creating their widgets so the scrollbar
+        # reflects the complete file while Tk processes the batches.
+        for row in range(1, len(parameter_items) + 1):
+            self.view_port.grid_rowconfigure(row, minsize=20)
+        self._reserved_table_rows = len(parameter_items)
+        self.view_port.update_idletasks()
+
+        def render_batch(start: int) -> None:
+            nonlocal should_try_to_display_bitmask_parameter_editor_usage
+            if render_generation != self._table_render_generation:
+                return
+            end = min(start + batch_size, len(parameter_items))
+            current_param_name = ""
+            try:
+                for row, (param_name, param) in enumerate(parameter_items[start:end], start + 1):
+                    current_param_name = param_name
+                    row_widgets = self._create_column_widgets(param_name, param, show_upload_column)
+                    should_display_bitmask_usage = (
+                        param.is_editable and param.is_bitmask
+                        if self.parameters is not None
+                        else self.parameter_editor.should_display_bitmask_parameter_editor_usage(param_name)
+                    )
+                    should_try_to_display_bitmask_parameter_editor_usage |= should_display_bitmask_usage
+                    self._grid_column_widgets(row_widgets, row, show_upload_column)
+            except KeyError as exc:
+                logging_critical(
+                    _("Parameter %s not found in the %s file: %s"),
+                    current_param_name,
+                    self.parameter_editor.current_file,
+                    exc,
+                    exc_info=True,
+                )
+                sys_exit(1)
+
+            if end < len(parameter_items):
+                self.after_idle(lambda: render_batch(end))
+                return
+
+            if self.options.show_parameter_actions:
+                add_button = ttk.Button(self.view_port, text=_("Add"), style="narrow.TButton", command=self._on_parameter_add)
+                tooltip_msg = _("Add a parameter to the {self.parameter_editor.current_file} file")
+                self._show_tooltip(add_button, tooltip_msg.format(**locals()))
+                add_button.grid(row=len(params) + 2, column=0, sticky="w", padx=0)
+
+            self._configure_table_columns(show_upload_column)
+            parent_root = self._get_parent_root()
+            if (
+                parent_root
+                and should_try_to_display_bitmask_parameter_editor_usage
+                and UsagePopupWindow.should_display("bitmask_parameter_editor")
+            ):
+                display_bitmask_parameters_editor_usage_popup(parent_root)
+            self._apply_scroll_position(scroll_to_bottom)
+
+        render_batch(0)
 
     def _create_column_widgets(self, param_name: str, param: ArduPilotParameter, show_upload_column: bool) -> list[tk.Widget]:
         """Create all column widgets for a parameter row."""
@@ -414,7 +506,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             self.view_port, text=_("Del"), style="narrow.TButton", command=lambda: self._on_parameter_delete(param_name)
         )
         tooltip_msg = _("Delete {param_name} from the {self.parameter_editor.current_file} file")
-        show_tooltip(delete_button, tooltip_msg.format(**locals()))
+        self._show_tooltip(delete_button, tooltip_msg.format(**locals()))
         return delete_button
 
     def _create_parameter_name(self, param: ArduPilotParameter) -> ttk.Label:
@@ -431,7 +523,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
         tooltip_parameter_name = param.tooltip_new_value
         if tooltip_parameter_name:
-            show_tooltip(parameter_label, tooltip_parameter_name)
+            self._show_tooltip(parameter_label, tooltip_parameter_name)
         return parameter_label
 
     def _create_flightcontroller_value(self, param: ArduPilotParameter) -> ttk.Label:
@@ -452,7 +544,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
         tooltip_fc_value = param.tooltip_fc_value
         if tooltip_fc_value:
-            show_tooltip(flightcontroller_value, tooltip_fc_value)
+            self._show_tooltip(flightcontroller_value, tooltip_fc_value)
         return flightcontroller_value
 
     def _create_value_different_label(self, param: ArduPilotParameter) -> ttk.Label:
@@ -698,7 +790,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
         tooltip_new_value = param.tooltip_new_value
         if tooltip_new_value:
-            show_tooltip(new_value_entry, tooltip_new_value)
+            self._show_tooltip(new_value_entry, tooltip_new_value)
 
         # Expose handlers for tests so they can be triggered without tkinter events
         new_value_entry.testing_on_parameter_value_change = _on_parameter_value_change  # type: ignore[attr-defined]
@@ -831,7 +923,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         unit_label = ttk.Label(self.view_port, text=param.unit)
         unit_tooltip = param.tooltip_unit
         if unit_tooltip:
-            show_tooltip(unit_label, unit_tooltip)
+            self._show_tooltip(unit_label, unit_tooltip)
         return unit_label
 
     def _create_upload_checkbutton(self, param_name: str) -> ttk.Checkbutton:
@@ -849,7 +941,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state="normal" if fc_connected and is_uploadable else "disabled")
         msg = _("When selected upload {param_name} new value to the flight controller")
-        show_tooltip(upload_checkbutton, msg.format(**locals()))
+        self._show_tooltip(upload_checkbutton, msg.format(**locals()))
         return upload_checkbutton
 
     def _create_manual_override_widget(self, param: ArduPilotParameter) -> ttk.Checkbutton | ttk.Label:
@@ -878,7 +970,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
             checkbox = ttk.Checkbutton(self.view_port, variable=var, command=on_external_toggle)
             checkbox._manual_override_var = var  # type: ignore[attr-defined]  # noqa: SLF001 # pylint: disable=protected-access
-            show_tooltip(
+            self._show_tooltip(
                 checkbox,
                 _("Allow this parameter value to be edited before upload. The file will not be changed."),
             )
@@ -900,7 +992,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         tooltip_msg = _(
             "When checked, allows manual editing of this forced or derived parameter value and change reason.\n"
         ) + _("When unchecked, reverts to the forced or derived value.")
-        show_tooltip(checkbox, tooltip_msg)
+        self._show_tooltip(checkbox, tooltip_msg)
         return checkbox
 
     def _create_change_reason_entry(self, param: ArduPilotParameter) -> ttk.Entry:
@@ -943,7 +1035,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             change_reason_entry.bind("<Return>", _on_change_reason_change)
             change_reason_entry.bind("<KP_Enter>", _on_change_reason_change)
 
-        show_tooltip(change_reason_entry, param.tooltip_change_reason)
+        self._show_tooltip(change_reason_entry, param.tooltip_change_reason)
 
         # Expose handler for tests to call without user events
         if param.is_editable:
