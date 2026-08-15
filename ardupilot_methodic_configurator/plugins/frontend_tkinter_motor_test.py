@@ -169,7 +169,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
         # Create PairTupleCombobox with frame type pairs
         frame_type_pairs = self.model.get_frame_type_pairs()
-        current_selection = self.model.get_current_frame_selection_key() if frame_type_pairs else None
+        current_selection_key = self.model.get_current_frame_selection_key() if frame_type_pairs else None
+        current_selection = current_selection_key if any(key == current_selection_key for key, _ in frame_type_pairs) else None
 
         self.frame_type_combobox = PairTupleCombobox(
             frame_type_frame, frame_type_pairs, current_selection, "Frame Type", state="readonly"
@@ -524,6 +525,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
             # Update UI components
             self._update_motor_buttons_layout()
+            self._update_diagram()
+            self._diagram_needs_update = False
 
         except (ValidationError, ParameterError, FrameConfigurationError) as e:
             showerror(_("Parameter Update Error"), str(e))
@@ -762,6 +765,8 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         # Refresh frame configuration when becoming active
         if not self.model.refresh_from_flight_controller():
             logging_warning(_("Could not refresh frame configuration from flight controller"))
+        self._diagrams_path = ""
+        self._diagram_needs_update = True
         self._update_view()
 
     def on_deactivate(self) -> None:
@@ -926,7 +931,10 @@ def _create_motor_test_view(
 
 def _create_motor_test_model(context: PluginModelContext) -> MotorTestDataModel:
     """Create the plugin data model from registered application dependencies."""
-    return MotorTestDataModel(context.flight_controller, context.local_filesystem)
+    model = MotorTestDataModel(context.flight_controller, context.local_filesystem)
+    if model.invalid_frame_type_error:
+        showerror(_("Invalid Frame Type"), model.invalid_frame_type_error)
+    return model
 
 
 def register_motor_test_plugin() -> None:

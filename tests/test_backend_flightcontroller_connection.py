@@ -1310,6 +1310,21 @@ class TestFlightControllerConnectionVehicleDetection:
         assert result == ""
         assert connection.info.is_supported
 
+    def test_select_supported_autopilot_logs_vehicle_type_before_firmware_is_known(self, caplog) -> None:
+        """Heartbeat classification logs vehicle type before AUTOPILOT_VERSION is processed."""
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        mock_heartbeat = Mock()
+        mock_heartbeat.autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+        mock_heartbeat.type = mavutil.mavlink.MAV_TYPE_FIXED_WING
+
+        with caplog.at_level("INFO"):
+            result = connection._select_supported_autopilot({(1, 1): mock_heartbeat})
+
+        assert result == ""
+        assert connection.info.vehicle_type == "ArduPlane"
+        assert "Vehicle type: Fixed wing aircraft." in caplog.text
+        assert "running ArduPlane firmware" in caplog.text
+
     def test_select_supported_autopilot_returns_error_when_none_supported(self) -> None:
         """
         _select_supported_autopilot returns an error when no autopilot is supported.
@@ -1797,6 +1812,58 @@ class TestFlightControllerConnectionProcessAutopilotVersion:
         assert connection.info.firmware_type == "ArduPlane"
         # Should have logged a debug message about the mismatch
         mock_debug.assert_called()
+
+    def test_process_autopilot_version_resolves_ambiguous_vtol_vehicle_from_banner(self) -> None:
+        """An ambiguous VTOL MAV type uses the firmware name from the banner."""
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        connection.info.vehicle_type = "ArduPlane or ArduCopter"
+
+        mock_m = Mock()
+        mock_m.capabilities = 0
+        mock_m.flight_sw_version = 0x040700FF
+        mock_m.vendor_id = 0
+        mock_m.product_id = 0
+        mock_m.board_version = 0
+        mock_m.flight_custom_version = [0] * 8
+        mock_m.os_custom_version = [0] * 8
+
+        result = connection._process_autopilot_version(
+            mock_m,
+            [
+                "ArduCopter V4.7.0 (1511f271)",
+                "ChibiOS: 4f34e217",
+                "CubeBlack 00460038 30365109 31353833",
+            ],
+        )
+
+        assert result == ""
+        assert connection.info.vehicle_type == "ArduCopter"
+        assert connection.info.firmware_type == "ArduCopter"
+
+    def test_process_autopilot_version_keeps_ambiguous_vtol_without_banner_firmware(self) -> None:
+        """
+        An ambiguous VTOL type remains available when no firmware banner is received.
+
+        GIVEN: An ambiguous VTOL MAV type and no banner firmware name
+        WHEN: AUTOPILOT_VERSION is processed
+        THEN: The ambiguous vehicle type should not be replaced with an empty value
+        """
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        connection.info.vehicle_type = "ArduPlane or ArduCopter"
+
+        mock_m = Mock()
+        mock_m.capabilities = 0
+        mock_m.flight_sw_version = 0x040700FF
+        mock_m.vendor_id = 0
+        mock_m.product_id = 0
+        mock_m.board_version = 0
+        mock_m.flight_custom_version = [0] * 8
+        mock_m.os_custom_version = [0] * 8
+
+        result = connection._process_autopilot_version(mock_m, [])
+
+        assert result == ""
+        assert connection.info.vehicle_type == "ArduPlane or ArduCopter"
 
     def test_process_autopilot_version_returns_empty_without_mismatch(self) -> None:
         """

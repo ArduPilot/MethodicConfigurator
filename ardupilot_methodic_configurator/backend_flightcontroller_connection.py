@@ -30,6 +30,7 @@ from serial.serialutil import SerialException
 from serial.tools.list_ports_common import ListPortInfo
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import (
     MavlinkConnectionFactory,
     SystemMavlinkConnectionFactory,
@@ -688,6 +689,13 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         """
         firmware_type = ""
 
+        known_firmware_types = VehicleComponents.supported_vehicles()
+        for message in banner_msgs:
+            parts = message.split(maxsplit=1)
+            first_word = parts[0] if parts else ""
+            if first_word in known_firmware_types:
+                return first_word
+
         # Try to extract from message after ChibiOS version
         if os_custom_version_index is not None and os_custom_version_index + 1 < len(banner_msgs):
             firmware_type_banner_substrings = banner_msgs[os_custom_version_index + 1].split(" ")
@@ -744,6 +752,9 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         # Extract firmware type from banner messages
         firmware_type = self._extract_firmware_type_from_banner(banner_msgs, os_custom_version_index)
+
+        if firmware_type and " or " in self.info.vehicle_type:  # vehicle_type detection in HEARTBEAT message was ambiguous
+            self.info.vehicle_type = firmware_type  # fallback to banner detected vehicle type
 
         # Update firmware type if found and different from AUTOPILOT_VERSION
         if firmware_type and firmware_type != self.info.firmware_type:
