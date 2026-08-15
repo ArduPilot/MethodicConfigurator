@@ -13,10 +13,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import logging
+import struct
 import unittest
 
 # from unittest.mock import patch
-from io import StringIO
+from io import BytesIO, StringIO
+from unittest.mock import Mock
 
 from pymavlink import mavutil
 
@@ -83,6 +85,58 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
 
         # Assert to check if the expected log is in log_output
         assert "This is a test log message" in log_output
+
+    def test_getparams_decode_failure_returns_ftp_error_instead_of_exiting(self) -> None:
+        """A malformed packed parameter file must be reported without terminating the app."""
+        self.mav_ftp.cmd_get = Mock()
+        self.mav_ftp.cmd_get.side_effect = lambda _args, callback, **_kwargs: callback(BytesIO(b"bad"))
+
+        result = self.mav_ftp.cmd_getparams(["values.param", "defaults.param"])
+
+        assert result.error_code == ERR_Fail
+
+    def test_param_decode_rejects_truncated_parameter_record(self) -> None:
+        """A packed parameter record missing its value must return no data."""
+        payload = struct.pack("<HHH", 0x671B, 1, 1) + b"\x01\x00A"
+
+        assert MAVFTP.ftp_param_decode(payload) is None
+
+    def test_param_decode_rejects_truncated_parameter_header(self) -> None:
+        """
+        A packed parameter file with an incomplete record header is rejected.
+
+        GIVEN: A valid packed-parameter file header followed by one record-header byte
+        WHEN: MAVFTP decodes the parameter data
+        THEN: It returns no data instead of attempting to unpack an incomplete header
+        """
+        # Arrange (Given): A header followed by only the parameter type byte
+        payload = struct.pack("<HHH", 0x671B, 1, 1) + b"\x01"
+
+        # Act (When): Decode the incomplete packed parameter data
+        result = MAVFTP.ftp_param_decode(payload)
+
+        # Assert (Then): The invalid file is rejected safely
+        assert result is None
+
+    def test_getparams_read_error_returns_ftp_error_instead_of_exiting(self) -> None:
+        """
+        A packed parameter file read error is returned to the caller.
+
+        GIVEN: MAVFTP supplies a parameter file handler whose read fails
+        WHEN: The parameter download callback processes the file
+        THEN: It returns an FTP failure rather than terminating the application
+        """
+        # Arrange (Given): A file handler that cannot be read
+        unreadable_file = Mock()
+        unreadable_file.read.side_effect = OSError("read failed")
+        self.mav_ftp.cmd_get = Mock()
+        self.mav_ftp.cmd_get.side_effect = lambda _args, callback, **_kwargs: callback(unreadable_file)
+
+        # Act (When): Request the packed parameters
+        result = self.mav_ftp.cmd_getparams(["values.param", "defaults.param"])
+
+        # Assert (Then): The caller receives a recoverable FTP failure
+        assert result.error_code == ERR_Fail
 
     @staticmethod
     def ftp_operation(seq: int, opcode: int, req_opcode: int, payload: bytearray) -> FTP_OP:
