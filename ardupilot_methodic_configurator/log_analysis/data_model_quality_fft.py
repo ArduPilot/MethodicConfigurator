@@ -60,8 +60,7 @@ class FftLogQualityModel(BaseLogQualityAnalysisModel):
         """Check that ISBD and ISBH header."""
         records = self.log_data.get_message_columns("ISBD")
         if records is None or len(records) == 0:
-            issues = [QualityIssue(_("ISBH header present but ISBD batch samples are missing"))]
-            return issues  # noqa: RET504
+            return [QualityIssue(_("ISBH header present but ISBD batch samples are missing"))]
 
         issues: list[QualityIssue] = []
         for axis_field in ("x", "y", "z"):
