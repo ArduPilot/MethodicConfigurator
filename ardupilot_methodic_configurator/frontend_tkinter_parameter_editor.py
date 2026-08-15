@@ -1578,6 +1578,30 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.ui.ask_yesno,
         )
 
+    def reset_all_parameters_to_default(self) -> bool:
+        """Reset all flight-controller parameters to defaults with a progress window."""
+        reset_progress_window = self.ui.create_progress_window(
+            self.root,
+            _("Resetting Flight Controller"),
+            _("Waiting for {} of {} seconds"),
+            True,  # noqa: FBT003
+        )
+        connection_progress_window = self.ui.create_progress_window(
+            self.root,
+            _("Reconnecting to Flight Controller"),
+            _("{} of {} percent"),
+            True,  # noqa: FBT003
+        )
+        try:
+            return self.parameter_editor.reset_all_parameters_to_default(
+                self.ui.show_error,
+                reset_progress_window.update_progress_bar,
+                connection_progress_window.update_progress_bar,
+            )
+        finally:
+            reset_progress_window.destroy()
+            connection_progress_window.destroy()
+
     def close_connection_and_quit(self) -> None:
         focused_widget = self.parameter_editor_table.view_port.focus_get()
         if focused_widget is not None:

@@ -53,7 +53,7 @@ class ParameterFileUploadWindow(BaseWindow):
 
         self.root.title(_("Compare and upload parameter file - {filename}").format(filename=Path(filepath).name))
         self.root.geometry(self.calculate_scaled_geometry(500, 620))
-        self.root.protocol("WM_DELETE_WINDOW", self.cancel)
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         file_label = ttk.Label(self.main_frame, text=filepath)
         file_label.pack(side=tk.TOP, fill="x", padx=8, pady=(8, 4))
@@ -81,16 +81,25 @@ class ParameterFileUploadWindow(BaseWindow):
             variable=self.show_only_changed,
             command=self.repopulate_table,
         )
-        changed_checkbox.pack(side=tk.LEFT, padx=(0, 12))
+        changed_checkbox.pack(side=tk.TOP, anchor=tk.W, pady=(0, 8))
 
-        cancel_button = ttk.Button(controls, text=_("Cancel"), command=self.cancel)
-        cancel_button.pack(side=tk.RIGHT, padx=(8, 0))
+        buttons = ttk.Frame(controls)
+        buttons.pack(side=tk.TOP, fill="x")
+
+        close_button = ttk.Button(buttons, text=_("Close"), command=self.close)
+        close_button.pack(side=tk.RIGHT, padx=(8, 0))
+        reset_button = ttk.Button(
+            buttons,
+            text=_("Reset all FC parameters to defaults"),
+            command=self.reset_all_parameters_to_default,
+        )
+        reset_button.pack(side=tk.LEFT, padx=(0, 8))
         upload_button = ttk.Button(
-            controls,
+            buttons,
             text=_("Upload selected params to the FC"),
             command=self.upload_parameters,
         )
-        upload_button.pack(side=tk.RIGHT)
+        upload_button.pack(side=tk.LEFT)
         show_tooltip(upload_button, _("Upload the selected parameters to the flight controller"))
 
         self.root.transient(parent.root)
@@ -119,9 +128,17 @@ class ParameterFileUploadWindow(BaseWindow):
         if not self.parent.parameter_editor.ensure_upload_preconditions(dict(selected_params), self.parent.ui.show_warning):
             return
         if self.parent.upload_external_params(selected_params):
-            self.cancel()
+            self.close()
 
-    def cancel(self) -> None:
+    def reset_all_parameters_to_default(self) -> None:
+        """Confirm and reset all flight-controller parameters to their factory defaults."""
+        if self.parent.ui.ask_yesno(
+            _("Reset all FC parameters"),
+            _("Are you sure you want to reset all FC parameters to their default values?"),
+        ):
+            self.parent.reset_all_parameters_to_default()
+
+    def close(self) -> None:
         """Close the modal window."""
         if sys_platform != "darwin":
             self.root.grab_release()

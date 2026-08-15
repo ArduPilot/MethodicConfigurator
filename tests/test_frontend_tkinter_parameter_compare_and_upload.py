@@ -297,7 +297,7 @@ def test_upload_warns_about_unselected_manual_edits() -> None:
     window.table.get_upload_selected_params.return_value = selected_params
     window.parent.parameter_editor.ensure_upload_preconditions.return_value = True
     window.parent.upload_external_params.return_value = True
-    window.cancel = MagicMock()
+    window.close = MagicMock()
 
     window.upload_parameters()
 
@@ -308,7 +308,7 @@ def test_upload_warns_about_unselected_manual_edits() -> None:
     )
     window.table.get_upload_selected_params.assert_not_called()
     window.parent.upload_external_params.assert_not_called()
-    window.cancel.assert_not_called()
+    window.close.assert_not_called()
 
 
 def test_warning_candidates_require_manual_edit_difference_and_unselected_upload() -> None:
@@ -343,7 +343,7 @@ def test_upload_uses_external_parameters_without_advancing_project() -> None:
     window.table.get_upload_selected_params.return_value = selected_params
     window.parent.parameter_editor.ensure_upload_preconditions.return_value = True
     window.parent.upload_external_params.return_value = True
-    window.cancel = MagicMock()
+    window.close = MagicMock()
 
     window.upload_parameters()
 
@@ -352,7 +352,7 @@ def test_upload_uses_external_parameters_without_advancing_project() -> None:
         dict(selected_params), window.parent.ui.show_warning
     )
     window.parent.upload_external_params.assert_called_once_with(selected_params)
-    window.cancel.assert_called_once_with()
+    window.close.assert_called_once_with()
     window.parent.on_skip_click.assert_not_called()
 
 
@@ -369,12 +369,42 @@ def test_failed_external_upload_keeps_modal_open() -> None:
     window.table.get_upload_selected_params.return_value = selected_params
     window.parent.parameter_editor.ensure_upload_preconditions.return_value = True
     window.parent.upload_external_params.return_value = False
-    window.cancel = MagicMock()
+    window.close = MagicMock()
 
     window.upload_parameters()
 
     window.parent.upload_external_params.assert_called_once_with(selected_params)
-    window.cancel.assert_not_called()
+    window.close.assert_not_called()
+
+
+def test_reset_defaults_requires_confirmation() -> None:
+    """
+    Require explicit confirmation before resetting all FC parameters.
+
+    GIVEN the external parameter window is open
+    WHEN the user confirms the reset action
+    THEN the data-model reset workflow is called with the error callback.
+    """
+    window = _window_without_tk()
+    window.parent.ui.ask_yesno.return_value = True
+
+    window.reset_all_parameters_to_default()
+
+    window.parent.ui.ask_yesno.assert_called_once_with(
+        "Reset all FC parameters",
+        "Are you sure you want to reset all FC parameters to their default values?",
+    )
+    window.parent.reset_all_parameters_to_default.assert_called_once_with()
+
+
+def test_reset_defaults_is_cancelled_without_confirmation() -> None:
+    """Do not reset FC parameters when the user declines the confirmation."""
+    window = _window_without_tk()
+    window.parent.ui.ask_yesno.return_value = False
+
+    window.reset_all_parameters_to_default()
+
+    window.parent.parameter_editor.reset_all_parameters_to_default.assert_not_called()
 
 
 def test_parameter_editor_propagates_external_workflow_failure() -> None:

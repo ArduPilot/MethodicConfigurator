@@ -1127,6 +1127,39 @@ class TestParameterDownloads:
 class TestUploadSelectedParameters:
     """Cover progress-window lifecycle when uploading parameters."""
 
+    def test_user_sees_progress_while_resetting_all_parameters_to_defaults(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        reset_progress_window = MagicMock()
+        connection_progress_window = MagicMock()
+        parameter_editor_window.ui.create_progress_window = MagicMock(
+            side_effect=[reset_progress_window, connection_progress_window]
+        )
+        parameter_editor_window.parameter_editor.reset_all_parameters_to_default.return_value = True
+
+        result = parameter_editor_window.reset_all_parameters_to_default()
+
+        assert result is True
+        parameter_editor_window.ui.create_progress_window.assert_any_call(
+            parameter_editor_window.root,
+            "Resetting Flight Controller",
+            "Waiting for {} of {} seconds",
+            True,  # noqa: FBT003
+        )
+        parameter_editor_window.ui.create_progress_window.assert_any_call(
+            parameter_editor_window.root,
+            "Reconnecting to Flight Controller",
+            "{} of {} percent",
+            True,  # noqa: FBT003
+        )
+        reset_progress_window.destroy.assert_called_once_with()
+        connection_progress_window.destroy.assert_called_once_with()
+        parameter_editor_window.parameter_editor.reset_all_parameters_to_default.assert_called_once_with(
+            parameter_editor_window.ui.show_error,
+            reset_progress_window.update_progress_bar,
+            connection_progress_window.update_progress_bar,
+        )
+
     def test_user_sees_reset_and_download_progress_windows(self, parameter_editor_window: ParameterEditorWindow) -> None:
         reset_window = MagicMock()
         reset_window.update_progress_bar = MagicMock()

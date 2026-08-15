@@ -1421,6 +1421,47 @@ class TestFlightControllerResetWorkflows:
         # Assert: Error message returned
         assert result == error_message
 
+    def test_user_can_reset_all_flight_controller_parameters_to_defaults(self, parameter_editor) -> None:
+        """
+        Reset all flight-controller parameters to their factory defaults.
+
+        GIVEN a connected flight controller that accepts the reset command
+        WHEN the parameter editor resets all parameters to defaults
+        THEN the reset succeeds without showing an error.
+        """
+        parameter_editor._flight_controller.reset_all_parameters_to_default.return_value = (True, "")
+        parameter_editor._flight_controller.reset_and_reconnect.return_value = None
+        show_error = MagicMock()
+        reset_progress_callback = MagicMock()
+        connection_progress_callback = MagicMock()
+
+        result = parameter_editor.reset_all_parameters_to_default(
+            show_error,
+            reset_progress_callback,
+            connection_progress_callback,
+        )
+
+        assert result is True
+        parameter_editor._flight_controller.reset_all_parameters_to_default.assert_called_once_with()
+        parameter_editor._flight_controller.reset_and_reconnect.assert_called_once_with(
+            reset_progress_callback,
+            connection_progress_callback,
+            1,
+        )
+        show_error.assert_not_called()
+
+    def test_user_is_informed_when_resetting_all_parameters_fails(self, parameter_editor) -> None:
+        """Report an error when the flight controller rejects the default reset command."""
+        error_message = "Reset failed"
+        parameter_editor._flight_controller.reset_all_parameters_to_default.return_value = (False, error_message)
+        show_error = MagicMock()
+
+        result = parameter_editor.reset_all_parameters_to_default(show_error)
+
+        assert result is False
+        show_error.assert_called_once_with("ArduPilot methodic configurator", error_message)
+        parameter_editor._flight_controller.reset_and_reconnect.assert_not_called()
+
 
 class TestFileCopyWorkflows:
     """Test file copy and FC value workflows."""
