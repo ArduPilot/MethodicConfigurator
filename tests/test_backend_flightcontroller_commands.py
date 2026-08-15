@@ -217,6 +217,10 @@ class TestFlightControllerCommandsParameterReset:  # pylint: disable=too-few-pub
         # Then: Command sent
         assert success is True
         assert error == ""
+        mock_master.mav.command_long_send.assert_called_once()
+        command_args = mock_master.mav.command_long_send.call_args.args
+        assert command_args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_STORAGE
+        assert command_args[4] == 2
 
 
 class TestFlightControllerCommandsSendCommandAndWaitAck:
