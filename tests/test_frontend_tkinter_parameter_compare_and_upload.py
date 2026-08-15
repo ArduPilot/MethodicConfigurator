@@ -56,7 +56,7 @@ def test_manual_column_enables_only_the_selected_external_parameter() -> None:
     with (
         patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.tk.BooleanVar", return_value=variable),
         patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Checkbutton") as checkbutton,
-        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip_lazily"),
     ):
         table._create_manual_override_widget(parameter)
         checkbutton.call_args.kwargs["command"]()
@@ -94,7 +94,7 @@ def test_clearing_manual_checkbox_discards_the_in_memory_edit() -> None:
     with (
         patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.tk.BooleanVar", return_value=variable),
         patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Checkbutton") as checkbutton,
-        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_tooltip_lazily"),
     ):
         table._create_manual_override_widget(parameter)
         checkbutton.call_args.kwargs["command"]()

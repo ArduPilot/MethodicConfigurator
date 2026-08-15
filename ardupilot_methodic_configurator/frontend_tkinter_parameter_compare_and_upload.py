@@ -49,6 +49,7 @@ class ParameterFileUploadWindow(BaseWindow):
             values_editable=False,
             skip_when_no_differences=False,
             manual_override_for_all_parameters=True,
+            render_batch_size=200,
         )
 
         self.root.title(_("Compare and upload parameter file - {filename}").format(filename=Path(filepath).name))

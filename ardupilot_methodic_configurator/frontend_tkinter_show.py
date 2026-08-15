@@ -705,5 +705,18 @@ def show_tooltip(widget: tk.Widget, text: str, position_below: bool = True) -> T
     return Tooltip(widget, text, position_below=position_below, tag_name="")
 
 
+def show_tooltip_lazily(widget: tk.Widget, text: str, position_below: bool = True) -> None:
+    """Create a tooltip only after the widget is first hovered."""
+    binding_id: str | None = None
+
+    def create_tooltip(event: tk.Event) -> None:
+        if binding_id is not None:
+            widget.unbind("<Enter>", binding_id)
+        tooltip = show_tooltip(widget, text, position_below=position_below)
+        tooltip.schedule_show(event)
+
+    binding_id = widget.bind("<Enter>", create_tooltip, "+")
+
+
 def show_tooltip_on_richtext_tag(widget: tk.Text, text: str, tag_name: str, position_below: bool = True) -> Tooltip:
     return Tooltip(widget, text, position_below=position_below, tag_name=tag_name)

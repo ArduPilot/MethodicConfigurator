@@ -34,6 +34,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_show import (
     show_no_connection_error,
     show_no_param_files_error,
     show_tooltip,
+    show_tooltip_lazily,
     show_tooltip_on_richtext_tag,
     show_warning_message,
 )
@@ -221,6 +222,32 @@ class TestUserErrorCommunication:
 
             # Then: All error reporting works reliably
             assert mock_showerror.call_count == 3
+
+
+class TestLazyTooltipUserExperience:  # pylint: disable=too-few-public-methods
+    """Test deferred tooltip setup for densely populated interfaces."""
+
+    def test_user_gets_a_tooltip_after_first_hover_without_eager_setup(self, mock_widget: MagicMock) -> None:
+        """
+        User receives help without paying tooltip construction cost before hovering.
+
+        GIVEN: A widget in a densely populated table
+        WHEN: Its lazy tooltip is configured and the user hovers it for the first time
+        THEN: The full tooltip is created only at that time and is scheduled to display
+        """
+        mock_widget.bind.return_value = "lazy-tooltip-binding"
+
+        with patch("ardupilot_methodic_configurator.frontend_tkinter_show.show_tooltip") as mock_show_tooltip:
+            show_tooltip_lazily(mock_widget, "Helpful text")
+
+            mock_show_tooltip.assert_not_called()
+            on_enter = mock_widget.bind.call_args.args[1]
+            event = MagicMock()
+            on_enter(event)
+
+        mock_widget.unbind.assert_called_once_with("<Enter>", "lazy-tooltip-binding")
+        mock_show_tooltip.assert_called_once_with(mock_widget, "Helpful text", position_below=True)
+        mock_show_tooltip.return_value.schedule_show.assert_called_once_with(event)
 
 
 class TestTooltipPositionCalculation:
