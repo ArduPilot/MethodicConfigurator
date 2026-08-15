@@ -35,8 +35,8 @@ class VibeLogQualityModel(BaseLogQualityAnalysisModel):
         for check in (self.check_vibe_levels, self.check_clipping):
             issues += check()
 
-        _, name = self.resolve_message_step("VIBE", "VIBE")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("VIBE", "VIBE")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """
@@ -46,14 +46,16 @@ class VibeLogQualityModel(BaseLogQualityAnalysisModel):
         logging), so diagnose_bitmask_absence falls through to its generic
         "not logged" branch here rather than a bitmask-specific one.
         """
-        name = self.resolve_message_step("VIBE", "VIBE")[1]
+        step, name = self.resolve_message_step("VIBE", "VIBE")[1]
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "VIBE",
             "VIBE",
             "VIBE",
             not_logged_hint=_("check that IMU data is being logged, since VIBE is derived from it"),
         )
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_vibe_levels(self) -> list[QualityIssue]:
         """Check that VibeX/Y/Z fields are present and have readable data."""

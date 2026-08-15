@@ -30,8 +30,8 @@ class EscLogQualityModel(BaseLogQualityAnalysisModel):
         for check in (self.check_rpm, self.check_current, self.check_error_rate):
             issues += check()
 
-        _, name = self.resolve_message_step("ESC", "ESC")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("ESC", "ESC")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why ESC data is absent."""
@@ -61,7 +61,9 @@ class EscLogQualityModel(BaseLogQualityAnalysisModel):
             reason = _("ESC telemetry not logged, check ESC hardware supports telemetry and is wired correctly")
             issues = [QualityIssue(_("No ESC messages found"), step)]
 
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_rpm(self) -> list[QualityIssue]:
         """Validate logged ESC RPM values."""

@@ -55,7 +55,7 @@ class BaseLogQualityAnalysisModel:
         except ValueError:
             return ""
 
-    def build_result(self, issues: list[QualityIssue], name: str) -> LogQualityResult:
+    def build_result(self, issues: list[QualityIssue], name: str, related_step: str = "") -> LogQualityResult:
         return LogQualityResult(
             available=True,
             state=LogQualityState.INFO if not issues else LogQualityState.WARNING,
@@ -64,6 +64,7 @@ class BaseLogQualityAnalysisModel:
             else _("{name} data has quality issues").format(name=name),
             issues=issues,
             name=name,
+            related_step=related_step,
         )
 
     def resolve_message_step(self, message_name: str, fallback_name: str) -> tuple[str, str]:
@@ -129,7 +130,15 @@ class BaseLogQualityAnalysisModel:
 
         if log_bit is not None and bitmask is not None and (int(bitmask) & (1 << log_bit)) == 0:
             reason = _("{message} logging is disabled in LOG_BITMASK").format(message=fallback_name)
-            issues = [QualityIssue(_("Enable {message} logging (LOG_BITMASK bit)").format(message=fallback_name), step)]
+            suggested_value = float(int(bitmask) | (1 << log_bit))
+            issues = [
+                QualityIssue(
+                    _("Enable {message} logging (LOG_BITMASK bit)").format(message=fallback_name),
+                    step,
+                    param_name="LOG_BITMASK",
+                    suggested_value=suggested_value,
+                )
+            ]
             return reason, issues, True
 
         reason = _("{message} telemetry not logged but logging enabled; {hint}").format(
