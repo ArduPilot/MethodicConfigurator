@@ -1337,7 +1337,7 @@ msgid ""
 "    lsof {device}\n"
 "or:\n"
 "    fuser {device}"
-msgstr ""
+msgstr "Die serielle Schnittstelle wird bereits von einer anderen Anwendung verwendet.\nSchließen Sie andere Ground-Control- oder Programme zur seriellen Überwachung und versuchen Sie es dann erneut.\nUm den Prozess zu finden, der die Schnittstelle verwendet, führen Sie Folgendes aus:\n    lsof {device}\noder:\n    fuser {device}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:657
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"

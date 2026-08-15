@@ -1312,7 +1312,7 @@ msgid ""
 "    lsof {device}\n"
 "or:\n"
 "    fuser {device}"
-msgstr ""
+msgstr "そのシリアルポートは、すでに別のアプリケーションで使用されています。\n他のグラウンドコントロールアプリケーションやシリアル監視アプリケーションを閉じてから、もう一度お試しください。\nそのポートを使用しているプロセスを特定するには、次を実行してください:\n    lsof {device}\nまたは:\n    fuser {device}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:657
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"

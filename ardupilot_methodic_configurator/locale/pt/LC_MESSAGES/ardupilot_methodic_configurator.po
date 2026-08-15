@@ -1342,7 +1342,7 @@ msgid ""
 "    lsof {device}\n"
 "or:\n"
 "    fuser {device}"
-msgstr ""
+msgstr "A porta série já está a ser utilizada por outra aplicação.\nFeche outras aplicações de controlo no solo ou de monitorização da porta série e tente novamente.\nPara encontrar o processo que está a utilizar a porta, execute:\n    lsof {device}\nou:\n    fuser {device}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:657
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"

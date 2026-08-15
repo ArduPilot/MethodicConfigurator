@@ -1226,7 +1226,7 @@ msgid ""
 "    lsof {device}\n"
 "or:\n"
 "    fuser {device}"
-msgstr ""
+msgstr "该串口已被其他应用程序占用。\n请关闭其他地面站或串口监视应用程序，然后重试。\n要查找正在使用该端口的进程，请运行：\n    lsof {device}\n或：\n    fuser {device}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:657
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
