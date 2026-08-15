@@ -338,6 +338,11 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Clear parameter cache via params manager
         self._params_manager.clear_parameters()
 
+    @property
+    def banner_text_buffer(self) -> list[str]:
+        """Return the most recently received FC banner text."""
+        return self._connection_manager.banner_text_buffer
+
     def add_connection(self, connection_string: str) -> bool:
         """Add a new connection to the list of available connections - delegates to connection manager."""
         return self._connection_manager.add_connection(connection_string)

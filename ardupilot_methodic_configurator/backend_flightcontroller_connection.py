@@ -150,6 +150,12 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self._mavlink_connection_factory: MavlinkConnectionFactory = (
             mavlink_connection_factory or SystemMavlinkConnectionFactory()
         )
+        self._banner_text_buffer: list[str] = []
+
+    @property
+    def banner_text_buffer(self) -> list[str]:
+        """Return the most recently received flight-controller banner text."""
+        return self._banner_text_buffer[:]
 
     def discover_connections(
         self,
@@ -229,6 +235,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             with contextlib.suppress(Exception):
                 self.master.close()  # pyright: ignore[reportAttributeAccessIssue]
             self.master = None
+        self._banner_text_buffer.clear()
         self.info.reset()
 
     def add_connection(self, connection_string: str) -> bool:
@@ -323,6 +330,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         # Always clear cached metadata before attempting a new connection so UI
         # components never display stale data while we probe ports.
+        self._banner_text_buffer.clear()
         self.info.reset()
 
         if device:
@@ -502,6 +510,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         """
         # Request banner and collect messages
         self._request_banner()
+        self._banner_text_buffer.clear()
         banner_msgs = self._receive_banner_text()
 
         # Request AUTOPILOT_VERSION message
@@ -553,6 +562,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 type="STATUSTEXT", blocking=False
             )
             if msg:
+                self._banner_text_buffer.append(msg.text)
                 if banner_msgs:
                     banner_msgs.append(msg.text)
                 else:
@@ -951,3 +961,4 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         # If setting to None, also clear related state
         if master is None:
             self.comport = None
+            self._banner_text_buffer.clear()
