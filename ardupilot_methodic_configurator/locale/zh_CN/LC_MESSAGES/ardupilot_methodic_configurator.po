@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-08-13 21:15+0000\n"
+"POT-Creation-Date: 2026-08-15 09:48+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -5820,78 +5820,78 @@ msgstr "使用中:"
 msgid "No hardware data available"
 msgstr "没有可用的硬件数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:45
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:47
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:776
 msgid "Log Quality Report"
 msgstr "日志质量报告"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:96
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:98
 msgid "Open release page on GitHub"
 msgstr "在 GitHub 上打开发布页面"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:123
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:125
 msgid "Vehicle & Firmware"
 msgstr "载具与固件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:130
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:135
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:132
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:137
 msgid "Firmware:"
 msgstr "固件:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:141
 msgid "FC:"
 msgstr "飞控:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:142
 msgid "Board:"
 msgstr "板卡:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:143
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:145
 msgid "Log Overview"
 msgstr "日志概览"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:146
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
 msgid "Flight Time:"
 msgstr "飞行时间:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:147
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:149
 msgid "Log Size:"
 msgstr "日志大小:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:150
 msgid "Total Msgs:"
 msgstr "消息总数:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:151
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:153
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:89
 msgid "System Performance"
 msgstr "系统性能"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:155
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
 msgid "Avg CPU:"
 msgstr "平均 CPU:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:156
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:158
 msgid "Peak CPU:"
 msgstr "CPU 峰值:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:159
 msgid "Long Loops:"
 msgstr "长循环："
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:169
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:171
 msgid "  Quality Report  "
 msgstr "质量报告"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:173
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:175
 msgid "  Hardware Overview  "
 msgstr "硬件概览"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:190
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:192
 msgid "Requires Attention"
 msgstr "需要注意"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:201
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:203
 msgid "Passed Checks"
 msgstr "已通过检查"
 
@@ -7359,62 +7359,62 @@ msgstr "未找到配置文件 '{config_file}'"
 msgid "Error in configuration file '{config_file}': {error}"
 msgstr "配置文件 '{config_file}' 错误：{error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:44
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:46
 msgid "Error opening logfile {logfile}: {error}"
 msgstr "打开日志文件 {logfile} 时出错：{error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:142
 msgid "Schema {name} has mismatched field and format counts"
 msgstr "模式 {name} 的字段和格式数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:151
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:153
 msgid "Unsupported log format character {format_char!r} in schema {name}"
 msgstr "模式 {name} 中不支持的日志格式字符 {format_char!r}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:169
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:171
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
 msgstr "{name} 的字段不匹配。缺少: {missing}，多余: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:282
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:284
 msgid "Message count for {message_type} exceeded the preallocated array size"
 msgstr "{message_type} 的消息数量超过了预分配数组大小"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:292
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:294
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_data.py:82
 msgid "Structured array for {message_type} is missing field metadata"
 msgstr "{message_type} 的结构化数组缺少字段元数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:311
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
 msgstr ""
 "{message_name} 的消息数量不匹配：预期为 {expected}，实际写入为 {written}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:389
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:391
 msgid "{message_name} log ends while still armed, no trailing disarm found"
 msgstr "{message_name} 日志在仍处于解锁状态时结束，未找到结尾的上锁记录"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:398
 msgid "Could not compute flight duration: {error}"
 msgstr "无法计算飞行时长：{error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:65
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:85
 msgid "Performance monitor data present and good for analysis"
 msgstr "性能监视器数据已记录且适合分析"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:67
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:87
 msgid "Performance monitor data has quality issues"
 msgstr "性能监视器数据存在质量问题"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:81
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:101
 msgid ""
 "The selected log is from {log_vehicle_type}, but the currently open vehicle "
 "is {project_vehicle_type}."
 msgstr ""
 "所选日志来自 {log_vehicle_type}，但当前打开的载具是 {project_vehicle_type}。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:88
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:108
 msgid ""
 "The selected log firmware version is {log_version}, but the currently open "
 "vehicle firmware version is {project_version}."
@@ -7422,247 +7422,393 @@ msgstr ""
 "所选日志的固件版本为 {log_version}，但当前打开的载具固件版本为 "
 "{project_version}。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:82
 msgid "Schema not found"
 msgstr "未找到模式"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:163
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:165
 msgid "PM message not logged"
 msgstr "未记录 PM 消息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:172
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:174
 msgid "Internal firmware errors were detected (InE)"
 msgstr "检测到固件内部错误 (InE)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:179
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:181
 msgid "Internal error count: {count}"
 msgstr "内部错误计数：{count}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:185
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:187
 msgid "An internal error line was recorded (ErrL)"
 msgstr "已记录一条内部错误行（ErrL）"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:193
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:195
 msgid "Detected {count} scheduler long loops"
 msgstr "检测到 {count} 次调度器长循环"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:213
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:215
 msgid "Missing field definitions"
 msgstr "缺少字段定义"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:215
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:217
 msgid "Missing format string"
 msgstr "缺少格式字符串"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:217
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:219
 msgid "Invalid message length"
 msgstr "消息长度无效"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:219
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:221
 msgid "Unit count mismatch"
 msgstr "单位数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:221
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:223
 msgid "Multiplier count mismatch"
 msgstr "乘数数量不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:224
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:226
 msgid "{message} has no logging data"
 msgstr "{message} 没有日志数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:232
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:234
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
 msgstr "字段不匹配。缺少: {missing}，多余: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:53
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
 msgid "Status: Log looks healthy. No major issues detected."
 msgstr "状态：日志看起来正常。未检测到重大问题。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:57
 msgid "Status: Found {n} potential issue(s) to review."
 msgstr "状态：发现 {n} 个需要检查的潜在问题。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:33
+msgid ""
+"ARM messages not found, that is unexpected since arm/disarm events are "
+"always logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:34
+msgid "No ARM messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:62
 msgid "{name} data present and good for analysis"
 msgstr "{name} 数据存在且适合分析"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:60
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:64
 msgid "{name} data has quality issues"
 msgstr "{name} 数据存在质量问题"
 
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:131
+msgid "{message} logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:132
+msgid "Enable {message} logging (LOG_BITMASK bit)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:135
+msgid "{message} telemetry not logged but logging enabled; {hint}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:138
+msgid "No {message} messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:154
+msgid "{field} field not present in this firmware's {msg} schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:157
+msgid "{field} values missing from {msg} records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:39
+msgid "check the battery monitor physical connection"
+msgstr ""
+
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
-msgid "Battery logging is disabled in LOG_BITMASK"
-msgstr "在 LOG_BITMASK 中已禁用电池日志记录"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:45
-msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
-msgstr "启用电池日志记录（设置 LOG_BITMASK 位）以记录 BAT 数据"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:47
 msgid "Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)"
 msgstr "已启用电池日志记录，但 BATT_MONITOR 为 0（监视器已禁用）"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:46
 msgid "Set BATT_MONITOR to enable the battery monitor"
 msgstr "设置 BATT_MONITOR 以启用电池监视器"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:52
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
 msgid ""
 "Battery logging enabled but no data, monitor may not be configured properly"
 msgstr "已启用电池日志记录，但没有数据，监视器可能未正确配置"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:53
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:50
 msgid "No BAT messages found"
 msgstr "未找到 BAT 消息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:61
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:133
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:130
 msgid "Volt field not present in this firmware's BAT schema"
 msgstr "此固件的 BAT 结构中不存在 Volt 字段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:62
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:134
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:59
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:131
 msgid "Voltage values missing from BAT records"
 msgstr "BAT 记录中缺少电压值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:68
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:65
 msgid "Voltage is zero throughout, sensor may not be reading"
 msgstr "电压始终为零，传感器可能未读取到数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:75
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:72
 msgid "Voltage spike, or MOT_BAT_VOLT_MAX misconfigured"
 msgstr "电压尖峰，或 MOT_BAT_VOLT_MAX 配置错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:77
 msgid "Voltage sag, or MOT_BAT_VOLT_MIN misconfigured"
 msgstr "电压下陷，或 MOT_BAT_VOLT_MIN 配置错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:89
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:86
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:136
 msgid "Curr field not present in this firmware's BAT schema"
 msgstr "此固件的 BAT 结构中不存在 Curr 字段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:90
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:87
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:137
 msgid "Current values missing from BAT records"
 msgstr "BAT 记录中缺少电流值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:98
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:95
 msgid "CurrTot field not present in this firmware's BAT schema"
 msgstr "此固件的 BAT 结构中不存在 CurrTot 字段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:99
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:96
 msgid "CurrTot missing from BAT records"
 msgstr "BAT 记录中缺少 CurrTot"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:108
 msgid "Battery low-voltage failsafe threshold disabled"
 msgstr "电池低电压失效保护阈值已禁用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:116
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:113
 msgid "Battery critical-voltage failsafe threshold disabled"
 msgstr "电池严重低电压失效保护阈值已禁用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:149
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:146
 msgid ""
 "Power efficiency < 200W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really good."
 msgstr ""
 "功率效率 < 200W/Kg。电流校准不正确，或起飞重量不正确，或效率确实非常好。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:158
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:155
 msgid ""
 "Power efficiency > 500W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really bad."
 msgstr "功率效率 > 500W/Kg。电流校准不正确，或起飞重量不正确，或效率确实很差。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:43
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_err.py:36
+msgid "No errors logged during this flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:45
 msgid "ESC telemetry not logged"
 msgstr "未记录 ESC 遥测数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:46
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:48
 msgid "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
 msgstr "将 MOT_PWM_TYPE 设置为 DShot 变体以支持 ESC 遥测"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:51
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:53
 msgid "ESC telemetry not logged, scripting is disabled"
 msgstr "未记录 ESC 遥测数据，脚本功能已禁用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:54
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:56
 msgid "Enable SCR_ENABLE if using scripted ESC telemetry"
 msgstr "如果使用脚本化 ESC 遥测，请启用 SCR_ENABLE"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:59
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:61
 msgid ""
 "ESC telemetry not logged, check ESC hardware supports telemetry and is wired "
 "correctly"
 msgstr "未记录 ESC 遥测数据，请检查 ESC 硬件是否支持遥测且接线正确"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:60
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:62
 msgid "No ESC messages found"
 msgstr "未找到 ESC 消息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:71
 msgid "RPM field not present in this firmware's ESC schema"
 msgstr "此固件的 ESC 架构中不存在 RPM 字段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:70
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:72
 msgid "RPM values missing from ESC records"
 msgstr "ESC 记录中缺少 RPM 值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:79
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:81
 msgid "Curr field not present in this firmware's ESC schema"
 msgstr "此固件的 ESC 架构中不存在 Curr 字段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:82
 msgid "Current values missing from ESC records"
 msgstr "ESC 记录中缺少电流值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:89
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:91
 msgid "Err field not present in this firmware's ESC schema"
 msgstr "此固件的 ESC 架构中不存在 Err 字段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:90
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:92
 msgid "ESC error values missing from ESC records"
 msgstr "ESC 记录中缺少 ESC 错误值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:93
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:96
 msgid "ESC error rate detected on at least one ESC instance"
 msgstr "检测到至少一个 ESC 实例存在错误率"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:44
-msgid "GPS logging is disabled in LOG_BITMASK"
-msgstr "LOG_BITMASK 中已禁用 GPS 日志记录"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:42
+msgid "Raw IMU batch logging is disabled (INS_LOG_BAT_MASK is 0)"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:45
-msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
-msgstr "启用 GPS 日志记录（LOG_BITMASK 位）以记录 GPS 数据"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:45
+msgid "Set INS_LOG_BAT_MASK to enable raw IMU batch logging for FFT analysis"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:47
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:50
 msgid ""
-"GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
-"connection"
-msgstr "GPS/GNSS 遥测数据未记录，但日志记录已启用；请检查 GPS 物理连接"
+"Raw IMU batch logging enabled but no data, check firmware build supports "
+"batch logging"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:48
-msgid "No GPS messages found"
-msgstr "未找到 GPS 消息"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:51
+msgid "No ISBH messages found"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:57
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:63
+msgid "ISBH header present but ISBD batch samples are missing"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:71
+msgid "{field} field not present in this firmware's ISBD schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:72
+msgid "{field} values missing from ISBD records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:40
+msgid "check the GPS physical connection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:49
 msgid "Status field not present in this firmware's GPS schema"
 msgstr "此固件的 GPS 架构中不存在 Status 字段"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:50
 msgid "GPS fix status missing from GPS records"
 msgstr "GPS 记录中缺少 GPS 定位状态"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:53
 msgid "GPS never achieved a 3D fix"
 msgstr "GPS 从未获得 3D 定位"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
 msgid "GPS type not configured (set to None)"
 msgstr "GPS 类型未配置（设置为 None）"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:39
+msgid "check firmware build supports IMU logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:48
+msgid "EG field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:49
+msgid "Gyroscope error count missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:52
+msgid "Gyroscope error count detected on at least one IMU instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:60
+msgid "EA field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:61
+msgid "Accelerometer error count missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:64
+msgid "Accelerometer error count detected on at least one IMU instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:74
+msgid "GH field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:75
+msgid "Gyroscope health missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:79
+msgid "Gyroscope reported unhealthy at some point during the flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:84
+msgid "AH field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:85
+msgid "Accelerometer health missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:89
+msgid "Accelerometer reported unhealthy at some point during the flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:101
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:114
+msgid "{field} field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:102
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:115
+msgid "{field} values missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:107
+msgid "{field} is zero throughout, gyroscope may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:120
+msgid "{field} is zero throughout, accelerometer may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:43
+msgid ""
+"MODE messages not found, this is unexpected since mode changes are always "
+"logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:44
+msgid "No MODE messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_pm.py:43
+msgid "check firmware build supports performance monitor logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:54
+msgid "check that IMU data is being logged, since VIBE is derived from it"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:67
+msgid "Clip field not present in this firmware's VIBE schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:68
+msgid "Clip values missing from VIBE records"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:31
 msgid "Place vehicle LEVEL and click Continue"
@@ -7802,7 +7948,9 @@ msgid ""
 "AHRS_ORIENTATION could not be read or is a custom/unsupported rotation. Set "
 "it to 0, upload it, reboot the flight controller, and reconnect before "
 "starting auto-detection."
-msgstr "无法读取 AHRS_ORIENTATION，或者它是自定义/不受支持的旋转。请将其设为 0，上传参数，重启飞控，并在开始自动检测前重新连接。"
+msgstr ""
+"无法读取 AHRS_ORIENTATION，或者它是自定义/不受支持的旋转。请将其设为 0，上传"
+"参数，重启飞控，并在开始自动检测前重新连接。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:169
 msgid "Unknown capture step: %(step)s"
@@ -7816,7 +7964,8 @@ msgstr "尚无可用的 IMU 样本。请保持飞行器静止后重试。"
 msgid ""
 "IMU magnitude %(value).2f m/s^2 is outside the expected still range. Keep "
 "the vehicle still and try again."
-msgstr "IMU 幅值 %(value).2f m/s^2 超出预期的静止范围。请保持飞行器静止后重试。"
+msgstr ""
+"IMU 幅值 %(value).2f m/s^2 超出预期的静止范围。请保持飞行器静止后重试。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:191
 msgid ""
@@ -7841,7 +7990,9 @@ msgstr "无法根据样本估算朝向。请重新采集该序列。"
 msgid ""
 "The captured poses are inconsistent with LEVEL, NOSE DOWN, and RIGHT. Place "
 "the vehicle accurately and capture the sequence again."
-msgstr "采集到的姿态与 LEVEL、NOSE DOWN 和 RIGHT 不一致。请准确放置飞行器并重新采集该序列。"
+msgstr ""
+"采集到的姿态与 LEVEL、NOSE DOWN 和 RIGHT 不一致。请准确放置飞行器并重新采集该"
+"序列。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:244
 msgid "Estimation complete"
@@ -8473,7 +8624,9 @@ msgstr "选项 1 - 手动设置 AHRS_ORIENTATION"
 msgid ""
 "Use this option if you know the vehicle orientation.\n"
 "Set AHRS_ORIENTATION manually in the parameter list on the right."
-msgstr "如果您知道飞行器朝向，请使用此选项。\n在右侧的参数列表中手动设置 AHRS_ORIENTATION。"
+msgstr ""
+"如果您知道飞行器朝向，请使用此选项。\n"
+"在右侧的参数列表中手动设置 AHRS_ORIENTATION。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:88
 msgid "Option 2 - Determine AHRS_ORIENTATION automatically"
@@ -8487,7 +8640,13 @@ msgid ""
 "\n"
 "It compensates for the current preset AHRS_ORIENTATION. If a custom\n"
 "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
-msgstr "如果您不知道飞行器朝向，请使用此选项。\n此向导根据飞行器的三个位置估算 AHRS_ORIENTATION：\nLEVEL、NOSE DOWN 和 RIGHT SIDE DOWN。\n\n它会补偿当前预设的 AHRS_ORIENTATION。如果启用了自定义\n朝向，请先将 AHRS_ORIENTATION 设为 0 并上传参数。"
+msgstr ""
+"如果您不知道飞行器朝向，请使用此选项。\n"
+"此向导根据飞行器的三个位置估算 AHRS_ORIENTATION：\n"
+"LEVEL、NOSE DOWN 和 RIGHT SIDE DOWN。\n"
+"\n"
+"它会补偿当前预设的 AHRS_ORIENTATION。如果启用了自定义\n"
+"朝向，请先将 AHRS_ORIENTATION 设为 0 并上传参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:128
 msgid "Not Connected"
@@ -8527,7 +8686,9 @@ msgstr "参数更新失败"
 msgid ""
 "AHRS_ORIENTATION was set to %(code)d (%(name)s). Match score: "
 "%(match_score).1f%%. Press upload to apply the changes."
-msgstr "AHRS_ORIENTATION 已设置为 %(code)d（%(name)s）。匹配分数：%(match_score).1f%%。按上传以应用更改。"
+msgstr ""
+"AHRS_ORIENTATION 已设置为 %(code)d（%(name)s）。匹配分数：%(match_score).1f%"
+"%。按上传以应用更改。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:188
 msgid "AHRS Orientation Estimate"
@@ -8541,7 +8702,13 @@ msgid ""
 "Yes: use CUST_ROT1_ROLL/PITCH/YAW and set AHRS_ORIENTATION to 101 (Custom "
 "1).\n"
 "No: re-do the estimation process."
-msgstr "无法识别出足够明确的预设方向（最佳匹配：%(code)d %(name)s，匹配分数 %(match_score).1f%%）。\n\n是：使用 CUST_ROT1_ROLL/PITCH/YAW，并将 AHRS_ORIENTATION 设置为 101（自定义 1）。\n否：重新执行估计过程。"
+msgstr ""
+"无法识别出足够明确的预设方向（最佳匹配：%(code)d %(name)s，匹配分数 "
+"%(match_score).1f%%）。\n"
+"\n"
+"是：使用 CUST_ROT1_ROLL/PITCH/YAW，并将 AHRS_ORIENTATION 设置为 101（自定义 "
+"1）。\n"
+"否：重新执行估计过程。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:202
 msgid "Low Confidence Estimate"
@@ -8552,7 +8719,10 @@ msgid ""
 "Set CUST_ROT_ENABLE=1, Applied CUST_ROT1_ROLL=%(roll).1f, "
 "CUST_ROT1_PITCH=%(pitch).1f, CUST_ROT1_YAW=%(yaw).1f and set "
 "AHRS_ORIENTATION=101 (Custom 1). Upload the changes to use Custom 1 rotation."
-msgstr "设置 CUST_ROT_ENABLE=1，已应用 CUST_ROT1_ROLL=%(roll).1f、CUST_ROT1_PITCH=%(pitch).1f、CUST_ROT1_YAW=%(yaw).1f，并将 AHRS_ORIENTATION 设置为 101（自定义 1）。上传这些更改以使用自定义 1 旋转。"
+msgstr ""
+"设置 CUST_ROT_ENABLE=1，已应用 CUST_ROT1_ROLL=%(roll).1f、"
+"CUST_ROT1_PITCH=%(pitch).1f、CUST_ROT1_YAW=%(yaw).1f，并将 AHRS_ORIENTATION "
+"设置为 101（自定义 1）。上传这些更改以使用自定义 1 旋转。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:216
 msgid "Custom Orientation Applied"
@@ -9736,6 +9906,26 @@ msgstr "硬件的版本或修订号"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "产品页面或文档的网页链接"
+
+#~ msgid "Battery logging is disabled in LOG_BITMASK"
+#~ msgstr "在 LOG_BITMASK 中已禁用电池日志记录"
+
+#~ msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
+#~ msgstr "启用电池日志记录（设置 LOG_BITMASK 位）以记录 BAT 数据"
+
+#~ msgid "GPS logging is disabled in LOG_BITMASK"
+#~ msgstr "LOG_BITMASK 中已禁用 GPS 日志记录"
+
+#~ msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
+#~ msgstr "启用 GPS 日志记录（LOG_BITMASK 位）以记录 GPS 数据"
+
+#~ msgid ""
+#~ "GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
+#~ "connection"
+#~ msgstr "GPS/GNSS 遥测数据未记录，但日志记录已启用；请检查 GPS 物理连接"
+
+#~ msgid "No GPS messages found"
+#~ msgstr "未找到 GPS 消息"
 
 #~ msgid "Analyse a .bin log"
 #~ msgstr "分析 .bin 日志"

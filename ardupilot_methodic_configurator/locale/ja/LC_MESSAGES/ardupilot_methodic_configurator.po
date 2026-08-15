@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.1.1\n"
-"POT-Creation-Date: 2026-08-13 21:15+0000\n"
+"POT-Creation-Date: 2026-08-15 09:48+0000\n"
 "PO-Revision-Date: 2024-12-02 13:13+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: JA\n"
@@ -4599,7 +4599,8 @@ msgstr "パラメータはすでに存在します。代わりに編集してく
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2018
 msgid "Parameter name not found in the flight controller or apm.pdef.xml."
-msgstr "フライトコントローラーまたは apm.pdef.xml にパラメータ名が見つかりません。"
+msgstr ""
+"フライトコントローラーまたは apm.pdef.xml にパラメータ名が見つかりません。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2020
 msgid "'{param_name}' not found in the apm.pdef.xml file."
@@ -4731,7 +4732,9 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2587
 msgid ""
 "data_model_parameter_editor: Plugin has no data model factory: {plugin_name}"
-msgstr "data_model_parameter_editor: プラグイン {plugin_name} にデータモデルファクトリーがありません"
+msgstr ""
+"data_model_parameter_editor: プラグイン {plugin_name} にデータモデルファクト"
+"リーがありません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:236
 msgid ""
@@ -6183,78 +6186,78 @@ msgstr "使用中:"
 msgid "No hardware data available"
 msgstr "ハードウェアデータはありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:45
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:47
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:776
 msgid "Log Quality Report"
 msgstr "ログ品質レポート"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:96
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:98
 msgid "Open release page on GitHub"
 msgstr "GitHubでリリースページを開く"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:123
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:125
 msgid "Vehicle & Firmware"
 msgstr "機体とファームウェア"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:130
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:135
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:132
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:137
 msgid "Firmware:"
 msgstr "ファームウェア:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:141
 msgid "FC:"
 msgstr "FC:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:142
 msgid "Board:"
 msgstr "ボード:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:143
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:145
 msgid "Log Overview"
 msgstr "ログ概要"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:146
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
 msgid "Flight Time:"
 msgstr "飛行時間:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:147
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:149
 msgid "Log Size:"
 msgstr "ログサイズ:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:150
 msgid "Total Msgs:"
 msgstr "総メッセージ数:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:151
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:153
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:89
 msgid "System Performance"
 msgstr "システム性能"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:155
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
 msgid "Avg CPU:"
 msgstr "平均CPU:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:156
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:158
 msgid "Peak CPU:"
 msgstr "最大CPU:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:159
 msgid "Long Loops:"
 msgstr "長いループ:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:169
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:171
 msgid "  Quality Report  "
 msgstr "品質レポート"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:173
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:175
 msgid "  Hardware Overview  "
 msgstr "ハードウェア概要"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:190
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:192
 msgid "Requires Attention"
 msgstr "要対応"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:201
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:203
 msgid "Passed Checks"
 msgstr "通過したチェック"
 
@@ -7778,34 +7781,34 @@ msgstr "構成ファイル '{config_file}' が見つかりません"
 msgid "Error in configuration file '{config_file}': {error}"
 msgstr "構成ファイル '{config_file}' 内でエラーが発生しました: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:44
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:46
 msgid "Error opening logfile {logfile}: {error}"
 msgstr "ログファイル {logfile} を開く際にエラーが発生しました: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:142
 msgid "Schema {name} has mismatched field and format counts"
 msgstr "スキーマ {name} にフィールド数とフォーマット数の不一致があります"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:151
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:153
 msgid "Unsupported log format character {format_char!r} in schema {name}"
 msgstr ""
 "スキーマ {name} でサポートされていないログフォーマット文字 {format_char!r}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:169
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:171
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
 msgstr "{name} のフィールドの不一致。欠落: {missing}、余分: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:282
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:284
 msgid "Message count for {message_type} exceeded the preallocated array size"
 msgstr ""
 "{message_type} のメッセージ数が事前割り当てされた配列サイズを超えました"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:292
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:294
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_data.py:82
 msgid "Structured array for {message_type} is missing field metadata"
 msgstr "{message_type} 用の構造化配列にフィールドメタデータがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:311
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
@@ -7813,25 +7816,25 @@ msgstr ""
 "{message_name} のメッセージ数の不一致: 期待値 {expected}、書き込んだ数 "
 "{written}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:389
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:391
 msgid "{message_name} log ends while still armed, no trailing disarm found"
 msgstr ""
 "{message_name} ログは武装状態のまま終了しており、末尾にディスアームが見つかり"
 "ません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:398
 msgid "Could not compute flight duration: {error}"
 msgstr "飛行時間を計算できませんでした: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:65
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:85
 msgid "Performance monitor data present and good for analysis"
 msgstr "パフォーマンスモニターデータがあり、解析に適しています"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:67
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:87
 msgid "Performance monitor data has quality issues"
 msgstr "パフォーマンスモニターデータに品質上の問題があります"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:81
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:101
 msgid ""
 "The selected log is from {log_vehicle_type}, but the currently open vehicle "
 "is {project_vehicle_type}."
@@ -7839,7 +7842,7 @@ msgstr ""
 "選択したログは {log_vehicle_type} のものですが、現在開いている機体は "
 "{project_vehicle_type} です。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:88
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:108
 msgid ""
 "The selected log firmware version is {log_version}, but the currently open "
 "vehicle firmware version is {project_version}."
@@ -7847,152 +7850,180 @@ msgstr ""
 "選択したログのファームウェアバージョンは {log_version} ですが、現在開いている"
 "機体のファームウェアバージョンは {project_version} です。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:82
 msgid "Schema not found"
 msgstr "スキーマが見つかりません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:163
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:165
 msgid "PM message not logged"
 msgstr "PMメッセージが記録されていません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:172
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:174
 msgid "Internal firmware errors were detected (InE)"
 msgstr "内部ファームウェアエラーが検出されました (InE)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:179
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:181
 msgid "Internal error count: {count}"
 msgstr "内部エラー数: {count}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:185
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:187
 msgid "An internal error line was recorded (ErrL)"
 msgstr "内部エラー行が記録されました (ErrL)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:193
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:195
 msgid "Detected {count} scheduler long loops"
 msgstr "スケジューラの長時間ループを {count} 件検出しました"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:213
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:215
 msgid "Missing field definitions"
 msgstr "フィールド定義がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:215
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:217
 msgid "Missing format string"
 msgstr "書式文字列がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:217
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:219
 msgid "Invalid message length"
 msgstr "メッセージ長が無効です"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:219
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:221
 msgid "Unit count mismatch"
 msgstr "ユニット数が一致しません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:221
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:223
 msgid "Multiplier count mismatch"
 msgstr "乗数の数が一致しません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:224
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:226
 msgid "{message} has no logging data"
 msgstr "{message} にロギングデータがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:232
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:234
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
 msgstr "フィールドの不一致。欠落: {missing}、余分: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:53
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
 msgid "Status: Log looks healthy. No major issues detected."
 msgstr "状態: ログは健全です。重大な問題は検出されませんでした。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:57
 msgid "Status: Found {n} potential issue(s) to review."
 msgstr "状態: 確認が必要な潜在的な問題を {n} 件検出しました。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:33
+msgid ""
+"ARM messages not found, that is unexpected since arm/disarm events are "
+"always logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:34
+msgid "No ARM messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:62
 msgid "{name} data present and good for analysis"
 msgstr "{name} データが存在し、分析に適しています"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:60
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:64
 msgid "{name} data has quality issues"
 msgstr "{name} データに品質上の問題があります"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
-msgid "Battery logging is disabled in LOG_BITMASK"
-msgstr "LOG_BITMASK でバッテリーログが無効になっています"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:45
-msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:131
+msgid "{message} logging is disabled in LOG_BITMASK"
 msgstr ""
-"BAT データを記録するには、バッテリーログ (LOG_BITMASK ビット) を有効にしてく"
-"ださい"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:47
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:132
+msgid "Enable {message} logging (LOG_BITMASK bit)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:135
+msgid "{message} telemetry not logged but logging enabled; {hint}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:138
+msgid "No {message} messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:154
+msgid "{field} field not present in this firmware's {msg} schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:157
+msgid "{field} values missing from {msg} records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:39
+msgid "check the battery monitor physical connection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
 msgid "Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)"
 msgstr "バッテリーログは有効ですが、BATT_MONITOR が 0 です (モニター無効)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:46
 msgid "Set BATT_MONITOR to enable the battery monitor"
 msgstr "バッテリーモニターを有効にするには BATT_MONITOR を設定してください"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:52
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
 msgid ""
 "Battery logging enabled but no data, monitor may not be configured properly"
 msgstr ""
 "バッテリーログは有効ですがデータがありません。モニターが正しく設定されていな"
 "い可能性があります"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:53
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:50
 msgid "No BAT messages found"
 msgstr "BAT メッセージが見つかりません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:61
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:133
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:130
 msgid "Volt field not present in this firmware's BAT schema"
 msgstr "このファームウェアの BAT スキーマには Volt フィールドがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:62
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:134
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:59
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:131
 msgid "Voltage values missing from BAT records"
 msgstr "BAT レコードに電圧値がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:68
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:65
 msgid "Voltage is zero throughout, sensor may not be reading"
 msgstr "電圧が全体を通して 0 です。センサーが読み取れていない可能性があります"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:75
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:72
 msgid "Voltage spike, or MOT_BAT_VOLT_MAX misconfigured"
 msgstr "電圧スパイク、または MOT_BAT_VOLT_MAX の設定不良"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:77
 msgid "Voltage sag, or MOT_BAT_VOLT_MIN misconfigured"
 msgstr "電圧低下、または MOT_BAT_VOLT_MIN の設定不良"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:89
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:86
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:136
 msgid "Curr field not present in this firmware's BAT schema"
 msgstr "このファームウェアの BAT スキーマには Curr フィールドがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:90
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:87
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:137
 msgid "Current values missing from BAT records"
 msgstr "BAT レコードに電流値がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:98
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:95
 msgid "CurrTot field not present in this firmware's BAT schema"
 msgstr "このファームウェアの BAT スキーマには CurrTot フィールドがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:99
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:96
 msgid "CurrTot missing from BAT records"
 msgstr "BAT レコードに CurrTot がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:108
 msgid "Battery low-voltage failsafe threshold disabled"
 msgstr "バッテリー低電圧フェイルセーフのしきい値が無効です"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:116
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:113
 msgid "Battery critical-voltage failsafe threshold disabled"
 msgstr "バッテリーのクリティカル低電圧フェイルセーフしきい値が無効です"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:149
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:146
 msgid ""
 "Power efficiency < 200W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really good."
@@ -8000,7 +8031,7 @@ msgstr ""
 "電力効率 < 200W/Kg。電流の較正が不正確か、離陸重量が不正確か、または効率が非"
 "常に良好です。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:158
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:155
 msgid ""
 "Power efficiency > 500W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really bad."
@@ -8008,27 +8039,31 @@ msgstr ""
 "電力効率が 500W/Kg を超えています。電流の較正が不正確か、離陸重量が正しくない"
 "か、効率が実際に非常に悪い可能性があります。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:43
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_err.py:36
+msgid "No errors logged during this flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:45
 msgid "ESC telemetry not logged"
 msgstr "ESC テレメトリが記録されていません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:46
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:48
 msgid "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
 msgstr ""
 "ESC テレメトリをサポートするには、MOT_PWM_TYPE を DShot 系の値に設定してくだ"
 "さい"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:51
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:53
 msgid "ESC telemetry not logged, scripting is disabled"
 msgstr "ESC テレメトリが記録されていません。スクリプト機能が無効です"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:54
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:56
 msgid "Enable SCR_ENABLE if using scripted ESC telemetry"
 msgstr ""
 "スクリプト化された ESC テレメトリを使用する場合は、SCR_ENABLE を有効にしてく"
 "ださい"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:59
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:61
 msgid ""
 "ESC telemetry not logged, check ESC hardware supports telemetry and is wired "
 "correctly"
@@ -8036,75 +8071,183 @@ msgstr ""
 "ESC テレメトリが記録されていません。ESC ハードウェアがテレメトリに対応してお"
 "り、正しく配線されているか確認してください"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:60
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:62
 msgid "No ESC messages found"
 msgstr "ESC メッセージが見つかりません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:71
 msgid "RPM field not present in this firmware's ESC schema"
 msgstr "このファームウェアの ESC スキーマには RPM フィールドがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:70
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:72
 msgid "RPM values missing from ESC records"
 msgstr "ESC レコードに RPM 値がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:79
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:81
 msgid "Curr field not present in this firmware's ESC schema"
 msgstr "このファームウェアの ESC スキーマには Curr フィールドがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:82
 msgid "Current values missing from ESC records"
 msgstr "ESC レコードに電流値がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:89
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:91
 msgid "Err field not present in this firmware's ESC schema"
 msgstr "このファームウェアの ESC スキーマには Err フィールドがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:90
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:92
 msgid "ESC error values missing from ESC records"
 msgstr "ESC レコードに ESC エラー値がありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:93
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:96
 msgid "ESC error rate detected on at least one ESC instance"
 msgstr "少なくとも 1 つの ESC インスタンスで ESC エラー率が検出されました"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:44
-msgid "GPS logging is disabled in LOG_BITMASK"
-msgstr "LOG_BITMASK で GPS ロギングが無効になっています"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:45
-msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:42
+msgid "Raw IMU batch logging is disabled (INS_LOG_BAT_MASK is 0)"
 msgstr ""
-"GPS データを記録するには、GPS ロギング（LOG_BITMASK ビット）を有効にしてくだ"
-"さい"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:47
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:45
+msgid "Set INS_LOG_BAT_MASK to enable raw IMU batch logging for FFT analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:50
 msgid ""
-"GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
-"connection"
+"Raw IMU batch logging enabled but no data, check firmware build supports "
+"batch logging"
 msgstr ""
-"ロギングは有効ですが GPS/GNSS テレメトリが記録されていません。GPS の物理接続"
-"を確認してください"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:48
-msgid "No GPS messages found"
-msgstr "GPS メッセージが見つかりません"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:51
+msgid "No ISBH messages found"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:57
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:63
+msgid "ISBH header present but ISBD batch samples are missing"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:71
+msgid "{field} field not present in this firmware's ISBD schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:72
+msgid "{field} values missing from ISBD records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:40
+msgid "check the GPS physical connection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:49
 msgid "Status field not present in this firmware's GPS schema"
 msgstr "このファームウェアの GPS スキーマには Status フィールドがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:50
 msgid "GPS fix status missing from GPS records"
 msgstr "GPS レコードに GPS 測位ステータスがありません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:53
 msgid "GPS never achieved a 3D fix"
 msgstr "GPS は一度も 3D Fix を取得していません"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
 msgid "GPS type not configured (set to None)"
 msgstr "GPS タイプが設定されていません（None に設定されています）"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:39
+msgid "check firmware build supports IMU logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:48
+msgid "EG field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:49
+msgid "Gyroscope error count missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:52
+msgid "Gyroscope error count detected on at least one IMU instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:60
+msgid "EA field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:61
+msgid "Accelerometer error count missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:64
+msgid "Accelerometer error count detected on at least one IMU instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:74
+msgid "GH field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:75
+msgid "Gyroscope health missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:79
+msgid "Gyroscope reported unhealthy at some point during the flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:84
+msgid "AH field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:85
+msgid "Accelerometer health missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:89
+msgid "Accelerometer reported unhealthy at some point during the flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:101
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:114
+msgid "{field} field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:102
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:115
+msgid "{field} values missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:107
+msgid "{field} is zero throughout, gyroscope may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:120
+msgid "{field} is zero throughout, accelerometer may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:43
+msgid ""
+"MODE messages not found, this is unexpected since mode changes are always "
+"logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:44
+msgid "No MODE messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_pm.py:43
+msgid "check firmware build supports performance monitor logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:54
+msgid "check that IMU data is being logged, since VIBE is derived from it"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:67
+msgid "Clip field not present in this firmware's VIBE schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:68
+msgid "Clip values missing from VIBE records"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:31
 msgid "Place vehicle LEVEL and click Continue"
@@ -8244,7 +8387,10 @@ msgid ""
 "AHRS_ORIENTATION could not be read or is a custom/unsupported rotation. Set "
 "it to 0, upload it, reboot the flight controller, and reconnect before "
 "starting auto-detection."
-msgstr "AHRS_ORIENTATION を読み取れなかったか、カスタム/未対応の回転が設定されています。0 に設定してアップロードし、フライトコントローラーを再起動してから、自動検出を開始する前に再接続してください。"
+msgstr ""
+"AHRS_ORIENTATION を読み取れなかったか、カスタム/未対応の回転が設定されていま"
+"す。0 に設定してアップロードし、フライトコントローラーを再起動してから、自動"
+"検出を開始する前に再接続してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:169
 msgid "Unknown capture step: %(step)s"
@@ -8252,19 +8398,25 @@ msgstr "不明なキャプチャ手順: %(step)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:171
 msgid "No IMU sample is available yet. Keep the vehicle still and try again."
-msgstr "IMU サンプルはまだ利用できません。機体を静止させたまま、もう一度試してください。"
+msgstr ""
+"IMU サンプルはまだ利用できません。機体を静止させたまま、もう一度試してくださ"
+"い。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:178
 msgid ""
 "IMU magnitude %(value).2f m/s^2 is outside the expected still range. Keep "
 "the vehicle still and try again."
-msgstr "IMU の大きさ %(value).2f m/s^2 は、静止時の想定範囲外です。機体を静止させたまま、もう一度試してください。"
+msgstr ""
+"IMU の大きさ %(value).2f m/s^2 は、静止時の想定範囲外です。機体を静止させたま"
+"ま、もう一度試してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:191
 msgid ""
 "%(step)s pose too similar to %(other)s. Reposition the vehicle further and "
 "try again."
-msgstr "%(step)s の姿勢が %(other)s に似すぎています。機体をさらに離れた位置に置き直してから、もう一度試してください。"
+msgstr ""
+"%(step)s の姿勢が %(other)s に似すぎています。機体をさらに離れた位置に置き直"
+"してから、もう一度試してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:196
 msgid "Captured %(step)s sample"
@@ -8272,18 +8424,24 @@ msgstr "%(step)s サンプルを取得しました"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:201
 msgid "Missing required samples. Capture LEVEL, NOSE DOWN, and RIGHT first."
-msgstr "必要なサンプルが不足しています。まず LEVEL、NOSE DOWN、RIGHT を取得してください。"
+msgstr ""
+"必要なサンプルが不足しています。まず LEVEL、NOSE DOWN、RIGHT を取得してくださ"
+"い。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:205
 msgid ""
 "Unable to estimate orientation from samples. Capture the sequence again."
-msgstr "サンプルから機体の向きを推定できません。シーケンスをもう一度取得してください。"
+msgstr ""
+"サンプルから機体の向きを推定できません。シーケンスをもう一度取得してくださ"
+"い。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:212
 msgid ""
 "The captured poses are inconsistent with LEVEL, NOSE DOWN, and RIGHT. Place "
 "the vehicle accurately and capture the sequence again."
-msgstr "取得した姿勢は LEVEL、NOSE DOWN、RIGHT と整合していません。機体を正確に配置し、シーケンスをもう一度取得してください。"
+msgstr ""
+"取得した姿勢は LEVEL、NOSE DOWN、RIGHT と整合していません。機体を正確に配置"
+"し、シーケンスをもう一度取得してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:244
 msgid "Estimation complete"
@@ -8953,7 +9111,9 @@ msgstr "オプション 1 - AHRS_ORIENTATION を手動で設定"
 msgid ""
 "Use this option if you know the vehicle orientation.\n"
 "Set AHRS_ORIENTATION manually in the parameter list on the right."
-msgstr "機体の向きが分かっている場合は、このオプションを使用してください。\n右側のパラメータ一覧で AHRS_ORIENTATION を手動で設定してください。"
+msgstr ""
+"機体の向きが分かっている場合は、このオプションを使用してください。\n"
+"右側のパラメータ一覧で AHRS_ORIENTATION を手動で設定してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:88
 msgid "Option 2 - Determine AHRS_ORIENTATION automatically"
@@ -8967,7 +9127,15 @@ msgid ""
 "\n"
 "It compensates for the current preset AHRS_ORIENTATION. If a custom\n"
 "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
-msgstr "機体の向きが分からない場合は、このオプションを使用してください。\nこのアシスタントは、機体の 3 つの姿勢:\nLEVEL、NOSE DOWN、RIGHT SIDE DOWN\n\nから AHRS_ORIENTATION を推定します。現在プリセットされている AHRS_ORIENTATION を補正します。カスタムの\n向きが有効な場合は、まず AHRS_ORIENTATION を 0 に設定してパラメータをアップロードしてください。"
+msgstr ""
+"機体の向きが分からない場合は、このオプションを使用してください。\n"
+"このアシスタントは、機体の 3 つの姿勢:\n"
+"LEVEL、NOSE DOWN、RIGHT SIDE DOWN\n"
+"\n"
+"から AHRS_ORIENTATION を推定します。現在プリセットされている "
+"AHRS_ORIENTATION を補正します。カスタムの\n"
+"向きが有効な場合は、まず AHRS_ORIENTATION を 0 に設定してパラメータをアップ"
+"ロードしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:128
 msgid "Not Connected"
@@ -9007,7 +9175,9 @@ msgstr "パラメータの更新に失敗しました"
 msgid ""
 "AHRS_ORIENTATION was set to %(code)d (%(name)s). Match score: "
 "%(match_score).1f%%. Press upload to apply the changes."
-msgstr "AHRS_ORIENTATION を %(code)d (%(name)s) に設定しました。一致度: %(match_score).1f%%。変更を適用するにはアップロードを押してください。"
+msgstr ""
+"AHRS_ORIENTATION を %(code)d (%(name)s) に設定しました。一致度: "
+"%(match_score).1f%%。変更を適用するにはアップロードを押してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:188
 msgid "AHRS Orientation Estimate"
@@ -9021,7 +9191,13 @@ msgid ""
 "Yes: use CUST_ROT1_ROLL/PITCH/YAW and set AHRS_ORIENTATION to 101 (Custom "
 "1).\n"
 "No: re-do the estimation process."
-msgstr "十分に明確なプリセット姿勢を特定できませんでした（最良候補: %(code)d %(name)s、一致スコア %(match_score).1f%%）。\n\nはい: CUST_ROT1_ROLL/PITCH/YAW を使用し、AHRS_ORIENTATION を 101（カスタム 1）に設定します。\nいいえ: 推定処理をやり直します。"
+msgstr ""
+"十分に明確なプリセット姿勢を特定できませんでした（最良候補: %(code)d "
+"%(name)s、一致スコア %(match_score).1f%%）。\n"
+"\n"
+"はい: CUST_ROT1_ROLL/PITCH/YAW を使用し、AHRS_ORIENTATION を 101（カスタム "
+"1）に設定します。\n"
+"いいえ: 推定処理をやり直します。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:202
 msgid "Low Confidence Estimate"
@@ -9032,7 +9208,11 @@ msgid ""
 "Set CUST_ROT_ENABLE=1, Applied CUST_ROT1_ROLL=%(roll).1f, "
 "CUST_ROT1_PITCH=%(pitch).1f, CUST_ROT1_YAW=%(yaw).1f and set "
 "AHRS_ORIENTATION=101 (Custom 1). Upload the changes to use Custom 1 rotation."
-msgstr "CUST_ROT_ENABLE=1 を設定し、CUST_ROT1_ROLL=%(roll).1f、CUST_ROT1_PITCH=%(pitch).1f、CUST_ROT1_YAW=%(yaw).1f を適用して、AHRS_ORIENTATION=101（カスタム 1）に設定しました。変更をアップロードして、カスタム 1 の回転を使用してください。"
+msgstr ""
+"CUST_ROT_ENABLE=1 を設定し、CUST_ROT1_ROLL=%(roll).1f、"
+"CUST_ROT1_PITCH=%(pitch).1f、CUST_ROT1_YAW=%(yaw).1f を適用して、"
+"AHRS_ORIENTATION=101（カスタム 1）に設定しました。変更をアップロードして、カ"
+"スタム 1 の回転を使用してください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:216
 msgid "Custom Orientation Applied"
@@ -9041,7 +9221,8 @@ msgstr "カスタム姿勢を適用しました"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:218
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:221
 msgid "Could not apply Custom 1 orientation parameters in the parameter table."
-msgstr "パラメーターテーブルに Custom 1 の姿勢パラメーターを適用できませんでした。"
+msgstr ""
+"パラメーターテーブルに Custom 1 の姿勢パラメーターを適用できませんでした。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:231
 msgid "Press Continue to start the auto-detection wizard."
@@ -9051,18 +9232,22 @@ msgstr "自動検出ウィザードを開始するには、[続行] を押して
 msgid ""
 "Place the vehicle LEVEL, keep it perfectly still, then click Continue to "
 "begin automatic detection."
-msgstr "機体を水平に置き、完全に静止させてから、[続行] をクリックして自動検出を開始してください。"
+msgstr ""
+"機体を水平に置き、完全に静止させてから、[続行] をクリックして自動検出を開始し"
+"てください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:295
 msgid ""
 "Place the vehicle NOSE DOWN, keep it perfectly still, then click Continue."
-msgstr "機体を機首下向きに置き、完全に静止させてから、[続行] をクリックしてください。"
+msgstr ""
+"機体を機首下向きに置き、完全に静止させてから、[続行] をクリックしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:297
 msgid ""
 "Place the vehicle on its RIGHT side, keep it perfectly still, then click "
 "Continue."
-msgstr "機体を右側面に置き、完全に静止させてから、[続行] をクリックしてください。"
+msgstr ""
+"機体を右側面に置き、完全に静止させてから、[続行] をクリックしてください。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:301
 msgid "Step %(current)d/%(total)d: %(name)s"
@@ -10284,6 +10469,32 @@ msgstr "ハードウェアのバージョンまたはリビジョン"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "製品ページまたはドキュメントへのウェブリンク"
+
+#~ msgid "Battery logging is disabled in LOG_BITMASK"
+#~ msgstr "LOG_BITMASK でバッテリーログが無効になっています"
+
+#~ msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
+#~ msgstr ""
+#~ "BAT データを記録するには、バッテリーログ (LOG_BITMASK ビット) を有効にして"
+#~ "ください"
+
+#~ msgid "GPS logging is disabled in LOG_BITMASK"
+#~ msgstr "LOG_BITMASK で GPS ロギングが無効になっています"
+
+#~ msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
+#~ msgstr ""
+#~ "GPS データを記録するには、GPS ロギング（LOG_BITMASK ビット）を有効にしてく"
+#~ "ださい"
+
+#~ msgid ""
+#~ "GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
+#~ "connection"
+#~ msgstr ""
+#~ "ロギングは有効ですが GPS/GNSS テレメトリが記録されていません。GPS の物理接"
+#~ "続を確認してください"
+
+#~ msgid "No GPS messages found"
+#~ msgstr "GPS メッセージが見つかりません"
 
 #~ msgid "Analyse a .bin log"
 #~ msgstr ".binログを解析"

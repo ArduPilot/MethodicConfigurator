@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-08-13 21:15+0000\n"
+"POT-Creation-Date: 2026-08-15 09:48+0000\n"
 "PO-Revision-Date: 2024-12-02 13:20+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -4764,7 +4764,8 @@ msgstr "O parâmetro já existe, edite-o em vez disso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2018
 msgid "Parameter name not found in the flight controller or apm.pdef.xml."
-msgstr "Nome do parâmetro não encontrado no controlador de voo nem em apm.pdef.xml."
+msgstr ""
+"Nome do parâmetro não encontrado no controlador de voo nem em apm.pdef.xml."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2020
 msgid "'{param_name}' not found in the apm.pdef.xml file."
@@ -4899,7 +4900,9 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2587
 msgid ""
 "data_model_parameter_editor: Plugin has no data model factory: {plugin_name}"
-msgstr "data_model_parameter_editor: O plugin não tem fábrica de modelo de dados: {plugin_name}"
+msgstr ""
+"data_model_parameter_editor: O plugin não tem fábrica de modelo de dados: "
+"{plugin_name}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_upgrade.py:236
 msgid ""
@@ -6386,78 +6389,78 @@ msgstr "Em uso:"
 msgid "No hardware data available"
 msgstr "Não há dados de hardware disponíveis"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:45
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:47
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:776
 msgid "Log Quality Report"
 msgstr "Relatório de qualidade do registo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:96
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:98
 msgid "Open release page on GitHub"
 msgstr "Abrir página da versão no GitHub"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:123
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:125
 msgid "Vehicle & Firmware"
 msgstr "Veículo e firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:130
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:135
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:132
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:137
 msgid "Firmware:"
 msgstr "Firmware:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:141
 msgid "FC:"
 msgstr "FC:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:142
 msgid "Board:"
 msgstr "Placa:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:143
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:145
 msgid "Log Overview"
 msgstr "Visão geral do registo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:146
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
 msgid "Flight Time:"
 msgstr "Tempo de voo:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:147
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:149
 msgid "Log Size:"
 msgstr "Tamanho do registo:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:148
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:150
 msgid "Total Msgs:"
 msgstr "Total de msgs:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:151
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:153
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:89
 msgid "System Performance"
 msgstr "Desempenho do sistema"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:155
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
 msgid "Avg CPU:"
 msgstr "CPU média:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:156
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:158
 msgid "Peak CPU:"
 msgstr "Pico de CPU:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:157
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:159
 msgid "Long Loops:"
 msgstr "Loops longos:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:169
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:171
 msgid "  Quality Report  "
 msgstr "Relatório de Qualidade"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:173
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:175
 msgid "  Hardware Overview  "
 msgstr "Visão Geral do Hardware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:190
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:192
 msgid "Requires Attention"
 msgstr "Requer atenção"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:201
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:203
 msgid "Passed Checks"
 msgstr "Verificações aprovadas"
 
@@ -8019,38 +8022,38 @@ msgstr "Ficheiro de configuração '{config_file}' não encontrado"
 msgid "Error in configuration file '{config_file}': {error}"
 msgstr "Erro no ficheiro de configuração '{config_file}': {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:44
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:46
 msgid "Error opening logfile {logfile}: {error}"
 msgstr "Erro ao abrir o ficheiro de registo {logfile}: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:142
 msgid "Schema {name} has mismatched field and format counts"
 msgstr "O esquema {name} tem contagem de campos e formatos incompatível"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:151
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:153
 msgid "Unsupported log format character {format_char!r} in schema {name}"
 msgstr ""
 "Caractere de formato de registo {format_char!r} não suportado no esquema "
 "{name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:169
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:171
 msgid "Field mismatch for {name}. Missing: {missing}, extra: {extra}"
 msgstr ""
 "Incompatibilidade de campos para {name}. Em falta: {missing}, em excesso: "
 "{extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:282
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:284
 msgid "Message count for {message_type} exceeded the preallocated array size"
 msgstr ""
 "O número de mensagens para {message_type} excedeu o tamanho pré-alocado da "
 "matriz"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:292
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:294
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_data.py:82
 msgid "Structured array for {message_type} is missing field metadata"
 msgstr "Falta o campo metadata na matriz estruturada para {message_type}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:311
 msgid ""
 "Message count mismatch for {message_name}: expected {expected}, wrote "
 "{written}"
@@ -8058,27 +8061,27 @@ msgstr ""
 "Incompatibilidade na contagem de mensagens para {message_name}: esperado "
 "{expected}, escrito {written}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:389
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:391
 msgid "{message_name} log ends while still armed, no trailing disarm found"
 msgstr ""
 "O registo {message_name} termina enquanto ainda está armado, sem desarmar no "
 "final"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:396
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py:398
 msgid "Could not compute flight duration: {error}"
 msgstr "Não foi possível calcular a duração do voo: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:65
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:85
 msgid "Performance monitor data present and good for analysis"
 msgstr ""
 "Os dados do monitor de desempenho estão presentes e são adequados para "
 "análise"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:67
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:87
 msgid "Performance monitor data has quality issues"
 msgstr "Os dados do monitor de desempenho têm problemas de qualidade"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:81
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:101
 msgid ""
 "The selected log is from {log_vehicle_type}, but the currently open vehicle "
 "is {project_vehicle_type}."
@@ -8086,7 +8089,7 @@ msgstr ""
 "O registo selecionado é de {log_vehicle_type}, mas o veículo atualmente "
 "aberto é {project_vehicle_type}."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:88
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:108
 msgid ""
 "The selected log firmware version is {log_version}, but the currently open "
 "vehicle firmware version is {project_version}."
@@ -8094,154 +8097,184 @@ msgstr ""
 "A versão de firmware do registo selecionado é {log_version}, mas a versão de "
 "firmware do veículo atualmente aberto é {project_version}."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:82
 msgid "Schema not found"
 msgstr "Esquema não encontrado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:163
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:165
 msgid "PM message not logged"
 msgstr "Mensagem PM não registada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:172
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:174
 msgid "Internal firmware errors were detected (InE)"
 msgstr "Foram detetados erros internos de firmware (InE)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:179
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:181
 msgid "Internal error count: {count}"
 msgstr "Contagem de erros internos: {count}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:185
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:187
 msgid "An internal error line was recorded (ErrL)"
 msgstr "Foi registada uma linha de erro interno (ErrL)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:193
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:195
 msgid "Detected {count} scheduler long loops"
 msgstr "Detetados {count} ciclos longos do escalonador"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:213
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:215
 msgid "Missing field definitions"
 msgstr "Faltam definições de campos"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:215
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:217
 msgid "Missing format string"
 msgstr "Falta cadeia de formato"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:217
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:219
 msgid "Invalid message length"
 msgstr "Comprimento de mensagem inválido"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:219
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:221
 msgid "Unit count mismatch"
 msgstr "Número de unidades não coincide"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:221
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:223
 msgid "Multiplier count mismatch"
 msgstr "Número de multiplicadores não coincide"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:224
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:226
 msgid "{message} has no logging data"
 msgstr "{message} não tem dados de registo"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:232
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py:234
 msgid "Field mismatch. Missing: {missing}, extra: {extra}"
 msgstr "Incompatibilidade de campos. Em falta: {missing}, em excesso: {extra}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:53
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
 msgid "Status: Log looks healthy. No major issues detected."
 msgstr ""
 "Estado: O registo parece estar saudável. Não foram detetados problemas "
 "graves."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:55
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_report.py:57
 msgid "Status: Found {n} potential issue(s) to review."
 msgstr "Estado: Foram encontrados {n} problema(s) potencial(is) para rever."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:33
+msgid ""
+"ARM messages not found, that is unexpected since arm/disarm events are "
+"always logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_arm.py:34
+msgid "No ARM messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:62
 msgid "{name} data present and good for analysis"
 msgstr "Os dados de {name} estão presentes e são adequados para análise"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:60
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:64
 msgid "{name} data has quality issues"
 msgstr "Os dados de {name} têm problemas de qualidade"
 
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:131
+msgid "{message} logging is disabled in LOG_BITMASK"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:132
+msgid "Enable {message} logging (LOG_BITMASK bit)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:135
+msgid "{message} telemetry not logged but logging enabled; {hint}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:138
+msgid "No {message} messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:154
+msgid "{field} field not present in this firmware's {msg} schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py:157
+msgid "{field} values missing from {msg} records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:39
+msgid "check the battery monitor physical connection"
+msgstr ""
+
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:44
-msgid "Battery logging is disabled in LOG_BITMASK"
-msgstr "O registo da bateria está desativado em LOG_BITMASK"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:45
-msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
-msgstr "Ative o registo da bateria (bit de LOG_BITMASK) para gravar dados BAT"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:47
 msgid "Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)"
 msgstr ""
 "O registo da bateria está ativado, mas BATT_MONITOR é 0 (monitor desativado)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:46
 msgid "Set BATT_MONITOR to enable the battery monitor"
 msgstr "Defina BATT_MONITOR para ativar o monitor da bateria"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:52
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:49
 msgid ""
 "Battery logging enabled but no data, monitor may not be configured properly"
 msgstr ""
 "O registo da bateria está ativado, mas não há dados; o monitor pode não "
 "estar configurado corretamente"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:53
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:50
 msgid "No BAT messages found"
 msgstr "Não foram encontradas mensagens BAT"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:61
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:133
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:130
 msgid "Volt field not present in this firmware's BAT schema"
 msgstr "O campo Volt não está presente no esquema BAT desta versão do firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:62
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:134
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:59
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:131
 msgid "Voltage values missing from BAT records"
 msgstr "Faltam valores de tensão nos registos BAT"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:68
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:65
 msgid "Voltage is zero throughout, sensor may not be reading"
 msgstr "A tensão é zero em todo o registo; o sensor pode não estar a ler"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:75
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:72
 msgid "Voltage spike, or MOT_BAT_VOLT_MAX misconfigured"
 msgstr "Pico de tensão, ou MOT_BAT_VOLT_MAX está mal configurado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:77
 msgid "Voltage sag, or MOT_BAT_VOLT_MIN misconfigured"
 msgstr "Queda de tensão, ou MOT_BAT_VOLT_MIN está mal configurado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:89
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:86
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:136
 msgid "Curr field not present in this firmware's BAT schema"
 msgstr "O campo Curr não está presente no esquema BAT desta versão do firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:90
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:87
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:137
 msgid "Current values missing from BAT records"
 msgstr "Faltam valores de corrente nos registos BAT"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:98
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:95
 msgid "CurrTot field not present in this firmware's BAT schema"
 msgstr ""
 "O campo CurrTot não está presente no esquema BAT desta versão do firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:99
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:96
 msgid "CurrTot missing from BAT records"
 msgstr "Falta CurrTot nos registos BAT"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:108
 msgid "Battery low-voltage failsafe threshold disabled"
 msgstr "O limiar de failsafe de baixa tensão da bateria está desativado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:116
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:113
 msgid "Battery critical-voltage failsafe threshold disabled"
 msgstr "O limiar de failsafe de tensão crítica da bateria está desativado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:149
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:146
 msgid ""
 "Power efficiency < 200W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really good."
@@ -8249,7 +8282,7 @@ msgstr ""
 "Eficiência energética < 200W/Kg. A corrente está mal calibrada, o peso à "
 "descolagem está incorreto ou a eficiência é realmente muito boa."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:158
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_battery.py:155
 msgid ""
 "Power efficiency > 500W/Kg. Current is miscalibrated or take off weight is "
 "incorrect or the efficiency is really bad."
@@ -8257,24 +8290,28 @@ msgstr ""
 "Eficiência de potência > 500W/Kg. A corrente está mal calibrada, ou o peso à "
 "descolagem está incorreto, ou a eficiência é realmente muito má."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:43
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_err.py:36
+msgid "No errors logged during this flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:45
 msgid "ESC telemetry not logged"
 msgstr "Telemetria do ESC não registada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:46
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:48
 msgid "Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"
 msgstr ""
 "Defina MOT_PWM_TYPE para uma variante DShot para suporte de telemetria do ESC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:51
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:53
 msgid "ESC telemetry not logged, scripting is disabled"
 msgstr "Telemetria do ESC não registada, a execução de scripts está desativada"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:54
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:56
 msgid "Enable SCR_ENABLE if using scripted ESC telemetry"
 msgstr "Ative SCR_ENABLE se estiver a utilizar telemetria do ESC por script"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:59
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:61
 msgid ""
 "ESC telemetry not logged, check ESC hardware supports telemetry and is wired "
 "correctly"
@@ -8282,73 +8319,183 @@ msgstr ""
 "Telemetria do ESC não registada; verifique se o hardware do ESC suporta "
 "telemetria e está corretamente ligado"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:60
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:62
 msgid "No ESC messages found"
 msgstr "Não foram encontradas mensagens ESC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:71
 msgid "RPM field not present in this firmware's ESC schema"
 msgstr "O campo RPM não está presente no esquema ESC deste firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:70
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:72
 msgid "RPM values missing from ESC records"
 msgstr "Faltam valores de RPM nos registos do ESC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:79
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:81
 msgid "Curr field not present in this firmware's ESC schema"
 msgstr "O campo Curr não está presente no esquema ESC deste firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:80
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:82
 msgid "Current values missing from ESC records"
 msgstr "Faltam valores de corrente nos registos do ESC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:89
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:91
 msgid "Err field not present in this firmware's ESC schema"
 msgstr "O campo Err não está presente no esquema ESC deste firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:90
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:92
 msgid "ESC error values missing from ESC records"
 msgstr "Faltam valores de erro do ESC nos registos do ESC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:93
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_esc.py:96
 msgid "ESC error rate detected on at least one ESC instance"
 msgstr "Taxa de erros do ESC detetada em pelo menos uma instância de ESC"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:44
-msgid "GPS logging is disabled in LOG_BITMASK"
-msgstr "O registo do GPS está desativado em LOG_BITMASK"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:45
-msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
-msgstr "Ative o registo do GPS (bit LOG_BITMASK) para registar dados de GPS"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:47
-msgid ""
-"GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
-"connection"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:42
+msgid "Raw IMU batch logging is disabled (INS_LOG_BAT_MASK is 0)"
 msgstr ""
-"Telemetria GPS/GNSS não registada apesar de o registo estar ativado; "
-"verifique a ligação física do GPS"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:48
-msgid "No GPS messages found"
-msgstr "Não foram encontradas mensagens GPS"
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:45
+msgid "Set INS_LOG_BAT_MASK to enable raw IMU batch logging for FFT analysis"
+msgstr ""
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:57
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:50
+msgid ""
+"Raw IMU batch logging enabled but no data, check firmware build supports "
+"batch logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:51
+msgid "No ISBH messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:63
+msgid "ISBH header present but ISBD batch samples are missing"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:71
+msgid "{field} field not present in this firmware's ISBD schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_fft.py:72
+msgid "{field} values missing from ISBD records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:40
+msgid "check the GPS physical connection"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:49
 msgid "Status field not present in this firmware's GPS schema"
 msgstr "O campo Status não está presente no esquema GPS deste firmware"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:58
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:50
 msgid "GPS fix status missing from GPS records"
 msgstr "Falta o estado de fixação do GPS nos registos do GPS"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:53
 msgid "GPS never achieved a 3D fix"
 msgstr "O GPS nunca obteve uma fixação 3D"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:69
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_gnss.py:61
 msgid "GPS type not configured (set to None)"
 msgstr "Tipo de GPS não configurado (definido como None)"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:39
+msgid "check firmware build supports IMU logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:48
+msgid "EG field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:49
+msgid "Gyroscope error count missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:52
+msgid "Gyroscope error count detected on at least one IMU instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:60
+msgid "EA field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:61
+msgid "Accelerometer error count missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:64
+msgid "Accelerometer error count detected on at least one IMU instance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:74
+msgid "GH field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:75
+msgid "Gyroscope health missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:79
+msgid "Gyroscope reported unhealthy at some point during the flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:84
+msgid "AH field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:85
+msgid "Accelerometer health missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:89
+msgid "Accelerometer reported unhealthy at some point during the flight"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:101
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:114
+msgid "{field} field not present in this firmware's IMU schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:102
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:115
+msgid "{field} values missing from IMU records"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:107
+msgid "{field} is zero throughout, gyroscope may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_imu.py:120
+msgid "{field} is zero throughout, accelerometer may not be reading"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:43
+msgid ""
+"MODE messages not found, this is unexpected since mode changes are always "
+"logged"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_mode.py:44
+msgid "No MODE messages found"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_pm.py:43
+msgid "check firmware build supports performance monitor logging"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:54
+msgid "check that IMU data is being logged, since VIBE is derived from it"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:67
+msgid "Clip field not present in this firmware's VIBE schema"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_quality_vibe.py:68
+msgid "Clip values missing from VIBE records"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_accelerometer_calibration.py:31
 msgid "Place vehicle LEVEL and click Continue"
@@ -8488,7 +8635,10 @@ msgid ""
 "AHRS_ORIENTATION could not be read or is a custom/unsupported rotation. Set "
 "it to 0, upload it, reboot the flight controller, and reconnect before "
 "starting auto-detection."
-msgstr "Não foi possível ler AHRS_ORIENTATION ou trata-se de uma rotação personalizada/não suportada. Defina-o como 0, carregue-o, reinicie o controlador de voo e volte a ligar-se antes de iniciar a deteção automática."
+msgstr ""
+"Não foi possível ler AHRS_ORIENTATION ou trata-se de uma rotação "
+"personalizada/não suportada. Defina-o como 0, carregue-o, reinicie o "
+"controlador de voo e volte a ligar-se antes de iniciar a deteção automática."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:169
 msgid "Unknown capture step: %(step)s"
@@ -8496,19 +8646,25 @@ msgstr "Passo de captura desconhecido: %(step)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:171
 msgid "No IMU sample is available yet. Keep the vehicle still and try again."
-msgstr "Ainda não existe nenhuma amostra da IMU disponível. Mantenha o veículo imóvel e tente novamente."
+msgstr ""
+"Ainda não existe nenhuma amostra da IMU disponível. Mantenha o veículo "
+"imóvel e tente novamente."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:178
 msgid ""
 "IMU magnitude %(value).2f m/s^2 is outside the expected still range. Keep "
 "the vehicle still and try again."
-msgstr "A magnitude da IMU %(value).2f m/s^2 está fora do intervalo esperado para imobilidade. Mantenha o veículo imóvel e tente novamente."
+msgstr ""
+"A magnitude da IMU %(value).2f m/s^2 está fora do intervalo esperado para "
+"imobilidade. Mantenha o veículo imóvel e tente novamente."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:191
 msgid ""
 "%(step)s pose too similar to %(other)s. Reposition the vehicle further and "
 "try again."
-msgstr "A posição %(step)s é demasiado semelhante a %(other)s. Reposicione o veículo mais afastado e tente novamente."
+msgstr ""
+"A posição %(step)s é demasiado semelhante a %(other)s. Reposicione o veículo "
+"mais afastado e tente novamente."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:196
 msgid "Captured %(step)s sample"
@@ -8516,18 +8672,24 @@ msgstr "Amostra %(step)s capturada"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:201
 msgid "Missing required samples. Capture LEVEL, NOSE DOWN, and RIGHT first."
-msgstr "Faltam amostras obrigatórias. Capture primeiro NIVELADO, NARIZ PARA BAIXO e DIREITA."
+msgstr ""
+"Faltam amostras obrigatórias. Capture primeiro NIVELADO, NARIZ PARA BAIXO e "
+"DIREITA."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:205
 msgid ""
 "Unable to estimate orientation from samples. Capture the sequence again."
-msgstr "Não foi possível estimar a orientação a partir das amostras. Capture novamente a sequência."
+msgstr ""
+"Não foi possível estimar a orientação a partir das amostras. Capture "
+"novamente a sequência."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:212
 msgid ""
 "The captured poses are inconsistent with LEVEL, NOSE DOWN, and RIGHT. Place "
 "the vehicle accurately and capture the sequence again."
-msgstr "As posições capturadas são inconsistentes com NIVELADO, NARIZ PARA BAIXO e DIREITA. Coloque o veículo com precisão e capture novamente a sequência."
+msgstr ""
+"As posições capturadas são inconsistentes com NIVELADO, NARIZ PARA BAIXO e "
+"DIREITA. Coloque o veículo com precisão e capture novamente a sequência."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_ahrs_orientation.py:244
 msgid "Estimation complete"
@@ -9230,7 +9392,9 @@ msgstr "Opção 1 - Definir AHRS_ORIENTATION manualmente"
 msgid ""
 "Use this option if you know the vehicle orientation.\n"
 "Set AHRS_ORIENTATION manually in the parameter list on the right."
-msgstr "Use esta opção se conhecer a orientação do veículo.\nDefina AHRS_ORIENTATION manualmente na lista de parâmetros à direita."
+msgstr ""
+"Use esta opção se conhecer a orientação do veículo.\n"
+"Defina AHRS_ORIENTATION manualmente na lista de parâmetros à direita."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:88
 msgid "Option 2 - Determine AHRS_ORIENTATION automatically"
@@ -9244,7 +9408,15 @@ msgid ""
 "\n"
 "It compensates for the current preset AHRS_ORIENTATION. If a custom\n"
 "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
-msgstr "Use esta opção se não conhecer a orientação do veículo.\nEste assistente estima AHRS_ORIENTATION a partir de três posições do veículo:\nNIVELADO, NARIZ PARA BAIXO e LADO DIREITO PARA BAIXO.\n\nCompensa a predefinição atual de AHRS_ORIENTATION. Se estiver ativa uma\norientação personalizada, defina AHRS_ORIENTATION como 0 e carregue primeiro os parâmetros."
+msgstr ""
+"Use esta opção se não conhecer a orientação do veículo.\n"
+"Este assistente estima AHRS_ORIENTATION a partir de três posições do "
+"veículo:\n"
+"NIVELADO, NARIZ PARA BAIXO e LADO DIREITO PARA BAIXO.\n"
+"\n"
+"Compensa a predefinição atual de AHRS_ORIENTATION. Se estiver ativa uma\n"
+"orientação personalizada, defina AHRS_ORIENTATION como 0 e carregue primeiro "
+"os parâmetros."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:128
 msgid "Not Connected"
@@ -9284,7 +9456,10 @@ msgstr "Falha na atualização do parâmetro"
 msgid ""
 "AHRS_ORIENTATION was set to %(code)d (%(name)s). Match score: "
 "%(match_score).1f%%. Press upload to apply the changes."
-msgstr "AHRS_ORIENTATION foi definido como %(code)d (%(name)s). Pontuação de correspondência: %(match_score).1f%%. Prima carregar para aplicar as alterações."
+msgstr ""
+"AHRS_ORIENTATION foi definido como %(code)d (%(name)s). Pontuação de "
+"correspondência: %(match_score).1f%%. Prima carregar para aplicar as "
+"alterações."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:188
 msgid "AHRS Orientation Estimate"
@@ -9298,7 +9473,14 @@ msgid ""
 "Yes: use CUST_ROT1_ROLL/PITCH/YAW and set AHRS_ORIENTATION to 101 (Custom "
 "1).\n"
 "No: re-do the estimation process."
-msgstr "Não foi possível identificar uma orientação predefinida suficientemente distinta (melhor correspondência: %(code)d %(name)s, pontuação de correspondência %(match_score).1f%%).\n\nSim: use CUST_ROT1_ROLL/PITCH/YAW e defina AHRS_ORIENTATION como 101 (Personalizada 1).\nNão: repita o processo de estimativa."
+msgstr ""
+"Não foi possível identificar uma orientação predefinida suficientemente "
+"distinta (melhor correspondência: %(code)d %(name)s, pontuação de "
+"correspondência %(match_score).1f%%).\n"
+"\n"
+"Sim: use CUST_ROT1_ROLL/PITCH/YAW e defina AHRS_ORIENTATION como 101 "
+"(Personalizada 1).\n"
+"Não: repita o processo de estimativa."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:202
 msgid "Low Confidence Estimate"
@@ -9309,7 +9491,11 @@ msgid ""
 "Set CUST_ROT_ENABLE=1, Applied CUST_ROT1_ROLL=%(roll).1f, "
 "CUST_ROT1_PITCH=%(pitch).1f, CUST_ROT1_YAW=%(yaw).1f and set "
 "AHRS_ORIENTATION=101 (Custom 1). Upload the changes to use Custom 1 rotation."
-msgstr "Defina CUST_ROT_ENABLE=1, foram aplicados CUST_ROT1_ROLL=%(roll).1f, CUST_ROT1_PITCH=%(pitch).1f, CUST_ROT1_YAW=%(yaw).1f e defina AHRS_ORIENTATION=101 (Personalizada 1). Carregue as alterações para usar a rotação Personalizada 1."
+msgstr ""
+"Defina CUST_ROT_ENABLE=1, foram aplicados CUST_ROT1_ROLL=%(roll).1f, "
+"CUST_ROT1_PITCH=%(pitch).1f, CUST_ROT1_YAW=%(yaw).1f e defina "
+"AHRS_ORIENTATION=101 (Personalizada 1). Carregue as alterações para usar a "
+"rotação Personalizada 1."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:216
 msgid "Custom Orientation Applied"
@@ -9318,7 +9504,9 @@ msgstr "Orientação personalizada aplicada"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:218
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:221
 msgid "Could not apply Custom 1 orientation parameters in the parameter table."
-msgstr "Não foi possível aplicar os parâmetros de orientação Personalizada 1 na tabela de parâmetros."
+msgstr ""
+"Não foi possível aplicar os parâmetros de orientação Personalizada 1 na "
+"tabela de parâmetros."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:231
 msgid "Press Continue to start the auto-detection wizard."
@@ -9328,18 +9516,24 @@ msgstr "Prima Continuar para iniciar o assistente de deteção automática."
 msgid ""
 "Place the vehicle LEVEL, keep it perfectly still, then click Continue to "
 "begin automatic detection."
-msgstr "Coloque o veículo NIVELADO, mantenha-o perfeitamente imóvel e, em seguida, clique em Continuar para iniciar a deteção automática."
+msgstr ""
+"Coloque o veículo NIVELADO, mantenha-o perfeitamente imóvel e, em seguida, "
+"clique em Continuar para iniciar a deteção automática."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:295
 msgid ""
 "Place the vehicle NOSE DOWN, keep it perfectly still, then click Continue."
-msgstr "Coloque o veículo COM O NARIZ PARA BAIXO, mantenha-o perfeitamente imóvel e, em seguida, clique em Continuar."
+msgstr ""
+"Coloque o veículo COM O NARIZ PARA BAIXO, mantenha-o perfeitamente imóvel e, "
+"em seguida, clique em Continuar."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:297
 msgid ""
 "Place the vehicle on its RIGHT side, keep it perfectly still, then click "
 "Continue."
-msgstr "Coloque o veículo sobre o lado DIREITO, mantenha-o perfeitamente imóvel e, em seguida, clique em Continuar."
+msgstr ""
+"Coloque o veículo sobre o lado DIREITO, mantenha-o perfeitamente imóvel e, "
+"em seguida, clique em Continuar."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_ahrs_orientation.py:301
 msgid "Step %(current)d/%(total)d: %(name)s"
@@ -10565,6 +10759,29 @@ msgstr "Versão ou revisão do hardware"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/vehicle_components.py:134
 msgid "Web link to the product page or documentation"
 msgstr "Ligação web para a página do produto ou documentação"
+
+#~ msgid "Battery logging is disabled in LOG_BITMASK"
+#~ msgstr "O registo da bateria está desativado em LOG_BITMASK"
+
+#~ msgid "Enable battery logging (LOG_BITMASK bit) to record BAT data"
+#~ msgstr ""
+#~ "Ative o registo da bateria (bit de LOG_BITMASK) para gravar dados BAT"
+
+#~ msgid "GPS logging is disabled in LOG_BITMASK"
+#~ msgstr "O registo do GPS está desativado em LOG_BITMASK"
+
+#~ msgid "Enable GPS logging (LOG_BITMASK bit) to record GPS data"
+#~ msgstr "Ative o registo do GPS (bit LOG_BITMASK) para registar dados de GPS"
+
+#~ msgid ""
+#~ "GPS/GNSS telemetry not logged but logging enabled; check the GPS physical "
+#~ "connection"
+#~ msgstr ""
+#~ "Telemetria GPS/GNSS não registada apesar de o registo estar ativado; "
+#~ "verifique a ligação física do GPS"
+
+#~ msgid "No GPS messages found"
+#~ msgstr "Não foram encontradas mensagens GPS"
 
 #~ msgid "Analyse a .bin log"
 #~ msgstr "Analisar um registo .bin"
