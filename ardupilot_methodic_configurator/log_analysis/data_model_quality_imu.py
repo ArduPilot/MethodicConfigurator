@@ -34,7 +34,7 @@ class ImuLogQualityModel(BaseLogQualityAnalysisModel):
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why IMU data is absent using LOG_BITMASK."""
-        step, name = self.resolve_message_step("IMU", "IMU")[1]
+        step, name = self.resolve_message_step("IMU", "IMU")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "IMU", "IMU", "IMU", not_logged_hint=_("check firmware build supports IMU logging")
         )

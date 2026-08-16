@@ -46,7 +46,7 @@ class VibeLogQualityModel(BaseLogQualityAnalysisModel):
         logging), so diagnose_bitmask_absence falls through to its generic
         "not logged" branch here rather than a bitmask-specific one.
         """
-        step, name = self.resolve_message_step("VIBE", "VIBE")[1]
+        step, name = self.resolve_message_step("VIBE", "VIBE")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "VIBE",
             "VIBE",

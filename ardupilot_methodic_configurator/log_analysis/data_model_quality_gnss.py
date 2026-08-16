@@ -35,7 +35,7 @@ class GPSLogQualityModel(BaseLogQualityAnalysisModel):
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why GPS data is absent using LOG_BITMASK."""
-        step, name = self.resolve_message_step("GPS", "GPS")[1]
+        step, name = self.resolve_message_step("GPS", "GPS")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "GPS", "GPS", "GPS", not_logged_hint=_("check the GPS physical connection")
         )

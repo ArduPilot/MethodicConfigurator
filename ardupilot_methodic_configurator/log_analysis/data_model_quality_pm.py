@@ -35,7 +35,7 @@ class PmLogQualityModel(BaseLogQualityAnalysisModel):
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why PM data is absent using LOG_BITMASK."""
-        step, name = self.resolve_message_step("PM", "PM")[1]
+        step, name = self.resolve_message_step("PM", "PM")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "PM",
             "System Performance",
