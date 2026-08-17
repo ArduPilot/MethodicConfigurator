@@ -233,10 +233,16 @@ def _record_message_counts_fields_and_identity(mlog: mavutil.mavfile, log_data: 
 
 
 def _resolve_multipliers(fmt: Any, mult_ids: str | None, mult_lookup: dict[str, float]) -> list[float | None]:  # noqa: ANN401
+    """
+    Fields whose format character is one of pymavlink's built-in fixed-point types.
+
+    ('c', 'C', 'e', 'E', 'L') are already scaled by pymavlink itself
+    inside DFMessage.
+    """
     resolved: list[float | None] = []
     for i, fixed_mult in enumerate(fmt.msg_mults):
         if fixed_mult is not None:
-            resolved.append(fixed_mult)
+            resolved.append(None)
             continue
 
         if mult_ids is not None and i < len(mult_ids) and mult_ids[i] != _NO_ID_ASSIGNED and mult_ids[i] in mult_lookup:
