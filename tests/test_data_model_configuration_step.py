@@ -51,6 +51,7 @@ def mock_local_filesystem() -> MagicMock:
 
     # Mock methods
     filesystem.compute_parameters.return_value = None
+    filesystem.compute_forced_and_derived_parameters.return_value = ("", "")
     filesystem.merge_forced_or_derived_parameters.return_value = False
     filesystem.get_eval_variables.return_value = {
         "selected_can": "CAN2",
@@ -157,7 +158,7 @@ class TestConfigurationStepProcessorWorkflows:
             selected_file, fc_parameters
         )  # Assert: Derived parameters were processed
         # compute_parameters is now called twice: once for "forced", once for "derived"
-        assert processor.local_filesystem.compute_parameters.call_count == 2
+        assert processor.local_filesystem.compute_forced_and_derived_parameters.call_count == 1
         # Note: merge_forced_or_derived_parameters is no longer called - derived params are returned instead
         assert isinstance(parameters, dict)
         assert ui_errors == []
@@ -178,7 +179,10 @@ class TestConfigurationStepProcessorWorkflows:
         # Arrange: Set up failing derived parameter computation
         selected_file = "test_file.param"
         processor.local_filesystem.configuration_steps = {selected_file: configuration_steps}
-        processor.local_filesystem.compute_parameters.return_value = "Computation error: Invalid expression"
+        processor.local_filesystem.compute_forced_and_derived_parameters.return_value = (
+            "Computation error: Invalid expression",
+            "Computation error: Invalid expression",
+        )
 
         # Act: Process configuration step with failing computation
         parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
@@ -340,7 +344,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
             selected_file, fc_parameters
         )  # Assert: Only derived parameters processed, no connection renaming
         # compute_parameters is now called twice: once for "forced", once for "derived"
-        assert processor.local_filesystem.compute_parameters.call_count == 2
+        assert processor.local_filesystem.compute_forced_and_derived_parameters.call_count == 1
         assert isinstance(parameters, dict)
         assert ui_errors == []
         assert ui_infos == []  # No connection renaming means no info messages

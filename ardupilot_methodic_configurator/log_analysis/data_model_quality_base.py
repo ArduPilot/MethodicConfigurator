@@ -10,9 +10,11 @@ SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import re
 from typing import TYPE_CHECKING, Any
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     LogQualityResult,
@@ -30,7 +32,7 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
 
-class BaseLogQualityAnalysisModel:
+class BaseLogModel(ConfigurationSteps):
     """Base class for log analysis models."""
 
     def __init__(
@@ -38,10 +40,11 @@ class BaseLogQualityAnalysisModel:
         log_data: "LogData",
         context: LogAnalysisContext,
     ) -> None:
+        ConfigurationSteps.__init__(self, _vehicle_dir="", vehicle_type="")
+        self.configuration_steps = context.configuration_steps
         self.log_data = log_data
         self.parameters = context.parameters
         self.vehicle_components = context.vehicle_components
-        self.configuration_steps = context.configuration_steps
         self.apm_doc = context.apm_doc
 
     def check(self) -> LogQualityResult:
@@ -55,7 +58,7 @@ class BaseLogQualityAnalysisModel:
         except ValueError:
             return ""
 
-    def build_result(self, issues: list[QualityIssue], name: str) -> LogQualityResult:
+    def build_result(self, issues: list[QualityIssue], name: str, related_step: str = "") -> LogQualityResult:
         return LogQualityResult(
             available=True,
             state=LogQualityState.INFO if not issues else LogQualityState.WARNING,
@@ -64,6 +67,7 @@ class BaseLogQualityAnalysisModel:
             else _("{name} data has quality issues").format(name=name),
             issues=issues,
             name=name,
+            related_step=related_step,
         )
 
     def resolve_message_step(self, message_name: str, fallback_name: str) -> tuple[str, str]:
@@ -161,3 +165,48 @@ class BaseLogQualityAnalysisModel:
             )
             issues += field_issues
         return issues
+
+    def expected_parameter_value(self, step_filename: str, param_name: str) -> tuple[float | None, str]:
+        """
+        Compute what a derived or forced parameter's value should be at a given step.
+
+        Returns: (expected_value, source) where source is "forced" or "derived",
+        or None if this parameter isn't forced or derived at this step.
+        """
+        if step_filename not in self.configuration_steps:
+            return None, ""
+
+        step_dict = self.configuration_steps[step_filename]
+        eval_variables: dict[str, Any] = {"vehicle_components": self.vehicle_components}
+        if self.apm_doc:
+            eval_variables["doc_dict"] = self.apm_doc
+        if self.parameters:
+            eval_variables["fc_parameters"] = self.parameters
+
+        self.compute_forced_and_derived_parameters(
+            step_filename, step_dict, eval_variables, ignore_fc_derived_param_warnings=True
+        )
+
+        for parameter_type in ("forced", "derived"):
+            destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
+            if step_filename in destination and param_name in destination[step_filename]:
+                return destination[step_filename][param_name].value, parameter_type
+
+        return None, ""
+
+    def derived_and_forced_parameters_matching(self, pattern: str) -> dict[str, str]:
+        """
+        Find every forced and derived parameter across all configuration steps.
+
+        Returns: param_name: step_filename
+        """
+        compiled = re.compile(pattern)
+        result: dict[str, str] = {}
+        for step_filename, step_info in self.configuration_steps.items():
+            for param_name in step_info.get("derived_parameters", {}):
+                if compiled.match(param_name):
+                    result[param_name] = step_filename
+            for param_name in step_info.get("forced_parameters", {}):
+                if compiled.match(param_name):
+                    result[param_name] = step_filename
+        return result

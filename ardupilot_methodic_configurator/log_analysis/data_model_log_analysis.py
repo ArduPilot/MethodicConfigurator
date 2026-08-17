@@ -30,7 +30,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check i
     validate_configuration_steps_data,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_arm import ArmLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogQualityAnalysisModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_err import ErrLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
@@ -134,7 +134,7 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
 def analyze_log(
     log_data: LogData,
     context: LogAnalysisContext,
-    quality_models: list[type[BaseLogQualityAnalysisModel]] | None = None,
+    quality_models: list[type[BaseLogModel]] | None = None,
 ) -> LogSummary:
     """
     Run log analysis over already loaded datasource values.
@@ -149,9 +149,7 @@ def analyze_log(
         Complete log analysis summary.
 
     """
-    resolved_quality_models: list[type[BaseLogQualityAnalysisModel]] = (
-        QUALITY_MODELS if quality_models is None else quality_models
-    )
+    resolved_quality_models: list[type[BaseLogModel]] = QUALITY_MODELS if quality_models is None else quality_models
 
     parameters = context.parameters
     configuration_steps = context.configuration_steps

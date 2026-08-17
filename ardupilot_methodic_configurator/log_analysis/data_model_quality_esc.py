@@ -11,14 +11,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogQualityAnalysisModel,
+    BaseLogModel,
     LogQualityResult,
     QualityIssue,
 )
 from ardupilot_methodic_configurator.log_analysis.utils import find_matching_param_values
 
 
-class EscLogQualityModel(BaseLogQualityAnalysisModel):
+class EscLogQualityModel(BaseLogModel):
     """Checks ESC telemetry and configuration quality."""
 
     def check(self) -> LogQualityResult:
