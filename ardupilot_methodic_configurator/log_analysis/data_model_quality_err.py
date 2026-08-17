@@ -11,13 +11,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogQualityAnalysisModel,
+    BaseLogModel,
     LogQualityResult,
     QualityIssue,
 )
 
 
-class ErrLogQualityModel(BaseLogQualityAnalysisModel):
+class ErrLogQualityModel(BaseLogModel):
     """
     Checks presence and readability of subsystem error/recovery events.
 

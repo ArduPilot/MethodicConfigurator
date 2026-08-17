@@ -98,19 +98,14 @@ class ConfigurationStepProcessor:
             variables["fc_parameters"] = fc_parameters
 
             # Compute forced parameters (does NOT mutate filesystem.file_parameters)
-            error_msg = self.local_filesystem.compute_parameters(
-                selected_file, self.local_filesystem.configuration_steps[selected_file], "forced", variables
+            forced_error, derived_error = self.local_filesystem.compute_forced_and_derived_parameters(
+                selected_file, self.local_filesystem.configuration_steps[selected_file], variables
             )
-            if error_msg:
-                ui_errors.append((_("Error in forced parameters"), error_msg))
+            if forced_error:
+                ui_errors.append((_("Error in forced parameters"), forced_error))
 
-            # Compute derived parameters (does NOT mutate filesystem.file_parameters)
-            error_msg = self.local_filesystem.compute_parameters(
-                selected_file, self.local_filesystem.configuration_steps[selected_file], "derived", variables
-            )
-            if error_msg:
-                ui_errors.append((_("Error in derived parameters"), error_msg))
-            # Collect derived parameter values to apply later in domain model
+            if derived_error:
+                ui_errors.append((_("Error in derived parameters"), derived_error))
             elif selected_file in self.local_filesystem.derived_parameters:
                 # Filter derived parameters that exist in FC (if fc_parameters provided)
                 fc_param_keys = set(fc_parameters.keys()) if fc_parameters else set()

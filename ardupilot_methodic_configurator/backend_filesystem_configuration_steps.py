@@ -547,6 +547,29 @@ class ConfigurationSteps:
                 errors.append(error_msg)
         return "\n".join(errors)
 
+    def compute_forced_and_derived_parameters(
+        self,
+        step_filename: str,
+        step_dict: dict,
+        eval_variables: dict,
+        ignore_fc_derived_param_warnings: bool = False,
+    ) -> tuple[str, str]:
+        """
+        Compute forced then derived parameters for one configuration step.
+
+        Returns:
+            forced_error, derived_error: error strings from compute_parameters(),
+            empty string when that parameter type computed successfully.
+
+        """
+        forced_error = self.compute_parameters(
+            step_filename, step_dict, "forced", eval_variables, ignore_fc_derived_param_warnings
+        )
+        derived_error = self.compute_parameters(
+            step_filename, step_dict, "derived", eval_variables, ignore_fc_derived_param_warnings
+        )
+        return forced_error, derived_error
+
     def compute_add_parameters(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         filename: str,
