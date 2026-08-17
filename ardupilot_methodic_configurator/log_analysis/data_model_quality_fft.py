@@ -11,13 +11,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogQualityAnalysisModel,
+    BaseLogModel,
     LogQualityResult,
     QualityIssue,
 )
 
 
-class FftLogQualityModel(BaseLogQualityAnalysisModel):
+class FftLogQualityModel(BaseLogModel):
     """Checks presence of raw IMU batch logging data (ISBH and ISBD samples)."""
 
     def check(self) -> LogQualityResult:
