@@ -10,11 +10,16 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar Lucas
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter, ParameterOutOfRangeError
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
+    ArduPilotParameter,
+    ParameterOutOfRangeError,
+    ParameterUnchangedError,
+)
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
     InvalidParameterNameError,
@@ -22,6 +27,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterEditor,
     ParameterValueUpdateStatus,
 )
+from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_AHRS_ORIENTATION,
     PLUGIN_BATTERY_MONITOR,
@@ -4835,3 +4841,1843 @@ class TestRefreshConnectionRenames:
         assert "OLD_TARGET" in parameter_editor.current_step_parameters
         # Rename tracking should be unchanged
         assert parameter_editor._connection_renames.get("ORIG_PARAM") == "OLD_TARGET"
+
+
+class TestFlightLogDownloadWorkflow:
+    """Test the flight log download workflow and its guard clauses."""
+
+    def test_user_is_warned_when_downloading_log_without_a_connected_fc(self, parameter_editor: ParameterEditor) -> None:
+        """
+        User is told to connect a flight controller before a log download is attempted.
+
+        GIVEN: No flight controller is connected
+        WHEN: The user triggers the flight log download
+        THEN: An error is shown and no save dialog is opened
+        """
+        parameter_editor._flight_controller.master = None
+        ask_saveas_filename = MagicMock()
+        show_error = MagicMock()
+        show_info = MagicMock()
+
+        parameter_editor.download_last_flight_log_workflow(ask_saveas_filename, show_error, show_info)
+
+        show_error.assert_called_once()
+        ask_saveas_filename.assert_not_called()
+        show_info.assert_not_called()
+
+    def test_user_is_warned_when_flight_controller_lacks_mavftp(self, parameter_editor: ParameterEditor) -> None:
+        """
+        User is told the download is impossible when the flight controller has no MAVFTP support.
+
+        GIVEN: A connected flight controller that does not support MAVFTP
+        WHEN: The user triggers the flight log download
+        THEN: An error is shown and no save dialog is opened
+        """
+        parameter_editor._flight_controller.master = MagicMock()
+        parameter_editor._flight_controller.info.is_mavftp_supported = False
+        ask_saveas_filename = MagicMock()
+        show_error = MagicMock()
+
+        parameter_editor.download_last_flight_log_workflow(ask_saveas_filename, show_error, MagicMock())
+
+        show_error.assert_called_once()
+        ask_saveas_filename.assert_not_called()
+
+    def test_user_can_cancel_the_save_dialog_without_downloading(self, parameter_editor: ParameterEditor) -> None:
+        """
+        User cancelling the save dialog aborts the download silently.
+
+        GIVEN: A connected flight controller with MAVFTP support
+        WHEN: The user closes the save dialog without picking a filename
+        THEN: No download is started and no message is shown
+        """
+        parameter_editor._flight_controller.master = MagicMock()
+        parameter_editor._flight_controller.info.is_mavftp_supported = True
+        show_error = MagicMock()
+        show_info = MagicMock()
+
+        parameter_editor.download_last_flight_log_workflow(lambda: "", show_error, show_info)
+
+        parameter_editor._flight_controller.download_last_flight_log.assert_not_called()
+        show_error.assert_not_called()
+        show_info.assert_not_called()
+
+    def test_user_sees_the_saved_path_after_a_successful_download(self, parameter_editor: ParameterEditor) -> None:
+        """
+        User is shown the destination path once the flight log has been downloaded.
+
+        GIVEN: A connected flight controller with MAVFTP support and a chosen filename
+        WHEN: The download succeeds
+        THEN: A success message containing the filename is shown
+        AND: The progress callback is forwarded to the backend
+        """
+        parameter_editor._flight_controller.master = MagicMock()
+        parameter_editor._flight_controller.info.is_mavftp_supported = True
+        parameter_editor._flight_controller.download_last_flight_log.return_value = True
+        show_info = MagicMock()
+        progress_callback = MagicMock()
+
+        parameter_editor.download_last_flight_log_workflow(lambda: "flight_log.bin", MagicMock(), show_info, progress_callback)
+
+        parameter_editor._flight_controller.download_last_flight_log.assert_called_once_with(
+            "flight_log.bin", progress_callback
+        )
+        assert "flight_log.bin" in show_info.call_args[0][1]
+
+    def test_user_is_told_when_the_flight_log_download_fails(self, parameter_editor: ParameterEditor) -> None:
+        """
+        User receives an error when the backend reports a failed download.
+
+        GIVEN: A connected flight controller with MAVFTP support and a chosen filename
+        WHEN: The backend download returns failure
+        THEN: An error is shown and no success message is displayed
+        """
+        parameter_editor._flight_controller.master = MagicMock()
+        parameter_editor._flight_controller.info.is_mavftp_supported = True
+        parameter_editor._flight_controller.download_last_flight_log.return_value = False
+        show_error = MagicMock()
+        show_info = MagicMock()
+
+        parameter_editor.download_last_flight_log_workflow(lambda: "flight_log.bin", show_error, show_info)
+
+        show_error.assert_called_once()
+        show_info.assert_not_called()
+
+
+class TestConfigurationStepNumbering:
+    """Test the derivation of the last configuration step number from the files on disk."""
+
+    def test_user_progress_bar_uses_the_highest_step_number_found_on_disk(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Progress reporting is based on the highest numbered file actually present.
+
+        GIVEN: Parameter files numbered out of order on disk
+        WHEN: The last configuration step number is requested
+        THEN: The highest step number plus one is returned
+        """
+        parameter_editor._local_filesystem.configuration_phases = {"Tune": MagicMock()}
+        parameter_editor._local_filesystem.file_parameters = {
+            "02_second.param": {},
+            "24_last.param": {},
+            "11_middle.param": {},
+        }
+
+        assert parameter_editor.get_last_configuration_step_number() == 25
+
+    def test_user_sees_no_step_number_when_no_file_is_numbered(self, parameter_editor: ParameterEditor) -> None:
+        """
+        No step number is reported when the files on disk carry no numeric prefix.
+
+        GIVEN: Parameter files without a leading two digit number
+        WHEN: The last configuration step number is requested
+        THEN: None is returned
+        """
+        parameter_editor._local_filesystem.configuration_phases = {"Tune": MagicMock()}
+        parameter_editor._local_filesystem.file_parameters = {"custom.param": {}, "x.param": {}}
+
+        assert parameter_editor.get_last_configuration_step_number() is None
+
+    def test_user_sees_no_step_number_when_no_configuration_phase_exists(self, parameter_editor: ParameterEditor) -> None:
+        """
+        No step number is reported when the project defines no configuration phase.
+
+        GIVEN: A project without configuration phases
+        WHEN: The last configuration step number is requested
+        THEN: None is returned even though numbered files exist
+        """
+        parameter_editor._local_filesystem.configuration_phases = {}
+        parameter_editor._local_filesystem.file_parameters = {"24_last.param": {}}
+
+        assert parameter_editor.get_last_configuration_step_number() is None
+
+
+class TestDocumentationPresentation:
+    """Test the documentation texts and links exposed to the documentation frame."""
+
+    def test_user_opens_every_available_documentation_link_at_once(self, parameter_editor: ParameterEditor) -> None:
+        """
+        All configured documentation links for a step are opened in the browser.
+
+        GIVEN: A step with a wiki, an external tool and a blog URL
+        WHEN: The user opens the documentation
+        THEN: The three URLs are opened
+        """
+        urls = {"wiki": "https://wiki", "external_tool": "https://tool", "blog": "https://blog"}
+        with (
+            patch.object(parameter_editor, "get_documentation_text_and_url", lambda key, _f: ("text", urls[key])),
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.webbrowser_open_url") as mock_open,
+        ):
+            parameter_editor.open_documentation_in_browser("10_step.param")
+
+        opened_urls = [call.args[0] if call.args else call.kwargs.get("url") for call in mock_open.call_args_list]
+        assert opened_urls == [
+            "https://wiki",
+            "https://tool",
+            "https://blog",
+        ]
+
+    def test_user_is_not_sent_to_a_browser_when_no_documentation_url_exists(self, parameter_editor: ParameterEditor) -> None:
+        """
+        No browser window is opened for a step that has no documentation URL.
+
+        GIVEN: A step whose documentation URLs are all empty
+        WHEN: The user opens the documentation
+        THEN: No browser call is made
+        """
+        with (
+            patch.object(parameter_editor, "get_documentation_text_and_url", return_value=("text", "")),
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.webbrowser_open_url") as mock_open,
+        ):
+            parameter_editor.open_documentation_in_browser("10_step.param")
+
+        mock_open.assert_not_called()
+
+    def test_user_sees_both_why_and_why_now_explanations_in_the_tooltip(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The tooltip combines the why and the why-now rationale of the current step.
+
+        GIVEN: A step defining both a why and a why_now text
+        WHEN: The tooltip is requested
+        THEN: Both texts appear in the returned tooltip
+        """
+        parameter_editor._local_filesystem.get_seq_tooltip_text.side_effect = lambda _f, key: {
+            "why": "it matters",
+            "why_now": "do it now",
+        }[key]
+
+        tooltip = parameter_editor.get_why_why_now_tooltip()
+
+        assert "it matters" in tooltip
+        assert "do it now" in tooltip
+
+    def test_user_sees_an_empty_tooltip_when_the_step_documents_no_rationale(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The tooltip stays empty when the step documents neither why nor why-now.
+
+        GIVEN: A step with empty why and why_now texts
+        WHEN: The tooltip is requested
+        THEN: An empty string is returned
+        """
+        parameter_editor._local_filesystem.get_seq_tooltip_text.return_value = ""
+
+        assert parameter_editor.get_why_why_now_tooltip() == ""
+
+    def test_user_sees_the_current_file_name_in_the_documentation_title(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The documentation frame title names the file being configured.
+
+        GIVEN: A selected configuration file
+        WHEN: The documentation frame title is requested
+        THEN: The file name appears in the title
+        """
+        parameter_editor.current_file = "10_step.param"
+
+        assert "10_step.param" in parameter_editor.get_documentation_frame_title()
+
+    def test_user_sees_a_generic_documentation_title_when_no_file_is_selected(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A generic title is shown when no configuration file is selected.
+
+        GIVEN: No current file
+        WHEN: The documentation frame title is requested
+        THEN: A non-empty generic title without a file name is returned
+        """
+        parameter_editor.current_file = ""
+
+        title = parameter_editor.get_documentation_frame_title()
+
+        assert title
+        assert ".param" not in title
+
+
+class TestVehicleComponentsSynchronisation:
+    """Test how edited component data is synchronised back into the filesystem store."""
+
+    def test_user_edits_are_applied_in_place_so_derived_parameters_stay_live(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Component edits update the existing dict object instead of replacing it.
+
+        GIVEN: The expression evaluator holds a reference to the Components dict
+        WHEN: The user saves edited components
+        THEN: The evaluator still sees the same object, now carrying the new values
+        """
+        components = {"Battery": {"Specifications": {"Volt per cell max": 4.2}}}
+        parameter_editor._local_filesystem.vehicle_components_fs.data = {"Components": components}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": components}
+
+        parameter_editor.update_vehicle_components({"Battery": {"Specifications": {"Volt per cell max": 4.35}}})
+
+        assert parameter_editor._config_step_processor.variables["vehicle_components"] is components
+        assert components["Battery"]["Specifications"]["Volt per cell max"] == 4.35
+
+    def test_system_resyncs_a_stale_evaluator_reference_instead_of_crashing(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A stale evaluator reference is repointed at the live dict rather than raising.
+
+        GIVEN: The evaluator points at a different dict than the filesystem store
+        WHEN: The user saves edited components
+        THEN: The evaluator is repointed at the live dict and the edit is applied
+        """
+        live = {"Battery": {}}
+        parameter_editor._local_filesystem.vehicle_components_fs.data = {"Components": live}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": {"stale": True}}
+
+        parameter_editor.update_vehicle_components({"Frame": {}})
+
+        assert parameter_editor._config_step_processor.variables["vehicle_components"] is live
+        assert live == {"Frame": {}}
+
+    def test_system_creates_the_components_key_when_the_project_has_none(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Component data is stored even when the project file carries no Components key yet.
+
+        GIVEN: A loaded vehicle components file without a Components key
+        WHEN: The user saves edited components
+        THEN: The Components key is created with the edited values
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.data = {"Format version": 1}
+
+        parameter_editor.update_vehicle_components({"Frame": {"Specifications": {}}})
+
+        assert parameter_editor._local_filesystem.vehicle_components_fs.data["Components"] == {"Frame": {"Specifications": {}}}
+
+    def test_system_ignores_component_edits_when_no_project_file_is_loaded(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Component edits are dropped when no vehicle components file has been loaded.
+
+        GIVEN: No loaded vehicle components data
+        WHEN: The user saves edited components
+        THEN: Nothing is stored and no exception is raised
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.data = None
+
+        parameter_editor.update_vehicle_components({"Frame": {}})
+
+        assert parameter_editor._local_filesystem.vehicle_components_fs.data is None
+
+    def test_user_can_revert_component_edits_to_the_last_saved_version(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Reverting restores the components dict in place so evaluators keep working.
+
+        GIVEN: A user who edited components without saving
+        WHEN: The user reverts the changes
+        THEN: The filesystem restores the Components key in place
+        """
+        parameter_editor.revert_vehicle_components()
+
+        parameter_editor._local_filesystem.vehicle_components_fs.revert_key_in_place.assert_called_once_with("Components")
+
+
+class TestPluginAvailability:
+    """Test which plugins are offered to the user for a given configuration step."""
+
+    def test_user_sees_an_unconditional_plugin_for_the_step(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A plugin without a condition is always offered.
+
+        GIVEN: A step declaring a plugin with no if condition
+        WHEN: The plugin for that step is requested
+        THEN: The plugin is returned unchanged
+        """
+        plugin = {"name": PLUGIN_MOTOR_TEST}
+        parameter_editor._local_filesystem.get_plugin.return_value = plugin
+
+        assert parameter_editor.get_plugin("10_step.param") == plugin
+
+    def test_user_sees_no_plugin_for_a_step_that_declares_none(self, parameter_editor: ParameterEditor) -> None:
+        """
+        No plugin is offered for a step that declares none.
+
+        GIVEN: A step without a plugin
+        WHEN: The plugin for that step is requested
+        THEN: None is returned
+        """
+        parameter_editor._local_filesystem.get_plugin.return_value = None
+
+        assert parameter_editor.get_plugin("10_step.param") is None
+
+    def test_user_sees_a_conditional_plugin_only_when_its_condition_holds(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A conditional plugin is offered when its condition evaluates to true.
+
+        GIVEN: A step declaring a plugin guarded by an if condition that holds
+        WHEN: The plugin for that step is requested
+        THEN: The plugin is returned without leaking the condition to the frontend
+        """
+        parameter_editor._local_filesystem.get_plugin.return_value = {"name": PLUGIN_MOTOR_TEST, "if": "True"}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": {}}
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.safe_evaluate", return_value=True
+        ) as mock_eval:
+            plugin = parameter_editor.get_plugin("10_step.param")
+
+        assert plugin == {"name": PLUGIN_MOTOR_TEST}
+        mock_eval.assert_called_once()
+        variables = mock_eval.call_args.kwargs.get("variables")
+        if variables is None and len(mock_eval.call_args.args) > 1:
+            variables = mock_eval.call_args.args[1]
+        assert variables is not None
+        assert "fc_parameters" in variables
+
+    def test_conditional_plugin_evaluation_ignores_absent_fc_parameters(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The plugin condition is evaluated without fc_parameters while the FC is disconnected.
+
+        GIVEN: A conditional plugin and a flight controller reporting no parameters
+        WHEN: The plugin for that step is requested
+        THEN: The evaluation variables carry no fc_parameters entry
+        """
+        parameter_editor._local_filesystem.get_plugin.return_value = {"name": PLUGIN_MOTOR_TEST, "if": "True"}
+        parameter_editor._config_step_processor.variables = {"vehicle_components": {}}
+        parameter_editor._flight_controller.fc_parameters = {}
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.safe_evaluate", return_value=True
+        ) as mock_eval:
+            parameter_editor.get_plugin("10_step.param")
+
+        mock_eval.assert_called_once()
+        variables = mock_eval.call_args.kwargs.get("variables")
+        if variables is None and len(mock_eval.call_args.args) > 1:
+            variables = mock_eval.call_args.args[1]
+        assert variables is not None
+        assert "fc_parameters" not in variables
+
+    def test_user_sees_no_plugin_when_its_condition_does_not_hold(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A conditional plugin is hidden when its condition evaluates to false.
+
+        GIVEN: A step declaring a plugin guarded by an if condition that does not hold
+        WHEN: The plugin for that step is requested
+        THEN: None is returned
+        """
+        parameter_editor._local_filesystem.get_plugin.return_value = {"name": PLUGIN_MOTOR_TEST, "if": "False"}
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.safe_evaluate", return_value=False):
+            assert parameter_editor.get_plugin("10_step.param") is None
+
+    def test_user_sees_no_plugin_when_its_condition_cannot_be_evaluated(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A plugin whose condition fails to evaluate is hidden instead of crashing the GUI.
+
+        GIVEN: A step declaring a plugin whose if condition raises on evaluation
+        WHEN: The plugin for that step is requested
+        THEN: None is returned and no exception escapes
+        """
+        parameter_editor._local_filesystem.get_plugin.return_value = {"name": PLUGIN_MOTOR_TEST, "if": "bad expr"}
+
+        with patch(
+            "ardupilot_methodic_configurator.data_model_parameter_editor.safe_evaluate",
+            side_effect=ConfigurationStepEvalError("boom"),
+        ):
+            assert parameter_editor.get_plugin("10_step.param") is None
+
+    def test_user_gets_no_plugin_data_model_while_the_fc_is_disconnected(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A plugin data model is not built while no flight controller is connected.
+
+        GIVEN: A registered plugin and a disconnected flight controller
+        WHEN: The plugin data model is requested
+        THEN: None is returned
+        """
+        parameter_editor._flight_controller.master = None
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.plugin_factory") as mock_factory:
+            mock_factory.is_registered.return_value = True
+            assert parameter_editor.create_plugin_data_model(PLUGIN_MOTOR_TEST) is None
+            mock_factory.create_model.assert_not_called()
+
+    def test_system_rejects_an_unknown_plugin_name(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Requesting a data model for an unregistered plugin is reported as a programming error.
+
+        GIVEN: A plugin name that is not registered
+        WHEN: The plugin data model is requested
+        THEN: A ValueError naming the plugin is raised
+        """
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.plugin_factory") as mock_factory:
+            mock_factory.is_registered.return_value = False
+            with pytest.raises(ValueError, match="not_a_plugin"):
+                parameter_editor.create_plugin_data_model("not_a_plugin")
+
+
+class TestLogAnalysisInputsSnapshot:
+    """Test the defensive snapshot handed over to log analysis."""
+
+    def test_log_analysis_cannot_mutate_the_live_project_data(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Log analysis receives copies, so it cannot corrupt the live project state.
+
+        GIVEN: Loaded vehicle components and configuration steps
+        WHEN: The log analysis inputs are requested and then mutated
+        THEN: The filesystem data is unchanged
+        """
+        components = {"Battery": {}}
+        steps = {"10_step.param": {}}
+        parameter_editor._local_filesystem.vehicle_components_fs.data = {"Components": components}
+        parameter_editor._local_filesystem.configuration_steps = steps
+
+        inputs = parameter_editor.get_log_analysis_context_inputs()
+        inputs.vehicle_components["Components"]["Battery"]["mutated"] = True
+        inputs.configuration_steps["10_step.param"]["mutated"] = True
+
+        assert components == {"Battery": {}}
+        assert steps == {"10_step.param": {}}
+
+    def test_caller_supplied_apm_doc_takes_precedence_over_the_project_one(self, parameter_editor: ParameterEditor) -> None:
+        """
+        An explicitly supplied APM document overrides the one loaded by the project.
+
+        GIVEN: A project doc_dict and a caller supplied apm_doc
+        WHEN: The log analysis inputs are requested with that apm_doc
+        THEN: The caller supplied document is snapshotted
+        """
+        parameter_editor._local_filesystem.doc_dict = {"from": "project"}
+
+        inputs = parameter_editor.get_log_analysis_context_inputs(apm_doc={"from": "caller"})
+
+        assert inputs.apm_doc == {"from": "caller"}
+
+    def test_log_analysis_gets_no_apm_doc_when_the_project_loaded_none(self, parameter_editor: ParameterEditor) -> None:
+        """
+        No APM document is reported when the project has not loaded one.
+
+        GIVEN: An empty project doc_dict and no caller supplied document
+        WHEN: The log analysis inputs are requested
+        THEN: apm_doc is None
+        """
+        parameter_editor._local_filesystem.doc_dict = {}
+
+        assert parameter_editor.get_log_analysis_context_inputs().apm_doc is None
+
+
+class TestFileExplorerIntegration:
+    """Test the OS specific file explorer invocation used after writing summary files."""
+
+    def test_windows_users_get_the_written_file_preselected(self) -> None:
+        """
+        On Windows the explorer is asked to select the written file.
+
+        GIVEN: A Windows host
+        WHEN: The file explorer is opened on a written file
+        THEN: explorer is invoked with the select flag
+        """
+        with (
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.platform.system", return_value="Windows"),
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.subprocess.run") as mock_run,
+        ):
+            ParameterEditor._open_file_explorer_and_select(Path("summary.zip"))
+
+        mock_run.assert_called_once()
+        command = mock_run.call_args.args[0] if mock_run.call_args.args else mock_run.call_args.kwargs["args"]
+        assert command[0] == "explorer"
+
+    def test_macos_users_get_the_written_file_revealed_in_finder(self) -> None:
+        """
+        On macOS the file is revealed in Finder.
+
+        GIVEN: A macOS host
+        WHEN: The file explorer is opened on a written file
+        THEN: open is invoked with the reveal flag
+        """
+        with (
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.platform.system", return_value="Darwin"),
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.subprocess.run") as mock_run,
+        ):
+            ParameterEditor._open_file_explorer_and_select(Path("summary.zip"))
+
+        mock_run.assert_called_once()
+        command = mock_run.call_args.args[0] if mock_run.call_args.args else mock_run.call_args.kwargs["args"]
+        assert command[:2] == ["open", "-R"]
+
+    def test_linux_users_get_the_first_available_file_manager(self) -> None:
+        """
+        On Linux the first file manager that starts is used.
+
+        GIVEN: A Linux host where nautilus is available
+        WHEN: The file explorer is opened on a written file
+        THEN: nautilus is invoked and no further file manager is tried
+        """
+        with (
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.platform.system", return_value="Linux"),
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.subprocess.run") as mock_run,
+        ):
+            ParameterEditor._open_file_explorer_and_select(Path("summary.zip"))
+
+        mock_run.assert_called_once()
+        command = mock_run.call_args.args[0] if mock_run.call_args.args else mock_run.call_args.kwargs["args"]
+        assert command[0] == "nautilus"
+
+    def test_linux_users_fall_back_to_opening_the_parent_directory(self) -> None:
+        """
+        On a Linux host without any known file manager the parent directory is opened.
+
+        GIVEN: A Linux host where every file manager is missing
+        WHEN: The file explorer is opened on a written file
+        THEN: xdg-open is used on the parent directory
+        """
+        attempts: list[list[str]] = []
+
+        def run_side_effect(cmd, **_kwargs) -> None:
+            attempts.append(cmd)
+            if cmd[0] != "xdg-open":
+                raise FileNotFoundError(cmd[0])
+
+        with (
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.platform.system", return_value="Linux"),
+            patch(
+                "ardupilot_methodic_configurator.data_model_parameter_editor.subprocess.run",
+                side_effect=run_side_effect,
+            ),
+        ):
+            ParameterEditor._open_file_explorer_and_select(Path("dir/summary.zip"))
+
+        assert attempts[-1][0] == "xdg-open"
+
+    def test_a_failing_file_explorer_never_breaks_the_summary_workflow(self) -> None:
+        """
+        A file explorer failure is logged instead of propagating to the caller.
+
+        GIVEN: A host where launching the file explorer raises an OSError
+        WHEN: The file explorer is opened on a written file
+        THEN: No exception escapes
+        """
+        with (
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.platform.system", return_value="Darwin"),
+            patch(
+                "ardupilot_methodic_configurator.data_model_parameter_editor.subprocess.run",
+                side_effect=OSError("no explorer"),
+            ),
+        ):
+            ParameterEditor._open_file_explorer_and_select(Path("summary.zip"))
+
+
+class TestForumHelpZipWorkflow:
+    """Test the creation of the support zip that users upload to the ArduPilot forum."""
+
+    def test_user_gets_a_timestamped_zip_revealed_in_the_file_manager(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A support zip is created, revealed in the file manager and the forum is opened.
+
+        GIVEN: A vehicle project with at least one intermediate parameter file
+        WHEN: The user creates the forum help zip
+        THEN: The zip is created without apm.pdef.xml, revealed to the user and the forum is opened
+        AND: The workflow reports success
+        """
+        parameter_editor._local_filesystem.vehicle_dir = "/vehicles/MyQuad"
+        parameter_editor._local_filesystem.zip_files.return_value = "/vehicles/MyQuad/MyQuad.zip"
+        show_info = MagicMock()
+
+        with (
+            patch.object(ParameterEditor, "_open_file_explorer_and_select") as mock_reveal,
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.webbrowser_open_url") as mock_browser,
+        ):
+            result = parameter_editor.create_forum_help_zip_workflow(show_info, MagicMock())
+
+        assert result is True
+        assert parameter_editor._local_filesystem.zip_files.call_args.kwargs["include_apm_pdef"] is False
+        assert parameter_editor._local_filesystem.zip_files.call_args.kwargs["zip_file_name"].startswith("MyQuad_")
+        mock_reveal.assert_called_once()
+        mock_browser.assert_called_once_with("https://discuss.ardupilot.org")
+        assert "/vehicles/MyQuad/MyQuad.zip" in show_info.call_args[0][1]
+
+    def test_user_is_told_when_the_project_has_no_parameter_file_to_zip(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The user is told the project is empty instead of receiving a useless zip.
+
+        GIVEN: A vehicle project without intermediate parameter files
+        WHEN: The user creates the forum help zip
+        THEN: An error is shown, no zip is written and the workflow reports failure
+        """
+        parameter_editor._local_filesystem.vehicle_dir = "/vehicles/MyQuad"
+        parameter_editor._local_filesystem.file_parameters = {}
+        show_error = MagicMock()
+
+        result = parameter_editor.create_forum_help_zip_workflow(MagicMock(), show_error)
+
+        assert result is False
+        parameter_editor._local_filesystem.zip_files.assert_not_called()
+        show_error.assert_called_once()
+
+    def test_user_is_told_when_the_zip_cannot_be_written_to_disk(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A filesystem failure while writing the zip is reported instead of crashing the GUI.
+
+        GIVEN: A vehicle directory the user cannot write to
+        WHEN: The user creates the forum help zip
+        THEN: An error is shown and the workflow reports failure
+        """
+        parameter_editor._local_filesystem.vehicle_dir = "/vehicles/MyQuad"
+        parameter_editor._local_filesystem.zip_files.side_effect = PermissionError("read-only volume")
+        show_error = MagicMock()
+
+        result = parameter_editor.create_forum_help_zip_workflow(MagicMock(), show_error)
+
+        assert result is False
+        show_error.assert_called_once()
+
+
+class TestParameterAdditionRules:
+    """Test the rules that decide whether a parameter can be added to the current file."""
+
+    def test_user_cannot_add_a_parameter_without_a_name(self, parameter_editor: ParameterEditor) -> None:
+        """
+        An empty parameter name is rejected.
+
+        GIVEN: A user who confirms the add dialog without typing a name
+        WHEN: The parameter is added
+        THEN: An InvalidParameterNameError is raised
+        """
+        with pytest.raises(InvalidParameterNameError):
+            parameter_editor.add_parameter_to_current_file("")
+
+    def test_user_cannot_add_a_parameter_that_is_already_in_the_file(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A parameter already present in the file is rejected with an edit-instead hint.
+
+        GIVEN: A parameter that exists in the current file and was not deleted
+        WHEN: The user tries to add it again
+        THEN: An InvalidParameterNameError is raised
+        """
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict({"PARAM1": Par(1.0)})}
+
+        with pytest.raises(InvalidParameterNameError):
+            parameter_editor.add_parameter_to_current_file("PARAM1")
+
+    def test_user_cannot_add_an_unknown_parameter_while_documentation_is_loaded(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A parameter absent from apm.pdef.xml is rejected while documentation is available.
+
+        GIVEN: A loaded apm.pdef.xml without the requested parameter and no FC parameters
+        WHEN: The user tries to add it
+        THEN: An InvalidParameterNameError naming the file is raised
+        """
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict()}
+        parameter_editor._local_filesystem.doc_dict = {"KNOWN_PARAM": {}}
+        parameter_editor._flight_controller.fc_parameters = {}
+
+        with pytest.raises(InvalidParameterNameError, match=r"apm\.pdef\.xml"):
+            parameter_editor.add_parameter_to_current_file("UNKNOWN_PARAM")
+
+    def test_user_cannot_add_any_parameter_without_documentation_and_without_an_fc(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        Adding is impossible when neither apm.pdef.xml nor a connected FC can validate the name.
+
+        GIVEN: No apm.pdef.xml and no FC parameters
+        WHEN: The user tries to add a parameter
+        THEN: An OperationNotPossibleError is raised
+        """
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict()}
+        parameter_editor._local_filesystem.doc_dict = {}
+        parameter_editor._flight_controller.fc_parameters = {}
+
+        with pytest.raises(OperationNotPossibleError):
+            parameter_editor.add_parameter_to_current_file("ANY_PARAM")
+
+    def test_user_cannot_autocomplete_parameter_names_without_documentation_or_an_fc(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        Autocompletion is refused when there is no source of parameter names.
+
+        GIVEN: No apm.pdef.xml and no FC parameters
+        WHEN: The list of addable parameter names is requested
+        THEN: An OperationNotPossibleError is raised
+        """
+        parameter_editor._local_filesystem.doc_dict = {}
+        parameter_editor._flight_controller.fc_parameters = {}
+
+        with pytest.raises(OperationNotPossibleError):
+            parameter_editor.get_possible_add_param_names()
+
+
+class TestBulkAddFeedback:
+    """Test the feedback shown to the user after adding several parameters at once."""
+
+    def test_user_sees_a_success_message_when_every_parameter_is_added(self) -> None:
+        """
+        A plain success is reported when nothing was skipped or rejected.
+
+        GIVEN: Two parameters added and none skipped or failed
+        WHEN: The bulk feedback message is generated
+        THEN: The message type is success
+        """
+        kind, _title, message = ParameterEditor.generate_bulk_add_feedback_message(["A", "B"], [], [])
+
+        assert kind == "success"
+        assert "2" in message
+
+    def test_user_sees_a_partial_success_listing_skipped_and_failed_names(self) -> None:
+        """
+        A partial success lists what was skipped and what failed.
+
+        GIVEN: One parameter added, one skipped and one failed
+        WHEN: The bulk feedback message is generated
+        THEN: The message type is warning and both names appear
+        """
+        kind, _title, message = ParameterEditor.generate_bulk_add_feedback_message(["A"], ["B"], ["C"])
+
+        assert kind == "warning"
+        assert "B" in message
+        assert "C" in message
+
+    def test_user_is_told_nothing_changed_when_every_parameter_already_exists(self) -> None:
+        """
+        Adding only already-present parameters reports a no-op.
+
+        GIVEN: Two skipped parameters and nothing added or failed
+        WHEN: The bulk feedback message is generated
+        THEN: The message type is info
+        """
+        kind, _title, _message = ParameterEditor.generate_bulk_add_feedback_message([], ["A", "B"], [])
+
+        assert kind == "info"
+
+    def test_user_sees_an_error_when_every_parameter_is_rejected(self) -> None:
+        """
+        Adding only invalid parameters is reported as an error.
+
+        GIVEN: Two failed parameters and nothing added or skipped
+        WHEN: The bulk feedback message is generated
+        THEN: The message type is error and both names appear
+        """
+        kind, _title, message = ParameterEditor.generate_bulk_add_feedback_message([], [], ["A", "B"])
+
+        assert kind == "error"
+        assert "A" in message
+
+    def test_user_sees_an_error_when_parameters_were_only_skipped_and_rejected(self) -> None:
+        """
+        A mix of skipped and failed with nothing added is reported as an error.
+
+        GIVEN: One skipped and one failed parameter, none added
+        WHEN: The bulk feedback message is generated
+        THEN: The message type is error and both names appear
+        """
+        kind, _title, message = ParameterEditor.generate_bulk_add_feedback_message([], ["A"], ["B"])
+
+        assert kind == "error"
+        assert "A" in message
+        assert "B" in message
+
+    def test_system_reports_an_error_for_an_empty_bulk_add_result(self) -> None:
+        """
+        An empty result set is reported as an error rather than silently succeeding.
+
+        GIVEN: No added, skipped or failed parameters
+        WHEN: The bulk feedback message is generated
+        THEN: The message type is error
+        """
+        kind, _title, _message = ParameterEditor.generate_bulk_add_feedback_message([], [], [])
+
+        assert kind == "error"
+
+
+class TestUnsavedComponentChangesPrompt:
+    """Test how unsaved component-data edits are handled when writing changes."""
+
+    def test_user_saving_parameters_also_saves_pending_component_edits(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Confirming the save prompt writes both the parameter file and the component data.
+
+        GIVEN: Edited parameters and edited component data
+        WHEN: The user confirms the save prompt
+        THEN: The parameter file is exported and the component data is saved without a second prompt
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = True
+        ask = MagicMock(return_value=True)
+
+        with (
+            patch.object(parameter_editor, "_has_unsaved_changes", return_value=True),
+            patch.object(parameter_editor, "_export_current_file") as mock_export,
+            patch.object(parameter_editor, "save_vehicle_components") as mock_save,
+        ):
+            result = parameter_editor.handle_write_changes_workflow(
+                annotate_params_into_files=False, ask_user_confirmation=ask
+            )
+
+        assert result is True
+        mock_export.assert_called_once()
+        mock_save.assert_called_once()
+        assert ask.call_count == 1
+
+    def test_user_declining_parameter_save_is_asked_separately_about_components(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        Declining the parameter save still offers to keep the component edits.
+
+        GIVEN: Edited parameters and edited component data
+        WHEN: The user declines the parameter save but accepts the component save
+        THEN: No parameter file is exported and the component data is saved
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = True
+        ask = MagicMock(side_effect=[False, True])
+
+        with (
+            patch.object(parameter_editor, "_has_unsaved_changes", return_value=True),
+            patch.object(parameter_editor, "_export_current_file") as mock_export,
+            patch.object(parameter_editor, "save_vehicle_components") as mock_save,
+        ):
+            result = parameter_editor.handle_write_changes_workflow(
+                annotate_params_into_files=False, ask_user_confirmation=ask
+            )
+
+        assert result is False
+        mock_export.assert_not_called()
+        mock_save.assert_called_once()
+
+    def test_user_declining_both_prompts_reverts_the_component_edits(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Declining both prompts discards the component edits instead of leaving them in memory.
+
+        GIVEN: Edited parameters and edited component data
+        WHEN: The user declines both the parameter save and the component save
+        THEN: The component data is reverted and nothing is written
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = True
+        ask = MagicMock(side_effect=[False, False])
+
+        with (
+            patch.object(parameter_editor, "_has_unsaved_changes", return_value=True),
+            patch.object(parameter_editor, "save_vehicle_components") as mock_save,
+            patch.object(parameter_editor, "revert_vehicle_components") as mock_revert,
+        ):
+            parameter_editor.handle_write_changes_workflow(annotate_params_into_files=False, ask_user_confirmation=ask)
+
+        mock_save.assert_not_called()
+        mock_revert.assert_called_once()
+
+    def test_user_with_only_component_edits_is_prompted_about_them(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Component-only edits still trigger a save prompt.
+
+        GIVEN: Unchanged parameters but edited component data
+        WHEN: The user confirms the prompt
+        THEN: The component data is saved and no parameter file is exported
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = True
+        parameter_editor._last_time_asked_to_save = 0.0
+        ask = MagicMock(return_value=True)
+
+        with (
+            patch.object(parameter_editor, "_has_unsaved_changes", return_value=False),
+            patch.object(parameter_editor, "_export_current_file") as mock_export,
+            patch.object(parameter_editor, "save_vehicle_components") as mock_save,
+        ):
+            result = parameter_editor.handle_write_changes_workflow(
+                annotate_params_into_files=False, ask_user_confirmation=ask
+            )
+
+        assert result is True
+        mock_export.assert_not_called()
+        mock_save.assert_called_once()
+
+    def test_user_with_component_edits_can_discard_them(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Declining the component-only prompt reverts the edits.
+
+        GIVEN: Unchanged parameters but edited component data
+        WHEN: The user declines the prompt
+        THEN: The component data is reverted
+        """
+        parameter_editor._local_filesystem.vehicle_components_fs.has_unsaved_changes.return_value = True
+        parameter_editor._last_time_asked_to_save = 0.0
+        ask = MagicMock(return_value=False)
+
+        with (
+            patch.object(parameter_editor, "_has_unsaved_changes", return_value=False),
+            patch.object(parameter_editor, "revert_vehicle_components") as mock_revert,
+        ):
+            result = parameter_editor.handle_write_changes_workflow(
+                annotate_params_into_files=False, ask_user_confirmation=ask
+            )
+
+        assert result is False
+        mock_revert.assert_called_once()
+
+
+class TestCopyFlightControllerValuesEdgeCases:
+    """Test how out-of-range and unchanged flight controller values are copied into a file."""
+
+    def test_user_keeps_an_out_of_range_value_that_came_from_the_flight_controller(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A value the flight controller reports is accepted even when it is outside the documented range.
+
+        GIVEN: A parameter whose FC value is out of the documented range
+        WHEN: The FC values are copied into the current file
+        THEN: The copy is reported as having changed something
+        """
+        param = MagicMock()
+        param.set_new_value.side_effect = ParameterOutOfRangeError("out of range")
+        parameter_editor.current_step_parameters = {"PARAM1": param}
+
+        assert parameter_editor._update_parameters_from_fc_values({"PARAM1": 999.0}) is True
+        param.set_new_value.assert_called_once_with("999.0", ignore_out_of_range=True)
+
+    def test_user_sees_no_change_when_the_flight_controller_values_already_match(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        Copying values identical to the ones already in the file changes nothing.
+
+        GIVEN: A parameter whose FC value equals the file value
+        WHEN: The FC values are copied into the current file
+        THEN: No change is reported
+        """
+        param = MagicMock()
+        param.set_new_value.side_effect = ParameterUnchangedError("unchanged")
+        parameter_editor.current_step_parameters = {"PARAM1": param}
+
+        assert parameter_editor._update_parameters_from_fc_values({"PARAM1": 1.0}) is False
+
+    def test_system_skips_a_flight_controller_value_that_cannot_be_converted(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A value that cannot be converted is skipped instead of aborting the whole copy.
+
+        GIVEN: One parameter that raises on conversion and one that accepts the value
+        WHEN: The FC values are copied into the current file
+        THEN: The valid parameter is still updated and a change is reported
+        """
+        bad = MagicMock()
+        bad.set_new_value.side_effect = ValueError("not a number")
+        good = ArduPilotParameter("GOOD", Par(1.0))
+        parameter_editor.current_step_parameters = {"BAD": bad, "GOOD": good}
+
+        assert parameter_editor._update_parameters_from_fc_values({"BAD": 1.0, "GOOD": 2.0}) is True
+        assert good.get_new_value() == 2.0
+
+    def test_system_skips_a_flight_controller_value_absent_from_the_current_step(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A flight controller parameter that is not part of the current step is ignored.
+
+        GIVEN: An FC value whose parameter is not in the current step
+        WHEN: The FC values are copied into the current file
+        THEN: No change is reported
+        """
+        parameter_editor.current_step_parameters = {}
+
+        assert parameter_editor._update_parameters_from_fc_values({"ABSENT": 1.0}) is False
+
+
+class TestFlightControllerParameterDiffExport:
+    """Test the export of flight controller parameters that differ from the project files."""
+
+    def test_user_gets_a_diff_file_named_after_the_processed_step_range(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The exported diff file name carries the range of configuration steps it covers.
+
+        GIVEN: FC parameters that are absent from the project files
+        WHEN: The diff export runs for a range of steps
+        THEN: A file named after the first and last step is exported
+        """
+        parameter_editor._local_filesystem.file_parameters = {"01_first.param": ParDict({"PARAM1": Par(1.0)})}
+        fc_params = ParDict({"EXTRA_PARAM": Par(7.0)})
+
+        parameter_editor._export_fc_params_missing_or_different_in_amc_files(fc_params, "01_first.param")
+
+        exported_name = parameter_editor._local_filesystem.export_to_param.call_args[0][1]
+        assert exported_name.endswith("01_first_to_01_first.param")
+
+    def test_boot_calibration_parameters_are_never_exported_as_a_difference(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Parameters recalibrated at every boot are excluded from the diff export.
+
+        GIVEN: FC parameters containing only boot calibration offsets
+        WHEN: The diff export runs
+        THEN: Nothing is exported
+        """
+        parameter_editor._local_filesystem.file_parameters = {"01_first.param": ParDict()}
+        fc_params = ParDict({"INS_ACCOFFS_X": Par(0.1), "INS_GYROFFS_Z": Par(0.2)})
+
+        parameter_editor._export_fc_params_missing_or_different_in_amc_files(fc_params, "01_first.param")
+
+        parameter_editor._local_filesystem.export_to_param.assert_not_called()
+
+    def test_diff_export_covers_both_the_current_step_and_the_whole_project(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The diff is exported twice, once up to the current step and once for the full project.
+
+        GIVEN: A project with several configuration steps
+        WHEN: The diff export runs
+        THEN: The per-file export is invoked for the current file and for the last file
+        """
+        parameter_editor.current_file = "01_first.param"
+        parameter_editor._local_filesystem.file_parameters = {
+            "01_first.param": ParDict(),
+            "24_last.param": ParDict(),
+        }
+
+        with (
+            patch.object(parameter_editor, "_get_non_default_non_read_only_fc_params", return_value=ParDict()),
+            patch.object(parameter_editor, "_export_fc_params_missing_or_different_in_amc_files") as mock_export,
+        ):
+            parameter_editor._export_fc_params_missing_or_different()
+
+        assert [call[0][1] for call in mock_export.call_args_list] == ["01_first.param", "24_last.param"]
+
+
+class TestOptionalStepDetection:
+    """Test how optional configuration steps are detected from their mandatory percentage."""
+
+    def test_optional_step_detection_defaults_to_the_current_file(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Omitting the file name checks the file currently open.
+
+        GIVEN: A current file documented as mostly optional
+        WHEN: The optional check runs without a file name
+        THEN: The current file is the one queried
+        """
+        parameter_editor.current_file = "optional_step.param"
+
+        assert parameter_editor.is_configuration_step_optional() is True
+
+    def test_a_step_with_unparsable_documentation_is_treated_as_optional(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A step whose mandatory text cannot be parsed is treated as optional rather than blocking.
+
+        GIVEN: A step whose mandatory documentation is not a percentage
+        WHEN: The optional check runs
+        THEN: The step is reported as optional
+        """
+        parameter_editor._local_filesystem.get_documentation_text_and_url.side_effect = None
+        parameter_editor._local_filesystem.get_documentation_text_and_url.return_value = ("not a percentage", "")
+
+        assert parameter_editor.is_configuration_step_optional("10_step.param") is True
+
+    def test_navigation_stops_when_the_current_file_is_unknown(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Navigation returns nothing when the current file is not part of the project.
+
+        GIVEN: A current file that is absent from the project files
+        WHEN: The next non-optional file is requested
+        THEN: None is returned
+        """
+        parameter_editor.current_file = "not_in_project.param"
+        parameter_editor._local_filesystem.file_parameters = {"01_first.param": ParDict()}
+
+        assert parameter_editor.get_next_non_optional_file() is None
+
+    def test_navigation_returns_nothing_for_an_empty_project(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Navigation returns nothing when the project holds no parameter file.
+
+        GIVEN: A project without parameter files
+        WHEN: The previous non-optional file is requested
+        THEN: None is returned
+        """
+        parameter_editor._local_filesystem.file_parameters = {}
+
+        assert parameter_editor.get_previous_non_optional_file() is None
+
+
+class TestConfigurationStepParameterRepopulation:
+    """Test the add and delete operations applied when a configuration step is loaded."""
+
+    def test_step_declared_parameters_are_added_to_the_current_step(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Parameters declared by the configuration step are added when they are missing.
+
+        GIVEN: A step declaring an add_parameters entry absent from the file
+        WHEN: The configuration step is repopulated
+        THEN: The parameter is present and tracked as added
+        """
+        step_file = "10_step.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"why": "add a parameter"}}
+        parameter_editor._local_filesystem.forced_parameters = {}
+        parameter_editor._local_filesystem.add_parameters = {step_file: ParDict({"NEW_PARAM": Par(3.0)})}
+        parameter_editor._local_filesystem.compute_deletions.return_value = set()
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "process_configuration_step",
+            return_value=({}, [], [], [], [], {}),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters()
+
+        assert "NEW_PARAM" in parameter_editor.current_step_parameters
+        assert "NEW_PARAM" in parameter_editor._added_parameters
+
+    def test_step_declared_deletions_remove_parameters_from_the_current_step(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Parameters the step marks for deletion are removed and tracked.
+
+        GIVEN: A step whose delete rules target an existing parameter
+        WHEN: The configuration step is repopulated
+        THEN: The parameter is gone and tracked as deleted
+        """
+        step_file = "10_step.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"why": "delete a parameter"}}
+        parameter_editor._local_filesystem.forced_parameters = {}
+        parameter_editor._local_filesystem.add_parameters = {}
+        parameter_editor._local_filesystem.compute_deletions.return_value = {"OLD_PARAM"}
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "process_configuration_step",
+            return_value=({"OLD_PARAM": MagicMock()}, [], [], [], [], {}),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters()
+
+        assert "OLD_PARAM" not in parameter_editor.current_step_parameters
+        assert "OLD_PARAM" in parameter_editor._deleted_parameters
+
+
+class TestComputedParameterRefreshGuards:
+    """Test the guard clauses of the lightweight computed-parameter refresh."""
+
+    def test_refresh_is_skipped_when_no_configuration_file_is_open(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The refresh does nothing when no configuration file is open.
+
+        GIVEN: No current file
+        WHEN: The computed parameters are refreshed
+        THEN: The filesystem is not asked to recompute anything
+        """
+        parameter_editor.current_file = ""
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        parameter_editor._local_filesystem.compute_parameters.assert_not_called()
+
+    def test_refresh_is_skipped_for_a_file_without_a_configuration_step(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The refresh does nothing for a file that declares no configuration step.
+
+        GIVEN: A current file absent from configuration_steps
+        WHEN: The computed parameters are refreshed
+        THEN: The filesystem is not asked to recompute anything
+        """
+        parameter_editor.current_file = "unlisted.param"
+        parameter_editor._local_filesystem.configuration_steps = {}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        parameter_editor._local_filesystem.compute_parameters.assert_not_called()
+
+
+class TestSummaryZipOverwrite:
+    """Test the overwrite prompt shown before writing the summary zip file."""
+
+    def test_user_is_asked_before_an_existing_summary_zip_is_overwritten(self, parameter_editor: ParameterEditor) -> None:
+        """
+        An existing summary zip is only replaced after the user confirms.
+
+        GIVEN: A summary zip that already exists on disk
+        WHEN: The user confirms the overwrite
+        THEN: The zip is written and the user is told where it is
+        """
+        parameter_editor._local_filesystem.zip_file_exists.return_value = True
+        parameter_editor._local_filesystem.zip_file_path.return_value = "/vehicles/MyQuad/summary.zip"
+        show_info = MagicMock()
+
+        result = parameter_editor._write_zip_file_workflow([], show_info, MagicMock(return_value=True))
+
+        assert result is True
+        parameter_editor._local_filesystem.zip_files.assert_called_once()
+        assert "/vehicles/MyQuad/summary.zip" in show_info.call_args[0][1]
+
+    def test_user_can_keep_the_existing_summary_zip(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Declining the overwrite prompt leaves the existing zip untouched.
+
+        GIVEN: A summary zip that already exists on disk
+        WHEN: The user declines the overwrite
+        THEN: No zip is written and no message is shown
+        """
+        parameter_editor._local_filesystem.zip_file_exists.return_value = True
+        show_info = MagicMock()
+
+        result = parameter_editor._write_zip_file_workflow([], show_info, MagicMock(return_value=False))
+
+        assert result is False
+        parameter_editor._local_filesystem.zip_files.assert_not_called()
+        show_info.assert_not_called()
+
+    def test_a_new_summary_zip_is_written_without_asking(self, parameter_editor: ParameterEditor) -> None:
+        """
+        No prompt is shown when the summary zip does not exist yet.
+
+        GIVEN: No existing summary zip
+        WHEN: The summary zip is written
+        THEN: The zip is written and the user is not asked anything
+        """
+        parameter_editor._local_filesystem.zip_file_exists.return_value = False
+        ask_confirmation = MagicMock()
+
+        result = parameter_editor._write_zip_file_workflow([], MagicMock(), ask_confirmation)
+
+        assert result is True
+        ask_confirmation.assert_not_called()
+        parameter_editor._local_filesystem.zip_files.assert_called_once()
+
+
+class TestProjectAccessors:
+    """Test the read-only project accessors exposed to the GUI layer."""
+
+    def test_gui_reads_the_vehicle_directory_from_the_project(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The vehicle directory comes from the loaded project.
+
+        GIVEN: A project loaded from a vehicle directory
+        WHEN: The vehicle directory is requested
+        THEN: The project directory is returned
+        """
+        parameter_editor._local_filesystem.vehicle_dir = "/vehicles/MyQuad"
+
+        assert parameter_editor.get_vehicle_directory() == "/vehicles/MyQuad"
+
+    def test_gui_lists_the_project_parameter_files_in_order(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The parameter file list mirrors the project files.
+
+        GIVEN: A project with two parameter files
+        WHEN: The parameter file list is requested
+        THEN: Both file names are returned in project order
+        """
+        parameter_editor._local_filesystem.file_parameters = {"01_first.param": {}, "02_second.param": {}}
+
+        assert parameter_editor.parameter_files() == ["01_first.param", "02_second.param"]
+
+    def test_gui_knows_whether_parameter_documentation_is_available(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Documentation availability follows whether apm.pdef.xml was loaded.
+
+        GIVEN: A project with and then without loaded documentation
+        WHEN: Documentation availability is requested
+        THEN: The answer follows the loaded documentation
+        """
+        parameter_editor._local_filesystem.doc_dict = {"PARAM1": {}}
+        assert parameter_editor.parameter_documentation_available() is True
+
+        parameter_editor._local_filesystem.doc_dict = {}
+        assert parameter_editor.parameter_documentation_available() is False
+
+    def test_gui_reads_the_configuration_phases_from_the_project(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Configuration phases come from the loaded project.
+
+        GIVEN: A project declaring configuration phases
+        WHEN: The phases are requested
+        THEN: The project phases are returned
+        """
+        phases = {"Tune": MagicMock()}
+        parameter_editor._local_filesystem.configuration_phases = phases
+
+        assert parameter_editor.configuration_phases() is phases
+
+    def test_gui_reads_the_progress_bar_phase_weights_from_the_project(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Phase weights for the progress bar are delegated to the project.
+
+        GIVEN: A project able to weight its phases
+        WHEN: The sorted phases are requested for a given last step
+        THEN: The project is queried with that step number
+        """
+        expected = {"Tune": MagicMock()}
+        parameter_editor._local_filesystem.get_sorted_phases_with_end_and_weight.return_value = expected
+
+        assert parameter_editor.get_sorted_phases_with_end_and_weight(25) is expected
+        parameter_editor._local_filesystem.get_sorted_phases_with_end_and_weight.assert_called_once_with(25)
+
+    def test_gui_reads_the_step_instructions_popup_from_the_project(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The optional instructions popup of a step comes from the project.
+
+        GIVEN: A step declaring an instructions popup
+        WHEN: The popup is requested
+        THEN: The project data is returned
+        """
+        popup = {"text": "Do this first"}
+        parameter_editor._local_filesystem.get_instructions_popup.return_value = popup
+
+        assert parameter_editor.get_instructions_popup("10_step.param") is popup
+
+    def test_component_editor_receives_the_project_and_the_fc_parameters(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The embedded component editor gets both the project and the live FC parameters.
+
+        GIVEN: A connected flight controller reporting parameters
+        WHEN: The component editor dependencies are requested
+        THEN: The project and the FC parameters are handed over
+        """
+        deps = parameter_editor.get_component_editor_deps()
+
+        assert deps.local_filesystem is parameter_editor._local_filesystem
+        assert deps.fc_parameters == {"PARAM1": 1.0, "PARAM2": 3.0}
+
+
+class TestConnectionRenameGuards:
+    """Test the guard clauses of the connection rename refresh."""
+
+    def test_rename_refresh_is_skipped_for_an_empty_rename_expression(self, parameter_editor: ParameterEditor) -> None:
+        """
+        An empty rename_connection expression leaves the parameters untouched.
+
+        GIVEN: A step whose rename_connection expression is empty
+        WHEN: The connection renames are refreshed
+        THEN: No rename operation is computed
+        """
+        parameter_editor.current_file = "10_gnss.param"
+
+        with patch.object(parameter_editor._config_step_processor, "calculate_connection_rename_operations") as mock_calc:
+            parameter_editor._refresh_current_step_connection_renames({"rename_connection": ""}, {})
+
+        mock_calc.assert_not_called()
+
+    def test_gnss_protocol_value_update_tolerates_an_unchanged_value(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Applying the GNSS protocol value twice is not reported as an error.
+
+        GIVEN: A renamed GNSS protocol parameter already holding the target value
+        WHEN: The protocol value is applied
+        THEN: No exception escapes
+        """
+        param = MagicMock()
+        param.set_new_value.side_effect = ParameterUnchangedError("unchanged")
+        parameter_editor.current_step_parameters = {"SERIAL1_PROTOCOL": param}
+
+        parameter_editor._apply_gnss_protocol_value("SERIAL1_PROTOCOL")
+
+
+class TestFlightControllerUploadReporting:
+    """Test what the user is told while parameters are uploaded to the flight controller."""
+
+    def test_user_is_told_which_parameters_failed_to_upload(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Parameters whose readback does not match are reported as upload errors.
+
+        GIVEN: A flight controller returning a different value than the one uploaded
+        WHEN: The uploaded parameters are validated
+        THEN: The mismatching parameter is reported
+        """
+        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 9.0}
+
+        errors = parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)})
+
+        assert "PARAM1" in errors
+
+    def test_user_sees_no_upload_error_when_the_readback_matches(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Parameters read back with the uploaded value are not reported as errors.
+
+        GIVEN: A flight controller returning the uploaded value
+        WHEN: The uploaded parameters are validated
+        THEN: No error is reported
+        """
+        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 1.0}
+
+        assert parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)}) == []
+
+    def test_a_parameter_missing_from_the_readback_is_reported_as_an_error(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A parameter absent from the readback is reported instead of being silently accepted.
+
+        GIVEN: A flight controller that does not report the uploaded parameter
+        WHEN: The uploaded parameters are validated
+        THEN: The missing parameter is reported
+        """
+        parameter_editor._flight_controller.fc_parameters = {}
+
+        assert parameter_editor._validate_uploaded_parameters({"PARAM1": Par(1.0)}) == ["PARAM1"]
+
+
+class TestParameterFileChangeWorkflow:
+    """Test the orchestration that runs when the user switches configuration file."""
+
+    @staticmethod
+    def _callbacks() -> dict:
+        """Build the callback set required by the file change workflow."""
+        return {
+            "handle_imu_temp_cal": MagicMock(),
+            "handle_copy_fc_values": MagicMock(return_value="continue"),
+            "handle_upload_file": MagicMock(return_value=True),
+            "ask_confirmation": MagicMock(return_value=True),
+            "show_error": MagicMock(),
+            "show_info": MagicMock(),
+        }
+
+    def test_reselecting_the_open_file_does_no_work(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Selecting the file that is already open short-circuits the whole workflow.
+
+        GIVEN: The user clicks the configuration file that is already open
+        WHEN: The file change workflow runs without the forced flag
+        THEN: The same file stays selected and no calibration check is triggered
+        """
+        parameter_editor.current_file = "10_step.param"
+        cb = self._callbacks()
+
+        selected, keep_going = parameter_editor.handle_param_file_change_workflow(
+            "10_step.param", forced=False, gui_complexity="simple", auto_open_documentation=False, **cb
+        )
+
+        assert (selected, keep_going) == ("10_step.param", True)
+        cb["handle_imu_temp_cal"].assert_not_called()
+
+    def test_simple_gui_users_get_the_step_documentation_opened_automatically(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The simple GUI opens the step documentation without the user asking.
+
+        GIVEN: A user on the simple GUI complexity switching to a new step
+        WHEN: The file change workflow runs
+        THEN: The documentation for the new step is opened
+        """
+        parameter_editor.current_file = "01_first.param"
+        cb = self._callbacks()
+
+        with (
+            patch.object(parameter_editor, "_handle_file_jump_workflow", return_value="10_step.param"),
+            patch.object(parameter_editor, "_repopulate_configuration_step_parameters", return_value=([], [])),
+            patch.object(parameter_editor, "_should_download_file_from_url_workflow", return_value=False),
+            patch.object(parameter_editor, "open_documentation_in_browser") as mock_doc,
+        ):
+            parameter_editor.handle_param_file_change_workflow(
+                "10_step.param", forced=False, gui_complexity="simple", auto_open_documentation=False, **cb
+            )
+
+        mock_doc.assert_called_once_with("10_step.param")
+
+    def test_closing_the_application_disconnects_the_flight_controller(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Choosing to close the application releases the flight controller connection.
+
+        GIVEN: A connected flight controller and a user who chooses to close
+        WHEN: The file change workflow runs
+        THEN: The flight controller is disconnected and the workflow stops
+        """
+        parameter_editor.current_file = "01_first.param"
+        parameter_editor._flight_controller.master = MagicMock()
+        cb = self._callbacks()
+        cb["handle_copy_fc_values"] = MagicMock(return_value="close")
+
+        with (
+            patch.object(parameter_editor, "_handle_file_jump_workflow", return_value="10_step.param"),
+            patch.object(parameter_editor, "_repopulate_configuration_step_parameters", return_value=([], [])),
+            patch.object(parameter_editor, "open_documentation_in_browser"),
+        ):
+            _selected, keep_going = parameter_editor.handle_param_file_change_workflow(
+                "10_step.param", forced=False, gui_complexity="normal", auto_open_documentation=False, **cb
+            )
+
+        assert keep_going is False
+        parameter_editor._flight_controller.disconnect.assert_called_once()
+
+    def test_a_downloaded_step_file_is_offered_for_upload_to_the_flight_controller(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A step file fetched from a URL is immediately offered for upload.
+
+        GIVEN: A step whose file was downloaded from a URL
+        WHEN: The file change workflow runs
+        THEN: The upload callback is invoked for that file
+        """
+        parameter_editor.current_file = "01_first.param"
+        cb = self._callbacks()
+
+        with (
+            patch.object(parameter_editor, "_handle_file_jump_workflow", return_value="10_step.param"),
+            patch.object(parameter_editor, "_repopulate_configuration_step_parameters", return_value=([], [])),
+            patch.object(parameter_editor, "_should_download_file_from_url_workflow", return_value=True),
+            patch.object(parameter_editor, "open_documentation_in_browser"),
+        ):
+            parameter_editor.handle_param_file_change_workflow(
+                "10_step.param", forced=False, gui_complexity="normal", auto_open_documentation=False, **cb
+            )
+
+        cb["handle_upload_file"].assert_called_once_with("10_step.param")
+
+    def test_step_errors_and_notices_are_surfaced_to_the_user(self, parameter_editor: ParameterEditor) -> None:
+        """
+        Errors and notices produced while loading a step are shown to the user.
+
+        GIVEN: A step whose repopulation produces one error and one notice
+        WHEN: The file change workflow runs
+        THEN: Both are shown through the matching callbacks
+        """
+        parameter_editor.current_file = "01_first.param"
+        cb = self._callbacks()
+
+        with (
+            patch.object(parameter_editor, "_handle_file_jump_workflow", return_value="10_step.param"),
+            patch.object(
+                parameter_editor,
+                "_repopulate_configuration_step_parameters",
+                return_value=([("Error", "bad expression")], [("Notice", "value derived")]),
+            ),
+            patch.object(parameter_editor, "_should_download_file_from_url_workflow", return_value=False),
+            patch.object(parameter_editor, "open_documentation_in_browser"),
+        ):
+            parameter_editor.handle_param_file_change_workflow(
+                "10_step.param", forced=False, gui_complexity="normal", auto_open_documentation=False, **cb
+            )
+
+        cb["show_error"].assert_called_once_with("Error", "bad expression")
+        cb["show_info"].assert_called_once_with("Notice", "value derived")
+
+
+class TestDuplicateParameterRemoval:
+    """Test the removal of duplicate parameters detected while loading a step."""
+
+    def test_a_duplicate_present_in_the_file_is_tracked_as_deleted(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A duplicate that exists in the file on disk is tracked so the deletion gets saved.
+
+        GIVEN: A step reporting a duplicate that exists in the file
+        WHEN: The configuration step is repopulated
+        THEN: The duplicate is removed and tracked as deleted
+        """
+        step_file = "10_step.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {}
+        parameter_editor._local_filesystem.forced_parameters = {}
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict({"DUP_PARAM": Par(1.0)})}
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "process_configuration_step",
+            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters()
+
+        assert "DUP_PARAM" not in parameter_editor.current_step_parameters
+        assert "DUP_PARAM" in parameter_editor._deleted_parameters
+
+    def test_a_duplicate_absent_from_the_file_is_removed_without_a_deletion_record(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A duplicate that only exists in memory is dropped without recording a file deletion.
+
+        GIVEN: A step reporting a duplicate absent from the file on disk
+        WHEN: The configuration step is repopulated
+        THEN: The duplicate is removed but no deletion is tracked
+        """
+        step_file = "10_step.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {}
+        parameter_editor._local_filesystem.forced_parameters = {}
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict()}
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "process_configuration_step",
+            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters()
+
+        assert "DUP_PARAM" not in parameter_editor.current_step_parameters
+        assert "DUP_PARAM" not in parameter_editor._deleted_parameters
+
+
+class TestDerivedParameterPatching:
+    """Test how derived parameter values are patched into an already loaded step."""
+
+    def test_a_parameter_that_became_derived_is_rebuilt_from_the_file_value(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A parameter that only became derived after a component edit is rebuilt with the derived flag.
+
+        GIVEN: An existing plain parameter that the step now declares as derived
+        WHEN: The computed parameters are refreshed
+        THEN: The parameter is re-created from its file value
+        """
+        step_file = "11_battery.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {"MOT_X": {}}}}
+        original_par = Par(4.2, "from file")
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict({"MOT_X": original_par})}
+        derived_par = MagicMock()
+        derived_par.value = "4.35"
+        derived_par.comment = "derived"
+        parameter_editor._local_filesystem.derived_parameters = {step_file: {"MOT_X": derived_par}}
+
+        plain = MagicMock()
+        plain.is_forced = False
+        plain.is_derived = False
+        parameter_editor.current_step_parameters = {"MOT_X": plain}
+
+        rebuilt = MagicMock()
+        with patch.object(
+            parameter_editor._config_step_processor, "create_ardupilot_parameter", return_value=rebuilt
+        ) as mock_create:
+            parameter_editor.refresh_current_step_computed_parameters()
+
+        assert parameter_editor.current_step_parameters["MOT_X"] is rebuilt
+        assert mock_create.call_args[0][1] is original_par
+
+    def test_a_parameter_that_became_derived_but_is_absent_from_the_file_is_left_alone(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A newly derived parameter with no file value keeps its existing object instead of crashing.
+
+        GIVEN: A plain parameter declared derived but absent from the file on disk
+        WHEN: The computed parameters are refreshed
+        THEN: The existing object is kept and no value is forced onto it
+        """
+        step_file = "11_battery.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {"MOT_X": {}}}}
+        parameter_editor._local_filesystem.file_parameters = {step_file: ParDict()}
+        derived_par = MagicMock()
+        derived_par.value = "4.35"
+        derived_par.comment = ""
+        parameter_editor._local_filesystem.derived_parameters = {step_file: {"MOT_X": derived_par}}
+
+        plain = MagicMock()
+        plain.is_forced = False
+        plain.is_derived = False
+        parameter_editor.current_step_parameters = {"MOT_X": plain}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        assert parameter_editor.current_step_parameters["MOT_X"] is plain
+        plain.set_forced_or_derived_value.assert_not_called()
+
+    def test_an_uncomputable_derived_value_is_logged_instead_of_crashing_the_editor(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A derived value that cannot be converted to a number is reported without breaking the GUI.
+
+        GIVEN: A derived parameter whose computed value is not numeric
+        WHEN: The computed parameters are refreshed
+        THEN: No exception escapes and no value is applied
+        """
+        step_file = "11_battery.param"
+        parameter_editor.current_file = step_file
+        parameter_editor._local_filesystem.configuration_steps = {step_file: {"derived_parameters": {"MOT_X": {}}}}
+        derived_par = MagicMock()
+        derived_par.value = "not a number"
+        derived_par.comment = ""
+        parameter_editor._local_filesystem.derived_parameters = {step_file: {"MOT_X": derived_par}}
+
+        derived = MagicMock()
+        derived.is_forced = False
+        derived.is_derived = True
+        parameter_editor.current_step_parameters = {"MOT_X": derived}
+
+        parameter_editor.refresh_current_step_computed_parameters()
+
+        derived.set_forced_or_derived_value.assert_not_called()
+
+
+class TestParameterAdditionFromFlightController:
+    """Test adding parameters whose names are validated against the connected flight controller."""
+
+    def test_user_can_add_a_parameter_known_only_to_the_flight_controller(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A parameter reported by the flight controller can be added even without documentation.
+
+        GIVEN: A connected FC reporting a parameter absent from the file
+        WHEN: The user adds it
+        THEN: The parameter is added and tracked
+        """
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict()}
+        parameter_editor._local_filesystem.doc_dict = {}
+        parameter_editor._flight_controller.fc_parameters = {"FC_ONLY_PARAM": 7.0}
+
+        assert parameter_editor.add_parameter_to_current_file("FC_ONLY_PARAM") is True
+        assert "FC_ONLY_PARAM" in parameter_editor._added_parameters
+
+    def test_user_cannot_add_a_parameter_the_flight_controller_does_not_know(self, parameter_editor: ParameterEditor) -> None:
+        """
+        A parameter unknown to the connected flight controller is rejected.
+
+        GIVEN: A connected FC without the requested parameter and no documentation
+        WHEN: The user tries to add it
+        THEN: An InvalidParameterNameError is raised
+        """
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict()}
+        parameter_editor._local_filesystem.doc_dict = {}
+        parameter_editor._flight_controller.fc_parameters = {"KNOWN_PARAM": 1.0}
+
+        with pytest.raises(InvalidParameterNameError):
+            parameter_editor.add_parameter_to_current_file("UNKNOWN_PARAM")
+
+    def test_user_cannot_add_an_undocumented_parameter_while_an_fc_is_connected(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        With documentation loaded and an FC connected, an unknown name is rejected on both grounds.
+
+        GIVEN: A loaded apm.pdef.xml and a connected FC, neither knowing the parameter
+        WHEN: The user tries to add it
+        THEN: An InvalidParameterNameError mentioning the flight controller is raised
+        """
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._local_filesystem.file_parameters = {"test_file.param": ParDict()}
+        parameter_editor._local_filesystem.doc_dict = {"KNOWN_PARAM": {}}
+        parameter_editor._flight_controller.fc_parameters = {"OTHER_PARAM": 1.0}
+
+        with pytest.raises(InvalidParameterNameError, match="flight controller"):
+            parameter_editor.add_parameter_to_current_file("UNKNOWN_PARAM")
+
+
+class TestBitmaskEditorAvailability:
+    """Test when the bitmask editor hint is offered for a parameter."""
+
+    def test_bitmask_editor_is_offered_for_an_editable_bitmask_parameter(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The bitmask editor is offered for an editable bitmask parameter.
+
+        GIVEN: An editable bitmask parameter in the current step
+        WHEN: The bitmask editor availability is checked
+        THEN: It is offered
+        """
+        param = MagicMock(is_editable=True, is_bitmask=True)
+        parameter_editor.current_step_parameters = {"BITMASK_PARAM": param}
+
+        assert parameter_editor.should_display_bitmask_parameter_editor_usage("BITMASK_PARAM") is True
+
+    def test_bitmask_editor_is_hidden_for_a_read_only_bitmask_parameter(self, parameter_editor: ParameterEditor) -> None:
+        """
+        The bitmask editor is not offered for a parameter the user cannot edit.
+
+        GIVEN: A read-only bitmask parameter in the current step
+        WHEN: The bitmask editor availability is checked
+        THEN: It is not offered
+        """
+        param = MagicMock(is_editable=False, is_bitmask=True)
+        parameter_editor.current_step_parameters = {"BITMASK_PARAM": param}
+
+        assert parameter_editor.should_display_bitmask_parameter_editor_usage("BITMASK_PARAM") is False
+
+
+class TestPluginModelFactoryContract:  # pylint: disable=too-few-public-methods
+    """Test the contract between the editor and the plugin model factory."""
+
+    def test_a_registered_plugin_without_a_model_factory_is_reported_as_an_error(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A plugin registered without a model factory is reported instead of returning None silently.
+
+        GIVEN: A registered plugin whose factory yields no model and a connected FC
+        WHEN: The plugin data model is requested
+        THEN: A ValueError naming the plugin is raised
+        """
+        parameter_editor._flight_controller.master = MagicMock()
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.plugin_factory") as mock_factory:
+            mock_factory.is_registered.return_value = True
+            mock_factory.create_model.return_value = None
+            with pytest.raises(ValueError, match=PLUGIN_MOTOR_TEST):
+                parameter_editor.create_plugin_data_model(PLUGIN_MOTOR_TEST)
