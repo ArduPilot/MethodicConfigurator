@@ -20,10 +20,12 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import sys
 import time
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
+from contextlib import suppress
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -127,6 +129,7 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         self._content_frame: ttk.Frame | None = None  # Store reference to content frame for widget searches
         self._motor_grid_frame: ttk.Frame | None = None  # Direct handle for motor grid frame
         self._timer_id: str | None = None  # Track scheduled update timer for cleanup
+        self._keyboard_bindings: list[tuple[str, str, str]] = []
 
         self._create_widgets()
 
@@ -747,18 +750,33 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
 
     def _setup_keyboard_shortcuts(self) -> None:
         """Setup keyboard shortcuts for critical motor test functions."""
-        # Emergency stop (Escape key)
-        self.root_window.bind("<Escape>", lambda _: self._stop_all_motors())
-        self.root_window.bind("<Control-s>", lambda _: self._stop_all_motors())
-
-        # Test all motors (Ctrl+A)
-        self.root_window.bind("<Control-a>", lambda _: self._test_all_motors())
-
-        # Test in sequence (Ctrl+Q)
-        self.root_window.bind("<Control-q>", lambda _: self._test_motors_in_sequence())
+        shortcuts = {
+            "<Escape>": self._stop_all_motors,
+            "<Control-s>": self._stop_all_motors,
+            "<Control-a>": self._test_all_motors,
+            "<Control-q>": self._test_motors_in_sequence,
+        }
+        for sequence, action in shortcuts.items():
+            previous_binding = str(self.root_window.tk.call("bind", str(self.root_window), sequence))
+            callback = cast(
+                "Callable[[Event], str]",
+                lambda _event, shortcut=action: self._handle_keyboard_shortcut(shortcut),
+            )
+            binding_id = self.root_window.bind(
+                sequence,
+                callback,
+                add="+",
+            )
+            if isinstance(binding_id, str):
+                self._keyboard_bindings.append((sequence, binding_id, previous_binding))
 
         # Focus root window to ensure it can capture key events
         self.root_window.focus_set()
+
+    def _handle_keyboard_shortcut(self, action: Callable[[], None]) -> str:
+        """Run a keyboard shortcut and stop Tk from processing the event further."""
+        action()
+        return "break"
 
     def on_activate(self) -> None:
         """
@@ -812,6 +830,18 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         if self._timer_id:
             self.after_cancel(self._timer_id)
             self._timer_id = None
+        for sequence, binding_id, previous_binding in self._keyboard_bindings:
+            with suppress(tk.TclError):
+                if sys.version_info >= (3, 11):
+                    self.root_window.unbind(sequence, binding_id)
+                else:
+                    # Python 3.10's tkinter.unbind(sequence, funcid) clears the
+                    # complete binding script before deleting funcid. Restore
+                    # the script that was present before this view was bound.
+                    self.root_window.unbind(sequence, binding_id)
+                    if previous_binding:
+                        self.root_window.bind(sequence, previous_binding)
+        self._keyboard_bindings.clear()
         super().destroy()
 
 

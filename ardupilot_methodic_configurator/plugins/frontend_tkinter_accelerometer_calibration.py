@@ -8,13 +8,16 @@ SPDX-FileCopyrightText: 2026 ArduPilot Contributors
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import re
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
+from collections.abc import Collection
 from contextlib import suppress
 from logging import error as logging_error
 from logging import warning as logging_warning
 from tkinter import Frame, ttk
 from tkinter.messagebox import showerror, showinfo
+from typing import Any, cast  # pylint: disable=unused-import
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.__main__ import (
@@ -25,6 +28,7 @@ from ardupilot_methodic_configurator.__main__ import (
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
 from ardupilot_methodic_configurator.plugins.imu_helpers import (
     ImuPollHandlers,
     poll_imu_periodically,
@@ -35,6 +39,11 @@ from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelCo
 
 _POLL_INTERVAL_MS = 100  # tkinter polling interval during full calibration
 _IMU_POLL_INTERVAL_MS = 200  # tkinter polling interval for live IMU monitor
+
+
+def _accel_calibration_names(parameters: Collection[str]) -> set[str]:
+    """Select offsets, scales, and trims written by simple accelerometer calibration."""
+    return {name for name in parameters if re.fullmatch(r"INS\d*_ACC\d*(?:OFFS|SCAL)_[XYZ]|AHRS_TRIM_[XYZ]", name)}
 
 
 class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-attributes
@@ -79,49 +88,64 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
             font=("TkDefaultFont", 14, "bold"),
         ).pack(pady=(0, 10))
 
-        # Info text
-        info_text = _(
-            "Simple Calibration — For large or heavy vehicles that are difficult to move. "
-            "Place the vehicle level and click the button. Slightly reduced accuracy.\n\n"
-            "Full Calibration — Highest accuracy. Move the vehicle to 6 positions as instructed. "
-            "The vehicle must rest completely still (do not hold it) when you press Continue "
-            "for each step — stillness matters more than exact angle.\n\n"
-            "Level Calibration — Trims roll and pitch only (not yaw). "
-            "Must be performed AFTER a Simple or Full calibration."
-        )
-        ttk.Label(main_frame, text=info_text, justify="left", wraplength=600).pack(pady=(0, 20))
+        calibration_status_frame = ttk.Frame(main_frame)
+        calibration_status_frame.pack(fill="x", pady=(0, 10))
 
-        # --- Static buttons (always visible) ---
-        buttons_frame = ttk.Frame(main_frame)
-        buttons_frame.pack(pady=10)
+        calibration_frame = ttk.Frame(calibration_status_frame)
+        calibration_frame.pack(side="left", fill="x", expand=True)
+
+        # Simple calibration button and info text
+        simple_frame = ttk.Frame(calibration_frame)
+        simple_frame.pack(fill="x", pady=(0, 10))
+
+        simple_button_text = _("Simple Calibration (Level)")
+        full_button_text = _("Full Calibration (6-Position)")
+        button_width = max(len(simple_button_text), len(full_button_text))
 
         self._simple_btn = ttk.Button(
-            buttons_frame,
-            text=_("Simple Calibration (Level)"),
+            simple_frame,
+            text=simple_button_text,
+            width=button_width,
             command=self._on_simple_calibration,
         )
-        self._simple_btn.pack(side="left", padx=8)
+        self._simple_btn.pack(side="left", padx=(8, 16), anchor="n")
+
+        simple_info_text = _(
+            "Slightly reduced accuracy. For large or heavy vehicles that are difficult to move.\n"
+            "Place the vehicle level and click the button."
+        )
+        wraplength = 450
+        ttk.Label(simple_frame, text=simple_info_text, justify="left", wraplength=wraplength).pack(
+            side="left", fill="x", expand=True, anchor="w"
+        )
+
+        # Full calibration button and info text
+        full_frame = ttk.Frame(calibration_frame)
+        full_frame.pack(fill="x", pady=(0, 10))
 
         self._full_btn = ttk.Button(
-            buttons_frame,
-            text=_("Full Calibration (6-Position)"),
+            full_frame,
+            text=full_button_text,
+            width=button_width,
             command=self._on_start_full_calibration,
         )
-        self._full_btn.pack(side="left", padx=8)
+        self._full_btn.pack(side="left", padx=(8, 16), anchor="n")
 
-        self._level_btn = ttk.Button(
-            buttons_frame,
-            text=_("Level Calibration (Trim)"),
-            command=self._on_level_calibration,
+        full_info_text = _(
+            "Highest accuracy. Move the vehicle to 6 positions as instructed.\n"
+            "The vehicle must rest completely still when you press Continue "
+            "for each step — stillness matters more than exact angle."
         )
-        self._level_btn.pack(side="left", padx=8)
+        ttk.Label(full_frame, text=full_info_text, justify="left", wraplength=wraplength).pack(
+            side="left", fill="x", expand=True, anchor="w"
+        )
 
         # --- Live sensor status ---
         self._imu_position_var = tk.StringVar(value="—")
         self._imu_magnitude_var = tk.StringVar(value="—")
 
-        status_frame = ttk.LabelFrame(main_frame, text=_("Live Sensor Status"), padding=8)
-        status_frame.pack(fill="x", padx=10, pady=(10, 0))
+        status_frame = ttk.LabelFrame(calibration_status_frame, text=_("Live Sensor Status"), padding=8)
+        status_frame.pack(side="left", fill="y", padx=(20, 4))
 
         status_grid = ttk.Frame(status_frame)
         status_grid.pack(anchor="w")
@@ -180,23 +204,52 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._cancel_btn.pack(side="left", padx=8)
 
     # ------------------------------------------------------------------
-    # Simple / level calibration
+    # Simple calibration
     # ------------------------------------------------------------------
 
     def _on_simple_calibration(self) -> None:
         """Handle Simple Calibration button."""
         success, message = self.model.start_simple_calibration()
+        base_window = cast("Any", self.base_window)
         if success:
+            download_result = base_window.download_flight_controller_parameters(redownload=True)
+            downloaded = not (isinstance(download_result, tuple) and not download_result[0])
+            stale_files = refresh_parameter_editor_after_calibration(
+                self.base_window,
+                parameter_names_to_copy=(
+                    _accel_calibration_names(base_window.parameter_editor.fc_parameters) if downloaded else set()
+                ),
+                check_other_steps=True,
+                redownload=False,
+            )
+            if not downloaded:
+                message += "\n" + _("Could not download the new calibration values.")
+            if stale_files:
+                message += "\n" + _("Review stale accelerometer calibration values in: %(filenames)s") % {
+                    "filenames": ", ".join(stale_files)
+                }
             showinfo(_("Calibration Result"), message)
         else:
-            showerror(_("Calibration Failed"), message)
-
-    def _on_level_calibration(self) -> None:
-        """Handle Level Calibration button."""
-        success, message = self.model.start_level_calibration()
-        if success:
-            showinfo(_("Calibration Result"), message)
-        else:
+            if self.model.is_connected():
+                editor = base_window.parameter_editor
+                old_values = dict(getattr(editor, "fc_parameters", {}))
+                download_result = base_window.download_flight_controller_parameters(redownload=True, response_timeout=2.0)
+                new_values = getattr(editor, "fc_parameters", {})
+                accel_names = _accel_calibration_names(old_values)
+                changed = sorted(name for name in accel_names if name in new_values and new_values[name] != old_values[name])
+                stale_files = refresh_parameter_editor_after_calibration(
+                    self.base_window, parameter_names_to_copy=changed, check_other_steps=True, redownload=False
+                )
+                if changed:
+                    message += "\n" + _(
+                        "The flight controller saved new calibration values despite the failed acknowledgment: %(parameters)s."
+                    ) % {"parameters": ", ".join(changed)}
+                if stale_files:
+                    message += "\n" + _("Review stale accelerometer calibration values in: %(filenames)s") % {
+                        "filenames": ", ".join(stale_files)
+                    }
+                if not new_values or (isinstance(download_result, tuple) and not download_result[0]):
+                    message += "\n" + _("Could not confirm whether the calibration values were saved.")
             showerror(_("Calibration Failed"), message)
 
     # ------------------------------------------------------------------
@@ -212,13 +265,12 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
         # Show wizard, disable the top-level calibration buttons
         self._simple_btn.configure(state="disabled")
-        self._level_btn.configure(state="disabled")
         self._full_btn.configure(state="disabled")
         self._position_label.configure(text=_("Waiting for flight controller..."))
         self._continue_btn.configure(state="disabled")
         self._waiting_for_position = False
         self._expected_position_name = ""
-        self._wizard_frame.pack(fill="x", padx=20, pady=(10, 0))
+        self._wizard_frame.pack(fill="x", padx=(4, 4), pady=(10, 0))
 
         self._start_polling()
 
@@ -264,16 +316,20 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
     def _on_cancel_full_calibration(self) -> None:
         """User clicked Cancel during full calibration."""
+        success, message = self.model.cancel_full_calibration()
         self._stop_polling()
-        self.model.cancel_full_calibration()
         self._hide_wizard()
-        showerror(_("Calibration Cancelled"), _("Full accelerometer calibration was cancelled."))
+        if not success:
+            showerror(_("Calibration Failed"), message)
+            return
+        showinfo(_("Calibration Wizard Closed"), message)
 
     def _end_full_calibration(self, *, success: bool) -> None:
         """Called when full calibration completes (successfully or not)."""
         self._stop_polling()
         self._hide_wizard()
         if success:
+            refresh_parameter_editor_after_calibration(self.base_window)
             showinfo(_("Calibration Result"), _("Full accelerometer calibration successful!"))
         else:
             showerror(_("Calibration Failed"), _("Full accelerometer calibration failed."))
@@ -289,7 +345,6 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._expected_position_name = ""
         self._wizard_frame.pack_forget()
         self._simple_btn.configure(state="normal")
-        self._level_btn.configure(state="normal")
         self._full_btn.configure(state="normal")
 
     # ------------------------------------------------------------------
@@ -310,7 +365,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         x, y, z = imu
         magnitude = self.model.compute_movement_magnitude_ms2(x, y, z)
         position = self.model.compute_detected_position(x, y, z)
-        self._imu_magnitude_var.set(f"{magnitude:.2f} m/s²  (≈9.81 when still)")
+        self._imu_magnitude_var.set(f"{magnitude:.2f} m/s² \n(≈9.81 when still)")
         self._imu_position_var.set(position)
         if self._waiting_for_position:
             matches = position == self._expected_position_name

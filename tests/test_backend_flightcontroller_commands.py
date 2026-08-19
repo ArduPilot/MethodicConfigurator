@@ -13,8 +13,12 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import itertools
+import subprocess
+import sys
 import time
-from unittest.mock import MagicMock, Mock
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pymavlink import mavutil
@@ -22,6 +26,29 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import FlightControllerCommands
 
 # pylint: disable=too-many-lines
+
+
+def test_command_ack_meets_pylint_statement_and_return_limits() -> None:
+    """Keep the CI pylint gate green when command ACK handling changes."""
+    pytest.importorskip("pylint")
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pylint",
+            "--persistent=n",
+            "--score=n",
+            "--disable=all",
+            "--enable=R0911,R0915",
+            "ardupilot_methodic_configurator/backend_flightcontroller_commands.py",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert "R0911:" not in result.stdout
+    assert "R0915:" not in result.stdout
 
 
 def test_reboot_to_bootloader_holds_bootloader_without_force_flags() -> None:
@@ -60,30 +87,164 @@ class TestFlightControllerCommandsInitialization:
         mock_params_mgr = Mock()
         mock_conn_mgr = Mock()
         mock_conn_mgr.master = None
-
-        # When: Create commands manager
+        # When: Create command manager
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
         # Then: Manager initialized
         assert commands_mgr is not None
         assert commands_mgr.master is None
 
     def test_commands_manager_requires_dependencies(self) -> None:
-        """
-        Command manager requires both params and connection managers.
-
-        GIVEN: Missing required dependencies
-        WHEN: User attempts to create commands manager
-        THEN: ValueError should be raised
-        AND: Clear error message should be provided
-        """
-        # When/Then: Missing params manager
+        """A command manager requires its parameter and connection managers."""
         with pytest.raises(ValueError, match="params_manager is required"):
             FlightControllerCommands(params_manager=None, connection_manager=Mock())
-
-        # When/Then: Missing connection manager
         with pytest.raises(ValueError, match="connection_manager is required"):
             FlightControllerCommands(params_manager=Mock(), connection_manager=None)
+
+
+def test_aborting_level_calibration_allows_a_new_attempt(mock_connected_master: tuple[MagicMock, Mock]) -> None:
+    """An abandoned view must not leave the command manager busy for the session."""
+    master, connection = mock_connected_master
+    old_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+    old_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+    master.recv_match.side_effect = [old_ack, None, None]
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+    assert commands.start_accel_calibration_level() == (True, "")
+    commands.abort_level_calibration()
+    assert commands.start_accel_calibration_level() == (True, "")
+    assert master.mav.command_long_send.call_count == 2
+
+
+def test_abandoned_level_ack_cannot_complete_a_new_attempt(mock_connected_master: tuple[MagicMock, Mock]) -> None:
+    """A late ACK from an abandoned trim must be consumed before another trim starts."""
+    master, connection = mock_connected_master
+    master.recv_match.return_value = None
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    assert commands.start_accel_calibration_level() == (True, "")
+    commands.abort_level_calibration()
+
+    assert commands.start_accel_calibration_level()[0] is False
+    assert master.mav.command_long_send.call_count == 1
+    old_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+    old_ack.result = mavutil.mavlink.MAV_RESULT_FAILED
+    master.recv_match.side_effect = [old_ack, None]
+    assert commands.start_accel_calibration_level() == (True, "")
+    assert master.mav.command_long_send.call_count == 2
+    master.recv_match.side_effect = [None]
+    assert commands.poll_accel_calibration_level() is None
+
+
+def test_expired_unpolled_level_calibration_can_restart(mock_connected_master: tuple[MagicMock, Mock]) -> None:
+    """The ACK deadline must also be checked when starting a later attempt."""
+    master, connection = mock_connected_master
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    now = [0.0]
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+        assert commands.start_accel_calibration_level() == (True, "")
+        now[0] = commands.LEVEL_CALIBRATION_ACK_TIMEOUT + 1
+        assert commands.start_accel_calibration_level() == (True, "")
+    assert master.mav.command_long_send.call_count == 2
+
+
+def test_aborting_level_calibration_ignores_transport_errors(mock_connected_master: tuple[MagicMock, Mock]) -> None:
+    """Closing a calibration on a dead serial link must still release local state."""
+    master, connection = mock_connected_master
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    assert commands.start_accel_calibration_level() == (True, "")
+    master.recv_match.side_effect = OSError("serial link disappeared")
+
+    commands.abort_level_calibration()
+
+    assert commands._level_calibration.active is False  # pylint: disable=protected-access
+    assert commands._abandoned_level_deadline is None  # pylint: disable=protected-access
+
+
+def test_aborting_during_retry_cooldown_allows_immediate_restart(
+    mock_connected_master: tuple[MagicMock, Mock],
+) -> None:
+    """No stale ACK quarantine is needed after the prior command already rejected."""
+    master, connection = mock_connected_master
+    rejected = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+    rejected.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+    master.recv_match.side_effect = itertools.chain([rejected], itertools.repeat(None))
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    now = [0.0]
+
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+        assert commands.start_accel_calibration_level() == (True, "")
+        assert commands.poll_accel_calibration_level() is None
+        now[0] = commands.COMMAND_ACK_STATUS_TEXT_GRACE + 0.1
+        assert commands.poll_accel_calibration_level() is None
+        commands.abort_level_calibration()
+        assert commands.start_accel_calibration_level() == (True, "")
+
+    assert master.mav.command_long_send.call_count == 2
+
+
+def test_timed_out_level_calibration_quarantines_a_late_ack(
+    mock_connected_master: tuple[MagicMock, Mock],
+) -> None:
+    """An ACK arriving just after timeout cannot complete a newly sent command."""
+    master, connection = mock_connected_master
+    master.recv_match.return_value = None
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    now = [0.0]
+
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+        assert commands.start_accel_calibration_level() == (True, "")
+        now[0] = commands.LEVEL_CALIBRATION_ACK_TIMEOUT + 1
+        timeout_result = commands.poll_accel_calibration_level()
+        assert timeout_result is not None
+        assert timeout_result[0] is False
+        assert commands.start_accel_calibration_level()[0] is False
+
+        late_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+        late_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        master.recv_match.side_effect = [late_ack, None]
+        assert commands.start_accel_calibration_level() == (True, "")
+
+    assert master.mav.command_long_send.call_count == 2
+
+
+def test_timed_out_level_calibration_quarantine_expires(
+    mock_connected_master: tuple[MagicMock, Mock],
+) -> None:
+    """A missing late ACK must not prevent all future level calibrations."""
+    master, connection = mock_connected_master
+    master.recv_match.return_value = None
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+    now = [0.0]
+
+    with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+        assert commands.start_accel_calibration_level() == (True, "")
+        now[0] = commands.LEVEL_CALIBRATION_ACK_TIMEOUT + 1
+        timeout_result = commands.poll_accel_calibration_level()
+        assert timeout_result is not None
+        assert timeout_result[0] is False
+        now[0] += commands.LEVEL_CALIBRATION_LATE_ACK_GUARD + 1
+        assert commands.start_accel_calibration_level() == (True, "")
+
+    assert master.mav.command_long_send.call_count == 2
+
+
+@pytest.mark.parametrize("result", [mavutil.mavlink.MAV_RESULT_FAILED, 9999])
+def test_failed_ack_without_status_capture_returns_immediately(
+    mock_connected_master: tuple[MagicMock, Mock], result: int
+) -> None:
+    """Commands that do not collect STATUSTEXT must not wait through its grace period."""
+    master, connection = mock_connected_master
+    ack = MagicMock(command=mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST, result=result)
+    master.recv_match.return_value = ack
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+    with patch(
+        "ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep", side_effect=AssertionError
+    ) as sleep:
+        success, _message = commands.send_command_and_wait_ack(mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST)
+
+    assert success is False
+    sleep.assert_not_called()
+    master.recv_match.assert_called_once_with(type="COMMAND_ACK", blocking=False)
 
 
 class TestFlightControllerCommandsMotorTest:
@@ -99,22 +260,16 @@ class TestFlightControllerCommandsMotorTest:
         AND: Command acknowledgment should be received
         """
         # Given: Connected FC with ACK response
+        # Given: Connected FC
         mock_master, mock_conn_mgr = mock_connected_master
-
-        mock_ack = MagicMock()
-        mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
+        mock_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST)
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
-
-        mock_params_mgr = Mock()
-
-        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
         # When: Test motor
         success, error = commands_mgr.test_motor(
             test_sequence_nr=1, motor_letters="A", motor_output_nr=1, throttle_percent=10, timeout_seconds=2
         )
-
         # Then: Command sent successfully
         assert success is True
         assert error == ""
@@ -132,13 +287,9 @@ class TestFlightControllerCommandsMotorTest:
         # Given: No connection
         mock_conn_mgr = Mock()
         mock_conn_mgr.master = None
-        mock_params_mgr = Mock()
-
-        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
         # When: Attempt motor test
         success, error = commands_mgr.test_motor(1, "A", 1, 10, 2)
-
         # Then: Clear failure
         assert success is False
         assert "connection" in error.lower()
@@ -156,22 +307,13 @@ class TestFlightControllerCommandsBatteryStatus:
         THEN: Data stream request should be sent
         AND: Command should be acknowledged
         """
-        # Given: Connected FC
         mock_master, mock_conn_mgr = mock_connected_master
-        mock_ack = MagicMock()
-        mock_ack.command = mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL
+        mock_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL)
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
-
-        mock_params_mgr = Mock()
-
-        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
         # When: Request battery status
-        success, error = commands_mgr.request_periodic_battery_status(
-            interval_microseconds=1000000  # 1Hz
-        )
-
+        success, error = commands_mgr.request_periodic_battery_status(interval_microseconds=1000000)
         # Then: Request sent
         assert success is True
         assert error == ""
@@ -188,18 +330,14 @@ class TestFlightControllerCommandsBatteryStatus:
         # Given: FC with battery data
         mock_master, mock_conn_mgr = mock_connected_master
         mock_battery_msg = MagicMock()
-        mock_battery_msg.voltages = [4200, 4180, 4190]  # mV
-        mock_battery_msg.current_battery = 2500  # centi-amps
+        mock_battery_msg.voltages = [4200, 4180, 4190]
+        mock_battery_msg.current_battery = 2500
         mock_master.recv_match.return_value = mock_battery_msg
-
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
-
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
         # When: Get battery status
         battery_data, message = commands_mgr.get_battery_status()
-
         # Then: Status retrieved
         assert battery_data is not None
         assert message == ""
@@ -222,18 +360,12 @@ class TestFlightControllerCommandsParameterReset:  # pylint: disable=too-few-pub
         """
         # Given: Connected FC
         mock_master, mock_conn_mgr = mock_connected_master
-        mock_ack = MagicMock()
-        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_STORAGE
+        mock_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_STORAGE)
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
-
-        mock_params_mgr = Mock()
-
-        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
         # When: Reset parameters
         success, error = commands_mgr.reset_all_parameters_to_default()
-
         # Then: Command sent
         assert success is True
         assert error == ""
@@ -257,20 +389,14 @@ class TestFlightControllerCommandsSendCommandAndWaitAck:
         """
         # Given: FC that sends ACK
         mock_master, mock_conn_mgr = mock_connected_master
-        mock_ack = MagicMock()
-        mock_ack.command = 123
+        mock_ack = MagicMock(command=123)
         mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
         mock_master.recv_match.return_value = mock_ack
-
-        mock_params_mgr = Mock()
-
-        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
         # When: Send command
         success, error = commands_mgr.send_command_and_wait_ack(
             command=123, param1=0, param2=0, param3=0, param4=0, param5=0, param6=0, param7=0, timeout=1.0
         )
-
         # Then: ACK received
         assert success is True
         assert error == ""
@@ -287,16 +413,12 @@ class TestFlightControllerCommandsSendCommandAndWaitAck:
         # Given: FC that doesn't respond
         mock_master, mock_conn_mgr = mock_connected_master
         mock_master.recv_match.return_value = None
-
-        mock_params_mgr = Mock()
-
-        commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
-
-        # When: Send command with short timeout
-        success, error = commands_mgr.send_command_and_wait_ack(
-            command=999, param1=0, param2=0, param3=0, param4=0, param5=0, param6=0, param7=0, timeout=0.1
-        )
-
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        with (
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=[0.0, 2.0]),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep"),
+        ):
+            success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=1.0)
         # Then: Timeout error
         assert success is False
         assert "timeout" in error.lower()
@@ -338,7 +460,6 @@ class TestFlightControllerCommandsEdgeCases:
         mock_master.recv_match.return_value = mock_ack
 
         mock_params_mgr = Mock()
-
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         success, error = commands_mgr.request_periodic_battery_status(interval_microseconds=1000000)
@@ -372,10 +493,8 @@ class TestFlightControllerCommandsEdgeCases:
         mock_battery_msg.voltages = [-1]
         mock_battery_msg.current_battery = -1
         mock_master.recv_match.return_value = mock_battery_msg
-
         mock_params_mgr = Mock()
         mock_params_mgr.fc_parameters = {"BATT_MONITOR": 4.0}
-
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         battery_data, _ = commands_mgr.get_battery_status()
@@ -388,14 +507,12 @@ class TestFlightControllerCommandsEdgeCases:
     def test_motor_test_denied_ack(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """Motor test should fail when FC returns a DENIED acknowledgment."""
         mock_master, mock_conn_mgr = mock_connected_master
-
         mock_ack = MagicMock()
         mock_ack.command = mavutil.mavlink.MAV_CMD_DO_MOTOR_TEST
         mock_ack.result = mavutil.mavlink.MAV_RESULT_DENIED
         mock_master.recv_match.return_value = mock_ack
 
         mock_params_mgr = Mock()
-
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         success, error = commands_mgr.test_motor(1, "A", 1, 10, 2)
@@ -412,7 +529,6 @@ class TestFlightControllerCommandsEdgeCases:
         mock_master.recv_match.return_value = mock_ack
 
         mock_params_mgr = Mock()
-
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         success, error = commands_mgr.send_command_and_wait_ack(command=999, timeout=0.5)
@@ -423,7 +539,6 @@ class TestFlightControllerCommandsEdgeCases:
     def test_send_command_in_progress_then_accepted(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """send_command_and_wait_ack should handle IN_PROGRESS followed by ACCEPTED."""
         mock_master, mock_conn_mgr = mock_connected_master
-
         in_progress = MagicMock()
         in_progress.command = 555
         in_progress.result = mavutil.mavlink.MAV_RESULT_IN_PROGRESS
@@ -437,7 +552,6 @@ class TestFlightControllerCommandsEdgeCases:
         mock_master.recv_match.side_effect = [in_progress, accepted]
 
         mock_params_mgr = Mock()
-
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
         success, error = commands_mgr.send_command_and_wait_ack(command=555, timeout=1.0)
@@ -693,7 +807,7 @@ class TestFlightControllerCommandsWrapperMethods:
         assert frame_type == 1
 
 
-class TestFlightControllerCommandsAccelerometerCalibration:
+class TestFlightControllerCommandsAccelerometerCalibration:  # pylint: disable=too-many-public-methods
     """Test accelerometer calibration command functionality."""
 
     def test_user_can_start_simple_accelerometer_calibration(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
@@ -840,29 +954,190 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         assert success is False
         assert error == "Command failed"
 
+    def test_simple_calibration_includes_firmware_failure_reason(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """A rejected simple calibration includes the following firmware status text."""
+        master, connection = mock_connected_master
+        ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+        ack.result = mavutil.mavlink.MAV_RESULT_FAILED
+        status = MagicMock()
+        status.get_type.return_value = "STATUSTEXT"
+        status.text = b"Disarm to allow calibration"
+        master.recv_match.side_effect = [ack, status, *([None] * 20)]
+        commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+        assert commands.start_accel_calibration_simple() == (False, "Command failed: Disarm to allow calibration")
+        assert master.recv_match.call_args.kwargs["type"] == ["COMMAND_ACK", "STATUSTEXT"]
+
     def test_user_can_run_level_accelerometer_calibration(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
-        User can level-trim the accelerometers on a connected vehicle.
+        Starting level trim sends its command without waiting for the ACK.
 
         GIVEN: A connected flight controller ready for level trim
         WHEN: User starts level calibration
-        THEN: Preflight calibration is sent with param5=2 and acknowledged
+        THEN: Preflight calibration is sent with param5=2 and the call returns immediately
         """
         mock_master, mock_conn_mgr = mock_connected_master
-        mock_ack = MagicMock()
-        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
-        mock_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
-        mock_master.recv_match.return_value = mock_ack
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
-        success, error = commands_mgr.start_accel_calibration_level()
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_sleep") as mock_sleep:
+            success, error = commands_mgr.start_accel_calibration_level()
 
         assert success is True
         assert error == ""
         mock_master.mav.command_long_send.assert_called_once()
+        mock_master.recv_match.assert_not_called()
+        mock_sleep.assert_not_called()
         args = mock_master.mav.command_long_send.call_args.args
         assert args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
         assert args[8] == 2.0
+
+    def test_level_calibration_reports_success_when_polled_acknowledgment_arrives(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """A later accepted ACK completes the previously started level trim."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        accepted_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+        accepted_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.return_value = accepted_ack
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        assert commands_mgr.start_accel_calibration_level() == (True, "")
+        assert commands_mgr.poll_accel_calibration_level() == (True, "")
+
+    def test_level_accelerometer_calibration_retries_a_temporary_rejection(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """
+        Level trim retries when the flight controller is still cooling down.
+
+        GIVEN: The flight controller temporarily rejects the first level-trim request
+        WHEN: The cooldown has elapsed and the command is retried
+        THEN: The level calibration succeeds without showing the transient rejection
+        """
+        # Arrange (Given)
+        mock_master, mock_conn_mgr = mock_connected_master
+        temporary_ack = MagicMock()
+        temporary_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        temporary_ack.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+        accepted_ack = MagicMock()
+        accepted_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        accepted_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        mock_master.recv_match.side_effect = [temporary_ack, None, None, accepted_ack]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        # Act (When)
+        now = [0.0]
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+            assert commands_mgr.start_accel_calibration_level() == (True, "")
+            assert commands_mgr.poll_accel_calibration_level() is None
+            now[0] = 0.6
+            assert commands_mgr.poll_accel_calibration_level() is None
+            now[0] = 5.6
+            assert commands_mgr.poll_accel_calibration_level() is None
+            result = commands_mgr.poll_accel_calibration_level()
+
+        # Assert (Then)
+        assert result == (True, "")
+        assert mock_master.mav.command_long_send.call_count == 2
+
+    def test_level_calibration_retries_until_an_in_progress_calibration_finishes(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """Repeated temporary rejections are retried without relying on translated text."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        temporary_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+        temporary_ack.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+        accepted_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+        accepted_ack.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+        max_retries = FlightControllerCommands.LEVEL_CALIBRATION_MAX_RETRIES
+        mock_master.recv_match.side_effect = [
+            message for _ in range(max_retries + 1) for message in (temporary_ack, None, None)
+        ]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        now = [0.0]
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+            assert commands_mgr.start_accel_calibration_level() == (True, "")
+            result = None
+            for retry_number in range(max_retries + 1):
+                assert commands_mgr.poll_accel_calibration_level() is None
+                now[0] += 0.6
+                result = commands_mgr.poll_accel_calibration_level()
+                if retry_number < max_retries:
+                    assert result is None
+                    now[0] += FlightControllerCommands.LEVEL_CALIBRATION_RETRY_DELAY
+                    assert commands_mgr.poll_accel_calibration_level() is None
+
+        assert result == (False, "Command temporarily rejected")
+        assert mock_master.mav.command_long_send.call_count == max_retries + 1
+
+    def test_level_calibration_waits_long_enough_for_firmware_gyro_convergence(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """Level trim allows the firmware's gyro-convergence window plus margin."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        mock_master.recv_match.return_value = None
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        now = [0.0]
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+            assert commands_mgr.start_accel_calibration_level() == (True, "")
+            now[0] = 46.0
+            result = commands_mgr.poll_accel_calibration_level()
+
+        assert result is not None
+        assert result[0] is False
+        error = result[1]
+        assert "45.0 seconds" in error
+
+    def test_level_calibration_stops_after_the_configured_retry_limit(
+        self, mock_connected_master: tuple[MagicMock, Mock]
+    ) -> None:
+        """Repeated temporary rejections do not cause unbounded command retries."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        temporary_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+        temporary_ack.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+        max_retries = FlightControllerCommands.LEVEL_CALIBRATION_MAX_RETRIES
+        mock_master.recv_match.side_effect = [
+            message for _ in range(max_retries + 1) for message in (temporary_ack, None, None)
+        ]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+
+        now = [0.0]
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+            assert commands_mgr.start_accel_calibration_level() == (True, "")
+            result = None
+            for retry_number in range(max_retries + 1):
+                assert commands_mgr.poll_accel_calibration_level() is None
+                now[0] += 0.6
+                result = commands_mgr.poll_accel_calibration_level()
+                if retry_number < max_retries:
+                    assert result is None
+                    now[0] += FlightControllerCommands.LEVEL_CALIBRATION_RETRY_DELAY
+                    assert commands_mgr.poll_accel_calibration_level() is None
+
+        assert result == (False, "Command temporarily rejected")
+        assert mock_master.mav.command_long_send.call_count == max_retries + 1
+
+    def test_failed_ack_collects_statustext_queued_after_it(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
+        """A failed ACK remains pending briefly so a following STATUSTEXT can explain it."""
+        mock_master, mock_conn_mgr = mock_connected_master
+        failed_ack = MagicMock(command=mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION)
+        failed_ack.result = mavutil.mavlink.MAV_RESULT_FAILED
+        status_text = MagicMock()
+        status_text.get_type.return_value = "STATUSTEXT"
+        status_text.text = b"Disarm to allow calibration"
+        mock_master.recv_match.side_effect = [failed_ack, status_text, None, None]
+        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
+        now = [0.0]
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_commands.time_time", side_effect=lambda: now[0]):
+            assert commands_mgr.start_accel_calibration_level() == (True, "")
+            assert commands_mgr.poll_accel_calibration_level() is None
+            now[0] = 0.6
+            result = commands_mgr.poll_accel_calibration_level()
+
+        assert result == (False, "Command failed: Disarm to allow calibration")
 
     def test_level_accelerometer_calibration_fails_without_connection(self) -> None:
         """
@@ -892,16 +1167,13 @@ class TestFlightControllerCommandsAccelerometerCalibration:
         THEN: The method reports failure with the backend error message
         """
         mock_master, mock_conn_mgr = mock_connected_master
-        mock_ack = MagicMock()
-        mock_ack.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
-        mock_ack.result = mavutil.mavlink.MAV_RESULT_FAILED
-        mock_master.recv_match.return_value = mock_ack
+        mock_master.mav.command_long_send.side_effect = RuntimeError("link down")
         commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
 
         success, error = commands_mgr.start_accel_calibration_level()
 
         assert success is False
-        assert error == "Command failed"
+        assert "link down" in error
 
     def test_full_accelerometer_calibration_reports_send_error(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
         """
@@ -1111,10 +1383,9 @@ class TestFlightControllerCommandsResultCodes:
         mock_ack.result = mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED
 
         mock_master.recv_match.return_value = mock_ack
-
+        mock_params_mgr = Mock()
         mock_conn_mgr = Mock()
         mock_conn_mgr.master = mock_master
-        mock_params_mgr = Mock()
 
         commands_mgr = FlightControllerCommands(params_manager=mock_params_mgr, connection_manager=mock_conn_mgr)
 
@@ -1336,117 +1607,12 @@ class TestFlightControllerCommandsBatteryEdgeCases:
         assert "failed to send command" in error.lower()
 
 
-class TestFlightControllerCommandsAccelCalibrationCancel:
-    """Test cancelling an in-progress accelerometer calibration (hardware-free)."""
+class TestFlightControllerCommandsAccelCalibrationCancel:  # pylint: disable=too-few-public-methods
+    """The backend must not invent an unsupported flight-controller cancel command."""
 
-    def test_user_can_cancel_accel_calibration_when_connected(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
-        """
-        User can cancel an ongoing accelerometer calibration.
-
-        GIVEN: A connected flight controller
-        WHEN: User cancels the accelerometer calibration
-        THEN: A PREFLIGHT_CALIBRATION command with all-zero params is sent
-        AND: The call reports success
-        """
-        # Given: Connected FC
-        mock_master, mock_conn_mgr = mock_connected_master
-        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
-
-        # When: Cancel calibration
-        success, error = commands_mgr.cancel_accel_calibration()
-
-        # Then: Success and the abort command was sent once
-        assert success is True
-        assert error == ""
-        mock_master.mav.command_long_send.assert_called_once()
-        sent_args = mock_master.mav.command_long_send.call_args.args
-        # args layout: target_system, target_component, command, confirmation, param1..param7
-        assert sent_args[2] == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
-        # all 7 calibration params (args[4:]) must be 0 (abort signal)
-        assert all(param == 0 for param in sent_args[4:])
-
-    def test_cancel_accel_calibration_resets_vehicle_position(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
-        """
-        Cancelling calibration clears any cached vehicle-position state.
-
-        GIVEN: A connected FC with a stale cached vehicle position
-        WHEN: User cancels the calibration
-        THEN: The cached position is reset to None
-        """
-        # Given: Connected FC with stale cached position
-        _mock_master, mock_conn_mgr = mock_connected_master
-        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
-        commands_mgr._last_accel_cal_vehicle_pos = 3  # pylint: disable=protected-access
-
-        # When: Cancel calibration
-        success, _error = commands_mgr.cancel_accel_calibration()
-
-        # Then: Cached position cleared
-        assert success is True
-        assert commands_mgr._last_accel_cal_vehicle_pos is None  # pylint: disable=protected-access
-
-    def test_cancel_accel_calibration_fails_without_connection(self) -> None:
-        """
-        Cancelling calibration fails gracefully when no FC is connected.
-
-        GIVEN: No flight controller connection
-        WHEN: User attempts to cancel the calibration
-        THEN: The call reports failure with a descriptive message
-        AND: No command is attempted
-        """
-        # Given: No connection
-        mock_conn_mgr = Mock()
-        mock_conn_mgr.master = None
-        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
-
-        # When: Cancel calibration
-        success, error = commands_mgr.cancel_accel_calibration()
-
-        # Then: Graceful failure
-        assert success is False
-        assert "connection" in error.lower()
-
-    def test_cancel_accel_calibration_handles_send_exception(self, mock_connected_master: tuple[MagicMock, Mock]) -> None:
-        """
-        Cancelling calibration reports failure if the MAVLink send raises.
-
-        GIVEN: A connected FC whose command send raises an exception
-        WHEN: User attempts to cancel the calibration
-        THEN: The call reports failure with the error captured in the message
-        """
-        # Given: Connected FC that raises on send
-        mock_master, mock_conn_mgr = mock_connected_master
-        mock_master.mav.command_long_send.side_effect = RuntimeError("link down")
-        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
-
-        # When: Cancel calibration
-        success, error = commands_mgr.cancel_accel_calibration()
-
-        # Then: Failure surfaced without raising
-        assert success is False
-        assert "link down" in error
-
-    def test_cancel_accel_calibration_preserves_position_on_failure(
-        self, mock_connected_master: tuple[MagicMock, Mock]
-    ) -> None:
-        """
-        Cancelling calibration does NOT clear the cached position when the send fails.
-
-        GIVEN: A connected FC with a cached vehicle position whose send raises
-        WHEN: User attempts to cancel the calibration
-        THEN: The cached position is left unchanged
-        """
-        # Given: Connected FC with stale cached position that raises on send
-        mock_master, mock_conn_mgr = mock_connected_master
-        mock_master.mav.command_long_send.side_effect = RuntimeError("link down")
-        commands_mgr = FlightControllerCommands(params_manager=Mock(), connection_manager=mock_conn_mgr)
-        commands_mgr._last_accel_cal_vehicle_pos = 3  # pylint: disable=protected-access
-
-        # When: Cancel calibration
-        commands_mgr.cancel_accel_calibration()
-
-        # Then: Cached position unchanged because send never succeeded
-        assert commands_mgr._last_accel_cal_vehicle_pos == 3  # pylint: disable=protected-access
+    def test_commands_manager_has_no_fake_mavlink_cancel_method(self) -> None:
+        """Local wizard dismissal is handled by the data model, not a MAVLink command."""
+        assert not hasattr(FlightControllerCommands, "cancel_accel_calibration")
 
 
 class TestFlightControllerCommandsPollScaledImu:

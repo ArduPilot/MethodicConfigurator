@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -30,12 +31,14 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import (
     ParameterValueUpdateStatus,
 )
 from ardupilot_methodic_configurator.data_model_safe_evaluator import ConfigurationStepEvalError
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
 from ardupilot_methodic_configurator.plugins.plugin_constants import (
     PLUGIN_AHRS_ORIENTATION,
     PLUGIN_BATTERY_MONITOR,
     PLUGIN_COMPASS_CALIBRATION,
     PLUGIN_ESC_RPM_SCALE,
     PLUGIN_MOTOR_TEST,
+    PLUGIN_SERVO_OUT,
 )
 
 # pylint: disable=redefined-outer-name, too-many-lines, protected-access
@@ -123,6 +126,71 @@ def parameter_editor(mock_flight_controller, mock_local_filesystem) -> Parameter
     return ParameterEditor("00_default.param", mock_flight_controller, mock_local_filesystem)
 
 
+def test_level_trim_warns_about_stale_values_in_other_step_without_changing_project(
+    parameter_editor: ParameterEditor, mock_local_filesystem: MagicMock, tmp_path: Path
+) -> None:
+    """GIVEN trims in a different step, WHEN calibrated, THEN name the step without writing its file."""
+    other_step = "14_mp_setup_mandatory_hardware.param"
+    original_step = "02_accelerometer.param"
+    original = ParDict({"AHRS_TRIM_X": Par(0.0, "roll trim"), "AHRS_TRIM_Y": Par(0.0, "pitch trim")})
+    original.export_to_param(str(tmp_path / other_step))
+    mock_local_filesystem.file_parameters = {
+        original_step: ParDict({"INS_GYRO_FILTER": Par(42.0)}),
+        other_step: original,
+    }
+
+    parameter_editor.current_file = original_step
+    parameter_editor.current_step_parameters = {}
+    parameter_editor._flight_controller.fc_parameters = {
+        "AHRS_TRIM_X": 0.01,
+        "AHRS_TRIM_Y": -0.02,
+        "INS_GYRO_FILTER": 90.0,
+    }
+    base_window = SimpleNamespace(
+        download_flight_controller_parameters=MagicMock(),
+        parameter_editor=parameter_editor,
+        repopulate_parameter_table=MagicMock(),
+    )
+
+    stale_files = refresh_parameter_editor_after_calibration(
+        base_window,
+        parameter_names_to_copy={"AHRS_TRIM_X", "AHRS_TRIM_Y"},
+        check_other_steps=True,
+    )
+
+    assert stale_files == [other_step]
+    assert ParDict.from_file(str(tmp_path / other_step)) == original
+    assert mock_local_filesystem.file_parameters[other_step] is original
+    assert mock_local_filesystem.file_parameters[original_step]["INS_GYRO_FILTER"].value == 42.0
+    mock_local_filesystem.export_to_param.assert_not_called()
+
+
+def test_level_trim_does_not_warn_when_other_step_matches_fc(parameter_editor, mock_local_filesystem) -> None:
+    """GIVEN a matching trim in another step, WHEN checking, THEN do not warn or change files."""
+    original = ParDict({"AHRS_TRIM_X": Par(0.01, "original trim")})
+    mock_local_filesystem.file_parameters = {"14_mp_setup_mandatory_hardware.param": original}
+    parameter_editor.current_file = "02_accelerometer.param"
+
+    stale_files = parameter_editor.find_other_steps_with_stale_calibration_values({"AHRS_TRIM_X": 0.01})
+
+    assert stale_files == []
+    assert mock_local_filesystem.file_parameters["14_mp_setup_mandatory_hardware.param"] is original
+    mock_local_filesystem.export_to_param.assert_not_called()
+
+
+def test_level_trim_does_not_warn_about_float32_rounding(parameter_editor, mock_local_filesystem) -> None:
+    """MAVLink float32 round-off must not make an equivalent saved trim look stale."""
+    original = ParDict({"AHRS_TRIM_X": Par(0.01, "original trim")})
+    mock_local_filesystem.file_parameters = {"14_mp_setup_mandatory_hardware.param": original}
+    parameter_editor.current_file = "02_accelerometer.param"
+
+    stale_files = parameter_editor.find_other_steps_with_stale_calibration_values({"AHRS_TRIM_X": 0.009999999776482582})
+
+    assert stale_files == []
+    assert mock_local_filesystem.file_parameters["14_mp_setup_mandatory_hardware.param"] is original
+    mock_local_filesystem.export_to_param.assert_not_called()
+
+
 class TestExternalParameterFiles:
     """Validate loading external files without adding them to the AMC project."""
 
@@ -169,7 +237,7 @@ class TestExternalParameterUploadWorkflow:
             return True, ""
 
         parameter_editor._flight_controller.set_param.side_effect = accept_parameter
-        parameter_editor._flight_controller.download_params.side_effect = lambda *_args: (
+        parameter_editor._flight_controller.download_params.side_effect = lambda *_args, **_kwargs: (
             dict(parameter_editor._flight_controller.fc_parameters),
             ParDict({"P1": Par(0.0)}),
         )
@@ -191,6 +259,7 @@ class TestExternalParameterUploadWorkflow:
             None,
             tmp_path / "complete.param",
             tmp_path / "00_default.param",
+            response_timeout=None,
         )
         parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
         parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
@@ -217,7 +286,7 @@ class TestExternalParameterUploadWorkflow:
             return True, ""
 
         parameter_editor._flight_controller.set_param.side_effect = accept_parameter
-        parameter_editor._flight_controller.download_params.side_effect = lambda *_args: (
+        parameter_editor._flight_controller.download_params.side_effect = lambda *_args, **_kwargs: (
             dict(parameter_editor._flight_controller.fc_parameters),
             ParDict({"P1": Par(0.0)}),
         )
@@ -234,8 +303,8 @@ class TestExternalParameterUploadWorkflow:
         # than falling back to the process working directory on MAVFTP.
         assert result is True
         assert parameter_editor._flight_controller.download_params.call_args_list == [
-            call(None, tmp_path / "complete.param", tmp_path / "00_default.param"),
-            call(None, tmp_path / "complete.param", tmp_path / "00_default.param"),
+            call(None, tmp_path / "complete.param", tmp_path / "00_default.param", response_timeout=None),
+            call(None, tmp_path / "complete.param", tmp_path / "00_default.param", response_timeout=None),
         ]
         parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
         parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
@@ -1249,7 +1318,10 @@ class TestFlightControllerDownloadWorkflows:
             _progress_callback,
             _complete_param_path,
             _default_param_path,
+            *,
+            response_timeout: float | None,
         ) -> tuple[dict, dict]:
+            assert response_timeout is None
             parameter_editor._flight_controller.fc_parameters = expected_fc_params.copy()
             return (expected_fc_params, expected_defaults)
 
@@ -1580,7 +1652,7 @@ class TestFileCopyWorkflows:
         User can update in-memory parameters from FC values.
 
         GIVEN: A user has relevant FC parameters to copy that exist in current_step_parameters
-        WHEN: They call _update_parameters_from_fc_values
+        WHEN: They call update_parameters_from_fc_values
         THEN: The in-memory parameter values should be updated and the result counts both updates
         """
         # Arrange (Given): Set up parameters in current_step_parameters
@@ -1602,12 +1674,35 @@ class TestFileCopyWorkflows:
         relevant_params = {"PARAM1": 1.0, "PARAM2": 2.0}
 
         # Act (When): Update parameters from FC values
-        result = parameter_editor._update_parameters_from_fc_values(relevant_params)
+        result = parameter_editor.update_parameters_from_fc_values(relevant_params)
 
         # Assert (Then): In-memory values were updated
         assert result == FcParameterCopyResult(copied=2)
         assert param1.get_new_value() == pytest.approx(1.0)
         assert param2.get_new_value() == pytest.approx(2.0)
+
+    def test_user_can_update_the_current_step_from_fc_values(self, parameter_editor) -> None:
+        """
+        A calibration readback updates the active step's new values from the FC.
+
+        GIVEN: The active step contains parameters with freshly downloaded FC values
+        WHEN: The current step is synchronized with those values
+        THEN: The active parameters contain the downloaded values
+        """
+        param = ArduPilotParameter(
+            name="PARAM1",
+            par_obj=Par(0.0, ""),
+            metadata={},
+            default_par=Par(0.0, ""),
+            fc_value=1.0,
+        )
+        parameter_editor.current_step_parameters = {"PARAM1": param}
+        parameter_editor._flight_controller.fc_parameters = {"PARAM1": 3.5}
+
+        result = parameter_editor.update_parameters_from_fc_values()
+
+        assert result == FcParameterCopyResult(copied=1)
+        assert param.get_new_value() == pytest.approx(3.5)
 
     def test_user_sees_ui_updated_when_copying_fc_values_to_current_file(self, parameter_editor) -> None:
         """
@@ -3812,6 +3907,23 @@ class TestEditorStateInitialization:
         # Assert
         assert result is None
         mock_factory.create_model.assert_not_called()
+
+    def test_servo_output_plugin_model_is_available_without_a_flight_controller(self, parameter_editor) -> None:
+        """Offline servo-output recommendations remain available in a disconnected project."""
+        parameter_editor._flight_controller.master = None
+        parameter_editor._flight_controller.fc_parameters = {}
+        expected_model = MagicMock()
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.plugin_factory") as mock_factory:
+            mock_factory.is_registered.return_value = True
+            mock_factory.requires_flight_controller.return_value = False
+            mock_factory.create_model.return_value = expected_model
+
+            result = parameter_editor.create_plugin_data_model(PLUGIN_SERVO_OUT)
+
+        assert result is expected_model
+        mock_factory.requires_flight_controller.assert_called_once_with(PLUGIN_SERVO_OUT)
+        mock_factory.create_model.assert_called_once()
 
     def test_system_counts_missing_fc_parameter_as_failed_copy(self, parameter_editor) -> None:
         """

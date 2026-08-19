@@ -384,6 +384,35 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 params_failed += 1
         return FcParameterCopyResult(params_copied, params_unchanged, params_failed)
 
+    def update_parameters_from_fc_values(self, relevant_fc_params: dict[str, float] | None = None) -> FcParameterCopyResult:
+        """
+        Copy flight-controller values into the active step's new values.
+
+        If no parameter subset is provided, all current-step parameters available from the
+        flight controller are copied. A subset can be provided by workflows that already
+        filtered the parameters, such as external-tool readback.
+        """
+        if relevant_fc_params is None:
+            relevant_fc_params = {
+                param_name: self.fc_parameters[param_name]
+                for param_name in self.current_step_parameters
+                if param_name in self.fc_parameters
+            }
+        return self._update_parameters_from_fc_values(relevant_fc_params)
+
+    def find_other_steps_with_stale_calibration_values(self, fc_values: dict[str, float]) -> list[str]:
+        """List other project steps whose saved values differ from calibrated FC values; never change them."""
+        stale_files: list[str] = []
+        for filename, parameters in self._local_filesystem.file_parameters.items():
+            if filename == self.current_file:
+                continue
+            if any(
+                name in parameters and not is_within_tolerance(parameters[name].value, value)
+                for name, value in fc_values.items()
+            ):
+                stale_files.append(filename)
+        return stale_files
+
     def handle_copy_fc_values_workflow(
         self,
         selected_file: str,
@@ -417,7 +446,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             user_choice = ask_user_choice(_("Update file with values from FC?"), msg, [_("Close"), _("Yes"), _("No")])
 
             if user_choice is True:  # Yes option
-                copy_result = self._update_parameters_from_fc_values(relevant_fc_params)
+                copy_result = self.update_parameters_from_fc_values(relevant_fc_params)
                 if copy_result.copied:
                     show_info(
                         _("Parameters copied"),
@@ -731,6 +760,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self,
         get_progress_callback: Callable[[], Callable | None] | None = None,
         persist_project_state: bool = True,
+        *,
+        response_timeout: float | None = None,
     ) -> tuple[dict, dict]:
         """
         Download parameters from the flight controller.
@@ -738,6 +769,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         Args:
             get_progress_callback: Optional factory function that creates and returns a progress callback.
             persist_project_state: Whether to update AMC-managed default-value data after the download.
+            response_timeout: Optional maximum response wait in seconds for either download protocol.
 
         Returns:
             tuple: (fc_parameters, param_default_values) downloaded from the flight controller.
@@ -751,6 +783,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             progress_callback,
             Path(self._local_filesystem.vehicle_dir) / "complete.param",
             Path(self._local_filesystem.vehicle_dir) / "00_default.param",
+            response_timeout=response_timeout,
         )
 
         # Note: fc_parameters are already updated internally in the flight controller
@@ -2768,7 +2801,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             plugin_name: The name of the plugin to create a data model for
 
         Returns:
-            The data model instance, or None if the flight controller is disconnected.
+            The data model instance, or None if this plugin requires an FC connection that is unavailable.
 
         Raises:
             ValueError when plugin name is unknown/unsupported
@@ -2778,7 +2811,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             raise ValueError(
                 _("data_model_parameter_editor: Unsupported plugin name: {plugin_name}").format(plugin_name=plugin_name)
             )
-        if not self.is_fc_connected:
+        if plugin_factory.requires_flight_controller(plugin_name) and not self.is_fc_connected:
             return None
         model = plugin_factory.create_model(
             plugin_name,

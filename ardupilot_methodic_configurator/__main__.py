@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import importlib
 import os
 import sys
 import tempfile
@@ -81,37 +82,26 @@ def register_plugins() -> None:
       4. On ``ardupilot_methodic_configurator\configuration_steps_schema.json`` - add the plugin name to
          ``plugin > properties > enum`` in the configuration steps schema.
     """
-    # Imports are intentionally deferred to avoid circular imports: the frontend_tkinter_* modules
-    # import plugin_factory at module level, so top-level imports here would form a cycle.
-    # pylint: disable=import-outside-toplevel, cyclic-import
-    from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import (  # noqa: PLC0415
-        register_accelerometer_calibration_plugin,
+    # Import each plugin lazily and independently. A missing optional dependency or a broken plugin
+    # must not prevent the remaining plugins from being registered.
+    registrations = (
+        ("frontend_tkinter_accelerometer_calibration", "register_accelerometer_calibration_plugin"),
+        ("frontend_tkinter_ahrs_orientation", "register_ahrs_orientation_plugin"),
+        ("frontend_tkinter_battery_monitor", "register_battery_monitor_plugin"),
+        ("frontend_tkinter_compass_calibration", "register_compass_calibration_plugin"),
+        ("frontend_tkinter_esc_rpm_scale", "register_esc_rpm_scale_plugin"),
+        ("frontend_tkinter_level_calibration", "register_level_calibration_plugin"),
+        ("frontend_tkinter_motor_test", "register_motor_test_plugin"),
+        ("frontend_tkinter_rc_calibration", "register_rc_calibration_plugin"),
+        ("frontend_tkinter_servo_out", "register_servo_out_plugin"),
     )
-    from ardupilot_methodic_configurator.plugins.frontend_tkinter_ahrs_orientation import (  # noqa: PLC0415
-        register_ahrs_orientation_plugin,
-    )
-    from ardupilot_methodic_configurator.plugins.frontend_tkinter_battery_monitor import (  # noqa: PLC0415
-        register_battery_monitor_plugin,
-    )
-    from ardupilot_methodic_configurator.plugins.frontend_tkinter_compass_calibration import (  # noqa: PLC0415
-        register_compass_calibration_plugin,
-    )
-    from ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale import (  # noqa: PLC0415
-        register_esc_rpm_scale_plugin,
-    )
-    from ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
-    from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration import (  # noqa: PLC0415
-        register_rc_calibration_plugin,
-    )
-    # pylint: enable=import-outside-toplevel, cyclic-import
-
-    register_accelerometer_calibration_plugin()
-    register_ahrs_orientation_plugin()
-    register_battery_monitor_plugin()
-    register_compass_calibration_plugin()
-    register_esc_rpm_scale_plugin()
-    register_motor_test_plugin()
-    register_rc_calibration_plugin()
+    for module_name, registration_name in registrations:
+        module_path = f"ardupilot_methodic_configurator.plugins.{module_name}"
+        try:
+            plugin_module = importlib.import_module(module_path)
+            getattr(plugin_module, registration_name)()
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_error("Failed to register plugin %s: %s", module_name, error)
 
     # Add more plugin registrations here in the future
 

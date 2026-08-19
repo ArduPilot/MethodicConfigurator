@@ -13,10 +13,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import argparse
+import importlib
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from types import ModuleType
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1897,6 +1899,12 @@ class TestRegisterPluginsInternals:
             patch(
                 "ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale.register_esc_rpm_scale_plugin"
             ) as mock_esc_rpm_scale,
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.register_level_calibration_plugin"
+            ) as mock_level_calibration,
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_servo_out.register_servo_out_plugin"
+            ) as mock_servo_out,
         ):
             register_plugins()
 
@@ -1905,6 +1913,41 @@ class TestRegisterPluginsInternals:
             mock_battery.assert_called_once()
             mock_compass.assert_called_once()
             mock_esc_rpm_scale.assert_called_once()
+            mock_level_calibration.assert_called_once()
+            mock_servo_out.assert_called_once()
+
+    def test_plugin_registration_continues_after_one_plugin_import_fails(self) -> None:
+        """A broken optional plugin does not prevent later plugins from registering."""
+        original_import_module = importlib.import_module
+        attempted_modules: list[str] = []
+
+        def import_module(module_name: str) -> ModuleType:
+            attempted_modules.append(module_name)
+            if module_name.endswith("frontend_tkinter_accelerometer_calibration"):
+                error_message = "optional plugin dependency unavailable"
+                raise ImportError(error_message)
+            return original_import_module(module_name)
+
+        with (
+            patch.object(amc_main.importlib, "import_module", side_effect=import_module),
+            patch.object(amc_main, "logging_error") as mock_log,
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_servo_out.register_servo_out_plugin"
+            ) as mock_servo_registration,
+        ):
+            register_plugins()
+
+        accelerometer_index = next(
+            index
+            for index, name in enumerate(attempted_modules)
+            if name.endswith("frontend_tkinter_accelerometer_calibration")
+        )
+        servo_out_index = max(
+            index for index, name in enumerate(attempted_modules) if name.endswith("frontend_tkinter_servo_out")
+        )
+        assert servo_out_index > accelerometer_index
+        mock_log.assert_called_once()
+        mock_servo_registration.assert_called_once_with()
 
 
 class TestValidatePluginRegistry:

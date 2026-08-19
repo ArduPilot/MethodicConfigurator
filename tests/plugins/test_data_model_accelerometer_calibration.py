@@ -48,6 +48,23 @@ class TestAccelerometerCalibrationDataModelConnection:
         assert model.is_connected() is False
 
 
+class TestAccelerometerCalibrationCancellation:  # pylint: disable=too-few-public-methods
+    """Closing the wizard resets local state without claiming to cancel FC work."""
+
+    def test_cancel_closes_locally_without_sending_an_fc_cancel_command(self, connected_flight_controller) -> None:
+        """The user can leave the wizard even though ArduPilot has no MAVLink cancel command."""
+        model = AccelerometerCalibrationDataModel(connected_flight_controller)
+        model._current_position = mavutil.mavlink.ACCELCAL_VEHICLE_POS_LEFT
+
+        success, message = model.cancel_full_calibration()
+
+        assert success is True
+        assert "wizard was closed" in message.lower()
+        assert "may still be finishing" in message.lower()
+        assert model._current_position is None
+        connected_flight_controller.cancel_accel_calibration.assert_not_called()
+
+
 class TestAccelerometerCalibrationDataModelSimpleCalibration:
     """Test the simple one-shot level calibration workflow."""
 
@@ -115,75 +132,6 @@ class TestAccelerometerCalibrationDataModelSimpleCalibration:
 
         assert success is False
         assert message == "Calibration failed"
-
-
-class TestAccelerometerCalibrationDataModelLevelCalibration:
-    """Test the level-trim calibration workflow."""
-
-    def test_level_calibration_is_refused_when_disconnected(self, disconnected_flight_controller) -> None:
-        """
-        Level calibration cannot run without a connected flight controller.
-
-        GIVEN: A disconnected flight controller
-        WHEN: start_level_calibration is called
-        THEN: It fails with a not-connected message and never touches the backend
-        """
-        model = AccelerometerCalibrationDataModel(disconnected_flight_controller)
-
-        success, message = model.start_level_calibration()
-
-        assert success is False
-        assert message == "Flight controller not connected"
-        disconnected_flight_controller.start_accel_calibration_level.assert_not_called()
-
-    def test_level_calibration_succeeds_when_backend_confirms(self, connected_flight_controller) -> None:
-        """
-        A successful level-trim is reported as success to the user.
-
-        GIVEN: A connected flight controller whose level calibration succeeds
-        WHEN: start_level_calibration is called
-        THEN: The backend is invoked and a success message is returned
-        """
-        connected_flight_controller.start_accel_calibration_level.return_value = (True, "")
-        model = AccelerometerCalibrationDataModel(connected_flight_controller)
-
-        success, message = model.start_level_calibration()
-
-        assert success is True
-        assert message == "Level calibration successful"
-        connected_flight_controller.start_accel_calibration_level.assert_called_once_with()
-
-    def test_level_calibration_surfaces_backend_error_message(self, connected_flight_controller) -> None:
-        """
-        A backend level-trim failure propagates its error message to the user.
-
-        GIVEN: A connected flight controller whose level calibration fails with a message
-        WHEN: start_level_calibration is called
-        THEN: The backend error message is returned
-        """
-        connected_flight_controller.start_accel_calibration_level.return_value = (False, "vehicle not level")
-        model = AccelerometerCalibrationDataModel(connected_flight_controller)
-
-        success, message = model.start_level_calibration()
-
-        assert success is False
-        assert message == "vehicle not level"
-
-    def test_level_calibration_provides_default_error_when_backend_is_silent(self, connected_flight_controller) -> None:
-        """
-        A silent level-trim failure still yields a meaningful failure text.
-
-        GIVEN: A connected flight controller whose level calibration fails without a message
-        WHEN: start_level_calibration is called
-        THEN: A default failure message is returned
-        """
-        connected_flight_controller.start_accel_calibration_level.return_value = (False, "")
-        model = AccelerometerCalibrationDataModel(connected_flight_controller)
-
-        success, message = model.start_level_calibration()
-
-        assert success is False
-        assert message == "Level calibration failed"
 
 
 class TestAccelerometerCalibrationDataModelFullCalibration:

@@ -112,6 +112,8 @@ class FlightControllerParams:
         progress_callback: Callable[[int, int], None] | None = None,
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
+        *,
+        response_timeout: float | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters from a MAVLink connection.
@@ -120,6 +122,7 @@ class FlightControllerParams:
             progress_callback: A callback function to report download progress
             parameter_values_filename: The filename to save the parameter values
             parameter_defaults_filename: The filename to save the parameter defaults
+            response_timeout: Optional maximum response wait in seconds for either download protocol
 
         Returns:
             tuple[dict[str, float], ParDict]: (parameter_values, default_parameters)
@@ -145,7 +148,10 @@ class FlightControllerParams:
             logging_info(_("MAVFTP is supported by the %s flight controller"), self.comport_device)
 
             param_dict, default_param_dict = self._download_params_via_mavftp(
-                progress_reporter, parameter_values_filename, parameter_defaults_filename
+                progress_reporter,
+                parameter_values_filename,
+                parameter_defaults_filename,
+                response_timeout=self.MAVFTP_GETPARAMS_TIMEOUT if response_timeout is None else response_timeout,
             )
             if param_dict:
                 self.fc_parameters = param_dict
@@ -153,7 +159,9 @@ class FlightControllerParams:
             logging_info(_("MAVFTP parameter download failed on the %s, fallback to MAVLink"), self.comport_device)
         else:
             logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport_device)
-        param_dict, download_complete = self._download_params_via_mavlink(progress_reporter)
+        param_dict, download_complete = self._download_params_via_mavlink(
+            progress_reporter, response_timeout=10.0 if response_timeout is None else response_timeout
+        )
         if not download_complete:
             logging_error(_("Incomplete parameter download from the %s flight controller"), self.comport_device)
             return {}, ParDict()
@@ -163,7 +171,7 @@ class FlightControllerParams:
         return param_dict, ParDict()
 
     def _download_params_via_mavlink(
-        self, progress_callback: Callable[[int, int], None] | None = None
+        self, progress_callback: Callable[[int, int], None] | None = None, *, response_timeout: float = 10.0
     ) -> tuple[dict[str, float], bool]:
         """
         Requests all flight controller parameters via MAVLink PARAM_REQUEST_LIST.
@@ -172,6 +180,7 @@ class FlightControllerParams:
 
         Args:
             progress_callback: A callback function to report download progress
+            response_timeout: Maximum wait between parameter responses, in seconds
 
         Returns:
             A tuple containing the parameter dictionary and whether all advertised
@@ -195,7 +204,7 @@ class FlightControllerParams:
         try:
             # Loop to receive all parameters
             while True:
-                m = self.master.recv_match(type="PARAM_VALUE", blocking=True, timeout=10)
+                m = self.master.recv_match(type="PARAM_VALUE", blocking=True, timeout=response_timeout)
                 if m is None:
                     return parameters, False
                 message = m.to_dict()
@@ -218,6 +227,8 @@ class FlightControllerParams:
         progress_callback: Callable[[int, int], None] | None = None,
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
+        *,
+        response_timeout: float = MAVFTP_GETPARAMS_TIMEOUT,
     ) -> tuple[dict[str, float], ParDict]:
         """
         Requests all flight controller parameters via MAVFTP protocol.
@@ -228,6 +239,7 @@ class FlightControllerParams:
             progress_callback: A callback function to report download progress
             parameter_values_filename: The filename to save the parameter values
             parameter_defaults_filename: The filename to save the parameter defaults
+            response_timeout: Maximum wait for the MAVFTP parameter response, in seconds
 
         Returns:
             tuple[dict[str, float], ParDict]: (parameter_values, default_parameters)
@@ -251,7 +263,7 @@ class FlightControllerParams:
                 [complete_param_filename, default_param_filename], progress_callback=get_params_progress_callback
             )
             # On slow links parameter download might take a long time.
-            ret = mavftp.process_ftp_reply("getparams", timeout=self.MAVFTP_GETPARAMS_TIMEOUT)
+            ret = mavftp.process_ftp_reply("getparams", timeout=response_timeout)
             pdict: dict[str, float] = {}
             defdict = ParDict()
 
