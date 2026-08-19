@@ -551,6 +551,17 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         """Create a label indicating if the new value is different from current FC value."""
         return ttk.Label(self.view_port, text=NEW_VALUE_DIFFERENT_STR if param.is_different_from_fc else " ")
 
+    def _open_bitmask_selection_if_editable(
+        self,
+        event: tk.Event,
+        param: ArduPilotParameter,
+        change_reason_widget: ttk.Entry | None,
+        value_is_different_label: ttk.Label,
+    ) -> None:
+        """Open the bitmask editor only when its value widget is editable."""
+        if str(event.widget.cget("state")) != "disabled":
+            self._open_bitmask_selection_window(event, param, change_reason_widget, value_is_different_label)
+
     def _handle_parameter_value_update(
         self, param: ArduPilotParameter, new_value: str, include_range_check: bool = True
     ) -> bool:
@@ -777,19 +788,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             if not value_is_editable:
                 new_value_entry.config(state="disabled", background="light grey")
             if param.is_bitmask:
-                def open_bitmask_selection_if_editable(event: tk.Event) -> None:
-                    """Do not let a disabled external row bypass its Manual gate."""
-                    if str(event.widget.cget("state")) != "disabled":
-                        self._open_bitmask_selection_window(
-                            event,
-                            param,
-                            change_reason_widget,
-                            value_is_different_label,
-                        )
-
                 new_value_entry.bind(
                     "<Double-Button-1>",
-                    open_bitmask_selection_if_editable,
+                    lambda event: self._open_bitmask_selection_if_editable(
+                        event,
+                        param,
+                        change_reason_widget,
+                        value_is_different_label,
+                    ),
                 )
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
             new_value_entry.bind("<Return>", _on_parameter_value_change)
@@ -849,7 +855,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             # Re-bind the FocusIn event to new_value_entry
             event.widget.bind(
                 "<Double-Button-1>",
-                lambda event: self._open_bitmask_selection_window(
+                lambda event: self._open_bitmask_selection_if_editable(
                     event,
                     param,
                     change_reason_widget,
@@ -967,6 +973,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             def on_external_toggle() -> None:
                 if var.get():
                     self.options.manually_editable_parameters.add(param.name)
+                    upload_selection = self.upload_checkbutton_var.get(param.name)
+                    if upload_selection is not None:
+                        upload_selection.set(True)
                 else:
                     self.options.manually_editable_parameters.discard(param.name)
                     param.reset_new_value_to_file_value()
