@@ -94,7 +94,7 @@ def test_analyze_log_passes_context_to_quality_models(monkeypatch: Any) -> None:
         lambda _log_data, _params, _apm_doc: sentinel_hardware_report,
     )
 
-    summary = analyze_log(log_data, context, quality_models=[RecordingQualityModel])
+    summary = analyze_log(log_data, context, quality_and_analysis_models=[(RecordingQualityModel, None)])
 
     assert RecordingQualityModel.seen_log_data is log_data
     assert RecordingQualityModel.seen_context is context
