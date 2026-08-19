@@ -378,6 +378,22 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 params_failed += 1
         return FcParameterCopyResult(params_copied, params_unchanged, params_failed)
 
+    def update_parameters_from_fc_values(self, relevant_fc_params: dict[str, float] | None = None) -> FcParameterCopyResult:
+        """
+        Copy flight-controller values into the active step's new values.
+
+        If no parameter subset is provided, all current-step parameters available from the
+        flight controller are copied. A subset can be provided by workflows that already
+        filtered the parameters, such as external-tool readback.
+        """
+        if relevant_fc_params is None:
+            relevant_fc_params = {
+                param_name: self.fc_parameters[param_name]
+                for param_name in self.current_step_parameters
+                if param_name in self.fc_parameters
+            }
+        return self._update_parameters_from_fc_values(relevant_fc_params)
+
     def handle_copy_fc_values_workflow(
         self,
         selected_file: str,
@@ -411,7 +427,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             user_choice = ask_user_choice(_("Update file with values from FC?"), msg, [_("Close"), _("Yes"), _("No")])
 
             if user_choice is True:  # Yes option
-                copy_result = self._update_parameters_from_fc_values(relevant_fc_params)
+                copy_result = self.update_parameters_from_fc_values(relevant_fc_params)
                 if copy_result.copied:
                     show_info(
                         _("Parameters copied"),
