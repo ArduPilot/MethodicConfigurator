@@ -183,9 +183,11 @@ class BaseLogModel(ConfigurationSteps):
         if self.parameters:
             eval_variables["fc_parameters"] = self.parameters
 
-        self.compute_forced_and_derived_parameters(
+        forced_error, derived_error = self.compute_forced_and_derived_parameters(
             step_filename, step_dict, eval_variables, ignore_fc_derived_param_warnings=True
         )
+        if forced_error or derived_error:
+            return None, ""
 
         for parameter_type in ("forced", "derived"):
             destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters

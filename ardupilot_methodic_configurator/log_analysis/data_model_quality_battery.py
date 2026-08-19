@@ -368,7 +368,7 @@ class BatteryLogAnalysis(BaseLogModel):
                         value=actual,
                         param_name=param_name,
                         suggested_value=expected,
+                        related_step=step_filename,
                     )
                 )
-
         return outcomes

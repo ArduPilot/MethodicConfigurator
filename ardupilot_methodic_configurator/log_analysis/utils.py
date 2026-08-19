@@ -38,12 +38,14 @@ def find_configuration_step_for_message(
 
 
 def find_configuration_step_for_parameter(configuration_steps: dict[str, Any], param_name: str) -> str | None:
-    """Find the configuration step that sets a given FC parameter (derived/forced parameters only)."""
+    """Find the configuration step that sets a given FC parameter (derived/forced/add parameters)."""
     steps = get_configuration_steps_map(configuration_steps)
     matches = [
         step_key
         for step_key, step in steps.items()
-        if param_name in step.get("derived_parameters", {}) or param_name in step.get("forced_parameters", {})
+        if param_name in step.get("derived_parameters", {})
+        or param_name in step.get("forced_parameters", {})
+        or param_name in step.get("add_parameters", {})
     ]
     if len(matches) > 1:
         msg = f"Parameter '{param_name}' is set by multiple steps: {matches}"

@@ -5614,7 +5614,7 @@ class TestLogAnalysisInputsSnapshot:
         parameter_editor._local_filesystem.configuration_steps = steps
 
         inputs = parameter_editor.get_log_analysis_context_inputs()
-        inputs.vehicle_components["Components"]["Battery"]["mutated"] = True
+        inputs.vehicle_components["Battery"]["mutated"] = True
         inputs.configuration_steps["10_step.param"]["mutated"] = True
 
         assert components == {"Battery": {}}
