@@ -97,7 +97,7 @@ The active `ParameterEditor.current_step_parameters` remains untouched throughou
 ### Parameter Editor Entry Point
 
 - **File**: `ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py`
-- **Methods**: `_create_conf_widgets()`, `on_upload_parameter_file_click()`
+- **Methods**: `_create_conf_widgets()`, `on_compare_and_upload_parameter_file_click()`
 - **Responsibilities**:
   - Place the external upload button to the right of the legend.
   - Disable external upload button when no FC is connected.
@@ -199,9 +199,11 @@ The reset method changes only the in-memory candidate value. It performs no file
   - Re-download FC parameters and validate the resulting values.
   - Offer retry/cancel behavior and manage progress windows.
 
-The external model entry point delegates to the common upload implementation with project-state
-persistence disabled. The shared FC safety mechanics remain common, while the normal workflow
-continues to write the current-step marker and reports.
+The external model entry point delegates to the common upload implementation with configuration
+step-state persistence disabled. Every FC download, including one made for an external upload,
+refreshes the `complete.param` and `00_default.param` FC snapshots in the vehicle directory. The
+shared FC safety mechanics remain common, while the normal workflow continues to write the
+current-step marker and reports.
 
 ## State Model
 
