@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import re
+from dataclasses import dataclass, field
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -52,6 +53,27 @@ class CompassCalibrationUpdate(TypedDict, total=False):
     text: str
 
 
+@dataclass(frozen=True, slots=True)
+class _CommandAckFailure:
+    """Terminal command result retained while queued STATUSTEXT is collected."""
+
+    result: int
+    error_message: str
+    grace_deadline: float
+
+
+@dataclass(slots=True)
+class _LevelCalibrationState:
+    """Mutable retry/ACK state for a non-blocking level-calibration exchange."""
+
+    active: bool = False
+    retry_count: int = 0
+    ack_deadline: float | None = None
+    retry_at: float | None = None
+    failure: _CommandAckFailure | None = None
+    status_texts: list[str] = field(default_factory=list)
+
+
 class FlightControllerCommands:  # pylint: disable=too-many-public-methods
     """
     Handles MAVLink command execution and status queries.
@@ -68,6 +90,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
     # Command timeout constants
     COMMAND_ACK_TIMEOUT: ClassVar[float] = 5.0
+    COMMAND_ACK_STATUS_TEXT_GRACE: ClassVar[float] = 0.5
     COMMAND_ACK_TIMEOUT_BATTERY: ClassVar[float] = 0.8
     MOTOR_TEST_COMMAND_DELAY: ClassVar[float] = 0.01
     BATTERY_STATUS_TIMEOUT: ClassVar[float] = 1.5
@@ -75,6 +98,11 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
     BATTERY_STATUS_REQUEST_ATTEMPTS: ClassVar[int] = 3
     BATTERY_STATUS_REQUEST_DELAY: ClassVar[float] = 0.3
     BATTERY_STATUS_ACTIVATION_WAIT: ClassVar[float] = 1.0
+    SIMPLE_ACCEL_CALIBRATION_ACK_TIMEOUT: ClassVar[float] = 30.0
+    LEVEL_CALIBRATION_RETRY_DELAY: ClassVar[float] = 5.0
+    LEVEL_CALIBRATION_LATE_ACK_GUARD: ClassVar[float] = 5.0
+    LEVEL_CALIBRATION_MAX_RETRIES: ClassVar[int] = 9
+    LEVEL_CALIBRATION_ACK_TIMEOUT: ClassVar[float] = 45.0
 
     def __init__(
         self,
@@ -100,13 +128,15 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
         self._last_battery_status: tuple[float, float] | None = None
         self._last_battery_message_time: float = 0.0
         self._last_accel_cal_vehicle_pos: int | None = None
+        self._level_calibration = _LevelCalibrationState()
+        self._abandoned_level_deadline: float | None = None
 
     @property
     def master(self) -> MavlinkConnection | None:
         """Get master connection - delegates to connection manager."""
         return self._connection_manager.master
 
-    def send_command_and_wait_ack(  # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
+    def send_command_and_wait_ack(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         command: int,
         param1: float = 0,
@@ -137,10 +167,38 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                              error_message is empty string on success or contains error description on failure
 
         """
+        success, error_msg, _result_code = self._send_command_and_wait_ack_with_result(
+            command,
+            param1=param1,
+            param2=param2,
+            param3=param3,
+            param4=param4,
+            param5=param5,
+            param6=param6,
+            param7=param7,
+            timeout=timeout,
+        )
+        return success, error_msg
+
+    def _send_command_and_wait_ack_with_result(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-branches,too-many-return-statements,too-many-statements  # noqa: PLR0913, PLR0915, PLR0911
+        self,
+        command: int,
+        param1: float = 0,
+        param2: float = 0,
+        param3: float = 0,
+        param4: float = 0,
+        param5: float = 0,
+        param6: float = 0,
+        param7: float = 0,
+        timeout: float = 5.0,
+        *,
+        capture_status_text: bool = False,
+    ) -> tuple[bool, str, int | None]:
+        """Send a command and also return its MAV_RESULT for behavior-specific decisions."""
         if self.master is None:
             error_msg = _("No flight controller connection available for command")
             logging_error(error_msg)
-            return False, error_msg
+            return False, error_msg, None
 
         try:
             # Send the command
@@ -158,13 +216,36 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
                 param7,
             )
 
-            # Wait for acknowledgment
+            # Wait for acknowledgment, retaining the receive window briefly after a
+            # failed ACK because ArduPilot queues STATUSTEXT separately.
             start_time = time_time()
-            while time_time() - start_time < timeout:
+            status_texts: list[str] = []
+            failure: _CommandAckFailure | None = None
+            while True:
+                now = time_time()
+                if failure is not None and now >= failure.grace_deadline:
+                    error_msg = failure.error_message
+                    if status_texts:
+                        error_msg = f"{error_msg}: {'; '.join(status_texts)}"
+                    logging_error(error_msg)
+                    return False, error_msg, failure.result
+                if failure is None and now - start_time >= timeout:
+                    break
                 msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
-                    type="COMMAND_ACK", blocking=False
+                    type=["COMMAND_ACK", "STATUSTEXT"] if capture_status_text else "COMMAND_ACK", blocking=False
                 )
-                if msg and msg.command == command:
+                if msg is None:
+                    time_sleep(0.1)  # Sleep briefly to reduce CPU usage
+                    continue
+                get_message_type = getattr(msg, "get_type", None)
+                if callable(get_message_type) and get_message_type() == "STATUSTEXT":
+                    status_text = self._extract_status_text(msg)
+                    if status_text:
+                        status_texts.append(status_text)
+                    continue
+                if getattr(msg, "command", None) == command:
+                    if failure is not None:
+                        continue
                     # Map result codes to error messages
                     result_messages = {
                         mavlink.MAV_RESULT_ACCEPTED: ("", True),
@@ -176,9 +257,17 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
                     if msg.result in result_messages:
                         error_msg, success = result_messages[msg.result]
-                        if not success:
+                        if success:
+                            return True, error_msg, int(msg.result)
+                        if not capture_status_text:
                             logging_error(error_msg)
-                        return success, error_msg
+                            return False, error_msg, int(msg.result)
+                        failure = _CommandAckFailure(
+                            result=int(msg.result),
+                            error_message=error_msg,
+                            grace_deadline=time_time() + self.COMMAND_ACK_STATUS_TEXT_GRACE,
+                        )
+                        continue
 
                     if msg.result == mavlink.MAV_RESULT_IN_PROGRESS:
                         # Command is still in progress, continue waiting
@@ -188,20 +277,34 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
 
                     # Unknown result code
                     error_msg = _("Command acknowledgment with unknown result: %(result)d") % {"result": msg.result}
-                    logging_error(error_msg)
-                    return False, error_msg
+                    if not capture_status_text:
+                        logging_error(error_msg)
+                        return False, error_msg, int(msg.result)
+                    failure = _CommandAckFailure(
+                        result=int(msg.result),
+                        error_message=error_msg,
+                        grace_deadline=time_time() + self.COMMAND_ACK_STATUS_TEXT_GRACE,
+                    )
+                    continue
 
                 time_sleep(0.1)  # Sleep briefly to reduce CPU usage
 
             # Timeout occurred
             error_msg = _("Command acknowledgment timeout after %(timeout).1f seconds") % {"timeout": timeout}
             logging_error(error_msg)
-            return False, error_msg
-
+            return False, error_msg, None
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Failed to send command: %(error)s") % {"error": str(e)}
             logging_error(error_msg)
-            return False, error_msg
+            return False, error_msg, None
+
+    @staticmethod
+    def _extract_status_text(msg: object) -> str:
+        """Decode and normalize a MAVLink STATUSTEXT payload."""
+        raw_text = getattr(msg, "text", "")
+        if isinstance(raw_text, bytes):
+            return raw_text.decode("utf-8", errors="replace").rstrip("\x00").strip()
+        return str(raw_text).rstrip("\x00").strip()
 
     def reboot_to_bootloader(self) -> tuple[bool, str]:
         """Request reboot into the bootloader and wait for its command acknowledgment."""
@@ -455,10 +558,11 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_error(error_msg)
             return False, error_msg
 
-        success, error_msg = self.send_command_and_wait_ack(
+        success, error_msg, _result = self._send_command_and_wait_ack_with_result(
             mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
             param5=4.0,  # simple one-shot level calibration
-            timeout=30.0,
+            timeout=self.SIMPLE_ACCEL_CALIBRATION_ACK_TIMEOUT,
+            capture_status_text=True,
         )
         if success:
             logging_info(_("Simple accelerometer calibration completed successfully"))
@@ -481,16 +585,216 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             error_msg = _("No flight controller connection available for level calibration")
             logging_error(error_msg)
             return False, error_msg
+        if self._abandoned_level_deadline is not None:
+            self._drain_abandoned_level_messages()
+            if self._abandoned_level_deadline is not None:
+                return False, _("The previous level calibration is still finishing; try again shortly")
+        if self._level_calibration.active:
+            deadline = self._level_calibration.ack_deadline
+            if deadline is not None and time_time() < deadline:
+                return False, _("A level calibration is already in progress")
+            self._reset_level_calibration_state()
 
-        success, error_msg = self.send_command_and_wait_ack(
-            mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-            param5=2.0,  # level trim / AHRS trim
-            timeout=15.0,
+        self._level_calibration.retry_count = 0
+        self._level_calibration.retry_at = None
+        self._level_calibration.failure = None
+        self._level_calibration.status_texts.clear()
+        return self._send_level_calibration_attempt()
+
+    def abort_level_calibration(self) -> None:
+        """Release an abandoned level calibration exchange when its view closes."""
+        if (
+            self._level_calibration.active
+            and self._level_calibration.failure is None
+            and self._level_calibration.retry_at is None
+        ):
+            self._abandoned_level_deadline = self._level_calibration.ack_deadline
+        self._reset_level_calibration_state()
+        self._drain_abandoned_level_messages()
+
+    def _drain_abandoned_level_messages(self) -> None:
+        """Discard queued old replies and wait for the old operation before starting another."""
+        if self.master is None:
+            self._abandoned_level_deadline = None
+            return
+        try:
+            while True:
+                msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                    type=["COMMAND_ACK", "STATUSTEXT"], blocking=False
+                )
+                if msg is None:
+                    break
+                if (
+                    getattr(msg, "command", None) == mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+                    and msg.result != mavlink.MAV_RESULT_IN_PROGRESS
+                ):
+                    self._abandoned_level_deadline = None
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_debug("Could not drain abandoned level calibration messages: %s", error)
+            self._abandoned_level_deadline = None
+        if self._abandoned_level_deadline is not None and time_time() >= self._abandoned_level_deadline:
+            self._abandoned_level_deadline = None
+
+    def _send_level_calibration_attempt(self) -> tuple[bool, str]:
+        """Send one level-trim attempt without waiting on the Tk event thread."""
+        if self.master is None:
+            return False, _("No flight controller connection available for level calibration")
+        try:
+            # pylint: disable=duplicate-code
+            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
+                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
+                mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2.0,
+                0,
+                0,
+            )
+            # pylint: enable=duplicate-code
+            self._level_calibration.active = True
+            self._level_calibration.ack_deadline = time_time() + self.LEVEL_CALIBRATION_ACK_TIMEOUT
+            return True, ""
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self._reset_level_calibration_state()
+            error_msg = _("Failed to send level calibration command: %(error)s") % {"error": str(e)}
+            logging_error(error_msg)
+            return False, error_msg
+
+    def poll_accel_calibration_level(self) -> tuple[bool, str] | None:
+        """Poll a level-trim attempt once; return None while the FC is still working."""
+        if not self._level_calibration.active:
+            return None
+        if self.master is None:
+            return self._finish_level_calibration(success=False, error_msg=_("No flight controller connection available"))
+        retry_handled, retry_result = self._send_due_level_calibration_retry(time_time())
+        if retry_handled:
+            return retry_result
+        try:
+            result = self._receive_level_calibration_ack()
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            error_msg = _("Failed to receive level calibration acknowledgment: %(error)s") % {"error": str(e)}
+            return self._finish_level_calibration(success=False, error_msg=error_msg)
+        if result is not None:
+            return result
+        return self._resolve_level_calibration_progress(time_time())
+
+    def _send_due_level_calibration_retry(self, now: float) -> tuple[bool, tuple[bool, str] | None]:
+        """Send a cooldown retry when due and report whether retry state handled this poll."""
+        retry_at = self._level_calibration.retry_at
+        if retry_at is None:
+            return False, None
+        if now < retry_at:
+            return True, None
+        self._level_calibration.retry_at = None
+        self._level_calibration.failure = None
+        self._level_calibration.status_texts.clear()
+        success, error_msg = self._send_level_calibration_attempt()
+        if not success:
+            return True, self._finish_level_calibration(success=False, error_msg=error_msg)
+        return True, None
+
+    def _receive_level_calibration_ack(self) -> tuple[bool, str] | None:
+        """Drain queued level-calibration ACK/STATUSTEXT messages once."""
+        if self.master is None:
+            return self._finish_level_calibration(success=False, error_msg=_("No flight controller connection available"))
+        while True:
+            msg = self.master.recv_match(  # pyright: ignore[reportAttributeAccessIssue]
+                type=["COMMAND_ACK", "STATUSTEXT"], blocking=False
+            )
+            if msg is None:
+                return None
+            message_type = getattr(msg, "get_type", None)
+            if callable(message_type) and message_type() == "STATUSTEXT":
+                raw_text = msg.text
+                status_text = (
+                    (raw_text.decode("utf-8", errors="replace") if isinstance(raw_text, bytes) else str(raw_text))
+                    .rstrip("\x00")
+                    .strip()
+                )
+                if status_text:
+                    self._level_calibration.status_texts.append(status_text)
+                continue
+            if getattr(msg, "command", None) != mavlink.MAV_CMD_PREFLIGHT_CALIBRATION:
+                continue
+            result = int(msg.result)
+            if result == mavlink.MAV_RESULT_ACCEPTED:
+                logging_info(_("Level calibration completed successfully"))
+                return self._finish_level_calibration(success=True, error_msg="")
+            if result == mavlink.MAV_RESULT_IN_PROGRESS or self._level_calibration.failure is not None:
+                continue
+            error_msg = self._level_calibration_result_message(result)
+            self._level_calibration.failure = _CommandAckFailure(
+                result=result,
+                error_message=error_msg,
+                grace_deadline=time_time() + self.COMMAND_ACK_STATUS_TEXT_GRACE,
+            )
+
+    @staticmethod
+    def _level_calibration_result_message(result: int) -> str:
+        """Translate a terminal MAV_RESULT returned for level calibration."""
+        result_messages = {
+            mavlink.MAV_RESULT_TEMPORARILY_REJECTED: _("Command temporarily rejected"),
+            mavlink.MAV_RESULT_DENIED: _("Command denied"),
+            mavlink.MAV_RESULT_UNSUPPORTED: _("Command unsupported"),
+            mavlink.MAV_RESULT_FAILED: _("Command failed"),
+        }
+        return result_messages.get(
+            result,
+            _("Command acknowledgment with unknown result: %(result)d") % {"result": result},
         )
-        if success:
-            logging_info(_("Level calibration completed successfully"))
-        else:
+
+    def _resolve_level_calibration_progress(self, now: float) -> tuple[bool, str] | None:
+        """Resolve a failed ACK after its text grace window, or return a timeout."""
+        failure = self._level_calibration.failure
+        if failure is not None:
+            if now < failure.grace_deadline:
+                return None
+            if (
+                failure.result == mavlink.MAV_RESULT_TEMPORARILY_REJECTED
+                and self._level_calibration.retry_count < self.LEVEL_CALIBRATION_MAX_RETRIES
+            ):
+                self._level_calibration.retry_count += 1
+                self._level_calibration.retry_at = now + self.LEVEL_CALIBRATION_RETRY_DELAY
+                logging_info(_("Level calibration was temporarily rejected; retrying after the calibration cooldown."))
+                return None
+            error_msg = self._level_calibration_error_with_status(failure.error_message)
+            return self._finish_level_calibration(success=False, error_msg=error_msg)
+
+        deadline = self._level_calibration.ack_deadline
+        if deadline is not None and now >= deadline:
+            self._abandoned_level_deadline = now + self.LEVEL_CALIBRATION_LATE_ACK_GUARD
+            error_msg = _("Command acknowledgment timeout after %(timeout).1f seconds") % {
+                "timeout": self.LEVEL_CALIBRATION_ACK_TIMEOUT
+            }
+            error_msg = self._level_calibration_error_with_status(error_msg)
+            return self._finish_level_calibration(success=False, error_msg=error_msg)
+        return None
+
+    def _level_calibration_error_with_status(self, error_msg: str) -> str:
+        """Append any STATUSTEXT messages received for the current level attempt."""
+        return (
+            f"{error_msg}: {'; '.join(self._level_calibration.status_texts)}"
+            if self._level_calibration.status_texts
+            else error_msg
+        )
+
+    def _reset_level_calibration_state(self) -> None:
+        """Clear all in-memory state for the current level-trim operation."""
+        self._level_calibration.active = False
+        self._level_calibration.ack_deadline = None
+        self._level_calibration.retry_at = None
+        self._level_calibration.failure = None
+        self._level_calibration.status_texts.clear()
+
+    def _finish_level_calibration(self, *, success: bool, error_msg: str) -> tuple[bool, str]:
+        """Finish and reset the current level-trim operation."""
+        if not success:
             logging_error(_("Level calibration failed: %(error)s"), {"error": error_msg})
+        self._reset_level_calibration_state()
         return success, error_msg
 
     def send_accel_calibration_full_start(self) -> tuple[bool, str]:
@@ -621,46 +925,6 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             return True, ""
         except Exception as e:  # pylint: disable=broad-exception-caught
             error_msg = _("Failed to send position confirmation: %(error)s") % {"error": str(e)}
-            logging_error(error_msg)
-            return False, error_msg
-
-    def cancel_accel_calibration(self) -> tuple[bool, str]:
-        """
-        Cancel any ongoing accelerometer calibration.
-
-        Sends MAV_CMD_PREFLIGHT_CALIBRATION with all parameters set to 0,
-        which signals ArduPilot to abort an in-progress calibration.
-
-        Returns:
-            tuple[bool, str]: (success, error_message)
-
-        """
-        if self.master is None:
-            error_msg = _("No flight controller connection available to cancel accelerometer calibration")
-            logging_error(error_msg)
-            return False, error_msg
-
-        try:
-            self.master.mav.command_long_send(  # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_system,  # pyright: ignore[reportAttributeAccessIssue]
-                self.master.target_component,  # pyright: ignore[reportAttributeAccessIssue]
-                mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-                # pylint: disable=duplicate-code
-                0,  # confirmation
-                0,  # param1: gyro
-                0,  # param2: mag
-                0,  # param3: pressure
-                0,  # param4: radio
-                0,  # param5: accel = 0 → cancel / no calibration
-                0,  # param6: reserved
-                0,  # param7: reserved
-                # pylint: enable=duplicate-code
-            )
-            self._last_accel_cal_vehicle_pos = None
-            logging_info(_("Accelerometer calibration cancel command sent"))
-            return True, ""
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            error_msg = _("Failed to send accelerometer calibration cancel command: %(error)s") % {"error": str(e)}
             logging_error(error_msg)
             return False, error_msg
 

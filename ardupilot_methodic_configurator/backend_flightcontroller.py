@@ -675,10 +675,15 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         progress_callback: Callable[[int, int], None] | None = None,
         parameter_values_filename: Path | None = None,
         parameter_defaults_filename: Path | None = None,
+        *,
+        response_timeout: float | None = None,
     ) -> tuple[dict[str, float], ParDict]:
         """Download all parameters from flight controller - delegates to params manager."""
         params, defaults = self._params_manager.download_params(
-            progress_callback, parameter_values_filename, parameter_defaults_filename
+            progress_callback,
+            parameter_values_filename,
+            parameter_defaults_filename,
+            response_timeout=response_timeout,
         )
         # params_manager updates its fc_parameters internally, which we access via property
         return params, defaults
@@ -742,8 +747,16 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         return self._commands_manager.start_accel_calibration_simple()
 
     def start_accel_calibration_level(self) -> tuple[bool, str]:
-        """Level-trim the accelerometers (sets AHRS_TRIM_*) - delegates to commands manager."""
+        """Start level-trim calibration (sets AHRS_TRIM_*) without waiting for its ACK."""
         return self._commands_manager.start_accel_calibration_level()
+
+    def poll_accel_calibration_level(self) -> tuple[bool, str] | None:
+        """Poll level-trim calibration; return None while the FC is still working."""
+        return self._commands_manager.poll_accel_calibration_level()
+
+    def abort_accel_calibration_level(self) -> None:
+        """Release a level calibration exchange abandoned by the active view."""
+        self._commands_manager.abort_level_calibration()
 
     def send_accel_calibration_full_start(self) -> tuple[bool, str]:
         """Send the start command for interactive 6-position calibration - delegates to commands manager."""
@@ -756,10 +769,6 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
     def confirm_accel_vehicle_pos(self, position: int) -> tuple[bool, str]:
         """Confirm calibration position to the FC - delegates to commands manager."""
         return self._commands_manager.confirm_accel_vehicle_pos(position)
-
-    def cancel_accel_calibration(self) -> tuple[bool, str]:
-        """Cancel any ongoing accelerometer calibration - delegates to commands manager."""
-        return self._commands_manager.cancel_accel_calibration()
 
     def poll_scaled_imu(self) -> tuple[float, float, float] | None:
         """Read the latest SCALED_IMU reading - delegates to commands manager."""

@@ -1408,7 +1408,9 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 msg = _("Failed to update progress bar, {selected_file} does not start with two digits like it should: {_e}")
                 logging_error(msg.format(**locals()))
 
-    def download_flight_controller_parameters(self, redownload: bool = False) -> None:
+    def download_flight_controller_parameters(
+        self, redownload: bool = False, *, response_timeout: float | None = None
+    ) -> tuple[dict, dict]:
         operation_string = _("Re-downloading FC parameters") if redownload else _("Downloading FC parameters")
 
         def get_progress_callback() -> Callable | None:
@@ -1425,16 +1427,18 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return param_download_progress_window.update_progress_bar
 
         # Download parameters using the lazy factory callback
-        self.parameter_editor.download_flight_controller_parameters(get_progress_callback)
+        download_result = self.parameter_editor.download_flight_controller_parameters(
+            get_progress_callback, response_timeout=response_timeout
+        )
 
         # Clean up progress window if it was created
         if self._param_download_progress_window is not None:
             # for the case that '--device test' and there is no real FC connected
             self._param_download_progress_window.destroy()
             self._param_download_progress_window = None
-
         if not redownload:
             self.on_param_file_combobox_change(None, forced=True)  # the initial param read will trigger a table update
+        return download_result
 
     def repopulate_parameter_table(self) -> None:
         if not self.parameter_editor.current_file:

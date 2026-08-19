@@ -137,6 +137,16 @@ class TestPluginFactory:
         assert result == "created_model"
         model_creator.assert_called_once_with(context)
 
+    def test_plugins_require_a_flight_controller_by_default_but_can_opt_out(self) -> None:
+        """Existing hardware-backed plugins stay gated while offline plugins can opt out."""
+        factory = PluginFactory()
+        factory.register("hardware_plugin", MagicMock())
+        factory.register("offline_plugin", MagicMock(), requires_flight_controller=False)
+
+        assert factory.requires_flight_controller("hardware_plugin") is True
+        assert factory.requires_flight_controller("offline_plugin") is False
+        assert factory.requires_flight_controller("unknown_plugin") is True
+
     def test_unregistered_model_factory_returns_none(self) -> None:
         factory = PluginFactory()
 

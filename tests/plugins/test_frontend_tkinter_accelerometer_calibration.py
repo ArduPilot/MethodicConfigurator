@@ -23,6 +23,7 @@ from pymavlink import mavutil
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
 from ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration import (
     AccelerometerCalibrationView,
+    _accel_calibration_names,
     _create_accelerometer_calibration_view,
 )
 
@@ -32,6 +33,152 @@ if TYPE_CHECKING:
 # pylint: disable=protected-access,redefined-outer-name
 
 _FRONTEND = "ardupilot_methodic_configurator.plugins.frontend_tkinter_accelerometer_calibration"
+
+
+def test_simple_calibration_copy_set_includes_trim_and_all_imu_naming_schemes() -> None:
+    """Simple calibration writes trims and both legacy and newer IMU parameter names."""
+    parameters = {
+        "INS_ACCOFFS_X",
+        "INS_ACC2SCAL_Y",
+        "INS4_ACCOFFS_X",
+        "INS5_ACCSCAL_Z",
+        "AHRS_TRIM_X",
+        "AHRS_TRIM_Y",
+        "INS_ACCEL_FILTER",
+        "AHRS_TRIM_LIMIT",
+    }
+
+    assert _accel_calibration_names(parameters) == {
+        "INS_ACCOFFS_X",
+        "INS_ACC2SCAL_Y",
+        "INS4_ACCOFFS_X",
+        "INS5_ACCSCAL_Z",
+        "AHRS_TRIM_X",
+        "AHRS_TRIM_Y",
+    }
+
+
+def test_failed_simple_ack_reads_back_accel_without_a_display(mocker) -> None:
+    """A lost simple-calibration ACK must still refresh changed values."""
+    view = object.__new__(AccelerometerCalibrationView)
+    view.model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    view.model.start_simple_calibration.return_value = (False, "Acknowledgment timed out")
+    view.model.is_connected.return_value = True
+    editor = SimpleNamespace(
+        fc_parameters={"INS_ACCOFFS_X": 0.1},
+        current_step_parameters={"INS_ACCOFFS_X": MagicMock()},
+        update_parameters_from_fc_values=MagicMock(),
+        find_other_steps_with_stale_calibration_values=MagicMock(return_value=["other.param"]),
+    )
+    view.base_window = SimpleNamespace(parameter_editor=editor, repopulate_parameter_table=MagicMock())
+
+    def download(*, redownload: bool, response_timeout: float) -> None:
+        assert redownload
+        assert response_timeout == 2.0
+        editor.fc_parameters["INS_ACCOFFS_X"] = 0.2
+
+    view.base_window.download_flight_controller_parameters = MagicMock(side_effect=download)
+    showerror = mocker.patch(f"{_FRONTEND}.showerror")
+
+    view._on_simple_calibration()
+
+    editor.update_parameters_from_fc_values.assert_called_once_with({"INS_ACCOFFS_X": 0.2})
+    assert "INS_ACCOFFS_X" in showerror.call_args.args[1]
+    assert "other.param" in showerror.call_args.args[1]
+
+
+def test_rejected_simple_calibration_preserves_staged_values_without_a_display(mocker) -> None:
+    """A rejected command preserves staged offsets and filter frequency."""
+    view = object.__new__(AccelerometerCalibrationView)
+    view.model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    view.model.start_simple_calibration.return_value = (False, "Command failed")
+    view.model.is_connected.return_value = True
+    editor = SimpleNamespace(
+        fc_parameters={"INS_ACCOFFS_X": 0.1, "INS_ACCEL_FILTER": 20.0},
+        current_step_parameters={"INS_ACCOFFS_X": MagicMock(), "INS_ACCEL_FILTER": MagicMock()},
+        update_parameters_from_fc_values=MagicMock(),
+    )
+    view.base_window = SimpleNamespace(
+        parameter_editor=editor,
+        download_flight_controller_parameters=MagicMock(),
+        repopulate_parameter_table=MagicMock(),
+    )
+    mocker.patch(f"{_FRONTEND}.showerror")
+
+    view._on_simple_calibration()
+
+    editor.update_parameters_from_fc_values.assert_not_called()
+
+
+def test_successful_simple_calibration_stages_only_offsets_without_a_display(mocker) -> None:
+    """A successful command stages offset results and reports stale steps."""
+    view = object.__new__(AccelerometerCalibrationView)
+    view.model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    view.model.start_simple_calibration.return_value = (True, "Calibration successful")
+    editor = SimpleNamespace(
+        fc_parameters={"INS_ACCOFFS_X": 0.2, "INS_ACCEL_FILTER": 20.0},
+        current_step_parameters={"INS_ACCOFFS_X": MagicMock(), "INS_ACCEL_FILTER": MagicMock()},
+        update_parameters_from_fc_values=MagicMock(),
+        find_other_steps_with_stale_calibration_values=MagicMock(return_value=["other.param"]),
+    )
+    view.base_window = SimpleNamespace(
+        parameter_editor=editor,
+        download_flight_controller_parameters=MagicMock(),
+        repopulate_parameter_table=MagicMock(),
+    )
+    showinfo = mocker.patch(f"{_FRONTEND}.showinfo")
+
+    view._on_simple_calibration()
+
+    editor.update_parameters_from_fc_values.assert_called_once_with({"INS_ACCOFFS_X": 0.2})
+    assert "other.param" in showinfo.call_args.args[1]
+
+
+def test_unavailable_simple_calibration_readback_warns_without_a_display(mocker) -> None:
+    """A failed parameter download must be visible alongside an uncertain ACK."""
+    view = object.__new__(AccelerometerCalibrationView)
+    view.model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    view.model.start_simple_calibration.return_value = (False, "Acknowledgment timed out")
+    view.model.is_connected.return_value = True
+    editor = SimpleNamespace(
+        fc_parameters={"INS_ACCOFFS_X": 0.1},
+        current_step_parameters={"INS_ACCOFFS_X": MagicMock()},
+        update_parameters_from_fc_values=MagicMock(),
+    )
+    view.base_window = SimpleNamespace(
+        parameter_editor=editor,
+        download_flight_controller_parameters=MagicMock(return_value=({}, {})),
+        repopulate_parameter_table=MagicMock(),
+    )
+    showerror = mocker.patch(f"{_FRONTEND}.showerror")
+
+    view._on_simple_calibration()
+
+    assert "could not confirm" in showerror.call_args.args[1].lower()
+    editor.update_parameters_from_fc_values.assert_not_called()
+
+
+def test_success_without_parameter_download_keeps_staged_values_without_a_display(mocker) -> None:
+    """An accepted command alone does not prove the cached values are new."""
+    view = object.__new__(AccelerometerCalibrationView)
+    view.model = MagicMock(spec=AccelerometerCalibrationDataModel)
+    view.model.start_simple_calibration.return_value = (True, "Calibration successful")
+    editor = SimpleNamespace(
+        fc_parameters={"INS_ACCOFFS_X": 0.1},
+        current_step_parameters={"INS_ACCOFFS_X": MagicMock()},
+        update_parameters_from_fc_values=MagicMock(),
+    )
+    view.base_window = SimpleNamespace(
+        parameter_editor=editor,
+        download_flight_controller_parameters=MagicMock(return_value=({}, {})),
+        repopulate_parameter_table=MagicMock(),
+    )
+    showinfo = mocker.patch(f"{_FRONTEND}.showinfo")
+
+    view._on_simple_calibration()
+
+    editor.update_parameters_from_fc_values.assert_not_called()
+    assert "could not download" in showinfo.call_args.args[1].lower()
 
 
 @pytest.fixture
@@ -45,19 +192,25 @@ def view_with_model(tk_root, mocker) -> Generator[SimpleNamespace, None, None]:
     """
     model = MagicMock(spec=AccelerometerCalibrationDataModel)
     parent = ttk.Frame(tk_root)
-    view = AccelerometerCalibrationView(parent, model, SimpleNamespace(root=tk_root))
+    base_window = SimpleNamespace(
+        root=tk_root,
+        download_flight_controller_parameters=MagicMock(),
+        parameter_editor=SimpleNamespace(fc_parameters={}, update_parameters_from_fc_values=MagicMock()),
+        repopulate_parameter_table=MagicMock(),
+    )
+    view = AccelerometerCalibrationView(parent, model, base_window)
     mocker.patch.object(view, "after", return_value="after-id")
     mocker.patch.object(view, "after_cancel")
     showinfo = mocker.patch(f"{_FRONTEND}.showinfo")
     showerror = mocker.patch(f"{_FRONTEND}.showerror")
     try:
-        yield SimpleNamespace(view=view, model=model, showinfo=showinfo, showerror=showerror)
+        yield SimpleNamespace(view=view, model=model, base_window=base_window, showinfo=showinfo, showerror=showerror)
     finally:
         parent.destroy()
 
 
-class TestSimpleAndLevelCalibrationButtons:
-    """Test the always-visible simple and level calibration buttons."""
+class TestSimpleCalibrationButton:
+    """Test the always-visible simple calibration button."""
 
     def test_simple_calibration_success_shows_result_dialog(self, view_with_model) -> None:
         """
@@ -74,6 +227,9 @@ class TestSimpleAndLevelCalibrationButtons:
         view_with_model.showinfo.assert_called_once()
         assert view_with_model.showinfo.call_args.args[1] == "Calibration successful"
         view_with_model.showerror.assert_not_called()
+        view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
+        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_not_called()
+        view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_simple_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
         """
@@ -84,6 +240,7 @@ class TestSimpleAndLevelCalibrationButtons:
         THEN: An error dialog is shown and no result dialog is raised
         """
         view_with_model.model.start_simple_calibration.return_value = (False, "not connected")
+        view_with_model.model.is_connected.return_value = False
 
         view_with_model.view._on_simple_calibration()
 
@@ -91,37 +248,86 @@ class TestSimpleAndLevelCalibrationButtons:
         assert view_with_model.showerror.call_args.args[1] == "not connected"
         view_with_model.showinfo.assert_not_called()
 
-    def test_level_calibration_success_shows_result_dialog(self, view_with_model) -> None:
-        """
-        A successful level calibration informs the user with a result dialog.
+    def test_failed_simple_calibration_reads_back_saved_accel_values(self, view_with_model) -> None:
+        """A missing ACK can follow a saved calibration, so read back connected vehicles."""
+        fixture = view_with_model
+        fixture.model.start_simple_calibration.return_value = (False, "Acknowledgment timed out")
+        fixture.model.is_connected.return_value = True
+        editor = fixture.base_window.parameter_editor
+        editor.fc_parameters = {"INS_ACCOFFS_X": 0.1}
+        editor.current_step_parameters = {"INS_ACCOFFS_X": MagicMock()}
 
-        GIVEN: The data model reports a successful level calibration
-        WHEN: The user clicks Level Calibration
-        THEN: An informational result dialog is shown and no error is raised
-        """
-        view_with_model.model.start_level_calibration.return_value = (True, "Level calibration successful")
+        def download(*, redownload: bool, response_timeout: float) -> None:
+            assert redownload
+            assert response_timeout == 2.0
+            editor.fc_parameters["INS_ACCOFFS_X"] = 0.2
 
-        view_with_model.view._on_level_calibration()
+        fixture.base_window.download_flight_controller_parameters.side_effect = download
+        fixture.view._on_simple_calibration()
 
-        view_with_model.showinfo.assert_called_once()
-        assert view_with_model.showinfo.call_args.args[1] == "Level calibration successful"
-        view_with_model.showerror.assert_not_called()
+        editor.update_parameters_from_fc_values.assert_called_once_with({"INS_ACCOFFS_X": 0.2})
+        assert "INS_ACCOFFS_X" in fixture.showerror.call_args.args[1]
 
-    def test_level_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
-        """
-        A failed level calibration warns the user with an error dialog.
+    def test_rejected_calibration_preserves_staged_edits(self, view_with_model) -> None:
+        """An unchanged calibration result must not replace any staged value."""
+        fixture = view_with_model
+        fixture.model.start_simple_calibration.return_value = (False, "Command failed")
+        fixture.model.is_connected.return_value = True
+        editor = fixture.base_window.parameter_editor
+        editor.fc_parameters = {"INS_ACCOFFS_X": 0.1, "INS_ACCEL_FILTER": 20.0}
+        editor.current_step_parameters = {name: MagicMock() for name in editor.fc_parameters}
 
-        GIVEN: The data model reports a failed level calibration
-        WHEN: The user clicks Level Calibration
-        THEN: An error dialog is shown and no result dialog is raised
-        """
-        view_with_model.model.start_level_calibration.return_value = (False, "vehicle not level")
+        fixture.view._on_simple_calibration()
 
-        view_with_model.view._on_level_calibration()
+        editor.update_parameters_from_fc_values.assert_not_called()
+        assert fixture.showerror.call_args.args[1] == "Command failed"
 
-        view_with_model.showerror.assert_called_once()
-        assert view_with_model.showerror.call_args.args[1] == "vehicle not level"
-        view_with_model.showinfo.assert_not_called()
+    def test_success_copies_calibration_values_and_reports_stale_steps(self, view_with_model) -> None:
+        """Successful calibration stages actual offsets and identifies stale steps."""
+        fixture = view_with_model
+        fixture.model.start_simple_calibration.return_value = (True, "Calibration successful")
+        editor = fixture.base_window.parameter_editor
+        editor.fc_parameters = {"INS_ACCOFFS_X": 0.2, "INS_ACCEL_FILTER": 20.0}
+        editor.current_step_parameters = {name: MagicMock() for name in editor.fc_parameters}
+        editor.find_other_steps_with_stale_calibration_values = MagicMock(return_value=["other.param"])
+
+        fixture.view._on_simple_calibration()
+
+        editor.update_parameters_from_fc_values.assert_called_once_with({"INS_ACCOFFS_X": 0.2})
+        editor.find_other_steps_with_stale_calibration_values.assert_called_once_with({"INS_ACCOFFS_X": 0.2})
+        assert "other.param" in fixture.showinfo.call_args.args[1]
+
+    def test_failed_ack_reports_other_stale_steps(self, view_with_model) -> None:
+        """A saved offset after a lost ACK identifies other steps that need review."""
+        fixture = view_with_model
+        fixture.model.start_simple_calibration.return_value = (False, "Acknowledgment timed out")
+        fixture.model.is_connected.return_value = True
+        editor = fixture.base_window.parameter_editor
+        editor.fc_parameters = {"INS_ACCOFFS_X": 0.1}
+        editor.current_step_parameters = {"INS_ACCOFFS_X": MagicMock()}
+        editor.find_other_steps_with_stale_calibration_values = MagicMock(return_value=["other.param"])
+
+        def download(*, redownload: bool, response_timeout: float) -> None:
+            assert redownload
+            assert response_timeout == 2.0
+            editor.fc_parameters["INS_ACCOFFS_X"] = 0.2
+
+        fixture.base_window.download_flight_controller_parameters.side_effect = download
+
+        fixture.view._on_simple_calibration()
+
+        assert "other.param" in fixture.showerror.call_args.args[1]
+
+    def test_failed_ack_warns_when_readback_is_unavailable(self, view_with_model) -> None:
+        """An empty FC parameter set cannot establish whether the calibration saved."""
+        fixture = view_with_model
+        fixture.model.start_simple_calibration.return_value = (False, "Acknowledgment timed out")
+        fixture.model.is_connected.return_value = True
+        fixture.base_window.parameter_editor.fc_parameters = {}
+
+        fixture.view._on_simple_calibration()
+
+        assert "could not confirm" in fixture.showerror.call_args.args[1].lower()
 
 
 class TestFullCalibrationStart:
@@ -142,7 +348,6 @@ class TestFullCalibrationStart:
 
         assert view._wizard_frame.winfo_manager() == "pack"
         assert str(view._simple_btn.cget("state")) == "disabled"
-        assert str(view._level_btn.cget("state")) == "disabled"
         assert str(view._full_btn.cget("state")) == "disabled"
         assert view._poll_job == "after-id"
         view_with_model.showerror.assert_not_called()
@@ -221,6 +426,9 @@ class TestFullCalibrationPolling:
 
         assert view._wizard_frame.winfo_manager() == ""
         view_with_model.showinfo.assert_called_once()
+        view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
+        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_not_called()
+        view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_poll_tick_ends_calibration_with_failure_on_failure_sentinel(self, view_with_model) -> None:
         """
@@ -292,6 +500,10 @@ class TestFullCalibrationContinueAndCancel:
         """
         view = view_with_model.view
         view_with_model.model.start_full_calibration.return_value = (True, "started")
+        view_with_model.model.cancel_full_calibration.return_value = (
+            True,
+            "The calibration wizard was closed. The flight controller may still be finishing calibration.",
+        )
         view._on_start_full_calibration()
 
         view._on_cancel_full_calibration()
@@ -299,8 +511,25 @@ class TestFullCalibrationContinueAndCancel:
         assert view._poll_job is None
         assert view._wizard_frame.winfo_manager() == ""
         assert str(view._simple_btn.cget("state")) == "normal"
-        view_with_model.showerror.assert_called_once()
-        assert view_with_model.showerror.call_args.args[1] == "Full accelerometer calibration was cancelled."
+        view_with_model.showinfo.assert_called_once_with(
+            "Calibration Wizard Closed",
+            "The calibration wizard was closed. The flight controller may still be finishing calibration.",
+        )
+        view_with_model.showerror.assert_not_called()
+
+    def test_failed_cancel_still_closes_wizard_and_shows_fc_error(self, view_with_model) -> None:
+        """A cancellation error is reported only after the local wizard has been made escapable."""
+        view = view_with_model.view
+        view_with_model.model.start_full_calibration.return_value = (True, "started")
+        view_with_model.model.cancel_full_calibration.return_value = (False, "Command denied")
+        view._on_start_full_calibration()
+
+        view._on_cancel_full_calibration()
+
+        assert view._wizard_frame.winfo_manager() == ""
+        assert view._poll_job is None
+        assert str(view._simple_btn.cget("state")) == "normal"
+        view_with_model.showerror.assert_called_once_with("Calibration Failed", "Command denied")
 
 
 class TestPluginLifecycle:
@@ -333,7 +562,6 @@ class TestPluginLifecycle:
             assert view._poll_job == "after-id"
             assert view._wizard_frame.winfo_manager() == "pack"
             assert str(view._simple_btn.cget("state")) == "disabled"
-            assert str(view._level_btn.cget("state")) == "disabled"
             assert str(view._full_btn.cget("state")) == "disabled"
 
             view.on_deactivate()
@@ -343,7 +571,6 @@ class TestPluginLifecycle:
             assert view._imu_poll_job is None
             assert view._wizard_frame.winfo_manager() == ""
             assert str(view._simple_btn.cget("state")) == "normal"
-            assert str(view._level_btn.cget("state")) == "normal"
             assert str(view._full_btn.cget("state")) == "normal"
         finally:
             parent.destroy()

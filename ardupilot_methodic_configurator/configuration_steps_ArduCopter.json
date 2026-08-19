@@ -172,7 +172,7 @@
             "component": "Frame",
             "plugin": {
                 "name": "ahrs_orientation",
-                "placement": "left"
+                "placement": "top"
             },
             "auto_changed_by": "",
             "derived_parameters": {

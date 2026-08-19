@@ -148,7 +148,10 @@ def parameter_editor() -> MagicMock:
     manager.handle_copy_fc_values_workflow = MagicMock(return_value="close")
     manager.open_documentation_in_browser = MagicMock()
 
-    def _download_fc_parameters(get_progress_callback: Callable | None = None) -> None:
+    def _download_fc_parameters(
+        get_progress_callback: Callable | None = None, *, response_timeout: float | None = None
+    ) -> None:
+        assert response_timeout is None
         if get_progress_callback is not None:
             callback = get_progress_callback()
             if callback is not None:
@@ -1955,7 +1958,7 @@ class TestProgressIndicators:
 
         editor.download_flight_controller_parameters(redownload=False)
 
-        parameter_editor.download_flight_controller_parameters.assert_called_once()
+        parameter_editor.download_flight_controller_parameters.assert_called_once_with(ANY, response_timeout=None)
         progress_instance.destroy.assert_called_once()
         editor.on_param_file_combobox_change.assert_called_once_with(None, forced=True)
 
@@ -1976,7 +1979,7 @@ class TestProgressIndicators:
 
         editor.download_flight_controller_parameters(redownload=True)
 
-        parameter_editor.download_flight_controller_parameters.assert_called_once()
+        parameter_editor.download_flight_controller_parameters.assert_called_once_with(ANY, response_timeout=None)
         editor.on_param_file_combobox_change.assert_not_called()
         progress_instance.destroy.assert_called_once()
 

@@ -57,12 +57,15 @@ class PluginFactory:
         """Initialize the plugin factory with an empty registry."""
         self._creators: dict[str, PluginCreator] = {}
         self._model_creators: dict[str, PluginModelCreator] = {}
+        self._flight_controller_requirements: dict[str, bool] = {}
 
     def register(
         self,
         plugin_name: str,
         creator_func: PluginCreator,
         model_creator_func: PluginModelCreator | None = None,
+        *,
+        requires_flight_controller: bool = True,
     ) -> None:
         """
         Register a plugin creator function.
@@ -72,6 +75,7 @@ class PluginFactory:
             creator_func: Function that creates a plugin instance.
                          Should accept (parent, model, base_window) and return PluginView
             model_creator_func: Function that creates the plugin data model from shared dependencies
+            requires_flight_controller: Whether model creation needs an active flight-controller connection
 
         """
         if plugin_name in self._creators:
@@ -81,6 +85,11 @@ class PluginFactory:
             self._model_creators[plugin_name] = model_creator_func
         else:
             self._model_creators.pop(plugin_name, None)
+        self._flight_controller_requirements[plugin_name] = requires_flight_controller
+
+    def requires_flight_controller(self, plugin_name: str) -> bool:
+        """Return whether creating this plugin requires an active FC connection."""
+        return self._flight_controller_requirements.get(plugin_name, True)
 
     def create(
         self,
