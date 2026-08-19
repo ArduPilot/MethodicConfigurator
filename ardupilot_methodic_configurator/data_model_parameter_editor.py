@@ -691,7 +691,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         Args:
             get_progress_callback: Optional factory function that creates and returns a progress callback.
-            persist_project_state: Whether downloaded parameter and default files are written to the AMC project.
+            persist_project_state: Whether to update AMC-managed default-value data after the download.
 
         Returns:
             tuple: (fc_parameters, param_default_values) downloaded from the flight controller.
@@ -703,8 +703,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         # Download all parameters from the flight controller
         fc_parameters, param_default_values = self._flight_controller.download_params(
             progress_callback,
-            Path(self._local_filesystem.vehicle_dir) / "complete.param" if persist_project_state else None,
-            Path(self._local_filesystem.vehicle_dir) / "00_default.param" if persist_project_state else None,
+            Path(self._local_filesystem.vehicle_dir) / "complete.param",
+            Path(self._local_filesystem.vehicle_dir) / "00_default.param",
         )
 
         # Note: fc_parameters are already updated internally in the flight controller

@@ -640,10 +640,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             widget.configure(state="readonly" if editable else "disabled")
             return
 
-        state = "normal" if editable else "disabled"
         background = "white" if editable else "light grey"
-        widget.configure(state=state, background=background)
+        # A disabled ttk.Entry ignores delete()/insert().  Synchronize its
+        # displayed value while it is writable, then apply its final state.
+        widget.configure(state="normal", background=background)
         self._update_new_value_entry_text(widget, param)
+        widget.configure(state="normal" if editable else "disabled")
 
     def _create_new_value_entry(  # pylint: disable=too-many-statements # noqa: PLR0915
         self,
@@ -775,14 +777,19 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             if not value_is_editable:
                 new_value_entry.config(state="disabled", background="light grey")
             if param.is_bitmask:
+                def open_bitmask_selection_if_editable(event: tk.Event) -> None:
+                    """Do not let a disabled external row bypass its Manual gate."""
+                    if str(event.widget.cget("state")) != "disabled":
+                        self._open_bitmask_selection_window(
+                            event,
+                            param,
+                            change_reason_widget,
+                            value_is_different_label,
+                        )
+
                 new_value_entry.bind(
                     "<Double-Button-1>",
-                    lambda event: self._open_bitmask_selection_window(
-                        event,
-                        param,
-                        change_reason_widget,
-                        value_is_different_label,
-                    ),
+                    open_bitmask_selection_if_editable,
                 )
             new_value_entry.bind("<FocusOut>", _on_parameter_value_change)
             new_value_entry.bind("<Return>", _on_parameter_value_change)

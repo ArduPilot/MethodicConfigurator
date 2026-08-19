@@ -185,7 +185,11 @@ class TestExternalParameterUploadWorkflow:
 
         assert result is True
         assert parameter_editor._flight_controller.fc_parameters["P1"] == 2.0
-        parameter_editor._flight_controller.download_params.assert_called_once_with(None, None, None)
+        parameter_editor._flight_controller.download_params.assert_called_once_with(
+            None,
+            tmp_path / "complete.param",
+            tmp_path / "00_default.param",
+        )
         parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
         parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
         update_report.assert_not_called()
@@ -193,12 +197,12 @@ class TestExternalParameterUploadWorkflow:
 
     def test_external_upload_requiring_reset_does_not_persist_redownloads(self, parameter_editor, tmp_path) -> None:
         """
-        Keep AMC files unchanged when an external parameter upload requires a reboot.
+        Refresh AMC parameter snapshots when an external parameter upload requires a reboot.
 
         GIVEN: An external parameter whose upload requires a flight-controller reset
         WHEN: The upload re-downloads parameters after reconnecting and for validation
-        THEN: Both downloads run without AMC project filenames
-        AND: Returned defaults are not written to the AMC project.
+        THEN: Both downloads refresh the AMC parameter snapshot files
+        AND: Returned defaults do not update AMC-managed default-value data.
         """
         # Arrange: The reboot-required parameter changes the simulated FC state.
         parameter_editor._local_filesystem.vehicle_dir = tmp_path
@@ -224,11 +228,12 @@ class TestExternalParameterUploadWorkflow:
             show_error=MagicMock(),
         )
 
-        # Assert: Neither the post-reset nor validation download can write AMC-managed files.
+        # Assert: Both downloads update the intended AMC snapshot files, rather
+        # than falling back to the process working directory on MAVFTP.
         assert result is True
         assert parameter_editor._flight_controller.download_params.call_args_list == [
-            call(None, None, None),
-            call(None, None, None),
+            call(None, tmp_path / "complete.param", tmp_path / "00_default.param"),
+            call(None, tmp_path / "complete.param", tmp_path / "00_default.param"),
         ]
         parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
         parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()

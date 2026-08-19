@@ -71,7 +71,6 @@ class ParameterFileUploadWindow(BaseWindow):
             parameters=self.parameters,
         )
         self.table.pack(side=tk.TOP, fill="both", expand=True, padx=4, pady=4)
-        self.table.repopulate_table(show_only_differences=False, gui_complexity=parent.gui_complexity)
 
         controls = ttk.Frame(self.main_frame)
         controls.pack(side=tk.BOTTOM, fill="x", padx=8, pady=8)
@@ -108,6 +107,13 @@ class ParameterFileUploadWindow(BaseWindow):
         self.center_window(self.root, parent.root)
         if sys_platform != "darwin":
             self.root.grab_set()
+        # center_window() calls update(), which drains idle callbacks.  Start
+        # batched table rendering only afterwards so the dialog is displayed
+        # before later batches are rendered.
+        def render_table() -> None:
+            self.table.repopulate_table(show_only_differences=False, gui_complexity=parent.gui_complexity)
+
+        self.root.after_idle(render_table)
 
     def repopulate_table(self) -> None:
         """Refresh the table using the current changed-only filter."""
@@ -136,8 +142,11 @@ class ParameterFileUploadWindow(BaseWindow):
         if self.parent.ui.ask_yesno(
             _("Reset all FC parameters"),
             _("Are you sure you want to reset all FC parameters to their default values?"),
-        ):
-            self.parent.reset_all_parameters_to_default()
+        ) and self.parent.reset_all_parameters_to_default():
+            # The reset clears the FC parameter cache.  Closing the modal
+            # prevents stale comparisons and forces a fresh external-file
+            # preview after reconnecting.
+            self.close()
 
     def close(self) -> None:
         """Close the modal window."""

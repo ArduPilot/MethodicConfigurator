@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # pylint: disable=protected-access
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
@@ -123,7 +123,28 @@ def test_manual_checkbox_restores_numeric_entry_background_when_enabled() -> Non
     with patch.object(table, "_update_new_value_entry_text") as update_text:
         table._set_external_value_widget_editability(parameter, editable=True)
 
-    entry.configure.assert_called_once_with(state="normal", background="white")
+    assert entry.configure.call_args_list == [
+        call(state="normal", background="white"),
+        call(state="normal"),
+    ]
+    update_text.assert_called_once_with(entry, parameter)
+
+
+def test_manual_checkbox_syncs_numeric_entry_before_disabling() -> None:
+    """Restore the file value before a manually edited entry is disabled."""
+    table = ParameterEditorTable.__new__(ParameterEditorTable)
+    entry = MagicMock()
+    parameter = MagicMock(name="ROLL_P")
+    parameter.name = "ROLL_P"
+    table._new_value_widgets = {"ROLL_P": entry}
+
+    with patch.object(table, "_update_new_value_entry_text") as update_text:
+        table._set_external_value_widget_editability(parameter, editable=False)
+
+    assert entry.configure.call_args_list == [
+        call(state="normal", background="light grey"),
+        call(state="disabled"),
+    ]
     update_text.assert_called_once_with(entry, parameter)
 
 
@@ -387,6 +408,7 @@ def test_reset_defaults_requires_confirmation() -> None:
     """
     window = _window_without_tk()
     window.parent.ui.ask_yesno.return_value = True
+    window.close = MagicMock()
 
     window.reset_all_parameters_to_default()
 
@@ -395,6 +417,7 @@ def test_reset_defaults_requires_confirmation() -> None:
         "Are you sure you want to reset all FC parameters to their default values?",
     )
     window.parent.reset_all_parameters_to_default.assert_called_once_with()
+    window.close.assert_called_once_with()
 
 
 def test_reset_defaults_is_cancelled_without_confirmation() -> None:
