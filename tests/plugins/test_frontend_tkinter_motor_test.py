@@ -42,7 +42,9 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-# pylint: disable=redefined-outer-name, too-few-public-methods, protected-access, raising-bad-type
+# pylint: disable=redefined-outer-name, too-few-public-methods, protected-access, raising-bad-type, too-many-lines
+
+
 class FakeMotorTestModel:  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """Minimal stand-in for MotorTestDataModel with controllable behavior."""
 
@@ -702,6 +704,44 @@ class TestMotorTestView:
         motor_view._setup_keyboard_shortcuts()
         assert bind_spy.call_count == 4
         focus_spy.assert_called_once()
+
+    def test_destroy_unbinds_keyboard_shortcuts(self, motor_view: MotorTestView, mocker) -> None:
+        """Destroying the view must remove its app-wide actuator shortcuts."""
+        unbind_spy = mocker.patch.object(motor_view.root_window, "unbind")
+
+        motor_view.destroy()
+
+        assert unbind_spy.call_count == 4
+
+    def test_destroy_preserves_preexisting_root_binding(self, motor_view: MotorTestView, mocker) -> None:
+        """Destroying the view must not erase a shortcut owned by another view."""
+        mocker.patch.object(motor_test_module, "sys", SimpleNamespace(version_info=(3, 10)))
+        sequences = ("<Escape>", "<Control-s>", "<Control-a>", "<Control-q>")
+        for sequence in sequences:
+            motor_view.root_window.unbind(sequence)
+        motor_view.root_window.bind("<Control-a>", lambda _event: "break")
+        motor_view._keyboard_bindings.clear()
+        motor_view._setup_keyboard_shortcuts()
+
+        motor_view.destroy()
+
+        assert str(motor_view.root_window.bind("<Control-a>")).strip()
+
+    def test_destroy_deletes_legacy_tcl_binding_commands(self, motor_view: MotorTestView, mocker) -> None:
+        """Legacy cleanup must delete callback commands as well as binding scripts."""
+        mocker.patch.object(motor_test_module, "sys", SimpleNamespace(version_info=(3, 10)))
+        sequences = ("<Escape>", "<Control-s>", "<Control-a>", "<Control-q>")
+        for sequence in sequences:
+            motor_view.root_window.unbind(sequence)
+        motor_view._keyboard_bindings.clear()
+        motor_view._setup_keyboard_shortcuts()
+        binding_ids = [binding_id for _sequence, binding_id, _previous in motor_view._keyboard_bindings]
+
+        assert all(motor_view.root_window.tk.call("info", "commands", binding_id) for binding_id in binding_ids)
+
+        motor_view.destroy()
+
+        assert all(not motor_view.root_window.tk.call("info", "commands", binding_id) for binding_id in binding_ids)
 
     def test_on_activate_and_on_deactivate_paths(
         self,
