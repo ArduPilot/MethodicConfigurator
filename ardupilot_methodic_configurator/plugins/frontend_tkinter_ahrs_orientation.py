@@ -73,14 +73,15 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
             padding=10,
         )
         manual_option_frame.pack(fill="x", padx=10, pady=(0, 10))
+        wraplength=800
         ttk.Label(
             manual_option_frame,
             text=_(
-                "Use this option if you know the vehicle orientation.\n"
-                "Set AHRS_ORIENTATION manually in the parameter list on the right."
+                "Use this option if you know the vehicle orientation. "
+                "Set AHRS_ORIENTATION manually in the parameter list below."
             ),
             justify="left",
-            wraplength=640,
+            wraplength=wraplength,
         ).pack(anchor="w")
 
         automated_option_frame = ttk.LabelFrame(
@@ -90,13 +91,13 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
         )
         automated_option_frame.pack(fill="x", padx=10)
         info_text = _(
-            "Use this option if you do not know the vehicle orientation.\n"
+            "Use this option if you do not know the vehicle orientation. "
             "This assistant estimates AHRS_ORIENTATION from three vehicle positions:\n"
             "LEVEL, NOSE DOWN, and RIGHT SIDE DOWN.\n\n"
-            "It compensates for the current preset AHRS_ORIENTATION. If a custom\n"
+            "It compensates for the current preset AHRS_ORIENTATION. If a custom "
             "orientation is active, set AHRS_ORIENTATION to 0 and upload parameters first."
         )
-        ttk.Label(automated_option_frame, text=info_text, justify="left", wraplength=640).pack(anchor="w", pady=(0, 16))
+        ttk.Label(automated_option_frame, text=info_text, justify="left", wraplength=wraplength).pack(anchor="w", pady=(0, 16))
 
         self._wizard_frame = ttk.Frame(automated_option_frame)
         self._wizard_frame.pack(fill="x")
