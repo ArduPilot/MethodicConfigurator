@@ -72,6 +72,7 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
     BATTERY_STATUS_REQUEST_ATTEMPTS: ClassVar[int] = 3
     BATTERY_STATUS_REQUEST_DELAY: ClassVar[float] = 0.3
     BATTERY_STATUS_ACTIVATION_WAIT: ClassVar[float] = 1.0
+    ACCEL_CALIBRATION_RETRY_DELAY: ClassVar[float] = 5.0
 
     def __init__(
         self,
@@ -484,6 +485,14 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             param5=2.0,  # level trim / AHRS trim
             timeout=15.0,
         )
+        if not success and error_msg == _("Command temporarily rejected"):
+            logging_info(_("Level calibration was temporarily rejected; retrying after the calibration cooldown."))
+            time_sleep(self.ACCEL_CALIBRATION_RETRY_DELAY)
+            success, error_msg = self.send_command_and_wait_ack(
+                mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                param5=2.0,  # level trim / AHRS trim
+                timeout=15.0,
+            )
         if success:
             logging_info(_("Level calibration completed successfully"))
         else:
