@@ -506,6 +506,7 @@ class TestVehicleDirectoryWorkflow:
             mock_window_class.return_value = mock_window
 
             mock_project_manager = MagicMock()
+            mock_project_manager.reset_fc_parameters_to_their_defaults = False
             mock_project_manager_class.return_value = mock_project_manager
 
             # Mock mainloop to prevent blocking (conftest root has this handled)
@@ -553,6 +554,7 @@ class TestVehicleDirectoryWorkflow:
             mock_window_class.return_value = mock_window
 
             mock_project_manager = MagicMock()
+            mock_project_manager.reset_fc_parameters_to_their_defaults = False
             mock_project_manager_class.return_value = mock_project_manager
 
             # Mock FC info window
@@ -1671,14 +1673,14 @@ class TestConnectionAndFilesystemBranches:
         vehicle_directory_selection resets FC parameters when the user requests it.
 
         GIVEN: vehicle_project_manager.reset_fc_parameters_to_their_defaults is True
-        AND: reset_all_parameters_to_default returns success
+        AND: reset_all_parameters_to_default_and_reconnect returns success
         WHEN: vehicle_directory_selection is called
-        THEN: flight_controller.reset_and_reconnect is called once
+        THEN: flight_controller resets and reconnects once
         """
         # Arrange
         state = ApplicationState(argparse.Namespace(vehicle_dir="/some/dir", device=None))
         state.flight_controller = MagicMock()
-        state.flight_controller.reset_all_parameters_to_default.return_value = (True, "")
+        state.flight_controller.reset_all_parameters_to_default_and_reconnect.return_value = (True, "")
         state.flight_controller.fc_parameters = {MagicMock(): MagicMock()}
         state.flight_controller.master = None
         state.local_filesystem = MagicMock()
@@ -1710,20 +1712,20 @@ class TestConnectionAndFilesystemBranches:
             vehicle_directory_selection(state)
 
         # Assert
-        state.flight_controller.reset_and_reconnect.assert_called_once()
+        state.flight_controller.reset_all_parameters_to_default_and_reconnect.assert_called_once_with()
 
     def test_vehicle_directory_selection_logs_error_when_fc_reset_fails(self) -> None:
         """
         vehicle_directory_selection logs an error when the FC reset operation fails.
 
-        GIVEN: reset_all_parameters_to_default returns (False, 'Reset failed')
+        GIVEN: reset_all_parameters_to_default_and_reconnect returns (False, 'Reset failed')
         WHEN: vehicle_directory_selection is called
         THEN: logging_error is called at least once
         """
         # Arrange
         state = ApplicationState(argparse.Namespace(vehicle_dir="/some/dir", device=None))
         state.flight_controller = MagicMock()
-        state.flight_controller.reset_all_parameters_to_default.return_value = (False, "Reset failed")
+        state.flight_controller.reset_all_parameters_to_default_and_reconnect.return_value = (False, "Reset failed")
         state.flight_controller.fc_parameters = {}
         state.flight_controller.master = None
         state.local_filesystem = MagicMock()
@@ -1757,6 +1759,7 @@ class TestConnectionAndFilesystemBranches:
 
         # Assert
         mock_log_err.assert_called()
+        mock_fciw.assert_not_called()
 
 
 class TestEditorBackupAndMainOrchestration:

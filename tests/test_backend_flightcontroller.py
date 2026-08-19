@@ -243,7 +243,7 @@ class TestFlightControllerParameterManagement:
             "MOT_SPIN_ARM": 0.1,  # Motor spin on arm
             "MOT_SPIN_MIN": 0.15,  # Minimum motor spin
         }
-        mock_download.return_value = test_params
+        mock_download.return_value = test_params, True
 
         fc = FlightController(reboot_time=2, baudrate=115200)
         fc.set_master_for_testing(MagicMock())
@@ -642,6 +642,39 @@ class TestServiceInjectionIntegration:
 
 class TestFlightControllerResetAndDelegation:
     """Test reset workflow and delegation helpers exposed by the facade."""
+
+    def test_resetting_all_parameters_reboots_only_after_a_successful_reset(self) -> None:
+        """The combined factory-reset workflow stops before rebooting when the command fails."""
+        fc, mock_conn_mgr, _params_mgr, mock_commands_mgr, _files_mgr, _master = _build_flight_controller_with_mocks()
+        mock_commands_mgr.reset_all_parameters_to_default.return_value = (False, "Reset rejected")
+
+        success, error_message = fc.reset_all_parameters_to_default_and_reconnect()
+
+        assert success is False
+        assert error_message == "Reset rejected"
+        mock_conn_mgr.disconnect.assert_not_called()
+
+    def test_resetting_all_parameters_reconnects_after_a_successful_reset(self) -> None:
+        """The combined factory-reset workflow reconnects when the reset command succeeds."""
+        fc, _mock_conn_mgr, _params_mgr, mock_commands_mgr, _files_mgr, _master = _build_flight_controller_with_mocks()
+        fc.reset_and_reconnect = MagicMock(return_value="")
+
+        success, error_message = fc.reset_all_parameters_to_default_and_reconnect()
+
+        assert success is True
+        assert error_message == ""
+        mock_commands_mgr.reset_all_parameters_to_default.assert_called_once_with()
+        fc.reset_and_reconnect.assert_called_once_with(None, None, None)
+
+    def test_resetting_all_parameters_reports_a_reconnect_failure(self) -> None:
+        """The combined workflow returns the reconnect error after a successful reset."""
+        fc, _mock_conn_mgr, _params_mgr, _mock_commands_mgr, _files_mgr, _master = _build_flight_controller_with_mocks()
+        fc.reset_and_reconnect = MagicMock(return_value="Unable to reconnect")
+
+        success, error_message = fc.reset_all_parameters_to_default_and_reconnect()
+
+        assert success is False
+        assert error_message == "Unable to reconnect"
 
     def test_user_is_warned_about_modemmanager_interference(self) -> None:
         """

@@ -414,11 +414,10 @@ def vehicle_directory_selection(state: ApplicationState) -> VehicleProjectOpener
 
     if state.vehicle_project_manager.reset_fc_parameters_to_their_defaults:
         backup_fc_parameters(state)
-        success, error_msg = state.flight_controller.reset_all_parameters_to_default()
+        success, error_msg = state.flight_controller.reset_all_parameters_to_default_and_reconnect()
         if not success:
             logging_error(_("Failed to reset parameters to defaults: %(error)s"), {"error": error_msg})
-        state.flight_controller.reset_and_reconnect()
-        if state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
+        elif state.flight_controller.master is not None or state.args.device == DEVICE_FC_PARAM_FROM_FILE:
             fciw = FlightControllerInfoWindow(state.flight_controller, Path(state.args.vehicle_dir))
             default_values = fciw.get_param_default_values()
             state.param_default_values = ParDict(default_values) if default_values else ParDict()

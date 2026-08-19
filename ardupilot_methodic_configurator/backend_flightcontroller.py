@@ -470,6 +470,24 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Reset all parameters to their factory default values - delegates to commands manager."""
         return self._commands_manager.reset_all_parameters_to_default()
 
+    def reset_all_parameters_to_default_and_reconnect(
+        self,
+        reset_progress_callback: Callable[[int, int], None] | None = None,
+        connection_progress_callback: Callable[[int, int], None] | None = None,
+        extra_sleep_time: int | None = None,
+    ) -> tuple[bool, str]:
+        """Reset all parameters to defaults, then reboot and reconnect the flight controller."""
+        success, error_message = self.reset_all_parameters_to_default()
+        if not success:
+            return False, error_message
+
+        reconnect_error = self.reset_and_reconnect(
+            reset_progress_callback,
+            connection_progress_callback,
+            extra_sleep_time,
+        )
+        return (False, reconnect_error) if reconnect_error else (True, "")
+
     # Motor Test Functionality - Delegated to commands manager
 
     def test_motor(  # pylint: disable=too-many-arguments, too-many-positional-arguments
