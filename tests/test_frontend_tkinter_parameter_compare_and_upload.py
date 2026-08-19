@@ -48,6 +48,8 @@ def test_manual_column_enables_only_the_selected_external_parameter() -> None:
     table.view_port = MagicMock()
     table.repopulate_table = MagicMock()
     table._set_external_value_widget_editability = MagicMock()
+    upload_selection = MagicMock()
+    table.upload_checkbutton_var = {"ROLL_P": upload_selection}
     parameter = MagicMock(name="ROLL_P", is_readonly=False)
     parameter.name = "ROLL_P"
     variable = MagicMock()
@@ -63,6 +65,8 @@ def test_manual_column_enables_only_the_selected_external_parameter() -> None:
 
     assert table.options.manually_editable_parameters == {"ROLL_P"}
     assert table._set_external_value_widget_editability.call_args.args == (parameter, True)
+    upload_selection.set.assert_called_once()
+    assert upload_selection.set.call_args.args == (True,)
     table.repopulate_table.assert_not_called()
 
 
@@ -83,6 +87,8 @@ def test_clearing_manual_checkbox_discards_the_in_memory_edit() -> None:
     table.view_port = MagicMock()
     table.repopulate_table = MagicMock()
     table._set_external_value_widget_editability = MagicMock()
+    upload_selection = MagicMock()
+    table.upload_checkbutton_var = {"ROLL_P": upload_selection}
     difference_label = MagicMock()
     table._value_is_different_labels = {"ROLL_P": difference_label}
     parameter = MagicMock(is_readonly=False)
@@ -103,6 +109,7 @@ def test_clearing_manual_checkbox_discards_the_in_memory_edit() -> None:
     parameter.reset_new_value_to_file_value.assert_called_once_with()
     difference_label.config.assert_called_once_with(text=" ")
     assert table._set_external_value_widget_editability.call_args.args == (parameter, False)
+    upload_selection.set.assert_not_called()
     table.repopulate_table.assert_not_called()
 
 
