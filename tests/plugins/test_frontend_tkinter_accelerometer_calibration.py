@@ -45,19 +45,25 @@ def view_with_model(tk_root, mocker) -> Generator[SimpleNamespace, None, None]:
     """
     model = MagicMock(spec=AccelerometerCalibrationDataModel)
     parent = ttk.Frame(tk_root)
-    view = AccelerometerCalibrationView(parent, model, SimpleNamespace(root=tk_root))
+    base_window = SimpleNamespace(
+        root=tk_root,
+        download_flight_controller_parameters=MagicMock(),
+        parameter_editor=SimpleNamespace(update_parameters_from_fc_values=MagicMock()),
+        repopulate_parameter_table=MagicMock(),
+    )
+    view = AccelerometerCalibrationView(parent, model, base_window)
     mocker.patch.object(view, "after", return_value="after-id")
     mocker.patch.object(view, "after_cancel")
     showinfo = mocker.patch(f"{_FRONTEND}.showinfo")
     showerror = mocker.patch(f"{_FRONTEND}.showerror")
     try:
-        yield SimpleNamespace(view=view, model=model, showinfo=showinfo, showerror=showerror)
+        yield SimpleNamespace(view=view, model=model, base_window=base_window, showinfo=showinfo, showerror=showerror)
     finally:
         parent.destroy()
 
 
-class TestSimpleAndLevelCalibrationButtons:
-    """Test the always-visible simple and level calibration buttons."""
+class TestSimpleCalibrationButton:
+    """Test the always-visible simple calibration button."""
 
     def test_simple_calibration_success_shows_result_dialog(self, view_with_model) -> None:
         """
@@ -74,6 +80,9 @@ class TestSimpleAndLevelCalibrationButtons:
         view_with_model.showinfo.assert_called_once()
         assert view_with_model.showinfo.call_args.args[1] == "Calibration successful"
         view_with_model.showerror.assert_not_called()
+        view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
+        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_called_once_with()
+        view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_simple_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
         """
@@ -89,38 +98,6 @@ class TestSimpleAndLevelCalibrationButtons:
 
         view_with_model.showerror.assert_called_once()
         assert view_with_model.showerror.call_args.args[1] == "not connected"
-        view_with_model.showinfo.assert_not_called()
-
-    def test_level_calibration_success_shows_result_dialog(self, view_with_model) -> None:
-        """
-        A successful level calibration informs the user with a result dialog.
-
-        GIVEN: The data model reports a successful level calibration
-        WHEN: The user clicks Level Calibration
-        THEN: An informational result dialog is shown and no error is raised
-        """
-        view_with_model.model.start_level_calibration.return_value = (True, "Level calibration successful")
-
-        view_with_model.view._on_level_calibration()
-
-        view_with_model.showinfo.assert_called_once()
-        assert view_with_model.showinfo.call_args.args[1] == "Level calibration successful"
-        view_with_model.showerror.assert_not_called()
-
-    def test_level_calibration_failure_shows_error_dialog(self, view_with_model) -> None:
-        """
-        A failed level calibration warns the user with an error dialog.
-
-        GIVEN: The data model reports a failed level calibration
-        WHEN: The user clicks Level Calibration
-        THEN: An error dialog is shown and no result dialog is raised
-        """
-        view_with_model.model.start_level_calibration.return_value = (False, "vehicle not level")
-
-        view_with_model.view._on_level_calibration()
-
-        view_with_model.showerror.assert_called_once()
-        assert view_with_model.showerror.call_args.args[1] == "vehicle not level"
         view_with_model.showinfo.assert_not_called()
 
 
@@ -142,7 +119,6 @@ class TestFullCalibrationStart:
 
         assert view._wizard_frame.winfo_manager() == "pack"
         assert str(view._simple_btn.cget("state")) == "disabled"
-        assert str(view._level_btn.cget("state")) == "disabled"
         assert str(view._full_btn.cget("state")) == "disabled"
         assert view._poll_job == "after-id"
         view_with_model.showerror.assert_not_called()
@@ -221,6 +197,9 @@ class TestFullCalibrationPolling:
 
         assert view._wizard_frame.winfo_manager() == ""
         view_with_model.showinfo.assert_called_once()
+        view_with_model.base_window.download_flight_controller_parameters.assert_called_once_with(redownload=True)
+        view_with_model.base_window.parameter_editor.update_parameters_from_fc_values.assert_called_once_with()
+        view_with_model.base_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_poll_tick_ends_calibration_with_failure_on_failure_sentinel(self, view_with_model) -> None:
         """
@@ -333,7 +312,6 @@ class TestPluginLifecycle:
             assert view._poll_job == "after-id"
             assert view._wizard_frame.winfo_manager() == "pack"
             assert str(view._simple_btn.cget("state")) == "disabled"
-            assert str(view._level_btn.cget("state")) == "disabled"
             assert str(view._full_btn.cget("state")) == "disabled"
 
             view.on_deactivate()
@@ -343,7 +321,6 @@ class TestPluginLifecycle:
             assert view._imu_poll_job is None
             assert view._wizard_frame.winfo_manager() == ""
             assert str(view._simple_btn.cget("state")) == "normal"
-            assert str(view._level_btn.cget("state")) == "normal"
             assert str(view._full_btn.cget("state")) == "normal"
         finally:
             parent.destroy()
