@@ -1580,6 +1580,19 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def reset_all_parameters_to_default(self) -> bool:
         """Reset all flight-controller parameters to defaults with a progress window."""
+        download_progress_window: ProgressWindow | None = None
+
+        def get_download_progress_callback() -> Callable[[int, int], None]:
+            """Create the download progress window after reconnection succeeds."""
+            nonlocal download_progress_window
+            download_progress_window = self.ui.create_progress_window(
+                self.root,
+                _("Re-downloading FC parameters"),
+                _("Downloaded {} of {} parameters"),
+                False,  # noqa: FBT003
+            )
+            return download_progress_window.update_progress_bar
+
         reset_progress_window = self.ui.create_progress_window(
             self.root,
             _("Resetting Flight Controller"),
@@ -1597,6 +1610,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 self.ui.show_error,
                 reset_progress_window.update_progress_bar,
                 connection_progress_window.update_progress_bar,
+                get_download_progress_callback,
             )
             if success:
                 self.repopulate_parameter_table()
@@ -1604,6 +1618,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         finally:
             reset_progress_window.destroy()
             connection_progress_window.destroy()
+            if download_progress_window is not None:
+                download_progress_window.destroy()
 
     def close_connection_and_quit(self) -> None:
         focused_widget = self.parameter_editor_table.view_port.focus_get()

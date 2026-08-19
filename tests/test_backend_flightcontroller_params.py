@@ -486,7 +486,7 @@ class TestFlightControllerParamsDownload:
         mock_conn_mgr.info = mock_info
 
         test_params = {"PARAM1": 1.0, "PARAM2": 2.0}
-        mock_download.return_value = test_params
+        mock_download.return_value = test_params, True
 
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
 
@@ -669,12 +669,13 @@ class TestFlightControllerParamsDownload:
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
 
         progress_updates: list[tuple[int, int]] = []
-        params = params_mgr._download_params_via_mavlink(  # pylint: disable=protected-access
+        params, complete = params_mgr._download_params_via_mavlink(  # pylint: disable=protected-access
             lambda current, total: progress_updates.append((current, total))
         )
 
         mock_master.mav.param_request_list_send.assert_called_once_with(1, 1)
         assert params == {"PSC_ACCZ_P": 0.5, "ATC_RATE_RLL_FF": 0.12}
+        assert complete is True
         assert progress_updates == [(1, 2), (2, 2)]
 
     def test_download_params_falls_back_to_mavlink_when_mavftp_returns_no_data(self) -> None:
@@ -702,7 +703,7 @@ class TestFlightControllerParamsDownload:
 
         with (
             patch.object(params_mgr, "_download_params_via_mavftp", return_value=({}, ParDict())) as mock_mavftp,
-            patch.object(params_mgr, "_download_params_via_mavlink", return_value=fallback_params) as mock_mavlink,
+            patch.object(params_mgr, "_download_params_via_mavlink", return_value=(fallback_params, True)) as mock_mavlink,
         ):
             params, defaults = params_mgr.download_params()
 
@@ -710,6 +711,33 @@ class TestFlightControllerParamsDownload:
         mock_mavlink.assert_called_once()
         assert params == fallback_params
         assert isinstance(defaults, ParDict)
+
+    def test_incomplete_mavlink_download_does_not_replace_cached_or_exported_parameters(self, tmp_path: Path) -> None:
+        """
+        A partial MAVLink download must not be treated as a valid parameter snapshot.
+
+        GIVEN: Existing cached and exported parameter values
+        WHEN: MAVLink times out after receiving only some parameters
+        THEN: The partial data is neither cached nor exported
+        """
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = MagicMock()
+        mock_info = FlightControllerInfo()
+        mock_info.is_mavftp_supported = False
+        mock_conn_mgr.info = mock_info
+
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+        params_mgr.fc_parameters = {"EXISTING": 1.0}
+        output_file = tmp_path / "complete.param"
+        output_file.write_text("EXISTING,1\n", encoding="utf-8")
+
+        with patch.object(params_mgr, "_download_params_via_mavlink", return_value=({"PARTIAL": 2.0}, False)):
+            params, defaults = params_mgr.download_params(parameter_values_filename=output_file)
+
+        assert params == {}
+        assert isinstance(defaults, ParDict)
+        assert params_mgr.fc_parameters == {"EXISTING": 1.0}
+        assert output_file.read_text(encoding="utf-8") == "EXISTING,1\n"
 
 
 class TestFlightControllerParamsFileOperations:  # pylint: disable=too-few-public-methods
@@ -734,7 +762,7 @@ class TestFlightControllerParamsFileOperations:  # pylint: disable=too-few-publi
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
 
         # Mock the download to return test data
-        with patch.object(params_mgr, "_download_params_via_mavlink", return_value={"TEST": 1.0}):
+        with patch.object(params_mgr, "_download_params_via_mavlink", return_value=({"TEST": 1.0}, True)):
             output_file = tmp_path / "params.txt"
 
             # When: Download with file output
