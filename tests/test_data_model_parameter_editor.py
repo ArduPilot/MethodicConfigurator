@@ -238,6 +238,39 @@ class TestExternalParameterUploadWorkflow:
         parameter_editor._local_filesystem.write_param_default_values_to_file.assert_not_called()
         parameter_editor._local_filesystem.write_last_uploaded_filename.assert_not_called()
 
+    def test_upload_stops_when_post_reset_parameter_download_fails(self, parameter_editor, tmp_path) -> None:
+        """
+        Do not send remaining parameters after a reset without a valid FC snapshot.
+
+        GIVEN: A reboot-required parameter followed by a normal parameter
+        WHEN: Re-downloading parameters after reconnecting fails
+        THEN: The normal parameter is not uploaded and the user is informed
+        """
+        parameter_editor._local_filesystem.vehicle_dir = tmp_path
+        parameter_editor._flight_controller.fc_parameters = {"RESET_PARAM": 1.0, "REMAINING_PARAM": 1.0}
+        parameter_editor._local_filesystem.doc_dict = {
+            "RESET_PARAM": {"RebootRequired": True},
+            "REMAINING_PARAM": {"RebootRequired": False},
+        }
+        parameter_editor._flight_controller.reset_and_reconnect.return_value = None
+        parameter_editor._flight_controller.set_param.return_value = (True, "")
+        parameter_editor._flight_controller.download_params.return_value = ({}, ParDict())
+        show_error = MagicMock()
+
+        result = parameter_editor.upload_external_params_workflow(
+            {"RESET_PARAM": Par(2.0), "REMAINING_PARAM": Par(2.0)},
+            ask_confirmation=MagicMock(return_value=True),
+            ask_retry_cancel=MagicMock(return_value=False),
+            show_error=show_error,
+        )
+
+        assert result is False
+        parameter_editor._flight_controller.set_param.assert_called_once_with("RESET_PARAM", 2.0)
+        show_error.assert_called_once_with(
+            "ArduPilot methodic configurator",
+            "Could not download parameters after resetting the flight controller. Upload was stopped.",
+        )
+
     def test_failed_external_upload_returns_failure_after_validation(self, parameter_editor, tmp_path) -> None:
         """
         Propagate external upload validation failures.

@@ -1146,10 +1146,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             # If reset happened, fc_parameters cache was cleared during disconnect/reconnect
             # Re-download parameters now so _upload_parameters_to_fc has valid cache for comparison
             if reset_happened:
-                self.download_flight_controller_parameters(
+                fc_parameters, _param_default_values = self.download_flight_controller_parameters(
                     _create_progress_callback_factory(progress_callback_for_download),
                     persist_project_state=persist_project_state,
                 )
+                if not fc_parameters:
+                    show_error(
+                        _("ArduPilot methodic configurator"),
+                        _("Could not download parameters after resetting the flight controller. Upload was stopped."),
+                    )
+                    self._at_least_one_changed = False
+                    return False
 
             # Upload remaining parameters (excluding those already uploaded in reset workflow)
             remaining_params = {k: v for k, v in selected_params.items() if k not in already_uploaded_params}
