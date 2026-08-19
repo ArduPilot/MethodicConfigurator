@@ -887,6 +887,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if reconnect_error:
             show_error(_("ArduPilot methodic configurator"), reconnect_error)
             return False
+        fc_parameters, _ = self.download_flight_controller_parameters()
+        if not fc_parameters:
+            show_error(
+                _("ArduPilot methodic configurator"),
+                _("Could not download parameters after resetting the flight controller."),
+            )
+            return False
         return True
 
     def reset_and_reconnect_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments

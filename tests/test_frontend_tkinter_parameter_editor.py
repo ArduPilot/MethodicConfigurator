@@ -1136,6 +1136,7 @@ class TestUploadSelectedParameters:
             side_effect=[reset_progress_window, connection_progress_window]
         )
         parameter_editor_window.parameter_editor.reset_all_parameters_to_default.return_value = True
+        parameter_editor_window.repopulate_parameter_table = MagicMock()
 
         result = parameter_editor_window.reset_all_parameters_to_default()
 
@@ -1159,6 +1160,7 @@ class TestUploadSelectedParameters:
             reset_progress_window.update_progress_bar,
             connection_progress_window.update_progress_bar,
         )
+        parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_user_sees_reset_and_download_progress_windows(self, parameter_editor_window: ParameterEditorWindow) -> None:
         reset_window = MagicMock()

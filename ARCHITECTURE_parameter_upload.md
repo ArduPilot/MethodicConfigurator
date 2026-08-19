@@ -201,9 +201,10 @@ The reset method changes only the in-memory candidate value. It performs no file
 
 The external model entry point delegates to the common upload implementation with configuration
 step-state persistence disabled. Every FC download, including one made for an external upload,
-refreshes the `complete.param` and `00_default.param` FC snapshots in the vehicle directory. The
-shared FC safety mechanics remain common, while the normal workflow continues to write the
-current-step marker and reports.
+refreshes `complete.param` in the vehicle directory. MAVFTP-capable FCs also supply and refresh
+the `00_default.param` snapshot; MAVLink parameter downloads do not expose defaults. The shared
+FC safety mechanics remain common, while the normal workflow continues to write the current-step
+marker and reports.
 
 ## State Model
 
