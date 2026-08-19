@@ -873,6 +873,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         show_error: ShowErrorCallback,
         reset_progress_callback: Callable | None = None,
         connection_progress_callback: Callable | None = None,
+        get_download_progress_callback: Callable[[], Callable | None] | None = None,
     ) -> bool:
         """Reset all flight-controller parameters, then reboot and reconnect."""
         success, error_message = self._flight_controller.reset_all_parameters_to_default()
@@ -887,7 +888,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if reconnect_error:
             show_error(_("ArduPilot methodic configurator"), reconnect_error)
             return False
-        fc_parameters, _ = self.download_flight_controller_parameters()
+        fc_parameters, _param_default_values = self.download_flight_controller_parameters(get_download_progress_callback)
         if not fc_parameters:
             show_error(
                 _("ArduPilot methodic configurator"),

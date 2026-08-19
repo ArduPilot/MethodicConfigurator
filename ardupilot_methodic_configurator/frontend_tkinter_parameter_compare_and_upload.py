@@ -109,6 +109,7 @@ class ParameterFileUploadWindow(BaseWindow):
         self.center_window(self.root, parent.root)
         if sys_platform != "darwin":
             self.root.grab_set()
+
         # center_window() calls update(), which drains idle callbacks.  Start
         # batched table rendering only afterwards so the dialog is displayed
         # before later batches are rendered.
@@ -146,10 +147,13 @@ class ParameterFileUploadWindow(BaseWindow):
 
     def reset_all_parameters_to_default(self) -> None:
         """Confirm and reset all flight-controller parameters to their factory defaults."""
-        if self.parent.ui.ask_yesno(
-            _("Reset all FC parameters"),
-            _("Are you sure you want to reset all FC parameters to their default values?"),
-        ) and self.parent.reset_all_parameters_to_default():
+        if (
+            self.parent.ui.ask_yesno(
+                _("Reset all FC parameters"),
+                _("Are you sure you want to reset all FC parameters to their default values?"),
+            )
+            and self.parent.reset_all_parameters_to_default()
+        ):
             # The reset clears the FC parameter cache.  Closing the modal
             # prevents stale comparisons and forces a fresh external-file
             # preview after reconnecting.

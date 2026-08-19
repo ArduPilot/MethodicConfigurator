@@ -53,9 +53,10 @@ class TestDownloadParamsViaMavlink:
         THEN: An empty dictionary should be returned
         AND: No exceptions should be raised
         """
-        result = disconnected_params_mgr._download_params_via_mavlink()
+        result, complete = disconnected_params_mgr._download_params_via_mavlink()
 
         assert result == {}
+        assert complete is False
 
     def test_download_params_handles_none_message(
         self, connected_params_mgr: tuple[MagicMock, FlightControllerParams]
@@ -71,9 +72,10 @@ class TestDownloadParamsViaMavlink:
         mock_master, params_mgr = connected_params_mgr
         mock_master.recv_match.return_value = None  # Simulate timeout
 
-        result = params_mgr._download_params_via_mavlink()
+        result, complete = params_mgr._download_params_via_mavlink()
 
         assert result == {}
+        assert complete is False
 
     def test_download_params_receives_parameters_with_progress_callback(
         self, connected_params_mgr: tuple[MagicMock, FlightControllerParams]
@@ -103,12 +105,13 @@ class TestDownloadParamsViaMavlink:
         def progress_callback(current: int, total: int) -> None:
             progress_calls.append((current, total))
 
-        result = params_mgr._download_params_via_mavlink(progress_callback=progress_callback)
+        result, complete = params_mgr._download_params_via_mavlink(progress_callback=progress_callback)
 
         assert "PARAM1" in result
         assert "PARAM2" in result
         assert result["PARAM1"] == 1.0
         assert result["PARAM2"] == 2.0
+        assert complete is True
         assert (1, 2) in progress_calls
         assert (2, 2) in progress_calls
 
@@ -126,9 +129,10 @@ class TestDownloadParamsViaMavlink:
         mock_master, params_mgr = connected_params_mgr
         mock_master.recv_match.side_effect = Exception("Serial port disconnected")
 
-        result = params_mgr._download_params_via_mavlink()
+        result, complete = params_mgr._download_params_via_mavlink()
 
         assert result == {}
+        assert complete is False
 
 
 class TestDownloadParamsViaMavftp:

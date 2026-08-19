@@ -129,13 +129,18 @@ class FlightControllerParams:
                 return param_dict, default_param_dict
 
         logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport_device)
-        param_dict = self._download_params_via_mavlink(progress_callback)
+        param_dict, download_complete = self._download_params_via_mavlink(progress_callback)
+        if not download_complete:
+            logging_error(_("Incomplete parameter download from the %s flight controller"), self.comport_device)
+            return {}, ParDict()
         self.fc_parameters = param_dict
         if parameter_values_filename is not None and param_dict:
             ParDict({name: Par(value) for name, value in param_dict.items()}).export_to_param(str(parameter_values_filename))
         return param_dict, ParDict()
 
-    def _download_params_via_mavlink(self, progress_callback: Callable[[int, int], None] | None = None) -> dict[str, float]:
+    def _download_params_via_mavlink(
+        self, progress_callback: Callable[[int, int], None] | None = None
+    ) -> tuple[dict[str, float], bool]:
         """
         Requests all flight controller parameters via MAVLink PARAM_REQUEST_LIST.
 
@@ -145,7 +150,8 @@ class FlightControllerParams:
             progress_callback: A callback function to report download progress
 
         Returns:
-            dict[str, float]: A dictionary of flight controller parameters
+            A tuple containing the parameter dictionary and whether all advertised
+            parameters were received.
 
         """
         logging_debug(_("Will fetch all parameters from the %s flight controller"), self.comport_device)
@@ -155,16 +161,16 @@ class FlightControllerParams:
 
         # Request all parameters
         if self.master is None:
-            return parameters
+            return parameters, False
 
         self.master.mav.param_request_list_send(self.master.target_system, self.master.target_component)
 
-        # Loop to receive all parameters
-        while True:
-            try:
+        try:
+            # Loop to receive all parameters
+            while True:
                 m = self.master.recv_match(type="PARAM_VALUE", blocking=True, timeout=10)
                 if m is None:
-                    break
+                    return parameters, False
                 message = m.to_dict()
                 param_id = message["param_id"]
                 param_value = message["param_value"]
@@ -177,11 +183,10 @@ class FlightControllerParams:
                     logging_debug(
                         _("Fetched %d parameter values from the %s flight controller"), m.param_count, self.comport_device
                     )
-                    break
-            except Exception as error:  # pylint: disable=broad-except
-                logging_error(_("Error: %s"), error)
-                break
-        return parameters
+                    return parameters, True
+        except Exception as error:  # pylint: disable=broad-except
+            logging_error(_("Error: %s"), error)
+            return parameters, False
 
     def _download_params_via_mavftp(
         self,

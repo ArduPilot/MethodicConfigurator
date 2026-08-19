@@ -1440,11 +1440,13 @@ class TestFlightControllerResetWorkflows:
         show_error = MagicMock()
         reset_progress_callback = MagicMock()
         connection_progress_callback = MagicMock()
+        get_download_progress_callback = MagicMock()
 
         result = parameter_editor.reset_all_parameters_to_default(
             show_error,
             reset_progress_callback,
             connection_progress_callback,
+            get_download_progress_callback,
         )
 
         assert result is True
@@ -1454,7 +1456,7 @@ class TestFlightControllerResetWorkflows:
             connection_progress_callback,
             1,
         )
-        parameter_editor.download_flight_controller_parameters.assert_called_once_with()
+        parameter_editor.download_flight_controller_parameters.assert_called_once_with(get_download_progress_callback)
         show_error.assert_not_called()
 
     def test_user_is_informed_when_resetting_all_parameters_fails(self, parameter_editor) -> None:

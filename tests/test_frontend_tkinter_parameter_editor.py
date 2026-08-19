@@ -1132,10 +1132,19 @@ class TestUploadSelectedParameters:
     ) -> None:
         reset_progress_window = MagicMock()
         connection_progress_window = MagicMock()
+        download_progress_window = MagicMock()
         parameter_editor_window.ui.create_progress_window = MagicMock(
-            side_effect=[reset_progress_window, connection_progress_window]
+            side_effect=[reset_progress_window, connection_progress_window, download_progress_window]
         )
-        parameter_editor_window.parameter_editor.reset_all_parameters_to_default.return_value = True
+        download_callback: Callable[[], Callable | None] | None = None
+
+        def reset_and_download(*args: object) -> bool:
+            nonlocal download_callback
+            download_callback = cast("Callable[[], Callable | None]", args[3])
+            assert download_callback() == download_progress_window.update_progress_bar
+            return True
+
+        parameter_editor_window.parameter_editor.reset_all_parameters_to_default.side_effect = reset_and_download
         parameter_editor_window.repopulate_parameter_table = MagicMock()
 
         result = parameter_editor_window.reset_all_parameters_to_default()
@@ -1153,13 +1162,22 @@ class TestUploadSelectedParameters:
             "{} of {} percent",
             True,  # noqa: FBT003
         )
+        parameter_editor_window.ui.create_progress_window.assert_any_call(
+            parameter_editor_window.root,
+            "Re-downloading FC parameters",
+            "Downloaded {} of {} parameters",
+            False,  # noqa: FBT003
+        )
         reset_progress_window.destroy.assert_called_once_with()
         connection_progress_window.destroy.assert_called_once_with()
-        parameter_editor_window.parameter_editor.reset_all_parameters_to_default.assert_called_once_with(
+        download_progress_window.destroy.assert_called_once_with()
+        reset_call = parameter_editor_window.parameter_editor.reset_all_parameters_to_default.call_args
+        assert reset_call.args[:3] == (
             parameter_editor_window.ui.show_error,
             reset_progress_window.update_progress_bar,
             connection_progress_window.update_progress_bar,
         )
+        assert reset_call.args[3] is download_callback
         parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_user_sees_reset_and_download_progress_windows(self, parameter_editor_window: ParameterEditorWindow) -> None:
