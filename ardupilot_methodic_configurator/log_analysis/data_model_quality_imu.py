@@ -165,6 +165,10 @@ class ImuLogAnalysis(BaseLogModel):
                 continue  # this IMU instance is not present on the board
 
             if enable == 0:
+                step_filename = self.step_for_parameter(enable_param)
+                suggested, _source = (
+                    self.expected_parameter_value(step_filename, enable_param) if step_filename else (None, "")
+                )
                 outcomes.append(
                     LogAnalysis(
                         message=_(
@@ -174,7 +178,8 @@ class ImuLogAnalysis(BaseLogModel):
                         timestamp_us=None,
                         value=0.0,
                         param_name=enable_param,
-                        suggested_value=2.0,
+                        suggested_value=suggested,
+                        related_step=step_filename or None,
                     )
                 )
                 continue
@@ -191,6 +196,8 @@ class ImuLogAnalysis(BaseLogModel):
                 continue
 
             enabled_codes = tcal_enabled_codes(self.apm_doc, instance)
+            if not enabled_codes:
+                enabled_codes = {"1"}
             if str(int(enable)) not in enabled_codes:
                 outcomes.append(
                     LogAnalysis(
