@@ -741,9 +741,7 @@ class TestFlightControllerParamsFileOperations:  # pylint: disable=too-few-publi
             params_mgr.download_params(parameter_values_filename=output_file)
 
             # Then: File created
-            # Note: Actual file creation depends on implementation details
-            # This test validates the interface accepts the parameter
-            assert True  # Interface test only
+            assert ParDict.from_file(output_file)["TEST"].value == 1.0
 
 
 class TestParameterEdgeCases:

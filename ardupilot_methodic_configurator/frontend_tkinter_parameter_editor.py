@@ -1593,11 +1593,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             True,  # noqa: FBT003
         )
         try:
-            return self.parameter_editor.reset_all_parameters_to_default(
+            success = self.parameter_editor.reset_all_parameters_to_default(
                 self.ui.show_error,
                 reset_progress_window.update_progress_bar,
                 connection_progress_window.update_progress_bar,
             )
+            if success:
+                self.repopulate_parameter_table()
+            return success
         finally:
             reset_progress_window.destroy()
             connection_progress_window.destroy()

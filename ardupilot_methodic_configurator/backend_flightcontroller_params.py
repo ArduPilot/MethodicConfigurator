@@ -23,7 +23,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict, validate_param_name
+from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, validate_param_name
 
 # Type hint for connection manager to avoid circular imports
 if TYPE_CHECKING:
@@ -131,6 +131,8 @@ class FlightControllerParams:
         logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport_device)
         param_dict = self._download_params_via_mavlink(progress_callback)
         self.fc_parameters = param_dict
+        if parameter_values_filename is not None and param_dict:
+            ParDict({name: Par(value) for name, value in param_dict.items()}).export_to_param(str(parameter_values_filename))
         return param_dict, ParDict()
 
     def _download_params_via_mavlink(self, progress_callback: Callable[[int, int], None] | None = None) -> dict[str, float]:

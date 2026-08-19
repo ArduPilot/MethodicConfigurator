@@ -82,6 +82,7 @@ class ParameterTableOptions:  # pylint: disable=too-many-instance-attributes
     manually_editable_parameters: set[str] = field(default_factory=set)
     render_batch_size: int | None = None
     defer_tooltips: bool = True
+    render_complete_callback: Callable[[], None] | None = None
 
 
 class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,too-many-instance-attributes
@@ -288,8 +289,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         if self.options.render_batch_size is None:
             self._update_table(params, gui_complexity)
             self._apply_scroll_position(scroll_to_bottom)
+            self._notify_render_complete()
             return
         self._update_table_in_batches(params, gui_complexity, scroll_to_bottom)
+
+    def _notify_render_complete(self) -> None:
+        """Notify an embedding view that every table row is ready for interaction."""
+        if self.options.render_complete_callback is not None:
+            self.options.render_complete_callback()
 
     def _apply_scroll_position(self, scroll_to_bottom: bool) -> None:
         """Apply the requested scroll position to the canvas."""
@@ -413,6 +420,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             ):
                 display_bitmask_parameters_editor_usage_popup(parent_root)
             self._apply_scroll_position(scroll_to_bottom)
+            self._notify_render_complete()
 
         render_batch(0)
 

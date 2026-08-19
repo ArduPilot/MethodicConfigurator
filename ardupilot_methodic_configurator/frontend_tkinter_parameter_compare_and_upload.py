@@ -50,6 +50,7 @@ class ParameterFileUploadWindow(BaseWindow):
             skip_when_no_differences=False,
             manual_override_for_all_parameters=True,
             render_batch_size=200,
+            render_complete_callback=self._enable_upload_button,
         )
 
         self.root.title(_("Compare and upload parameter file - {filename}").format(filename=Path(filepath).name))
@@ -94,13 +95,14 @@ class ParameterFileUploadWindow(BaseWindow):
             command=self.reset_all_parameters_to_default,
         )
         reset_button.pack(side=tk.LEFT, padx=(0, 8))
-        upload_button = ttk.Button(
+        self.upload_button = ttk.Button(
             buttons,
             text=_("Upload selected params to the FC"),
             command=self.upload_parameters,
+            state="disabled",
         )
-        upload_button.pack(side=tk.LEFT)
-        show_tooltip(upload_button, _("Upload the selected parameters to the flight controller"))
+        self.upload_button.pack(side=tk.LEFT)
+        show_tooltip(self.upload_button, _("Upload the selected parameters to the flight controller"))
 
         self.root.transient(parent.root)
         self.root.update_idletasks()
@@ -115,8 +117,13 @@ class ParameterFileUploadWindow(BaseWindow):
 
         self.root.after_idle(render_table)
 
+    def _enable_upload_button(self) -> None:
+        """Allow uploading only after every row has an Upload selection state."""
+        self.upload_button.configure(state="normal")
+
     def repopulate_table(self) -> None:
         """Refresh the table using the current changed-only filter."""
+        self.upload_button.configure(state="disabled")
         self.table.repopulate_table(self.show_only_changed.get(), self.parent.gui_complexity)
 
     def upload_parameters(self) -> None:
