@@ -97,10 +97,14 @@ def register_plugins() -> None:
     from ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale import (  # noqa: PLC0415
         register_esc_rpm_scale_plugin,
     )
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration import (  # noqa: PLC0415
+        register_level_calibration_plugin,
+    )
     from ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test import register_motor_test_plugin  # noqa: PLC0415
     from ardupilot_methodic_configurator.plugins.frontend_tkinter_rc_calibration import (  # noqa: PLC0415
         register_rc_calibration_plugin,
     )
+    from ardupilot_methodic_configurator.plugins.frontend_tkinter_servo_out import register_servo_out_plugin  # noqa: PLC0415
     # pylint: enable=import-outside-toplevel, cyclic-import
 
     register_accelerometer_calibration_plugin()
@@ -108,8 +112,10 @@ def register_plugins() -> None:
     register_battery_monitor_plugin()
     register_compass_calibration_plugin()
     register_esc_rpm_scale_plugin()
+    register_level_calibration_plugin()
     register_motor_test_plugin()
     register_rc_calibration_plugin()
+    register_servo_out_plugin()
 
     # Add more plugin registrations here in the future
 

@@ -1,0 +1,96 @@
+{
+    "steps": {
+        "14_accelerometer_calibration.param": {
+            "why": "Accelerometer calibration values and the accelerometers to use must be configured before the vehicle can be flown.",
+            "why_now": "The flight controller and sensors have been configured in the preceding steps.",
+            "blog_text": "Calibrate the accelerometers and configure the accelerometer sensors.",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#681-accelerometer-calibration-14_accelerometer_calibrationparam",
+            "wiki_text": "Accelerometer Calibration",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-accelerometer-calibration.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "plugin": {
+                "name": "accelerometer_calibration",
+                "placement": "left"
+            },
+            "autoimport_nondefault_regexp": [
+                "INS_ACC(?:[2-3])?SCAL_[XYZ]",
+                "INS_USE[2-3]?"
+            ],
+            "old_filenames": []
+        },
+        "15_accelerometer_level.param": {
+            "why": "Accelerometer level trim values compensate for the vehicle attitude when it is stationary.",
+            "why_now": "The accelerometers must be calibrated before their level can be checked and corrected.",
+            "blog_text": "Level the accelerometers.",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#682-accelerometer-level-15_accelerometer_levelparam",
+            "wiki_text": "Accelerometer Level",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-accelerometer-calibration.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "10% mandatory (90% optional)",
+            "plugin": {
+                "name": "level_calibration",
+                "placement": "left"
+            },
+            "autoimport_nondefault_regexp": [
+                "AHRS_TRIM_[XY]"
+            ],
+            "old_filenames": []
+        },
+        "16_compass_calibration.param": {
+            "why": "Compass calibration and ordering are required for reliable heading estimation.",
+            "why_now": "The compass hardware and vehicle orientation are configured in the preceding steps.",
+            "blog_text": "Calibrate and configure the compasses.",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#683-compass-calibration-16_compass_calibrationparam",
+            "wiki_text": "Compass Calibration",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-compass-setup-advanced.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "plugin": {
+                "name": "compass_calibration",
+                "placement": "left"
+            },
+            "autoimport_nondefault_regexp": [
+                "COMPASS_.+"
+            ],
+            "old_filenames": []
+        },
+        "17_flight_modes.param": {
+            "why": "Flight modes determine how the vehicle responds to pilot and ground-control inputs.",
+            "why_now": "The radio and flight controller inputs have been configured in the preceding steps.",
+            "blog_text": "Configure the vehicle flight modes.",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#684-flight-modes-17_flight_modesparam",
+            "wiki_text": "Flight Modes",
+            "wiki_url": "https://ardupilot.org/copter/docs/flight-modes.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "autoimport_nondefault_regexp": [
+                "FLTMODE[1-6]"
+            ],
+            "old_filenames": []
+        },
+        "18_servo_outputs.param": {
+            "why": "Servo output functions define how the flight controller drives the vehicle outputs.",
+            "why_now": "Output functions are assigned after the connected hardware and vehicle type are known.",
+            "blog_text": "Configure servo output functions.",
+            "blog_url": "https://ardupilot.github.io/MethodicConfigurator/TUNING_GUIDE_ArduCopter#685-servo-outputs-18_servo_outputsparam",
+            "wiki_text": "Servo Output Functions",
+            "wiki_url": "https://ardupilot.org/copter/docs/common-servo.html",
+            "external_tool_text": "",
+            "external_tool_url": "",
+            "mandatory_text": "100% mandatory (0% optional)",
+            "plugin": {
+                "name": "servo_out",
+                "placement": "left"
+            },
+            "autoimport_nondefault_regexp": [
+                "SERVO[0-9]+_FUNCTION"
+            ],
+            "old_filenames": []
+        }
+    }
+}

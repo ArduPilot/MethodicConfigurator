@@ -22,11 +22,17 @@ import re
 from json import dumps as json_dumps
 from json import load as json_load
 from pathlib import Path
+from shutil import copyfile
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
+    VehicleProjectCreationError,
+    VehicleProjectCreator,
+)
 
-VEHICLE_COMPONENTS_FORMAT_VERSION = 1
+VEHICLE_COMPONENTS_FORMAT_VERSION = 2
 _VEHICLE_COMPONENTS_JSON_FILENAME = "vehicle_components.json"
+_PACKAGE_DIR = Path(__file__).resolve().parent
 
 # ---------------------------------------------------------------------------
 # Format version 0 → 1
@@ -308,6 +314,105 @@ _FILES_TO_DELETE_V0_TO_V1: dict[str, list[str]] = {
 }
 
 # ---------------------------------------------------------------------------
+# Format version 1 → 2
+# ---------------------------------------------------------------------------
+
+_PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
+    "all": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "14_accelerometer_calibration.param",
+            [r"INS_ACC(?:[2-3])?SCAL_[XYZ]", r"INS_USE[2-3]?"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "03_imu_temperature_calibration_results.param",
+            [r"INS_ACC[1-3]_CALTEMP"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "15_accelerometer_level.param",
+            [r"AHRS_TRIM_[XY]"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "16_compass_calibration.param",
+            [r"COMPASS_.+"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "17_flight_modes.param",
+            [r"FLTMODE[1-6]"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "07_remote_controller_controller.param",
+            [r"RC\d+_(?:MIN|MAX|TRIM)"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "18_servo_outputs.param",
+            [r"SERVO\d+_FUNCTION"],
+        ),
+    ],
+    "ArduCopter": [],
+    "ArduPlane": [],
+    "Heli": [],
+    "Rover": [],
+}
+
+_NEW_FILES_V1_TO_V2: dict[str, list[tuple[str, str]]] = {
+    "all": [
+        ("14_accelerometer_calibration.param", ""),
+        ("15_accelerometer_level.param", ""),
+        ("16_compass_calibration.param", ""),
+        ("17_flight_modes.param", ""),
+        ("18_servo_outputs.param", ""),
+    ],
+    "ArduCopter": [],
+    "ArduPlane": [],
+    "Heli": [],
+    "Rover": [],
+}
+
+_PARAM_DELETES_V1_TO_V2: dict[str, list[tuple[str, list[str]]]] = {
+    "all": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            [
+                "ATC_ACCEL_P_MAX",
+                "ATC_ACCEL_R_MAX",
+                "ATC_ACCEL_Y_MAX",
+                "ATC_RAT_PIT_FLTD",
+                "ATC_RAT_PIT_FLTT",
+                "ATC_RAT_RLL_FLTD",
+                "ATC_RAT_RLL_FLTT",
+                "ATC_RAT_YAW_FLTE",
+                "ATC_RAT_YAW_FLTT",
+                "FENCE_ACTION",
+                "FENCE_ALT_MAX",
+                "FENCE_ENABLE",
+                "FENCE_RADIUS",
+                "FRAME_CLASS",
+                "FRAME_TYPE",
+                "INS_GYRO_FILTER",
+                "MOT_BAT_VOLT_MAX",
+                "MOT_BAT_VOLT_MIN",
+                "MOT_SPIN_ARM",
+                "MOT_SPIN_MAX",
+                "MOT_SPIN_MIN",
+                "MOT_THST_EXPO",
+                "MOT_THST_HOVER",
+            ],
+        ),
+    ],
+    "ArduCopter": [],
+    "ArduPlane": [],
+    "Heli": [],
+    "Rover": [],
+}
+
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
@@ -384,6 +489,55 @@ def _extract_params(source: Path, patterns: list[str]) -> tuple[list[str], list[
         else:
             remaining.append(line)
     return extracted, remaining
+
+
+def _restore_missing_configuration_step_files(vehicle_path: Path, vehicle_type: str, firmware_version: str) -> None:
+    """
+    Copy missing configuration-step files from the matching empty firmware template.
+
+    A project may have been created before a configuration step was introduced.  Once all
+    version-specific migration operations have completed, restore only those absent step files
+    that exist in both the current configuration-step definition and the matching empty template.
+    Existing project files, including empty files, are never overwritten.
+    """
+    version_match = re.search(r"(\d+)\.(\d+)", firmware_version)
+    if not vehicle_type or not version_match:
+        logging.warning(_("Cannot restore missing configuration files: firmware type or version is unavailable."))
+        return
+
+    major, minor = (int(part) for part in version_match.groups())
+    try:
+        template_dir = Path(VehicleProjectCreator.template_dir_for_bin_import(vehicle_type, major, minor))
+    except VehicleProjectCreationError as exc:
+        logging.warning(_("Migration template directory not found, skipping missing files: %s"), exc.message)
+        return
+
+    configuration_filename = f"configuration_steps_{vehicle_type}.json"
+    configuration_path = vehicle_path / configuration_filename
+    if not configuration_path.is_file():
+        configuration_path = _PACKAGE_DIR / configuration_filename
+    try:
+        with open(configuration_path, encoding="utf-8-sig") as file:
+            configuration_data = json_load(file)
+    except (FileNotFoundError, OSError, ValueError) as exc:
+        logging.warning(_("Cannot load configuration steps %s: %s"), configuration_path, exc)
+        return
+
+    steps = configuration_data.get("steps", {}) if isinstance(configuration_data, dict) else {}
+    if not isinstance(steps, dict):
+        logging.warning(_("Configuration steps file has no valid steps dictionary: %s"), configuration_path)
+        return
+
+    for filename in steps:
+        if not isinstance(filename, str) or Path(filename).name != filename:
+            logging.warning(_("Skipping unsafe configuration-step filename: %r"), filename)
+            continue
+        destination = vehicle_path / filename
+        source = template_dir / filename
+        if destination.exists() or not source.is_file():
+            continue
+        copyfile(source, destination)
+        logging.info(_("Restored missing configuration file from template: %s"), filename)
 
 
 # ---------------------------------------------------------------------------
@@ -477,6 +631,61 @@ def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> None:  # pylint:
                 logging.info(_("Deleted obsolete file: %s"), filename)
 
 
+def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> None:
+    """Split mandatory hardware calibration results into dedicated ArduCopter files."""
+    accumulated: dict[str, list[str]] = {}
+
+    param_move_keys = ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
+    for key in param_move_keys:
+        for src_name, dst_name, patterns in _PARAM_MOVES_V1_TO_V2[key]:
+            src_path = vehicle_path / src_name
+            if not src_path.exists():
+                logging.warning(_("Migration source file not found, skipping extraction: %s"), src_name)
+                continue
+
+            extracted, remaining = _extract_params(src_path, patterns)
+            if not extracted:
+                continue
+
+            accumulated.setdefault(dst_name, []).extend(extracted)
+            _write_param_file_lines(src_path, remaining)
+            logging.info(_("Extracted %d parameter line(s) from %s for %s"), len(extracted), src_name, dst_name)
+
+    for dst_name, lines in accumulated.items():
+        dst_path = vehicle_path / dst_name
+        existing = _read_param_file_lines(dst_path) if dst_path.exists() else []
+        existing_names = {
+            _param_name_from_line(existing_line) for existing_line in existing if _param_name_from_line(existing_line)
+        }
+        new_lines = [line for line in lines if _param_name_from_line(line) not in existing_names]
+        if not new_lines:
+            continue
+        _write_param_file_lines(dst_path, existing + new_lines)
+        logging.info(_("%s parameter migration file: %s"), _("Updated") if existing else _("Created"), dst_name)
+
+    for key in ["all"] + ([vehicle_type] if vehicle_type in _PARAM_DELETES_V1_TO_V2 else []):
+        for src_name, patterns in _PARAM_DELETES_V1_TO_V2[key]:
+            src_path = vehicle_path / src_name
+            if not src_path.exists():
+                continue
+            deleted, remaining = _extract_params(src_path, patterns)
+            if deleted:
+                logging.info(_("Deleted %d obsolete parameter line(s) from %s"), len(deleted), src_name)
+                if any(_param_name_from_line(line) for line in remaining):
+                    _write_param_file_lines(src_path, remaining)
+                else:
+                    src_path.unlink()
+                    logging.info(_("Deleted empty parameter file: %s"), src_name)
+
+    new_file_keys = ["all"] + ([vehicle_type] if vehicle_type in _NEW_FILES_V1_TO_V2 else [])
+    for key in new_file_keys:
+        for filename, content in _NEW_FILES_V1_TO_V2[key]:
+            file_path = vehicle_path / filename
+            if not file_path.exists():
+                _write_param_file_lines(file_path, [content] if content else [])
+                logging.info(_("Created new file: %s"), filename)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -520,7 +729,9 @@ def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:
     if format_version >= VEHICLE_COMPONENTS_FORMAT_VERSION:
         return False
 
-    vehicle_type: str = data.get("Components", {}).get("Flight Controller", {}).get("Firmware", {}).get("Type", "")
+    firmware = data.get("Components", {}).get("Flight Controller", {}).get("Firmware", {})
+    vehicle_type: str = firmware.get("Type", "")
+    firmware_version: str = firmware.get("Version", "")
 
     logging.info(
         _("Migrating %s vehicle project in '%s' from format version %d to %d"),
@@ -532,6 +743,10 @@ def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:
 
     if format_version < 1:
         _migrate_v0_to_v1(vehicle_path, vehicle_type)
+        _restore_missing_configuration_step_files(vehicle_path, vehicle_type, firmware_version)
+    if format_version < 2:
+        _migrate_v1_to_v2(vehicle_path, vehicle_type)
+        _restore_missing_configuration_step_files(vehicle_path, vehicle_type, firmware_version)
 
     data["Format version"] = VEHICLE_COMPONENTS_FORMAT_VERSION
     json_str = json_dumps(data, indent=4)

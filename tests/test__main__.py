@@ -1443,6 +1443,12 @@ class TestRegisterPluginsInternals:
             patch(
                 "ardupilot_methodic_configurator.plugins.frontend_tkinter_esc_rpm_scale.register_esc_rpm_scale_plugin"
             ) as mock_esc_rpm_scale,
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_level_calibration.register_level_calibration_plugin"
+            ) as mock_level_calibration,
+            patch(
+                "ardupilot_methodic_configurator.plugins.frontend_tkinter_servo_out.register_servo_out_plugin"
+            ) as mock_servo_out,
         ):
             register_plugins()
 
@@ -1451,6 +1457,8 @@ class TestRegisterPluginsInternals:
             mock_battery.assert_called_once()
             mock_compass.assert_called_once()
             mock_esc_rpm_scale.assert_called_once()
+            mock_level_calibration.assert_called_once()
+            mock_servo_out.assert_called_once()
 
 
 class TestValidatePluginRegistry:

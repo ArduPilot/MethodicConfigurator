@@ -54,9 +54,8 @@ class AccelerometerCalibrationDataModel:
     Provides business logic for calibrating accelerometers using MAVLink commands,
     delegating all FC communication to backend_flightcontroller_commands.
 
-    Three calibration modes are supported:
+    Two calibration modes are supported:
     - Simple (param5=4): one-shot level calibration, no interaction required.
-    - Level trim (param5=2): adjusts AHRS_TRIM_* to the current vehicle attitude.
     - Full 6-position (param5=1): interactive; caller must poll
       poll_for_next_position() and call confirm_current_position() for each step.
     """
@@ -95,25 +94,6 @@ class AccelerometerCalibrationDataModel:
             logging_info(_("Simple accelerometer calibration completed"))
             return True, _("Calibration successful")
         return False, error_msg or _("Calibration failed")
-
-    def start_level_calibration(self) -> tuple[bool, str]:
-        """
-        Level-trim the accelerometers to the vehicle's current attitude.
-
-        Sets AHRS_TRIM_* parameters. The vehicle must be placed level.
-        Uses MAV_CMD_PREFLIGHT_CALIBRATION with param5=2.
-
-        Returns:
-            tuple[bool, str]: (success, message)
-
-        """
-        if not self.is_connected():
-            return False, _("Flight controller not connected")
-        success, error_msg = self.flight_controller.start_accel_calibration_level()
-        if success:
-            logging_info(_("Level calibration completed"))
-            return True, _("Level calibration successful")
-        return False, error_msg or _("Level calibration failed")
 
     def start_full_calibration(self) -> tuple[bool, str]:
         """

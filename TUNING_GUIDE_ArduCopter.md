@@ -600,84 +600,103 @@ When asked *Update file with values from FC?* select `Close` to close the applic
 
 ## 6.8 Configure "Mandatory Hardware" Parameters
 
-Open Mission Planner, connect to the flight controller and select `SETUP >> Mandatory Hardware` and work yourself through all the submenus as described below. **DO NOT SKIP ANY STEP**.
+> **Work in progress:** This section describes the target configuration sequence. Until the
+> sequence-reorder change is complete, later sections still use the current filenames.
 
-### Frame Type
+Complete these five configuration steps in ArduPilot Methodic Configurator, using the available
+calibration and output plugins where applicable, after the initial attitude PID gains. The
+accelerometer-level step is optional if accelerometer calibration has already levelled the
+vehicle. Flight mode selection does not use a plugin.
 
-This relates to the `FRAME_CLASS` and `FRAME_TYPE` parameters.
-To do [frame type configuration](https://ardupilot.org/copter/docs/frame-type-configuration.html)
-you should read [how to connect ESCs and Motors](https://ardupilot.org/copter/docs/connect-escs-and-motors.html)
+### 6.8.1 Accelerometer calibration: `14_accelerometer_calibration.param`
 
-**WARNING:** If misconfigured, your vehicle will flip and crash on every attempt to takeoff.
+Use the **accelerometer calibration plugin** to calibrate the accelerometers and store the
+resulting scaling values. The plugin offers two methods. Follow the
+[ArduPilot accelerometer calibration instructions](https://ardupilot.org/copter/docs/common-accelerometer-calibration.html).
 
-### [Initial Tune Parameters](https://ardupilot.org/copter/docs/setting-up-for-tuning.html)
+- **Full Calibration (6-Position)** provides the best accuracy and is normally the right
+  choice. Click the button, then place the vehicle in each position requested by the wizard:
+  level, left, right, nose down, nose up, and back. Rest it on a stable surface; do not hold it.
+  Wait until the live **Detected position** agrees with the instruction, then press
+  **Continue**. Keep the vehicle completely still while confirming each position. The first
+  position must be level; the other positions may be within approximately 20 degrees of the
+  requested orientation. Use **Cancel** if the vehicle moves or a position is confirmed in
+  error, then restart the calibration.
+- **Simple Calibration (Level)** is intended for large or heavy vehicles that cannot safely be
+  moved through all six positions. Place the vehicle level and stationary, then click the
+  button. It is less accurate than the six-position method.
 
-Answer the questions that Mission Planner asks, select *Add suggested settings for 4.0 and up (Battery failsafe and Fence)* and upload the calculated parameters to the flight controller by pressing `Upload to FC`.
+The live **Movement amplitude** should be close to 9.81 m/s² when the vehicle is still. Wait for
+the success message before continuing to the next step.
 
-![MP Initial Tune Parameters questions](images/blog/mp_initial_parameters.png)
+### 6.8.2 Accelerometer level: `15_accelerometer_level.param`
 
-![MP Initial Tune Parameters results](images/blog/mp_initial_parameters_calc.png)
+Use the **level calibration plugin** to level the vehicle after accelerometer calibration. This
+step is optional because a completed accelerometer calibration may already have levelled the
+vehicle. Follow the [ArduPilot accelerometer level instructions](https://ardupilot.org/copter/docs/common-accelerometer-calibration.html).
 
-### [Accel Calibration](https://ardupilot.org/copter/docs/common-accelerometer-calibration.html)
+Place the vehicle on a genuinely level surface in its intended flying orientation and keep it
+still. Click **Level Calibration (Trim)** and wait for the result message. The command adjusts
+roll and pitch trim (`AHRS_TRIM_X` and `AHRS_TRIM_Y`); it does not adjust yaw. If the result is
+unexpected, correct the physical mounting or surface level before trying again.
 
-Follow the [ArduPilot wiki instructions](https://ardupilot.org/copter/docs/common-accelerometer-calibration.html) and calibrate the accelerometers.
-For small vehicles use:
+### 6.8.3 Compass calibration: `16_compass_calibration.param`
 
-- *Calibrate Accel*
-- *Calibrate level*
+Use the **compass calibration plugin** to calibrate and order the compasses. Before starting,
+ensure `COMPASS_ENABLE` is enabled and that at least one `COMPASS_USE*` parameter selects an
+active compass; the plugin refuses to start otherwise. Follow the
+[ArduPilot compass calibration instructions](https://ardupilot.org/copter/docs/common-compass-calibration-in-mission-planner.html).
 
-For very large vehicles:
+Click **Start Compass Calibration**, read the instructions, then click **Continue**. Hold the
+vehicle in the air, initially level in front of you, and rotate it so that the front, back,
+left, right, top, and bottom each face downward. The plugin displays a progress bar for every
+active compass. Keep rotating until every bar reaches 100% and the success message appears. Use
+**Cancel Calibration** to stop and restart if the process is interrupted. Reboot the flight
+controller if it reports that a reboot is required after calibration.
 
-- *Simple Accel Cal*
-
-### [Compass](https://ardupilot.org/copter/docs/common-compass-calibration-in-mission-planner.html)
-
-Follow the [ArduPilot wiki instructions](https://ardupilot.org/copter/docs/common-compass-calibration-in-mission-planner.html) and calibrate the compass(es).
 Disable internal compasses if the battery or power wires are close to the flight controller.
-Do not select *Automatically learn offsets* it makes little sense on a multicopter.
-And we will do in-flight MagFit later
+Do not select *Automatically learn offsets* for a multicopter; in-flight MagFit is performed
+later. For large vehicles, consider [large vehicle MagCal](https://ardupilot.org/copter/docs/common-compass-calibration-in-mission-planner.html#large-vehicle-magcal).
 
-If you have a large vehicle you might want to use [large vehicle MagCal](https://ardupilot.org/copter/docs/common-compass-calibration-in-mission-planner.html#large-vehicle-magcal) instead.
+### 6.8.4 Flight modes: `17_flight_modes.param`
 
-### [Radio Calibration](https://ardupilot.org/copter/docs/common-radio-control-calibration.html)
+This step does not use a plugin. In the parameter editor, assign the desired mode to each of
+`FLTMODE1` through `FLTMODE6`, matching the six positions of the transmitter's flight-mode
+switch, then upload the file. Choose modes appropriate for the vehicle, flying site, and pilot
+experience, and verify the assignments with the transmitter before flight.
 
-Follow the [ArduPilot wiki instructions](https://ardupilot.org/copter/docs/common-radio-control-calibration.html) and calibrate the Remote Control.
-Turn on your RC Transmitter and move the sticks around.
-Make sure all transmitter channels move across their entire range.
+Do not use [`POSHOLD`](https://ardupilot.org/copter/docs/poshold-mode.html); use
+[`LOITER`](https://ardupilot.org/copter/docs/loiter-mode.html) instead when a good GNSS signal is
+available. Otherwise, [`ALTHOLD`](https://ardupilot.org/copter/docs/altholdmode.html) is recommended.
 
-### [Servo Output](https://ardupilot.org/copter/docs/common-dshot-escs.html#configure-the-servo-functions)
+### 6.8.5 Servo outputs: `18_servo_outputs.param`
 
-Change the parameters according to your requirements.
+Use the **servo output plugin** to create the initial `SERVOx_FUNCTION` assignments for the
+motors. Before using it, complete the component-editor entries for the **FC-to-ESC connection**
+and ensure that `FRAME_CLASS` matches the airframe. The plugin can only make a recommendation
+when the connection type is **Main Out** or **AIO**.
 
-### [ESC Calibration](https://ardupilot.org/copter/docs/esc-calibration.html)
+1. Open this step and read the proposed assignments. The motor count comes from the selected
+   `FRAME_CLASS`.
+1. The selected **FC-to-ESC connection** identifies the output bank used by the first motors.
+   With **Main Out**, motors 1 through 8 are assigned to `SERVO1_FUNCTION` through
+   `SERVO8_FUNCTION`; additional motors continue at `SERVO9_FUNCTION` in the **AIO** bank.
+   With **AIO**, motors 1 through 6 are assigned to `SERVO9_FUNCTION` through
+   `SERVO14_FUNCTION`; additional motors continue at `SERVO1_FUNCTION` in the **Main Out** bank.
+   This lets the plugin assign vehicles with more motors than the first bank provides.
+1. Select **Apply Recommended Motor Outputs** to add or enable the proposed motor functions.
+   The plugin changes only missing or disabled (`0`) functions. It never replaces a non-zero
+   `SERVOx_FUNCTION`, so existing custom wiring remains intact.
+1. Compare every assignment with the flight-controller wiring and correct any deliberate custom
+   mapping in the parameter editor. Configure non-motor functions, such as a payload, landing
+   gear, or buzzer, manually; leave genuinely unused outputs disabled.
+1. Upload the file, then perform the later
+   [motor/propeller order and direction test](#612-motorpropeller-order-and-direction-test)
+   before fitting propellers or flying.
 
-Do not make changes here, these parameters will be set later on the [Motor/Propeller order and direction test](#612-motorpropeller-order-and-direction-test) section
-
-### [Flight Modes](https://ardupilot.org/copter/docs/flight-modes.html)
-
-Define the flight modes you plan to use.
-Do not use [`POSHOLD`](https://ardupilot.org/copter/docs/poshold-mode.html), use [`LOITER`](https://ardupilot.org/copter/docs/loiter-mode.html) instead.
-Both only work outdoors because they require a good GNSS signal quality with low variance.
-If that is not possible, [GPS glitches](https://ardupilot.org/copter/docs/common-diagnosing-problems-using-logs.html#gps-glitches) will occur and [`ALTHOLD` flight mode](https://ardupilot.org/copter/docs/altholdmode.html) is recommended instead.
-
-### [Failsafe](https://ardupilot.org/copter/docs/failsafe-landing-page.html)
-
-These are very important and can save your vehicle in case of failure.
-Configure at least [`Radio Failsafe`](https://ardupilot.org/copter/docs/radio-failsafe.html), [`Battery Failsafe`](https://ardupilot.org/copter/docs/failsafe-battery.html) and [`Geofence`](https://ardupilot.org/copter/docs/common-ac2_simple_geofence.html)
-
-### HW ID
-
-This is just informational. No need to change anything.
-
-### [ADSB](https://ardupilot.org/copter/docs/common-ads-b-receiver.html)
-
-Change the parameters according to your requirements.
-
-### Last step
-
-The changes you did in the steps above have been stored in your vehicle.
-Most of the changed parameters are vehicle-instance specific and can not be reused between two vehicles, no matter how similar they are.
-Close Mission Planner.
+This step assigns output functions only. Configure the ESC protocol and calibrate the ESCs in
+their respective steps. For background and special output-function cases, see the
+[ArduPilot servo output instructions](https://ardupilot.org/copter/docs/common-servo.html).
 
 ## 6.9 General configuration
 

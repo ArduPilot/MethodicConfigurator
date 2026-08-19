@@ -85,9 +85,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
             "Place the vehicle level and click the button. Slightly reduced accuracy.\n\n"
             "Full Calibration — Highest accuracy. Move the vehicle to 6 positions as instructed. "
             "The vehicle must rest completely still (do not hold it) when you press Continue "
-            "for each step — stillness matters more than exact angle.\n\n"
-            "Level Calibration — Trims roll and pitch only (not yaw). "
-            "Must be performed AFTER a Simple or Full calibration."
+            "for each step — stillness matters more than exact angle."
         )
         ttk.Label(main_frame, text=info_text, justify="left", wraplength=600).pack(pady=(0, 20))
 
@@ -108,13 +106,6 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
             command=self._on_start_full_calibration,
         )
         self._full_btn.pack(side="left", padx=8)
-
-        self._level_btn = ttk.Button(
-            buttons_frame,
-            text=_("Level Calibration (Trim)"),
-            command=self._on_level_calibration,
-        )
-        self._level_btn.pack(side="left", padx=8)
 
         # --- Live sensor status ---
         self._imu_position_var = tk.StringVar(value="—")
@@ -180,20 +171,12 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._cancel_btn.pack(side="left", padx=8)
 
     # ------------------------------------------------------------------
-    # Simple / level calibration
+    # Simple calibration
     # ------------------------------------------------------------------
 
     def _on_simple_calibration(self) -> None:
         """Handle Simple Calibration button."""
         success, message = self.model.start_simple_calibration()
-        if success:
-            showinfo(_("Calibration Result"), message)
-        else:
-            showerror(_("Calibration Failed"), message)
-
-    def _on_level_calibration(self) -> None:
-        """Handle Level Calibration button."""
-        success, message = self.model.start_level_calibration()
         if success:
             showinfo(_("Calibration Result"), message)
         else:
@@ -212,7 +195,6 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
 
         # Show wizard, disable the top-level calibration buttons
         self._simple_btn.configure(state="disabled")
-        self._level_btn.configure(state="disabled")
         self._full_btn.configure(state="disabled")
         self._position_label.configure(text=_("Waiting for flight controller..."))
         self._continue_btn.configure(state="disabled")
@@ -289,7 +271,6 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._expected_position_name = ""
         self._wizard_frame.pack_forget()
         self._simple_btn.configure(state="normal")
-        self._level_btn.configure(state="normal")
         self._full_btn.configure(state="normal")
 
     # ------------------------------------------------------------------
