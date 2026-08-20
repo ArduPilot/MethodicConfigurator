@@ -37,7 +37,7 @@ from ardupilot_methodic_configurator.data_model_flightcontroller_info import (
 )
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-lines
 
 
 def _build_flight_controller_with_mocks(
