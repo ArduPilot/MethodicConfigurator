@@ -24,6 +24,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_json_with_schema import FilesystemJSONWithSchema
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.data_model_vehicle_components_validation import FRAME_CLASS_DICT
 from ardupilot_methodic_configurator.plugins.data_model_battery_monitor import BatteryMonitorDataModel
 
 # pylint: disable=too-many-lines
@@ -117,6 +118,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         self._test_order: list[int] = []  # default to empty
         self._motor_directions: list[str] = []  # default to empty
         self._frame_layout: dict[str, Any] = {}  # default to empty
+        self._invalid_frame_type_error: str | None = None
 
         self._test_throttle_pct = 0.0
         self._test_duration_s = 0.0
@@ -178,33 +180,19 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         # Update frame parameters
         self._frame_class = frame_class
         self._frame_type = frame_type
-        self._motor_count = 0
-        self._frame_layout = {}
+        self._invalid_frame_type_error = None
+        has_frame_class_configuration = False
+        frame_type_is_available = False
 
-        # Find matching layout in motor data and populate motor arrays
+        # Check available layouts before loading the matching motor layout.
         if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
             for layout in self._motor_data_loader.data["layouts"]:
-                if layout["Class"] == self._frame_class and layout["Type"] == self._frame_type and "motors" in layout:
-                    self._frame_layout = layout
-                    self._motor_count = len(layout["motors"])
-                    # Generate motor labels: A-Z for first 26, then AA, AB, AC... for motors 27-32
-                    self._motor_labels = []
-                    for i in range(self._motor_count):
-                        if i < 26:
-                            self._motor_labels.append(chr(ord("A") + i))
-                        else:
-                            # For motors 27-32: AA, AB, AC, AD, AE, AF
-                            self._motor_labels.append("A" + chr(ord("A") + (i - 26)))
-                    self._motor_numbers = [0] * self._motor_count
-                    self._test_order = [0] * self._motor_count
-                    self._motor_directions = [""] * self._motor_count
-                    for i, motor in enumerate(self._frame_layout.get("motors", [])):
-                        test_order = motor.get("TestOrder")
-                        if test_order and 1 <= test_order <= self._motor_count:
-                            self._motor_numbers[test_order - 1] = motor.get("Number")
-                            self._motor_directions[test_order - 1] = motor.get("Rotation")
-                            self._test_order[i] = test_order
-                    break
+                if layout.get("Class") == self._frame_class and layout.get("motors"):
+                    has_frame_class_configuration = True
+                if layout.get("Class") == self._frame_class and layout.get("Type") == self._frame_type:
+                    frame_type_is_available = True
+
+        self._load_motor_layout()
 
         if self._motor_count == 0:
             if self._frame_class == 0:
@@ -213,6 +201,16 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                     self._frame_class,
                     self._frame_type,
                 )
+                return
+            metadata_frame_types = self._get_frame_types_from_parameter_metadata(self._frame_class)
+            frame_type_is_available = frame_type_is_available or self._frame_type in metadata_frame_types
+            if frame_type_is_available:
+                return
+            if has_frame_class_configuration or metadata_frame_types:
+                self._invalid_frame_type_error = _(
+                    "No motor configuration found for frame class %(class)d and type %(type)d; select a valid frame type"
+                ) % {"class": self._frame_class, "type": self._frame_type}
+                logging_error(self._invalid_frame_type_error)
                 return
             raise RuntimeError(
                 _("No motor configuration found for frame class %(class)d and type %(type)d")
@@ -227,6 +225,44 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 "motors": self._motor_count,
             },
         )
+
+    def _load_motor_layout(self) -> None:
+        """Reset and populate motor data for the current frame class and type."""
+        self._motor_count = 0
+        self._motor_labels = []
+        self._motor_numbers = []
+        self._test_order = []
+        self._motor_directions = []
+        self._frame_layout = {}
+
+        if not self._motor_data_loader.data or "layouts" not in self._motor_data_loader.data:
+            return
+
+        for layout in self._motor_data_loader.data["layouts"]:
+            if layout.get("Class") != self._frame_class or layout.get("Type") != self._frame_type or "motors" not in layout:
+                continue
+
+            self._frame_layout = layout
+            self._motor_count = len(layout["motors"])
+            self._motor_labels = [
+                chr(ord("A") + index) if index < 26 else "A" + chr(ord("A") + (index - 26))
+                for index in range(self._motor_count)
+            ]
+            self._motor_numbers = [0] * self._motor_count
+            self._test_order = [0] * self._motor_count
+            self._motor_directions = [""] * self._motor_count
+            for index, motor in enumerate(layout["motors"]):
+                test_order = motor.get("TestOrder")
+                if test_order and 1 <= test_order <= self._motor_count:
+                    self._motor_numbers[test_order - 1] = motor.get("Number")
+                    self._motor_directions[test_order - 1] = motor.get("Rotation")
+                    self._test_order[index] = test_order
+            return
+
+    @property
+    def invalid_frame_type_error(self) -> str | None:
+        """Return the invalid frame type error detected during initialization, if any."""
+        return self._invalid_frame_type_error
 
     def _get_test_settings_from_disk(self) -> None:
         """Load test settings from disk."""
@@ -753,6 +789,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                              or empty string if not available
 
         """
+        if self._invalid_frame_type_error:
+            return "", ""
         return ProgramSettings.motor_diagram_filepath(self._frame_class, self._frame_type)
 
     def motor_diagram_exists(self) -> bool:
@@ -763,7 +801,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             bool: True if diagram exists, False otherwise
 
         """
-        return ProgramSettings.motor_diagram_exists(self._frame_class, self._frame_type)
+        return bool(
+            not self._invalid_frame_type_error and ProgramSettings.motor_diagram_exists(self._frame_class, self._frame_type)
+        )
 
     def _get_test_duration_s(self) -> float:
         """
@@ -902,16 +942,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             # Update internal state
             self._frame_class = frame_class
             self._frame_type = frame_type
-
-            # Recalculate motor count using motor data loader
-            self._motor_count = 0
-            if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
-                # Find a layout that matches the current frame class and type
-                for layout in self._motor_data_loader.data["layouts"]:
-                    if layout.get("Class") == frame_class and layout.get("Type") == frame_type and "motors" in layout:
-                        self._frame_layout = layout
-                        self._motor_count = len(layout["motors"])
-                        break
+            self._invalid_frame_type_error = None
+            self._load_motor_layout()
 
             logging_info(
                 _("Frame configuration updated: Class=%(class)d, Type=%(type)d, Motors=%(motors)d"),
@@ -975,6 +1007,14 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             )
             return types_for_class
 
+        parameter_metadata_types = self._get_frame_types_from_parameter_metadata(frame_class_int)
+        if parameter_metadata_types:
+            logging_debug(
+                _("Found %(count)d frame types for current frame class %(class)d in parameter metadata"),
+                {"count": len(parameter_metadata_types), "class": frame_class_int},
+            )
+            return parameter_metadata_types
+
         # Class number not found in motor data
         max_class = max(class_number_to_name.keys()) if class_number_to_name else 0
         logging_warning(
@@ -982,6 +1022,42 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             {"class": frame_class_int, "max": max_class},
         )
         return {}
+
+    def _get_frame_types_from_parameter_metadata(self, frame_class: int) -> dict[int, str]:
+        """Get frame types for a class from flight-controller parameter metadata."""
+        doc_dict = getattr(self.filesystem, "doc_dict", None)
+        if not doc_dict:
+            return {}
+
+        class_values = doc_dict.get("FRAME_CLASS", {}).get("values", {})
+        class_name = None
+        for code, name in class_values.items():
+            try:
+                if int(code) == frame_class:
+                    class_name = str(name).strip().upper()
+                    break
+            except (TypeError, ValueError):
+                continue
+        if not class_name:
+            class_name = FRAME_CLASS_DICT.get("ArduCopter", {}).get(frame_class, "").upper()
+        if not class_name:
+            return {}
+
+        frame_type_values = doc_dict.get("FRAME_TYPE", {}).get("values", {})
+        frame_types: dict[int, str] = {}
+        for code, name in frame_type_values.items():
+            if ":" not in str(name):
+                continue
+            metadata_class_name, type_name = str(name).split(":", 1)
+            if metadata_class_name.strip().upper() != class_name:
+                continue
+            try:
+                frame_types[int(code)] = type_name.strip()
+            except (TypeError, ValueError):
+                continue
+        if not frame_types and class_name == "BICOPTER":
+            frame_types[0] = "PLUS"
+        return frame_types
 
     def get_frame_options(self) -> dict[str, dict[int, str]]:  # pylint: disable=too-many-branches
         """
@@ -1193,18 +1269,8 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             # Update internal state and recalculate motor count
             self._frame_class = frame_class_code
             self._frame_type = frame_type_code
-            self._motor_count = 0
-            if self._motor_data_loader.data and "layouts" in self._motor_data_loader.data:
-                # Find a layout that matches the current frame class and type
-                for layout in self._motor_data_loader.data["layouts"]:
-                    if (
-                        layout.get("Class") == frame_class_code
-                        and layout.get("Type") == frame_type_code
-                        and "motors" in layout
-                    ):
-                        self._frame_layout = layout
-                        self._motor_count = len(layout["motors"])
-                        break
+            self._invalid_frame_type_error = None
+            self._load_motor_layout()
 
             return True
 
