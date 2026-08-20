@@ -658,13 +658,27 @@ class TestFlightControllerParamsDownload:
         assert params == {}
         assert isinstance(defaults, ParDict)
         mock_warning.assert_called_once()
-        progress.assert_called_once_with(100, 100)
+        progress.assert_not_called()
 
-    def test_mavftp_download_ignores_progress_callback_errors_during_fallback(self) -> None:
+    def test_download_params_ignores_progress_callback_errors_during_fallback(self) -> None:
         """A broken progress callback must not prevent the MAVLink fallback."""
+        mock_master = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        mock_master.mav = MagicMock()
+        mavlink_message = MagicMock()
+        mavlink_message.param_count = 2
+        mavlink_message.to_dict.return_value = {"param_id": "AHRS_EKF_TYPE", "param_value": 10.0}
+        second_mavlink_message = MagicMock()
+        second_mavlink_message.param_count = 2
+        second_mavlink_message.to_dict.return_value = {"param_id": "ATC_RATE_RLL_FF", "param_value": 0.12}
+        mock_master.recv_match.side_effect = [mavlink_message, second_mavlink_message]
+
         mock_conn_mgr = Mock()
-        mock_conn_mgr.master = MagicMock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.comport_device = "tcp:127.0.0.1:5760"
         mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.info.is_mavftp_supported = True
         params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
 
         progress = Mock(side_effect=RuntimeError("UI unavailable"))
@@ -672,11 +686,12 @@ class TestFlightControllerParamsDownload:
             "ardupilot_methodic_configurator.backend_flightcontroller_params.create_mavftp",
             side_effect=ValueError("paramftp: bad count 999 should be 989"),
         ):
-            params, defaults = params_mgr._download_params_via_mavftp(progress)  # pylint: disable=protected-access
+            params, defaults = params_mgr.download_params(progress)
 
-        assert params == {}
+        mock_master.mav.param_request_list_send.assert_called_once_with(1, 1)
+        assert params == {"AHRS_EKF_TYPE": 10.0, "ATC_RATE_RLL_FF": 0.12}
         assert isinstance(defaults, ParDict)
-        progress.assert_called_once_with(100, 100)
+        progress.assert_called_once_with(1, 2)
 
     def test_download_params_falls_back_to_mavlink_after_mavftp_exception(self) -> None:
         """
@@ -707,7 +722,7 @@ class TestFlightControllerParamsDownload:
             params, defaults = params_mgr.download_params()
 
         # Assert (Then): MAVLink completes the download after the recoverable FTP failure
-        mock_mavlink.assert_called_once_with(None)
+        mock_mavlink.assert_called_once()
         assert params == fallback_params
         assert isinstance(defaults, ParDict)
         assert params_mgr.fc_parameters == fallback_params

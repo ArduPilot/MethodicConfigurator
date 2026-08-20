@@ -53,6 +53,10 @@ from ardupilot_methodic_configurator.backend_mavftp import (
     OP_ReadFile,
 )
 
+PARAM_HEADER_STRUCT = struct.Struct("<HHH")
+PARAM_MAGIC = 0x671B
+PARAM_MAGIC_WITH_DEFAULTS = 0x671C
+
 
 class TestMAVFTPPayloadDecoding(unittest.TestCase):
     """Test MAVFTP payload decoding."""
@@ -97,7 +101,46 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
 
     def test_param_decode_rejects_truncated_parameter_record(self) -> None:
         """A packed parameter record missing its value must return no data."""
-        payload = struct.pack("<HHH", 0x671B, 1, 1) + b"\x01\x00A"
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC, 1, 1) + b"\x01\x00A"
+
+        assert MAVFTP.ftp_param_decode(payload) is None
+
+    def test_param_decode_decodes_plain_parameter_value(self) -> None:
+        """A packed parameter record is decoded into its name, value, and type."""
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC, 1, 1)
+        payload += b"\x04\x30TEST" + struct.pack("<f", 12.5)
+
+        result = MAVFTP.ftp_param_decode(payload)
+
+        assert result is not None
+        assert result.params == [(b"TEST", 12.5, 4)]
+        assert result.defaults is None
+
+    def test_param_decode_decodes_explicit_default_value(self) -> None:
+        """A defaults record keeps the transmitted default value."""
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC_WITH_DEFAULTS, 1, 1)
+        payload += b"\x14\x30RATE" + struct.pack("<ff", 12.5, 10.0)
+
+        result = MAVFTP.ftp_param_decode(payload)
+
+        assert result is not None
+        assert result.params == [(b"RATE", 12.5, 4)]
+        assert result.defaults == [(b"RATE", 10.0, 4)]
+
+    def test_param_decode_handles_shared_names_and_padding(self) -> None:
+        """Padding and a shared name prefix are ignored and reconstructed correctly."""
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC, 2, 2)
+        payload += b"\x01\x20FOO" + struct.pack("<b", 1)
+        payload += b"\x00\x00\x01\x02B" + struct.pack("<b", 2)
+
+        result = MAVFTP.ftp_param_decode(payload)
+
+        assert result is not None
+        assert result.params == [(b"FOO", 1, 1), (b"FOB", 2, 1)]
+
+    def test_param_decode_rejects_invalid_shared_name_prefix(self) -> None:
+        """A record cannot reference more prefix bytes than its predecessor contains."""
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC, 1, 1) + b"\x01\x0fA\x05"
 
         assert MAVFTP.ftp_param_decode(payload) is None
 
@@ -110,7 +153,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         THEN: It returns no data instead of attempting to unpack an incomplete header
         """
         # Arrange (Given): A header followed by only the parameter type byte
-        payload = struct.pack("<HHH", 0x671B, 1, 1) + b"\x01"
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC, 1, 1) + b"\x01"
 
         # Act (When): Decode the incomplete packed parameter data
         result = MAVFTP.ftp_param_decode(payload)

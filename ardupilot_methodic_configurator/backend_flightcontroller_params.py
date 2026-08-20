@@ -33,6 +33,26 @@ if TYPE_CHECKING:
     )
 
 
+class _ProgressReporter:  # pylint: disable=too-few-public-methods
+    """Safely report progress and disable a callback after its first failure."""
+
+    def __init__(self, callback: Callable[[int, int], None] | None) -> None:
+        self.callback = callback
+
+    def __call__(self, current: int, total: int) -> None:
+        """Report progress without allowing callback failures to interrupt a transfer."""
+        if self.callback is None:
+            return
+        try:
+            self.callback(current, total)
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_warning(
+                _("Parameter download progress update failed: %(error)s"),
+                {"error": str(error)},
+            )
+            self.callback = None
+
+
 class FlightControllerParams:
     """
     Manages flight controller parameter operations.
@@ -117,19 +137,22 @@ class FlightControllerParams:
         if self.master is None:
             return {}, ParDict()
 
+        progress_reporter = _ProgressReporter(progress_callback)
+
         # Check if MAVFTP is supported
         if self.info.is_mavftp_supported:
             logging_info(_("MAVFTP is supported by the %s flight controller"), self.comport_device)
 
             param_dict, default_param_dict = self._download_params_via_mavftp(
-                progress_callback, parameter_values_filename, parameter_defaults_filename
+                progress_reporter, parameter_values_filename, parameter_defaults_filename
             )
             if param_dict:
                 self.fc_parameters = param_dict
                 return param_dict, default_param_dict
-
-        logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport_device)
-        param_dict, download_complete = self._download_params_via_mavlink(progress_callback)
+            logging_info(_("MAVFTP parameter download failed on the %s, fallback to MAVLink"), self.comport_device)
+        else:
+            logging_info(_("MAVFTP is not supported by the %s flight controller, fallback to MAVLink"), self.comport_device)
+        param_dict, download_complete = self._download_params_via_mavlink(progress_reporter)
         if not download_complete:
             logging_error(_("Incomplete parameter download from the %s flight controller"), self.comport_device)
             return {}, ParDict()
@@ -154,6 +177,9 @@ class FlightControllerParams:
             parameters were received.
 
         """
+        progress_reporter = (
+            progress_callback if isinstance(progress_callback, _ProgressReporter) else _ProgressReporter(progress_callback)
+        )
         logging_debug(_("Will fetch all parameters from the %s flight controller"), self.comport_device)
 
         # Dictionary to store parameters
@@ -176,9 +202,7 @@ class FlightControllerParams:
                 param_value = message["param_value"]
                 parameters[param_id] = param_value
                 logging_debug(_("Received parameter: %s = %s"), param_id, param_value)
-                # Call the progress callback with the current progress
-                if progress_callback:
-                    progress_callback(len(parameters), m.param_count)
+                progress_reporter(len(parameters), m.param_count)
                 if m.param_count == len(parameters):
                     logging_debug(
                         _("Fetched %d parameter values from the %s flight controller"), m.param_count, self.comport_device
@@ -210,12 +234,15 @@ class FlightControllerParams:
         """
         if self.master is None:
             return {}, ParDict()
+        progress_reporter = (
+            progress_callback if isinstance(progress_callback, _ProgressReporter) else _ProgressReporter(progress_callback)
+        )
         try:
             mavftp = create_mavftp(self.master)
 
             def get_params_progress_callback(completion: float) -> None:
                 if progress_callback is not None and completion is not None:
-                    progress_callback(int(completion * 100), 100)
+                    progress_reporter(int(completion * 100), 100)
 
             complete_param_filename = str(parameter_values_filename) if parameter_values_filename else "complete.param"
             default_param_filename = str(parameter_defaults_filename) if parameter_defaults_filename else "00_default.param"
@@ -236,22 +263,16 @@ class FlightControllerParams:
             else:
                 ret.display_message()
 
+            if pdict:
+                progress_reporter(100, 100)
             return pdict, defdict
         except Exception as error:  # pylint: disable=broad-exception-caught
             logging_warning(
                 _("MAVFTP parameter download failed; falling back to MAVLink: %(error)s"),
                 {"error": str(error)},
+                exc_info=True,
             )
             return {}, ParDict()
-        finally:
-            if progress_callback is not None:
-                try:
-                    progress_callback(100, 100)
-                except Exception as error:  # pylint: disable=broad-exception-caught
-                    logging_warning(
-                        _("MAVFTP parameter download progress update failed: %(error)s"),
-                        {"error": str(error)},
-                    )
 
     def set_param(self, param_name: str, param_value: float) -> tuple[bool, str]:
         """

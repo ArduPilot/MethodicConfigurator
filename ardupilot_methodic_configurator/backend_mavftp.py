@@ -83,6 +83,15 @@ ERR_RemoteReplyTimeout = 73
 
 HDR_Len = 12
 MAX_Payload = 239
+PARAM_HEADER_STRUCT = struct.Struct("<HHH")
+PARAM_MAGIC = 0x671B
+PARAM_MAGIC_WITH_DEFAULTS = 0x671C
+PARAM_TYPE_FORMATS = {
+    1: (1, "b"),
+    2: (2, "h"),
+    3: (4, "i"),
+    4: (4, "f"),
+}
 # pylint: enable=invalid-name
 
 
@@ -1311,81 +1320,76 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         )
 
     @staticmethod
-    def ftp_param_decode(data: bytes) -> ParamData | None:  # pylint: disable=too-many-locals  # noqa: PLR0911,PLR0915
-        """Decode parameter data, returning ParamData."""
-        pdata = ParamData()
+    def __decode_param_record(  # pylint: disable=too-many-locals
+        data: bytes,
+        last_name: bytes,
+        with_defaults: bool,
+        pdata: ParamData,
+    ) -> tuple[bytes, bytes] | None:
+        """Decode one packed-parameter record and append it to ``pdata``."""
+        if len(data) < 2:
+            logging.error("paramftp: truncated parameter header")
+            return None
 
-        magic = 0x671B
-        magic_defaults = 0x671C
-        if len(data) < 6:
+        ptype, plen = struct.unpack("<BB", data[0:2])
+        flags = (ptype >> 4) & 0x0F
+        has_default = with_defaults and (flags & 1) != 0
+        ptype &= 0x0F
+        if ptype not in PARAM_TYPE_FORMATS:
+            logging.error("paramftp: bad type 0x%x", ptype)
+            return None
+
+        type_len, type_format = PARAM_TYPE_FORMATS[ptype]
+        name_len = ((plen >> 4) & 0x0F) + 1
+        common_len = plen & 0x0F
+        value_len = type_len * (2 if has_default else 1)
+        record_len = 2 + name_len + value_len
+        if len(data) < record_len:
+            logging.error("paramftp: truncated parameter record")
+            return None
+        if common_len > len(last_name):
+            logging.error("paramftp: invalid shared parameter name prefix length %u", common_len)
+            return None
+
+        name = last_name[:common_len] + data[2 : 2 + name_len]
+        vdata = data[2 + name_len : record_len]
+        unpack_format = "<" + type_format
+        if has_default:
+            value, default = struct.unpack("<" + type_format * 2, vdata)
+            pdata.add_param(name, value, ptype)
+            pdata.add_default(name, default, ptype)
+        else:
+            (value,) = struct.unpack(unpack_format, vdata)
+            pdata.add_param(name, value, ptype)
+            if with_defaults:
+                pdata.add_default(name, value, ptype)
+        return name, data[record_len:]
+
+    @staticmethod
+    def ftp_param_decode(data: bytes) -> ParamData | None:
+        """Decode parameter data, returning ParamData."""
+        if len(data) < PARAM_HEADER_STRUCT.size:
             logging.error("paramftp: Not enough data do decode, only %u bytes", len(data))
             return None
-        magic2, _num_params, total_params = struct.unpack("<HHH", data[0:6])
-        if magic2 not in {magic, magic_defaults}:
-            logging.error("paramftp: bad magic 0x%x expected 0x%x", magic2, magic)
+        magic, _num_params, total_params = PARAM_HEADER_STRUCT.unpack_from(data)
+        if magic not in {PARAM_MAGIC, PARAM_MAGIC_WITH_DEFAULTS}:
+            logging.error("paramftp: bad magic 0x%x expected 0x%x", magic, PARAM_MAGIC)
             return None
-        with_defaults = magic2 == magic_defaults
-        data = data[6:]
-
-        # mapping of data type to type length and format
-        data_types = {
-            1: (1, "b"),
-            2: (2, "h"),
-            3: (4, "i"),
-            4: (4, "f"),
-        }
+        with_defaults = magic == PARAM_MAGIC_WITH_DEFAULTS
+        data = data[PARAM_HEADER_STRUCT.size :]
+        pdata = ParamData()
 
         count = 0
-        pad_byte = 0
         last_name = b""
-        while True:
-            while len(data) > 0 and data[0] == pad_byte:
-                data = data[1:]  # skip pad bytes
-
-            if len(data) == 0:
+        while data:
+            while data and data[0] == 0:
+                data = data[1:]
+            if not data:
                 break
-            if len(data) < 2:
-                logging.error("paramftp: truncated parameter header")
+            decoded = MAVFTP.__decode_param_record(data, last_name, with_defaults, pdata)
+            if decoded is None:
                 return None
-
-            ptype, plen = struct.unpack("<BB", data[0:2])
-            flags = (ptype >> 4) & 0x0F
-            has_default = with_defaults and (flags & 1) != 0
-            ptype &= 0x0F
-
-            if ptype not in data_types:
-                logging.error("paramftp: bad type 0x%x", ptype)
-                return None
-
-            (type_len, type_format) = data_types[ptype]
-            default_len = type_len if has_default else 0
-
-            name_len = ((plen >> 4) & 0x0F) + 1
-            common_len = plen & 0x0F
-            value_len = type_len + default_len
-            record_len = 2 + name_len + value_len
-            if len(data) < record_len:
-                logging.error("paramftp: truncated parameter record")
-                return None
-            name = last_name[0:common_len] + data[2 : 2 + name_len]
-            vdata = data[2 + name_len : record_len]
-            last_name = name
-            data = data[record_len:]
-            if with_defaults:
-                if has_default:
-                    (
-                        v1,
-                        v2,
-                    ) = struct.unpack("<" + type_format + type_format, vdata)
-                    pdata.add_param(name, v1, ptype)
-                    pdata.add_default(name, v2, ptype)
-                else:
-                    (v,) = struct.unpack("<" + type_format, vdata)
-                    pdata.add_param(name, v, ptype)
-                    pdata.add_default(name, v, ptype)
-            else:
-                (v,) = struct.unpack("<" + type_format, vdata)
-                pdata.add_param(name, v, ptype)
+            last_name, data = decoded
             count += 1
 
         if count != total_params:
