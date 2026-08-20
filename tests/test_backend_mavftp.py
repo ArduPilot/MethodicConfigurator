@@ -116,6 +116,16 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         assert result.params == [(b"TEST", 12.5, 4)]
         assert result.defaults is None
 
+    def test_param_decode_accepts_subset_response(self) -> None:
+        """A subset response has fewer transmitted parameters than the total count."""
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC, 1, 2)
+        payload += b"\x04\x30TEST" + struct.pack("<f", 12.5)
+
+        result = MAVFTP.ftp_param_decode(payload)
+
+        assert result is not None
+        assert result.params == [(b"TEST", 12.5, 4)]
+
     def test_param_decode_decodes_explicit_default_value(self) -> None:
         """A defaults record keeps the transmitted default value."""
         payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC_WITH_DEFAULTS, 1, 1)
