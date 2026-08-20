@@ -1322,16 +1322,17 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
     @staticmethod
     def __decode_param_record(  # pylint: disable=too-many-locals
         data: bytes,
+        offset: int,
         last_name: bytes,
         with_defaults: bool,
         pdata: ParamData,
-    ) -> tuple[bytes, bytes] | None:
+    ) -> tuple[bytes, int] | None:
         """Decode one packed-parameter record and append it to ``pdata``."""
-        if len(data) < 2:
+        if len(data) - offset < 2:
             logging.error("paramftp: truncated parameter header")
             return None
 
-        ptype, plen = struct.unpack("<BB", data[0:2])
+        ptype, plen = struct.unpack_from("<BB", data, offset)
         flags = (ptype >> 4) & 0x0F
         has_default = with_defaults and (flags & 1) != 0
         ptype &= 0x0F
@@ -1344,26 +1345,28 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         common_len = plen & 0x0F
         value_len = type_len * (2 if has_default else 1)
         record_len = 2 + name_len + value_len
-        if len(data) < record_len:
+        record_end = offset + record_len
+        if len(data) < record_end:
             logging.error("paramftp: truncated parameter record")
             return None
         if common_len > len(last_name):
             logging.error("paramftp: invalid shared parameter name prefix length %u", common_len)
             return None
 
-        name = last_name[:common_len] + data[2 : 2 + name_len]
-        vdata = data[2 + name_len : record_len]
+        name_start = offset + 2
+        value_start = name_start + name_len
+        name = last_name[:common_len] + data[name_start:value_start]
         unpack_format = "<" + type_format
         if has_default:
-            value, default = struct.unpack("<" + type_format * 2, vdata)
+            value, default = struct.unpack_from("<" + type_format * 2, data, value_start)
             pdata.add_param(name, value, ptype)
             pdata.add_default(name, default, ptype)
         else:
-            (value,) = struct.unpack(unpack_format, vdata)
+            (value,) = struct.unpack_from(unpack_format, data, value_start)
             pdata.add_param(name, value, ptype)
             if with_defaults:
                 pdata.add_default(name, value, ptype)
-        return name, data[record_len:]
+        return name, record_end
 
     @staticmethod
     def ftp_param_decode(data: bytes) -> ParamData | None:
@@ -1376,20 +1379,20 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             logging.error("paramftp: bad magic 0x%x expected 0x%x", magic, PARAM_MAGIC)
             return None
         with_defaults = magic == PARAM_MAGIC_WITH_DEFAULTS
-        data = data[PARAM_HEADER_STRUCT.size :]
         pdata = ParamData()
 
         count = 0
         last_name = b""
-        while data:
-            while data and data[0] == 0:
-                data = data[1:]
-            if not data:
+        offset = PARAM_HEADER_STRUCT.size
+        while offset < len(data):
+            while offset < len(data) and data[offset] == 0:
+                offset += 1
+            if offset == len(data):
                 break
-            decoded = MAVFTP.__decode_param_record(data, last_name, with_defaults, pdata)
+            decoded = MAVFTP.__decode_param_record(data, offset, last_name, with_defaults, pdata)
             if decoded is None:
                 return None
-            last_name, data = decoded
+            last_name, offset = decoded
             count += 1
 
         if count != total_params:
