@@ -394,6 +394,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.fh: SIO | BufferedReader | BufferedWriter | None = None
         self.filename: str | None = None
         self.callback: Callable[..., Any] | None = None
+        self.callback_failure: MAVFTPReturn | None = None
         self.callback_progress: Callable[..., Any] | None = None
         self.put_callback: Callable[..., Any] | None = None
         self.put_callback_progress: Callable[..., Any] | None = None
@@ -599,6 +600,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             logging.info("Getting %s to %s", fname, self.filename)
         self.op_start = time.time()
         self.callback = callback
+        self.callback_failure = None
         self.callback_progress = progress_callback
         self.read_retries = 0
         self.duplicates = 0
@@ -653,7 +655,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             rate = (ofs / dt) / 1024.0
             if self.callback is not None:
                 self.fh.seek(0)
-                self.callback(self.fh)
+                callback_result = self.callback(self.fh)
+                if isinstance(callback_result, MAVFTPReturn) and callback_result.error_code != ERR_None:
+                    self.callback_failure = callback_result
                 self.callback = None
             elif self.filename == "-":
                 self.fh.seek(0)
@@ -1247,6 +1251,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
                     ret = MAVFTPReturn(operation_name, ERR_None)
                 else:
                     ret = self.__mavlink_packet(m)
+                if self.callback_failure is not None:
+                    ret = self.callback_failure
+                    break
             if self.__idle_task():
                 break
             if timeout > 0 and time.time() - start_time > timeout:  # pylint: disable=chained-comparison

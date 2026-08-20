@@ -18,7 +18,7 @@ import unittest
 
 # from unittest.mock import patch
 from io import BytesIO, StringIO
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from pymavlink import mavutil
 
@@ -98,6 +98,22 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         result = self.mav_ftp.cmd_getparams(["values.param", "defaults.param"])
 
         assert result.error_code == ERR_Fail
+
+    def test_process_ftp_reply_propagates_getparams_callback_failure(self) -> None:
+        """A parameter-decoding callback failure makes the transfer fail, enabling fallback."""
+        callback_failure = MAVFTPReturn("GetParams", ERR_Fail)
+        packet_result = MAVFTPReturn("BurstReadFile", ERR_None)
+        self.mav_ftp.master = Mock()
+        self.mav_ftp.master.recv_match.return_value = Mock()
+
+        def simulate_finished_transfer(_message: object) -> MAVFTPReturn:
+            self.mav_ftp.callback_failure = callback_failure
+            return packet_result
+
+        with patch.object(self.mav_ftp, "_MAVFTP__mavlink_packet", side_effect=simulate_finished_transfer):
+            result = self.mav_ftp.process_ftp_reply("getparams", timeout=5)
+
+        assert result is callback_failure
 
     def test_param_decode_rejects_truncated_parameter_record(self) -> None:
         """A packed parameter record missing its value must return no data."""
