@@ -1374,7 +1374,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         if len(data) < PARAM_HEADER_STRUCT.size:
             logging.error("paramftp: Not enough data do decode, only %u bytes", len(data))
             return None
-        magic, _num_params, total_params = PARAM_HEADER_STRUCT.unpack_from(data)
+        magic, num_params, _total_params = PARAM_HEADER_STRUCT.unpack_from(data)
         if magic not in {PARAM_MAGIC, PARAM_MAGIC_WITH_DEFAULTS}:
             logging.error("paramftp: bad magic 0x%x expected 0x%x", magic, PARAM_MAGIC)
             return None
@@ -1395,8 +1395,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             last_name, offset = decoded
             count += 1
 
-        if count != total_params:
-            logging.error("paramftp: bad count %u should be %u", count, total_params)
+        if count != num_params:
+            logging.error("paramftp: bad count %u should be %u", count, num_params)
             return None
 
         return pdata
