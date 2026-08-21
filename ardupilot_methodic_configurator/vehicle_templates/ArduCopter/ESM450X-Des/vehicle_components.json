@@ -58,7 +58,7 @@
             "Specifications": {
                 "Chemistry": "Lipo",
                 "Volt per cell max": 4.2,
-                "Volt per cell arm": 3.6,
+                "Volt per cell arm": 3.5,
                 "Volt per cell low": 3.5,
                 "Volt per cell crit": 3.3,
                 "Volt per cell min": 3.3,
@@ -190,6 +190,6 @@
             "Notes": ""
         }
     },
-    "Program version": "4.3.1",
+    "Program version": "4.4.0",
     "Configuration template": "Holybro_X500_V2"
 }
