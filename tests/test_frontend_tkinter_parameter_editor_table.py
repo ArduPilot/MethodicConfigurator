@@ -2354,32 +2354,26 @@ class TestUploadSelectionBehavior:
 
 
 @pytest.fixture
-def headless_parameter_editor_table() -> ParameterEditorTable:
-    """Build a table helper without creating a Tk root window."""
-    table = object.__new__(ParameterEditorTable)
-    table_any = cast("Any", table)
-    table_any.view_port = MagicMock()
-    table_any.options = SimpleNamespace(manual_override_for_all_parameters=True, manually_editable_parameters=set())
-    table_any.upload_checkbutton_var = {}
-    table_any._value_is_different_labels = {}
-    table_any.parameter_editor = MagicMock()
-    table_any.parameter_editor_window = MagicMock()
-    table_any.canvas = MagicMock()
-    table_any._dialogs = MagicMock()
-    table_any.parameters = {}
-    return table
+def configured_parameter_editor_table(parameter_editor_table: ParameterEditorTable) -> ParameterEditorTable:
+    """Provide an initialized table with rendering dependencies replaced by mocks."""
+    parameter_editor_table.options.manual_override_for_all_parameters = True
+    parameter_editor_table.options.manually_editable_parameters = set()
+    parameter_editor_table.upload_checkbutton_var = {}
+    parameter_editor_table._value_is_different_labels = {}
+    parameter_editor_table.parameters = {}
+    return parameter_editor_table
 
 
 class TestManualOverrideBehavior:
     """Test temporary and persisted manual override workflows without rendering Tk widgets."""
 
     def test_readonly_external_parameter_has_no_manual_override(
-        self, headless_parameter_editor_table: ParameterEditorTable
+        self, configured_parameter_editor_table: ParameterEditorTable
     ) -> None:
         """
-        A readonly external parameter cannot be made manually editable.
+        A read-only external parameter cannot be made manually editable.
 
-        GIVEN: A readonly parameter from an external file
+        GIVEN: A read-only parameter from an external file
         WHEN: Its manual override widget is created
         THEN: An empty label is returned without creating a checkbox
         """
@@ -2393,13 +2387,14 @@ class TestManualOverrideBehavior:
             ),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Checkbutton") as checkbutton,
         ):
-            result = headless_parameter_editor_table._create_manual_override_widget(param)
+            result = configured_parameter_editor_table._create_manual_override_widget(param)
 
         assert result is empty_label
+        assert configured_parameter_editor_table.options.manually_editable_parameters == set()
         checkbutton.assert_not_called()
 
     def test_external_manual_override_enables_upload_and_restores_file_value(
-        self, headless_parameter_editor_table: ParameterEditorTable
+        self, configured_parameter_editor_table: ParameterEditorTable
     ) -> None:
         """
         Temporary manual editing follows the checkbox state.
@@ -2415,10 +2410,10 @@ class TestManualOverrideBehavior:
         upload_selection = MagicMock()
         difference_label = MagicMock()
         value = MagicMock()
-        value.get.side_effect = [True, True, False, False]
+        value.get.return_value = True
         checkbox = MagicMock()
-        headless_parameter_editor_table.upload_checkbutton_var["PARAM"] = upload_selection
-        headless_parameter_editor_table._value_is_different_labels["PARAM"] = difference_label
+        configured_parameter_editor_table.upload_checkbutton_var["PARAM"] = upload_selection
+        configured_parameter_editor_table._value_is_different_labels["PARAM"] = difference_label
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.tk.BooleanVar", return_value=value),
@@ -2426,22 +2421,24 @@ class TestManualOverrideBehavior:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Checkbutton",
                 return_value=checkbox,
             ) as checkbutton_factory,
-            patch.object(headless_parameter_editor_table, "_show_tooltip"),
-            patch.object(headless_parameter_editor_table, "_set_external_value_widget_editability") as set_editability,
+            patch.object(configured_parameter_editor_table, "_show_tooltip"),
+            patch.object(configured_parameter_editor_table, "_set_external_value_widget_editability") as set_editability,
         ):
-            headless_parameter_editor_table._create_manual_override_widget(param)
+            configured_parameter_editor_table._create_manual_override_widget(param)
             on_toggle = checkbutton_factory.call_args.kwargs["command"]
             on_toggle()
+            assert "PARAM" in configured_parameter_editor_table.options.manually_editable_parameters
+            value.get.return_value = False
             on_toggle()
 
         assert upload_selection.set.call_args.args == (True,)
         param.reset_new_value_to_file_value.assert_called_once_with()
         difference_label.config.assert_called_once_with(text=NEW_VALUE_DIFFERENT_STR)
-        assert "PARAM" not in headless_parameter_editor_table.options.manually_editable_parameters
+        assert "PARAM" not in configured_parameter_editor_table.options.manually_editable_parameters
         assert [item.args for item in set_editability.call_args_list] == [(param, True), (param, False)]
 
     def test_forced_parameter_override_preserves_scroll_position(
-        self, headless_parameter_editor_table: ParameterEditorTable
+        self, configured_parameter_editor_table: ParameterEditorTable
     ) -> None:
         """
         Persisted manual override keeps the user's place in the table.
@@ -2450,8 +2447,8 @@ class TestManualOverrideBehavior:
         WHEN: Manual override is toggled
         THEN: The table is rebuilt and its previous scroll position is restored
         """
-        headless_parameter_editor_table.options.manual_override_for_all_parameters = False
-        headless_parameter_editor_table.canvas.yview.return_value = (0.4, 0.8)
+        configured_parameter_editor_table.options.manual_override_for_all_parameters = False
+        configured_parameter_editor_table.canvas.yview.return_value = (0.4, 0.8)
         param = MagicMock(is_forced=True, is_derived=False, is_readonly=False, is_manual_override=False)
         value = MagicMock()
         value.get.return_value = True
@@ -2459,16 +2456,14 @@ class TestManualOverrideBehavior:
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.tk.BooleanVar", return_value=value),
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.ttk.Checkbutton") as checkbutton,
-            patch.object(headless_parameter_editor_table, "_show_tooltip"),
+            patch.object(configured_parameter_editor_table, "_show_tooltip"),
         ):
-            headless_parameter_editor_table._create_manual_override_widget(param)
+            configured_parameter_editor_table._create_manual_override_widget(param)
             checkbutton.call_args.kwargs["command"]()
 
         assert param.set_manual_override.call_args.args == (True,)
-        cast(
-            "Any", headless_parameter_editor_table
-        ).parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
-        headless_parameter_editor_table.canvas.yview_moveto.assert_called_once_with(0.4)
+        configured_parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
+        configured_parameter_editor_table.canvas.yview_moveto.assert_called_once_with(0.4)
 
 
 class TestBulkAddFeedbackBehavior:
@@ -2480,7 +2475,7 @@ class TestBulkAddFeedbackBehavior:
     )
     def test_feedback_routes_each_result_to_the_expected_popup(
         self,
-        headless_parameter_editor_table: ParameterEditorTable,
+        configured_parameter_editor_table: ParameterEditorTable,
         message_type: str,
         popup_name: str | None,
     ) -> None:
@@ -2491,7 +2486,7 @@ class TestBulkAddFeedbackBehavior:
         WHEN: Feedback is displayed
         THEN: Clean success stays silent and every other result uses its matching popup
         """
-        cast("Any", headless_parameter_editor_table).parameter_editor.generate_bulk_add_feedback_message.return_value = (
+        configured_parameter_editor_table.parameter_editor.generate_bulk_add_feedback_message.return_value = (
             message_type,
             "Title",
             "Message",
@@ -2502,7 +2497,7 @@ class TestBulkAddFeedbackBehavior:
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_info_popup") as info,
             patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table.show_error_popup") as error,
         ):
-            headless_parameter_editor_table._show_bulk_add_parameters_feedback([], [], [])
+            configured_parameter_editor_table._show_bulk_add_parameters_feedback([], [], [])
 
         popups = {"show_warning_popup": warning, "show_info_popup": info, "show_error_popup": error}
         for name, popup in popups.items():
@@ -2512,7 +2507,7 @@ class TestBulkAddFeedbackBehavior:
                 popup.assert_not_called()
 
     def test_added_parameters_repopulate_and_scroll_to_bottom(
-        self, headless_parameter_editor_table: ParameterEditorTable
+        self, configured_parameter_editor_table: ParameterEditorTable
     ) -> None:
         """
         Adding parameters refreshes the table and schedules a scroll to the new rows.
@@ -2521,26 +2516,24 @@ class TestBulkAddFeedbackBehavior:
         WHEN: Feedback is processed
         THEN: The table refreshes and the pending bottom-scroll flag is set
         """
-        cast("Any", headless_parameter_editor_table).parameter_editor.generate_bulk_add_feedback_message.return_value = (
+        configured_parameter_editor_table.parameter_editor.generate_bulk_add_feedback_message.return_value = (
             "success",
             "",
             "",
         )
-        headless_parameter_editor_table._pending_scroll_to_bottom = False
+        configured_parameter_editor_table._pending_scroll_to_bottom = False
 
-        headless_parameter_editor_table._show_bulk_add_parameters_feedback(["A", "B"], [], [])
+        configured_parameter_editor_table._show_bulk_add_parameters_feedback(["A", "B"], [], [])
 
-        assert headless_parameter_editor_table._pending_scroll_to_bottom is True
-        cast(
-            "Any", headless_parameter_editor_table
-        ).parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
+        assert configured_parameter_editor_table._pending_scroll_to_bottom is True
+        configured_parameter_editor_table.parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
 
 
 class TestManualUploadSelection:
     """Test filtering of temporary manual edits before upload."""
 
     def test_returns_only_dirty_different_unselected_manual_parameters(
-        self, headless_parameter_editor_table: ParameterEditorTable
+        self, configured_parameter_editor_table: ParameterEditorTable
     ) -> None:
         """
         Only unselected temporary edits that differ from the flight controller need confirmation.
@@ -2549,30 +2542,30 @@ class TestManualUploadSelection:
         WHEN: Unselected edits are requested
         THEN: Only dirty and different parameters not selected for upload are returned in name order
         """
-        headless_parameter_editor_table.options.manually_editable_parameters = {
+        configured_parameter_editor_table.options.manually_editable_parameters = {
             "SELECTED",
             "UNCHANGED",
             "Z_PARAM",
             "A_PARAM",
             "MISSING",
         }
-        cast("Any", headless_parameter_editor_table).parameters = {
+        configured_parameter_editor_table.parameters = {
             "SELECTED": SimpleNamespace(is_dirty=True, is_different_from_fc=True),
             "UNCHANGED": SimpleNamespace(is_dirty=True, is_different_from_fc=False),
             "Z_PARAM": SimpleNamespace(is_dirty=True, is_different_from_fc=True),
             "A_PARAM": SimpleNamespace(is_dirty=True, is_different_from_fc=True),
         }
-        cast("Any", headless_parameter_editor_table).upload_checkbutton_var = {
+        configured_parameter_editor_table.upload_checkbutton_var = {
             "SELECTED": SimpleNamespace(get=lambda: True),
             "A_PARAM": SimpleNamespace(get=lambda: False),
         }
 
-        result = headless_parameter_editor_table.get_unselected_manually_edited_different_parameter_names()
+        result = configured_parameter_editor_table.get_unselected_manually_edited_different_parameter_names()
 
         assert result == ["A_PARAM", "Z_PARAM"]
 
-    def test_returns_empty_list_without_parameters(self, headless_parameter_editor_table: ParameterEditorTable) -> None:
+    def test_returns_empty_list_without_parameters(self, configured_parameter_editor_table: ParameterEditorTable) -> None:
         """No parameter model means there are no manual edits to confirm."""
-        cast("Any", headless_parameter_editor_table).parameters = None
+        configured_parameter_editor_table.parameters = None
 
-        assert headless_parameter_editor_table.get_unselected_manually_edited_different_parameter_names() == []
+        assert configured_parameter_editor_table.get_unselected_manually_edited_different_parameter_names() == []
