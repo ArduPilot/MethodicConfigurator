@@ -157,7 +157,7 @@ class EscLogAnalysis(BaseLogModel):
 
         return windows
 
-    def check_rpm_while_armed(self) -> list[LogAnalysis]:
+    def check_rpm_while_armed(self) -> list[LogAnalysis]:  # pylint: disable=too-many-locals
         """Report ESC outputs whose RPM was zero for a sustained period while the vehicle was armed."""
         windows = self._armed_time_windows()
         if not windows:
@@ -256,7 +256,7 @@ class EscLogAnalysis(BaseLogModel):
             )
         return outcomes
 
-    def check_current_imbalance(self) -> list[LogAnalysis]:
+    def check_current_imbalance(self) -> list[LogAnalysis]:  # pylint: disable=too-many-locals
         """
         Report ESC outputs, average current is separated from the rest.
 
@@ -354,9 +354,9 @@ class EscLogAnalysis(BaseLogModel):
             ]
         return []
 
-    def _dshot_rate_multiplier(self, dshot_rate_code: float) -> float | None:  # noqa: PLR0911
+    def _dshot_rate_multiplier(self, dshot_rate_code: float) -> float | None:  # noqa: PLR0911 # pylint: disable=too-many-return-statements
         """
-        Resolve SERVO_DSHOT_RATE's effective multiplier from its apm.pdef.xml enum label.
+        SERVO_DSHOT_RATE's effective multiplier from its apm.pdef.xml enum label.
 
         Returns None if the label can't be parsed (unexpected/unknown enum value).
         """

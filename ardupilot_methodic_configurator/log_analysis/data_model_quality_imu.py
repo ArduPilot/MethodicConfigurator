@@ -16,6 +16,10 @@ from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import
     LogQualityResult,
     QualityIssue,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_instances import (
+    has_nonzero_parameter,
+    imu_device_id_param,
+)
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_param_metadata import tcal_enabled_codes
 
 # This must be at least 10 degrees above TMIN for calibration
@@ -159,6 +163,9 @@ class ImuLogAnalysis(BaseLogModel):
         outcomes: list[LogAnalysis] = []
 
         for instance in (1, 2, 3):
+            if not has_nonzero_parameter(self.parameters, imu_device_id_param(instance)):
+                continue  # no physical IMU detected
+
             enable_param = f"INS_TCAL{instance}_ENABLE"
             enable = self.parameters.get(enable_param)
             if enable is None:
