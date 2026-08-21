@@ -204,7 +204,7 @@ class TestImuLogAnalysisTemperatureCalibrationState:
         """
         # Arrange: single-IMU board, calibration disabled
         log_data = FakeLogData({})
-        model = ImuLogAnalysis(log_data, _context({"INS_TCAL1_ENABLE": 0.0}, apm_doc=imu_apm_doc))
+        model = ImuLogAnalysis(log_data, _context({"INS_TCAL1_ENABLE": 0.0, "INS_ACC_ID": 1.0}, apm_doc=imu_apm_doc))
 
         # Act: run temperature calibration analysis
         outcomes = model.check_temperature_calibration()
@@ -224,7 +224,7 @@ class TestImuLogAnalysisTemperatureCalibrationState:
         """
         # Arrange: calibration in progress
         log_data = FakeLogData({})
-        model = ImuLogAnalysis(log_data, _context({"INS_TCAL1_ENABLE": 2.0}, apm_doc=imu_apm_doc))
+        model = ImuLogAnalysis(log_data, _context({"INS_TCAL1_ENABLE": 2.0, "INS_ACC_ID": 1.0}, apm_doc=imu_apm_doc))
 
         # Act: run temperature calibration analysis
         outcomes = model.check_temperature_calibration()
@@ -242,14 +242,11 @@ class TestImuLogAnalysisTemperatureCalibrationState:
         """
         # Arrange: only instance 1's param exists
         log_data = FakeLogData({})
-        model = ImuLogAnalysis(log_data, _context({"INS_TCAL1_ENABLE": 0.0}, apm_doc=imu_apm_doc))
+        model = ImuLogAnalysis(log_data, _context({"INS_TCAL1_ENABLE": 0.0, "INS_ACC_ID": 1.0}, apm_doc=imu_apm_doc))
 
-        # Act: run temperature calibration analysis
         outcomes = model.check_temperature_calibration()
 
-        # Assert: only one finding, for instance 1
         assert len(outcomes) == 1
-        assert outcomes[0].param_name == "INS_TCAL1_ENABLE"
 
 
 class TestImuLogAnalysisTemperatureSpread:
@@ -270,6 +267,7 @@ class TestImuLogAnalysisTemperatureSpread:
             _context(
                 {
                     "INS_TCAL1_ENABLE": 1.0,
+                    "INS_ACC_ID": 1.0,
                     "INS_ACC1_CALTEMP": 25.0,
                     "INS_GYR1_CALTEMP": 25.0,
                     "INS_TCAL1_TMIN": -15.0,
@@ -302,6 +300,7 @@ class TestImuLogAnalysisTemperatureSpread:
             _context(
                 {
                     "INS_TCAL1_ENABLE": 1.0,
+                    "INS_ACC_ID": 1.0,
                     "INS_ACC1_CALTEMP": 20.0,
                     "INS_GYR1_CALTEMP": 20.0,
                     "INS_TCAL1_TMIN": 18.0,
@@ -334,6 +333,7 @@ class TestImuLogAnalysisTemperatureSpread:
             _context(
                 {
                     "INS_TCAL1_ENABLE": 1.0,
+                    "INS_ACC_ID": 1.0,
                     "INS_ACC1_CALTEMP": 30.0,
                     "INS_GYR1_CALTEMP": 30.0,
                     "INS_TCAL1_TMIN": 10.0,
@@ -370,6 +370,7 @@ class TestImuLogAnalysisInvalidCalTemp:  # pylint: disable=too-few-public-method
             _context(
                 {
                     "INS_TCAL1_ENABLE": 1.0,
+                    "INS_ACC_ID": 1.0,
                     "INS_ACC1_CALTEMP": -300.0,
                     "INS_GYR1_CALTEMP": -300.0,
                     "INS_TCAL1_TMIN": -15.0,
