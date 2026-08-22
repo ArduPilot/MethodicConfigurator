@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-08-15 14:48+0000\n"
+"POT-Creation-Date: 2026-08-22 14:44+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -71,7 +71,7 @@ msgid "Vehicle project migration to format version %d completed"
 msgstr "车辆项目迁移到格式版本 %d 完成"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:381
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:275
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:283
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:83
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_opener.py:151
 msgid "Fatal error reading parameter files"
@@ -89,7 +89,7 @@ msgstr ""
 msgid "Failed to reset parameters to defaults: %(error)s"
 msgstr "将参数重置为默认值失败: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:487
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:486
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:128
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:131
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:133
@@ -102,12 +102,12 @@ msgstr "将参数重置为默认值失败: %(error)s"
 msgid "Unknown"
 msgstr "未知"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:583
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:582
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_configuration_step.py:112
 msgid "Error in derived parameters"
 msgstr "派生参数中的错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:590
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:589
 msgid ""
 "The component or connection changes you just did will have repercussions on "
 "the following parameter files:\n"
@@ -116,65 +116,65 @@ msgstr ""
 "您刚才进行的组件或连接更改将影响以下参数文件：\n"
 "\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:592
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:591
 msgid ""
 "Please review the changes, and upload the updated parameter files to the "
 "flight controller.\n"
 msgstr "请检查这些更改，并将更新后的参数文件上传到飞行控制器。\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:594
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:593
 msgid ""
 "If you already uploaded said parameters to the FC, switch to the normal GUI "
 "complexity mode\n"
 msgstr "如果您已经将这些参数上传到飞行控制器，请切换到普通GUI复杂度模式\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:598
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:597
 msgid "in order to be able to jump to those specific parameter files"
 msgstr "以便能够跳转到那些特定的参数文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:601
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:600
 msgid "Component derived param changes"
 msgstr "由组件导出的参数更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:647
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:646
 msgid "Created backup file autobackup_%02d.param"
 msgstr "已创建备份文件 autobackup_%02d.param"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:649
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:648
 msgid "Permission denied when creating backup files: %s"
 msgstr "创建备份文件时权限被拒绝: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:650
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:649
 msgid ""
 "Please check file permissions and ensure you have write access to the "
 "vehicle directory"
 msgstr "请检查文件权限并确保您对车辆目录有写入权限"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:653
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:652
 msgid "Insufficient disk space to create backup files: %s"
 msgstr "磁盘空间不足，无法创建备份文件: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:654
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:653
 msgid "Please free up disk space and try again"
 msgstr "请释放磁盘空间并重试"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:656
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:655
 msgid "Failed to create backup files: %s"
 msgstr "创建备份文件失败: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:658
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:657
 msgid "Unexpected error creating backup files: %s"
 msgstr "创建备份文件时出现意外错误: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:738
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:737
 msgid "Parameter files firmware version from vehicle_components.json: %s"
 msgstr "车辆组件文件 vehicle_components.json 中的参数文件固件版本：%s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:747
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:746
 msgid "Incompatible parameter definition file detected"
 msgstr "检测到不兼容的参数定义文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:748
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/__main__.py:747
 msgid ""
 "The parameter definition file 'apm.pdef.xml' is incompatible with ArduPilot "
 "4.6.x firmware. It appears to be from the master branch. The file will be "
@@ -311,7 +311,7 @@ msgid ""
 msgstr "无法重新启动配置：00_default.param 是唯一可用的文件，无法编辑。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem.py:937
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1870
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1975
 msgid "Deleting parameters %s from '%s'"
 msgstr "正在从“%s”删除参数%s"
 
@@ -839,13 +839,13 @@ msgstr "无法重置飞行控制器:未连接"
 msgid "Reset command sent to ArduPilot."
 msgstr "重启指令已发送至飞控。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:573
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:596
 msgid ""
 "MAVLink serial connection baudrate to the flight controller. Default is "
 "%(default)s"
 msgstr "连接到飞行控制器的MAVLink串行连接波特率。默认为 %(default)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:579
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:602
 msgid ""
 "MAVLink connection string to the flight controller. If set to \"none\" no "
 "connection is made. If set to \"file\" the file params.param is used. "
@@ -854,7 +854,7 @@ msgstr ""
 "到飞行控制器的MAVLink连接字符串。如果设置为\"none\"则不建立连接。如果设置为"
 "\"file\"则使用params.param文件。默认为自动检测"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:594
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:617
 msgid "Flight controller reboot time. Default is %(default)s"
 msgstr "飞控重启时间, 默认为  %(default)s"
 
@@ -1128,82 +1128,82 @@ msgstr "指南针校准轮询期间忽略非校准 MAVLink 消息类型：%(mess
 msgid "Error reading compass calibration progress: %(error)s"
 msgstr "读取指南针校准进度时出错：%(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:196
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:204
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:202
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:210
 msgid "Add another"
 msgstr "添加另一个"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:213
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:219
 msgid "Available connection ports are:"
 msgstr "可用的连接端口有:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:220
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:226
 msgid "Connection port added: %s - %s"
 msgstr "连接端口已添加：%s - %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:222
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:228
 msgid "Connection port removed: %s - %s"
 msgstr "连接端口已移除：%s - %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:249
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:256
 msgid "Added connection %s"
 msgstr "已添加连接 %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:251
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:258
 msgid "Did not add duplicated connection %s"
 msgstr "没有添加重复的连接 %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:253
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:260
 msgid "Did not add empty connection"
 msgstr "没有添加空连接"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:346
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:354
 msgid "Auto-detected device %s"
 msgstr "自动检测到设备 %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:352
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:360
 msgid "Resolved soft link %s to %s"
 msgstr "已解析软链接 %s 为 %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:372
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:380
 msgid "Trying network port %s"
 msgstr "正在尝试网络端口 %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:386
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:394
 msgid "No auto-detected ports responded."
 msgstr "未检测到任何端口响应。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:456
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:464
 msgid "Detected vehicle %u:%u (autopilot=%u, type=%u)"
 msgstr "检测到车辆 %u:%u (autopilot=%u, type=%u)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:472
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:480
 msgid "No MAVLink heartbeat received, connection failed."
 msgstr "没有收到MAVLINK心跳, 连接失败。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:477
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:485
 msgid "Connection established with systemID %s, componentID %s."
 msgstr "已与系统ID %s、组件ID %s 建立连接。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:481
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:489
 msgid "Autopilot type {self.info.autopilot}"
 msgstr "飞控类型{self.info.autopilot}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:484
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:492
 msgid ""
 "Vehicle type: {self.info.mav_type} running {self.info.vehicle_type} firmware"
 msgstr ""
 "载具类型：{self.info.mav_type} 正在运行 {self.info.vehicle_type} 固件。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:487
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:495
 msgid "Unsupported autopilot type {self.info.autopilot}"
 msgstr "不支持的飞控类型{self.info.autopilot}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:490
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:498
 msgid "No supported autopilots found"
 msgstr "未找到支持的自动驾驶仪"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:612
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:622
 msgid ""
 "Permission denied accessing the serial port. This is common on Linux "
 "systems.\n"
@@ -1217,7 +1217,7 @@ msgstr ""
 "    sudo adduser $USER dialout\n"
 "然后注销并重新登录以使更改生效。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:621
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:631
 msgid ""
 "The serial port is already in use by another application.\n"
 "Close other ground-control or serial-monitoring applications, then try "
@@ -1226,13 +1226,19 @@ msgid ""
 "    lsof {device}\n"
 "or:\n"
 "    fuser {device}"
-msgstr "该串口已被其他应用程序占用。\n请关闭其他地面站或串口监视应用程序，然后重试。\n要查找正在使用该端口的进程，请运行：\n    lsof {device}\n或：\n    fuser {device}"
+msgstr ""
+"该串口已被其他应用程序占用。\n"
+"请关闭其他地面站或串口监视应用程序，然后重试。\n"
+"要查找正在使用该端口的进程，请运行：\n"
+"    lsof {device}\n"
+"或：\n"
+"    fuser {device}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:657
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:667
 msgid "ChibiOS version mismatch: %s (BANNER) != % s (AUTOPILOT_VERSION)"
 msgstr "ChibiOS版本不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:723
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:733
 msgid ""
 "No AUTOPILOT_VERSION MAVLink message received, connection failed.\n"
 "Only ArduPilot versions newer than 4.3.8 are supported.\n"
@@ -1245,27 +1251,27 @@ msgstr ""
 "仅支持 4.3.8 版本之后的 ArduPilot。\n"
 "请确保参数 SERIAL0_PROTOCOL 设置为 2。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:741
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:751
 msgid "FC firmware type mismatch: %s (BANNER) != %s (AUTOPILOT_VERSION)"
 msgstr "FC 固件类型不匹配：%s (BANNER) != %s (AUTOPILOT_VERSION)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:867
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:877
 msgid "Will connect to %s"
 msgstr "将连接到 %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:869
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:879
 msgid "Will connect to %s @ %u baud"
 msgstr "将连接到 %s @ %u 波特率"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:879
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:889
 msgid "Waiting for MAVLink heartbeats..."
 msgstr "等待 MAVLink 心跳..."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:902
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:912
 msgid "Connection failed: %s"
 msgstr "连接失败: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:903
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_connection.py:913
 msgid "Failed to connect after %d attempts."
 msgstr "重试 %d 次后依旧连接失败。"
 
@@ -1298,12 +1304,12 @@ msgid "Failed to create remote directory %(directory)s"
 msgstr "无法创建远程目录 %(directory)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:189
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1275
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1380
 msgid "No flight controller connected"
 msgstr "未连接飞行控制器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_files.py:193
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1279
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1384
 msgid "MAVFTP is not supported by the flight controller"
 msgstr "飞行控制器不支持MAVFTP"
 
@@ -1395,50 +1401,66 @@ msgstr "下载日志文件失败: %(error)s"
 msgid "Could not extract last log file number from LASTLOG.TXT: %(error)s"
 msgstr "无法从LASTLOG.TXT提取最后一个日志文件编号: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:50
+msgid "Parameter download progress update failed: %(error)s"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:131
 msgid "Testing active, will load all parameters from the %s file"
 msgstr "测试中，将从 %s 文件加载所有参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:122
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:144
 msgid "MAVFTP is supported by the %s flight controller"
 msgstr "MAVFTP 由 %s 飞控支持。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:131
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:152
+msgid "MAVFTP parameter download failed on the %s, fallback to MAVLink"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:154
 msgid ""
 "MAVFTP is not supported by the %s flight controller, fallback to MAVLink"
 msgstr "飞控 %s 不支持MAVFTP, 已切换为MAVLink"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:149
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:157
+msgid "Incomplete parameter download from the %s flight controller"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:183
 msgid "Will fetch all parameters from the %s flight controller"
 msgstr "将从 %s 获取飞控所有参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:170
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:329
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:204
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:371
 msgid "Received parameter: %s = %s"
 msgstr "获取到参数: %s = %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:176
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:208
 msgid "Fetched %d parameter values from the %s flight controller"
 msgstr "获取到了 %d 个来自于 %s 飞控的参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:180
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:212
 msgid "Error: %s"
 msgstr "错误: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:252
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:271
+msgid "MAVFTP parameter download failed; falling back to MAVLink: %(error)s"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:294
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:407
 msgid "No flight controller connection available"
 msgstr "无可用的飞控连接"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:262
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:304
 msgid "Invalid parameter value type: %s (expected numeric)"
 msgstr "无效的参数值类型: %s (期望数字)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:309
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:351
 msgid "Timeout for parameter %s is non-positive, skipping request"
 msgstr "参数%s的超时不是正数,跳过请求"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:336
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:378
 msgid "Timeout waiting for parameter %s"
 msgstr "等待参数 %s 超时"
 
@@ -3255,8 +3277,8 @@ msgid "Guided operation"
 msgstr "引导操作"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:361
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:240
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:251
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:248
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:259
 msgid "IMU temperature calibration"
 msgstr "IMU 温度校准"
 
@@ -3515,7 +3537,7 @@ msgstr "此阶段是否可选"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:248
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:298
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:384
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:551
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:119
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:130
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:186
@@ -3531,68 +3553,68 @@ msgstr "此参数在 apm.pdef.xml 中没有可用的文档"
 msgid "Reason why {param_name} should change to {value}"
 msgstr "{param_name}应该更改为{value}的原因"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:319
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:323
 msgid "The value for {param_name} must be a finite number."
 msgstr "{param_name} 的值必须是有限数字。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:326
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:330
 msgid "The value for {param_name} ({value}) should be smaller than {max_val}\n"
 msgstr "{param_name}的值（{value}）应该小于{max_val}\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:335
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:339
 msgid "The value for {param_name} ({value}) should be greater than {min_val}\n"
 msgstr "{param_name}的值（{value}）应该大于{min_val}\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:349
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:353
 msgid "The value for {param_name} contains unknown bit(s)."
 msgstr "{param_name}的值包含未知位。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:405
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:409
 msgid "This parameter is forced or derived and cannot be changed."
 msgstr "此参数是强制或派生的，无法更改。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:408
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:412
 msgid "Parameter value must be provided as a string."
 msgstr "参数值必须以字符串形式提供。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:412
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:416
 msgid "Empty value is not allowed for {param_name}"
 msgstr "{param_name}不允许空值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:420
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:424
 msgid "The provided value for {param_name} would not change the parameter."
 msgstr "为{param_name}提供的值不会更改参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:432
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:436
 msgid "The value for {param_name} must be an integer for bitmask parameters."
 msgstr "{param_name}的值对于位掩码参数必须是整数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:437
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:441
 msgid ""
 "The provided bitmask value for {param_name} would not change the parameter."
 msgstr "为{param_name}提供的位掩码值不会更改参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:453
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:457
 msgid "The value for {param_name} must be a number."
 msgstr "{param_name}的值必须是数字。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:460
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:464
 msgid ""
 "The provided numeric value for {param_name} is within tolerance and would "
 "not change the parameter."
 msgstr "为{param_name}提供的数值在容差范围内，不会更改参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:511
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:533
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:515
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:537
 msgid "This method is only for forced or derived parameters."
 msgstr "此方法仅适用于强制或派生参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:514
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:536
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:518
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:540
 msgid "Readonly parameters cannot be forced or derived."
 msgstr "只读参数不能被强制或派生。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:557
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_ardupilot_parameter.py:561
 msgid "Manual override is only applicable to forced or derived parameters."
 msgstr "手动覆盖仅适用于强制或派生参数。"
 
@@ -3791,7 +3813,7 @@ msgstr "只能追加另一个ParDict实例"
 msgid "Can only compare with another ParDict instance"
 msgstr "只能与另一个ParDict实例进行比较"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:233
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:241
 msgid ""
 "If you proceed the {tempcal_imu_result_param_filename}\n"
 "will be overwritten with the new calibration results.\n"
@@ -3806,11 +3828,11 @@ msgstr ""
 "您是否想提供一个 .bin 日志文件并\n"
 "使用它运行 IMU 温度校准？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:244
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:252
 msgid "Select ArduPilot binary log file"
 msgstr "选择 ArduPilot 二进制日志文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:252
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:260
 msgid ""
 "Please wait, this can take a really long time and\n"
 "the GUI will be unresponsive until it finishes."
@@ -3819,19 +3841,19 @@ msgstr ""
 "在完成之前图形用户界面将无响应。请稍等，这可能需要很长时间，\n"
 "界面将在完成之前可能没有响应。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:331
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:339
 msgid "Parameter %s not in current step parameters"
 msgstr "参数 %s 不在当前步骤参数中"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:340
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:348
 msgid "Parameter %s value %s is out of range but accepted from FC"
 msgstr "参数 %s 值 %s 超出范围但已被飞控接受"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:343
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:351
 msgid "Failed to update in-memory value for %s after FC copy"
 msgstr "从飞控复制后无法更新 %s 的内存值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:367
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:375
 msgid ""
 "This configuration step requires external changes by: {auto_changed_by}\n"
 "\n"
@@ -3853,60 +3875,62 @@ msgstr ""
 "* 是 - 将当前飞控值复制到{selected_file}（如果您已完成实验）\n"
 "* 否 - 不复制值继续（如果您尚未执行实验，但知道自己在做什么）"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:377
-msgid "Close"
-msgstr "关闭"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:377
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:385
 msgid "Update file with values from FC?"
 msgstr "将飞控的值更新到文件中吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:377
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:385
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:32
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:90
+msgid "Close"
+msgstr "关闭"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:385
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:273
 msgid "Yes"
 msgstr "是"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:377
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:385
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:276
 msgid "No"
 msgstr "否"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:383
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:391
 msgid "Parameters copied"
 msgstr "参数已复制"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:384
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:392
 msgid "FC values have been copied to {selected_file}"
 msgstr "FC 值已复制到 {selected_file}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:410
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:418
 msgid "Skip some steps?"
 msgstr "跳过部分步骤吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:410
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:418
 msgid "Skip to {dest_file}?"
 msgstr "跳转到{dest_file}？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:452
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:460
 msgid "Do you want to write the changes to the {current_filename} file?"
 msgstr "您要将更改写入 {current_filename} 文件吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:455
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:463
 msgid "One or more parameters have been edited"
 msgstr "一个或多个参数已被编辑"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:463
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:474
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:471
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:482
 msgid ""
 "Do you want to save the component data changes to vehicle_components.json?"
 msgstr "是否要将组件数据更改保存到 vehicle_components.json？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:464
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:475
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:472
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:483
 msgid "Component data has been edited"
 msgstr "组件数据已被编辑"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:593
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:601
 msgid ""
 "Should the {local_filename} file be downloaded from the URL\n"
 "{url}?"
@@ -3914,105 +3938,112 @@ msgstr ""
 "是否应从 URL\n"
 " 下载  文件？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:594
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:602
 msgid "Download file from URL"
 msgstr "从 URL 下载文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:599
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:607
 msgid ""
 "Failed to download {local_filename} from {url}, please download it manually"
 msgstr "从 {url} 下载 {local_filename} 文件失败，请手动下载"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:600
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:608
 msgid "Download failed"
 msgstr "下载失败"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:636
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:644
 msgid "Local file {local_filename} does not exist"
 msgstr "本地文件 {local_filename} 不存在"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:637
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:641
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:645
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:649
 msgid "Will not upload any file"
 msgstr "将不会上传任何文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:641
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:675
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:649
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:683
 msgid "No flight controller connection"
 msgstr "没有飞控连接"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:645
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:653
 msgid ""
 "Should the {local_filename} file be uploaded to the flight controller as "
 "{remote_filename}?"
 msgstr "是否应将 {local_filename} 文件作为 {remote_filename} 上传到飞控？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:647
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:655
 msgid "Upload file to FC"
 msgstr "上传文件到飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:656
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:664
 msgid ""
 "Failed to upload {local_filename} to {remote_filename}, please upload it "
 "manually"
 msgstr "将 {local_filename} 上传到 {remote_filename} 失败，请手动上传"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:657
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:665
 msgid "Upload failed"
 msgstr "上传失败"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:669
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:677
 msgid "No parameter was selected for upload, will not upload any parameter"
 msgstr "未选择任何参数进行上传，将不会上传任何参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:670
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:678
 msgid "No parameter was selected for upload"
 msgstr "未选择任何参数进行上传"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:670
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:675
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:678
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:683
 msgid "Will not upload any parameter"
 msgstr "将不会上传任何参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:674
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:682
 msgid ""
 "No parameters were yet downloaded from the flight controller, will not "
 "upload any parameter"
 msgstr "尚未从飞行控制器下载任何参数，将不会上传任何参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:761
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:783
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:772
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:794
 msgid "Failed to set parameter %s: %s"
 msgstr "设置参数%s失败: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:766
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:777
 msgid "Parameter %s changed from %f to %f, reset required"
 msgstr "参数 %s 从 %f 更改为 %f，需要重启飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:772
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:783
 msgid "Parameter %s changed to %f, reset required"
 msgstr "参数 %s 更改为 %f，需要重启飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:788
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:799
 msgid "Parameter %s changed from %f to %f, possible reset required"
 msgstr "参数 %s 从 %f 更改为 %f，可能需要重启飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:794
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:805
 msgid "Parameter %s changed to %f, possible reset required"
 msgstr "参数 %s 更改为 %f，可能需要重启飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:797
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:808
 msgid "Failed to set parameter {param_name}: {e}"
 msgstr "设置参数 {param_name} 失败：{e}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:802
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:898
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:964
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:215
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:813
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:888
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:893
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:945
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1014
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1154
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:281
 msgid "ArduPilot methodic configurator"
 msgstr "ArduPilot 调参助手"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:892
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:894
+msgid "Could not download parameters after resetting the flight controller."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:935
 msgid ""
 "{param_list_str} parameter(s) potentially require a reset\n"
 "Do you want to reset the ArduPilot?"
@@ -4020,83 +4051,89 @@ msgstr ""
 "{param_list_str} 个参数可能需要重置\n"
 "您要重置 ArduPilot 吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:893
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:936
 msgid "Possible reset required"
 msgstr "可能需要重启飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:934
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:984
 msgid "Failed to set parameter %(name)s: %(error)s"
 msgstr "设置参数%(name)s失败: %(error)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:942
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:992
 msgid "Parameter %s changed from %f to %f"
 msgstr "参数 %s 从 %f 更改为 %f"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:949
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:999
 msgid "Parameter %s changed to %f"
 msgstr "参数 %s 更改为 %f"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:955
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1005
 msgid "Parameter %s unchanged from %f"
 msgstr "参数 %s 从 %f 未更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:958
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1008
 msgid "Failed to set parameter {param_name}: {_e}"
 msgstr "设置参数 {param_name} 失败：{_e}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:966
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1016
 msgid "%d FC parameter(s) changed value"
 msgstr "%d个FC参数更改了值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:968
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1018
 msgid ""
 "%d FC parameter(s) already had the value defined in this configuration step"
 msgstr "%d个FC参数已经具有此配置步骤中定义的值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1070
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1127
 msgid "Uploading %d selected %s parameters to flight controller..."
 msgstr "正在将 %d 个选定的 %s 参数上传到飞行控制器..."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1108
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1155
+msgid ""
+"Could not download parameters after resetting the flight controller. Upload "
+"was stopped."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1186
 msgid "Parameter upload error"
 msgstr "参数上传错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1109
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1187
 msgid "Failed to upload the following parameters to the flight controller:\n"
 msgstr "未能将以下参数上传到飞行控制器：\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1115
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1194
 msgid "All parameters uploaded to the flight controller successfully"
 msgstr "所有参数成功上传到飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1124
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1229
 msgid "Re-downloaded all parameters from the flight controller"
 msgstr "已重新下载所有参数从飞行控制器"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1135
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1240
 msgid ""
 "Parameter %s upload to the flight controller failed. Expected: %f, Actual: %f"
 msgstr "上传参数 %s 至飞控时发生错误. 期待结果为: %f, 实际得到了: %f"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1143
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1248
 msgid ""
 "Parameter %s upload to the flight controller failed. Expected: %f, Actual: N/"
 "A"
 msgstr "参数 %s 上传到飞控失败。期待结果为：%f，实际得到了：N/A"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1239
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1344
 msgid "Exported %d FC parameters missing or different in AMC files to %s"
 msgstr "导出了%d个在AMC文件中缺失或不同的FC参数到 %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1244
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1349
 msgid "No FC parameters are missing or different from AMC parameter files"
 msgstr "没有FC参数缺失或与AMC参数文件不同"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1275
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1279
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1290
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2098
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1380
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1384
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1395
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2233
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2246
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:239
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:319
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor.py:475
@@ -4106,8 +4143,8 @@ msgstr "没有FC参数缺失或与AMC参数文件不同"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:701
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_template_manager.py:87
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:180
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:415
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:629
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:597
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:836
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_accelerometer_calibration.py:468
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:192
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:201
@@ -4128,7 +4165,7 @@ msgstr "没有FC参数缺失或与AMC参数文件不同"
 msgid "Error"
 msgstr "错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1288
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1393
 msgid ""
 "Flight log downloaded successfully to:\n"
 "%s"
@@ -4136,21 +4173,21 @@ msgstr ""
 "飞行日志已成功下载到：\n"
 "%s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1288
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2081
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1393
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2216
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:336
 msgid "Success"
 msgstr "成功"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1290
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1395
 msgid "Failed to download flight log. Check the console for details."
 msgstr "下载飞行日志失败。请检查控制台以获取详细信息。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1418
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1523
 msgid "No parameters available for summary."
 msgstr "没有可用于摘要的参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1435
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1540
 msgid ""
 "Methodic configuration of {nr_total_params} parameters complete:\n"
 "\n"
@@ -4184,12 +4221,12 @@ msgstr ""
 "{nr_non_default__writable_non_calibrations_non_ids} 个非默认的可写非传感器校"
 "准非 ID 参数 - 可在类似车辆间复用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1488
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1593
 msgid "Last parameter file processed"
 msgstr "最后处理的参数文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1574
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1608
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1679
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1713
 msgid ""
 "{} file already exists.\n"
 "Do you want to overwrite it?"
@@ -4198,16 +4235,16 @@ msgstr ""
 "您是否要覆盖它？{} 文件已存在。\n"
 "您想覆盖它吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1575
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1609
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1680
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1714
 msgid "Overwrite existing file"
 msgstr "覆盖现有文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1580
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1685
 msgid "Summary file %s written"
 msgstr "汇总文件 %s 已写入"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1614
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1719
 msgid ""
 "All relevant files have been zipped into the \n"
 "{zip_file_path} file.\n"
@@ -4225,15 +4262,15 @@ msgstr ""
 "您现在可以将此文件上传到 ArduPilot调参助手\n"
 "的博客 discuss.ardupilot.org。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1619
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1724
 msgid "Parameter files zipped"
 msgstr "参数文件已压缩"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1733
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1838
 msgid "Zip file successfully created"
 msgstr "成功创建Zip文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1734
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1839
 msgid ""
 "Zipped all vehicle configuration files into the file \n"
 "{zip_fullpath}\n"
@@ -4255,188 +4292,188 @@ msgstr ""
 "上传到文件共享服务,并在ArduPilot支持论坛中\n"
 "发布链接。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1748
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1853
 msgid "Failed to create zip file: {error}"
 msgstr "创建zip文件失败: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1750
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1756
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1855
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1861
 msgid "Zip file creation failed"
 msgstr "Zip文件创建失败"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1754
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1859
 msgid "Failed to create zip file due to file system error: {error}"
 msgstr "由于文件系统错误创建zip文件失败: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1794
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1899
 msgid "Failed to apply derived parameter %s: %s"
 msgstr "应用派生参数 %s 失败: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1890
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1995
 msgid "Parameter not found"
 msgstr "未找到参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1891
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1996
 msgid "Parameter {param_name} could not be located."
 msgstr "无法找到参数 {param_name}。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1903
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1909
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:419
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2018
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2024
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:601
 msgid "Out-of-range value"
 msgstr "超出范围的值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1906
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2021
 msgid "Parameter %s out of range: %s"
 msgstr "参数%s超出范围: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1913
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2028
 msgid "Invalid value for %s: %s"
 msgstr "%s 的无效值：%s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1916
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2031
 msgid "Invalid value"
 msgstr "无效值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1954
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2089
 msgid ""
 "No apm.pdef.xml file and no FC connected. Not possible autocomplete "
 "parameter names."
 msgstr "没有 apm.pdef.xml 文件且未连接飞控。无法自动完成参数名称。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1975
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2110
 msgid "Parameter name can not be empty."
 msgstr "参数名称不能为空。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1984
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2119
 msgid "Parameter already exists, edit it instead"
 msgstr "参数已存在，请编辑它"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2018
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2153
 msgid "Parameter name not found in the flight controller or apm.pdef.xml."
 msgstr "在飞控或 apm.pdef.xml 中未找到参数名称。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2020
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2155
 msgid "'{param_name}' not found in the apm.pdef.xml file."
 msgstr "'{param_name}' 在 apm.pdef.xml 文件中未找到。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2024
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2159
 msgid "Parameter name not found in the flight controller."
 msgstr "飞控中未找到参数名称。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2028
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2163
 msgid ""
 "Can not add parameter when no FC is connected and no apm.pdef.xml file "
 "exists."
 msgstr "在没有连接飞控且没有 apm.pdef.xml 文件时，无法添加参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2081
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2216
 msgid "Successfully added %d parameter(s)."
 msgstr "成功添加了%d个参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2085
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2220
 msgid "Added %d parameter(s)."
 msgstr "已添加%d个参数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2087
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2104
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2222
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2239
 msgid "Skipped %d parameter(s): %s"
 msgstr "跳过了%d个参数: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2089
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2106
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2224
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2241
 msgid "Failed %d parameter(s): %s"
 msgstr "失败了%d个参数: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2090
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2225
 msgid "Partial Success"
 msgstr "部分成功"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2094
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2229
 msgid "All %d parameter(s) already exist in the file."
 msgstr "所有%d个参数已存在于文件中。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2094
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2229
 msgid "No Changes"
 msgstr "无更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2098
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2233
 msgid "Failed to add all %d parameter(s): %s"
 msgstr "添加所有%d个参数失败: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2107
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2242
 msgid "No Parameters Added"
 msgstr "未添加参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2111
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2246
 msgid "Unexpected result during bulk parameter addition."
 msgstr "批量添加参数期间出现意外结果。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2255
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2390
 msgid "Why: "
 msgstr "原因："
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2257
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2392
 msgid "Why now: "
 msgstr "现在原因："
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2262
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2397
 msgid "{current_file} Documentation"
 msgstr "{current_file} 文档"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2264
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2399
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_documentation_frame.py:62
 msgid "Documentation"
 msgstr "文档"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2284
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2419
 msgid ""
 "This configuration step ({current_file} intermediate parameter file) is "
 "{percentage}% mandatory"
 msgstr "此配置步骤（{current_file}中间参数文件）是{percentage}%强制性的"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2288
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2423
 msgid ""
 "Mandatory level not available for this configuration step ({current_file})"
 msgstr "此配置步骤（{current_file}）的强制级别不可用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2312
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2447
 msgid "Plugin condition '%s' could not be evaluated: %s"
 msgstr "无法计算插件条件 '%s': %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2410
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2545
 msgid "Failed to patch derived parameter %s: %s"
 msgstr "无法修补派生参数 %s：%s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2444
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2579
 msgid "rename_connection eval failed for %s: %s"
 msgstr "重命名连接时对%s的eval失败：%s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2466
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2497
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2601
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2632
 msgid "Skipping connection rename %s → %s: target already exists"
 msgstr "跳过连接重命名 %s → %s：目标已存在"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2479
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2510
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2614
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2645
 msgid "Renamed connection parameter %s → %s"
 msgstr "已重命名连接参数 %s → %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2543
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2678
 msgid ""
 "vehicle_components evaluator reference is stale; re-syncing to the live "
 "object"
 msgstr "vehicle_components 评估器引用已失效；正在重新同步到实时对象"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2554
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2689
 msgid "No vehicle component data loaded; save aborted."
 msgstr "未加载车辆组件数据；保存已中止。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2577
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2712
 msgid "data_model_parameter_editor: Unsupported plugin name: {plugin_name}"
 msgstr "data_model_parameter_editor: 不支持的插件名称：{plugin_name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2587
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:2722
 msgid ""
 "data_model_parameter_editor: Plugin has no data model factory: {plugin_name}"
 msgstr "data_model_parameter_editor: 插件没有数据模型工厂：{plugin_name}"
@@ -5305,7 +5342,7 @@ msgid " - Vehicle Component Editor"
 msgstr " - 载具组件编辑器"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_component_editor_base.py:223
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:288
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:292
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:53
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:54
 msgid "Amilcar Lucas's - ArduPilot methodic configurator "
@@ -5662,14 +5699,15 @@ msgid "Select an ArduPilot .bin log file"
 msgstr "选择一个 ArduPilot .bin 日志文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:690
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1067
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:723
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1100
 msgid "ArduPilot binary log files"
 msgstr "ArduPilot日志文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_directory_selection.py:172
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:690
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1458
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:723
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1451
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1518
 msgid "All files"
 msgstr "所有文件"
 
@@ -5698,6 +5736,14 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_entry_dynamic.py:50
 msgid "List_of_items can't be 'None'"
 msgstr "List_of_items 不能为 'None'"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:23
+msgid "Flight Controller Banner"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:29
+msgid "No banner messages captured."
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py:47
 msgid "Initializing Flight Controller"
@@ -5728,8 +5774,9 @@ msgid "Lifting window: {_e}"
 msgstr "升起窗口：{_e}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_info.py:153
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:224
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1323
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:226
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1356
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1611
 msgid "Downloaded {} of {} parameters"
 msgstr "已下载 {} / {} 个参数"
 
@@ -5832,7 +5879,7 @@ msgid "No hardware data available"
 msgstr "没有可用的硬件数据"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_quality.py:47
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:776
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:809
 msgid "Log Quality Report"
 msgstr "日志质量报告"
 
@@ -5932,49 +5979,101 @@ msgid ""
 "is called from another script"
 msgstr "此主程序仅用于测试和开发，通常 PairTupleCombobox 是从另一个脚本调用的"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:187
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:56
+msgid "Compare and upload parameter file - {filename}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:64
+msgid ""
+"Parameter file selected for comparison and optional upload. This file is not "
+"managed by AMC."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:81
+msgid "Show only changed parameters"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:94
+msgid "Reset all FC parameters to defaults"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:100
+msgid "Upload selected params to the FC"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:105
+msgid "Upload the selected parameters to the flight controller"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:135
+msgid "Manual parameter edits not selected"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:136
+msgid ""
+"The following manually edited parameters differ from the flight controller "
+"but are not selected for upload:\n"
+"\n"
+"{parameter_names}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:152
+msgid "Reset all FC parameters"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:153
+msgid ""
+"Are you sure you want to reset all FC parameters to their default values?"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:189
 msgid "Uploading FC parameters"
 msgstr "正在上传飞控参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:188
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:190
 msgid "Uploaded {} of {} parameters"
 msgstr "已上传 {} 个参数，共 {} 个参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:199
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:201
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1618
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:497
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:591
 msgid "Resetting Flight Controller"
 msgstr "重置飞行控制器"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:200
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:202
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1619
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:498
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:504
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_motor_test.py:591
 msgid "Waiting for {} of {} seconds"
 msgstr "等待  秒中的"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:211
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:213
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1624
 msgid "Reconnecting to Flight Controller"
 msgstr "正在重新连接飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:212
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:214
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1625
 msgid "{} of {} percent"
 msgstr "{} 的 {} 百分比"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:223
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1315
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:225
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1348
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1610
 msgid "Re-downloading FC parameters"
 msgstr "重新下载飞控参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:288
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:292
 msgid " - Parameter file editor and uploader"
 msgstr " - 参数文件编辑器和上传器"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:369
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:373
 msgid "Current intermediate parameter file:"
 msgstr "当前模版文件："
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:378
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:382
 msgid ""
 "Select the intermediate parameter file from the list of available files in "
 "the selected vehicle directory\n"
@@ -5986,71 +6085,92 @@ msgstr ""
 "件列表中选择模版文件\n"
 "一旦当前文件上传到飞控，它将自动跳转到下一个文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:397
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:403
+msgid "Compare and upload"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:410
+msgid ""
+"Select a .parm or .param file to compare with the FC and optionally upload"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:412
+msgid "No flight controller connected, external parameter upload not available"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:417
+msgid "FC banner"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:424
+msgid "Display the latest flight-controller banner"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:430
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
 msgstr "用户手册，支持论坛，报告 bug，许可证，源代码"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:403
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:436
 msgid "Legend"
 msgstr "图例"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:406
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:439
 msgid "the meaning of the text background colors"
 msgstr "文本背景颜色的含义"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:409
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:442
 msgid "Normal parameter"
 msgstr "普通参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:410
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:443
 msgid "Normal parameter - reusable in similar vehicles"
 msgstr "普通参数 - 可在类似车辆中重用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:412
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:445
 msgid "Calibration param"
 msgstr "标定参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:413
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:446
 msgid "Calibration parameter - not-reusable, even in similar vehicles"
 msgstr "校准参数 - 即使在类似车辆中也不可重用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:415
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:448
 msgid "Read-only param"
 msgstr "只读参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:416
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:449
 msgid "Read-only parameter - not writable nor changeable"
 msgstr "只读参数 - 不可写入或更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:418
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:451
 msgid "Below limit"
 msgstr "低于限制"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:419
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:452
 msgid "Parameter value below the minimum recommended value"
 msgstr "参数值低于建议的最小值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:423
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:456
 msgid "Default value"
 msgstr "默认值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:424
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:457
 msgid "This is the default value of this parameter"
 msgstr "这是此参数的默认值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:426
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:459
 msgid "Not available"
 msgstr "不可用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:427
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:460
 msgid "This parameter is not available on the connected flight controller"
 msgstr "此参数在连接的飞行控制器上不可用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:429
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:462
 msgid "Not editable"
 msgstr "不可编辑"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:432
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:465
 msgid ""
 "This value has been automatically calculated by the software using data\n"
 "from the component editor window or from the 'configuration_steps.json' file"
@@ -6058,29 +6178,29 @@ msgstr ""
 "此值已由软件自动计算，使用来自组件编辑器窗口或 'configuration_steps.json' 文"
 "件中的数据"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:439
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:472
 msgid "Above limit"
 msgstr "高于限制"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:440
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:473
 msgid "Parameter value above the maximum recommended value"
 msgstr "参数值高于建议的最大值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:476
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:509
 msgid "See only changed parameters"
 msgstr "仅查看已更改的参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:484
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:517
 msgid ""
 "Toggle to show only parameters that will change if/when uploaded to the "
 "flight controller"
 msgstr "切换以显示仅在上传到飞控时会更改的参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:489
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:522
 msgid "Annotate docs into .param files"
 msgstr "在 .param 文件中注释文档"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:500
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:533
 msgid ""
 "Annotate ArduPilot parameter documentation metadata into the intermediate "
 "parameter files\n"
@@ -6092,7 +6212,7 @@ msgstr ""
 "释到中间参数文件中\n"
 "文件会变大，但所有现有的参数文档将包含在内"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:509
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:542
 msgid ""
 "Upload selected params to FC,\n"
 "and advance to next param file"
@@ -6100,7 +6220,7 @@ msgstr ""
 "将选定的参数上传到飞控,\n"
 "并前进到下一个参数文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:516
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:549
 msgid ""
 "Upload selected parameters to the flight controller and advance to the next "
 "intermediate parameter file\n"
@@ -6113,15 +6233,15 @@ msgstr ""
 "如果对当前文件进行了更改，它会询问您是否要保存它们\n"
 "如果需要，它将重置 FC，重新下载所有参数并验证其值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:522
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:555
 msgid "No flight controller connected, upload not available"
 msgstr "未连接飞行控制器，上传不可用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:528
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:561
 msgid "Download last flight log"
 msgstr "下载最后的飞行日志"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:541
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:574
 msgid ""
 "Download the last flight log from the flight controller\n"
 "This will save the previous flight log to a file on your computer for "
@@ -6130,15 +6250,15 @@ msgstr ""
 "从飞行控制器下载最后的飞行日志\n"
 "这将把之前的飞行日志保存到您的电脑上以供分析"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:546
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:579
 msgid "No flight controller connected or MAVFTP not supported"
 msgstr "未连接飞行控制器或不支持 MAVFTP"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:552
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:585
 msgid "Zip Vehicle for Forum Help"
 msgstr "压缩飞行器以获取论坛帮助"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:561
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:594
 msgid ""
 "Creates a .zip file of the configuration files\n"
 "so that they can be easily shared for forum help"
@@ -6146,15 +6266,15 @@ msgstr ""
 "创建配置文件的.zip文件,\n"
 "以便轻松共享以获取论坛帮助"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:563
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:596
 msgid "No intermediate parameter files available"
 msgstr "没有可用的中间参数文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:567
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:600
 msgid "Skip >"
 msgstr "跳过 >"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:580
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:613
 msgid ""
 "Go to the next configuration step parameter file without uploading any "
 "changes to the flight controller\n"
@@ -6164,11 +6284,11 @@ msgstr ""
 "转到下一个配置步骤参数文件，而不将任何更改上传到飞控\n"
 "如果当前文件已被修改，它会询问您是否要保存这些更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:586
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:619
 msgid "< Skip"
 msgstr "< 跳过"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:591
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:624
 msgid ""
 "Go to the previous configuration step parameter file without uploading any "
 "changes to the flight controller\n"
@@ -6178,15 +6298,15 @@ msgstr ""
 "转到上一个配置步骤参数文件，而不将任何更改上传到飞控\n"
 "如果当前文件已被修改，它会询问您是否要保存这些更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:601
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:634
 msgid ".bin Log Analysis"
 msgstr ".bin 日志分析"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:629
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:662
 msgid "Log Mismatch"
 msgstr "日志不匹配"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:630
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:663
 msgid ""
 "{error}\n"
 "\n"
@@ -6197,30 +6317,30 @@ msgstr ""
 "\n"
 "仍要使用适用于 {vehicle_type} {version} 的 ArduPilot 元数据来分析此日志吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:638
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:671
 msgid "Downloading parameter metadata for this log, please wait..."
 msgstr "正在下载此日志的参数元数据，请稍候..."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:689
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:722
 msgid "Select a flight log"
 msgstr "选择飞行日志"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:698
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:721
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:725
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:745
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:731
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:754
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:758
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:778
 msgid "Log Analysis Error"
 msgstr "日志分析错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:701
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:734
 msgid "Reading flight log, please wait..."
 msgstr "正在读取飞行日志，请稍候..."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:725
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:758
 msgid "No firmware version information found in parsed log"
 msgstr "在已解析的日志中未找到固件版本信息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:760
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:793
 msgid ""
 "Log Quality Report\n"
 "\n"
@@ -6228,7 +6348,7 @@ msgstr ""
 "日志质量报告\n"
 "\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:763
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:796
 msgid ""
 "Analysis is only as good as the data in your log.\n"
 "\n"
@@ -6253,130 +6373,142 @@ msgstr ""
 "将鼠标悬停在任一问题计数上即可查看详细信息。\n"
 "这些问题会链接回修复它们的配置步骤。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:789
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:867
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:822
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:900
 msgid "Error deactivating plugin: %s"
 msgstr "停用插件时出错: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:796
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:872
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:829
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:905
 msgid "Error destroying plugin view: %s"
 msgstr "销毁插件视图时出错: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:808
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:841
 msgid "Error destroying paned window: %s"
 msgstr "销毁分隔窗口时出错: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1000
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1033
 msgid "Plugin configuration missing name"
 msgstr "插件配置缺少名称"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1005
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1038
 msgid "Unknown plugin: {plugin_name}"
 msgstr "未知插件: {plugin_name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1019
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1052
 msgid "Plugin requires flight controller connection"
 msgstr "插件需要飞行控制器连接"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1028
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1061
 msgid "Failed to create plugin: {plugin_name}"
 msgstr "创建插件失败: {plugin_name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1043
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1076
 msgid "Error activating plugin: %s"
 msgstr "激活插件时出错: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1053
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1086
 msgid "Error loading plugin {plugin_name}: {error}"
 msgstr "加载插件{plugin_name}时出错: {error}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1074
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1107
 msgid "Reading IMU calibration messages"
 msgstr "正在读取 IMU 校准信息"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1075
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1108
 msgid "Please wait, this can take a long time"
 msgstr "请稍等，这可能需要很长时间"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1123
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1156
 msgid "Click here to open the Tuning Guide relevant Section"
 msgstr "单击此处打开调谐指南的相关部分"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1207
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1240
 msgid "Uploading file"
 msgstr "正在上传文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1208
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1241
 msgid "Uploaded {} of {} %"
 msgstr "已上传 {} 中的 {} %"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1225
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1232
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1258
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1265
 msgid "File Upload Error"
 msgstr "文件上传错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1226
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1259
 msgid "Do you want to retry?"
 msgstr "您想要重试吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1226
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1259
 msgid "Failed to upload file to flight controller:"
 msgstr "无法上传文件到飞行控制器："
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1233
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1266
 msgid "File upload failed. Do you want to retry?"
 msgstr "文件上传失败。您要重试吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1301
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1303
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1334
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1336
 msgid "Step Instructions"
 msgstr "步骤说明"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1311
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1344
 msgid ""
 "Failed to update progress bar, {selected_file} does not start with two "
 "digits like it should: {_e}"
 msgstr ""
 "更新进度条失败，{selected_file}不是以两位数字开头，如其应有的格式：{_e}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1315
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1348
 msgid "Downloading FC parameters"
 msgstr "下载飞控参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1436
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1448
+msgid "Select an ArduPilot parameter file"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1450
+msgid "ArduPilot parameter files"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1460
+msgid "Parameter file error"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1497
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:252
 msgid "Failed to upload parameters:"
 msgstr "参数上传失败："
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1436
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1497
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:252
 msgid "Upload Error"
 msgstr "上传错误"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1447
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1507
 msgid "Downloading Flight Log"
 msgstr "正在下载飞行日志"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1448
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1508
 msgid "Downloaded {}% from {}%"
 msgstr "已下载 {}%，总共 {}%"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1454
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1514
 msgid "Save flight log as"
 msgstr "将飞行日志另存为"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1457
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1517
 msgid "Binary log files"
 msgstr "二进制日志文件"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1550
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1657
 msgid ""
 "Export FC params that are missing or different in the configuration steps. "
 "Default is %(default)s"
 msgstr "导出在配置步骤中缺失或不同的飞控参数。默认值为 %(default)s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1566
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1673
 msgid ""
 "A GUI for editing ArduPilot param files. Not to be used directly, but "
 "through the main ArduPilot methodic configurator script."
@@ -6454,141 +6586,156 @@ msgstr "每当当前中间参数文件更改时，自动在浏览器中打开所
 msgid "Documentation URL not available"
 msgstr "文档 URL 不可用"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:177
 msgid "-/+"
 msgstr "-/+"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:140
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:178
+msgid "Delete or add a parameter"
+msgstr "删除或添加参数"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:182
 msgid "Parameter"
 msgstr "参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:141
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:183
 msgid "Current Value"
 msgstr "当前值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:143
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:185
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:237
 msgid "New Value"
 msgstr "新值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:144
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:186
 msgid "Unit"
 msgstr "单位"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:148
-msgid "Delete or add a parameter"
-msgstr "删除或添加参数"
-
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:149
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:192
 msgid "Parameter name must be ^[A-Z][A-Z_0-9]* and most 16 characters long"
 msgstr "参数名称必须是 ^[A-Z][A-Z_0-9]* 并且最多 16 个字符长"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:150
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:193
 msgid "Current value on the flight controller"
 msgstr "飞行控制器上的当前值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:151
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:194
 msgid "Is the new value different from the current FC value?"
 msgstr "新值与当前FC值不同吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:152
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:195
 msgid "New value from the above selected intermediate parameter file"
 msgstr "来自上述选定模版文件的新值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:153
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:197
+msgid "Parameter value to upload to the flight controller"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:198
 msgid "Parameter Unit"
 msgstr "参数单位"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:157
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:203
 msgid "Reason why respective parameter changed."
 msgstr "相应参数更改的原因。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:159
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:205
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:183
 msgid "Documenting change reasons is crucial because it:"
 msgstr "记录更改原因至关重要，因为它："
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:161
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:207
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:184
 msgid " * Promotes thoughtful decisions over impulsive changes"
 msgstr " * 促进深思熟虑的决策而非冲动的更改"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:163
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:209
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:187
 msgid " * Provides documentation for vehicle certification requirements"
 msgstr " * 为车辆认证要求提供文档"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:165
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:211
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:191
 msgid " * Enables validation or suggestions from team members or AI tools"
 msgstr " * 使团队成员或AI工具能够进行验证或提供建议"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:167
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:213
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:195
 msgid " * Preserves your reasoning for future reference or troubleshooting"
 msgstr " * 保存您的推理以供将来参考或故障排除"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:171
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:217
 msgid "Upload"
 msgstr "上传"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:172
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:218
 msgid "When selected, upload the new value to the flight controller"
 msgstr "选择后，将新值上传到飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:174
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:221
 msgid "Manual"
 msgstr "手动"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:176
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:223
+msgid "When checked, allows this parameter value to be edited before upload.\n"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:224
+msgid "When unchecked, restores the value loaded from the file."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:226
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter.\n"
 msgstr "选中时，允许手动编辑此强制或派生参数。\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:177
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:776
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:227
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1018
 msgid "When unchecked, reverts to the forced or derived value."
 msgstr "未选中时，将恢复为强制或派生值。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:180
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:231
 msgid "Why are you changing this parameter?"
 msgstr "您为什么要更改此参数？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:211
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:277
 msgid "No different parameters found in {selected_file}. Skipping..."
 msgstr "在 {selected_file} 中未找到不同的参数，跳过..."
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:246
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:331
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:409
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:200
 msgid "Add"
 msgstr "添加"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:247
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:332
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:410
 msgid "Add a parameter to the {self.parameter_editor.current_file} file"
 msgstr "向{self.parameter_editor.current_file}文件添加参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:253
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:338
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:396
 msgid "Parameter %s not found in the %s file: %s"
 msgstr "在 %s 文件中找不到参数 %s: %s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:347
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:514
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_windows.py:198
 msgid "Del"
 msgstr "删除"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:349
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:516
 msgid "Delete {param_name} from the {self.parameter_editor.current_file} file"
 msgstr "从{self.parameter_editor.current_file}文件中删除{param_name}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:415
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:597
 msgid "Unknown error."
 msgstr "未知错误。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:418
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:600
 msgid " Use out-of-range value?"
 msgstr "使用超出范围的值吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:509
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:716
 msgid ""
 "This parameter already has the correct value for this configuration step.\n"
 "You must not change it, as this would defeat the purpose of this "
@@ -6602,7 +6749,7 @@ msgstr ""
 "\n"
 "如果您有充分的理由更改它，请将其添加到其他配置步骤并在那里更改。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:514
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:721
 msgid ""
 "This parameter value has been derived from information you entered in the "
 "component editor window.\n"
@@ -6611,70 +6758,76 @@ msgstr ""
 "此参数值是根据您在组件编辑器窗口中输入的信息派生的。\n"
 "您需要在该窗口上更改信息以在此处更新值。\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:522
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:729
 msgid "Forced Parameter"
 msgstr "强制参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:524
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:731
 msgid "Derived Parameter"
 msgstr "派生参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:563
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:770
 msgid ""
 "Parameter %s changed, will later ask if change(s) should be saved to file."
 msgstr "参数 %s 已更改，稍后会询问是否将更改保存到文件。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:627
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:834
 msgid "Error getting {param_name} checked keys: %s"
 msgstr "获取{param_name}检查键时出错：%s"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:629
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:836
 msgid "Could not get {param_name} checked keys. Please try again."
 msgstr "无法获取{param_name}检查键。请重试。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:675
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:883
 msgid "{_param_name} Value: {_new_decimal_value}"
 msgstr "{_param_name} 值: {_new_decimal_value}"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:686
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:894
 msgid "Select {param.name} Bitmask Options"
 msgstr "选择{param.name}位掩码选项"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:704
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:912
 msgid "Invalid Bitmask Value"
 msgstr "无效的位掩码值"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:705
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:913
 msgid ""
 "The new value '{new_value_str}' is not a valid integer for the {param.name} "
 "bitmask."
 msgstr "新值'{new_value_str}'不是{param.name}位掩码的有效整数。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:748
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:964
 msgid "When selected upload {param_name} new value to the flight controller"
 msgstr "选择后将 {param_name} 新值上传到飞控"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:774
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:999
+msgid ""
+"Allow this parameter value to be edited before upload. The file will not be "
+"changed."
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1016
 msgid ""
 "When checked, allows manual editing of this forced or derived parameter "
 "value and change reason.\n"
 msgstr "选中时，允许手动编辑此强制或派生参数的值和更改原因。\n"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:810
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1052
 msgid ""
 "Parameter %s change reason changed from %s to %s, will later ask if should "
 "be saved to file."
 msgstr "参数%s更改原因从%s更改为%s，稍后将询问是否应保存到文件。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:829
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1071
 msgid "Are you sure you want to delete the {param_name} parameter?"
 msgstr "您确定要删除 {param_name} 参数吗？"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:846
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1088
 msgid "Name filter:"
 msgstr "名称筛选器:"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:853
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1095
 msgid ""
 "Type part of a parameter name to filter the list.\n"
 "Press Enter to add all filtered parameters,\n"
@@ -6684,11 +6837,11 @@ msgstr ""
 "按Enter键添加所有筛选的参数,\n"
 "或仅添加选定的参数(如果已选择)。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:860
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1102
 msgid "(Use Ctrl/Shift for multiple selection)"
 msgstr "(使用Ctrl/Shift进行多选)"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:874
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1116
 msgid ""
 "Double-click to add single parameter\n"
 "Ctrl+click to select multiple one-by-one\n"
@@ -6704,24 +6857,24 @@ msgstr ""
 "Ctrl+D: 取消全选\n"
 "Enter: 添加选定项"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:884
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:960
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1126
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1202
 msgid "No parameter selected"
 msgstr "未选择参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:949
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1191
 msgid "Add parameter(s)"
 msgstr "添加参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:962
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1204
 msgid "Add selected parameter"
 msgstr "添加选定的参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:964
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1206
 msgid "Add %d selected parameters"
 msgstr "添加%d个选定的参数"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:978
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1220
 msgid ""
 "Adding many parameters at once can make it difficult to track changes and "
 "may impact GUI performance.\n"
@@ -6730,15 +6883,15 @@ msgstr ""
 "一次添加多个参数可能会使更改难以跟踪,并可能影响GUI性能。\n"
 "您确定要添加所有%d个参数吗?"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:982
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1224
 msgid "Confirm bulk addition"
 msgstr "确认批量添加"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1050
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1292
 msgid "Invalid parameter name."
 msgstr "无效的参数名称。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1053
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1295
 msgid "Operation not possible"
 msgstr "操作不可行"
 
