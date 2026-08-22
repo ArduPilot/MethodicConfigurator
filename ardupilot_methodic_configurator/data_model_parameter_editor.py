@@ -2482,7 +2482,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         return LogAnalysisInputs(
             project_vehicle_type=str(self._local_filesystem.vehicle_type),
             project_firmware_version=str(self._local_filesystem.fw_version),
-            vehicle_components=deepcopy(self._local_filesystem.vehicle_components_fs.data or {}),
+            vehicle_components=deepcopy((self._local_filesystem.vehicle_components_fs.data or {}).get("Components", {})),
             configuration_steps=deepcopy(self._local_filesystem.configuration_steps or {}),
             apm_doc=deepcopy(resolved_apm_doc) if resolved_apm_doc is not None else None,
         )

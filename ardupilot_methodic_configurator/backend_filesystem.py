@@ -909,17 +909,16 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             # Compute and merge forced / derived parameters into the working copy
             if self.configuration_steps and param_filename in self.configuration_steps:
                 step_dict = self.configuration_steps[param_filename]
-                error_msg = self.compute_parameters(param_filename, step_dict, "forced", eval_variables)
-                if error_msg:
-                    msg = f"Error computing forced parameters for {param_filename}: {error_msg}"
+                forced_error, derived_error = self.compute_forced_and_derived_parameters(
+                    param_filename, step_dict, eval_variables, ignore_fc_derived_param_warnings=True
+                )
+                if forced_error:
+                    msg = f"Error computing forced parameters for {param_filename}: {forced_error}"
                     raise ValueError(msg)
                 self.merge_forced_or_derived_parameters(param_filename, self.forced_parameters, fc_param_names, target=working)
 
-                error_msg = self.compute_parameters(
-                    param_filename, step_dict, "derived", eval_variables, ignore_fc_derived_param_warnings=True
-                )
-                if error_msg:
-                    msg = f"Error computing derived parameters for {param_filename}: {error_msg}"
+                if derived_error:
+                    msg = f"Error computing derived parameters for {param_filename}: {derived_error}"
                     raise ValueError(msg)
                 self.merge_forced_or_derived_parameters(
                     param_filename, self.derived_parameters, fc_param_names, target=working

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     LogQualityResult,
@@ -30,30 +31,30 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check i
     validate_configuration_steps_data,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_arm import ArmLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogQualityAnalysisModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import BaseLogModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogAnalysis, BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_err import ErrLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogAnalysis, EscLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_fft import FftLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_imu import ImuLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_imu import ImuLogAnalysis, ImuLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_mode import ModeLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_pm import PmLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_vibe import VibeLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_vibe import VibeLogAnalysis, VibeLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import HardwareReport
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_report import extract_hardware_report
 
-QUALITY_MODELS = [
-    BatteryLogQualityModel,
-    GPSLogQualityModel,
-    EscLogQualityModel,
-    ImuLogQualityModel,
-    VibeLogQualityModel,
-    FftLogQualityModel,
-    ErrLogQualityModel,
-    PmLogQualityModel,
-    ArmLogQualityModel,
-    ModeLogQualityModel,
+QUALITY_AND_ANALYSIS_MODELS: list[tuple[type[BaseLogModel], type[BaseLogModel] | None]] = [
+    (BatteryLogQualityModel, BatteryLogAnalysis),
+    (GPSLogQualityModel, None),
+    (EscLogQualityModel, EscLogAnalysis),
+    (ImuLogQualityModel, ImuLogAnalysis),
+    (VibeLogQualityModel, VibeLogAnalysis),
+    (FftLogQualityModel, None),
+    (ErrLogQualityModel, None),
+    (PmLogQualityModel, None),
+    (ArmLogQualityModel, None),
+    (ModeLogQualityModel, None),
 ]
 
 
@@ -127,14 +128,15 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     pm_status: PMStatus | None
     pm_validation: MessageValidation | None
     quality_results: list[LogQualityResult]
+    analysis_results: list[LogAnalysisResult]
     step_results: list[StepValidationResult]
     hardware_report: HardwareReport
 
 
-def analyze_log(
+def analyze_log(  # pylint: disable=too-many-locals
     log_data: LogData,
     context: LogAnalysisContext,
-    quality_models: list[type[BaseLogQualityAnalysisModel]] | None = None,
+    quality_and_analysis_models: list[tuple[type[BaseLogModel], type[BaseLogModel] | None]] | None = None,
 ) -> LogSummary:
     """
     Run log analysis over already loaded datasource values.
@@ -143,14 +145,16 @@ def analyze_log(
         log_data: Parsed log.
         context: Typed analysis inputs (parameters, configuration steps,
             optional component metadata and apm.pdef definitions).
-        quality_models: Optional model classes to run instead of the default registry.
+        quality_and_analysis_models: Optional (quality_model_cls, analysis_model_cls) pairs to run
+            instead of the default registry. Pass None if the second element of a pair for
+            subsystems with no analysis model.
 
     Returns:
         Complete log analysis summary.
 
     """
-    resolved_quality_models: list[type[BaseLogQualityAnalysisModel]] = (
-        QUALITY_MODELS if quality_models is None else quality_models
+    resolved_models: list[tuple[type[BaseLogModel], type[BaseLogModel] | None]] = (
+        QUALITY_AND_ANALYSIS_MODELS if quality_and_analysis_models is None else quality_and_analysis_models
     )
 
     parameters = context.parameters
@@ -164,7 +168,14 @@ def analyze_log(
     pm_quality_result = _pm_validation_as_quality_result(pm_validation)
     if pm_quality_result is not None:
         quality_results.append(pm_quality_result)
-    quality_results.extend(model(log_data, context).check() for model in resolved_quality_models)
+    analysis_results: list[LogAnalysisResult] = []
+    for quality_model_cls, analysis_model_cls in resolved_models:
+        quality_model = quality_model_cls(log_data, context)
+        quality_result = quality_model.check()
+        quality_results.append(quality_result)
+
+        if analysis_model_cls is not None and quality_result.available:
+            analysis_results.append(analysis_model_cls(log_data, context).analyse())
 
     step_results = validate_configuration_steps_data(log_data, configuration_steps)
     hardware_report = extract_hardware_report(log_data, parameters, apm_doc)
@@ -180,4 +191,5 @@ def analyze_log(
         quality_results=quality_results,
         step_results=step_results,
         hardware_report=hardware_report,
+        analysis_results=analysis_results,
     )

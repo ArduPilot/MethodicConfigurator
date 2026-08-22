@@ -9,15 +9,30 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogQualityAnalysisModel,
+    BaseLogModel,
     LogQualityResult,
     QualityIssue,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_instances import (
+    has_nonzero_parameter,
+    imu_device_id_param,
+)
+from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_param_metadata import tcal_enabled_codes
+
+# This must be at least 10 degrees above TMIN for calibration
+_TCAL_MIN_REQUIRED_SPREAD = 10.0
+_TCAL_RECOMMENDED_SPREAD = 25.0
+
+# Below this, TMIN is unlikely to reflect a real freezer.
+_TCAL_TMIN_WARM_THRESHOLD = 0.0
+_TCAL_TMIN_RECOMMENDED = -10.0
+_INVALID_CALTEMP = -300.0
 
 
-class ImuLogQualityModel(BaseLogQualityAnalysisModel):
+class ImuLogQualityModel(BaseLogModel):
     """Checks IMU telemetry quality (error counts, sensor health, raw signal presence)."""
 
     def check(self) -> LogQualityResult:
@@ -121,3 +136,156 @@ class ImuLogQualityModel(BaseLogQualityAnalysisModel):
                 )
 
         return issues
+
+
+class ImuLogAnalysis(BaseLogModel):
+    """
+    IMU analysis on the data from the log.
+
+    Runs after IMU quality model passes with the required data for analysis.
+    """
+
+    def analyse(self) -> LogAnalysisResult:
+        outcomes: list[LogAnalysis] = []
+        outcomes += self.check_temperature_calibration()
+
+        step, _name = self.resolve_message_step("IMU", "IMU")
+        return LogAnalysisResult(
+            available=True,
+            outcomes=outcomes,
+            name=_("IMU Analysis"),
+            reason=_("IMU analysis complete"),
+            related_step=step,
+        )
+
+    def check_temperature_calibration(self) -> list[LogAnalysis]:
+        """Check IMU temperature calibration state and, if calibrated, the achieved per IMU instance."""
+        outcomes: list[LogAnalysis] = []
+
+        for instance in (1, 2, 3):
+            if not has_nonzero_parameter(self.parameters, imu_device_id_param(instance)):
+                continue  # no physical IMU detected
+
+            enable_param = f"INS_TCAL{instance}_ENABLE"
+            enable = self.parameters.get(enable_param)
+            if enable is None:
+                continue  # this IMU instance is not present on the board
+
+            if enable == 0:
+                step_filename = self.step_for_parameter(enable_param)
+                suggested, _source = (
+                    self.expected_parameter_value(step_filename, enable_param) if step_filename else (None, "")
+                )
+                outcomes.append(
+                    LogAnalysis(
+                        message=_(
+                            "IMU {n} temperature calibration is not enabled. "
+                            "Consider running it for better accuracy across temperature changes."
+                        ).format(n=instance),
+                        timestamp_us=None,
+                        value=0.0,
+                        param_name=enable_param,
+                        suggested_value=suggested,
+                        related_step=step_filename or None,
+                    )
+                )
+                continue
+
+            if enable == 2:
+                outcomes.append(
+                    LogAnalysis(
+                        message=_("IMU {n} temperature calibration is in progress (not yet complete).").format(n=instance),
+                        timestamp_us=None,
+                        value=2.0,
+                        param_name=enable_param,
+                    )
+                )
+                continue
+
+            enabled_codes = tcal_enabled_codes(self.apm_doc, instance)
+            if not enabled_codes:
+                enabled_codes = {"1"}
+            if str(int(enable)) not in enabled_codes:
+                outcomes.append(
+                    LogAnalysis(
+                        message=_(
+                            "IMU {n} has an unexpected {param} value of {value}, "
+                            "neither disabled, learning, nor a recognized enabled state."
+                        ).format(n=instance, param=enable_param, value=enable),
+                        timestamp_us=None,
+                        value=float(enable),
+                        param_name=enable_param,
+                    )
+                )
+                continue
+
+            accel_caltemp = self.parameters.get(f"INS_ACC{instance}_CALTEMP")
+            gyro_caltemp = self.parameters.get(f"INS_GYR{instance}_CALTEMP")
+            if _INVALID_CALTEMP in (accel_caltemp, gyro_caltemp):
+                outcomes.append(
+                    LogAnalysis(
+                        message=_(
+                            "IMU {n} is marked as temperature-calibrated, but accelerometer/gyroscope "
+                            "calibration (CALTEMP) was never performed. This calibration data may be "
+                            "unreliable; run a 6-axis accel calibration and re-run temperature calibration."
+                        ).format(n=instance),
+                        timestamp_us=None,
+                        value=None,
+                        param_name=enable_param,
+                    )
+                )
+                continue
+
+            tmin = self.parameters.get(f"INS_TCAL{instance}_TMIN")
+            tmax = self.parameters.get(f"INS_TCAL{instance}_TMAX")
+            if tmin is None or tmax is None:
+                outcomes.append(
+                    LogAnalysis(
+                        message=_(
+                            "IMU {n} temperature calibration is enabled but TMIN/TMAX data is missing, an inconsistent state."
+                        ).format(n=instance),
+                        timestamp_us=None,
+                        value=None,
+                        param_name=enable_param,
+                    )
+                )
+                continue
+
+            if tmin > _TCAL_TMIN_WARM_THRESHOLD:
+                outcomes.append(
+                    LogAnalysis(
+                        message=_(
+                            "IMU {n} temperature calibration's coldest recorded point was {tmin:.1f}C, "
+                            "above freezing. For best results, cool the flight controller down to "
+                            "around {rec:.0f}C or lower before starting calibration."
+                        ).format(n=instance, tmin=tmin, rec=_TCAL_TMIN_RECOMMENDED),
+                        timestamp_us=None,
+                        value=tmin,
+                        param_name=f"INS_TCAL{instance}_TMIN",
+                    )
+                )
+
+            outcomes.append(self._temp_difference(instance, tmin, tmax))
+
+        return outcomes
+
+    def _temp_difference(self, instance: int, tmin: float, tmax: float) -> LogAnalysis:
+        """Build the LogAnalysis finding for one IMU instance's achieved calibration spread."""
+        spread = tmax - tmin
+
+        if spread < _TCAL_MIN_REQUIRED_SPREAD:
+            message = _(
+                "IMU {n} temperature calibration spread is only {spread:.1f}C ({tmin:.1f}C to {tmax:.1f}C), "
+                "below ArduPilot's required minimum of {min_req:.0f}C. Recalibration needed."
+            ).format(n=instance, spread=spread, tmin=tmin, tmax=tmax, min_req=_TCAL_MIN_REQUIRED_SPREAD)
+        elif spread < _TCAL_RECOMMENDED_SPREAD:
+            message = _(
+                "IMU {n} temperature calibration spread is {spread:.1f}C ({tmin:.1f}C to {tmax:.1f}C), "
+                "meets the minimum but below the recommended {rec:.0f}C for best coverage."
+            ).format(n=instance, spread=spread, tmin=tmin, tmax=tmax, rec=_TCAL_RECOMMENDED_SPREAD)
+        else:
+            message = _(
+                "IMU {n} temperature calibration spread is {spread:.1f}C ({tmin:.1f}C to {tmax:.1f}C), good coverage."
+            ).format(n=instance, spread=spread, tmin=tmin, tmax=tmax)
+
+        return LogAnalysis(message=message, timestamp_us=None, value=spread)
