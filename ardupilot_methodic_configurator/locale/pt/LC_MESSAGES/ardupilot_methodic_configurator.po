@@ -1525,7 +1525,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:50
 msgid "Parameter download progress update failed: %(error)s"
-msgstr ""
+msgstr "Falha ao atualizar o progresso da transferência de parâmetros: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:131
 msgid "Testing active, will load all parameters from the %s file"
@@ -1537,7 +1537,7 @@ msgstr "MAVFTP é suportado pelo controlador de voo %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:152
 msgid "MAVFTP parameter download failed on the %s, fallback to MAVLink"
-msgstr ""
+msgstr "A transferência de parâmetros por MAVFTP falhou no %s; a recorrer ao MAVLink"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:154
 msgid ""
@@ -1547,7 +1547,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:157
 msgid "Incomplete parameter download from the %s flight controller"
-msgstr ""
+msgstr "Transferência incompleta de parâmetros do controlador de voo %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:183
 msgid "Will fetch all parameters from the %s flight controller"
@@ -1568,7 +1568,7 @@ msgstr "Erro: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:271
 msgid "MAVFTP parameter download failed; falling back to MAVLink: %(error)s"
-msgstr ""
+msgstr "A transferência de parâmetros por MAVFTP falhou; a recorrer ao MAVLink: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:294
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:407
@@ -4493,7 +4493,7 @@ msgstr "Configurador metódico do ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:894
 msgid "Could not download parameters after resetting the flight controller."
-msgstr ""
+msgstr "Não foi possível transferir os parâmetros após reiniciar o controlador de voo."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:935
 msgid ""
@@ -4545,7 +4545,7 @@ msgstr "Enviando %d parâmetros %s selecionados para o controlador de voo..."
 msgid ""
 "Could not download parameters after resetting the flight controller. Upload "
 "was stopped."
-msgstr ""
+msgstr "Não foi possível transferir os parâmetros após reiniciar o controlador de voo. O envio foi interrompido."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1186
 msgid "Parameter upload error"
@@ -6305,11 +6305,11 @@ msgstr "List_of_items não pode ser 'None'"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:23
 msgid "Flight Controller Banner"
-msgstr ""
+msgstr "Banner do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:29
 msgid "No banner messages captured."
-msgstr ""
+msgstr "Nenhuma mensagem de banner capturada."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py:47
 msgid "Initializing Flight Controller"
@@ -6556,33 +6556,33 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:56
 msgid "Compare and upload parameter file - {filename}"
-msgstr ""
+msgstr "Comparar e enviar ficheiro de parâmetros - {filename}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:64
 msgid ""
 "Parameter file selected for comparison and optional upload. This file is not "
 "managed by AMC."
-msgstr ""
+msgstr "Ficheiro de parâmetros selecionado para comparação e envio opcional. Este ficheiro não é gerido pelo AMC."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:81
 msgid "Show only changed parameters"
-msgstr ""
+msgstr "Mostrar apenas os parâmetros alterados"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:94
 msgid "Reset all FC parameters to defaults"
-msgstr ""
+msgstr "Repor todos os parâmetros do FC para os valores predefinidos"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:100
 msgid "Upload selected params to the FC"
-msgstr ""
+msgstr "Enviar os parâmetros selecionados para o FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:105
 msgid "Upload the selected parameters to the flight controller"
-msgstr ""
+msgstr "Enviar os parâmetros selecionados para o controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:135
 msgid "Manual parameter edits not selected"
-msgstr ""
+msgstr "Edições manuais de parâmetros não selecionadas"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:136
 msgid ""
@@ -6590,16 +6590,16 @@ msgid ""
 "but are not selected for upload:\n"
 "\n"
 "{parameter_names}"
-msgstr ""
+msgstr "Os seguintes parâmetros editados manualmente diferem do controlador de voo, mas não estão selecionados para envio:\n\n{parameter_names}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:152
 msgid "Reset all FC parameters"
-msgstr ""
+msgstr "Repor todos os parâmetros do FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:153
 msgid ""
 "Are you sure you want to reset all FC parameters to their default values?"
-msgstr ""
+msgstr "Tem a certeza de que pretende repor todos os parâmetros do FC para os respetivos valores predefinidos?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:189
 msgid "Uploading FC parameters"
@@ -6662,24 +6662,24 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:403
 msgid "Compare and upload"
-msgstr ""
+msgstr "Comparar e enviar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:410
 msgid ""
 "Select a .parm or .param file to compare with the FC and optionally upload"
-msgstr ""
+msgstr "Selecione um ficheiro .parm ou .param para comparar com o FC e, opcionalmente, enviar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:412
 msgid "No flight controller connected, external parameter upload not available"
-msgstr ""
+msgstr "Nenhum controlador de voo ligado; o envio de parâmetros externos não está disponível"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:417
 msgid "FC banner"
-msgstr ""
+msgstr "Banner do FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:424
 msgid "Display the latest flight-controller banner"
-msgstr ""
+msgstr "Mostrar o banner mais recente do controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:430
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
@@ -7058,15 +7058,15 @@ msgstr "Baixando parâmetros do FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1448
 msgid "Select an ArduPilot parameter file"
-msgstr ""
+msgstr "Selecione um ficheiro de parâmetros ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1450
 msgid "ArduPilot parameter files"
-msgstr ""
+msgstr "Ficheiros de parâmetros ArduPilot"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1460
 msgid "Parameter file error"
-msgstr ""
+msgstr "Erro no ficheiro de parâmetros"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1497
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:252
@@ -7229,7 +7229,7 @@ msgstr "Novo valor do ficheiro de parâmetros intermediários selecionado acima"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:197
 msgid "Parameter value to upload to the flight controller"
-msgstr ""
+msgstr "Valor do parâmetro a carregar para o controlador de voo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:198
 msgid "Parameter Unit"
@@ -7280,11 +7280,11 @@ msgstr "Manual"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:223
 msgid "When checked, allows this parameter value to be edited before upload.\n"
-msgstr ""
+msgstr "Quando selecionado, permite que este valor de parâmetro seja editado antes do carregamento.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:224
 msgid "When unchecked, restores the value loaded from the file."
-msgstr ""
+msgstr "Quando não selecionado, repõe o valor carregado do ficheiro."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:226
 msgid ""
@@ -7420,7 +7420,7 @@ msgstr ""
 msgid ""
 "Allow this parameter value to be edited before upload. The file will not be "
 "changed."
-msgstr ""
+msgstr "Permitir que este valor de parâmetro seja editado antes do carregamento. O ficheiro não será alterado."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1016
 msgid ""

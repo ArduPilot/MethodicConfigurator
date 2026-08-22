@@ -1403,7 +1403,7 @@ msgstr "无法从LASTLOG.TXT提取最后一个日志文件编号: %(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:50
 msgid "Parameter download progress update failed: %(error)s"
-msgstr ""
+msgstr "参数下载进度更新失败：%(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:131
 msgid "Testing active, will load all parameters from the %s file"
@@ -1415,7 +1415,7 @@ msgstr "MAVFTP 由 %s 飞控支持。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:152
 msgid "MAVFTP parameter download failed on the %s, fallback to MAVLink"
-msgstr ""
+msgstr "在 %s 上通过 MAVFTP 下载参数失败，回退到 MAVLink"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:154
 msgid ""
@@ -1424,7 +1424,7 @@ msgstr "飞控 %s 不支持MAVFTP, 已切换为MAVLink"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:157
 msgid "Incomplete parameter download from the %s flight controller"
-msgstr ""
+msgstr "从 %s 飞控下载的参数不完整"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:183
 msgid "Will fetch all parameters from the %s flight controller"
@@ -1445,7 +1445,7 @@ msgstr "错误: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:271
 msgid "MAVFTP parameter download failed; falling back to MAVLink: %(error)s"
-msgstr ""
+msgstr "MAVFTP 参数下载失败；回退到 MAVLink：%(error)s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_params.py:294
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/data_model_motor_test.py:407
@@ -4041,7 +4041,7 @@ msgstr "ArduPilot 调参助手"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:894
 msgid "Could not download parameters after resetting the flight controller."
-msgstr ""
+msgstr "重置飞控后无法下载参数。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:935
 msgid ""
@@ -4092,7 +4092,7 @@ msgstr "正在将 %d 个选定的 %s 参数上传到飞行控制器..."
 msgid ""
 "Could not download parameters after resetting the flight controller. Upload "
 "was stopped."
-msgstr ""
+msgstr "重置飞控后无法下载参数。上传已停止。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:1186
 msgid "Parameter upload error"
@@ -5739,11 +5739,11 @@ msgstr "List_of_items 不能为 'None'"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:23
 msgid "Flight Controller Banner"
-msgstr ""
+msgstr "飞控横幅信息"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_fc_banner_window.py:29
 msgid "No banner messages captured."
-msgstr ""
+msgstr "未捕获到横幅消息。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_flightcontroller_connection_progress.py:47
 msgid "Initializing Flight Controller"
@@ -5981,33 +5981,33 @@ msgstr "此主程序仅用于测试和开发，通常 PairTupleCombobox 是从�
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:56
 msgid "Compare and upload parameter file - {filename}"
-msgstr ""
+msgstr "比较并上传参数文件 - {filename}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:64
 msgid ""
 "Parameter file selected for comparison and optional upload. This file is not "
 "managed by AMC."
-msgstr ""
+msgstr "已选择用于比较和可选上传的参数文件。此文件不受 AMC 管理。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:81
 msgid "Show only changed parameters"
-msgstr ""
+msgstr "仅显示已更改的参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:94
 msgid "Reset all FC parameters to defaults"
-msgstr ""
+msgstr "将所有飞控参数重置为默认值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:100
 msgid "Upload selected params to the FC"
-msgstr ""
+msgstr "将所选参数上传到飞控"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:105
 msgid "Upload the selected parameters to the flight controller"
-msgstr ""
+msgstr "将所选参数上传到飞控"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:135
 msgid "Manual parameter edits not selected"
-msgstr ""
+msgstr "未选择手动编辑的参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:136
 msgid ""
@@ -6015,16 +6015,16 @@ msgid ""
 "but are not selected for upload:\n"
 "\n"
 "{parameter_names}"
-msgstr ""
+msgstr "以下手动编辑的参数与飞控中的参数不同，但未被选中以上传：\n\n{parameter_names}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:152
 msgid "Reset all FC parameters"
-msgstr ""
+msgstr "重置所有飞控参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_compare_and_upload.py:153
 msgid ""
 "Are you sure you want to reset all FC parameters to their default values?"
-msgstr ""
+msgstr "确定要将所有飞控参数重置为默认值吗？"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:189
 msgid "Uploading FC parameters"
@@ -6087,24 +6087,24 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:403
 msgid "Compare and upload"
-msgstr ""
+msgstr "比较并上传"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:410
 msgid ""
 "Select a .parm or .param file to compare with the FC and optionally upload"
-msgstr ""
+msgstr "选择一个 .parm 或 .param 文件，与飞控比较并可选择上传"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:412
 msgid "No flight controller connected, external parameter upload not available"
-msgstr ""
+msgstr "未连接飞控，外部参数上传不可用"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:417
 msgid "FC banner"
-msgstr ""
+msgstr "飞控横幅"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:424
 msgid "Display the latest flight-controller banner"
-msgstr ""
+msgstr "显示最新的飞控横幅信息"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:430
 msgid "User Manual, Support Forum, Report a Bug, Licenses, Source Code"
@@ -6466,15 +6466,15 @@ msgstr "下载飞控参数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1448
 msgid "Select an ArduPilot parameter file"
-msgstr ""
+msgstr "选择一个 ArduPilot 参数文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1450
 msgid "ArduPilot parameter files"
-msgstr ""
+msgstr "ArduPilot 参数文件"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1460
 msgid "Parameter file error"
-msgstr ""
+msgstr "参数文件错误"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1497
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:252
@@ -6629,7 +6629,7 @@ msgstr "来自上述选定模版文件的新值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:197
 msgid "Parameter value to upload to the flight controller"
-msgstr ""
+msgstr "要上传到飞行控制器的参数值"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:198
 msgid "Parameter Unit"
@@ -6678,11 +6678,11 @@ msgstr "手动"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:223
 msgid "When checked, allows this parameter value to be edited before upload.\n"
-msgstr ""
+msgstr "选中时，允许在上传前编辑此参数值。\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:224
 msgid "When unchecked, restores the value loaded from the file."
-msgstr ""
+msgstr "取消选中时，恢复从文件加载的值。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:226
 msgid ""
@@ -6805,7 +6805,7 @@ msgstr "选择后将 {param_name} 新值上传到飞控"
 msgid ""
 "Allow this parameter value to be edited before upload. The file will not be "
 "changed."
-msgstr ""
+msgstr "允许在上传前编辑此参数值。文件不会被更改。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor_table.py:1016
 msgid ""
