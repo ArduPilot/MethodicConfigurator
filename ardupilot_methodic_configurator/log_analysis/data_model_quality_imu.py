@@ -29,16 +29,18 @@ class ImuLogQualityModel(BaseLogQualityAnalysisModel):
         for check in (self.check_gyro_error, self.check_accel_error, self.check_health, self.check_signal_present):
             issues += check()
 
-        _, name = self.resolve_message_step("IMU", "IMU")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("IMU", "IMU")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why IMU data is absent using LOG_BITMASK."""
-        name = self.resolve_message_step("IMU", "IMU")[1]
+        step, name = self.resolve_message_step("IMU", "IMU")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "IMU", "IMU", "IMU", not_logged_hint=_("check firmware build supports IMU logging")
         )
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_gyro_error(self) -> list[QualityIssue]:
         """Validate gyroscope error count across all IMU instances."""

@@ -30,16 +30,18 @@ class GPSLogQualityModel(BaseLogQualityAnalysisModel):
             issues += check()
         issues += self.check_parameters()
 
-        _, name = self.resolve_message_step("GPS", "GPS")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("GPS", "GPS")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why GPS data is absent using LOG_BITMASK."""
-        name = self.resolve_message_step("GPS", "GPS")[1]
+        step, name = self.resolve_message_step("GPS", "GPS")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "GPS", "GPS", "GPS", not_logged_hint=_("check the GPS physical connection")
         )
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_status(self) -> list[QualityIssue]:
         """Validate GPS fix status."""

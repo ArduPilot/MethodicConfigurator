@@ -29,8 +29,8 @@ class FftLogQualityModel(BaseLogQualityAnalysisModel):
         for check in (self.check_header_fields, self.check_batch_data_present):
             issues += check()
 
-        _, name = self.resolve_message_step("ISBH", "FFT")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("ISBH", "FFT")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why ISBH/ISBD data is absent using INS_LOG_BAT_MASK."""
@@ -44,13 +44,17 @@ class FftLogQualityModel(BaseLogQualityAnalysisModel):
                 QualityIssue(
                     _("Set INS_LOG_BAT_MASK to enable raw IMU batch logging for FFT analysis"),
                     self.step_for_parameter("INS_LOG_BAT_MASK"),
+                    param_name="INS_LOG_BAT_MASK",
+                    suggested_value=1.0,
                 )
             ]
         else:
             reason = _("Raw IMU batch logging enabled but no data, check firmware build supports batch logging")
             issues = [QualityIssue(_("No ISBH messages found"), step)]
 
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_header_fields(self) -> list[QualityIssue]:
         """Check that ISBH's key fields are present and have readable data."""

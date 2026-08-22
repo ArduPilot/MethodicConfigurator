@@ -11,7 +11,7 @@ SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
@@ -129,6 +129,7 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     quality_results: list[LogQualityResult]
     step_results: list[StepValidationResult]
     hardware_report: HardwareReport
+    related_parameter_values: dict[str, float] = field(default_factory=dict)
 
 
 def analyze_log(
@@ -165,6 +166,11 @@ def analyze_log(
     if pm_quality_result is not None:
         quality_results.append(pm_quality_result)
     quality_results.extend(model(log_data, context).check() for model in resolved_quality_models)
+    related_parameter_values: dict[str, float] = {}
+    for result in quality_results:
+        for issue in result.issues:
+            if issue.param_name is not None and issue.param_name in parameters:
+                related_parameter_values[issue.param_name] = parameters[issue.param_name]
 
     step_results = validate_configuration_steps_data(log_data, configuration_steps)
     hardware_report = extract_hardware_report(log_data, parameters, apm_doc)
@@ -180,4 +186,5 @@ def analyze_log(
         quality_results=quality_results,
         step_results=step_results,
         hardware_report=hardware_report,
+        related_parameter_values=related_parameter_values,
     )

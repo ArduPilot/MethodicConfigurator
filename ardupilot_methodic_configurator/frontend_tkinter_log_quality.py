@@ -13,11 +13,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from functools import partial
 from tkinter import ttk
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
+from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.formatting import format_filesize
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_log_hardware_quality import build_hardware_tab
@@ -27,6 +29,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     LogQualityResult,
     LogQualityState,
+    QualityIssue,
     StepValidationResult,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_report import (
@@ -41,9 +44,20 @@ class LogQualityReportWindow(BaseWindow):
     """Displays log analysis results as a beginner-friendly, detailed dashboard."""
 
     # pylint: disable=duplicate-code
-    def __init__(self, root_tk: tk.Tk | tk.Toplevel, summary: LogSummary) -> None:
+    def __init__(
+        self,
+        root_tk: tk.Tk | tk.Toplevel,
+        summary: LogSummary,
+        is_fc_connected: bool = False,
+        upload_callback: Callable[[dict], bool] | None = None,
+        navigate_callback: Callable[[str], None] | None = None,
+    ) -> None:
         super().__init__(root_tk)
         self.summary = summary
+        self.is_fc_connected = is_fc_connected
+        self.upload_callback = upload_callback
+        self.navigate_callback = navigate_callback
+        self._parent_root = root_tk
         self.root.title(_("Log Quality Report"))
         self.root.geometry(self.calculate_scaled_geometry(1000, 750))
         self.center_window(self.root, root_tk)
@@ -110,6 +124,98 @@ class LogQualityReportWindow(BaseWindow):
             font=("TkDefaultFont", 13, "bold"),
         ).pack(side=tk.LEFT)
 
+    def _open_review_dialog(self, fixes: list[tuple[str, float, float, list[str]]]) -> None:
+        dialog = tk.Toplevel(self.root)
+        dialog.title(_("Review Parameter Changes"))
+        dialog.geometry(self.calculate_scaled_geometry(520, 140 + 60 * len(fixes)))
+        self.center_window(dialog, self.root)
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        ttk.Label(dialog, text=_("The following parameter change(s) are proposed:"), font=("TkDefaultFont", 11, "bold")).pack(
+            anchor=tk.W, padx=14, pady=(14, 6)
+        )
+
+        rows_frame = ttk.Frame(dialog)
+        rows_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(0, 6))
+
+        for param_name, current, proposed, reasons in fixes:
+            row = ttk.Frame(rows_frame)
+            row.pack(fill=tk.X, pady=4)
+            ttk.Label(row, text=param_name, width=18, font=("TkDefaultFont", 11, "bold")).pack(side=tk.LEFT)
+            ttk.Label(row, text=str(int(current)), foreground="gray").pack(side=tk.LEFT, padx=(0, 6))
+            ttk.Label(row, text="->").pack(side=tk.LEFT, padx=(0, 6))
+            value_lbl = ttk.Label(row, text=str(int(proposed)), foreground="darkgreen", font=("TkDefaultFont", 11, "bold"))
+            value_lbl.pack(side=tk.LEFT)
+            show_tooltip(value_lbl, "\n".join(f"- {r}" for r in reasons))
+
+        button_row = ttk.Frame(dialog)
+        button_row.pack(fill=tk.X, padx=14, pady=(6, 14))
+        ttk.Button(button_row, text=_("Cancel"), command=dialog.destroy).pack(side=tk.RIGHT, padx=(6, 0))
+
+        upload_button = ttk.Button(
+            button_row,
+            text=_("Apply & Upload"),
+            command=partial(self._apply_param_fixes, fixes, dialog),
+        )
+        upload_button.configure(state="normal" if self.is_fc_connected else "disabled")
+        upload_button.pack(side=tk.RIGHT)
+        if not self.is_fc_connected:
+            show_tooltip(upload_button, _("No flight controller connected, upload not available"))
+
+    def _apply_param_fixes(self, fixes: list[tuple[str, float, float, list[str]]], dialog: tk.Toplevel) -> None:
+        changes = {param_name: Par(proposed, "") for param_name, _current, proposed, _reasons in fixes}
+        self.summary.related_parameter_values.update({name: par.value for name, par in changes.items()})
+        if self.upload_callback is not None:
+            self.upload_callback(changes)
+        dialog.destroy()
+
+    @staticmethod
+    def _first_config_step(issues: list[QualityIssue]) -> str:
+        for issue in issues:
+            if issue.config_step:
+                return issue.config_step
+        return ""
+
+    def _navigate_to_step(self, step: str) -> None:
+        if self.navigate_callback is not None:
+            self.navigate_callback(step)
+        self._parent_root.deiconify()
+        self._parent_root.lift()
+        self._parent_root.focus_force()
+
+    def _fixes_for_issues(self, issues: list[QualityIssue]) -> list[tuple[str, float, float, list[str]]]:
+        """
+        Compute proposed parameter changes for a specific set of issues.
+
+        Returns (param_name, current_value, proposed_value, reasons) tuples.
+        LOG_BITMASK entries within the given issues are OR-merged; every other
+        parameter takes its first suggested value.
+        """
+        by_param: dict[str, list[QualityIssue]] = {}
+        for issue in issues:
+            if issue.param_name is not None and issue.suggested_value is not None:
+                by_param.setdefault(issue.param_name, []).append(issue)
+
+        fixes: list[tuple[str, float, float, list[str]]] = []
+        for param_name, param_issues in by_param.items():
+            current = self.summary.related_parameter_values.get(param_name)
+            if current is None:
+                continue
+
+            if param_name == "LOG_BITMASK":
+                proposed = int(current)
+                for issue in param_issues:
+                    proposed |= int(issue.suggested_value)  # type: ignore[arg-type]
+                proposed_value = float(proposed)
+            else:
+                proposed_value = param_issues[0].suggested_value  # type: ignore[assignment]
+
+            if proposed_value != current:
+                fixes.append((param_name, current, proposed_value, [i.message for i in param_issues]))
+
+        return fixes
+
     def _build_stats_cards(self) -> None:
         card_container = ttk.Frame(self.main_frame)
         card_container.pack(side=tk.TOP, fill=tk.X, padx=12, pady=8)
@@ -158,8 +264,6 @@ class LogQualityReportWindow(BaseWindow):
         self._add_key_value(card, _("Peak CPU:"), f"{pm.peak_cpu_load:.1f}%" if pm else "-")
         self._add_key_value(card, _("Long Loops:"), str(pm.scheduler_long_loops) if pm else "-")
 
-    # ------------------------------------------------------------------ tabs
-
     def _build_tabs(self) -> None:
         style = ttk.Style()
         style.configure("TNotebook.Tab", font=("TkDefaultFont", 11))
@@ -180,12 +284,23 @@ class LogQualityReportWindow(BaseWindow):
         scroll_container.pack(fill=tk.BOTH, expand=True)
         inner = scroll_container.view_port
 
+        absorbed_by_step: dict[str, list[StepValidationResult]] = {}
+        for step_result in self.summary.step_results:
+            for q in self.summary.quality_results:
+                if q.related_step and q.related_step == step_result.step:
+                    absorbed_by_step.setdefault(q.related_step, []).append(step_result)
+                    break
+
+        absorbed_steps = set(absorbed_by_step)
+
         needs_attention: list[tuple[str, object]] = []
         passed_checks: list[tuple[str, object]] = []
 
         for q in self.summary.quality_results:
             (passed_checks if q.state == LogQualityState.INFO else needs_attention).append(("quality", q))
         for s in self.summary.step_results:
+            if s.step in absorbed_steps:
+                continue
             (passed_checks if s.valid else needs_attention).append(("step", s))
 
         if needs_attention:
@@ -194,7 +309,7 @@ class LogQualityReportWindow(BaseWindow):
             )
             for kind, item in needs_attention:
                 if kind == "quality":
-                    self._quality_result_card(inner, item)  # type: ignore[arg-type]
+                    self._quality_result_card(inner, item, absorbed_by_step.get(item.related_step, []))  # type: ignore[arg-type]
                 else:
                     self._step_result_card(inner, item)  # type: ignore[arg-type]
             ttk.Separator(inner, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=14, pady=(14, 14))
@@ -205,19 +320,15 @@ class LogQualityReportWindow(BaseWindow):
             )
             for kind, item in passed_checks:
                 if kind == "quality":
-                    self._quality_result_card(inner, item)  # type: ignore[arg-type]
+                    self._quality_result_card(inner, item, absorbed_by_step.get(item.related_step, []))  # type: ignore[arg-type]
                 else:
                     self._step_result_card(inner, item)  # type: ignore[arg-type]
 
-    def _quality_result_card(self, parent: ttk.Frame, result: LogQualityResult) -> None:
+    def _quality_result_card(
+        self, parent: ttk.Frame, result: LogQualityResult, absorbed_steps: list[StepValidationResult]
+    ) -> None:
         card = ttk.Frame(parent)
         card.pack(fill=tk.X, padx=14, pady=6)
-
-        tag = "OK" if result.state == LogQualityState.INFO else "WARN"
-        color = "darkgreen" if result.state == LogQualityState.INFO else "red3"
-
-        icon_lbl = ttk.Label(card, text=tag, foreground=color, font=("TkDefaultFont", 12, "bold"), width=8)
-        icon_lbl.pack(side=tk.LEFT)
 
         text_frame = ttk.Frame(card)
         text_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
@@ -227,24 +338,30 @@ class LogQualityReportWindow(BaseWindow):
         text_frame.bind("<Configure>", partial(self._set_wraplength, reason_lbl))
 
         if result.issues:
-            tooltip = "\n".join(f"- {i.message}" for i in result.issues)
+            tooltip_lines = [f"- {i.message}" for i in result.issues]
+            tooltip_lines += [f"- Also required for: {step_display_name(s.step)}" for s in absorbed_steps]
+            tooltip = "\n".join(tooltip_lines)
             issue_lbl = ttk.Label(
                 card, text=f"{len(result.issues)} Issue(s)", foreground="darkorange", font=("TkDefaultFont", 11, "bold")
             )
             issue_lbl.pack(side=tk.RIGHT, padx=14)
             show_tooltip(issue_lbl, tooltip)
-            show_tooltip(icon_lbl, tooltip)
             show_tooltip(card, tooltip)
+
+            fixes = self._fixes_for_issues(result.issues)
+            if fixes:
+                fix_button = ttk.Button(card, text=_("Fix"), command=partial(self._open_review_dialog, fixes))
+                fix_button.pack(side=tk.RIGHT, padx=(0, 8))
+
+            step = result.related_step or self._first_config_step(result.issues)
+            if step:
+                step_button = ttk.Button(card, text=_("Go to Step"), command=partial(self._navigate_to_step, step))
+                step_button.pack(side=tk.RIGHT, padx=(0, 8))
+                show_tooltip(step_button, _("Jump to the {step} configuration step").format(step=step))
 
     def _step_result_card(self, parent: ttk.Frame, result: StepValidationResult) -> None:
         card = ttk.Frame(parent)
         card.pack(fill=tk.X, padx=14, pady=6)
-
-        tag = "PASS" if result.valid else "FAIL"
-        color = "darkgreen" if result.valid else "darkorange"
-
-        icon_lbl = ttk.Label(card, text=tag, foreground=color, font=("TkDefaultFont", 12, "bold"), width=8)
-        icon_lbl.pack(side=tk.LEFT)
 
         lbl = ttk.Label(card, text=step_display_name(result.step), font=("TkDefaultFont", 12), wraplength=500)
         lbl.pack(side=tk.LEFT, anchor=tk.W, fill=tk.X, expand=True)
@@ -254,9 +371,10 @@ class LogQualityReportWindow(BaseWindow):
 
         if not result.valid:
             issues_lines = [i for mr in result.message_results.values() for i in mr.issues]
+            step_button = ttk.Button(card, text=_("Go to Step"), command=partial(self._navigate_to_step, result.step))
+            step_button.pack(side=tk.RIGHT, padx=(0, 8))
             if issues_lines:
                 tooltip = "\n".join(f"- {i}" for i in issues_lines)
-                show_tooltip(icon_lbl, tooltip)
                 show_tooltip(lbl, tooltip)
                 show_tooltip(card, tooltip)
 

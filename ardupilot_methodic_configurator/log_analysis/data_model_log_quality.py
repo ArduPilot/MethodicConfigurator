@@ -25,6 +25,8 @@ class QualityIssue:
 
     message: str
     config_step: str = ""
+    param_name: str | None = None
+    suggested_value: float | None = None
 
 
 @dataclass
@@ -36,6 +38,7 @@ class LogQualityResult:
     reason: str
     issues: list[QualityIssue]
     name: str
+    related_step: str = ""
 
 
 @dataclass

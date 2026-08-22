@@ -284,6 +284,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._tempcal_imu_progress_window: ProgressWindow | None = None
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
+        self._log_quality_report_window: LogQualityReportWindow | None = None
+        self._log_report_return_pending: bool = False
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
@@ -579,6 +581,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No flight controller connected or MAVFTP not supported"),
         )
 
+        # Create analyse flight log button
+        analyse_log_button = ttk.Button(
+            buttons_frame,
+            text=_("Analyse a .bin log"),
+            command=self.on_analyse_log_click,
+        )
+        analyse_log_button.pack(side=tk.LEFT, padx=(8, 8))
+        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its quality"))
+
         # Create Zip file for forum button
         zip_vehicle_for_forum_button = ttk.Button(
             buttons_frame,
@@ -596,8 +607,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No intermediate parameter files available"),
         )
 
-        # Create skip buttons
-        self.skip_button = ttk.Button(buttons_frame, text=_("Skip >"), command=self.on_skip_click)
+        # Create skip button
+        self.skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
         self.skip_button.configure(
             state=(
                 "normal"
@@ -611,18 +622,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         show_tooltip(
             self.skip_button,
             _(
-                "Go to the next configuration step parameter file without uploading any changes to the flight "
-                "controller\nIf changes have been made to the current file it will ask if you want to save them"
-            ),
-        )
-
-        self.previous_button = ttk.Button(buttons_frame, text=_("< Skip"), command=self.on_previous_click)
-        self._update_previous_button_state()
-        self.previous_button.pack(side=tk.RIGHT, padx=(8, 0))
-        show_tooltip(
-            self.previous_button,
-            _(
-                "Go to the previous configuration step parameter file without uploading any changes to the flight "
+                "Skip to the next intermediate parameter file without uploading any changes to the flight "
                 "controller\nIf changes have been made to the current file it will ask if you want to save them"
             ),
         )
@@ -724,7 +724,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         if not filepath:
             return
+        self._analyse_log_file(filepath)
 
+    def _navigate_to_config_step(self, step: str) -> None:
+        if not step or step not in self.file_selection_combobox["values"]:
+            return
+        self._log_report_return_pending = True
+        self.file_selection_combobox.set(step)
+        self.on_param_file_combobox_change(None, forced=True)
+
+    def _analyse_log_file(self, filepath: str) -> None:
         try:
             inputs = self.parameter_editor.get_log_analysis_context_inputs()
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -778,9 +787,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.ui.show_error(_("Log Analysis Error"), str(e))
                     return
 
-                report_window = LogQualityReportWindow(self.root, summary)
-                if UsagePopupWindow.should_display("log_quality_report"):
-                    display_log_quality_report_usage_popup(cast("tk.Tk", report_window.root))
+                report_window = LogQualityReportWindow(
+                    self.root,
+                    summary,
+                    is_fc_connected=self.parameter_editor.is_fc_connected,
+                    upload_callback=self.upload_selected_params,
+                    navigate_callback=self._navigate_to_config_step,
+                )
+                self._log_quality_report_window = report_window
 
         thread = threading.Thread(target=run_extraction, daemon=True)
         thread.start()
@@ -1319,7 +1333,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             # Repopulate parameter table with new file
             self.repopulate_parameter_table()
             self._update_skip_button_state()
-            self._update_previous_button_state()
 
             # Update inline component editor for the current step
             self._update_inline_component_editor(self.parameter_editor.get_current_component())
@@ -1473,8 +1486,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         if self.upload_selected_params(selected_params):
-            # Delete the parameter table and create a new one with the next file if available
+            self._continue_to_analyse()
             self.on_skip_click()
+
+    def _continue_to_analyse(self) -> None:
+        if not self._log_report_return_pending:
+            return
+        self._log_report_return_pending = False
+        if self._log_quality_report_window is not None and self.ui.ask_yesno(
+            _("Continue Log Quality Review"),
+            _("Parameters uploaded. Return to the log quality report to continue?"),
+        ):
+            self._log_quality_report_window.root.deiconify()
+            self._log_quality_report_window.root.lift()
+            self._log_quality_report_window.root.focus_force()
 
     # This function can recurse multiple times if there is an upload error
 
@@ -1549,27 +1574,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                 else "disabled"
             )
             self.skip_button.configure(state=skip_button_state)
-
-    def _update_previous_button_state(self) -> None:
-        """Enable the previous button when an earlier parameter file is available."""
-        if not hasattr(self, "previous_button"):
-            return
-        previous_file = self.parameter_editor.get_previous_non_optional_file(
-            current_file=self.file_selection_combobox.get(), gui_complexity=self.gui_complexity
-        )
-        self.previous_button.configure(state="normal" if previous_file is not None else "disabled")
-
-    def on_previous_click(self, _event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
-        """Select the preceding parameter file, saving any pending edits first."""
-        previous_file = self.parameter_editor.get_previous_non_optional_file(
-            current_file=self.file_selection_combobox.get(), gui_complexity=self.gui_complexity
-        )
-        if previous_file is None:
-            return
-
-        self.write_changes_to_intermediate_parameter_file()
-        self.file_selection_combobox.set(previous_file)
-        self.on_param_file_combobox_change(None)
 
     def on_skip_click(self, _event: Union[tk.Event, None] = None) -> None:  # noqa: UP007
         self.write_changes_to_intermediate_parameter_file()

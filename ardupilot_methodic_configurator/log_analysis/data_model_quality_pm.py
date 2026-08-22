@@ -30,19 +30,21 @@ class PmLogQualityModel(BaseLogQualityAnalysisModel):
             return self._diagnose_absence()
 
         issues = self.check_pm_fields()
-        _, name = self.resolve_message_step("PM", "PM")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("PM", "PM")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why PM data is absent using LOG_BITMASK."""
-        name = self.resolve_message_step("PM", "PM")[1]
+        step, name = self.resolve_message_step("PM", "PM")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "PM",
             "System Performance",
             "PM",
             not_logged_hint=_("check firmware build supports performance monitor logging"),
         )
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_pm_fields(self) -> list[QualityIssue]:
         """Check that key PM fields are present and have readable data."""

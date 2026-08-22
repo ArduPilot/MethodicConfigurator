@@ -30,8 +30,8 @@ class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
             issues += check()
         issues += self.check_parameters()
 
-        _, name = self.resolve_message_step("BAT", "Battery")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("BAT", "Battery")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         name = self.resolve_message_step("BAT", "Battery")[1]
@@ -49,7 +49,9 @@ class BatteryLogQualityModel(BaseLogQualityAnalysisModel):
                 reason = _("Battery logging enabled but no data, monitor may not be configured properly")
                 issues = [QualityIssue(_("No BAT messages found"), step)]
 
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_voltage(self) -> list[QualityIssue]:
         volts, issues = self.field_values_or_issue(
