@@ -44,13 +44,17 @@ class FftLogQualityModel(BaseLogModel):
                 QualityIssue(
                     _("Set INS_LOG_BAT_MASK to enable raw IMU batch logging for FFT analysis"),
                     self.step_for_parameter("INS_LOG_BAT_MASK"),
+                    param_name="INS_LOG_BAT_MASK",
+                    suggested_value=1.0,
                 )
             ]
         else:
             reason = _("Raw IMU batch logging enabled but no data, check firmware build supports batch logging")
             issues = [QualityIssue(_("No ISBH messages found"), step)]
 
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_header_fields(self) -> list[QualityIssue]:
         """Check that ISBH's key fields are present and have readable data."""

@@ -358,17 +358,28 @@ class BatteryLogAnalysis(BaseLogModel):
                 continue
 
             if not is_within_tolerance(actual, expected):
-                outcomes.append(
-                    LogAnalysis(
-                        message=_(
-                            "{param} is {actual:.2f} but should be {expected:.2f} as per {source} parameter "
-                            "in {step}, based on your vehicle_components specifications."
-                        ).format(param=param_name, actual=actual, expected=expected, source=source, step=step_filename),
-                        timestamp_us=None,
-                        value=actual,
-                        param_name=param_name,
-                        suggested_value=expected,
-                        related_step=step_filename,
+                if param_name == "MOT_BAT_VOLT_MAX":
+                    message = _(
+                        "{param} is {actual:.2f} but should be {expected:.2f} as per {source} parameter "
+                        "in {step}, based on your vehicle_components specifications. This is used to correctly "
+                        "scale the PID gains. It is the voltage of a healthy, fully charged battery "
+                        "read from your flight log immediately after takeoff (which is lower than the battery's "
+                        "true max voltage due to sag under load)."
+                    ).format(param=param_name, actual=actual, expected=expected, source=source, step=step_filename)
+                else:
+                    message = _(
+                        "{param} is {actual:.2f} but should be {expected:.2f} as per {source} parameter "
+                        "in {step}, based on your vehicle_components specifications."
+                    ).format(param=param_name, actual=actual, expected=expected, source=source, step=step_filename)
+
+                    outcomes.append(
+                        LogAnalysis(
+                            message=message,
+                            timestamp_us=None,
+                            value=actual,
+                            param_name=param_name,
+                            suggested_value=expected,
+                            related_step=step_filename,
+                        )
                     )
-                )
         return outcomes
