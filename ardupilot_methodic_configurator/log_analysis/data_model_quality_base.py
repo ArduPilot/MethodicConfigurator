@@ -133,7 +133,15 @@ class BaseLogModel(ConfigurationSteps):
 
         if log_bit is not None and bitmask is not None and (int(bitmask) & (1 << log_bit)) == 0:
             reason = _("{message} logging is disabled in LOG_BITMASK").format(message=fallback_name)
-            issues = [QualityIssue(_("Enable {message} logging (LOG_BITMASK bit)").format(message=fallback_name), step)]
+            suggested_value = float(int(bitmask) | (1 << log_bit))
+            issues = [
+                QualityIssue(
+                    _("Enable {message} logging (LOG_BITMASK bit)").format(message=fallback_name),
+                    step,
+                    param_name="LOG_BITMASK",
+                    suggested_value=suggested_value,
+                )
+            ]
             return reason, issues, True
 
         reason = _("{message} telemetry not logged but logging enabled; {hint}").format(

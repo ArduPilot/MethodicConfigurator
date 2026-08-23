@@ -29,8 +29,8 @@ class ModeLogQualityModel(BaseLogModel):
         for check in (self.check_mode_fields,):
             issues += check()
 
-        _, name = self.resolve_message_step("MODE", "MODE")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("MODE", "MODE")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """
@@ -42,7 +42,9 @@ class ModeLogQualityModel(BaseLogModel):
         step, name = self.resolve_message_step("MODE", "MODE")
         reason = _("MODE messages not found, this is unexpected since mode changes are always logged")
         issues = [QualityIssue(_("No MODE messages found"), step)]
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_mode_fields(self) -> list[QualityIssue]:
         """Check that Mode/ModeNum/Rsn fields are present and have readable data."""

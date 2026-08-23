@@ -21,6 +21,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_in
     imu_device_id_param,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_param_metadata import tcal_enabled_codes
+from ardupilot_methodic_configurator.log_analysis.utils import find_matching_param_values
 
 # This must be at least 10 degrees above TMIN for calibration
 _TCAL_MIN_REQUIRED_SPREAD = 10.0
@@ -44,16 +45,18 @@ class ImuLogQualityModel(BaseLogModel):
         for check in (self.check_gyro_error, self.check_accel_error, self.check_health, self.check_signal_present):
             issues += check()
 
-        _, name = self.resolve_message_step("IMU", "IMU")
-        return self.build_result(issues, name)
+        step, name = self.resolve_message_step("IMU", "IMU")
+        return self.build_result(issues, name, related_step=step)
 
     def _diagnose_absence(self) -> LogQualityResult:
         """Diagnose why IMU data is absent using LOG_BITMASK."""
-        name = self.resolve_message_step("IMU", "IMU")[1]
+        step, name = self.resolve_message_step("IMU", "IMU")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "IMU", "IMU", "IMU", not_logged_hint=_("check firmware build supports IMU logging")
         )
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogQualityResult(
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        )
 
     def check_gyro_error(self) -> list[QualityIssue]:
         """Validate gyroscope error count across all IMU instances."""
@@ -148,6 +151,7 @@ class ImuLogAnalysis(BaseLogModel):
     def analyse(self) -> LogAnalysisResult:
         outcomes: list[LogAnalysis] = []
         outcomes += self.check_temperature_calibration()
+        outcomes += self.check_notch_filter_telemetry_dependency()
 
         step, _name = self.resolve_message_step("IMU", "IMU")
         return LogAnalysisResult(
@@ -267,6 +271,36 @@ class ImuLogAnalysis(BaseLogModel):
 
             outcomes.append(self._temp_difference(instance, tmin, tmax))
 
+        return outcomes
+
+    def check_notch_filter_telemetry_dependency(self) -> list[LogAnalysis]:
+        """Warn when a notch filter is configured to track ESC telemetry RPM, but no ESC telemetry was present."""
+        esc_columns = self.log_data.get_message_columns("ESC")
+        esc_present = esc_columns is not None and len(esc_columns) > 0
+        if esc_present:
+            return []
+
+        outcomes: list[LogAnalysis] = []
+        for mode_param in ("INS_HNTCH_MODE", "INS_HNTC2_MODE"):
+            mode = self.parameters.get(mode_param)
+            if mode is None or self.apm_doc is None:
+                continue
+
+            esc_telemetry_codes = find_matching_param_values(self.apm_doc, mode_param, "ESC Telemetry")
+            if str(int(mode)) in esc_telemetry_codes:
+                outcomes.append(
+                    LogAnalysis(
+                        message=_(
+                            "{param} is set to ESC Telemetry tracking mode, but no ESC telemetry was present "
+                            "in this log. The notch filter could not track motor RPM, and did not "
+                            "remove motor noise. Motor vibration noise reached the PID controller inputs."
+                        ).format(param=mode_param),
+                        timestamp_us=None,
+                        value=float(mode),
+                        param_name=mode_param,
+                        related_step=self.step_for_parameter(mode_param),
+                    )
+                )
         return outcomes
 
     def _temp_difference(self, instance: int, tmin: float, tmax: float) -> LogAnalysis:

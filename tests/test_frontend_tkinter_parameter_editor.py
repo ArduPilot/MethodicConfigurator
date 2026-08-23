@@ -56,7 +56,7 @@ def _build_parameter_area_container() -> MagicMock:
     return container
 
 
-def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:
+def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noqa: PLR0915, RUF100 # pylint: disable=too-many-statements
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
     editor.parameter_editor = parameter_editor
     editor.root = MagicMock()
@@ -71,6 +71,8 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:
     editor.parameter_editor_table.repopulate = MagicMock()
     editor.parameter_editor_table.get_upload_selected_params = MagicMock(return_value={})
     editor.parameter_editor_table.view_port = MagicMock()
+    editor._log_quality_report_window = None
+    editor._log_report_return_pending = False
     focus_widget = MagicMock()
     editor.parameter_editor_table.view_port.focus_get.return_value = focus_widget
     progress_windows: list[MagicMock] = []
@@ -81,6 +83,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:
         progress.update_progress_bar_300_pct = MagicMock()
         progress.destroy = MagicMock()
         progress_windows.append(progress)
+
         return progress
 
     editor._test_progress_windows = progress_windows  # type: ignore[attr-defined]
@@ -754,7 +757,15 @@ class TestAnalyseLogClick:
             check_done()
 
         # Assert — report window opened with correct args
-        mock_report.assert_called_once_with(parameter_editor_window.root, fake_summary)
+        mock_report.assert_called_once_with(
+            parameter_editor_window.root,
+            fake_summary,
+            parameter_editor_window.parameter_editor.get_vehicle_directory(),
+            is_fc_connected=True,
+            upload_callback=parameter_editor_window.upload_selected_params,
+            navigate_callback=parameter_editor_window._navigate_to_config_step,
+            report=None,
+        )
         mock_report.return_value.run.assert_not_called()
         parameter_editor_window._test_progress_windows[0].destroy.assert_called_once()  # type: ignore[attr-defined]
         parameter_editor_window.ui.show_error.assert_not_called()

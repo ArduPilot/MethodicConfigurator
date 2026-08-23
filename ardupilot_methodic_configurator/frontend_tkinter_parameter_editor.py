@@ -284,6 +284,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._tempcal_imu_progress_window: ProgressWindow | None = None
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
+        self._log_quality_report_window: LogQualityReportWindow | None = None
+        self._log_report_return_pending: bool = False
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
         self._updating_inline_editor: bool = False
@@ -578,6 +580,14 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
         )
+        # Create analyse flight log button
+        analyse_log_button = ttk.Button(
+            buttons_frame,
+            text=_("Analyse a .bin log"),
+            command=self.on_analyse_log_click,
+        )
+        analyse_log_button.pack(side=tk.LEFT, padx=(8, 8))
+        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its quality"))
 
         # Create Zip file for forum button
         zip_vehicle_for_forum_button = ttk.Button(
@@ -595,6 +605,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if self.parameter_editor.parameter_files()
             else _("No intermediate parameter files available"),
         )
+        # Create skip button
+        self.skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
 
         # Create skip buttons
         self.skip_button = ttk.Button(buttons_frame, text=_("Skip >"), command=self.on_skip_click)
@@ -724,6 +736,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         )
         if not filepath:
             return
+        self._analyse_log_file(filepath)
+
+    def _navigate_to_config_step(self, step: str) -> None:
+        if not step or step not in self.file_selection_combobox["values"]:
+            return
+        self._log_report_return_pending = True
+        self.file_selection_combobox.set(step)
+        self.on_param_file_combobox_change(None, forced=True)
+
+    def _analyse_log_file(self, filepath: str) -> None:
 
         try:
             inputs = self.parameter_editor.get_log_analysis_context_inputs()
@@ -774,13 +796,24 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                         apm_doc=resolved_inputs.apm_doc,
                         validate_project=False,
                     )
+                    report = None
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     self.ui.show_error(_("Log Analysis Error"), str(e))
                     return
 
-                report_window = LogQualityReportWindow(self.root, summary)
-                if UsagePopupWindow.should_display("log_quality_report"):
-                    display_log_quality_report_usage_popup(cast("tk.Tk", report_window.root))
+                report_window = LogQualityReportWindow(
+                    self.root,
+                    summary,
+                    self.parameter_editor.get_vehicle_directory(),
+                    is_fc_connected=self.parameter_editor.is_fc_connected,
+                    upload_callback=self.upload_selected_params,
+                    navigate_callback=self._navigate_to_config_step,
+                    report=report,
+                )
+                self._log_quality_report_window = report_window
+
+                if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("log_quality_report"):
+                    display_log_quality_report_usage_popup(report_window.root)
 
         thread = threading.Thread(target=run_extraction, daemon=True)
         thread.start()
@@ -1473,8 +1506,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             return
 
         if self.upload_selected_params(selected_params):
+            self._continue_to_analyse()
             # Delete the parameter table and create a new one with the next file if available
             self.on_skip_click()
+
+    def _continue_to_analyse(self) -> None:
+        if not self._log_report_return_pending:
+            return
+        self._log_report_return_pending = False
+        if self._log_quality_report_window is not None and self.ui.ask_yesno(
+            _("Continue Log Quality Review"),
+            _("Parameters uploaded. Return to the log quality report to continue?"),
+        ):
+            self._log_quality_report_window.root.deiconify()
+            self._log_quality_report_window.root.lift()
+            self._log_quality_report_window.root.focus_force()
 
     # This function can recurse multiple times if there is an upload error
 
