@@ -111,6 +111,25 @@ def test_battery_model_checks_present_log_data_without_datasource_access() -> No
     assert any("Voltage is zero" in issue.message for issue in result.issues)
 
 
+def test_battery_model_rejects_non_finite_telemetry_values() -> None:
+    """NaN telemetry must not be reported as healthy battery data."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "BAT",
+        np.array(
+            [(np.nan, np.nan, np.nan)],
+            dtype=[("Volt", "f8"), ("Curr", "f8"), ("CurrTot", "f8")],
+        ),
+    )
+
+    result = BatteryLogQualityModel(log_data, _context({"BATT_MONITOR": 4.0})).check()
+
+    assert result.available is True
+    assert result.state == LogQualityState.WARNING
+    assert len(result.issues) == 3
+    assert all("non-finite telemetry values" in issue.message for issue in result.issues)
+
+
 def test_esc_analysis_does_not_report_zero_error_rates_as_findings() -> None:
     """A healthy ESC log should have no error-rate findings."""
     log_data = LogData()

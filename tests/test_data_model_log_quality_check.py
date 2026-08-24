@@ -13,6 +13,8 @@ import pytest
 
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check import (
+    check_cpu_performance_message,
+    get_pm_status,
     validate_configuration_steps_data,
     validate_fmt_schema,
 )
@@ -86,6 +88,35 @@ class TestValidateFmtSchema:
 
         assert result.valid is True
         assert not result.issues
+
+
+def test_pm_non_finite_values_are_reported_as_invalid() -> None:
+    """NaN PM telemetry must not be treated as a valid performance report."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM",
+        np.array(
+            [(np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan)],
+            dtype=[
+                ("Load", "f8"),
+                ("NLon", "f8"),
+                ("MaxT", "f8"),
+                ("Mem", "f8"),
+                ("InE", "f8"),
+                ("ErC", "f8"),
+                ("ErrL", "f8"),
+            ],
+        ),
+    )
+
+    validation = check_cpu_performance_message(log_data)
+    status = get_pm_status(log_data)
+
+    assert validation.valid is False
+    assert len(validation.issues) == 7
+    assert all("non-finite telemetry values" in issue for issue in validation.issues)
+    assert status is not None
+    assert status.healthy is None
 
 
 class TestValidateConfigurationSteps:
