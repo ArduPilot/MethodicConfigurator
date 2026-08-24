@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     LogQualityResult,
     LogQualityState,
@@ -50,6 +51,11 @@ class BaseLogModel(ConfigurationSteps):
     def check(self) -> LogQualityResult:
         """Run the model-specific quality analysis and return a result."""
         msg = f"{self.__class__.__name__} must implement check()"
+        raise NotImplementedError(msg)
+
+    def analyse(self) -> LogAnalysisResult:
+        """Run the model-specific detailed analysis and return its result."""
+        msg = f"{self.__class__.__name__} must implement analyse()"
         raise NotImplementedError(msg)
 
     def step_for_parameter(self, param_name: str) -> str:
