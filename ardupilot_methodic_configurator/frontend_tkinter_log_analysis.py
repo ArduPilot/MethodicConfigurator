@@ -149,7 +149,7 @@ def _format_component(component: dict[str, Any]) -> list[str]:  # pylint: disabl
 class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Log analysis window."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         root_tk: tk.Tk | tk.Toplevel,
         summary: LogSummary,
