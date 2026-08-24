@@ -33,3 +33,4 @@ class LogAnalysisResult:
     name: str | None
     reason: str
     related_step: str | None = None
+    subsystem_key: str | None = None

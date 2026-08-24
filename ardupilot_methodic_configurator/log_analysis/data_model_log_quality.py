@@ -39,6 +39,7 @@ class LogQualityResult:
     issues: list[QualityIssue]
     name: str
     related_step: str = ""
+    subsystem_key: str | None = None
 
 
 @dataclass

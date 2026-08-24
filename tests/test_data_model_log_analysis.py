@@ -22,11 +22,11 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_contex
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityResult, LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogModel,
+    BaseLogQualityModel,
 )
 
 
-class RecordingQualityModel(BaseLogModel):
+class RecordingQualityModel(BaseLogQualityModel):
     """Quality model test double that records constructor inputs."""
 
     seen_log_data: ClassVar[LogData | None] = None
@@ -47,7 +47,7 @@ class RecordingQualityModel(BaseLogModel):
         )
 
 
-class DummyQualityModel(BaseLogModel):
+class DummyQualityModel(BaseLogQualityModel):
     """Minimal concrete model to exercise base-class context wiring."""
 
     def check(self) -> LogQualityResult:

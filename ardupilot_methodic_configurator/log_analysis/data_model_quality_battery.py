@@ -13,14 +13,15 @@ from ardupilot_methodic_configurator.data_model_par_dict import is_within_tolera
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogModel,
+    BaseLogAnalysisModel,
+    BaseLogQualityModel,
     LogQualityResult,
     QualityIssue,
 )
 from ardupilot_methodic_configurator.log_analysis.utils import find_log_bit_in_apm_file
 
 
-class BatteryLogQualityModel(BaseLogModel):
+class BatteryLogQualityModel(BaseLogQualityModel):
     """Checks battery telemetry and configuration quality."""
 
     def check(self) -> LogQualityResult:
@@ -114,7 +115,7 @@ class BatteryLogQualityModel(BaseLogModel):
 # Hardware and parameter analysis.
 
 
-class BatteryLogAnalysis(BaseLogModel):
+class BatteryLogAnalysis(BaseLogAnalysisModel):
     """
     Battery analysis on the data from the log.
 
