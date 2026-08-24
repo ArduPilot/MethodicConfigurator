@@ -289,7 +289,21 @@ class EscLogAnalysis(BaseLogModel):
         if len(instances) < 3:
             return []
 
-        means = {inst: float(curr_values[instance_numbers == inst].mean()) for inst in instances}
+        windows = self._armed_time_windows()
+        if not windows:
+            return []
+
+        armed_masks = [(time_us >= arm_time) & (time_us <= disarm_time) for arm_time, disarm_time in windows]
+        armed_mask = armed_masks[0]
+        for window_mask in armed_masks[1:]:
+            armed_mask |= window_mask
+
+        means: dict[float, float] = {}
+        for instance in instances:
+            instance_mask = armed_mask & (instance_numbers == instance)
+            if not instance_mask.any():
+                return []
+            means[instance] = float(curr_values[instance_mask].mean())
         sorted_items = sorted(means.items(), key=lambda kv: kv[1])
         values = [v for _, v in sorted_items]
 
@@ -315,7 +329,7 @@ class EscLogAnalysis(BaseLogModel):
         median_curr = statistics.median(values)
         outcomes: list[LogAnalysis] = []
         for inst, inst_mean in outlier_group:
-            mask = instance_numbers == inst
+            mask = armed_mask & (instance_numbers == inst)
             inst_curr = curr_values[mask]
             inst_times = time_us[mask]
             furthest_idx = abs(inst_curr - median_curr).argmax()
@@ -339,7 +353,12 @@ class EscLogAnalysis(BaseLogModel):
         """Check SCHED_LOOP_RATE * SERVO_DSHOT_RATE effective output rate against a minimum threshold."""
         loop_rate = self.parameters.get("SCHED_LOOP_RATE")
         dshot_rate_code = self.parameters.get("SERVO_DSHOT_RATE")
-        if loop_rate is None or dshot_rate_code is None:
+        pwm_type = self.parameters.get("MOT_PWM_TYPE")
+        if loop_rate is None or dshot_rate_code is None or pwm_type is None or self.apm_doc is None:
+            return []
+
+        dshot_values = find_matching_param_values(self.apm_doc, "MOT_PWM_TYPE", "DShot")
+        if str(int(pwm_type)) not in dshot_values:
             return []
 
         label = enum_value_name(self.apm_doc, "SERVO_DSHOT_RATE", dshot_rate_code)
