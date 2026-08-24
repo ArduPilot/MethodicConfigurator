@@ -156,7 +156,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         vehicle_dir: str,
         report: dict[str, Any] | None = None,
         is_fc_connected: bool = False,
-        upload_callback: Callable[[dict], bool] | None = None,
+        upload_callback: Callable[[dict[str, Par]], bool | None] | None = None,
     ) -> None:
         super().__init__(root_tk)
         self.summary = summary
@@ -259,7 +259,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         tuning_report_path = Path(self.vehicle_dir) / "tuning_report.csv"
         try:
             TuningReportWindow(self.root, str(tuning_report_path))
-        except (OSError, ValueError, StopIteration) as exc:
+        except (OSError, ValueError) as exc:
             messagebox.showerror(_("Tuning Graph Error"), str(exc), parent=self.root)
 
     def _render_subsystem(self, name: str) -> None:  # pylint: disable=too-many-locals, too-many-branches
@@ -399,8 +399,10 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
 
     def _apply_param_fixes(self, fixes: list[tuple[str, float, float, list[str]]], dialog: tk.Toplevel) -> None:
         changes = {param_name: Par(proposed, "") for param_name, _current, proposed, _reasons in fixes}
-        if self.upload_callback is not None and not self.upload_callback(changes):
-            return
+        if self.upload_callback is not None:
+            upload_result = self.upload_callback(changes)
+            if upload_result is False:
+                return
         self.summary.related_parameter_values.update({name: par.value for name, par in changes.items()})
         dialog.destroy()
 

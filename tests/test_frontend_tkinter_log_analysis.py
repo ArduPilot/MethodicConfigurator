@@ -405,6 +405,7 @@ def bare_window() -> LogAnalysisReportWindow:
     window = LogAnalysisReportWindow.__new__(LogAnalysisReportWindow)
     window.root = MagicMock()
     window.main_frame = MagicMock()
+    window.summary = MagicMock(related_parameter_values={})
     return window
 
 
@@ -622,6 +623,29 @@ class TestRenderSubsystem:
         fixes = bare_window._fix_for_outcome(outcome)
 
         assert fixes == [("MOT_SPIN_MIN", 0.1, 0.15, ["finding"])]
+
+    @pytest.mark.parametrize("upload_result", [None, True])
+    def test_analysis_fix_accepts_non_false_upload_result(
+        self, bare_window: LogAnalysisReportWindow, upload_result: bool | None
+    ) -> None:
+        """
+        Treat callbacks without an explicit failure result as successful.
+
+        GIVEN a parameter-fix callback returning None or True,
+        WHEN the analysis report applies a fix,
+        THEN the displayed parameter state is updated and the dialog closes.
+        """
+        # Arrange: provide a side-effect callback and a pending parameter fix.
+        bare_window.upload_callback = MagicMock(return_value=upload_result)
+        fixes = [("MOT_SPIN_MIN", 0.1, 0.15, ["finding"])]
+        dialog = MagicMock()
+
+        # Act: apply the proposed change.
+        bare_window._apply_param_fixes(fixes, dialog)
+
+        # Assert: None is not mistaken for an upload failure.
+        assert bare_window.summary.related_parameter_values == {"MOT_SPIN_MIN": 0.15}
+        dialog.destroy.assert_called_once()
 
     def test_renders_no_hardware_section_when_no_component_data(self, bare_window: LogAnalysisReportWindow) -> None:
         """
