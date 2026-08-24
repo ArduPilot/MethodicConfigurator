@@ -152,18 +152,18 @@ def test_base_quality_model_reads_fields_from_context() -> None:
 
 def test_base_analysis_model_delegates_parameter_derivation_to_context_service() -> None:
     """Detailed models can be tested with an injected parameter-derivation service."""
-    deriver = RecordingParameterDeriver()
+    parameter_deriver = RecordingParameterDeriver()
     context = LogAnalysisContext(
         parameters={"TEST_PARAM": 1.0},
         configuration_steps={"01_test.param": {}},
-        parameter_deriver=deriver,
+        parameter_deriver=parameter_deriver,
     )
     model = DummyAnalysisModel(LogData(), context)
 
     assert model.expected_parameter_value("01_test.param", "TEST_PARAM") == (42.0, "derived")
     assert model.derived_and_forced_parameters_matching(r"TEST_.*") == {"TEST_PARAM": "01_test.param"}
-    assert deriver.expected_call == ("01_test.param", "TEST_PARAM")
-    assert deriver.matching_pattern == r"TEST_.*"
+    assert parameter_deriver.expected_call == ("01_test.param", "TEST_PARAM")
+    assert parameter_deriver.matching_pattern == r"TEST_.*"
 
 
 def test_subsystem_component_metadata_is_declared_by_the_registry() -> None:

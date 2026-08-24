@@ -49,32 +49,41 @@ The main components are:
 
 The log extraction backend reads an ArduPilot `.bin` flight log and creates the internal `LogData` representation.
 
-The extraction layer is responsible for parsing the log and providing the data required by the analysis models. Individual analysis models do not parse the `.bin` file themselves.
+The extraction layer is responsible for parsing the log and providing the data required by the analysis models. Individual analysis models do not parse the `.bin` file
+themselves.
 
 The extraction backend can also report progress through a callback so that the frontend can display parsing progress without depending on the parser implementation.
 
 ### Numeric Storage and Scaling
 
-`LogData` keeps one compact NumPy structured array for each log message type. The stored representation is selected to limit the permanent memory cost of long flight logs; conversion to analysis units happens only when required.
+`LogData` keeps one compact NumPy structured array for each log message type. The stored representation is selected to limit the permanent memory cost of long flight
+logs; conversion to analysis units happens only when required.
 
-ArduPilot DataFlash fixed-point format characters `c`, `C`, `e`, `E`, and `L` are stored as their original integer values. Although pymavlink exposes scaled values through normal attribute access and `to_dict()`, extraction reads the corresponding `DFMessage._elements` entry for these fields. `_elements` is a pymavlink private API, but it is maintained by the ArduPilot project and is isolated to the extraction adapter with fixture-based regression coverage.
+ArduPilot DataFlash fixed-point format characters `c`, `C`, `e`, `E`, and `L` are stored as their original integer values. Although pymavlink exposes scaled values
+through normal attribute access and `to_dict()`, extraction reads the corresponding `DFMessage._elements` entry for these fields. `_elements` is a pymavlink private API,
+but it is maintained by the ArduPilot project and is isolated to the extraction adapter with fixture-based regression coverage.
 
-`LogData.get_field(..., scaled=True)` applies the fixed-point multiplier with a vectorized `float64` NumPy operation. The temporary scaled array is not cached, so analyses that do not request a field do not pay its memory cost.
+`LogData.get_field(..., scaled=True)` applies the fixed-point multiplier with a vectorized `float64` NumPy operation. The temporary scaled array is not cached, so
+analyses that do not request a field do not pay its memory cost.
 
 FMTU multipliers use a width-aware policy:
 
-* `f` and `d` fields apply their dynamic FMTU multiplier while being ingested, retaining their original floating-point dtype and avoiding repeated scaling for common telemetry fields.
+* `f` and `d` fields apply their dynamic FMTU multiplier while being ingested, retaining their original floating-point dtype and avoiding repeated scaling for common
+  telemetry fields.
 * Integer fields whose multiplier would require a wider or fractional representation retain their compact stored value and scale lazily.
 * Multipliers equal to one leave values unchanged.
 
-Each `MessageSchema` records `stored_units`, `scaled_units`, `multipliers`, and `multipliers_applied_at_ingest`. These fields make the storage-to-analysis conversion explicit and prevent a multiplier from being applied twice.
+Each `MessageSchema` records `stored_units`, `scaled_units`, `multipliers`, and `multipliers_applied_at_ingest`. These fields make the storage-to-analysis conversion
+explicit and prevent a multiplier from being applied twice.
 
-Analysis code always uses `LogData`'s default scaled representation. The `scaled=False` option is retained for low-level diagnostics and regression tests, not for production analysis. A result timestamp is converted to microseconds only when populating `LogAnalysis.timestamp_us`; parameter values with different documented units are converted explicitly before comparison.
+Analysis code always uses `LogData`'s default scaled representation. The `scaled=False` option is retained for low-level diagnostics and regression tests, not for
+production analysis. A result timestamp is converted to microseconds only when populating `LogAnalysis.timestamp_us`; parameter values with different documented units
+are converted explicitly before comparison.
 
 ## Log Analysis Backend
 
-[`backend_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py) acts as the orchestration layer between log extraction, Methodic Configurator context,
-and the analysis data models.
+[`backend_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py) acts as the orchestration layer between log extraction, Methodic
+Configurator context, and the analysis data models.
 
 Its responsibilities are:
 
