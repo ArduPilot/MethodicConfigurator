@@ -31,8 +31,10 @@ def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> N
             length=1,
             format="Nf",
             fields=["Name", "Value"],
-            units=[],
+            stored_units=["", ""],
+            scaled_units=["", ""],
             multipliers=[None, None],
+            multipliers_applied_at_ingest=[False, False],
             records=1,
         ),
     )

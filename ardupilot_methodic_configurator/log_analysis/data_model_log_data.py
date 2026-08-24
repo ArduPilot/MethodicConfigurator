@@ -20,7 +20,7 @@ from ardupilot_methodic_configurator import _
 
 @dataclass
 class MessageSchema:  # pylint: disable=too-many-instance-attributes
-    """Message type's FMT schema: fields, units, multipliers, types."""
+    """Message type's FMT schema and units for its stored and scaled values."""
 
     name: str
     msg_type: int
@@ -28,8 +28,10 @@ class MessageSchema:  # pylint: disable=too-many-instance-attributes
 
     format: str
     fields: list[str]
-    units: list[str]
+    stored_units: list[str]
+    scaled_units: list[str]
     multipliers: list[float | None]
+    multipliers_applied_at_ingest: list[bool]
 
     records: int = 0
 
@@ -40,8 +42,12 @@ class LogData:
     Store parsed log metadata and one structured numpy array per message type.
 
     Attributes:
-        schemas: Raw message definitions extracted from FMT/FMTU/UNIT/MULT,
-            keyed by message name.
+        schemas: Message definitions extracted from FMT/FMTU/UNIT/MULT, keyed
+            by message name. ``stored_units`` describes decoded values in
+            ``_raw_messages`` and returned with ``scaled=False``;
+            ``scaled_units`` describes values returned with ``scaled=True``.
+            ``multipliers_applied_at_ingest`` records fields whose multiplier
+            has already been applied without widening the stored dtype.
         _raw_messages: Per message type, a structured numpy array containing all
             decoded values for that message type. Access via get_message_columns(),
             get_field() or iter_message_records().
@@ -91,8 +97,8 @@ class LogData:
         if not scaled:
             return values
 
-        multiplier, format_char = self._field_multiplier_and_format(message_name, field_name)
-        return scale_field_values(values, multiplier, format_char)
+        multiplier = self._field_multiplier(message_name, field_name)
+        return scale_field_values(values, multiplier)
 
     def iter_message_records(self, message_name: str, scaled: bool = True) -> Iterator[dict[str, Any]]:
         """
@@ -123,60 +129,38 @@ class LogData:
                     value = value.decode("ascii", "ignore")
 
                 if scaled:
-                    multiplier, format_char = self._field_multiplier_and_format(message_name, field_name)
+                    multiplier = self._field_multiplier(message_name, field_name)
                     if multiplier is not None and multiplier != 1 and not isinstance(value, str):
                         if isinstance(value, list):
-                            value = scale_field_values(np.asarray(value), multiplier, format_char).tolist()
+                            value = scale_field_values(np.asarray(value), multiplier).tolist()
                         else:
-                            value = scale_field_values(np.asarray(value), multiplier, format_char)[()]
+                            value = scale_field_values(np.asarray(value), multiplier)[()]
 
                 record[field_name] = value
             yield record
 
-    def _field_multiplier_and_format(self, message_name: str, field_name: str) -> tuple[float | None, str | None]:
+    def _field_multiplier(self, message_name: str, field_name: str) -> float | None:
         schema = self.schemas.get(message_name)
         if schema is None:
-            return None, None
+            return None
 
         try:
             field_index = schema.fields.index(field_name)
         except ValueError:
-            return None, None
+            return None
 
-        if field_index >= len(schema.multipliers):
-            return None, None
+        if field_index >= len(schema.multipliers) or field_index >= len(schema.multipliers_applied_at_ingest):
+            return None
 
-        format_char = schema.format[field_index] if field_index < len(schema.format) else None
-        return schema.multipliers[field_index], format_char
+        if schema.multipliers_applied_at_ingest[field_index]:
+            return None
 
-
-def promoted_integer_dtype(dtype: np.dtype[Any]) -> np.dtype[Any]:
-    """Return a wider integer dtype suitable for fixed-point scaled fields."""
-    if dtype.kind == "i":
-        if dtype.itemsize <= 2:
-            return np.dtype(np.int32)
-        return np.dtype(np.int64)
-
-    if dtype.kind == "u":
-        if dtype.itemsize <= 2:
-            return np.dtype(np.uint32)
-        return np.dtype(np.uint64)
-
-    return dtype
+        return schema.multipliers[field_index]
 
 
-def is_integer_multiplier(multiplier: float | None) -> bool:
-    """Return True when a multiplier can be applied without leaving integer space."""
-    return multiplier is not None and float(multiplier).is_integer()
-
-
-def scale_field_values(values: np.ndarray, multiplier: float | None, format_char: str | None = None) -> np.ndarray:
-    """Apply a field multiplier while preserving integer width for fixed-point fields."""
+def scale_field_values(values: np.ndarray, multiplier: float | None) -> np.ndarray:
+    """Apply one deferred fixed-point or FMTU multiplier to stored values."""
     if multiplier is None or multiplier == 1:
         return values
-
-    if format_char in {"c", "C", "e", "E"} and values.dtype.kind in {"i", "u"} and is_integer_multiplier(multiplier):
-        promoted_dtype = promoted_integer_dtype(values.dtype)
-        return values.astype(promoted_dtype, copy=False) * int(multiplier)
 
     return values * multiplier

@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import os
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from logging import error as logging_error
 from typing import Any, Protocol, cast
 
@@ -27,6 +28,19 @@ from ardupilot_methodic_configurator.log_analysis import data_model_log_data
 from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import parse_first_msg_version, parse_ver_fields
 
 _NO_ID_ASSIGNED = "-"  # ArduPilot's FMTU convention: '-' marks a field with no unit/multiplier ID assigned
+
+_MULTIPLIER_TO_PREFIX = {
+    0.0: "",
+    1.0: "",
+    1.0e-1: "d",
+    1.0e-2: "c",
+    1.0e-3: "m",
+    1.0e-6: "µ",
+    1.0e-9: "n",
+}
+
+_FIXED_POINT_FORMATS = frozenset("cCeEL")
+_EAGERLY_SCALED_FLOAT_FORMATS = frozenset("fd")
 
 
 def open_log(logfile: str) -> mavutil.mavfile:
@@ -109,6 +123,15 @@ class _SchemaSource(Protocol):  # pylint: disable=too-few-public-methods
 
     formats: dict[Any, _MavFmt]
     mult_lookup: dict[str, float]
+    unit_lookup: dict[str, str]
+
+
+@dataclass(frozen=True)
+class _FMTUDefinition:
+    """The UNIT and MULT identifiers assigned by one FMTU message."""
+
+    unit_ids: str
+    mult_ids: str
 
 
 _FORMAT_TO_DTYPE: dict[str, Any] = {
@@ -119,6 +142,7 @@ _FORMAT_TO_DTYPE: dict[str, Any] = {
     "i": np.int32,
     "I": np.uint32,
     "f": np.float32,
+    "g": np.float16,
     "d": np.float64,
     "n": "S4",
     "N": "S16",
@@ -137,7 +161,7 @@ _ARRAY_FIELD_LENGTH = 32
 
 
 def _schema_numpy_dtype(schema: data_model_log_data.MessageSchema) -> np.dtype[Any]:
-    """Build a structured numpy dtype that mirrors a message schema."""
+    """Build a compact structured NumPy dtype matching the log's stored values."""
     if len(schema.fields) != len(schema.format):
         msg = _("Schema {name} has mismatched field and format counts").format(name=schema.name)
         raise ValueError(msg)
@@ -205,20 +229,22 @@ def _set_log_identity(log_data: data_model_log_data.LogData, identity: tuple[str
     log_data.firmware_version = (major, minor, patch)
 
 
-def _record_message_counts_fields_and_identity(mlog: mavutil.mavfile, log_data: data_model_log_data.LogData) -> dict[int, str]:
+def _record_message_counts_fields_and_identity(
+    mlog: mavutil.mavfile, log_data: data_model_log_data.LogData
+) -> dict[int, _FMTUDefinition]:
     """
-    First pass: count message occurrences, capture each type's FMTU MultIds string, and find log identity.
+    First pass: count messages, capture FMTU unit/multiplier IDs, and find log identity.
 
-    MultIds maps each field position to a single-character multiplier ID,
-    resolved later against mlog.mult_lookup.
+    FMTU IDs map each field position to a UNIT and MULT entry, resolved later
+    against pymavlink's completed lookup tables.
     """
-    mult_ids_by_type: dict[int, str] = {}
+    fmtu_definitions: dict[int, _FMTUDefinition] = {}
     msg_fallback_identity: tuple[str, int, int, int] | None = None
     for msg in _iter_messages(mlog):
         msg_type = msg.get_type()
         log_data.msg_count[msg_type] = log_data.msg_count.get(msg_type, 0) + 1
         if msg_type == "FMTU":
-            mult_ids_by_type[int(msg.FmtType)] = msg.MultIds
+            fmtu_definitions[int(msg.FmtType)] = _FMTUDefinition(unit_ids=msg.UnitIds, mult_ids=msg.MultIds)
         elif msg_type == "VER" and log_data.vehicle_type is None:
             identity = process_ver_identity(msg)
             if identity is not None:
@@ -229,20 +255,15 @@ def _record_message_counts_fields_and_identity(mlog: mavutil.mavfile, log_data: 
     if log_data.vehicle_type is None and msg_fallback_identity is not None:
         _set_log_identity(log_data, msg_fallback_identity)
 
-    return mult_ids_by_type
+    return fmtu_definitions
 
 
 def _resolve_multipliers(fmt: Any, mult_ids: str | None, mult_lookup: dict[str, float]) -> list[float | None]:  # noqa: ANN401
-    """
-    Fields whose format character is one of pymavlink's built-in fixed-point types.
-
-    ('c', 'C', 'e', 'E', 'L') are already scaled by pymavlink itself
-    inside DFMessage.
-    """
+    """Return each field's stored-to-scaled fixed-point or FMTU multiplier."""
     resolved: list[float | None] = []
     for i, fixed_mult in enumerate(fmt.msg_mults):
         if fixed_mult is not None:
-            resolved.append(None)
+            resolved.append(fixed_mult)
             continue
 
         if mult_ids is not None and i < len(mult_ids) and mult_ids[i] != _NO_ID_ASSIGNED and mult_ids[i] in mult_lookup:
@@ -251,6 +272,54 @@ def _resolve_multipliers(fmt: Any, mult_ids: str | None, mult_lookup: dict[str, 
             resolved.append(None)
 
     return resolved
+
+
+def _resolve_multipliers_applied_at_ingest(fmt: Any, multipliers: list[float | None]) -> list[bool]:  # noqa: ANN401
+    """Mark dynamic FMTU multipliers that can be applied without widening float storage."""
+    return [
+        fmt.format[index] in _EAGERLY_SCALED_FLOAT_FORMATS and fmt.msg_mults[index] is None and multiplier not in (None, 1)
+        for index, multiplier in enumerate(multipliers)
+    ]
+
+
+def _resolve_scaled_units(fmt: Any, unit_ids: str | None, unit_lookup: dict[str, str]) -> list[str]:  # noqa: ANN401
+    """Return units for values after dynamic FMTU multipliers are applied."""
+    fallback_units = list(fmt.units) if fmt.units is not None else [""] * len(fmt.columns)
+    if unit_ids is None:
+        return fallback_units
+
+    return [
+        unit_lookup.get(unit_ids[index], fallback_units[index])
+        if index < len(unit_ids) and unit_ids[index] != _NO_ID_ASSIGNED
+        else fallback_units[index]
+        for index in range(len(fmt.columns))
+    ]
+
+
+def _resolve_stored_units(
+    scaled_units: list[str],
+    multipliers: list[float | None],
+    multipliers_applied_at_ingest: list[bool],
+) -> list[str]:
+    """Return units corresponding to the values physically stored in NumPy arrays."""
+    stored_units: list[str] = []
+    for unit, multiplier, applied_at_ingest in zip(scaled_units, multipliers, multipliers_applied_at_ingest, strict=True):
+        if applied_at_ingest or multiplier is None or multiplier == 1:
+            stored_units.append(unit)
+            continue
+
+        prefix = _MULTIPLIER_TO_PREFIX.get(multiplier)
+        stored_units.append(f"{prefix}{unit}" if prefix is not None else f"{multiplier:.4g} {unit}")
+    return stored_units
+
+
+def _raw_fixed_point_value(msg: Any, field_index: int, field_name: str) -> Any:  # noqa: ANN401
+    """Return one unscaled fixed-point value from pymavlink's DataFlash message storage."""
+    try:
+        return msg._elements[field_index]  # pylint: disable=protected-access # noqa: SLF001 # pymavlink's raw DataFlash representation
+    except (AttributeError, IndexError) as error:
+        message = _("pymavlink did not expose raw fixed-point field {field_name}").format(field_name=field_name)
+        raise ValueError(message) from error
 
 
 def _allocate_message_arrays(log_data: data_model_log_data.LogData) -> None:
@@ -301,8 +370,17 @@ def _fill_message_arrays(  # pylint: disable=too-many-locals
             raise ValueError(error_message)
 
         values: list[Any] = []
-        for field_name in schema.fields:
-            value = payload[field_name]
+        for field_index, field_name in enumerate(schema.fields):
+            format_char = schema.format[field_index]
+            if format_char in _FIXED_POINT_FORMATS:
+                value = _raw_fixed_point_value(msg, field_index, field_name)
+            else:
+                value = payload[field_name]
+
+            if schema.multipliers_applied_at_ingest[field_index]:
+                multiplier = schema.multipliers[field_index]
+                if multiplier is not None:
+                    value *= multiplier
 
             dtype = field_info[field_name][0]
             if dtype.kind == "S" and isinstance(value, str):
@@ -323,30 +401,49 @@ def _fill_message_arrays(  # pylint: disable=too-many-locals
 def extract_schemas(
     mlog: mavutil.mavfile,
     log_data: data_model_log_data.LogData,
-    mult_ids_by_type: dict[int, str],
+    fmtu_definitions: dict[int, _FMTUDefinition],
 ) -> None:
     """
     Copy pymavlink's discovered FMT/FMTU schemas into log_data.schemas.
 
-    Stored dicts (not pymavlink objects). Raw metadata only units and multipliers are stored.
+    Stored schemas distinguish units for decoded stored values from units for
+    values returned after dynamic FMTU scaling.
 
     Args:
         mlog: An open pymavlink connection (fully read).
         log_data: The LogData instance to populate.
-        mult_ids_by_type: Per message type, the MultIds string from that type's FMTU message.
+        fmtu_definitions: Per message type, FMTU UNIT and MULT identifiers.
 
     """
     schema_source = cast("_SchemaSource", mlog)
     for fmt in schema_source.formats.values():
+        fmtu_definition = fmtu_definitions.get(fmt.type)
+        multipliers = _resolve_multipliers(
+            fmt,
+            fmtu_definition.mult_ids if fmtu_definition is not None else None,
+            schema_source.mult_lookup,
+        )
+        multipliers_applied_at_ingest = _resolve_multipliers_applied_at_ingest(fmt, multipliers)
+        scaled_units = _resolve_scaled_units(
+            fmt,
+            fmtu_definition.unit_ids if fmtu_definition is not None else None,
+            schema_source.unit_lookup,
+        )
         log_data.schemas[fmt.name] = data_model_log_data.MessageSchema(
             name=fmt.name,
             msg_type=fmt.type,
             length=fmt.len,
             format=fmt.format,
             fields=list(fmt.columns),
-            units=list(fmt.units) if fmt.units is not None else [],
-            multipliers=_resolve_multipliers(fmt, mult_ids_by_type.get(fmt.type), schema_source.mult_lookup),
+            scaled_units=scaled_units,
+            multipliers=multipliers,
+            multipliers_applied_at_ingest=multipliers_applied_at_ingest,
             records=log_data.msg_count.get(fmt.name, 0),
+            stored_units=_resolve_stored_units(
+                scaled_units,
+                multipliers,
+                multipliers_applied_at_ingest,
+            ),
         )
 
 
@@ -378,17 +475,17 @@ def compute_flight_duration(log_data: data_model_log_data.LogData) -> float | No
             if records is None or records.size == 0:
                 continue
 
-            timeus = log_data.get_field(message_name, "TimeUS", scaled=False)
+            time_seconds = log_data.get_field(message_name, "TimeUS")
             states = log_data.get_field(message_name, state_field)
             total_time = 0
             start_time = None
 
             # Many logs have multiple arm/disarm events, calculate them separately and sum up
-            for time_dur, state in zip(timeus, states, strict=True):
+            for timestamp_seconds, state in zip(time_seconds, states, strict=True):
                 if state == start_value and start_time is None:
-                    start_time = time_dur
+                    start_time = timestamp_seconds
                 elif state == stop_value and start_time is not None:
-                    total_time += time_dur - start_time
+                    total_time += timestamp_seconds - start_time
                     start_time = None
 
             # If there is no disarm message the flight time can't be calculated.
@@ -398,7 +495,7 @@ def compute_flight_duration(log_data: data_model_log_data.LogData) -> float | No
                 )
 
             if total_time > 0:
-                return total_time / 1e6  # 1_000_000
+                return float(total_time)
 
     except (KeyError, ValueError) as error:
         logging_error(_("Could not compute flight duration: {error}").format(error=error))
@@ -432,9 +529,9 @@ def extract_log(
     # first pass: count messages, capture identity, and let pymavlink discover schemas for preallocated arrays
     mlog = open_log(logfile)
     try:
-        mult_ids_by_type = _record_message_counts_fields_and_identity(mlog, log_data)
+        fmtu_definitions = _record_message_counts_fields_and_identity(mlog, log_data)
         # extract_schemas should not raise any exception if it does it should fail
-        extract_schemas(mlog, log_data, mult_ids_by_type)
+        extract_schemas(mlog, log_data, fmtu_definitions)
     finally:
         close_log(mlog)
 

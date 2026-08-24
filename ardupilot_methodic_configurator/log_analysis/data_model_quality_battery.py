@@ -21,6 +21,16 @@ from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import
 from ardupilot_methodic_configurator.log_analysis.utils import find_log_bit_in_apm_file
 
 
+def _battery_parameter(instance: int, parameter: str) -> str:
+    """Return an ArduPilot battery parameter name for a one-based monitor instance."""
+    return f"BATT{'' if instance == 1 else instance}_{parameter}"
+
+
+def _configured_battery_instances(parameters: dict[str, float]) -> list[int]:
+    """Return all configured battery-monitor instances found in logged parameters."""
+    return [instance for instance in range(1, 10) if _battery_parameter(instance, "MONITOR") in parameters]
+
+
 class BatteryLogQualityModel(BaseLogQualityModel):
     """Checks battery telemetry and configuration quality."""
 
@@ -43,10 +53,22 @@ class BatteryLogQualityModel(BaseLogQualityModel):
             "BAT", "Battery Monitor", "Battery", not_logged_hint=_("check the battery monitor physical connection")
         )
         if not bitmask_disabled:
-            if self.parameters.get("BATT_MONITOR") == 0:
+            instances = _configured_battery_instances(self.parameters)
+            enabled_instances = [
+                instance for instance in instances if self.parameters[_battery_parameter(instance, "MONITOR")] != 0
+            ]
+            if instances == [1] and not enabled_instances:
                 reason = _("Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)")
                 issues = [
                     QualityIssue(_("Set BATT_MONITOR to enable the battery monitor"), self.step_for_parameter("BATT_MONITOR"))
+                ]
+            elif instances and not enabled_instances:
+                reason = _("Battery logging enabled but all configured battery monitors are disabled")
+                issues = [
+                    QualityIssue(
+                        _("Enable a configured battery monitor"),
+                        self.step_for_parameter(_battery_parameter(instances[0], "MONITOR")),
+                    )
                 ]
             else:
                 reason = _("Battery logging enabled but no data, monitor may not be configured properly")
@@ -85,28 +107,36 @@ class BatteryLogQualityModel(BaseLogQualityModel):
         _cur_tot, issues = self.field_values_or_issue(
             "BAT",
             "CurrTot",
-            scaled=False,
             missing_field_message=_("CurrTot field not present in this firmware's BAT schema"),
             missing_values_message=_("CurrTot missing from BAT records"),
         )
         return issues
 
     def check_parameters(self) -> list[QualityIssue]:
+        """Check failsafe thresholds for every enabled battery monitor instance."""
         issues: list[QualityIssue] = []
-        monitor = self.parameters.get("BATT_MONITOR")
-        if monitor is None:
-            return issues
+        for instance in _configured_battery_instances(self.parameters):
+            monitor_param = _battery_parameter(instance, "MONITOR")
+            if self.parameters[monitor_param] == 0:
+                continue
 
-        if self.parameters.get("BATT_LOW_VOLT") == 0:
-            issues.append(
-                QualityIssue(_("Battery low-voltage failsafe threshold disabled"), self.step_for_parameter("BATT_LOW_VOLT"))
-            )
-        if self.parameters.get("BATT_CRT_VOLT") == 0:
-            issues.append(
-                QualityIssue(
-                    _("Battery critical-voltage failsafe threshold disabled"), self.step_for_parameter("BATT_CRT_VOLT")
+            prefix = "" if instance == 1 else f"Battery {instance}: "
+            low_volt_param = _battery_parameter(instance, "LOW_VOLT")
+            if self.parameters.get(low_volt_param) == 0:
+                issues.append(
+                    QualityIssue(
+                        _("{prefix}low-voltage failsafe threshold disabled").format(prefix=prefix),
+                        self.step_for_parameter(low_volt_param),
+                    )
                 )
-            )
+            crt_volt_param = _battery_parameter(instance, "CRT_VOLT")
+            if self.parameters.get(crt_volt_param) == 0:
+                issues.append(
+                    QualityIssue(
+                        _("{prefix}critical-voltage failsafe threshold disabled").format(prefix=prefix),
+                        self.step_for_parameter(crt_volt_param),
+                    )
+                )
 
         return issues
 
@@ -152,39 +182,36 @@ class BatteryLogAnalysis(BaseLogAnalysisModel):
         )
 
     def _last_timestamp_us(self) -> float | None:
-        """Return the TimeUS value for this message, in microseconds."""
-        time_us, _issues = self.field_values_or_issue(
+        """Return the final canonical timestamp as microseconds for a LogAnalysis result."""
+        time_seconds, _issues = self.field_values_or_issue(
             "BAT",
             "TimeUS",
-            scaled=False,
             missing_field_message=_("TimeUS field not present in this firmware's BAT schema"),
             missing_values_message=_("TimeUS missing from BAT records"),
         )
-        if time_us is None or len(time_us) == 0:
+        if time_seconds is None or len(time_seconds) == 0:
             return None
-        return float(time_us[-1])
+        return float(time_seconds[-1] * 1e6)
 
     def check_battery_capacity_retention(self) -> list[LogAnalysis]:
         """Check what percentage of rated BATT_CAPACITY was consumed during the flight."""
         outcomes: list[LogAnalysis] = []
 
-        bat_capacity = self.parameters.get("BATT_CAPACITY")
-        if bat_capacity is None or bat_capacity <= 0:
+        bat_capacity_mah = self.parameters.get("BATT_CAPACITY")
+        if bat_capacity_mah is None or bat_capacity_mah <= 0:
             return outcomes
+        bat_capacity_ah = bat_capacity_mah / 1000
 
         curr_tot, _issues = self.field_values_or_issue(
             "BAT",
             "CurrTot",
-            # 3 test logs were tested where scaled values were physically implausible (<1 mAh total consumed) To be tested
-            # on more logs later until then scaled should be False.
-            scaled=False,
             missing_field_message=_("CurrTot field not present in this firmware's BAT schema"),
             missing_values_message=_("CurrTot missing from BAT records"),
         )
         if curr_tot is None:
             return outcomes
 
-        used_percentage = float(curr_tot.max() / bat_capacity * 100)
+        used_percentage = float(curr_tot.max() / bat_capacity_ah * 100)
         timestamp_us = self._last_timestamp_us()
 
         if used_percentage > 100:
@@ -194,7 +221,7 @@ class BatteryLogAnalysis(BaseLogAnalysisModel):
                         "Consumed {used:.1f}% of rated battery capacity ({capacity:.0f} mAh). "
                         "This exceeds 100%, check BATT_CAPACITY is correct for your battery, "
                         "or BATT_AMP_PERVLT."
-                    ).format(used=used_percentage, capacity=bat_capacity),
+                    ).format(used=used_percentage, capacity=bat_capacity_mah),
                     timestamp_us=timestamp_us,
                     value=used_percentage,
                     param_name="BATT_CAPACITY",
@@ -204,7 +231,7 @@ class BatteryLogAnalysis(BaseLogAnalysisModel):
             outcomes.append(
                 LogAnalysis(
                     message=_("Used {used:.1f}% of rated battery capacity ({capacity:.0f} mAh)").format(
-                        used=used_percentage, capacity=bat_capacity
+                        used=used_percentage, capacity=bat_capacity_mah
                     ),
                     timestamp_us=timestamp_us,
                     value=used_percentage,

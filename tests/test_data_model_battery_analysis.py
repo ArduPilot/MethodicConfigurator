@@ -247,8 +247,8 @@ class TestBatteryLogAnalysisCapacityRetention:
         WHEN: Capacity retention analysis runs
         THEN: It reports the correct percentage without flagging an anomaly
         """
-        # Arrange: 500 mAh consumed out of a 1000 mAh pack
-        log_data = FakeLogData({"BAT": {"CurrTot": [100.0, 500.0], "TimeUS": [0, 1_000_000]}})
+        # Arrange: CurrTot is scaled to Ah by LogData: 500 mAh from a 1000 mAh pack
+        log_data = FakeLogData({"BAT": {"CurrTot": [0.1, 0.5], "TimeUS": [0, 1_000_000]}})
         model = BatteryLogAnalysis(log_data, _context({"BATT_CAPACITY": 1000.0}))
 
         # Act: run capacity retention analysis
@@ -267,8 +267,8 @@ class TestBatteryLogAnalysisCapacityRetention:
         WHEN: Capacity retention analysis runs
         THEN: It flags the anomaly and points at BATT_CAPACITY as the likely cause
         """
-        # Arrange: 1200 mAh consumed against a 1000 mAh rated pack
-        log_data = FakeLogData({"BAT": {"CurrTot": [1200.0], "TimeUS": [1_000_000]}})
+        # Arrange: CurrTot is scaled to Ah by LogData: 1200 mAh against a 1000 mAh rated pack
+        log_data = FakeLogData({"BAT": {"CurrTot": [1.2], "TimeUS": [1_000_000]}})
         model = BatteryLogAnalysis(log_data, _context({"BATT_CAPACITY": 1000.0}))
 
         # Act: run capacity retention analysis

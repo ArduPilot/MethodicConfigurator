@@ -123,9 +123,9 @@ def get_pm_status(log_data: LogData) -> PMStatus | None:
     available = set(columns.dtype.names or ())
 
     load = log_data.get_field("PM", "Load") if "Load" in available else None
-    nlon = log_data.get_field("PM", "NLon", scaled=False) if "NLon" in available else None
-    max_t = log_data.get_field("PM", "MaxT", scaled=False) if "MaxT" in available else None
-    mem = log_data.get_field("PM", "Mem", scaled=False) if "Mem" in available else None
+    nlon = log_data.get_field("PM", "NLon") if "NLon" in available else None
+    max_t = log_data.get_field("PM", "MaxT") if "MaxT" in available else None
+    mem = log_data.get_field("PM", "Mem") if "Mem" in available else None
 
     if any(values is not None and not np.isfinite(values).all() for values in (load, nlon, max_t, mem)):
         return PMStatus(0.0, 0.0, 0, 0, 0, None)
@@ -172,19 +172,19 @@ def check_cpu_performance_message(log_data: LogData) -> MessageValidation:
 
     for field_name in ("Load", "NLon", "MaxT", "Mem", "InE", "ErC", "ErrL"):
         if field_name in available:
-            values = log_data.get_field("PM", field_name, scaled=False)
+            values = log_data.get_field("PM", field_name)
             if not np.isfinite(values).all():
                 issues.append(_("{field} contains non-finite telemetry values").format(field=field_name))
 
     # Internal error mask
     if "InE" in available:
-        ine = log_data.get_field("PM", "InE", scaled=False)
+        ine = log_data.get_field("PM", "InE")
         if np.isfinite(ine).all() and ine.max() > 0:
             issues.append(_("Internal firmware errors were detected (InE)"))
 
     # Internal error count
     if "ErC" in available:
-        erc = log_data.get_field("PM", "ErC", scaled=False)
+        erc = log_data.get_field("PM", "ErC")
         if np.isfinite(erc).all():
             count = int(erc.max())
             if count > 0:
@@ -192,13 +192,13 @@ def check_cpu_performance_message(log_data: LogData) -> MessageValidation:
 
     # Internal error line number
     if "ErrL" in available:
-        errl = log_data.get_field("PM", "ErrL", scaled=False)
+        errl = log_data.get_field("PM", "ErrL")
         if np.isfinite(errl).all() and errl.max() > 0:
             issues.append(_("An internal error line was recorded (ErrL)"))
 
     # Long loops
     if "NLon" in available:
-        nlon = log_data.get_field("PM", "NLon", scaled=False)
+        nlon = log_data.get_field("PM", "NLon")
         if np.isfinite(nlon).all():
             count = int(nlon.sum())
             if count > 0:
@@ -227,10 +227,14 @@ def validate_fmt_schema(schema: MessageSchema, columns: np.ndarray | None) -> Me
         issues.append(_("Missing format string"))
     if schema.length <= 0:
         issues.append(_("Invalid message length"))
-    if schema.units and len(schema.units) != len(schema.fields):
-        issues.append(_("Unit count mismatch"))
+    if len(schema.stored_units) != len(schema.fields):
+        issues.append(_("Stored unit count mismatch"))
+    if len(schema.scaled_units) != len(schema.fields):
+        issues.append(_("Scaled unit count mismatch"))
     if schema.multipliers and len(schema.multipliers) != len(schema.fields):
         issues.append(_("Multiplier count mismatch"))
+    if len(schema.multipliers_applied_at_ingest) != len(schema.fields):
+        issues.append(_("Multiplier ingestion state count mismatch"))
 
     if columns is None or columns.size == 0:
         issues.append(_("{message} has no logging data").format(message=schema.name))

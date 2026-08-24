@@ -47,5 +47,7 @@ class PmLogQualityModel(BaseLogQualityModel):
         )
 
     def check_pm_fields(self) -> list[QualityIssue]:
-        """Check that key PM fields are present and have readable data."""
-        return self.check_fields_present("PM", ("Load", "Mem", "NLon", "InE", "ErC"), scaled=False)
+        """Validate whichever known PM fields are provided by this firmware's schema."""
+        optional_fields = ("Load", "Mem", "NLon", "InE", "ErC")
+        available_fields = tuple(field_name for field_name in optional_fields if self.field_available("PM", field_name))
+        return self.check_fields_present("PM", available_fields)

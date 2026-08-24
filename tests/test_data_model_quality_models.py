@@ -13,9 +13,10 @@ import numpy as np
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogAnalysis, BatteryLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogAnalysis, EscLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_pm import PmLogQualityModel
 
 
 def _context(
@@ -130,6 +131,54 @@ def test_battery_model_rejects_non_finite_telemetry_values() -> None:
     assert all("non-finite telemetry values" in issue.message for issue in result.issues)
 
 
+def test_battery_model_checks_failsafes_for_each_enabled_monitor() -> None:
+    """An enabled secondary monitor must not bypass its own voltage failsafes."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "BAT",
+        np.array([(22.0, 1.0, 0.1)], dtype=[("Volt", "f8"), ("Curr", "f8"), ("CurrTot", "f8")]),
+    )
+
+    result = BatteryLogQualityModel(
+        log_data,
+        _context({"BATT_MONITOR": 4.0, "BATT2_MONITOR": 4.0, "BATT2_LOW_VOLT": 0.0, "BATT2_CRT_VOLT": 0.0}),
+    ).check()
+
+    assert result.state == LogQualityState.WARNING
+    assert [issue.message for issue in result.issues] == [
+        "Battery 2: low-voltage failsafe threshold disabled",
+        "Battery 2: critical-voltage failsafe threshold disabled",
+    ]
+
+
+def test_pm_model_accepts_valid_legacy_schema_without_internal_error_fields() -> None:
+    """Older PM schemas do not contain the current InE and ErC fields."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM",
+        np.array([(20.0, 10_000.0, 0.0)], dtype=[("Load", "f8"), ("Mem", "f8"), ("NLon", "f8")]),
+    )
+
+    result = PmLogQualityModel(log_data, _context({})).check()
+
+    assert result.state == LogQualityState.INFO
+
+
+def test_battery_capacity_uses_canonical_amp_hours() -> None:
+    """A mAh capacity parameter must be converted before comparison with scaled CurrTot."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "BAT",
+        np.array([(0.5, 1.0)], dtype=[("CurrTot", "f8"), ("TimeUS", "f8")]),
+    )
+
+    outcomes = BatteryLogAnalysis(log_data, _context({"BATT_CAPACITY": 1000.0})).check_battery_capacity_retention()
+
+    assert len(outcomes) == 1
+    assert outcomes[0].value == 50.0
+    assert outcomes[0].timestamp_us == 1_000_000.0
+
+
 def test_esc_analysis_does_not_report_zero_error_rates_as_findings() -> None:
     """A healthy ESC log should have no error-rate findings."""
     log_data = LogData()
@@ -151,11 +200,11 @@ def test_esc_analysis_ignores_a_single_zero_rpm_sample() -> None:
     log_data = LogData()
     log_data.add_message_columns(
         "ARM",
-        np.array([(1.0, 0.0), (0.0, 2_000_000.0)], dtype=[("ArmState", "f8"), ("TimeUS", "f8")]),
+        np.array([(1.0, 0.0), (0.0, 2.0)], dtype=[("ArmState", "f8"), ("TimeUS", "f8")]),
     )
     log_data.add_message_columns(
         "ESC",
-        np.array([(0.0, 0.0, 1_000_000.0)], dtype=[("Instance", "f8"), ("RPM", "f8"), ("TimeUS", "f8")]),
+        np.array([(0.0, 0.0, 1.0)], dtype=[("Instance", "f8"), ("RPM", "f8"), ("TimeUS", "f8")]),
     )
 
     outcomes = EscLogAnalysis(log_data, _context({})).check_rpm_while_armed()

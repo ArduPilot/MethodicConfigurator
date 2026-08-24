@@ -24,7 +24,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_pa
 from ardupilot_methodic_configurator.log_analysis.utils import find_matching_param_values
 
 _MOT_SPIN_MIN_REQUIRED_MARGIN = 0.03
-_MIN_ZERO_RPM_OBSERVATION_US = 1_000_000
+_MIN_ZERO_RPM_OBSERVATION_SECONDS = 1.0
 _MIN_ZERO_RPM_ARMED_COVERAGE = 0.5
 _DSHOT_OUTPUT_RATE_WARN_THRESHOLD = 1000.0  # Amilcar's stated threshold, Hz
 
@@ -137,27 +137,27 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         )
 
     def _armed_time_windows(self) -> list[tuple[float, float]]:
-        """Build (arm_time_us, disarm_time_us) pairs from ARM message transitions."""
+        """Build canonical-second arm/disarm windows from ARM message transitions."""
         columns = self.log_data.get_message_columns("ARM")
         names = tuple(columns.dtype.names or ()) if columns is not None else ()
         if columns is None or "ArmState" not in names or "TimeUS" not in names:
             return []
 
-        arm_state = self.log_data.get_field("ARM", "ArmState", scaled=False)
-        time_us = self.log_data.get_field("ARM", "TimeUS", scaled=False)
+        arm_state = self.log_data.get_field("ARM", "ArmState")
+        time_seconds = self.log_data.get_field("ARM", "TimeUS")
 
         windows: list[tuple[float, float]] = []
         arm_time: float | None = None
-        for state, ts in zip(arm_state, time_us, strict=True):
+        for state, timestamp_seconds in zip(arm_state, time_seconds, strict=True):
             if state and arm_time is None:
-                arm_time = float(ts)
+                arm_time = float(timestamp_seconds)
             elif not state and arm_time is not None:
-                windows.append((arm_time, float(ts)))
+                windows.append((arm_time, float(timestamp_seconds)))
                 arm_time = None
 
         # Vehicle still armed at end of log (no matching disarm event)
-        if arm_time is not None and len(time_us) > 0:
-            windows.append((arm_time, float(time_us[-1])))
+        if arm_time is not None and len(time_seconds) > 0:
+            windows.append((arm_time, float(time_seconds[-1])))
 
         return windows
 
@@ -172,14 +172,14 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         if "Instance" not in names or "RPM" not in names or "TimeUS" not in names:
             return []
 
-        instance_numbers = self.log_data.get_field("ESC", "Instance", scaled=False)
+        instance_numbers = self.log_data.get_field("ESC", "Instance")
         rpm_values = self.log_data.get_field("ESC", "RPM")
-        time_us = self.log_data.get_field("ESC", "TimeUS", scaled=False)
+        time_seconds = self.log_data.get_field("ESC", "TimeUS")
 
         outcomes: list[LogAnalysis] = []
         for instance in sorted(set(instance_numbers.tolist())):
             mask = instance_numbers == instance
-            inst_times = time_us[mask]
+            inst_times = time_seconds[mask]
             inst_rpm = rpm_values[mask]
 
             for arm_time, disarm_time in windows:
@@ -192,7 +192,7 @@ class EscLogAnalysis(BaseLogAnalysisModel):
                 armed_duration = float(disarm_time - arm_time)
                 has_meaningful_coverage = (
                     len(windowed_rpm) >= 2
-                    and observed_duration >= _MIN_ZERO_RPM_OBSERVATION_US
+                    and observed_duration >= _MIN_ZERO_RPM_OBSERVATION_SECONDS
                     and armed_duration > 0
                     and observed_duration / armed_duration >= _MIN_ZERO_RPM_ARMED_COVERAGE
                 )
@@ -202,8 +202,8 @@ class EscLogAnalysis(BaseLogAnalysisModel):
                             message=_(
                                 "ESC output {instance} reported zero RPM throughout an armed period "
                                 "({start:.1f}s to {end:.1f}s), the motor may not have responded."
-                            ).format(instance=int(instance), start=arm_time / 1e6, end=disarm_time / 1e6),
-                            timestamp_us=arm_time,
+                            ).format(instance=int(instance), start=arm_time, end=disarm_time),
+                            timestamp_us=arm_time * 1e6,
                             value=0.0,
                         )
                     )
@@ -246,15 +246,15 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         if "Instance" not in names or "Err" not in names or "TimeUS" not in names:
             return []
 
-        instance_numbers = self.log_data.get_field("ESC", "Instance", scaled=False)
+        instance_numbers = self.log_data.get_field("ESC", "Instance")
         err_values = self.log_data.get_field("ESC", "Err")
-        time_us = self.log_data.get_field("ESC", "TimeUS", scaled=False)
+        time_seconds = self.log_data.get_field("ESC", "TimeUS")
 
         outcomes: list[LogAnalysis] = []
         for instance in sorted(set(instance_numbers.tolist())):
             mask = instance_numbers == instance
             instance_errs = err_values[mask]
-            instance_times = time_us[mask]
+            instance_times = time_seconds[mask]
 
             peak_err = float(instance_errs.max())
             if peak_err <= 0:
@@ -265,7 +265,7 @@ class EscLogAnalysis(BaseLogAnalysisModel):
                     message=_("ESC output {instance} peak error rate: {err:.1f}%").format(
                         instance=int(instance), err=peak_err
                     ),
-                    timestamp_us=float(instance_times[peak_idx]),
+                    timestamp_us=float(instance_times[peak_idx] * 1e6),
                     value=peak_err,
                 )
             )
@@ -283,16 +283,16 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         if "Instance" not in names or "Curr" not in names or "TimeUS" not in names:
             return []
 
-        instance_numbers = self.log_data.get_field("ESC", "Instance", scaled=False)
+        instance_numbers = self.log_data.get_field("ESC", "Instance")
         curr_values = self.log_data.get_field("ESC", "Curr")
-        time_us = self.log_data.get_field("ESC", "TimeUS", scaled=False)
+        time_seconds = self.log_data.get_field("ESC", "TimeUS")
 
         instances = sorted(set(instance_numbers.tolist()))
         windows = self._armed_time_windows()
         if len(instances) < 3 or not windows:
             return []
 
-        armed_masks = [(time_us >= arm_time) & (time_us <= disarm_time) for arm_time, disarm_time in windows]
+        armed_masks = [(time_seconds >= arm_time) & (time_seconds <= disarm_time) for arm_time, disarm_time in windows]
         armed_mask = armed_masks[0]
         for window_mask in armed_masks[1:]:
             armed_mask |= window_mask
@@ -326,7 +326,7 @@ class EscLogAnalysis(BaseLogAnalysisModel):
         for inst, inst_mean in outlier_group:
             mask = armed_mask & (instance_numbers == inst)
             inst_curr = curr_values[mask]
-            inst_times = time_us[mask]
+            inst_times = time_seconds[mask]
             furthest_idx = abs(inst_curr - median_curr).argmax()
 
             outcomes.append(
@@ -336,7 +336,7 @@ class EscLogAnalysis(BaseLogAnalysisModel):
                         "current drawn by the other {n} ESC output(s) (median {median:.2f}A). If unexpected "
                         "for this vehicle's configuration, check for a mechanical or wiring issue."
                     ).format(instance=int(inst), mean=inst_mean, n=len(instances) - len(outlier_group), median=median_curr),
-                    timestamp_us=float(inst_times[furthest_idx]),
+                    timestamp_us=float(inst_times[furthest_idx] * 1e6),
                     value=inst_mean,
                 )
             )
