@@ -39,4 +39,4 @@ class ArmLogQualityModel(BaseLogQualityModel):
 
     def check_arm_fields(self) -> list[QualityIssue]:
         """Check that ArmState/ArmChecks/Forced/Method fields are present and have readable data."""
-        return self.check_fields_present("ARM", ("ArmState", "ArmChecks", "Forced", "Method"), scaled=False)
+        return self.check_fields_present("ARM", ("ArmState", "ArmChecks", "Forced", "Method"))

@@ -111,23 +111,22 @@ class VibeLogAnalysis(BaseLogAnalysisModel):
             related_step=step,
         )
 
-    def _time_us(self) -> Any | None:  # noqa: ANN401
-        """Return the raw TimeUS array for the VIBE message, or None if unavailable."""
-        time_us, _issues = self.field_values_or_issue(
+    def _time_seconds(self) -> Any | None:  # noqa: ANN401
+        """Return canonical TimeUS values in seconds, or None if unavailable."""
+        time_seconds, _issues = self.field_values_or_issue(
             "VIBE",
             "TimeUS",
-            scaled=False,
             missing_field_message=_("TimeUS field not present in this firmware's VIBE schema"),
             missing_values_message=_("TimeUS missing from VIBE records"),
         )
-        return time_us
+        return time_seconds
 
     def check_vibration_levels(self) -> list[LogAnalysis]:
         """Check peak vibration per axis against the ArduPilot wiki's 30/60 m/s/s guidance."""
         outcomes: list[LogAnalysis] = []
 
-        time_us = self._time_us()
-        if time_us is None:
+        time_seconds = self._time_seconds()
+        if time_seconds is None:
             return outcomes
 
         for axis_field in _VIBE_AXES:
@@ -142,7 +141,7 @@ class VibeLogAnalysis(BaseLogAnalysisModel):
 
             peak_idx = values.argmax()
             peak_value = float(values[peak_idx])
-            peak_timestamp = float(time_us[peak_idx])
+            peak_timestamp_us = float(time_seconds[peak_idx] * 1e6)
 
             if peak_value >= _VIBE_SEVERE_THRESHOLD:
                 outcomes.append(
@@ -151,7 +150,7 @@ class VibeLogAnalysis(BaseLogAnalysisModel):
                             "{axis} peaked at {peak:.1f} m/s/s, above the {severe:.0f} m/s/s level at which "
                             "position/altitude hold problems are nearly always present."
                         ).format(axis=axis_field, peak=peak_value, severe=_VIBE_SEVERE_THRESHOLD),
-                        timestamp_us=peak_timestamp,
+                        timestamp_us=peak_timestamp_us,
                         value=peak_value,
                     )
                 )
@@ -162,7 +161,7 @@ class VibeLogAnalysis(BaseLogAnalysisModel):
                             "{axis} peaked at {peak:.1f} m/s/s, above the {warn:.0f} m/s/s level that may cause "
                             "position/altitude hold problems."
                         ).format(axis=axis_field, peak=peak_value, warn=_VIBE_WARNING_THRESHOLD),
-                        timestamp_us=peak_timestamp,
+                        timestamp_us=peak_timestamp_us,
                         value=peak_value,
                     )
                 )
@@ -173,15 +172,14 @@ class VibeLogAnalysis(BaseLogAnalysisModel):
         """Report total accelerometer clipping events, if any."""
         outcomes: list[LogAnalysis] = []
 
-        time_us = self._time_us()
+        time_seconds = self._time_seconds()
         clip_values, _issues = self.field_values_or_issue(
             "VIBE",
             "Clip",
-            scaled=False,
             missing_field_message=_("Clip field not present in this firmware's VIBE schema"),
             missing_values_message=_("Clip values missing from VIBE records"),
         )
-        if clip_values is None or time_us is None or len(clip_values) == 0:
+        if clip_values is None or time_seconds is None or len(clip_values) == 0:
             return outcomes
 
         total_clips = float(clip_values.max())
@@ -193,7 +191,7 @@ class VibeLogAnalysis(BaseLogAnalysisModel):
                         "Accelerometer reported {count:.0f} clipping event(s) during the flight, "
                         "meaning the sensor physically saturated at some point."
                     ).format(count=total_clips),
-                    timestamp_us=float(time_us[worst_idx]),
+                    timestamp_us=float(time_seconds[worst_idx] * 1e6),
                     value=total_clips,
                 )
             )

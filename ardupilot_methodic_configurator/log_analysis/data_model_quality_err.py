@@ -43,4 +43,4 @@ class ErrLogQualityModel(BaseLogQualityModel):
 
     def check_err_fields(self) -> list[QualityIssue]:
         """Check that Subsys/ECode fields are present and have readable data."""
-        return self.check_fields_present("ERR", ("Subsys", "ECode"), scaled=False)
+        return self.check_fields_present("ERR", ("Subsys", "ECode"))

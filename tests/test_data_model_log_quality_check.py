@@ -29,8 +29,10 @@ def _make_schema(fields: list[str]) -> MessageSchema:
         length=4,
         format="f",
         fields=fields,
-        units=[""] * len(fields),
+        stored_units=[""] * len(fields),
+        scaled_units=[""] * len(fields),
         multipliers=[None] * len(fields),
+        multipliers_applied_at_ingest=[False] * len(fields),
     )
 
 

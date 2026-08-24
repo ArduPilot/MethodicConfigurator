@@ -78,8 +78,10 @@ def test_build_baro_info_handles_missing_instance_field_without_crashing() -> No
         length=1,
         format="B",
         fields=["Health"],
-        units=[],
+        stored_units=[""],
+        scaled_units=[""],
         multipliers=[None],
+        multipliers_applied_at_ingest=[False],
         records=1,
     )
 

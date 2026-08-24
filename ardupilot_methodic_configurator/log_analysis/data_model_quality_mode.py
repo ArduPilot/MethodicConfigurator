@@ -48,4 +48,4 @@ class ModeLogQualityModel(BaseLogQualityModel):
 
     def check_mode_fields(self) -> list[QualityIssue]:
         """Check that Mode/ModeNum/Rsn fields are present and have readable data."""
-        return self.check_fields_present("MODE", ("Mode", "ModeNum", "Rsn"), scaled=False)
+        return self.check_fields_present("MODE", ("Mode", "ModeNum", "Rsn"))
