@@ -252,7 +252,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         tuning_report_path = Path(self.vehicle_dir) / "tuning_report.csv"
         try:
             TuningReportWindow(self.root, str(tuning_report_path))
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError, StopIteration) as exc:
             messagebox.showerror(_("Tuning Graph Error"), str(exc), parent=self.root)
 
     def _render_subsystem(self, name: str) -> None:  # pylint: disable=too-many-locals, too-many-branches

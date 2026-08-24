@@ -200,9 +200,10 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
     def _apply_param_fixes(self, fixes: list[tuple[str, float, float, list[str]]], dialog: tk.Toplevel) -> None:
         changes = {param_name: Par(proposed, "") for param_name, _current, proposed, _reasons in fixes}
+        if self.upload_callback is not None and not self.upload_callback(changes):
+            return
+
         self.summary.related_parameter_values.update({name: par.value for name, par in changes.items()})
-        if self.upload_callback is not None:
-            self.upload_callback(changes)
         dialog.destroy()
 
     @staticmethod

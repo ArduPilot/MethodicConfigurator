@@ -605,9 +605,6 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             if self.parameter_editor.parameter_files()
             else _("No intermediate parameter files available"),
         )
-        # Create skip button
-        self.skip_button = ttk.Button(buttons_frame, text=_("Skip parameter file"), command=self.on_skip_click)
-
         # Create skip buttons
         self.skip_button = ttk.Button(buttons_frame, text=_("Skip >"), command=self.on_skip_click)
         self.skip_button.configure(
