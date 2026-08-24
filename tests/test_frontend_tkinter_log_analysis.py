@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -482,7 +482,7 @@ class TestTuningGraphButton:
         THEN: The button is configured with state="normal"
         """
         (tmp_path / "tuning_report.csv").write_text("param,00_default.param\n", encoding="utf-8")
-        window = cast("LogAnalysisReportWindow", LogAnalysisReportWindow.__new__(LogAnalysisReportWindow))
+        window = LogAnalysisReportWindow.__new__(LogAnalysisReportWindow)
         window.main_frame = MagicMock()
         window.vehicle_dir = str(tmp_path)
         window.report = None
@@ -502,7 +502,7 @@ class TestTuningGraphButton:
         WHEN: The footer is built
         THEN: The button is configured with state="disabled"
         """
-        window = cast("LogAnalysisReportWindow", LogAnalysisReportWindow.__new__(LogAnalysisReportWindow))
+        window = LogAnalysisReportWindow.__new__(LogAnalysisReportWindow)
         window.main_frame = MagicMock()
         window.vehicle_dir = str(tmp_path)
         window.report = None
