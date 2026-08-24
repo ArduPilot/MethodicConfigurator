@@ -368,8 +368,8 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
             for kind, item in needs_attention:
                 if kind == "quality":
                     quality_item = cast("LogQualityResult", item)
-                    absorbed_steps = absorbed_by_step.get(quality_item.related_step, [])
-                    self._quality_result_card(inner, quality_item, absorbed_steps)
+                    quality_absorbed_steps = absorbed_by_step.get(quality_item.related_step, [])
+                    self._quality_result_card(inner, quality_item, quality_absorbed_steps)
                 else:
                     self._step_result_card(inner, item)  # type: ignore[arg-type]
             ttk.Separator(inner, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=14, pady=(14, 14))
@@ -381,8 +381,8 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
             for kind, item in passed_checks:
                 if kind == "quality":
                     quality_item = cast("LogQualityResult", item)
-                    absorbed_steps = absorbed_by_step.get(quality_item.related_step, [])
-                    self._quality_result_card(inner, quality_item, absorbed_steps)
+                    quality_absorbed_steps = absorbed_by_step.get(quality_item.related_step, [])
+                    self._quality_result_card(inner, quality_item, quality_absorbed_steps)
                 else:
                     self._step_result_card(inner, item)  # type: ignore[arg-type]
 

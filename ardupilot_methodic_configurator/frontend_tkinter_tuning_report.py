@@ -74,8 +74,10 @@ class TuningReportWindow(BaseWindow):
         right_scroll.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(4, 8), pady=8)
 
         self.figure = Figure(figsize=(7, 6), dpi=100)
-        self.canvas = FigureCanvasTkAgg(self.figure, master=right_scroll.view_port)
-        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        self.canvas = FigureCanvasTkAgg(  # type: ignore[no-untyped-call]
+            self.figure, master=right_scroll.view_port
+        )
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # type: ignore[no-untyped-call]
 
         self.canvas.mpl_connect("motion_notify_event", self._on_hover)
 
@@ -90,7 +92,7 @@ class TuningReportWindow(BaseWindow):
 
         if num_plots == 0:
             self.figure.set_figheight(6)
-            self.canvas.get_tk_widget().configure(height=int(6 * self.figure.dpi))
+            self.canvas.get_tk_widget().configure(height=int(6 * self.figure.dpi))  # type: ignore[no-untyped-call]
             ax = self.figure.add_subplot(111)
             ax.text(
                 0.5,
@@ -106,13 +108,13 @@ class TuningReportWindow(BaseWindow):
             ax.set_yticks([])
             for spine in ax.spines.values():
                 spine.set_visible(False)
-            self.canvas.draw()
-            self.canvas.get_tk_widget().update_idletasks()
+            self.canvas.draw()  # type: ignore[no-untyped-call]
+            self.canvas.get_tk_widget().update_idletasks()  # type: ignore[no-untyped-call]
             return
 
         calc_height = max(6.0, num_plots * 1.5)
         self.figure.set_figheight(calc_height)
-        self.canvas.get_tk_widget().configure(height=int(calc_height * self.figure.dpi))
+        self.canvas.get_tk_widget().configure(height=int(calc_height * self.figure.dpi))  # type: ignore[no-untyped-call]
 
         axes = self.figure.subplots(nrows=num_plots, ncols=1, sharex=True, squeeze=False)
         flat_axes = [ax[0] for ax in axes]
@@ -159,8 +161,8 @@ class TuningReportWindow(BaseWindow):
         self.figure.align_ylabels(flat_axes)
         self.figure.subplots_adjust(hspace=0.1)
         self.figure.tight_layout()
-        self.canvas.draw()
-        self.canvas.get_tk_widget().update_idletasks()
+        self.canvas.draw()  # type: ignore[no-untyped-call]
+        self.canvas.get_tk_widget().update_idletasks()  # type: ignore[no-untyped-call]
 
     def _on_hover(self, event: Any) -> None:  # noqa: ANN401
         """Triggered on mouse movement to display exact point values."""
@@ -199,7 +201,7 @@ class TuningReportWindow(BaseWindow):
                 redraw_needed = True
 
         if redraw_needed:
-            self.canvas.draw_idle()
+            self.canvas.draw_idle()  # type: ignore[no-untyped-call]
 
     def run(self) -> None:
         self.root.mainloop()
