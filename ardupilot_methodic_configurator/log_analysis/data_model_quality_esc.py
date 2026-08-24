@@ -25,6 +25,7 @@ from ardupilot_methodic_configurator.log_analysis.utils import find_matching_par
 _MOT_SPIN_MIN_REQUIRED_MARGIN = 0.03
 _MIN_ZERO_RPM_OBSERVATION_US = 1_000_000
 _MIN_ZERO_RPM_ARMED_COVERAGE = 0.5
+_DSHOT_OUTPUT_RATE_WARN_THRESHOLD = 1000.0  # Amilcar's stated threshold, Hz
 
 
 class EscLogQualityModel(BaseLogModel):
@@ -286,11 +287,8 @@ class EscLogAnalysis(BaseLogModel):
         time_us = self.log_data.get_field("ESC", "TimeUS", scaled=False)
 
         instances = sorted(set(instance_numbers.tolist()))
-        if len(instances) < 3:
-            return []
-
         windows = self._armed_time_windows()
-        if not windows:
+        if len(instances) < 3 or not windows:
             return []
 
         armed_masks = [(time_us >= arm_time) & (time_us <= disarm_time) for arm_time, disarm_time in windows]
@@ -308,14 +306,10 @@ class EscLogAnalysis(BaseLogModel):
         values = [v for _, v in sorted_items]
 
         total_range = values[-1] - values[0]
-        if total_range == 0:
-            return []
-
         gaps = [values[i + 1] - values[i] for i in range(len(values) - 1)]
         max_gap = max(gaps)
         max_gap_idx = gaps.index(max_gap)
-
-        if max_gap <= (total_range - max_gap):
+        if total_range == 0 or max_gap <= (total_range - max_gap):
             return []
 
         lower_group = sorted_items[: max_gap_idx + 1]
@@ -337,7 +331,7 @@ class EscLogAnalysis(BaseLogModel):
             outcomes.append(
                 LogAnalysis(
                     message=_(
-                        "ESC output {instance} drew {mean:.2f}A on average,"
+                        "ESC output {instance} drew {mean:.2f}A on average, "
                         "current drawn by the other {n} ESC output(s) (median {median:.2f}A). If unexpected "
                         "for this vehicle's configuration, check for a mechanical or wiring issue."
                     ).format(instance=int(inst), mean=inst_mean, n=len(instances) - len(outlier_group), median=median_curr),
@@ -346,8 +340,6 @@ class EscLogAnalysis(BaseLogModel):
                 )
             )
         return outcomes
-
-    _DSHOT_OUTPUT_RATE_WARN_THRESHOLD = 1000.0  # Amilcar's stated threshold, Hz
 
     def check_dshot_output_rate(self) -> list[LogAnalysis]:
         """Check SCHED_LOOP_RATE * SERVO_DSHOT_RATE effective output rate against a minimum threshold."""
@@ -363,21 +355,26 @@ class EscLogAnalysis(BaseLogModel):
 
         label = enum_value_name(self.apm_doc, "SERVO_DSHOT_RATE", dshot_rate_code)
         if label is not None and label.lower() == "1khz":
-            effective_rate = 1000.0
+            effective_rate = _DSHOT_OUTPUT_RATE_WARN_THRESHOLD
         else:
             multiplier = self._dshot_rate_multiplier(dshot_rate_code)
             if multiplier is None:
                 return []  # unknown enum value, skip
             effective_rate = loop_rate * multiplier
 
-        if effective_rate <= 1000.0:
+        if effective_rate <= _DSHOT_OUTPUT_RATE_WARN_THRESHOLD:
             return [
                 LogAnalysis(
                     message=_(
                         "Effective DShot output rate is {rate:.0f}Hz (SCHED_LOOP_RATE={loop:.0f}Hz, "
                         "SERVO_DSHOT_RATE={dshot!r}), at or below the {threshold:.0f}Hz level Amilcar flagged as "
                         "problematic. apm.pdef.xml also states SERVO_DSHOT_RATE should never be set below 500Hz."
-                    ).format(rate=effective_rate, loop=loop_rate, dshot=label, threshold=1000.0),
+                    ).format(
+                        rate=effective_rate,
+                        loop=loop_rate,
+                        dshot=label,
+                        threshold=_DSHOT_OUTPUT_RATE_WARN_THRESHOLD,
+                    ),
                     timestamp_us=None,
                     value=effective_rate,
                     param_name="SERVO_DSHOT_RATE",
