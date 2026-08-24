@@ -186,7 +186,11 @@ def analyze_log(  # pylint: disable=too-many-locals
                 related_parameter_values[issue.param_name] = parameters[issue.param_name]
 
         if analysis_model_cls is not None and quality_result.available:
-            analysis_results.append(analysis_model_cls(log_data, context).analyse())
+            analysis_result = analysis_model_cls(log_data, context).analyse()
+            analysis_results.append(analysis_result)
+            for outcome in analysis_result.outcomes:
+                if outcome.param_name is not None and outcome.param_name in parameters:
+                    related_parameter_values[outcome.param_name] = parameters[outcome.param_name]
 
     step_results = validate_configuration_steps_data(log_data, configuration_steps)
     hardware_report = extract_hardware_report(log_data, parameters, apm_doc)

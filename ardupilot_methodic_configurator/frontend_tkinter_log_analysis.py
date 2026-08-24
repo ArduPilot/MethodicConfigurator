@@ -11,13 +11,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from collections.abc import Callable
 from enum import Enum
+from functools import partial
 from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import Any
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
+from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
@@ -152,11 +155,15 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         summary: LogSummary,
         vehicle_dir: str,
         report: dict[str, Any] | None = None,
+        is_fc_connected: bool = False,
+        upload_callback: Callable[[dict], bool] | None = None,
     ) -> None:
         super().__init__(root_tk)
         self.summary = summary
         self.vehicle_dir = vehicle_dir
         self.report = report
+        self.is_fc_connected = is_fc_connected
+        self.upload_callback = upload_callback
         self._ai_panel_visible = False
 
         self.pairs = paired_quality_and_analysis_results(summary)
@@ -331,13 +338,71 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
 
     def _outcome_line(self, outcome: LogAnalysis) -> None:
         timestamp_text = f" ({outcome.timestamp_us / 1e6:.1f}s)" if outcome.timestamp_us is not None else ""
+        row = ttk.Frame(self.body_frame)
+        row.pack(anchor=tk.W, padx=(10, 0), pady=3, fill=tk.X)
         ttk.Label(
-            self.body_frame,
+            row,
             text=f"{outcome.message}{timestamp_text}",
             font=("TkDefaultFont", 14),
             wraplength=950,
             justify=tk.LEFT,
-        ).pack(anchor=tk.W, padx=(10, 0), pady=3, fill=tk.X)
+        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        fixes = self._fix_for_outcome(outcome)
+        if fixes:
+            fix_button = ttk.Button(row, text=_("Fix"), command=partial(self._open_review_dialog, fixes))
+            fix_button.pack(side=tk.RIGHT, padx=(8, 0))
+
+    def _fix_for_outcome(self, outcome: LogAnalysis) -> list[tuple[str, float, float, list[str]]]:
+        if not isinstance(outcome.param_name, str) or not isinstance(outcome.suggested_value, (int, float)):
+            return []
+        current = self.summary.related_parameter_values.get(outcome.param_name)
+        if current is None or float(outcome.suggested_value) == current:
+            return []
+        return [(outcome.param_name, current, float(outcome.suggested_value), [outcome.message])]
+
+    def _open_review_dialog(self, fixes: list[tuple[str, float, float, list[str]]]) -> None:
+        dialog = tk.Toplevel(self.root)
+        dialog.title(_("Review Parameter Changes"))
+        dialog.geometry(self.calculate_scaled_geometry(520, 140 + 60 * len(fixes)))
+        self.center_window(dialog, self.root)
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        ttk.Label(dialog, text=_("The following parameter change(s) are proposed:"), font=("TkDefaultFont", 11, "bold")).pack(
+            anchor=tk.W, padx=14, pady=(14, 6)
+        )
+        rows_frame = ttk.Frame(dialog)
+        rows_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(0, 6))
+        for param_name, current, proposed, reasons in fixes:
+            row = ttk.Frame(rows_frame)
+            row.pack(fill=tk.X, pady=4)
+            ttk.Label(row, text=param_name, width=18, font=("TkDefaultFont", 11, "bold")).pack(side=tk.LEFT)
+            ttk.Label(row, text=str(current), foreground="gray").pack(side=tk.LEFT, padx=(0, 6))
+            ttk.Label(row, text="->").pack(side=tk.LEFT, padx=(0, 6))
+            value_lbl = ttk.Label(row, text=str(proposed), foreground="darkgreen", font=("TkDefaultFont", 11, "bold"))
+            value_lbl.pack(side=tk.LEFT)
+            show_tooltip(value_lbl, "\n".join(f"- {reason}" for reason in reasons))
+
+        button_row = ttk.Frame(dialog)
+        button_row.pack(fill=tk.X, padx=14, pady=(6, 14))
+        ttk.Button(button_row, text=_("Cancel"), command=dialog.destroy).pack(side=tk.RIGHT, padx=(6, 0))
+        upload_button = ttk.Button(
+            button_row,
+            text=_("Apply & Upload"),
+            command=partial(self._apply_param_fixes, fixes, dialog),
+        )
+        upload_button.configure(state="normal" if self.is_fc_connected else "disabled")
+        upload_button.pack(side=tk.RIGHT)
+        if not self.is_fc_connected:
+            show_tooltip(upload_button, _("No flight controller connected, upload not available"))
+
+    def _apply_param_fixes(self, fixes: list[tuple[str, float, float, list[str]]], dialog: tk.Toplevel) -> None:
+        changes = {param_name: Par(proposed, "") for param_name, _current, proposed, _reasons in fixes}
+        if self.upload_callback is not None and not self.upload_callback(changes):
+            return
+        self.summary.related_parameter_values.update({name: par.value for name, par in changes.items()})
+        dialog.destroy()
 
     def _section_link(self, tag: str, text: str, url: str) -> None:
         row = ttk.Frame(self.body_frame)

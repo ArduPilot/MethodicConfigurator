@@ -64,10 +64,14 @@ def _make_outcome(
     *,
     message: str = "finding",
     timestamp_us: float | None = None,
+    param_name: str | None = None,
+    suggested_value: float | None = None,
 ) -> MagicMock:
     outcome = MagicMock()
     outcome.message = message
     outcome.timestamp_us = timestamp_us
+    outcome.param_name = param_name
+    outcome.suggested_value = suggested_value
     return outcome
 
 
@@ -609,6 +613,15 @@ class TestRenderSubsystem:
         assert mock_outcome_line.call_count == 2
         mock_outcome_line.assert_any_call(outcomes[0])
         mock_outcome_line.assert_any_call(outcomes[1])
+
+    def test_actionable_outcome_exposes_a_parameter_fix(self, bare_window: LogAnalysisReportWindow) -> None:
+        """Analysis recommendations should use the same parameter-fix workflow as quality issues."""
+        outcome = _make_outcome(param_name="MOT_SPIN_MIN", suggested_value=0.15)
+        bare_window.summary.related_parameter_values = {"MOT_SPIN_MIN": 0.1}
+
+        fixes = bare_window._fix_for_outcome(outcome)
+
+        assert fixes == [("MOT_SPIN_MIN", 0.1, 0.15, ["finding"])]
 
     def test_renders_no_hardware_section_when_no_component_data(self, bare_window: LogAnalysisReportWindow) -> None:
         """
