@@ -60,7 +60,7 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         summary: LogSummary,
         vehicle_dir: str,
         is_fc_connected: bool = False,
-        upload_callback: Callable[[dict], bool] | None = None,
+        upload_callback: Callable[[dict[str, Par]], bool | None] | None = None,
         navigate_callback: Callable[[str], None] | None = None,
         report: dict | None = None,
     ) -> None:
@@ -217,8 +217,10 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
     def _apply_param_fixes(self, fixes: list[tuple[str, float, float, list[str]]], dialog: tk.Toplevel) -> None:
         changes = {param_name: Par(proposed, "") for param_name, _current, proposed, _reasons in fixes}
-        if self.upload_callback is not None and not self.upload_callback(changes):
-            return
+        if self.upload_callback is not None:
+            upload_result = self.upload_callback(changes)
+            if upload_result is False:
+                return
 
         self.summary.related_parameter_values.update({name: par.value for name, par in changes.items()})
         dialog.destroy()
