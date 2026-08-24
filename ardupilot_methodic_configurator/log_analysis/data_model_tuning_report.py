@@ -55,6 +55,8 @@ def load_tuning_report(csv_path: str) -> TuningReport:
             # Defensive: some CSV writers drop trailing empty cells, pad to match step count.
             if len(raw_values) < len(steps):
                 raw_values = raw_values + [""] * (len(steps) - len(raw_values))
+            elif len(raw_values) > len(steps):
+                raw_values = raw_values[: len(steps)]
             raw_rows.append((param_name, raw_values))
 
     values: dict[str, list[float | None]] = {}
