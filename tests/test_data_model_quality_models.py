@@ -142,3 +142,19 @@ def test_esc_analysis_ignores_a_single_zero_rpm_sample() -> None:
     outcomes = EscLogAnalysis(log_data, _context({})).check_rpm_while_armed()
 
     assert outcomes == []
+
+
+def test_esc_analysis_skips_dshot_rate_for_pwm_output() -> None:
+    """A SERVO_DSHOT_RATE parameter must not trigger findings when PWM outputs are active."""
+    model = EscLogAnalysis(
+        LogData(),
+        _context(
+            {"MOT_PWM_TYPE": 0.0, "SCHED_LOOP_RATE": 400.0, "SERVO_DSHOT_RATE": 1.0},
+            apm_doc={
+                "MOT_PWM_TYPE": {"values": {"0": "Normal", "4": "DShot150"}},
+                "SERVO_DSHOT_RATE": {"values": {"1": "loop-rate"}},
+            },
+        ),
+    )
+
+    assert model.check_dshot_output_rate() == []
