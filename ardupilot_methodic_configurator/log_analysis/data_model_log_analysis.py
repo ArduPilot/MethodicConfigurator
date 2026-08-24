@@ -55,14 +55,15 @@ class LogAnalysisModelSpec:
     key: str
     quality_model: type[BaseLogQualityModel]
     analysis_model: type[BaseLogAnalysisModel] | None = None
+    component_keys: tuple[str, ...] = ()
 
 
 LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
-    LogAnalysisModelSpec("battery", BatteryLogQualityModel, BatteryLogAnalysis),
-    LogAnalysisModelSpec("gps", GPSLogQualityModel),
-    LogAnalysisModelSpec("esc", EscLogQualityModel, EscLogAnalysis),
-    LogAnalysisModelSpec("imu", ImuLogQualityModel, ImuLogAnalysis),
-    LogAnalysisModelSpec("vibe", VibeLogQualityModel, VibeLogAnalysis),
+    LogAnalysisModelSpec("battery", BatteryLogQualityModel, BatteryLogAnalysis, ("Battery", "Battery Monitor")),
+    LogAnalysisModelSpec("gps", GPSLogQualityModel, component_keys=("GNSS Receiver",)),
+    LogAnalysisModelSpec("esc", EscLogQualityModel, EscLogAnalysis, ("ESC", "Motors")),
+    LogAnalysisModelSpec("imu", ImuLogQualityModel, ImuLogAnalysis, ("Flight Controller",)),
+    LogAnalysisModelSpec("vibe", VibeLogQualityModel, VibeLogAnalysis, ("Flight Controller",)),
     LogAnalysisModelSpec("fft", FftLogQualityModel),
     LogAnalysisModelSpec("err", ErrLogQualityModel),
     LogAnalysisModelSpec("pm", PmLogQualityModel),
@@ -146,6 +147,15 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     hardware_report: HardwareReport
     related_parameter_values: dict[str, float] = field(default_factory=dict)
     analysis_subsystem_keys: tuple[str, ...] = ()
+    subsystem_component_keys: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
+    def component_keys_for_subsystem(self, subsystem_key: str | None) -> tuple[str, ...]:
+        """Return vehicle-component keys declared by one registered subsystem."""
+        if subsystem_key is None:
+            return ()
+        if subsystem_key in self.subsystem_component_keys:
+            return self.subsystem_component_keys[subsystem_key]
+        return next((spec.component_keys for spec in LOG_ANALYSIS_SUBSYSTEMS if spec.key == subsystem_key), ())
 
     def paired_quality_and_analysis_results(
         self,
@@ -183,11 +193,13 @@ def analyze_log(  # pylint: disable=too-many-locals
     """
     if quality_and_analysis_models is None:
         resolved_models = [(spec.quality_model, spec.analysis_model, spec.key) for spec in LOG_ANALYSIS_SUBSYSTEMS]
+        subsystem_component_keys = {spec.key: spec.component_keys for spec in LOG_ANALYSIS_SUBSYSTEMS}
     else:
         resolved_models = [
             (quality_model, analysis_model, f"custom_{index}")
             for index, (quality_model, analysis_model) in enumerate(quality_and_analysis_models)
         ]
+        subsystem_component_keys = {}
 
     parameters = context.parameters
     configuration_steps = context.configuration_steps
@@ -245,4 +257,5 @@ def analyze_log(  # pylint: disable=too-many-locals
         analysis_results=analysis_results,
         related_parameter_values=related_parameter_values,
         analysis_subsystem_keys=tuple(analysis_subsystem_keys),
+        subsystem_component_keys=subsystem_component_keys,
     )

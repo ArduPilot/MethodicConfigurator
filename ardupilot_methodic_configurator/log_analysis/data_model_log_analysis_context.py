@@ -11,6 +11,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from dataclasses import dataclass, field
 from typing import Any
 
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_derivation import (
+    ConfigurationStepParameterDeriver,
+    ParameterDeriver,
+)
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 
@@ -22,3 +26,4 @@ class LogAnalysisContext:
     configuration_steps: dict[str, Any]
     vehicle_components: dict[str, Any] = field(default_factory=dict)
     apm_doc: APMDoc | None = None
+    parameter_deriver: ParameterDeriver = field(default_factory=ConfigurationStepParameterDeriver)

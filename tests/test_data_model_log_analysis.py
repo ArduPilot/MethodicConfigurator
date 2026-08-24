@@ -22,6 +22,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_contex
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityResult, LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
+    BaseLogAnalysisModel,
     BaseLogQualityModel,
 )
 
@@ -58,6 +59,26 @@ class DummyQualityModel(BaseLogQualityModel):
             issues=[],
             name="Dummy",
         )
+
+
+class DummyAnalysisModel(BaseLogAnalysisModel):
+    """Minimal detailed model used to exercise parameter-derivation wiring."""
+
+
+class RecordingParameterDeriver:
+    """Test double proving detailed models use the context-provided service."""
+
+    def __init__(self) -> None:
+        self.expected_call: tuple[str, str] | None = None
+        self.matching_pattern: str | None = None
+
+    def expected_parameter_value(self, step_filename: str, param_name: str, **_kwargs: object) -> tuple[float, str]:
+        self.expected_call = (step_filename, param_name)
+        return 42.0, "derived"
+
+    def derived_and_forced_parameters_matching(self, pattern: str, **_kwargs: object) -> dict[str, str]:
+        self.matching_pattern = pattern
+        return {"TEST_PARAM": "01_test.param"}
 
 
 def test_analyze_log_passes_context_to_quality_models(monkeypatch: Any) -> None:  # noqa: ANN401
@@ -127,6 +148,31 @@ def test_base_quality_model_reads_fields_from_context() -> None:
     assert model.configuration_steps is context.configuration_steps
     assert model.vehicle_components is context.vehicle_components
     assert model.apm_doc is context.apm_doc
+
+
+def test_base_analysis_model_delegates_parameter_derivation_to_context_service() -> None:
+    """Detailed models can be tested with an injected parameter-derivation service."""
+    deriver = RecordingParameterDeriver()
+    context = LogAnalysisContext(
+        parameters={"TEST_PARAM": 1.0},
+        configuration_steps={"01_test.param": {}},
+        parameter_deriver=deriver,
+    )
+    model = DummyAnalysisModel(LogData(), context)
+
+    assert model.expected_parameter_value("01_test.param", "TEST_PARAM") == (42.0, "derived")
+    assert model.derived_and_forced_parameters_matching(r"TEST_.*") == {"TEST_PARAM": "01_test.param"}
+    assert deriver.expected_call == ("01_test.param", "TEST_PARAM")
+    assert deriver.matching_pattern == r"TEST_.*"
+
+
+def test_subsystem_component_metadata_is_declared_by_the_registry() -> None:
+    """Component guidance belongs to subsystem registration, not translated UI names."""
+    component_keys = {spec.key: spec.component_keys for spec in data_model_log_analysis.LOG_ANALYSIS_SUBSYSTEMS}
+
+    assert component_keys["battery"] == ("Battery", "Battery Monitor")
+    assert component_keys["gps"] == ("GNSS Receiver",)
+    assert component_keys["esc"] == ("ESC", "Motors")
 
 
 def test_base_quality_model_tolerates_ambiguous_configuration_metadata() -> None:
