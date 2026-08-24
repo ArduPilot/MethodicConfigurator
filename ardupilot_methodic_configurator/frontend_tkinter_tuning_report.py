@@ -183,7 +183,7 @@ class TuningReportWindow(BaseWindow):
                     annot.xy = (x_val, y_val)
                     step_name = self.report.steps[int(x_val)]
 
-                    text = f"Step: {step_name}\nValue: {y_val}"
+                    text = f"{_('Step')}: {step_name}\n{_('Value')}: {y_val}"
 
                     # Only update and redraw if the tooltip is new or changed
                     if not annot.get_visible() or annot.get_text() != text:
