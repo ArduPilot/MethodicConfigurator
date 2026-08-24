@@ -10,13 +10,11 @@ SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-import re
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     LogQualityResult,
@@ -48,6 +46,7 @@ class BaseLogModel:
         self.parameters = context.parameters
         self.vehicle_components = context.vehicle_components
         self.apm_doc = context.apm_doc
+        self.parameter_deriver = context.parameter_deriver
 
     def step_for_parameter(self, param_name: str) -> str:
         try:
@@ -185,11 +184,10 @@ class BaseLogQualityModel(BaseLogModel):
         )
 
 
-class BaseLogAnalysisModel(ConfigurationSteps, BaseLogModel):
+class BaseLogAnalysisModel(BaseLogModel):
     """Base class for detailed analysis models requiring configuration evaluation."""
 
     def __init__(self, log_data: "LogData", context: LogAnalysisContext) -> None:
-        ConfigurationSteps.__init__(self, _vehicle_dir="", vehicle_type="")
         BaseLogModel.__init__(self, log_data, context)
 
     def analyse(self) -> "LogAnalysisResult":
@@ -204,28 +202,14 @@ class BaseLogAnalysisModel(ConfigurationSteps, BaseLogModel):
         Returns: (expected_value, source) where source is "forced" or "derived",
         or None if this parameter isn't forced or derived at this step.
         """
-        if step_filename not in self.configuration_steps:
-            return None, ""
-
-        step_dict = self.configuration_steps[step_filename]
-        eval_variables: dict[str, Any] = {"vehicle_components": self.vehicle_components}
-        if self.apm_doc:
-            eval_variables["doc_dict"] = self.apm_doc
-        if self.parameters:
-            eval_variables["fc_parameters"] = self.parameters
-
-        forced_error, derived_error = self.compute_forced_and_derived_parameters(
-            step_filename, step_dict, eval_variables, ignore_fc_derived_param_warnings=True
+        return self.parameter_deriver.expected_parameter_value(
+            step_filename,
+            param_name,
+            configuration_steps=self.configuration_steps,
+            parameters=self.parameters,
+            vehicle_components=self.vehicle_components,
+            apm_doc=self.apm_doc,
         )
-        if forced_error or derived_error:
-            return None, ""
-
-        for parameter_type in ("forced", "derived"):
-            destination = self.forced_parameters if parameter_type == "forced" else self.derived_parameters
-            if step_filename in destination and param_name in destination[step_filename]:
-                return destination[step_filename][param_name].value, parameter_type
-
-        return None, ""
 
     def derived_and_forced_parameters_matching(self, pattern: str) -> dict[str, str]:
         """
@@ -233,13 +217,6 @@ class BaseLogAnalysisModel(ConfigurationSteps, BaseLogModel):
 
         Returns: param_name: step_filename
         """
-        compiled = re.compile(pattern)
-        result: dict[str, str] = {}
-        for step_filename, step_info in self.configuration_steps.items():
-            for param_name in step_info.get("derived_parameters", {}):
-                if compiled.match(param_name):
-                    result[param_name] = step_filename
-            for param_name in step_info.get("forced_parameters", {}):
-                if compiled.match(param_name):
-                    result[param_name] = step_filename
-        return result
+        return self.parameter_deriver.derived_and_forced_parameters_matching(
+            pattern, configuration_steps=self.configuration_steps
+        )

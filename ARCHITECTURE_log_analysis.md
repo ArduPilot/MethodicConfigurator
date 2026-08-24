@@ -12,13 +12,14 @@ The main components are:
 
 1. **Log Analysis Backend** - Loads and validates ArduPilot `.bin` logs and prepares the data required by the analysis layer.
 
-   * [`backend_log_analysis.py`](ardupilot_methodic_configurator/backend_log_analysis.py)
+   * [`backend_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py)
    * [`backend_log_extraction.py`](ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py)
 
 2. **Log Analysis Data Models** - Contains the analysis pipeline, shared context, quality models, analysis models, and result structures.
 
    * [`data_model_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py)
    * [`data_model_log_analysis_context.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_context.py)
+   * [`data_model_parameter_derivation.py`](ardupilot_methodic_configurator/log_analysis/data_model_parameter_derivation.py)
    * [`data_model_log_quality.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_quality.py)
    * [`data_model_log_quality_check.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py)
    * [`data_model_quality_base.py`](ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py)
@@ -72,7 +73,7 @@ Analysis code always uses `LogData`'s default scaled representation. The `scaled
 
 ## Log Analysis Backend
 
-[`backend_log_analysis.py`](ardupilot_methodic_configurator/backend_log_analysis.py) acts as the orchestration layer between log extraction, Methodic Configurator context,
+[`backend_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py) acts as the orchestration layer between log extraction, Methodic Configurator context,
 and the analysis data models.
 
 Its responsibilities are:
@@ -116,11 +117,17 @@ The context contains:
 * Methodic Configurator configuration steps
 * Vehicle component information
 * ArduPilot parameter documentation
+* A parameter-derivation service
 
 The backend constructs this context after extracting the log.
 
 The analysis models receive the context instead of independently loading these resources. This keeps data loading outside the analysis models and avoids duplicated
 filesystem and configuration logic.
+
+Detailed analysis models use the parameter-derivation service to evaluate forced
+and derived configuration parameters. The default adapter reuses the shared
+configuration-step expression evaluator with only the already-loaded context
+data; tests can supply a small replacement service without a vehicle directory.
 
 ## Analysis Pipeline
 

@@ -29,14 +29,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_tuning_report import Tunin
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 
-_SUBSYSTEM_TO_COMPONENT_KEYS: dict[str, tuple[str, ...]] = {
-    "Battery": ("Battery", "Battery Monitor"),
-    "ESC telemetry": ("ESC", "Motors"),
-    "IMU": ("Flight Controller",),
-    "VIBE": ("Flight Controller",),
-    "GPS": ("GNSS Receiver",),
-}
-
 
 class Severity(Enum):
     """Severity tiers shown only in the static legend key - not assigned to any finding yet."""
@@ -263,7 +255,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
                     self._section_link(_("Guide"), link.get("blog_text") or link["blog_url"], link["blog_url"])
 
         vehicle_components = (self.report or {}).get("vehicle_components") or {}
-        component_keys = _SUBSYSTEM_TO_COMPONENT_KEYS.get(name, ())
+        component_keys = self.summary.component_keys_for_subsystem(quality_result.subsystem_key)
         hardware_lines: list[tuple[str, list[str]]] = []
         for key in component_keys:
             component = vehicle_components.get(key)
