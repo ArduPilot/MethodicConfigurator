@@ -372,14 +372,14 @@ class BatteryLogAnalysis(BaseLogModel):
                         "in {step}, based on your vehicle_components specifications."
                     ).format(param=param_name, actual=actual, expected=expected, source=source, step=step_filename)
 
-                    outcomes.append(
-                        LogAnalysis(
-                            message=message,
-                            timestamp_us=None,
-                            value=actual,
-                            param_name=param_name,
-                            suggested_value=expected,
-                            related_step=step_filename,
-                        )
+                outcomes.append(
+                    LogAnalysis(
+                        message=message,
+                        timestamp_us=None,
+                        value=actual,
+                        param_name=param_name,
+                        suggested_value=expected,
+                        related_step=step_filename,
                     )
+                )
         return outcomes

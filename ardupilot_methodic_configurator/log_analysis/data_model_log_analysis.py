@@ -181,6 +181,9 @@ def analyze_log(  # pylint: disable=too-many-locals
         quality_model = quality_model_cls(log_data, context)
         quality_result = quality_model.check()
         quality_results.append(quality_result)
+        for issue in quality_result.issues:
+            if issue.param_name is not None and issue.param_name in parameters:
+                related_parameter_values[issue.param_name] = parameters[issue.param_name]
 
         if analysis_model_cls is not None and quality_result.available:
             analysis_results.append(analysis_model_cls(log_data, context).analyse())
