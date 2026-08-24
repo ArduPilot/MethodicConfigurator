@@ -23,6 +23,8 @@ from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_pa
 from ardupilot_methodic_configurator.log_analysis.utils import find_matching_param_values
 
 _MOT_SPIN_MIN_REQUIRED_MARGIN = 0.03
+_MIN_ZERO_RPM_OBSERVATION_US = 1_000_000
+_MIN_ZERO_RPM_ARMED_COVERAGE = 0.5
 
 
 class EscLogQualityModel(BaseLogModel):
@@ -183,7 +185,16 @@ class EscLogAnalysis(BaseLogModel):
                 if not window_mask.any():
                     continue
                 windowed_rpm = inst_rpm[window_mask]
-                if windowed_rpm.max() == 0:
+                windowed_times = inst_times[window_mask]
+                observed_duration = float(windowed_times[-1] - windowed_times[0])
+                armed_duration = float(disarm_time - arm_time)
+                has_meaningful_coverage = (
+                    len(windowed_rpm) >= 2
+                    and observed_duration >= _MIN_ZERO_RPM_OBSERVATION_US
+                    and armed_duration > 0
+                    and observed_duration / armed_duration >= _MIN_ZERO_RPM_ARMED_COVERAGE
+                )
+                if windowed_rpm.max() == 0 and has_meaningful_coverage:
                     outcomes.append(
                         LogAnalysis(
                             message=_(
@@ -244,6 +255,8 @@ class EscLogAnalysis(BaseLogModel):
             instance_times = time_us[mask]
 
             peak_err = float(instance_errs.max())
+            if peak_err <= 0:
+                continue
             peak_idx = instance_errs.argmax()
             outcomes.append(
                 LogAnalysis(

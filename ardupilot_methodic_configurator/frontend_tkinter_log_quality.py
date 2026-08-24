@@ -157,7 +157,14 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
                 ),
                 parent=self.root,
             )
-        self._analysis_window = LogAnalysisReportWindow(self.root, self.summary, self.vehicle_dir, report=self.report)
+        self._analysis_window = LogAnalysisReportWindow(
+            self.root,
+            self.summary,
+            self.vehicle_dir,
+            is_fc_connected=self.is_fc_connected,
+            upload_callback=self.upload_callback,
+            report=self.report,
+        )
 
     def _open_review_dialog(self, fixes: list[tuple[str, float, float, list[str]]]) -> None:
         dialog = tk.Toplevel(self.root)

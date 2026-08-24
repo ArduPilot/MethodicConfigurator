@@ -14,7 +14,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_contex
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogAnalysis, EscLogQualityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
 
 
@@ -109,3 +109,36 @@ def test_battery_model_checks_present_log_data_without_datasource_access() -> No
     assert result.available is True
     assert result.state == LogQualityState.WARNING
     assert any("Voltage is zero" in issue.message for issue in result.issues)
+
+
+def test_esc_analysis_does_not_report_zero_error_rates_as_findings() -> None:
+    """A healthy ESC log should have no error-rate findings."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "ESC",
+        np.array(
+            [(0.0, 0.0, 1_000_000.0), (1.0, 0.0, 2_000_000.0)],
+            dtype=[("Instance", "f8"), ("Err", "f8"), ("TimeUS", "f8")],
+        ),
+    )
+
+    outcomes = EscLogAnalysis(log_data, _context({})).check_per_instance_errors()
+
+    assert outcomes == []
+
+
+def test_esc_analysis_ignores_a_single_zero_rpm_sample() -> None:
+    """A sparse zero-RPM sample must not be described as a full armed-period failure."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "ARM",
+        np.array([(1.0, 0.0), (0.0, 2_000_000.0)], dtype=[("ArmState", "f8"), ("TimeUS", "f8")]),
+    )
+    log_data.add_message_columns(
+        "ESC",
+        np.array([(0.0, 0.0, 1_000_000.0)], dtype=[("Instance", "f8"), ("RPM", "f8"), ("TimeUS", "f8")]),
+    )
+
+    outcomes = EscLogAnalysis(log_data, _context({})).check_rpm_while_armed()
+
+    assert outcomes == []
