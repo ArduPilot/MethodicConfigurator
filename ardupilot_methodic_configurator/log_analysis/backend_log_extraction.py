@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import contextlib
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from logging import error as logging_error
 from typing import Any, Protocol, cast
@@ -328,6 +328,31 @@ def _allocate_message_arrays(log_data: data_model_log_data.LogData) -> None:
         log_data._raw_messages[message_name] = np.empty(schema.records, dtype=_schema_numpy_dtype(schema))  # pylint: disable=protected-access # noqa: SLF001
 
 
+def _message_values(
+    msg: Any,  # noqa: ANN401
+    schema: data_model_log_data.MessageSchema,
+    payload: dict[str, Any],
+    field_info: Mapping[str, Any],
+) -> list[Any]:
+    """Convert one decoded message into values compatible with its structured-array schema."""
+    values: list[Any] = []
+    for field_index, field_name in enumerate(schema.fields):
+        format_char = schema.format[field_index]
+        value = (
+            _raw_fixed_point_value(msg, field_index, field_name)
+            if format_char in _FIXED_POINT_FORMATS
+            else payload[field_name]
+        )
+        if schema.multipliers_applied_at_ingest[field_index]:
+            multiplier = schema.multipliers[field_index]
+            if multiplier is not None:
+                value *= multiplier
+        if field_info[field_name][0].kind == "S" and isinstance(value, str):
+            value = value.encode("ascii", "ignore")
+        values.append(value)
+    return values
+
+
 def _fill_message_arrays(  # pylint: disable=too-many-locals
     mlog: mavutil.mavfile,
     log_data: data_model_log_data.LogData,
@@ -369,24 +394,7 @@ def _fill_message_arrays(  # pylint: disable=too-many-locals
             error_message = _("Structured array for {message_type} is missing field metadata").format(message_type=msg_type)
             raise ValueError(error_message)
 
-        values: list[Any] = []
-        for field_index, field_name in enumerate(schema.fields):
-            format_char = schema.format[field_index]
-            if format_char in _FIXED_POINT_FORMATS:
-                value = _raw_fixed_point_value(msg, field_index, field_name)
-            else:
-                value = payload[field_name]
-
-            if schema.multipliers_applied_at_ingest[field_index]:
-                multiplier = schema.multipliers[field_index]
-                if multiplier is not None:
-                    value *= multiplier
-
-            dtype = field_info[field_name][0]
-            if dtype.kind == "S" and isinstance(value, str):
-                value = value.encode("ascii", "ignore")
-            values.append(value)
-        array[index] = tuple(values)
+        array[index] = tuple(_message_values(msg, schema, payload, field_info))
         write_positions[msg_type] = index + 1
 
     for message_name, schema in log_data.schemas.items():
