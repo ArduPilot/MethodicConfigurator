@@ -48,12 +48,14 @@ class FftLogQualityModel(BaseLogModel):
                     suggested_value=1.0,
                 )
             ]
+            result_step = ""
         else:
             reason = _("Raw IMU batch logging enabled but no data, check firmware build supports batch logging")
             issues = [QualityIssue(_("No ISBH messages found"), step)]
+            result_step = step
 
         return LogQualityResult(
-            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=result_step
         )
 
     def check_header_fields(self) -> list[QualityIssue]:
