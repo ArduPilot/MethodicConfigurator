@@ -45,6 +45,11 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_report import (
 )
 
 
+def _format_parameter_value(value: float) -> str:
+    """Format a parameter value without hiding fractional changes."""
+    return str(int(value)) if value.is_integer() else str(value)
+
+
 class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Displays log analysis results as a beginner-friendly, detailed dashboard."""
 
@@ -185,9 +190,14 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
             row = ttk.Frame(rows_frame)
             row.pack(fill=tk.X, pady=4)
             ttk.Label(row, text=param_name, width=18, font=("TkDefaultFont", 11, "bold")).pack(side=tk.LEFT)
-            ttk.Label(row, text=str(int(current)), foreground="gray").pack(side=tk.LEFT, padx=(0, 6))
+            ttk.Label(row, text=_format_parameter_value(current), foreground="gray").pack(side=tk.LEFT, padx=(0, 6))
             ttk.Label(row, text="->").pack(side=tk.LEFT, padx=(0, 6))
-            value_lbl = ttk.Label(row, text=str(int(proposed)), foreground="darkgreen", font=("TkDefaultFont", 11, "bold"))
+            value_lbl = ttk.Label(
+                row,
+                text=_format_parameter_value(proposed),
+                foreground="darkgreen",
+                font=("TkDefaultFont", 11, "bold"),
+            )
             value_lbl.pack(side=tk.LEFT)
             show_tooltip(value_lbl, "\n".join(f"- {r}" for r in reasons))
 
