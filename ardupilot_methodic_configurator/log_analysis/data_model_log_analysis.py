@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysisResult
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     LogQualityResult,
@@ -71,6 +71,8 @@ LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
     LogAnalysisModelSpec("mode", ModeLogQualityModel),
 )
 
+ResolvedModel = tuple[type[BaseLogQualityModel], type[BaseLogAnalysisModel] | None, str]
+
 
 def parse_firmware_version(version: object) -> tuple[int, int, int] | None:
     """Parse a firmware version string into a comparable tuple, if available."""
@@ -103,6 +105,60 @@ def _pm_validation_as_quality_result(validation: MessageValidation | None) -> Lo
         issues=issues,
         name=_("System Performance"),
     )
+
+
+def _resolve_models(
+    quality_and_analysis_models: list[tuple[type[BaseLogQualityModel], type[BaseLogAnalysisModel] | None]] | None,
+) -> tuple[list[ResolvedModel], dict[str, tuple[str, ...]]]:
+    """Resolve the default registry or caller-provided model pairs."""
+    if quality_and_analysis_models is None:
+        return (
+            [(spec.quality_model, spec.analysis_model, spec.key) for spec in LOG_ANALYSIS_SUBSYSTEMS],
+            {spec.key: spec.component_keys for spec in LOG_ANALYSIS_SUBSYSTEMS},
+        )
+    return (
+        [
+            (quality_model, analysis_model, f"custom_{index}")
+            for index, (quality_model, analysis_model) in enumerate(quality_and_analysis_models)
+        ],
+        {},
+    )
+
+
+def _add_related_parameter_values(
+    related_values: dict[str, float],
+    findings: list[QualityIssue] | list[LogAnalysis],
+    parameters: dict[str, float],
+) -> None:
+    """Add parameters referenced by quality issues or analysis outcomes."""
+    for finding in findings:
+        if finding.param_name is not None and finding.param_name in parameters:
+            related_values[finding.param_name] = parameters[finding.param_name]
+
+
+def _run_subsystem_models(
+    resolved_models: list[ResolvedModel],
+    log_data: LogData,
+    context: LogAnalysisContext,
+    related_parameter_values: dict[str, float],
+) -> tuple[list[LogQualityResult], list[LogAnalysisResult], list[str]]:
+    """Run registered quality and available detailed-analysis models."""
+    quality_results: list[LogQualityResult] = []
+    analysis_results: list[LogAnalysisResult] = []
+    analysis_subsystem_keys: list[str] = []
+    for quality_model_cls, analysis_model_cls, subsystem_key in resolved_models:
+        quality_result = quality_model_cls(log_data, context).check()
+        quality_result.subsystem_key = subsystem_key
+        quality_results.append(quality_result)
+        _add_related_parameter_values(related_parameter_values, quality_result.issues, context.parameters)
+        if analysis_model_cls is not None:
+            analysis_subsystem_keys.append(subsystem_key)
+        if analysis_model_cls is not None and quality_result.available:
+            analysis_result = analysis_model_cls(log_data, context).analyse()
+            analysis_result.subsystem_key = subsystem_key
+            analysis_results.append(analysis_result)
+            _add_related_parameter_values(related_parameter_values, analysis_result.outcomes, context.parameters)
+    return quality_results, analysis_results, analysis_subsystem_keys
 
 
 def validate_log_matches_vehicle(
@@ -191,57 +247,26 @@ def analyze_log(  # pylint: disable=too-many-locals
         Complete log analysis summary.
 
     """
-    if quality_and_analysis_models is None:
-        resolved_models = [(spec.quality_model, spec.analysis_model, spec.key) for spec in LOG_ANALYSIS_SUBSYSTEMS]
-        subsystem_component_keys = {spec.key: spec.component_keys for spec in LOG_ANALYSIS_SUBSYSTEMS}
-    else:
-        resolved_models = [
-            (quality_model, analysis_model, f"custom_{index}")
-            for index, (quality_model, analysis_model) in enumerate(quality_and_analysis_models)
-        ]
-        subsystem_component_keys = {}
-
     parameters = context.parameters
-    configuration_steps = context.configuration_steps
-    apm_doc = context.apm_doc
-
     pm_status = get_pm_status(log_data)
     pm_validation = check_cpu_performance_message(log_data)
+    resolved_models, subsystem_component_keys = _resolve_models(quality_and_analysis_models)
 
     quality_results: list[LogQualityResult] = []
     pm_quality_result = _pm_validation_as_quality_result(pm_validation)
     if pm_quality_result is not None:
         quality_results.append(pm_quality_result)
-    analysis_results: list[LogAnalysisResult] = []
-    analysis_subsystem_keys: list[str] = []
 
     related_parameter_values: dict[str, float] = {}
     for result in quality_results:
-        for issue in result.issues:
-            if issue.param_name is not None and issue.param_name in parameters:
-                related_parameter_values[issue.param_name] = parameters[issue.param_name]
+        _add_related_parameter_values(related_parameter_values, result.issues, parameters)
+    subsystem_quality_results, analysis_results, analysis_subsystem_keys = _run_subsystem_models(
+        resolved_models, log_data, context, related_parameter_values
+    )
+    quality_results.extend(subsystem_quality_results)
 
-    for quality_model_cls, analysis_model_cls, subsystem_key in resolved_models:
-        quality_model = quality_model_cls(log_data, context)
-        quality_result = quality_model.check()
-        quality_result.subsystem_key = subsystem_key
-        quality_results.append(quality_result)
-        for issue in quality_result.issues:
-            if issue.param_name is not None and issue.param_name in parameters:
-                related_parameter_values[issue.param_name] = parameters[issue.param_name]
-
-        if analysis_model_cls is not None:
-            analysis_subsystem_keys.append(subsystem_key)
-        if analysis_model_cls is not None and quality_result.available:
-            analysis_result = analysis_model_cls(log_data, context).analyse()
-            analysis_result.subsystem_key = subsystem_key
-            analysis_results.append(analysis_result)
-            for outcome in analysis_result.outcomes:
-                if outcome.param_name is not None and outcome.param_name in parameters:
-                    related_parameter_values[outcome.param_name] = parameters[outcome.param_name]
-
-    step_results = validate_configuration_steps_data(log_data, configuration_steps)
-    hardware_report = extract_hardware_report(log_data, parameters, apm_doc)
+    step_results = validate_configuration_steps_data(log_data, context.configuration_steps)
+    hardware_report = extract_hardware_report(log_data, parameters, context.apm_doc)
 
     return LogSummary(
         flight_duration_sec=log_data.flight_duration_sec,

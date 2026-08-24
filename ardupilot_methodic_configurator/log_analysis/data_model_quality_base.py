@@ -21,6 +21,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import 
     LogQualityState,
     QualityIssue,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_derivation import ParameterDerivationInputs
 from ardupilot_methodic_configurator.log_analysis.utils import (
     find_configuration_step_for_message,
     find_configuration_step_for_parameter,
@@ -202,14 +203,7 @@ class BaseLogAnalysisModel(BaseLogModel):
         Returns: (expected_value, source) where source is "forced" or "derived",
         or None if this parameter isn't forced or derived at this step.
         """
-        return self.parameter_deriver.expected_parameter_value(
-            step_filename,
-            param_name,
-            configuration_steps=self.configuration_steps,
-            parameters=self.parameters,
-            vehicle_components=self.vehicle_components,
-            apm_doc=self.apm_doc,
-        )
+        return self.parameter_deriver.expected_parameter_value(step_filename, param_name, self._parameter_derivation_inputs())
 
     def derived_and_forced_parameters_matching(self, pattern: str) -> dict[str, str]:
         """
@@ -217,6 +211,13 @@ class BaseLogAnalysisModel(BaseLogModel):
 
         Returns: param_name: step_filename
         """
-        return self.parameter_deriver.derived_and_forced_parameters_matching(
-            pattern, configuration_steps=self.configuration_steps
+        return self.parameter_deriver.derived_and_forced_parameters_matching(pattern, self._parameter_derivation_inputs())
+
+    def _parameter_derivation_inputs(self) -> ParameterDerivationInputs:
+        """Build the in-memory inputs used by the injected derivation service."""
+        return ParameterDerivationInputs(
+            configuration_steps=self.configuration_steps,
+            parameters=self.parameters,
+            vehicle_components=self.vehicle_components,
+            apm_doc=self.apm_doc,
         )

@@ -72,11 +72,11 @@ class RecordingParameterDeriver:
         self.expected_call: tuple[str, str] | None = None
         self.matching_pattern: str | None = None
 
-    def expected_parameter_value(self, step_filename: str, param_name: str, **_kwargs: object) -> tuple[float, str]:
+    def expected_parameter_value(self, step_filename: str, param_name: str, _inputs: object) -> tuple[float, str]:
         self.expected_call = (step_filename, param_name)
         return 42.0, "derived"
 
-    def derived_and_forced_parameters_matching(self, pattern: str, **_kwargs: object) -> dict[str, str]:
+    def derived_and_forced_parameters_matching(self, pattern: str, _inputs: object) -> dict[str, str]:
         self.matching_pattern = pattern
         return {"TEST_PARAM": "01_test.param"}
 

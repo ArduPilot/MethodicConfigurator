@@ -156,6 +156,33 @@ def get_pm_status(log_data: LogData) -> PMStatus | None:
     )
 
 
+def _pm_non_finite_issues(log_data: LogData, available: set[str]) -> list[str]:
+    """Return one issue for each PM field that contains non-finite samples."""
+    return [
+        _("{field} contains non-finite telemetry values").format(field=field_name)
+        for field_name in ("Load", "NLon", "MaxT", "Mem", "InE", "ErC", "ErrL")
+        if field_name in available and not np.isfinite(log_data.get_field("PM", field_name)).all()
+    ]
+
+
+def _pm_error_signal_issues(log_data: LogData, available: set[str]) -> list[str]:
+    """Return issues reported by finite PM error counters and masks."""
+    issues: list[str] = []
+    for field_name, reducer, message in (
+        ("InE", np.max, _("Internal firmware errors were detected (InE)")),
+        ("ErC", np.max, _("Internal error count: {count}")),
+        ("ErrL", np.max, _("An internal error line was recorded (ErrL)")),
+        ("NLon", np.sum, _("Detected {count} scheduler long loops")),
+    ):
+        if field_name in available:
+            values = log_data.get_field("PM", field_name)
+            if np.isfinite(values).all():
+                count = int(reducer(values))
+                if count > 0:
+                    issues.append(message.format(count=count) if field_name in {"ErC", "NLon"} else message)
+    return issues
+
+
 def check_cpu_performance_message(log_data: LogData) -> MessageValidation:
     """
     Validate the PM (Performance Monitor) message for internal errors and health.
@@ -168,41 +195,8 @@ def check_cpu_performance_message(log_data: LogData) -> MessageValidation:
         return MessageValidation(valid=False, issues=[_("PM message not logged")])
 
     available = set(columns.dtype.names or ())
-    issues: list[str] = []
-
-    for field_name in ("Load", "NLon", "MaxT", "Mem", "InE", "ErC", "ErrL"):
-        if field_name in available:
-            values = log_data.get_field("PM", field_name)
-            if not np.isfinite(values).all():
-                issues.append(_("{field} contains non-finite telemetry values").format(field=field_name))
-
-    # Internal error mask
-    if "InE" in available:
-        ine = log_data.get_field("PM", "InE")
-        if np.isfinite(ine).all() and ine.max() > 0:
-            issues.append(_("Internal firmware errors were detected (InE)"))
-
-    # Internal error count
-    if "ErC" in available:
-        erc = log_data.get_field("PM", "ErC")
-        if np.isfinite(erc).all():
-            count = int(erc.max())
-            if count > 0:
-                issues.append(_("Internal error count: {count}").format(count=count))
-
-    # Internal error line number
-    if "ErrL" in available:
-        errl = log_data.get_field("PM", "ErrL")
-        if np.isfinite(errl).all() and errl.max() > 0:
-            issues.append(_("An internal error line was recorded (ErrL)"))
-
-    # Long loops
-    if "NLon" in available:
-        nlon = log_data.get_field("PM", "NLon")
-        if np.isfinite(nlon).all():
-            count = int(nlon.sum())
-            if count > 0:
-                issues.append(_("Detected {count} scheduler long loops").format(count=count))
+    issues = _pm_non_finite_issues(log_data, available)
+    issues.extend(_pm_error_signal_issues(log_data, available))
 
     return MessageValidation(valid=not issues, issues=issues)
 

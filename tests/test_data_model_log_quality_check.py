@@ -121,6 +121,35 @@ def test_pm_non_finite_values_are_reported_as_invalid() -> None:
     assert status.healthy is None
 
 
+def test_pm_error_signals_preserve_report_order() -> None:
+    """PM error findings retain the established order used by reports and snapshots."""
+    log_data = LogData()
+    log_data.add_message_columns(
+        "PM",
+        np.array(
+            [(25.0, 3, 0, 20_000, 1, 2, 42)],
+            dtype=[
+                ("Load", "f8"),
+                ("NLon", "i4"),
+                ("MaxT", "i4"),
+                ("Mem", "i4"),
+                ("InE", "i4"),
+                ("ErC", "i4"),
+                ("ErrL", "i4"),
+            ],
+        ),
+    )
+
+    validation = check_cpu_performance_message(log_data)
+
+    assert validation.issues == [
+        "Internal firmware errors were detected (InE)",
+        "Internal error count: 2",
+        "An internal error line was recorded (ErrL)",
+        "Detected 3 scheduler long loops",
+    ]
+
+
 class TestValidateConfigurationSteps:
     """Validate configuration steps using extracted log data."""
 
