@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     MessageValidation,
@@ -32,8 +34,6 @@ from ardupilot_methodic_configurator.log_analysis.utils import (
 )
 
 if TYPE_CHECKING:
-    import numpy as np
-
     from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
 
 _MAX_HEALTHY_AVG_CPU = 80.0  # percent
@@ -127,6 +127,9 @@ def get_pm_status(log_data: LogData) -> PMStatus | None:
     max_t = log_data.get_field("PM", "MaxT", scaled=False) if "MaxT" in available else None
     mem = log_data.get_field("PM", "Mem", scaled=False) if "Mem" in available else None
 
+    if any(values is not None and not np.isfinite(values).all() for values in (load, nlon, max_t, mem)):
+        return PMStatus(0.0, 0.0, 0, 0, 0, None)
+
     # compute values into locals first
     avg_cpu_load = float(load.mean()) if load is not None else 0.0
     peak_cpu_load = float(load.max()) if load is not None else 0.0
@@ -167,32 +170,39 @@ def check_cpu_performance_message(log_data: LogData) -> MessageValidation:
     available = set(columns.dtype.names or ())
     issues: list[str] = []
 
+    for field_name in ("Load", "NLon", "MaxT", "Mem", "InE", "ErC", "ErrL"):
+        if field_name in available:
+            values = log_data.get_field("PM", field_name, scaled=False)
+            if not np.isfinite(values).all():
+                issues.append(_("{field} contains non-finite telemetry values").format(field=field_name))
+
     # Internal error mask
     if "InE" in available:
         ine = log_data.get_field("PM", "InE", scaled=False)
-        if ine.max() > 0:
+        if np.isfinite(ine).all() and ine.max() > 0:
             issues.append(_("Internal firmware errors were detected (InE)"))
 
     # Internal error count
     if "ErC" in available:
         erc = log_data.get_field("PM", "ErC", scaled=False)
-        count = int(erc.max())
-        if count > 0:
-            issues.append(_("Internal error count: {count}").format(count=count))
+        if np.isfinite(erc).all():
+            count = int(erc.max())
+            if count > 0:
+                issues.append(_("Internal error count: {count}").format(count=count))
 
     # Internal error line number
     if "ErrL" in available:
         errl = log_data.get_field("PM", "ErrL", scaled=False)
-        if errl.max() > 0:
+        if np.isfinite(errl).all() and errl.max() > 0:
             issues.append(_("An internal error line was recorded (ErrL)"))
 
     # Long loops
     if "NLon" in available:
         nlon = log_data.get_field("PM", "NLon", scaled=False)
-        count = int(nlon.sum())
-
-        if count > 0:
-            issues.append(_("Detected {count} scheduler long loops").format(count=count))
+        if np.isfinite(nlon).all():
+            count = int(nlon.sum())
+            if count > 0:
+                issues.append(_("Detected {count} scheduler long loops").format(count=count))
 
     return MessageValidation(valid=not issues, issues=issues)
 

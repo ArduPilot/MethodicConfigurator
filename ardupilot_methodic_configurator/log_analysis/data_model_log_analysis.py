@@ -70,6 +70,7 @@ LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
     LogAnalysisModelSpec("mode", ModeLogQualityModel),
 )
 
+
 def parse_firmware_version(version: object) -> tuple[int, int, int] | None:
     """Parse a firmware version string into a comparable tuple, if available."""
     if not isinstance(version, str) or not version:

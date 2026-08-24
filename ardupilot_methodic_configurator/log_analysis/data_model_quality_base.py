@@ -13,6 +13,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import re
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
@@ -91,6 +93,10 @@ class BaseLogModel:
         values = self.log_data.get_field(message_name, field_name, scaled=scaled)
         if len(values) == 0:
             issues.append(QualityIssue(missing_values_message))
+            return None, issues
+
+        if np.issubdtype(values.dtype, np.number) and not np.isfinite(values).all():
+            issues.append(QualityIssue(_("{field} contains non-finite telemetry values").format(field=field_name)))
             return None, issues
 
         return values, issues
