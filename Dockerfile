@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm@sha256:593bd06efe90efa80dc4eee3948be7c0fde4134606dd40d8dd8dbcade98e669c
+FROM python:3.14-slim-bookworm@sha256:23c59390fc717bf09f9336908199a0ae75d9c4264bf296123f94ad772fea3b52
 
 LABEL maintainer="ArduPilot Methodic Configurator Team"
 LABEL description="Development environment for ArduPilot Methodic Configurator with SITL support"
