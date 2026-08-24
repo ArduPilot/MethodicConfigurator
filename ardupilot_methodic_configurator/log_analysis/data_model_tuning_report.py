@@ -33,7 +33,16 @@ def load_tuning_report(csv_path: str) -> TuningReport:
     """Load and forward-fill tuning_report.csv."""
     with open(csv_path, encoding="utf-8", newline="") as f:
         reader = csv.reader(f)
-        header = next(reader)
+        try:
+            header = next(reader)
+        except StopIteration as exc:
+            msg = "tuning_report.csv is empty"
+            raise ValueError(msg) from exc
+
+        if len(header) < 2 or not header[0].strip():
+            msg = "tuning_report.csv has no parameter-step columns"
+            raise ValueError(msg)
+
         # Apply the display name cleanup directly to the headers
         steps = [step_display_name(step) for step in header[1:]]
 
