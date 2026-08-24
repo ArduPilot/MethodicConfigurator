@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, Any
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import ConfigurationSteps
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
     LogQualityResult,
     LogQualityState,
@@ -30,51 +29,29 @@ from ardupilot_methodic_configurator.log_analysis.utils import (
 )
 
 if TYPE_CHECKING:
+    from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysisResult
     from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
 
-class BaseLogModel(ConfigurationSteps):
-    """Base class for log analysis models."""
+class BaseLogModel:
+    """Common log-data services shared by quality and analysis models."""
 
     def __init__(
         self,
         log_data: "LogData",
         context: LogAnalysisContext,
     ) -> None:
-        ConfigurationSteps.__init__(self, _vehicle_dir="", vehicle_type="")
         self.configuration_steps = context.configuration_steps
         self.log_data = log_data
         self.parameters = context.parameters
         self.vehicle_components = context.vehicle_components
         self.apm_doc = context.apm_doc
 
-    def check(self) -> LogQualityResult:
-        """Run the model-specific quality analysis and return a result."""
-        msg = f"{self.__class__.__name__} must implement check()"
-        raise NotImplementedError(msg)
-
-    def analyse(self) -> LogAnalysisResult:
-        """Run the model-specific detailed analysis and return its result."""
-        msg = f"{self.__class__.__name__} must implement analyse()"
-        raise NotImplementedError(msg)
-
     def step_for_parameter(self, param_name: str) -> str:
         try:
             return find_configuration_step_for_parameter(self.configuration_steps, param_name) or ""
         except ValueError:
             return ""
-
-    def build_result(self, issues: list[QualityIssue], name: str, related_step: str = "") -> LogQualityResult:
-        return LogQualityResult(
-            available=True,
-            state=LogQualityState.INFO if not issues else LogQualityState.WARNING,
-            reason=_("{name} data present and good for analysis").format(name=name)
-            if not issues
-            else _("{name} data has quality issues").format(name=name),
-            issues=issues,
-            name=name,
-            related_step=related_step,
-        )
 
     def resolve_message_step(self, message_name: str, fallback_name: str) -> tuple[str, str]:
         """
@@ -179,6 +156,40 @@ class BaseLogModel(ConfigurationSteps):
             )
             issues += field_issues
         return issues
+
+
+class BaseLogQualityModel(BaseLogModel):
+    """Base class for subsystem quality models."""
+
+    def check(self) -> LogQualityResult:
+        """Run the model-specific quality analysis and return a result."""
+        msg = f"{self.__class__.__name__} must implement check()"
+        raise NotImplementedError(msg)
+
+    def build_result(self, issues: list[QualityIssue], name: str, related_step: str = "") -> LogQualityResult:
+        return LogQualityResult(
+            available=True,
+            state=LogQualityState.INFO if not issues else LogQualityState.WARNING,
+            reason=_("{name} data present and good for analysis").format(name=name)
+            if not issues
+            else _("{name} data has quality issues").format(name=name),
+            issues=issues,
+            name=name,
+            related_step=related_step,
+        )
+
+
+class BaseLogAnalysisModel(ConfigurationSteps, BaseLogModel):
+    """Base class for detailed analysis models requiring configuration evaluation."""
+
+    def __init__(self, log_data: "LogData", context: LogAnalysisContext) -> None:
+        ConfigurationSteps.__init__(self, _vehicle_dir="", vehicle_type="")
+        BaseLogModel.__init__(self, log_data, context)
+
+    def analyse(self) -> "LogAnalysisResult":
+        """Run the model-specific detailed analysis and return its result."""
+        msg = f"{self.__class__.__name__} must implement analyse()"
+        raise NotImplementedError(msg)
 
     def expected_parameter_value(self, step_filename: str, param_name: str) -> tuple[float | None, str]:
         """

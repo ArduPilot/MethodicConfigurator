@@ -14,7 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -23,13 +23,16 @@ from ardupilot_methodic_configurator.frontend_tkinter_log_analysis import (
     LogAnalysisReportWindow,
     _collect_links,
     _format_component,
-    paired_quality_and_analysis_results,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from pytest_mock import MockerFixture
+
+    from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysisResult
+    from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityResult
 
 MODULE = "ardupilot_methodic_configurator.frontend_tkinter_log_analysis"
 
@@ -50,6 +53,7 @@ def _make_quality_result(
     reason: str = "Battery data present and good for analysis",
     issues: list[MagicMock] | None = None,
     related_step: str = "",
+    subsystem_key: str | None = "battery",
 ) -> MagicMock:
     result = MagicMock()
     result.name = name
@@ -57,6 +61,7 @@ def _make_quality_result(
     result.reason = reason
     result.issues = issues or []
     result.related_step = related_step
+    result.subsystem_key = subsystem_key
     return result
 
 
@@ -81,34 +86,39 @@ def _make_analysis_result(
     available: bool = True,
     outcomes: list[MagicMock] | None = None,
     reason: str = "Battery analysis complete",
+    subsystem_key: str | None = "battery",
 ) -> MagicMock:
     result = MagicMock()
     result.name = name
     result.available = available
     result.outcomes = outcomes if outcomes is not None else []
     result.reason = reason
+    result.subsystem_key = subsystem_key
     return result
 
 
-def _make_summary(quality_results: list[MagicMock], analysis_results: list[MagicMock]) -> MagicMock:
-    summary = MagicMock()
-    summary.quality_results = quality_results
-    summary.analysis_results = analysis_results
-    return summary
-
-
-class _FakeQualityCls:  # pylint: disable=too-few-public-methods
-    """Stand-in for a real quality model class - identity only matters for pairing."""
-
-
-class _FakeAnalysisCls:  # pylint: disable=too-few-public-methods
-    """Stand-in for a real analysis model class - identity only matters for pairing."""
+def _make_summary(quality_results: list[MagicMock], analysis_results: list[MagicMock]) -> LogSummary:
+    return LogSummary(
+        flight_duration_sec=None,
+        file_size_bytes=0,
+        total_messages=0,
+        message_types=0,
+        parameter_count=0,
+        pm_status=None,
+        pm_validation=None,
+        quality_results=cast("list[LogQualityResult]", quality_results),
+        analysis_results=cast("list[LogAnalysisResult]", analysis_results),
+        step_results=[],
+        hardware_report=MagicMock(),
+        analysis_subsystem_keys=tuple(result.subsystem_key for result in analysis_results if result.subsystem_key is not None)
+        or ("battery",),
+    )
 
 
 class TestPairedQualityAndAnalysisResults:
-    """Cover the offset-detection pairing logic between quality and analysis results."""
+    """Cover stable-key pairing between quality and analysis results."""
 
-    def test_pairs_available_quality_with_its_analysis_result(self, mocker: MockerFixture) -> None:
+    def test_pairs_available_quality_with_its_analysis_result(self) -> None:
         """
         Quality models with an analysis counterpart are paired when data is available.
 
@@ -116,16 +126,15 @@ class TestPairedQualityAndAnalysisResults:
         WHEN: Results are paired
         THEN: The quality result is paired with the corresponding analysis result
         """
-        mocker.patch(f"{MODULE}.QUALITY_AND_ANALYSIS_MODELS", [(_FakeQualityCls, _FakeAnalysisCls)])
         quality = _make_quality_result(name="Battery", available=True)
         analysis = _make_analysis_result(name="Battery Analysis")
         summary = _make_summary([quality], [analysis])
 
-        pairs = paired_quality_and_analysis_results(summary)
+        pairs = summary.paired_quality_and_analysis_results()
 
         assert pairs == [(quality, analysis)]
 
-    def test_pairs_unavailable_quality_with_none(self, mocker: MockerFixture) -> None:
+    def test_pairs_unavailable_quality_with_none(self) -> None:
         """
         Quality models whose data was unavailable pair with None instead of an analysis result.
 
@@ -134,15 +143,14 @@ class TestPairedQualityAndAnalysisResults:
         THEN: The analysis side of the pair is None
         AND: No analysis result is consumed from the iterator
         """
-        mocker.patch(f"{MODULE}.QUALITY_AND_ANALYSIS_MODELS", [(_FakeQualityCls, _FakeAnalysisCls)])
         quality = _make_quality_result(name="ESC telemetry", available=False)
         summary = _make_summary([quality], [])
 
-        pairs = paired_quality_and_analysis_results(summary)
+        pairs = summary.paired_quality_and_analysis_results()
 
         assert pairs == [(quality, None)]
 
-    def test_skips_quality_models_with_no_analysis_class(self, mocker: MockerFixture) -> None:
+    def test_skips_quality_models_with_no_analysis_class(self) -> None:
         """
         Subsystems with no analysis model (analysis_cls is None) are excluded entirely.
 
@@ -150,48 +158,48 @@ class TestPairedQualityAndAnalysisResults:
         WHEN: Results are paired
         THEN: GPS does not appear in the paired output at all
         """
-        mocker.patch(f"{MODULE}.QUALITY_AND_ANALYSIS_MODELS", [(_FakeQualityCls, None)])
-        quality = _make_quality_result(name="GPS", available=True)
+        quality = _make_quality_result(name="GPS", available=True, subsystem_key="gps")
         summary = _make_summary([quality], [])
 
-        pairs = paired_quality_and_analysis_results(summary)
+        pairs = summary.paired_quality_and_analysis_results()
 
         assert not pairs
 
-    def test_handles_one_prepended_quality_result_via_offset(self, mocker: MockerFixture) -> None:
+    def test_ignores_unregistered_prepended_quality_result(self) -> None:
         """
         A single extra quality result (e.g. System Performance) prepended by analyze_log().
 
-        GIVEN: quality_results has one more entry than QUALITY_AND_ANALYSIS_MODELS
+        GIVEN: the extra result has no subsystem key
         WHEN: Results are paired
-        THEN: The registry's Battery entry pairs with the second quality_results entry, not the first
+        THEN: the keyed Battery entry is paired, independently of list position
         """
-        mocker.patch(f"{MODULE}.QUALITY_AND_ANALYSIS_MODELS", [(_FakeQualityCls, _FakeAnalysisCls)])
-        prepended = _make_quality_result(name="System Performance", available=True)
+        prepended = _make_quality_result(name="System Performance", available=True, subsystem_key=None)
         battery_quality = _make_quality_result(name="Battery", available=True)
         analysis = _make_analysis_result(name="Battery Analysis")
         summary = _make_summary([prepended, battery_quality], [analysis])
 
-        pairs = paired_quality_and_analysis_results(summary)
+        pairs = summary.paired_quality_and_analysis_results()
 
         assert pairs == [(battery_quality, analysis)]
 
-    def test_raises_when_offset_is_not_zero_or_one(self, mocker: MockerFixture) -> None:
+    def test_ignores_results_without_a_registered_subsystem_key(self) -> None:
         """
-        An unexpected length mismatch fails loudly instead of silently misaligning results.
+        Unknown or legacy result entries do not affect keyed pairing.
 
-        GIVEN: quality_results has two more entries than the registry (not 0 or 1 offset)
+        GIVEN: quality results have no registered subsystem keys
         WHEN: Results are paired
-        THEN: An AssertionError is raised describing the mismatch
+        THEN: no positional pairing is attempted
         """
-        mocker.patch(f"{MODULE}.QUALITY_AND_ANALYSIS_MODELS", [(_FakeQualityCls, _FakeAnalysisCls)])
         summary = _make_summary(
-            [_make_quality_result(), _make_quality_result(), _make_quality_result()],
+            [
+                _make_quality_result(subsystem_key=None),
+                _make_quality_result(subsystem_key=None),
+                _make_quality_result(subsystem_key=None),
+            ],
             [],
         )
 
-        with pytest.raises(AssertionError, match="Unexpected quality_results length"):
-            paired_quality_and_analysis_results(summary)
+        assert summary.paired_quality_and_analysis_results() == []
 
 
 class TestCollectLinks:
@@ -422,7 +430,6 @@ class TestWindowConstruction:
         report: dict | None = None,
         vehicle_dir: str = "/vehicle",
     ) -> LogAnalysisReportWindow:
-        mocker.patch(f"{MODULE}.QUALITY_AND_ANALYSIS_MODELS", [(_FakeQualityCls, _FakeAnalysisCls)] * len(quality_results))
         mocker.patch.object(LogAnalysisReportWindow, "calculate_scaled_geometry", return_value="1050x800")
         mocker.patch.object(LogAnalysisReportWindow, "center_window")
         summary = _make_summary(quality_results, analysis_results)
@@ -444,10 +451,10 @@ class TestWindowConstruction:
         WHEN: The window is constructed
         THEN: The selector's set() is called with the first subsystem's name
         """
-        quality_battery = _make_quality_result(name="Battery")
-        quality_imu = _make_quality_result(name="IMU")
-        analysis_battery = _make_analysis_result(name="Battery Analysis")
-        analysis_imu = _make_analysis_result(name="IMU Analysis")
+        quality_battery = _make_quality_result(name="Battery", subsystem_key="battery")
+        quality_imu = _make_quality_result(name="IMU", subsystem_key="imu")
+        analysis_battery = _make_analysis_result(name="Battery Analysis", subsystem_key="battery")
+        analysis_imu = _make_analysis_result(name="IMU Analysis", subsystem_key="imu")
 
         window = self._build_window(mocker, patched_widgets, [quality_battery, quality_imu], [analysis_battery, analysis_imu])
 

@@ -12,7 +12,8 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogModel,
+    BaseLogAnalysisModel,
+    BaseLogQualityModel,
     LogQualityResult,
     QualityIssue,
 )
@@ -33,7 +34,7 @@ _TCAL_TMIN_RECOMMENDED = -10.0
 _INVALID_CALTEMP = -300.0
 
 
-class ImuLogQualityModel(BaseLogModel):
+class ImuLogQualityModel(BaseLogQualityModel):
     """Checks IMU telemetry quality (error counts, sensor health, raw signal presence)."""
 
     def check(self) -> LogQualityResult:
@@ -141,7 +142,7 @@ class ImuLogQualityModel(BaseLogModel):
         return issues
 
 
-class ImuLogAnalysis(BaseLogModel):
+class ImuLogAnalysis(BaseLogAnalysisModel):
     """
     IMU analysis on the data from the log.
 

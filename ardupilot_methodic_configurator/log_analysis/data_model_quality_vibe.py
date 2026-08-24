@@ -14,7 +14,8 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogModel,
+    BaseLogAnalysisModel,
+    BaseLogQualityModel,
     LogQualityResult,
     QualityIssue,
 )
@@ -25,7 +26,7 @@ _VIBE_SEVERE_THRESHOLD = 60.0
 _VIBE_AXES = ("VibeX", "VibeY", "VibeZ")
 
 
-class VibeLogQualityModel(BaseLogModel):
+class VibeLogQualityModel(BaseLogQualityModel):
     """
     Checks VIBE data presence and availability for analysis.
 
@@ -80,7 +81,7 @@ class VibeLogQualityModel(BaseLogModel):
         return issues
 
 
-class VibeLogAnalysis(BaseLogModel):
+class VibeLogAnalysis(BaseLogAnalysisModel):
     """
     VIBE analysis on the data from the log.
 

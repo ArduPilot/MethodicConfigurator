@@ -26,9 +26,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWin
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_tuning_report import TuningReportWindow
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import QUALITY_AND_ANALYSIS_MODELS, LogSummary
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityResult
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 
 _SUBSYSTEM_TO_COMPONENT_KEYS: dict[str, tuple[str, ...]] = {
     "Battery": ("Battery", "Battery Monitor"),
@@ -64,28 +63,6 @@ _SEVERITY_TOOLTIP = {
     Severity.NEEDS_ATTENTION: _("Worth reviewing, may or may not need action"),
     Severity.INFORMATIONAL: _("For your information only, no action expected"),
 }
-
-
-def paired_quality_and_analysis_results(summary: LogSummary) -> list[tuple[LogQualityResult, LogAnalysisResult | None]]:
-    offset = len(summary.quality_results) - len(QUALITY_AND_ANALYSIS_MODELS)
-    if offset not in (0, 1):
-        msg = (
-            f"Unexpected quality_results length ({len(summary.quality_results)}) vs "
-            f"QUALITY_AND_ANALYSIS_MODELS length ({len(QUALITY_AND_ANALYSIS_MODELS)})."
-        )
-        raise AssertionError(msg)
-
-    analysis_iter = iter(summary.analysis_results)
-    paired: list[tuple[LogQualityResult, LogAnalysisResult | None]] = []
-
-    for i, (_quality_cls, analysis_cls) in enumerate(QUALITY_AND_ANALYSIS_MODELS):
-        if analysis_cls is None:
-            continue
-        quality_result = summary.quality_results[i + offset]
-        analysis_result = next(analysis_iter) if quality_result.available else None
-        paired.append((quality_result, analysis_result))
-
-    return paired
 
 
 def _collect_links(quality_dict: dict[str, Any] | None, analysis_dict: dict[str, Any] | None) -> list[dict[str, Any]]:
@@ -166,7 +143,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         self.upload_callback = upload_callback
         self._ai_panel_visible = False
 
-        self.pairs = paired_quality_and_analysis_results(summary)
+        self.pairs = summary.paired_quality_and_analysis_results()
         self.subsystem_names = [q.name for q, _a in self.pairs]
 
         self._report_quality_by_name: dict[str, dict[str, Any]] = {}

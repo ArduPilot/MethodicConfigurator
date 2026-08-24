@@ -15,7 +15,8 @@ from ardupilot_methodic_configurator.data_model_par_dict import is_within_tolera
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
 from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogModel,
+    BaseLogAnalysisModel,
+    BaseLogQualityModel,
     LogQualityResult,
     QualityIssue,
 )
@@ -28,7 +29,7 @@ _MIN_ZERO_RPM_ARMED_COVERAGE = 0.5
 _DSHOT_OUTPUT_RATE_WARN_THRESHOLD = 1000.0  # Amilcar's stated threshold, Hz
 
 
-class EscLogQualityModel(BaseLogModel):
+class EscLogQualityModel(BaseLogQualityModel):
     """Checks ESC telemetry and configuration quality."""
 
     def check(self) -> LogQualityResult:
@@ -107,7 +108,7 @@ class EscLogQualityModel(BaseLogModel):
         return issues
 
 
-class EscLogAnalysis(BaseLogModel):
+class EscLogAnalysis(BaseLogAnalysisModel):
     """
     ESC analysis on the data from the log.
 

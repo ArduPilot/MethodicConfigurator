@@ -23,10 +23,7 @@ from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.formatting import format_filesize
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
-from ardupilot_methodic_configurator.frontend_tkinter_log_analysis import (
-    LogAnalysisReportWindow,
-    paired_quality_and_analysis_results,
-)
+from ardupilot_methodic_configurator.frontend_tkinter_log_analysis import LogAnalysisReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_log_hardware_quality import build_hardware_tab
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
@@ -151,7 +148,7 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
     def _on_continue_to_analysis(self) -> None:
         pending_names = [
             quality_result.name
-            for quality_result, analysis_result in paired_quality_and_analysis_results(self.summary)
+            for quality_result, analysis_result in self.summary.paired_quality_and_analysis_results()
             if analysis_result is None
         ]
         if pending_names:
