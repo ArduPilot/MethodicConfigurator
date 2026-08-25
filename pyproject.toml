@@ -95,7 +95,7 @@ scripts = [
 
 pypi_dist = [
     "build==1.5.0",
-    "packaging==26.2",
+    "packaging==26.3",
     "setuptools==83.0.0",
 ]
 
@@ -104,21 +104,21 @@ win_dist = [
     "pywin32==312",
     "pyinstaller==6.20.0",
     "pyinstaller-hooks-contrib==2026.6",
-    "packaging==26.2",
+    "packaging==26.3",
 ]
 
 mac_dist = [
     "pip==26.2.1",
     "pyinstaller==6.20.0",
     "pyinstaller-hooks-contrib==2026.6",
-    "packaging==26.2",
+    "packaging==26.3",
 ]
 
 linux_dist = [
     "pip==26.2.1",
     "pyinstaller==6.20.0",
     "pyinstaller-hooks-contrib==2026.6",
-    "packaging==26.2",
+    "packaging==26.3",
 ]
 
 [project.scripts]
