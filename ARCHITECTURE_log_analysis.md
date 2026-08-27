@@ -2,7 +2,7 @@
 
 The Log Analysis subsystem provides a structured pipeline for analyzing ArduPilot `.bin` flight logs inside ArduPilot Methodic Configurator.
 
-The subsystem separates log extraction, data quality validation, log analysis, configuration validation, hardware extraction, and result presentation.
+The subsystem separates log extraction, data availability validation, log analysis, configuration validation, hardware extraction, and result presentation.
 
 ## The Log Analysis Architecture
 
@@ -15,16 +15,16 @@ The main components are:
    * [`backend_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py)
    * [`backend_log_extraction.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py)
 
-2. **Log Analysis Data Models** - Contains the analysis pipeline, shared context, quality models, analysis models, and result structures.
+2. **Log Analysis Data Models** - Contains the analysis pipeline, shared context, availability models, analysis models, and result structures.
 
    * [`data_model_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py)
    * [`data_model_log_analysis_context.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_context.py)
    * [`data_model_parameter_derivation.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_parameter_derivation.py)
-   * [`data_model_log_quality.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_quality.py)
-   * [`data_model_log_quality_check.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py)
-   * [`data_model_quality_base.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py)
+   * [`data_model_log_availability.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_availability.py)
+   * [`data_model_log_availability_check.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py)
+   * [`data_model_availability_base.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py)
 
-3. **Quality and Analysis Models** - Performs subsystem-specific data validation and analysis.
+3. **Availability and Analysis Models** - Performs subsystem-specific data validation and analysis.
 
    * Battery
    * ESC
@@ -39,7 +39,7 @@ The main components are:
 
 4. **Result Models** - Provides common result structures consumed by the frontend and report-generation layers.
 
-   * `LogQualityResult`
+   * `LogAvailabilityResult`
    * `LogAnalysisResult`
    * `LogSummary`
    * `StepValidationResult`
@@ -120,7 +120,7 @@ This prevents analysis results from being interpreted using the configuration of
 
 [`data_model_log_analysis_context.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_context.py)
  provides the common information required by
-the quality and analysis models.
+the availability and analysis models.
 
 The context contains:
 
@@ -147,11 +147,11 @@ contains the main domain-level analysis pipeline.
 
 The `analyze_log()` function performs the following operations:
 
-1. Resolve the quality and analysis model registry.
+1. Resolve the availability and analysis model registry.
 2. Obtain parameters and documentation from `LogAnalysisContext`.
 3. Check Performance Monitor data.
-4. Execute the registered quality models.
-5. Store each quality result.
+4. Execute the registered availability models.
+5. Store each availability result.
 6. Execute an analysis model only when the required data is available.
 7. Validate configuration-step data.
 8. Extract the hardware report.
@@ -159,22 +159,22 @@ The `analyze_log()` function performs the following operations:
 
 The resulting `LogSummary` provides a common result object for the frontend and other consumers.
 
-## Data Quality and Analysis
+## Data Availability and Analysis
 
-Data quality and analysis are separate stages.
+Data availability and analysis are separate stages.
 
-### Data Quality
+### Data Availability
 
-A quality model determines whether the required data is available and suitable for a particular analysis.
+An availability model determines whether the required data is available and suitable for a particular analysis.
 
-Quality checks can verify:
+Availability checks can verify:
 
 * Required log messages
 * Required telemetry
 * Required parameters
 * Data sufficiency
 
-The quality stage produces a `LogQualityResult` containing:
+The availability stage produces a `LogAvailabilityResult` containing:
 
 * `available`
 * `state`
@@ -187,7 +187,7 @@ The quality stage produces a `LogQualityResult` containing:
 
 An analysis model determines what can be established from the available data.
 
-An analysis model is executed only when its corresponding quality result reports that the required data is available.
+An analysis model is executed only when its corresponding availability result reports that the required data is available.
 
 The analysis stage produces a `LogAnalysisResult` containing the analysis name, availability, reason, outcomes, and related configuration step.
 
@@ -202,24 +202,24 @@ Analysis outcomes can contain:
 
 This separation distinguishes between missing or invalid data, a valid analysis that identifies an issue, and an analysis that cannot currently be performed.
 
-## Quality and Analysis Model Registry
+## Availability and Analysis Model Registry
 
-The quality and analysis model registry is defined in [`data_model_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py).
+The availability and analysis model registry is defined in [`data_model_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py).
 
-| Quality Model | Analysis Model |
-| ------------- | -------------- |
-| Battery       | Battery        |
-| GPS           | None           |
-| ESC           | ESC            |
-| IMU           | IMU            |
-| VIBE          | VIBE           |
-| FFT           | None           |
-| ERR           | None           |
-| PM            | None           |
-| ARM           | None           |
-| MODE          | None           |
+| Availability Model | Analysis Model |
+| ------------------ | -------------- |
+| Battery            | Battery        |
+| GPS                | None           |
+| ESC                | ESC            |
+| IMU                | IMU            |
+| VIBE               | VIBE           |
+| FFT                | None           |
+| ERR                | None           |
+| PM                 | None           |
+| ARM                | None           |
+| MODE               | None           |
 
-An entry with `None` as the analysis model means that the quality check exists but a corresponding analysis model is not currently registered.
+An entry with `None` as the analysis model means that the availability check exists but a corresponding analysis model is not currently registered.
 
 This allows additional analysis models to be added without modifying the log extraction pipeline.
 
@@ -231,11 +231,11 @@ This allows additional analysis models to be added without modifying the log ext
 
 3. **IMU** - Validates IMU data and currently includes IMU temperature calibration analysis.
 
-4. **VIBE** - Provides both a VIBE quality model and analysis model.
+4. **VIBE** - Provides both a VIBE availability model and analysis model.
 
-5. **FFT** - Provides a quality model. An analysis model is not currently registered.
+5. **FFT** - Provides an availability model. An analysis model is not currently registered.
 
-6. **GPS, ERR, PM, ARM, MODE** - Provide quality checks without currently registered analysis models.
+6. **GPS, ERR, PM, ARM, MODE** - Provide availability checks without currently registered analysis models.
 
 ## Log Summary
 
@@ -250,7 +250,7 @@ It contains:
 * Parameter count
 * Performance Monitor status
 * Performance Monitor validation
-* Data quality results
+* Data availability results
 * Analysis results
 * Configuration-step validation results
 * Hardware report
@@ -260,7 +260,7 @@ The frontend and report-generation layers can consume this summary without knowi
 
 ## Configuration Step Validation
 
-Configuration-step validation is performed after the quality and analysis models.
+Configuration-step validation is performed after the availability and analysis models.
 
 The analysis context contains the Methodic Configurator configuration steps required for this validation.
 
@@ -303,14 +303,14 @@ The report contains:
 * `schema_version`
 * `flight`
 * `vehicle_components`
-* `data_quality`
+* `data_availability`
 * `analysis`
 
 The `vehicle_components` section contains vehicle configuration information maintained by Methodic Configurator.
 
 The `flight` section contains the start timestamp, end timestamp, and duration.
 
-The `data_quality` section contains quality results produced by the quality models.
+The `data_availability` section contains availability results produced by the availability models.
 
 The `analysis` section contains completed analyses.
 
@@ -326,7 +326,7 @@ The frontend can consume:
 
 * Extraction progress
 * `LogSummary`
-* Quality results
+* Availability results
 * Analysis results
 * Hardware report
 * Configuration-step results
@@ -337,19 +337,19 @@ This keeps presentation logic separate from the analysis implementation.
 
 ## Extending the Log Analysis System
 
-New subsystems should follow the existing quality and analysis model architecture.
+New subsystems should follow the existing availability and analysis model architecture.
 
-A new subsystem should provide a quality model derived from the existing base model.
+A new subsystem should provide an availability model derived from the existing base model.
 
 If analysis is required, it should also provide an analysis model using the shared `LogData` and `LogAnalysisContext`.
 
-The new quality and analysis models are then added to the existing registry.
+The new availability and analysis models are then added to the existing registry.
 
 The extraction backend does not need to be modified when the required log data is already available through `LogData`.
 
 The backend orchestration does not need to know the implementation details of the new subsystem.
 
-The frontend can consume the resulting `LogQualityResult` and `LogAnalysisResult` through the existing result structures.
+The frontend can consume the resulting `LogAvailabilityResult` and `LogAnalysisResult` through the existing result structures.
 
 ## Testing
 
@@ -359,9 +359,9 @@ The log-analysis architecture is tested at several levels.
 
 Verify that ArduPilot `.bin` logs are correctly converted into `LogData`.
 
-### Quality Models
+### Availability Models
 
-Verify that each quality model correctly identifies:
+Verify that each availability model correctly identifies:
 
 * Available data
 * Missing data
@@ -378,8 +378,8 @@ Verify that:
 
 * Logs are validated against the active vehicle.
 * The analysis context is constructed correctly.
-* Quality models execute.
-* Analysis models execute only when their quality requirements are satisfied.
+* Availability models execute.
+* Analysis models execute only when their availability requirements are satisfied.
 * Configuration-step validation is performed.
 * Hardware information is extracted.
 * `LogSummary` contains all expected results.
@@ -396,16 +396,16 @@ The current implementation provides:
 * Vehicle and firmware validation
 * Shared log data representation
 * Shared analysis context
-* Modular data quality models
+* Modular data availability models
 * Battery analysis
 * ESC analysis
 * IMU analysis
 * VIBE analysis
-* FFT data quality checking
-* Additional quality checks for ERR, PM, ARM, and MODE
+* FFT data availability checking
+* Additional availability checks for ERR, PM, ARM, and MODE
 * Configuration-step validation
 * Hardware report extraction
 * Tuning report parsing
 * Structured log-analysis JSON output
 
-The architecture allows additional quality checks and analysis modules to be introduced without changing the fundamental log extraction and orchestration pipeline.
+The architecture allows additional availability checks and analysis modules to be introduced without changing the fundamental log extraction and orchestration pipeline.

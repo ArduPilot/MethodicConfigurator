@@ -423,7 +423,7 @@ class TestSettingsFileOperations:
         expected_result["display_usage_popup"]["workflow_explanation"] = True  # Added by default
         expected_result["display_usage_popup"]["bitmask_parameter_editor"] = True  # Added by default
         expected_result["display_usage_popup"]["only_changed_get_uploaded"] = True  # Added by default
-        expected_result["display_usage_popup"]["log_quality_report"] = True  # Added by default
+        expected_result["display_usage_popup"]["log_availability_report"] = True  # Added by default
 
         # Update directory_selection with the defaults that would be merged in
         expected_result["directory_selection"]["new_base_dir"] = os_path.join(mock_user_config["config_dir"], "vehicles")
@@ -494,7 +494,7 @@ class TestSettingsFileOperations:
             assert result["display_usage_popup"]["parameter_editor"] is True
             assert result["display_usage_popup"]["bitmask_parameter_editor"] is True
             assert result["display_usage_popup"]["only_changed_get_uploaded"] is True
-            assert result["display_usage_popup"]["log_quality_report"] is True
+            assert result["display_usage_popup"]["log_availability_report"] is True
 
     def test_user_can_load_settings_from_file_directly(self, mock_user_config) -> None:  # pylint: disable=unused-argument
         """
@@ -558,7 +558,7 @@ class TestSettingsFileOperations:
             assert "display_usage_popup" in result  # Added
             assert result["display_usage_popup"]["component_editor"] is True  # Added
             assert result["display_usage_popup"]["parameter_editor"] is True  # Added
-            assert result["display_usage_popup"]["log_quality_report"] is True  # Added
+            assert result["display_usage_popup"]["log_availability_report"] is True  # Added
             assert result["auto_open_doc_in_browser"] is True  # Added
             assert result["annotate_docs_into_param_files"] is False  # Added
 
@@ -646,12 +646,12 @@ class TestUsagePopupSettings:
                 "display_usage_popup": {
                     "component_editor": True,
                     "parameter_editor": True,
-                    "log_quality_report": True,
+                    "log_availability_report": True,
                 }
             }
 
             # Act: Set valid popup preference
-            ProgramSettings.set_display_usage_popup("log_quality_report", value=False)
+            ProgramSettings.set_display_usage_popup("log_availability_report", value=False)
 
             # Assert: Settings are updated correctly
             mock_set_settings.assert_called_with(
@@ -659,7 +659,7 @@ class TestUsagePopupSettings:
                     "display_usage_popup": {
                         "component_editor": True,
                         "parameter_editor": True,
-                        "log_quality_report": False,
+                        "log_availability_report": False,
                     }
                 }
             )
