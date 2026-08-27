@@ -14,7 +14,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ardupilot_methodic_configurator.frontend_tkinter_log_quality import LogQualityReportWindow, _format_parameter_value
+from ardupilot_methodic_configurator.frontend_tkinter_log_availability import (
+    LogQualityReportWindow,
+    _format_parameter_value,
+)
 
 
 @pytest.mark.parametrize(

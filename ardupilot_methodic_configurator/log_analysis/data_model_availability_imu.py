@@ -1,5 +1,5 @@
 """
-Data model for IMU quality check.
+Data model for IMU availability check.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -9,14 +9,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
+    AvailabilityIssue,
     BaseLogAnalysisModel,
-    BaseLogQualityModel,
-    LogQualityResult,
-    QualityIssue,
+    BaseLogAvailabilityModel,
+    LogAvailabilityResult,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_instances import (
     has_nonzero_parameter,
     imu_device_id_param,
@@ -34,32 +34,32 @@ _TCAL_TMIN_RECOMMENDED = -10.0
 _INVALID_CALTEMP = -300.0
 
 
-class ImuLogQualityModel(BaseLogQualityModel):
-    """Checks IMU telemetry quality (error counts, sensor health, raw signal presence)."""
+class ImuLogAvailabilityModel(BaseLogAvailabilityModel):
+    """Checks IMU telemetry availability (error counts, sensor health, raw signal presence)."""
 
-    def check(self) -> LogQualityResult:
+    def check(self) -> LogAvailabilityResult:
         records = self.log_data.get_message_columns("IMU")
         if records is None or len(records) == 0:
             return self._diagnose_absence()
 
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
         for check in (self.check_gyro_error, self.check_accel_error, self.check_health, self.check_signal_present):
             issues += check()
 
         step, name = self.resolve_message_step("IMU", "IMU")
         return self.build_result(issues, name, related_step=step)
 
-    def _diagnose_absence(self) -> LogQualityResult:
+    def _diagnose_absence(self) -> LogAvailabilityResult:
         """Diagnose why IMU data is absent using LOG_BITMASK."""
         step, name = self.resolve_message_step("IMU", "IMU")
         reason, issues, _bitmask_disabled = self.diagnose_bitmask_absence(
             "IMU", "IMU", "IMU", not_logged_hint=_("check firmware build supports IMU logging")
         )
-        return LogQualityResult(
-            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        return LogAvailabilityResult(
+            available=False, state=LogAvailabilityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
         )
 
-    def check_gyro_error(self) -> list[QualityIssue]:
+    def check_gyro_error(self) -> list[AvailabilityIssue]:
         """Validate gyroscope error count across all IMU instances."""
         eg, issues = self.field_values_or_issue(
             "IMU",
@@ -68,10 +68,10 @@ class ImuLogQualityModel(BaseLogQualityModel):
             missing_values_message=_("Gyroscope error count missing from IMU records"),
         )
         if eg is not None and eg.max() > 0:
-            issues.append(QualityIssue(_("Gyroscope error count detected on at least one IMU instance")))
+            issues.append(AvailabilityIssue(_("Gyroscope error count detected on at least one IMU instance")))
         return issues
 
-    def check_accel_error(self) -> list[QualityIssue]:
+    def check_accel_error(self) -> list[AvailabilityIssue]:
         """Validate accelerometer error count across all IMU instances."""
         ea, issues = self.field_values_or_issue(
             "IMU",
@@ -80,12 +80,12 @@ class ImuLogQualityModel(BaseLogQualityModel):
             missing_values_message=_("Accelerometer error count missing from IMU records"),
         )
         if ea is not None and ea.max() > 0:
-            issues.append(QualityIssue(_("Accelerometer error count detected on at least one IMU instance")))
+            issues.append(AvailabilityIssue(_("Accelerometer error count detected on at least one IMU instance")))
         return issues
 
-    def check_health(self) -> list[QualityIssue]:
+    def check_health(self) -> list[AvailabilityIssue]:
         """Validate gyroscope/accelerometer health flags across all IMU instances."""
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
 
         gh, gh_issues = self.field_values_or_issue(
             "IMU",
@@ -95,7 +95,7 @@ class ImuLogQualityModel(BaseLogQualityModel):
         )
         issues += gh_issues
         if gh is not None and (gh == 0).any():
-            issues.append(QualityIssue(_("Gyroscope reported unhealthy at some point during the flight")))
+            issues.append(AvailabilityIssue(_("Gyroscope reported unhealthy at some point during the flight")))
 
         ah, ah_issues = self.field_values_or_issue(
             "IMU",
@@ -105,13 +105,13 @@ class ImuLogQualityModel(BaseLogQualityModel):
         )
         issues += ah_issues
         if ah is not None and (ah == 0).any():
-            issues.append(QualityIssue(_("Accelerometer reported unhealthy at some point during the flight")))
+            issues.append(AvailabilityIssue(_("Accelerometer reported unhealthy at some point during the flight")))
 
         return issues
 
-    def check_signal_present(self) -> list[QualityIssue]:
+    def check_signal_present(self) -> list[AvailabilityIssue]:
         """Validate that raw gyro/accel signals are not flat-zero throughout (sensor not reading)."""
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
 
         for axis_field in ("GyrX", "GyrY", "GyrZ"):
             values, field_issues = self.field_values_or_issue(
@@ -123,7 +123,7 @@ class ImuLogQualityModel(BaseLogQualityModel):
             issues += field_issues
             if values is not None and values.max() == 0 and values.min() == 0:
                 issues.append(
-                    QualityIssue(_("{field} is zero throughout, gyroscope may not be reading").format(field=axis_field))
+                    AvailabilityIssue(_("{field} is zero throughout, gyroscope may not be reading").format(field=axis_field))
                 )
 
         for axis_field in ("AccX", "AccY", "AccZ"):
@@ -136,7 +136,9 @@ class ImuLogQualityModel(BaseLogQualityModel):
             issues += field_issues
             if values is not None and values.max() == 0 and values.min() == 0:
                 issues.append(
-                    QualityIssue(_("{field} is zero throughout, accelerometer may not be reading").format(field=axis_field))
+                    AvailabilityIssue(
+                        _("{field} is zero throughout, accelerometer may not be reading").format(field=axis_field)
+                    )
                 )
 
         return issues
@@ -146,7 +148,7 @@ class ImuLogAnalysis(BaseLogAnalysisModel):
     """
     IMU analysis on the data from the log.
 
-    Runs after IMU quality model passes with the required data for analysis.
+    Runs after IMU availability model passes with the required data for analysis.
     """
 
     def analyse(self) -> LogAnalysisResult:

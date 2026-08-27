@@ -57,7 +57,7 @@ _SEVERITY_TOOLTIP = {
 }
 
 
-def _collect_links(quality_dict: dict[str, Any] | None, analysis_dict: dict[str, Any] | None) -> list[dict[str, Any]]:
+def _collect_links(availability_dict: dict[str, Any] | None, analysis_dict: dict[str, Any] | None) -> list[dict[str, Any]]:
     seen: set[tuple[str | None, str | None]] = set()
     links: list[dict[str, Any]] = []
 
@@ -70,8 +70,8 @@ def _collect_links(quality_dict: dict[str, Any] | None, analysis_dict: dict[str,
         seen.add(key)
         links.append(step_info)
 
-    if quality_dict:
-        for issue in quality_dict.get("issues", []):
+    if availability_dict:
+        for issue in availability_dict.get("issues", []):
             _add(issue.get("step_info"))
     if analysis_dict:
         for outcome in analysis_dict.get("outcomes", []):
@@ -135,14 +135,14 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         self.upload_callback = upload_callback
         self._ai_panel_visible = False
 
-        self.pairs = summary.paired_quality_and_analysis_results()
+        self.pairs = summary.paired_availability_and_analysis_results()
         self.subsystem_names = [q.name for q, _a in self.pairs]
 
-        self._report_quality_by_name: dict[str, dict[str, Any]] = {}
+        self._report_availability_by_name: dict[str, dict[str, Any]] = {}
         self._report_analysis_by_name: dict[str, dict[str, Any]] = {}
         if report is not None:
-            for entry in report.get("data_quality", []):
-                self._report_quality_by_name[entry.get("name", "")] = entry
+            for entry in report.get("data_availability", []):
+                self._report_availability_by_name[entry.get("name", "")] = entry
             for entry in report.get("analysis", []):
                 name = entry.get("name", "")
                 self._report_analysis_by_name[name.removesuffix(" Analysis")] = entry
@@ -238,13 +238,13 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         matching = [(q, a) for q, a in self.pairs if q.name == name]
         if not matching:
             return
-        quality_result, analysis_result = matching[0]
+        availability_result, analysis_result = matching[0]
 
-        quality_dict = self._report_quality_by_name.get(name)
+        availability_dict = self._report_availability_by_name.get(name)
         analysis_dict = self._report_analysis_by_name.get(name)
 
         self._section_heading(_("Links"))
-        links = _collect_links(quality_dict, analysis_dict)
+        links = _collect_links(availability_dict, analysis_dict)
         if not links:
             self._section_body(_("No linked documentation for this subsystem."))
         else:
@@ -255,7 +255,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
                     self._section_link(_("Guide"), link.get("blog_text") or link["blog_url"], link["blog_url"])
 
         vehicle_components = (self.report or {}).get("vehicle_components") or {}
-        component_keys = self.summary.component_keys_for_subsystem(quality_result.subsystem_key)
+        component_keys = self.summary.component_keys_for_subsystem(availability_result.subsystem_key)
         hardware_lines: list[tuple[str, list[str]]] = []
         for key in component_keys:
             component = vehicle_components.get(key)
@@ -271,14 +271,14 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
                 for line in lines:
                     self._bullet_line(line)
 
-        self._section_heading(_("Quality"))
-        self._section_body(quality_result.reason)
-        for issue in quality_result.issues:
+        self._section_heading(_("Availability"))
+        self._section_body(availability_result.reason)
+        for issue in availability_result.issues:
             self._bullet_line(issue.message)
 
         self._section_heading(_("Analysis"))
         if analysis_result is None:
-            self._section_body(_("Not yet analyzed - {reason}").format(reason=quality_result.reason))
+            self._section_body(_("Not yet analyzed - {reason}").format(reason=availability_result.reason))
         elif not analysis_result.outcomes:
             self._section_body(_("No findings."))
         else:

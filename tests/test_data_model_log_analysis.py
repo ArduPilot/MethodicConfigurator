@@ -13,22 +13,25 @@ from typing import Any, ClassVar
 import pytest
 
 from ardupilot_methodic_configurator.log_analysis import data_model_log_analysis
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
+    BaseLogAnalysisModel,
+    BaseLogAvailabilityModel,
+)
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import (
     analyze_log,
     parse_firmware_version,
     validate_log_matches_vehicle,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
-from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityResult, LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogAnalysisModel,
-    BaseLogQualityModel,
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
+    LogAvailabilityResult,
+    LogAvailabilityState,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 
 
-class RecordingQualityModel(BaseLogQualityModel):
-    """Quality model test double that records constructor inputs."""
+class RecordingAvailabilityModel(BaseLogAvailabilityModel):
+    """Availability model test double that records constructor inputs."""
 
     seen_log_data: ClassVar[LogData | None] = None
     seen_context: ClassVar[LogAnalysisContext | None] = None
@@ -38,23 +41,23 @@ class RecordingQualityModel(BaseLogQualityModel):
         type(self).seen_log_data = log_data
         type(self).seen_context = context
 
-    def check(self) -> LogQualityResult:
-        return LogQualityResult(
+    def check(self) -> LogAvailabilityResult:
+        return LogAvailabilityResult(
             available=True,
-            state=LogQualityState.INFO,
+            state=LogAvailabilityState.INFO,
             reason="ok",
             issues=[],
             name="Recording",
         )
 
 
-class DummyQualityModel(BaseLogQualityModel):
+class DummyAvailabilityModel(BaseLogAvailabilityModel):
     """Minimal concrete model to exercise base-class context wiring."""
 
-    def check(self) -> LogQualityResult:
-        return LogQualityResult(
+    def check(self) -> LogAvailabilityResult:
+        return LogAvailabilityResult(
             available=True,
-            state=LogQualityState.INFO,
+            state=LogAvailabilityState.INFO,
             reason="ok",
             issues=[],
             name="Dummy",
@@ -81,11 +84,11 @@ class RecordingParameterDeriver:
         return {"TEST_PARAM": "01_test.param"}
 
 
-def test_analyze_log_passes_context_to_quality_models(monkeypatch: Any) -> None:  # noqa: ANN401
+def test_analyze_log_passes_context_to_availability_models(monkeypatch: Any) -> None:  # noqa: ANN401
     """
-    Pass the same context object through to each quality model constructor.
+    Pass the same context object through to each availability model constructor.
 
-    GIVEN analyze_log is called with an explicit context and quality-model list,
+    GIVEN analyze_log is called with an explicit context and availability-model list,
     WHEN the analysis runs,
     THEN each model should receive the original context object.
     """
@@ -115,22 +118,22 @@ def test_analyze_log_passes_context_to_quality_models(monkeypatch: Any) -> None:
         lambda _log_data, _params, _apm_doc: sentinel_hardware_report,
     )
 
-    summary = analyze_log(log_data, context, quality_and_analysis_models=[(RecordingQualityModel, None)])
+    summary = analyze_log(log_data, context, availability_and_analysis_models=[(RecordingAvailabilityModel, None)])
 
-    assert RecordingQualityModel.seen_log_data is log_data
-    assert RecordingQualityModel.seen_context is context
+    assert RecordingAvailabilityModel.seen_log_data is log_data
+    assert RecordingAvailabilityModel.seen_context is context
     assert summary.parameter_count == 1
     assert summary.hardware_report is sentinel_hardware_report
-    assert [result.name for result in summary.quality_results] == ["System Performance", "Recording"]
+    assert [result.name for result in summary.availability_results] == ["System Performance", "Recording"]
     assert seen_steps == [context.configuration_steps]
 
 
-def test_base_quality_model_reads_fields_from_context() -> None:
+def test_base_availability_model_reads_fields_from_context() -> None:
     """
     Populate base-model dependencies directly from context.
 
     GIVEN a context with parameters, config steps, apm-doc, and components,
-    WHEN a concrete quality model is created,
+    WHEN a concrete availability model is created,
     THEN the base model should expose those values without repacking args.
     """
     log_data = LogData()
@@ -141,7 +144,7 @@ def test_base_quality_model_reads_fields_from_context() -> None:
         apm_doc={"BATT_MONITOR": {"humanName": "Battery monitor"}},
     )
 
-    model = DummyQualityModel(log_data, context)
+    model = DummyAvailabilityModel(log_data, context)
 
     assert model.log_data is log_data
     assert model.parameters is context.parameters
@@ -175,12 +178,12 @@ def test_subsystem_component_metadata_is_declared_by_the_registry() -> None:
     assert component_keys["esc"] == ("ESC", "Motors")
 
 
-def test_base_quality_model_tolerates_ambiguous_configuration_metadata() -> None:
+def test_base_availability_model_tolerates_ambiguous_configuration_metadata() -> None:
     """
     Keep report generation alive when configuration metadata has duplicate references.
 
     GIVEN duplicated message and parameter references in configuration steps,
-    WHEN quality helpers resolve frontend guidance,
+    WHEN availability helpers resolve frontend guidance,
     THEN they should fall back instead of raising from the model layer.
     """
     context = LogAnalysisContext(
@@ -196,7 +199,7 @@ def test_base_quality_model_tolerates_ambiguous_configuration_metadata() -> None
             },
         },
     )
-    model = DummyQualityModel(LogData(), context)
+    model = DummyAvailabilityModel(LogData(), context)
 
     assert model.resolve_message_step("BAT", "Battery") == ("", "Battery")
     assert model.step_for_parameter("BATT_MONITOR") == ""

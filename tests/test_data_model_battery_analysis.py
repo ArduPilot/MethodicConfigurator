@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Behavior-driven tests for battery log quality and analysis data models.
+Behavior-driven tests for battery log availability and analysis data models.
 
-This module contains comprehensive tests for BatteryLogQualityModel and
+This module contains comprehensive tests for BatteryLogAvailabilityModel and
 BatteryLogAnalysis, focusing on user workflows and business value rather
 than implementation details.
 
@@ -17,12 +17,12 @@ from typing import Any
 import numpy as np
 import pytest
 
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import (
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_battery import (
     BatteryLogAnalysis,
-    BatteryLogQualityModel,
+    BatteryLogAvailabilityModel,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 
 # pylint: disable=redefined-outer-name
 
@@ -124,26 +124,28 @@ def _context(
     )
 
 
-class TestBatteryLogQualityModelPresence:
+class TestBatteryLogAvailabilityModelPresence:
     """Test presence and sensor-reading checks for battery telemetry."""
 
-    def test_user_sees_good_quality_when_bat_data_is_present_and_healthy(self, healthy_bat_log_data, battery_apm_doc) -> None:
+    def test_user_sees_good_availability_when_bat_data_is_present_and_healthy(
+        self, healthy_bat_log_data, battery_apm_doc
+    ) -> None:
         """
-        User sees a clean quality report for a normally logged battery.
+        User sees a clean availability report for a normally logged battery.
 
         GIVEN: A log with BAT data whose voltage and current are non-zero
-        WHEN: The battery quality model runs
+        WHEN: The battery availability model runs
         THEN: It reports available data with no issues
         """
         # Arrange: healthy log data provided by fixture
-        model = BatteryLogQualityModel(healthy_bat_log_data, _context({"BATT_MONITOR": 4}, apm_doc=battery_apm_doc))
+        model = BatteryLogAvailabilityModel(healthy_bat_log_data, _context({"BATT_MONITOR": 4}, apm_doc=battery_apm_doc))
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: no issues, informational state
         assert result.available is True
-        assert result.state == LogQualityState.INFO
+        assert result.state == LogAvailabilityState.INFO
         assert not result.issues
 
     def test_user_is_warned_when_voltage_is_stuck_at_zero(self, battery_apm_doc) -> None:
@@ -151,22 +153,22 @@ class TestBatteryLogQualityModelPresence:
         User is warned when the voltage sensor never reports a real reading.
 
         GIVEN: BAT data where Volt never leaves zero
-        WHEN: The battery quality model runs
-        THEN: It reports a quality issue about the sensor not reading
+        WHEN: The battery availability model runs
+        THEN: It reports a availability issue about the sensor not reading
         """
         # Arrange: log where Volt is flat zero throughout
         log_data = FakeLogData({"BAT": {"Volt": [0.0, 0.0], "Curr": [1.0, 1.0], "CurrTot": [1.0, 2.0]}})
-        model = BatteryLogQualityModel(log_data, _context({"BATT_MONITOR": 4}, apm_doc=battery_apm_doc))
+        model = BatteryLogAvailabilityModel(log_data, _context({"BATT_MONITOR": 4}, apm_doc=battery_apm_doc))
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: warning state with a zero-reading issue
-        assert result.state == LogQualityState.WARNING
+        assert result.state == LogAvailabilityState.WARNING
         assert any("zero throughout" in issue.message for issue in result.issues)
 
 
-class TestBatteryLogQualityModelFailsafeParameters:  # pylint: disable=too-few-public-methods
+class TestBatteryLogAvailabilityModelFailsafeParameters:  # pylint: disable=too-few-public-methods
     """Test detection of disabled battery failsafe thresholds."""
 
     def test_user_is_warned_when_low_and_critical_voltage_failsafes_are_disabled(self, battery_apm_doc) -> None:
@@ -174,16 +176,16 @@ class TestBatteryLogQualityModelFailsafeParameters:  # pylint: disable=too-few-p
         User is warned when both battery voltage failsafe thresholds are turned off.
 
         GIVEN: BATT_LOW_VOLT and BATT_CRT_VOLT are both 0 (disabled)
-        WHEN: The battery quality model runs
+        WHEN: The battery availability model runs
         THEN: It reports both failsafe thresholds as disabled issues
         """
         # Arrange: log with valid telemetry but both failsafes at 0
         log_data = FakeLogData({"BAT": {"Volt": [22.0], "Curr": [1.0], "CurrTot": [1.0]}})
-        model = BatteryLogQualityModel(
+        model = BatteryLogAvailabilityModel(
             log_data, _context({"BATT_MONITOR": 4, "BATT_LOW_VOLT": 0, "BATT_CRT_VOLT": 0}, apm_doc=battery_apm_doc)
         )
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: both failsafe-disabled issues present
@@ -192,7 +194,7 @@ class TestBatteryLogQualityModelFailsafeParameters:  # pylint: disable=too-few-p
         assert any("critical-voltage failsafe threshold disabled" in m for m in messages)
 
 
-class TestBatteryLogQualityModelAbsenceDiagnosis:
+class TestBatteryLogAvailabilityModelAbsenceDiagnosis:
     """Test diagnosing why BAT data is absent from a log."""
 
     def test_user_is_told_to_check_log_bitmask_when_battery_monitor_bit_is_disabled(self, battery_apm_doc) -> None:
@@ -200,14 +202,16 @@ class TestBatteryLogQualityModelAbsenceDiagnosis:
         User is pointed at LOG_BITMASK when battery logging was never enabled.
 
         GIVEN: No BAT data and LOG_BITMASK with the Battery Monitor bit cleared
-        WHEN: The battery quality model runs
+        WHEN: The battery availability model runs
         THEN: It reports the absence as a LOG_BITMASK configuration issue, not a wiring problem
         """
         # Arrange: no BAT data, bitmask excludes battery monitor logging
         log_data = FakeLogData({})
-        model = BatteryLogQualityModel(log_data, _context({"LOG_BITMASK": 0.0, "BATT_MONITOR": 4.0}, apm_doc=battery_apm_doc))
+        model = BatteryLogAvailabilityModel(
+            log_data, _context({"LOG_BITMASK": 0.0, "BATT_MONITOR": 4.0}, apm_doc=battery_apm_doc)
+        )
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: absence diagnosed via LOG_BITMASK, not physical connection
@@ -219,16 +223,16 @@ class TestBatteryLogQualityModelAbsenceDiagnosis:
         User is pointed at BATT_MONITOR when logging is enabled but the monitor itself is off.
 
         GIVEN: No BAT data, LOG_BITMASK includes Battery Monitor logging, but BATT_MONITOR is 0
-        WHEN: The battery quality model runs
+        WHEN: The battery availability model runs
         THEN: It reports BATT_MONITOR as the misconfiguration, not the physical connection
         """
         # Arrange: bitmask enabled, but BATT_MONITOR itself is 0
         log_data = FakeLogData({})
-        model = BatteryLogQualityModel(
+        model = BatteryLogAvailabilityModel(
             log_data, _context({"LOG_BITMASK": 512.0, "BATT_MONITOR": 0.0}, apm_doc=battery_apm_doc)
         )
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: absence diagnosed via BATT_MONITOR, not LOG_BITMASK

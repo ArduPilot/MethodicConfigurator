@@ -1,5 +1,5 @@
 """
-Data model for battery quality check and battery analysis.
+Data model for battery availability check and battery analysis.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -10,14 +10,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import is_within_tolerance
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
+    AvailabilityIssue,
     BaseLogAnalysisModel,
-    BaseLogQualityModel,
-    LogQualityResult,
-    QualityIssue,
+    BaseLogAvailabilityModel,
+    LogAvailabilityResult,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 from ardupilot_methodic_configurator.log_analysis.utils import find_log_bit_in_apm_file
 
 
@@ -31,15 +31,15 @@ def _configured_battery_instances(parameters: dict[str, float]) -> list[int]:
     return [instance for instance in range(1, 10) if _battery_parameter(instance, "MONITOR") in parameters]
 
 
-class BatteryLogQualityModel(BaseLogQualityModel):
-    """Checks battery telemetry and configuration quality."""
+class BatteryLogAvailabilityModel(BaseLogAvailabilityModel):
+    """Checks battery telemetry and configuration availability."""
 
-    def check(self) -> LogQualityResult:
+    def check(self) -> LogAvailabilityResult:
         records = self.log_data.get_message_columns("BAT")
         if records is None or len(records) == 0:
             return self._diagnose_absence()
 
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
         for check in (self.check_voltage, self.check_curr_total, self.check_current):
             issues += check()
         issues += self.check_parameters()
@@ -47,7 +47,7 @@ class BatteryLogQualityModel(BaseLogQualityModel):
         step, name = self.resolve_message_step("BAT", "Battery")
         return self.build_result(issues, name, related_step=step)
 
-    def _diagnose_absence(self) -> LogQualityResult:
+    def _diagnose_absence(self) -> LogAvailabilityResult:
         step, name = self.resolve_message_step("BAT", "Battery")
         reason, issues, bitmask_disabled = self.diagnose_bitmask_absence(
             "BAT", "Battery Monitor", "Battery", not_logged_hint=_("check the battery monitor physical connection")
@@ -60,25 +60,27 @@ class BatteryLogQualityModel(BaseLogQualityModel):
             if instances == [1] and not enabled_instances:
                 reason = _("Battery logging enabled but BATT_MONITOR is 0 (monitor disabled)")
                 issues = [
-                    QualityIssue(_("Set BATT_MONITOR to enable the battery monitor"), self.step_for_parameter("BATT_MONITOR"))
+                    AvailabilityIssue(
+                        _("Set BATT_MONITOR to enable the battery monitor"), self.step_for_parameter("BATT_MONITOR")
+                    )
                 ]
             elif instances and not enabled_instances:
                 reason = _("Battery logging enabled but all configured battery monitors are disabled")
                 issues = [
-                    QualityIssue(
+                    AvailabilityIssue(
                         _("Enable a configured battery monitor"),
                         self.step_for_parameter(_battery_parameter(instances[0], "MONITOR")),
                     )
                 ]
             else:
                 reason = _("Battery logging enabled but no data, monitor may not be configured properly")
-                issues = [QualityIssue(_("No BAT messages found"), step)]
+                issues = [AvailabilityIssue(_("No BAT messages found"), step)]
 
-        return LogQualityResult(
-            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        return LogAvailabilityResult(
+            available=False, state=LogAvailabilityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
         )
 
-    def check_voltage(self) -> list[QualityIssue]:
+    def check_voltage(self) -> list[AvailabilityIssue]:
         """Voltage presence check."""
         volts, issues = self.field_values_or_issue(
             "BAT",
@@ -90,11 +92,11 @@ class BatteryLogQualityModel(BaseLogQualityModel):
             return issues
 
         if volts.max() == 0:
-            issues.append(QualityIssue(_("Voltage is zero throughout, sensor may not be reading")))
+            issues.append(AvailabilityIssue(_("Voltage is zero throughout, sensor may not be reading")))
 
         return issues
 
-    def check_current(self) -> list[QualityIssue]:
+    def check_current(self) -> list[AvailabilityIssue]:
         _current, issues = self.field_values_or_issue(
             "BAT",
             "Curr",
@@ -103,7 +105,7 @@ class BatteryLogQualityModel(BaseLogQualityModel):
         )
         return issues
 
-    def check_curr_total(self) -> list[QualityIssue]:
+    def check_curr_total(self) -> list[AvailabilityIssue]:
         _cur_tot, issues = self.field_values_or_issue(
             "BAT",
             "CurrTot",
@@ -112,9 +114,9 @@ class BatteryLogQualityModel(BaseLogQualityModel):
         )
         return issues
 
-    def check_parameters(self) -> list[QualityIssue]:
+    def check_parameters(self) -> list[AvailabilityIssue]:
         """Check failsafe thresholds for every enabled battery monitor instance."""
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
         for instance in _configured_battery_instances(self.parameters):
             monitor_param = _battery_parameter(instance, "MONITOR")
             if self.parameters[monitor_param] == 0:
@@ -124,7 +126,7 @@ class BatteryLogQualityModel(BaseLogQualityModel):
             low_volt_param = _battery_parameter(instance, "LOW_VOLT")
             if self.parameters.get(low_volt_param) == 0:
                 issues.append(
-                    QualityIssue(
+                    AvailabilityIssue(
                         _("{prefix}low-voltage failsafe threshold disabled").format(prefix=prefix),
                         self.step_for_parameter(low_volt_param),
                     )
@@ -132,7 +134,7 @@ class BatteryLogQualityModel(BaseLogQualityModel):
             crt_volt_param = _battery_parameter(instance, "CRT_VOLT")
             if self.parameters.get(crt_volt_param) == 0:
                 issues.append(
-                    QualityIssue(
+                    AvailabilityIssue(
                         _("{prefix}critical-voltage failsafe threshold disabled").format(prefix=prefix),
                         self.step_for_parameter(crt_volt_param),
                     )
@@ -149,7 +151,7 @@ class BatteryLogAnalysis(BaseLogAnalysisModel):
     """
     Battery analysis on the data from the log.
 
-    Runs after battery quality model passes with the required data.
+    Runs after battery availability model passes with the required data.
     """
 
     def analyse(self) -> LogAnalysisResult:

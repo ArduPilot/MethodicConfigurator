@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Behavior-driven tests for IMU log quality and analysis data models.
+Behavior-driven tests for IMU log availability and analysis data models.
 
-This module contains comprehensive tests for ImuLogQualityModel and
+This module contains comprehensive tests for ImuLogAvailabilityModel and
 ImuLogAnalysis, focusing on user workflows and business value rather
 than implementation details.
 
@@ -17,9 +17,9 @@ from typing import Any
 import numpy as np
 import pytest
 
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_imu import ImuLogAnalysis, ImuLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_imu import ImuLogAnalysis, ImuLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 
 # pylint: disable=redefined-outer-name
 
@@ -84,27 +84,27 @@ def _context(parameters: dict[str, float] | None = None, *, apm_doc: dict | None
     )
 
 
-class TestImuLogQualityModelHealth:
+class TestImuLogAvailabilityModelHealth:
     """Test presence and health checks for IMU telemetry."""
 
-    def test_user_sees_good_quality_for_a_healthy_imu(self, healthy_imu_columns, imu_apm_doc) -> None:
+    def test_user_sees_good_availability_for_a_healthy_imu(self, healthy_imu_columns, imu_apm_doc) -> None:
         """
-        User sees a clean quality report for a healthy IMU.
+        User sees a clean availability report for a healthy IMU.
 
         GIVEN: IMU data with zero error counts, healthy flags, and non-zero signal
-        WHEN: The IMU quality model runs
+        WHEN: The IMU availability model runs
         THEN: It reports available data with no issues
         """
         # Arrange: healthy IMU data provided by fixture
         log_data = FakeLogData({"IMU": healthy_imu_columns})
-        model = ImuLogQualityModel(log_data, _context(apm_doc=imu_apm_doc))
+        model = ImuLogAvailabilityModel(log_data, _context(apm_doc=imu_apm_doc))
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: no issues, informational state
         assert result.available is True
-        assert result.state == LogQualityState.INFO
+        assert result.state == LogAvailabilityState.INFO
         assert not result.issues
 
     def test_user_is_warned_about_a_nonzero_gyro_error_count(self, healthy_imu_columns, imu_apm_doc) -> None:
@@ -112,16 +112,16 @@ class TestImuLogQualityModelHealth:
         User is warned when the gyroscope reports internal errors during the flight.
 
         GIVEN: EG (gyro error count) is nonzero at some point
-        WHEN: The IMU quality model runs
+        WHEN: The IMU availability model runs
         THEN: It reports a gyroscope error issue
         """
         # Arrange: EG goes nonzero partway through the flight
         columns = dict(healthy_imu_columns)
         columns["EG"] = [0.0, 3.0]
         log_data = FakeLogData({"IMU": columns})
-        model = ImuLogQualityModel(log_data, _context(apm_doc=imu_apm_doc))
+        model = ImuLogAvailabilityModel(log_data, _context(apm_doc=imu_apm_doc))
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: gyroscope error issue reported
@@ -132,16 +132,16 @@ class TestImuLogQualityModelHealth:
         User is warned when the accelerometer reports unhealthy during the flight.
 
         GIVEN: AH (accelerometer health) drops to 0 at some point
-        WHEN: The IMU quality model runs
+        WHEN: The IMU availability model runs
         THEN: It reports an accelerometer health issue
         """
         # Arrange: AH drops to unhealthy partway through the flight
         columns = dict(healthy_imu_columns)
         columns["AH"] = [1.0, 0.0]
         log_data = FakeLogData({"IMU": columns})
-        model = ImuLogQualityModel(log_data, _context(apm_doc=imu_apm_doc))
+        model = ImuLogAvailabilityModel(log_data, _context(apm_doc=imu_apm_doc))
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: accelerometer health issue reported
@@ -152,23 +152,23 @@ class TestImuLogQualityModelHealth:
         User is warned when a gyroscope axis never reports a real reading.
 
         GIVEN: GyrX is zero throughout the flight
-        WHEN: The IMU quality model runs
+        WHEN: The IMU availability model runs
         THEN: It reports the axis as possibly not reading
         """
         # Arrange: GyrX flat zero throughout
         columns = dict(healthy_imu_columns)
         columns["GyrX"] = [0.0, 0.0]
         log_data = FakeLogData({"IMU": columns})
-        model = ImuLogQualityModel(log_data, _context(apm_doc=imu_apm_doc))
+        model = ImuLogAvailabilityModel(log_data, _context(apm_doc=imu_apm_doc))
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: flat-zero axis flagged
         assert any("GyrX is zero throughout" in issue.message for issue in result.issues)
 
 
-class TestImuLogQualityModelAbsenceDiagnosis:  # pylint: disable=too-few-public-methods
+class TestImuLogAvailabilityModelAbsenceDiagnosis:  # pylint: disable=too-few-public-methods
     """Test diagnosing why IMU data is absent from a log."""
 
     def test_user_is_told_to_check_log_bitmask_when_imu_bit_is_disabled(self, imu_apm_doc) -> None:
@@ -176,14 +176,14 @@ class TestImuLogQualityModelAbsenceDiagnosis:  # pylint: disable=too-few-public-
         User is pointed at LOG_BITMASK when IMU logging was never enabled.
 
         GIVEN: No IMU data and LOG_BITMASK excludes the IMU bit
-        WHEN: The IMU quality model runs
+        WHEN: The IMU availability model runs
         THEN: It reports the absence as a LOG_BITMASK configuration issue
         """
         # Arrange: no IMU data, bitmask excludes IMU logging
         log_data = FakeLogData({})
-        model = ImuLogQualityModel(log_data, _context({"LOG_BITMASK": 0.0}, apm_doc=imu_apm_doc))
+        model = ImuLogAvailabilityModel(log_data, _context({"LOG_BITMASK": 0.0}, apm_doc=imu_apm_doc))
 
-        # Act: run the quality check
+        # Act: run the availability check
         result = model.check()
 
         # Assert: absence diagnosed via LOG_BITMASK

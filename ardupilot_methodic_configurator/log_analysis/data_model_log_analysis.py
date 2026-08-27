@@ -14,36 +14,39 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from dataclasses import dataclass, field
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_arm import ArmLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
+    BaseLogAnalysisModel,
+    BaseLogAvailabilityModel,
+)
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_battery import (
+    BatteryLogAnalysis,
+    BatteryLogAvailabilityModel,
+)
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_err import ErrLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_esc import EscLogAnalysis, EscLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_fft import FftLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_gnss import GPSLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_imu import ImuLogAnalysis, ImuLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_mode import ModeLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_pm import PmLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_vibe import VibeLogAnalysis, VibeLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
-from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
-    LogQualityResult,
-    LogQualityState,
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
+    AvailabilityIssue,
+    LogAvailabilityResult,
+    LogAvailabilityState,
     MessageValidation,
     PMStatus,
-    QualityIssue,
     StepValidationResult,
 )
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check import (
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability_check import (
     check_cpu_performance_message,
     get_pm_status,
     validate_configuration_steps_data,
 )
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_arm import ArmLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
-    BaseLogAnalysisModel,
-    BaseLogQualityModel,
-)
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogAnalysis, BatteryLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_err import ErrLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogAnalysis, EscLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_fft import FftLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_imu import ImuLogAnalysis, ImuLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_mode import ModeLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_pm import PmLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_vibe import VibeLogAnalysis, VibeLogQualityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import HardwareReport
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_report import extract_hardware_report
 
@@ -53,25 +56,25 @@ class LogAnalysisModelSpec:
     """Registration for one log subsystem and its optional detailed analysis."""
 
     key: str
-    quality_model: type[BaseLogQualityModel]
+    availability_model: type[BaseLogAvailabilityModel]
     analysis_model: type[BaseLogAnalysisModel] | None = None
     component_keys: tuple[str, ...] = ()
 
 
 LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
-    LogAnalysisModelSpec("battery", BatteryLogQualityModel, BatteryLogAnalysis, ("Battery", "Battery Monitor")),
-    LogAnalysisModelSpec("gps", GPSLogQualityModel, component_keys=("GNSS Receiver",)),
-    LogAnalysisModelSpec("esc", EscLogQualityModel, EscLogAnalysis, ("ESC", "Motors")),
-    LogAnalysisModelSpec("imu", ImuLogQualityModel, ImuLogAnalysis, ("Flight Controller",)),
-    LogAnalysisModelSpec("vibe", VibeLogQualityModel, VibeLogAnalysis, ("Flight Controller",)),
-    LogAnalysisModelSpec("fft", FftLogQualityModel),
-    LogAnalysisModelSpec("err", ErrLogQualityModel),
-    LogAnalysisModelSpec("pm", PmLogQualityModel),
-    LogAnalysisModelSpec("arm", ArmLogQualityModel),
-    LogAnalysisModelSpec("mode", ModeLogQualityModel),
+    LogAnalysisModelSpec("battery", BatteryLogAvailabilityModel, BatteryLogAnalysis, ("Battery", "Battery Monitor")),
+    LogAnalysisModelSpec("gps", GPSLogAvailabilityModel, component_keys=("GNSS Receiver",)),
+    LogAnalysisModelSpec("esc", EscLogAvailabilityModel, EscLogAnalysis, ("ESC", "Motors")),
+    LogAnalysisModelSpec("imu", ImuLogAvailabilityModel, ImuLogAnalysis, ("Flight Controller",)),
+    LogAnalysisModelSpec("vibe", VibeLogAvailabilityModel, VibeLogAnalysis, ("Flight Controller",)),
+    LogAnalysisModelSpec("fft", FftLogAvailabilityModel),
+    LogAnalysisModelSpec("err", ErrLogAvailabilityModel),
+    LogAnalysisModelSpec("pm", PmLogAvailabilityModel),
+    LogAnalysisModelSpec("arm", ArmLogAvailabilityModel),
+    LogAnalysisModelSpec("mode", ModeLogAvailabilityModel),
 )
 
-ResolvedModel = tuple[type[BaseLogQualityModel], type[BaseLogAnalysisModel] | None, str]
+ResolvedModel = tuple[type[BaseLogAvailabilityModel], type[BaseLogAnalysisModel] | None, str]
 
 
 def parse_firmware_version(version: object) -> tuple[int, int, int] | None:
@@ -90,36 +93,36 @@ def parse_firmware_version(version: object) -> tuple[int, int, int] | None:
         return None
 
 
-def _pm_validation_as_quality_result(validation: MessageValidation | None) -> LogQualityResult | None:
-    """Convert PM validation into the common quality-result shape used by the frontend."""
+def _pm_validation_as_availability_result(validation: MessageValidation | None) -> LogAvailabilityResult | None:
+    """Convert PM validation into the common availability-result shape used by the frontend."""
     if validation is None:
         return None
 
-    issues = [QualityIssue(issue) for issue in validation.issues]
-    return LogQualityResult(
+    issues = [AvailabilityIssue(issue) for issue in validation.issues]
+    return LogAvailabilityResult(
         available=validation.valid,
-        state=LogQualityState.INFO if validation.valid else LogQualityState.WARNING,
+        state=LogAvailabilityState.INFO if validation.valid else LogAvailabilityState.WARNING,
         reason=_("Performance monitor data present and good for analysis")
         if validation.valid
-        else _("Performance monitor data has quality issues"),
+        else _("Performance monitor data has availability issues"),
         issues=issues,
         name=_("System Performance"),
     )
 
 
 def _resolve_models(
-    quality_and_analysis_models: list[tuple[type[BaseLogQualityModel], type[BaseLogAnalysisModel] | None]] | None,
+    availability_and_analysis_models: list[tuple[type[BaseLogAvailabilityModel], type[BaseLogAnalysisModel] | None]] | None,
 ) -> tuple[list[ResolvedModel], dict[str, tuple[str, ...]]]:
     """Resolve the default registry or caller-provided model pairs."""
-    if quality_and_analysis_models is None:
+    if availability_and_analysis_models is None:
         return (
-            [(spec.quality_model, spec.analysis_model, spec.key) for spec in LOG_ANALYSIS_SUBSYSTEMS],
+            [(spec.availability_model, spec.analysis_model, spec.key) for spec in LOG_ANALYSIS_SUBSYSTEMS],
             {spec.key: spec.component_keys for spec in LOG_ANALYSIS_SUBSYSTEMS},
         )
     return (
         [
-            (quality_model, analysis_model, f"custom_{index}")
-            for index, (quality_model, analysis_model) in enumerate(quality_and_analysis_models)
+            (availability_model, analysis_model, f"custom_{index}")
+            for index, (availability_model, analysis_model) in enumerate(availability_and_analysis_models)
         ],
         {},
     )
@@ -127,10 +130,10 @@ def _resolve_models(
 
 def _add_related_parameter_values(
     related_values: dict[str, float],
-    findings: list[QualityIssue] | list[LogAnalysis],
+    findings: list[AvailabilityIssue] | list[LogAnalysis],
     parameters: dict[str, float],
 ) -> None:
-    """Add parameters referenced by quality issues or analysis outcomes."""
+    """Add parameters referenced by availability issues or analysis outcomes."""
     for finding in findings:
         if finding.param_name is not None and finding.param_name in parameters:
             related_values[finding.param_name] = parameters[finding.param_name]
@@ -141,24 +144,24 @@ def _run_subsystem_models(
     log_data: LogData,
     context: LogAnalysisContext,
     related_parameter_values: dict[str, float],
-) -> tuple[list[LogQualityResult], list[LogAnalysisResult], list[str]]:
-    """Run registered quality and available detailed-analysis models."""
-    quality_results: list[LogQualityResult] = []
+) -> tuple[list[LogAvailabilityResult], list[LogAnalysisResult], list[str]]:
+    """Run registered availability and available detailed-analysis models."""
+    availability_results: list[LogAvailabilityResult] = []
     analysis_results: list[LogAnalysisResult] = []
     analysis_subsystem_keys: list[str] = []
-    for quality_model_cls, analysis_model_cls, subsystem_key in resolved_models:
-        quality_result = quality_model_cls(log_data, context).check()
-        quality_result.subsystem_key = subsystem_key
-        quality_results.append(quality_result)
-        _add_related_parameter_values(related_parameter_values, quality_result.issues, context.parameters)
+    for availability_model_cls, analysis_model_cls, subsystem_key in resolved_models:
+        availability_result = availability_model_cls(log_data, context).check()
+        availability_result.subsystem_key = subsystem_key
+        availability_results.append(availability_result)
+        _add_related_parameter_values(related_parameter_values, availability_result.issues, context.parameters)
         if analysis_model_cls is not None:
             analysis_subsystem_keys.append(subsystem_key)
-        if analysis_model_cls is not None and quality_result.available:
+        if analysis_model_cls is not None and availability_result.available:
             analysis_result = analysis_model_cls(log_data, context).analyse()
             analysis_result.subsystem_key = subsystem_key
             analysis_results.append(analysis_result)
             _add_related_parameter_values(related_parameter_values, analysis_result.outcomes, context.parameters)
-    return quality_results, analysis_results, analysis_subsystem_keys
+    return availability_results, analysis_results, analysis_subsystem_keys
 
 
 def validate_log_matches_vehicle(
@@ -197,7 +200,7 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
     parameter_count: int
     pm_status: PMStatus | None
     pm_validation: MessageValidation | None
-    quality_results: list[LogQualityResult]
+    availability_results: list[LogAvailabilityResult]
     analysis_results: list[LogAnalysisResult]
     step_results: list[StepValidationResult]
     hardware_report: HardwareReport
@@ -213,24 +216,27 @@ class LogSummary:  # pylint: disable=too-many-instance-attributes
             return self.subsystem_component_keys[subsystem_key]
         return next((spec.component_keys for spec in LOG_ANALYSIS_SUBSYSTEMS if spec.key == subsystem_key), ())
 
-    def paired_quality_and_analysis_results(
+    def paired_availability_and_analysis_results(
         self,
-    ) -> list[tuple[LogQualityResult, LogAnalysisResult | None]]:
+    ) -> list[tuple[LogAvailabilityResult, LogAnalysisResult | None]]:
         """Return analysis-enabled subsystem results matched by stable subsystem key."""
-        quality_by_key = {result.subsystem_key: result for result in self.quality_results if result.subsystem_key is not None}
+        availability_by_key = {
+            result.subsystem_key: result for result in self.availability_results if result.subsystem_key is not None
+        }
         analysis_by_key = {
             result.subsystem_key: result for result in self.analysis_results if result.subsystem_key is not None
         }
         registered_keys = self.analysis_subsystem_keys or tuple(
             spec.key for spec in LOG_ANALYSIS_SUBSYSTEMS if spec.analysis_model is not None
         )
-        return [(quality_by_key[key], analysis_by_key.get(key)) for key in registered_keys if key in quality_by_key]
+        return [(availability_by_key[key], analysis_by_key.get(key)) for key in registered_keys if key in availability_by_key]
 
 
 def analyze_log(  # pylint: disable=too-many-locals
     log_data: LogData,
     context: LogAnalysisContext,
-    quality_and_analysis_models: list[tuple[type[BaseLogQualityModel], type[BaseLogAnalysisModel] | None]] | None = None,
+    availability_and_analysis_models: list[tuple[type[BaseLogAvailabilityModel], type[BaseLogAnalysisModel] | None]]
+    | None = None,
 ) -> LogSummary:
     """
     Run log analysis over already loaded datasource values.
@@ -239,7 +245,7 @@ def analyze_log(  # pylint: disable=too-many-locals
         log_data: Parsed log.
         context: Typed analysis inputs (parameters, configuration steps,
             optional component metadata and apm.pdef definitions).
-        quality_and_analysis_models: Optional (quality_model_cls, analysis_model_cls) pairs to run
+        availability_and_analysis_models: Optional (availability_model_cls, analysis_model_cls) pairs to run
             instead of the default registry. Pass None if the second element of a pair for
             subsystems with no analysis model.
 
@@ -250,20 +256,20 @@ def analyze_log(  # pylint: disable=too-many-locals
     parameters = context.parameters
     pm_status = get_pm_status(log_data)
     pm_validation = check_cpu_performance_message(log_data)
-    resolved_models, subsystem_component_keys = _resolve_models(quality_and_analysis_models)
+    resolved_models, subsystem_component_keys = _resolve_models(availability_and_analysis_models)
 
-    quality_results: list[LogQualityResult] = []
-    pm_quality_result = _pm_validation_as_quality_result(pm_validation)
-    if pm_quality_result is not None:
-        quality_results.append(pm_quality_result)
+    availability_results: list[LogAvailabilityResult] = []
+    pm_availability_result = _pm_validation_as_availability_result(pm_validation)
+    if pm_availability_result is not None:
+        availability_results.append(pm_availability_result)
 
     related_parameter_values: dict[str, float] = {}
-    for result in quality_results:
+    for result in availability_results:
         _add_related_parameter_values(related_parameter_values, result.issues, parameters)
-    subsystem_quality_results, analysis_results, analysis_subsystem_keys = _run_subsystem_models(
+    subsystem_availability_results, analysis_results, analysis_subsystem_keys = _run_subsystem_models(
         resolved_models, log_data, context, related_parameter_values
     )
-    quality_results.extend(subsystem_quality_results)
+    availability_results.extend(subsystem_availability_results)
 
     step_results = validate_configuration_steps_data(log_data, context.configuration_steps)
     hardware_report = extract_hardware_report(log_data, parameters, context.apm_doc)
@@ -276,7 +282,7 @@ def analyze_log(  # pylint: disable=too-many-locals
         parameter_count=len(parameters),
         pm_status=pm_status,
         pm_validation=pm_validation,
-        quality_results=quality_results,
+        availability_results=availability_results,
         step_results=step_results,
         hardware_report=hardware_report,
         analysis_results=analysis_results,

@@ -1,5 +1,5 @@
 """
-Data model for ESC quality check.
+Data model for ESC availability check.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -12,14 +12,14 @@ import statistics
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_par_dict import is_within_tolerance
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
+    AvailabilityIssue,
     BaseLogAnalysisModel,
-    BaseLogQualityModel,
-    LogQualityResult,
-    QualityIssue,
+    BaseLogAvailabilityModel,
+    LogAvailabilityResult,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview_param_metadata import enum_value_name
 from ardupilot_methodic_configurator.log_analysis.utils import find_matching_param_values
 
@@ -29,22 +29,22 @@ _MIN_ZERO_RPM_ARMED_COVERAGE = 0.5
 _DSHOT_OUTPUT_RATE_WARN_THRESHOLD = 1000.0  # Amilcar's stated threshold, Hz
 
 
-class EscLogQualityModel(BaseLogQualityModel):
-    """Checks ESC telemetry and configuration quality."""
+class EscLogAvailabilityModel(BaseLogAvailabilityModel):
+    """Checks ESC telemetry and configuration availability."""
 
-    def check(self) -> LogQualityResult:
+    def check(self) -> LogAvailabilityResult:
         records = self.log_data.get_message_columns("ESC")
         if records is None or len(records) == 0:
             return self._diagnose_absence()
 
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
         for check in (self.check_rpm, self.check_current, self.check_error_rate):
             issues += check()
 
         _, name = self.resolve_message_step("ESC", "ESC")
         return self.build_result(issues, name)
 
-    def _diagnose_absence(self) -> LogQualityResult:
+    def _diagnose_absence(self) -> LogAvailabilityResult:
         """Diagnose why ESC data is absent."""
         step, name = self.resolve_message_step("ESC", "ESC")
 
@@ -55,7 +55,7 @@ class EscLogQualityModel(BaseLogQualityModel):
         if pwm_type is not None and str(int(pwm_type)) not in dshot_values:
             reason = _("ESC telemetry not logged")
             issues = [
-                QualityIssue(
+                AvailabilityIssue(
                     _("Set MOT_PWM_TYPE to a DShot variant for ESC telemetry support"),
                     self.step_for_parameter("MOT_PWM_TYPE"),
                 )
@@ -63,18 +63,20 @@ class EscLogQualityModel(BaseLogQualityModel):
         elif scr_enabled == 0:
             reason = _("ESC telemetry not logged, scripting is disabled")
             issues = [
-                QualityIssue(
+                AvailabilityIssue(
                     _("Enable SCR_ENABLE if using scripted ESC telemetry"),
                     self.step_for_parameter("SCR_ENABLE"),
                 )
             ]
         else:
             reason = _("ESC telemetry not logged, check ESC hardware supports telemetry and is wired correctly")
-            issues = [QualityIssue(_("No ESC messages found"), step)]
+            issues = [AvailabilityIssue(_("No ESC messages found"), step)]
 
-        return LogQualityResult(available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name)
+        return LogAvailabilityResult(
+            available=False, state=LogAvailabilityState.WARNING, reason=reason, issues=issues, name=name
+        )
 
-    def check_rpm(self) -> list[QualityIssue]:
+    def check_rpm(self) -> list[AvailabilityIssue]:
         """Validate logged ESC RPM values."""
         _rpm, issues = self.field_values_or_issue(
             "ESC",
@@ -84,7 +86,7 @@ class EscLogQualityModel(BaseLogQualityModel):
         )
         return issues
 
-    def check_current(self) -> list[QualityIssue]:
+    def check_current(self) -> list[AvailabilityIssue]:
         """Validate logged ESC current values."""
         _current, issues = self.field_values_or_issue(
             "ESC",
@@ -94,7 +96,7 @@ class EscLogQualityModel(BaseLogQualityModel):
         )
         return issues
 
-    def check_error_rate(self) -> list[QualityIssue]:
+    def check_error_rate(self) -> list[AvailabilityIssue]:
         """Validate ESC error rate."""
         err, issues = self.field_values_or_issue(
             "ESC",
@@ -104,7 +106,7 @@ class EscLogQualityModel(BaseLogQualityModel):
         )
         if err is not None and err.max() > 0:
             step, _name = self.resolve_message_step("ESC", "ESC")
-            issues.append(QualityIssue(_("ESC error rate detected on at least one ESC instance"), step))
+            issues.append(AvailabilityIssue(_("ESC error rate detected on at least one ESC instance"), step))
         return issues
 
 
@@ -112,7 +114,7 @@ class EscLogAnalysis(BaseLogAnalysisModel):
     """
     ESC analysis on the data from the log.
 
-    Runs after ESC quality model passes with the required data.
+    Runs after ESC availability model passes with the required data.
     """
 
     def analyse(self) -> LogAnalysisResult:
