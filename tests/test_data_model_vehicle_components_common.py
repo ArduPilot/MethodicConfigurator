@@ -15,11 +15,12 @@ from typing import Any, TypeVar
 from unittest.mock import MagicMock
 
 from ardupilot_methodic_configurator.backend_filesystem_vehicle_components import VehicleComponents
+from ardupilot_methodic_configurator.data_model_vehicle_components_base import ComponentDataModelBase
 from ardupilot_methodic_configurator.data_model_vehicle_components_display import ComponentDataModelDisplay
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
 
 # Type variables for generic fixture factories
-T = TypeVar("T")
+T = TypeVar("T", bound=ComponentDataModelBase)
 
 # Common test data structures
 EMPTY_COMPONENT_DATA = {
