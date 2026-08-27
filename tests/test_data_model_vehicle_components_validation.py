@@ -300,6 +300,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             (("Battery", "Specifications", "Number of cells"), "4", True),
             (("Battery", "Specifications", "Capacity mAh"), "1800", True),
             (("Motors", "Specifications", "Poles"), "14", True),
+            (("Motors", "Specifications", "Poles"), "100", True),
             (("Propellers", "Specifications", "Diameter_inches"), "3.0", True),
         ]
 
@@ -328,7 +329,7 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
             (("Battery", "Specifications", "Number of cells"), "0", False),  # Below minimum
             (("Battery", "Specifications", "Number of cells"), "100", False),  # Above maximum
             (("Motors", "Specifications", "Poles"), "1", False),  # Below minimum
-            (("Motors", "Specifications", "Poles"), "100", False),  # Above maximum
+            (("Motors", "Specifications", "Poles"), "101", False),  # Above maximum
         ]
 
         for path, value, should_be_valid in test_cases:

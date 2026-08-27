@@ -424,7 +424,7 @@ class ComponentDataModelValidation(ComponentDataModelBase):
             ("Frame", "Specifications", "TOW max Kg"): (float, (0.01, 600), "Takeoff Weight"),
             ("Battery", "Specifications", "Number of cells"): (int, (1, 50), "Nr of cells"),
             ("Battery", "Specifications", "Capacity mAh"): (int, (100, 1000000), "mAh capacity"),
-            ("Motors", "Specifications", "Poles"): (int, (2, 59), "Motor Poles"),
+            ("Motors", "Specifications", "Poles"): (int, (2, 100), "Motor Poles"),
             ("Propellers", "Specifications", "Diameter_inches"): (float, (0.3, 400), "Propeller Diameter"),
         }
     )
