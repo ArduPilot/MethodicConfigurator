@@ -12,17 +12,17 @@ The main components are:
 
 1. **Log Analysis Backend** - Loads and validates ArduPilot `.bin` logs and prepares the data required by the analysis layer.
 
-   * [`backend_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py)
-   * [`backend_log_extraction.py`](ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py)
+   * [`backend_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py)
+   * [`backend_log_extraction.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py)
 
 2. **Log Analysis Data Models** - Contains the analysis pipeline, shared context, quality models, analysis models, and result structures.
 
-   * [`data_model_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py)
-   * [`data_model_log_analysis_context.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_context.py)
-   * [`data_model_parameter_derivation.py`](ardupilot_methodic_configurator/log_analysis/data_model_parameter_derivation.py)
-   * [`data_model_log_quality.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_quality.py)
-   * [`data_model_log_quality_check.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py)
-   * [`data_model_quality_base.py`](ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py)
+   * [`data_model_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py)
+   * [`data_model_log_analysis_context.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_context.py)
+   * [`data_model_parameter_derivation.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_parameter_derivation.py)
+   * [`data_model_log_quality.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_quality.py)
+   * [`data_model_log_quality_check.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py)
+   * [`data_model_quality_base.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_quality_base.py)
 
 3. **Quality and Analysis Models** - Performs subsystem-specific data validation and analysis.
 
@@ -82,7 +82,8 @@ are converted explicitly before comparison.
 
 ## Log Analysis Backend
 
-[`backend_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py) acts as the orchestration layer between log extraction, Methodic
+[`backend_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py) acts as
+the orchestration layer between log extraction, Methodic
 Configurator context, and the analysis data models.
 
 Its responsibilities are:
@@ -117,7 +118,8 @@ This prevents analysis results from being interpreted using the configuration of
 
 ## Log Analysis Context
 
-[`data_model_log_analysis_context.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_context.py) provides the common information required by
+[`data_model_log_analysis_context.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis_context.py)
+ provides the common information required by
 the quality and analysis models.
 
 The context contains:
@@ -140,7 +142,8 @@ data; tests can supply a small replacement service without a vehicle directory.
 
 ## Analysis Pipeline
 
-[`data_model_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py) contains the main domain-level analysis pipeline.
+[`data_model_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py)
+contains the main domain-level analysis pipeline.
 
 The `analyze_log()` function performs the following operations:
 
@@ -201,7 +204,7 @@ This separation distinguishes between missing or invalid data, a valid analysis 
 
 ## Quality and Analysis Model Registry
 
-The quality and analysis model registry is defined in [`data_model_log_analysis.py`](ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py).
+The quality and analysis model registry is defined in [`data_model_log_analysis.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py).
 
 | Quality Model | Analysis Model |
 | ------------- | -------------- |
@@ -277,7 +280,8 @@ The resulting `HardwareReport` is included in `LogSummary`.
 
 ## Tuning Report
 
-[`data_model_tuning_report.py`](ardupilot_methodic_configurator/log_analysis/data_model_tuning_report.py) provides the data model for parameter changes across
+[`data_model_tuning_report.py`](https://github.com/ArduPilot/MethodicConfigurator/blob/master/ardupilot_methodic_configurator/log_analysis/data_model_tuning_report.py)
+provides the data model for parameter changes across
 Methodic Configurator configuration steps.
 
 The tuning report parser reads `tuning_report.csv` and produces a `TuningReport` containing `steps` and `values`.

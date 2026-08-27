@@ -2,7 +2,7 @@
 
 ArduPilot Methodic Configurator includes a Log Analysis feature that helps you inspect an ArduPilot `.bin` flight log.
 
-It checks the quality of the recorded data and, when enough information is available, performs additional analysis of the vehicle.
+It checks the availability of the recorded data and, when enough information is available, performs additional analysis of the vehicle.
 
 The process is simple:
 
@@ -17,7 +17,7 @@ The current Log Analysis system provides **detailed analysis** for:
 * IMU
 * Vibration
 
-It also performs **data quality checks only** (no detailed analysis yet) for:
+It also performs **data availability checks only** (no detailed analysis yet) for:
 
 * GPS
 * FFT
@@ -26,7 +26,8 @@ It also performs **data quality checks only** (no detailed analysis yet) for:
 * Arming
 * Flight Mode
 
-All ten subsystems are checked for data quality first. Only the four listed above currently go on to produce detailed findings; the other six report whether their data is
+All ten subsystems are checked for data availability first. Only the four listed above currently go on to produce detailed findings; the other six report whether their data
+is
 present and usable.
 
 ## Before you start
@@ -57,7 +58,7 @@ Select the log
 Read and validate log
   |
   v
-Check data quality
+Check data availability
   |
   v
 Run available analyses
@@ -117,12 +118,12 @@ Before performing the analysis, the log is checked against the currently opened 
 This prevents a log from one vehicle from accidentally being analyzed using another vehicle's configuration.
 Which can provide wrong analysis.
 
-### 5. Data quality
+### 5. Data availability
 
 Before running an analysis, the tool checks whether the required data exists and can be used. This is important because a missing or invalid log message should not produce
 a misleading analysis result.
 
-For example, the IMU quality checks can detect:
+For example, the IMU data availability checks can detect:
 
 * Missing IMU fields
 * Missing IMU values
@@ -132,7 +133,7 @@ For example, the IMU quality checks can detect:
 * Gyroscope signals that remain at zero
 * Accelerometer signals that remain at zero
 
-A quality problem does not necessarily mean that the hardware is broken. It may simply mean that the required information was not recorded correctly.
+Data availability problem does not necessarily mean that the hardware is broken. It may simply mean that the required information was not recorded correctly.
 
 ## Battery Analysis
 
@@ -409,7 +410,7 @@ Make sure:
 2. Open the correct Methodic Configurator project.
 3. Select the log.
 4. Run Log Analysis.
-5. Check the data quality results.
+5. Check the data availability results.
 6. Read the analysis results.
 7. Investigate reported issues.
 8. Correct the underlying problem.
@@ -439,7 +440,7 @@ Not necessarily. A warning identifies something that should be investigated.
 **Should I immediately change the parameter mentioned in a warning?**
 No. First understand why the value was reported and check the related Methodic Configurator step.
 
-**Why does the tool check data quality first?**
+**Why does the tool check data availability first?**
 Because an analysis based on missing or invalid data could produce a misleading result.
 
 ## Useful ArduPilot documentation
@@ -457,6 +458,6 @@ Because an analysis based on missing or invalid data could produce a misleading 
 
 The Log Analysis feature makes it easier to understand what happened during an ArduPilot flight.
 
-Current detailed analyses include Battery, ESC, IMU, and Vibration. The system also performs data quality checks for other vehicle subsystems (GPS, FFT, Errors, Performance
+Current detailed analyses include Battery, ESC, IMU, and Vibration. The system also performs data availability checks for other vehicle subsystems (GPS, FFT, Errors, Performance
 Monitor, Arming, and Flight Mode). The best results come from a correctly configured vehicle, a complete flight log, and investigating the reported findings rather than
 blindly changing parameters.

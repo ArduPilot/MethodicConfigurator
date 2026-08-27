@@ -21,10 +21,10 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_report import (
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import VehicleInfo
 
 
-def test_report_status_counts_quality_issues_and_failed_steps() -> None:
+def test_report_status_counts_availability_issues_and_failed_steps() -> None:
     """Report status is calculated without building Tk widgets."""
     summary = MagicMock()
-    summary.quality_results = [MagicMock(issues=[object(), object()]), MagicMock(issues=[])]
+    summary.availability_results = [MagicMock(issues=[object(), object()]), MagicMock(issues=[])]
     summary.step_results = [MagicMock(valid=True), MagicMock(valid=False)]
 
     status = build_report_status(summary)
@@ -36,7 +36,7 @@ def test_report_status_counts_quality_issues_and_failed_steps() -> None:
 
 def test_report_status_is_healthy_when_no_issues() -> None:
     summary = MagicMock()
-    summary.quality_results = [MagicMock(issues=[])]
+    summary.availability_results = [MagicMock(issues=[])]
     summary.step_results = [MagicMock(valid=True)]
 
     status = build_report_status(summary)
