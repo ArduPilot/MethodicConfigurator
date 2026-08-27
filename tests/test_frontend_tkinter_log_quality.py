@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for ardupilot_methodic_configurator/frontend_tkinter_log_quality.py.
+Tests for ardupilot_methodic_configurator/frontend_tkinter_log_availability.py.
 
 This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
 
@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ardupilot_methodic_configurator.frontend_tkinter_log_availability import (
-    LogQualityReportWindow,
+    LogAvailabilityReportWindow,
     _format_parameter_value,
 )
 
@@ -46,16 +46,16 @@ def test_parameter_value_formatting_preserves_fractional_changes(value: float, e
 
 
 @pytest.mark.parametrize("upload_result", [None, True])
-def test_quality_fix_accepts_non_false_upload_result(upload_result: bool | None) -> None:
+def test_availability_fix_accepts_non_false_upload_result(upload_result: bool | None) -> None:
     """
     Treat callbacks without an explicit failure result as successful.
 
     GIVEN a parameter-fix callback returning None or True,
-    WHEN the quality report applies a fix,
+    WHEN the availability report applies a fix,
     THEN the displayed parameter state is updated and the dialog closes.
     """
     # Arrange: bypass Tk construction and provide a side-effect callback.
-    window = LogQualityReportWindow.__new__(LogQualityReportWindow)
+    window = LogAvailabilityReportWindow.__new__(LogAvailabilityReportWindow)
     window.summary = MagicMock(related_parameter_values={})
     window.upload_callback = MagicMock(return_value=upload_result)
     dialog = MagicMock()

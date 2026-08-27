@@ -40,9 +40,11 @@ def test_hardware_tab_shows_empty_state_when_report_has_no_sensors() -> None:
     )
 
     with (
-        patch("ardupilot_methodic_configurator.frontend_tkinter_log_hardware_quality.ScrollFrame", return_value=scroll_frame),
         patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_log_hardware_quality.ttk.Label",
+            "ardupilot_methodic_configurator.frontend_tkinter_log_hardware_availability.ScrollFrame", return_value=scroll_frame
+        ),
+        patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_log_hardware_availability.ttk.Label",
             return_value=label,
         ) as mock_label,
     ):
@@ -62,13 +64,13 @@ def test_release_link_opens_with_backend_internet_browser_helper() -> None:
     link_label = MagicMock()
 
     with (
-        patch("ardupilot_methodic_configurator.frontend_tkinter_log_quality.ttk.Frame", return_value=row),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_log_availability.ttk.Frame", return_value=row),
         patch(
-            "ardupilot_methodic_configurator.frontend_tkinter_log_quality.ttk.Label",
+            "ardupilot_methodic_configurator.frontend_tkinter_log_availability.ttk.Label",
             side_effect=[key_label, link_label],
         ),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_log_quality.show_tooltip"),
-        patch("ardupilot_methodic_configurator.frontend_tkinter_log_quality.webbrowser_open_url") as mock_open,
+        patch("ardupilot_methodic_configurator.frontend_tkinter_log_availability.show_tooltip"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_log_availability.webbrowser_open_url") as mock_open,
     ):
         report_window._add_clickable_key_value(parent, "Firmware:", "Copter-4.5.5", "https://example.test/release")  # pylint: disable=protected-access
 
