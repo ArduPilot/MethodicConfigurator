@@ -1,5 +1,5 @@
 """
-Log quality report window for the ArduPilot Methodic Configurator.
+Log availability report window for the ArduPilot Methodic Configurator.
 
 Displays a parsed ArduPilot .bin log analysis.
 
@@ -24,14 +24,14 @@ from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.formatting import format_filesize
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_log_analysis import LogAnalysisReportWindow
-from ardupilot_methodic_configurator.frontend_tkinter_log_hardware_quality import build_hardware_tab
+from ardupilot_methodic_configurator.frontend_tkinter_log_hardware_availability import build_hardware_tab
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
-    LogQualityResult,
-    LogQualityState,
-    QualityIssue,
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
+    AvailabilityIssue,
+    LogAvailabilityResult,
+    LogAvailabilityState,
     StepValidationResult,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_report import (
@@ -47,7 +47,7 @@ def _format_parameter_value(value: float) -> str:
     return str(int(value)) if value.is_integer() else str(value)
 
 
-class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
+class LogAvailabilityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
     """Displays log analysis results as a beginner-friendly, detailed dashboard."""
 
     # pylint: disable=duplicate-code
@@ -68,7 +68,7 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         self.upload_callback = upload_callback
         self.navigate_callback = navigate_callback
         self._parent_root = root_tk
-        self.root.title(_("Log Quality Report"))
+        self.root.title(_("Log Availability Report"))
         self.root.geometry(self.calculate_scaled_geometry(1000, 750))
         self.center_window(self.root, root_tk)
         self.root.resizable(width=True, height=True)
@@ -147,8 +147,8 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
 
     def _on_continue_to_analysis(self) -> None:
         pending_names = [
-            quality_result.name
-            for quality_result, analysis_result in self.summary.paired_quality_and_analysis_results()
+            availability_result.name
+            for availability_result, analysis_result in self.summary.paired_availability_and_analysis_results()
             if analysis_result is None
         ]
         if pending_names:
@@ -223,7 +223,7 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         dialog.destroy()
 
     @staticmethod
-    def _first_config_step(issues: list[QualityIssue]) -> str:
+    def _first_config_step(issues: list[AvailabilityIssue]) -> str:
         for issue in issues:
             if issue.config_step:
                 return issue.config_step
@@ -236,7 +236,7 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         self._parent_root.lift()
         self._parent_root.focus_force()
 
-    def _fixes_for_issues(self, issues: list[QualityIssue]) -> list[tuple[str, float, float, list[str]]]:
+    def _fixes_for_issues(self, issues: list[AvailabilityIssue]) -> list[tuple[str, float, float, list[str]]]:
         """
         Compute proposed parameter changes for a specific set of issues.
 
@@ -244,7 +244,7 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         LOG_BITMASK entries within the given issues are OR-merged; every other
         parameter takes its first suggested value.
         """
-        by_param: dict[str, list[QualityIssue]] = {}
+        by_param: dict[str, list[AvailabilityIssue]] = {}
         for issue in issues:
             if issue.param_name is not None and issue.suggested_value is not None:
                 by_param.setdefault(issue.param_name, []).append(issue)
@@ -326,22 +326,22 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         notebook = ttk.Notebook(self.main_frame)
         notebook.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=12, pady=(12, 12))
 
-        quality_frame = ttk.Frame(notebook)
-        notebook.add(quality_frame, text=_("  Quality Report  "))
-        self._build_quality_tab(quality_frame)
+        availability_frame = ttk.Frame(notebook)
+        notebook.add(availability_frame, text=_("  Data Availability Report  "))
+        self._build_availability_tab(availability_frame)
 
         hardware_frame = ttk.Frame(notebook)
         notebook.add(hardware_frame, text=_("  Hardware Overview  "))
         build_hardware_tab(hardware_frame, self.summary.hardware_report)
 
-    def _build_quality_tab(self, parent: ttk.Frame) -> None:  # pylint: disable=too-many-branches
+    def _build_availability_tab(self, parent: ttk.Frame) -> None:  # pylint: disable=too-many-branches
         scroll_container = ScrollFrame(parent)
         scroll_container.pack(fill=tk.BOTH, expand=True)
         inner = scroll_container.view_port
 
         absorbed_by_step: dict[str, list[StepValidationResult]] = {}
         for step_result in self.summary.step_results:
-            for q in self.summary.quality_results:
+            for q in self.summary.availability_results:
                 if q.related_step and q.related_step == step_result.step:
                     absorbed_by_step.setdefault(q.related_step, []).append(step_result)
                     break
@@ -351,8 +351,8 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
         needs_attention: list[tuple[str, object]] = []
         passed_checks: list[tuple[str, object]] = []
 
-        for q in self.summary.quality_results:
-            (passed_checks if q.state == LogQualityState.INFO else needs_attention).append(("quality", q))
+        for q in self.summary.availability_results:
+            (passed_checks if q.state == LogAvailabilityState.INFO else needs_attention).append(("availability", q))
         for s in self.summary.step_results:
             if s.step in absorbed_steps:
                 continue
@@ -363,10 +363,10 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
                 anchor=tk.W, padx=14, pady=(18, 6)
             )
             for kind, item in needs_attention:
-                if kind == "quality":
-                    quality_item = cast("LogQualityResult", item)
-                    quality_absorbed_steps = absorbed_by_step.get(quality_item.related_step, [])
-                    self._quality_result_card(inner, quality_item, quality_absorbed_steps)
+                if kind == "availability":
+                    availability_item = cast("LogAvailabilityResult", item)
+                    availability_absorbed_steps = absorbed_by_step.get(availability_item.related_step, [])
+                    self._availability_result_card(inner, availability_item, availability_absorbed_steps)
                 else:
                     self._step_result_card(inner, item)  # type: ignore[arg-type]
             ttk.Separator(inner, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=14, pady=(14, 14))
@@ -376,15 +376,15 @@ class LogQualityReportWindow(BaseWindow):  # pylint: disable=too-many-instance-a
                 anchor=tk.W, padx=14, pady=(10, 6)
             )
             for kind, item in passed_checks:
-                if kind == "quality":
-                    quality_item = cast("LogQualityResult", item)
-                    quality_absorbed_steps = absorbed_by_step.get(quality_item.related_step, [])
-                    self._quality_result_card(inner, quality_item, quality_absorbed_steps)
+                if kind == "availability":
+                    availability_item = cast("LogAvailabilityResult", item)
+                    availability_absorbed_steps = absorbed_by_step.get(availability_item.related_step, [])
+                    self._availability_result_card(inner, availability_item, availability_absorbed_steps)
                 else:
                     self._step_result_card(inner, item)  # type: ignore[arg-type]
 
-    def _quality_result_card(
-        self, parent: ttk.Frame, result: LogQualityResult, absorbed_steps: list[StepValidationResult]
+    def _availability_result_card(
+        self, parent: ttk.Frame, result: LogAvailabilityResult, absorbed_steps: list[StepValidationResult]
     ) -> None:
         card = ttk.Frame(parent)
         card.pack(fill=tk.X, padx=14, pady=6)

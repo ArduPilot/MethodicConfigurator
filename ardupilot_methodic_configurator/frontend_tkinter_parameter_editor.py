@@ -56,7 +56,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor import Co
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
-from ardupilot_methodic_configurator.frontend_tkinter_log_quality import LogQualityReportWindow
+from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
@@ -284,7 +284,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._tempcal_imu_progress_window: ProgressWindow | None = None
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
-        self._log_quality_report_window: LogQualityReportWindow | None = None
+        self._log_availability_report_window: LogAvailabilityReportWindow | None = None
         self._log_report_return_pending: bool = False
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
@@ -587,7 +587,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.on_analyse_log_click,
         )
         analyse_log_button.pack(side=tk.LEFT, padx=(8, 8))
-        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its quality"))
+        show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
 
         # Create Zip file for forum button
         zip_vehicle_for_forum_button = ttk.Button(
@@ -798,7 +798,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self.ui.show_error(_("Log Analysis Error"), str(e))
                     return
 
-                report_window = LogQualityReportWindow(
+                report_window = LogAvailabilityReportWindow(
                     self.root,
                     summary,
                     self.parameter_editor.get_vehicle_directory(),
@@ -807,20 +807,20 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     navigate_callback=self._navigate_to_config_step,
                     report=report,
                 )
-                self._log_quality_report_window = report_window
+                self._log_availability_report_window = report_window
 
-                if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("log_quality_report"):
-                    display_log_quality_report_usage_popup(report_window.root)
+                if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("log_availability_report"):
+                    display_log_availability_report_usage_popup(report_window.root)
 
         thread = threading.Thread(target=run_extraction, daemon=True)
         thread.start()
         self.root.after(100, check_done)
 
-        def display_log_quality_report_usage_popup(parent: tk.Tk | tk.Toplevel) -> None:
+        def display_log_availability_report_usage_popup(parent: tk.Tk | tk.Toplevel) -> None:
             usage_popup_window = BaseWindow(parent)
             usage_popup_window.root.withdraw()
             instructions_text = RichText(usage_popup_window.main_frame, height=12, width=80)
-            instructions_text.insert(tk.END, _("Log Quality Report\n\n"), "title")
+            instructions_text.insert(tk.END, _("Log availability Report\n\n"), "title")
             instructions_text.insert(
                 tk.END,
                 _(
@@ -836,8 +836,8 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             UsagePopupWindow.display(
                 cast("tk.Tk", parent),
                 usage_popup_window,
-                _("Log Quality Report"),
-                "log_quality_report",
+                _("Log availability Report"),
+                "log_availability_report",
                 "520x320",
                 instructions_text,
             )
@@ -1511,13 +1511,13 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not self._log_report_return_pending:
             return
         self._log_report_return_pending = False
-        if self._log_quality_report_window is not None and self.ui.ask_yesno(
-            _("Continue Log Quality Review"),
-            _("Parameters uploaded. Return to the log quality report to continue?"),
+        if self._log_availability_report_window is not None and self.ui.ask_yesno(
+            _("Continue Log availability Review"),
+            _("Parameters uploaded. Return to the log availability report to continue?"),
         ):
-            self._log_quality_report_window.root.deiconify()
-            self._log_quality_report_window.root.lift()
-            self._log_quality_report_window.root.focus_force()
+            self._log_availability_report_window.root.deiconify()
+            self._log_availability_report_window.root.lift()
+            self._log_availability_report_window.root.focus_force()
 
     # This function can recurse multiple times if there is an upload error
 

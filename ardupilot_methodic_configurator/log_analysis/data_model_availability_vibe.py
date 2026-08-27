@@ -1,5 +1,5 @@
 """
-Data model for VIBE quality check.
+Data model for VIBE availability check.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -11,14 +11,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from typing import Any
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_base import (
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
+    AvailabilityIssue,
     BaseLogAnalysisModel,
-    BaseLogQualityModel,
-    LogQualityResult,
-    QualityIssue,
+    BaseLogAvailabilityModel,
+    LogAvailabilityResult,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis, LogAnalysisResult
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 
 _VIBE_WARNING_THRESHOLD = 30.0
 _VIBE_SEVERE_THRESHOLD = 60.0
@@ -26,7 +26,7 @@ _VIBE_SEVERE_THRESHOLD = 60.0
 _VIBE_AXES = ("VibeX", "VibeY", "VibeZ")
 
 
-class VibeLogQualityModel(BaseLogQualityModel):
+class VibeLogAvailabilityModel(BaseLogAvailabilityModel):
     """
     Checks VIBE data presence and availability for analysis.
 
@@ -35,19 +35,19 @@ class VibeLogQualityModel(BaseLogQualityModel):
     guidance, or clip-count nuance) is deferred to a future analysis layer.
     """
 
-    def check(self) -> LogQualityResult:
+    def check(self) -> LogAvailabilityResult:
         records = self.log_data.get_message_columns("VIBE")
         if records is None or len(records) == 0:
             return self._diagnose_absence()
 
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
         for check in (self.check_vibe_levels, self.check_clipping):
             issues += check()
 
         step, name = self.resolve_message_step("VIBE", "VIBE")
         return self.build_result(issues, name, related_step=step)
 
-    def _diagnose_absence(self) -> LogQualityResult:
+    def _diagnose_absence(self) -> LogAvailabilityResult:
         """
         Diagnose why VIBE data is absent.
 
@@ -62,15 +62,15 @@ class VibeLogQualityModel(BaseLogQualityModel):
             "VIBE",
             not_logged_hint=_("check that IMU data is being logged, since VIBE is derived from it"),
         )
-        return LogQualityResult(
-            available=False, state=LogQualityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
+        return LogAvailabilityResult(
+            available=False, state=LogAvailabilityState.WARNING, reason=reason, issues=issues, name=name, related_step=step
         )
 
-    def check_vibe_levels(self) -> list[QualityIssue]:
+    def check_vibe_levels(self) -> list[AvailabilityIssue]:
         """Check that VibeX/Y/Z fields are present and have readable data."""
         return self.check_fields_present("VIBE", ("VibeX", "VibeY", "VibeZ"))
 
-    def check_clipping(self) -> list[QualityIssue]:
+    def check_clipping(self) -> list[AvailabilityIssue]:
         """Check that the Clip field is present and has readable data."""
         _clip, issues = self.field_values_or_issue(
             "VIBE",
@@ -85,7 +85,7 @@ class VibeLogAnalysis(BaseLogAnalysisModel):
     """
     VIBE analysis on the data from the log.
 
-    Runs after VIBE quality model passes with the required data.
+    Runs after VIBE availability model passes with the required data.
     """
 
     def analyse(self) -> LogAnalysisResult:

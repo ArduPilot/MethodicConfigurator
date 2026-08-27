@@ -1,5 +1,5 @@
 """
-ArduPilot log quality checker.
+ArduPilot log availability checker.
 
 Validates that the messages and params required by the Methodic Configurator configuration
 steps are present, also checks if a specific analysis can be performed and the logged records match their FMT schema.
@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
     MessageValidation,
     PMStatus,
     StepValidationResult,

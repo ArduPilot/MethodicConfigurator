@@ -1,5 +1,5 @@
 """
-Structured result types for log quality analysis.
+Structured result types for log availability analysis.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -12,15 +12,15 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 
-class LogQualityState(str, Enum):
-    """Semantic state for a quality-analysis result."""
+class LogAvailabilityState(str, Enum):
+    """Semantic state for a availability-analysis result."""
 
     INFO = "info"
     WARNING = "warning"
 
 
 @dataclass
-class QualityIssue:
+class AvailabilityIssue:
     """One detected issue, paired with the configuration step that would fix it."""
 
     message: str
@@ -30,13 +30,13 @@ class QualityIssue:
 
 
 @dataclass
-class LogQualityResult:
-    """Result produced by a subsystem quality model (battery, GPS, etc.)."""
+class LogAvailabilityResult:
+    """Result produced by a subsystem availability model (battery, GPS, etc.)."""
 
     available: bool
-    state: LogQualityState
+    state: LogAvailabilityState
     reason: str
-    issues: list[QualityIssue]
+    issues: list[AvailabilityIssue]
     name: str
     related_step: str = ""
     subsystem_key: str | None = None

@@ -1,5 +1,5 @@
 """
-Pure presentation helpers for log quality reports.
+Pure presentation helpers for log availability reports.
 
 These helpers keep report formatting and display decisions out of Tkinter
 widgets so they can be tested without a GUI.
@@ -20,7 +20,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview im
 
 @dataclass(frozen=True)
 class ReportStatus:
-    """Header status for the log quality report."""
+    """Header status for the log availability report."""
 
     text: str
     color: str
@@ -46,8 +46,8 @@ def format_duration(sec: float | None) -> str:
 
 
 def build_report_status(summary: LogSummary) -> ReportStatus:
-    """Return the report header status from quality and step results."""
-    issues_count = sum(len(res.issues) for res in summary.quality_results)
+    """Return the report header status from availability and step results."""
+    issues_count = sum(len(res.issues) for res in summary.availability_results)
     failed_steps = sum(1 for res in summary.step_results if not res.valid)
     total_problems = issues_count + failed_steps
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for log-analysis quality domain models.
+Tests for log-analysis availability domain models.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -10,13 +10,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import numpy as np
 
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_battery import (
+    BatteryLogAnalysis,
+    BatteryLogAvailabilityModel,
+)
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_esc import EscLogAnalysis, EscLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_gnss import GPSLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_pm import PmLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityState
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityState
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_battery import BatteryLogAnalysis, BatteryLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_esc import EscLogAnalysis, EscLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_gnss import GPSLogQualityModel
-from ardupilot_methodic_configurator.log_analysis.data_model_quality_pm import PmLogQualityModel
 
 
 def _context(
@@ -48,7 +51,7 @@ def _context(
 
 def test_battery_model_uses_apm_doc_to_diagnose_disabled_logging() -> None:
     """Missing BAT data should point to LOG_BITMASK when the bit is disabled."""
-    result = BatteryLogQualityModel(
+    result = BatteryLogAvailabilityModel(
         LogData(),
         _context(
             {"LOG_BITMASK": 0.0, "BATT_MONITOR": 4.0},
@@ -57,14 +60,14 @@ def test_battery_model_uses_apm_doc_to_diagnose_disabled_logging() -> None:
     ).check()
 
     assert result.available is False
-    assert result.state == LogQualityState.WARNING
+    assert result.state == LogAvailabilityState.WARNING
     assert result.issues[0].config_step == "05_battery.param"
     assert "LOG_BITMASK" in result.issues[0].message
 
 
 def test_gps_model_uses_apm_doc_to_diagnose_disabled_logging() -> None:
     """Missing GPS data should point to LOG_BITMASK when the GPS bit is disabled."""
-    result = GPSLogQualityModel(
+    result = GPSLogAvailabilityModel(
         LogData(),
         _context(
             {"LOG_BITMASK": 0.0, "GPS_TYPE": 1.0},
@@ -73,14 +76,14 @@ def test_gps_model_uses_apm_doc_to_diagnose_disabled_logging() -> None:
     ).check()
 
     assert result.available is False
-    assert result.state == LogQualityState.WARNING
+    assert result.state == LogAvailabilityState.WARNING
     assert result.issues[0].config_step == "06_gnss.param"
     assert "GPS logging" in result.reason
 
 
 def test_esc_model_uses_apm_doc_to_detect_non_dshot_configuration() -> None:
     """Missing ESC data should recommend DShot when MOT_PWM_TYPE is not one of the documented DShot values."""
-    result = EscLogQualityModel(
+    result = EscLogAvailabilityModel(
         LogData(),
         _context(
             {"MOT_PWM_TYPE": 3.0, "SCR_ENABLE": 1.0},
@@ -89,7 +92,7 @@ def test_esc_model_uses_apm_doc_to_detect_non_dshot_configuration() -> None:
     ).check()
 
     assert result.available is False
-    assert result.state == LogQualityState.WARNING
+    assert result.state == LogAvailabilityState.WARNING
     assert result.issues[0].config_step == "07_esc.param"
     assert "DShot" in result.issues[0].message
 
@@ -105,10 +108,10 @@ def test_battery_model_checks_present_log_data_without_datasource_access() -> No
         ),
     )
 
-    result = BatteryLogQualityModel(log_data, _context({"BATT_MONITOR": 4.0})).check()
+    result = BatteryLogAvailabilityModel(log_data, _context({"BATT_MONITOR": 4.0})).check()
 
     assert result.available is True
-    assert result.state == LogQualityState.WARNING
+    assert result.state == LogAvailabilityState.WARNING
     assert any("Voltage is zero" in issue.message for issue in result.issues)
 
 
@@ -123,10 +126,10 @@ def test_battery_model_rejects_non_finite_telemetry_values() -> None:
         ),
     )
 
-    result = BatteryLogQualityModel(log_data, _context({"BATT_MONITOR": 4.0})).check()
+    result = BatteryLogAvailabilityModel(log_data, _context({"BATT_MONITOR": 4.0})).check()
 
     assert result.available is True
-    assert result.state == LogQualityState.WARNING
+    assert result.state == LogAvailabilityState.WARNING
     assert len(result.issues) == 3
     assert all("non-finite telemetry values" in issue.message for issue in result.issues)
 
@@ -139,12 +142,12 @@ def test_battery_model_checks_failsafes_for_each_enabled_monitor() -> None:
         np.array([(22.0, 1.0, 0.1)], dtype=[("Volt", "f8"), ("Curr", "f8"), ("CurrTot", "f8")]),
     )
 
-    result = BatteryLogQualityModel(
+    result = BatteryLogAvailabilityModel(
         log_data,
         _context({"BATT_MONITOR": 4.0, "BATT2_MONITOR": 4.0, "BATT2_LOW_VOLT": 0.0, "BATT2_CRT_VOLT": 0.0}),
     ).check()
 
-    assert result.state == LogQualityState.WARNING
+    assert result.state == LogAvailabilityState.WARNING
     assert [issue.message for issue in result.issues] == [
         "Battery 2: low-voltage failsafe threshold disabled",
         "Battery 2: critical-voltage failsafe threshold disabled",
@@ -159,9 +162,9 @@ def test_pm_model_accepts_valid_legacy_schema_without_internal_error_fields() ->
         np.array([(20.0, 10_000.0, 0.0)], dtype=[("Load", "f8"), ("Mem", "f8"), ("NLon", "f8")]),
     )
 
-    result = PmLogQualityModel(log_data, _context({})).check()
+    result = PmLogAvailabilityModel(log_data, _context({})).check()
 
-    assert result.state == LogQualityState.INFO
+    assert result.state == LogAvailabilityState.INFO
 
 
 def test_battery_capacity_uses_canonical_amp_hours() -> None:

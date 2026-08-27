@@ -1,7 +1,7 @@
 """
-Base Quality model for all base classes and combined results.
+Base Availability model for all base classes and combined results.
 
-Defines the common result data model and the base class used by all subsystem quality analysis models.
+Defines the common result data model and the base class used by all subsystem availability analysis models.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -16,10 +16,10 @@ import numpy as np
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import (
-    LogQualityResult,
-    LogQualityState,
-    QualityIssue,
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
+    AvailabilityIssue,
+    LogAvailabilityResult,
+    LogAvailabilityState,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_parameter_derivation import ParameterDerivationInputs
 from ardupilot_methodic_configurator.log_analysis.utils import (
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 class BaseLogModel:
-    """Common log-data services shared by quality and analysis models."""
+    """Common log-data services shared by availability and analysis models."""
 
     def __init__(
         self,
@@ -83,20 +83,20 @@ class BaseLogModel:
         scaled: bool = True,
         missing_field_message: str,
         missing_values_message: str,
-    ) -> tuple[Any | None, list[QualityIssue]]:
+    ) -> tuple[Any | None, list[AvailabilityIssue]]:
         """Return field values or a single issue explaining why values are unavailable."""
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
         if not self.field_available(message_name, field_name):
-            issues.append(QualityIssue(missing_field_message))
+            issues.append(AvailabilityIssue(missing_field_message))
             return None, issues
 
         values = self.log_data.get_field(message_name, field_name, scaled=scaled)
         if len(values) == 0:
-            issues.append(QualityIssue(missing_values_message))
+            issues.append(AvailabilityIssue(missing_values_message))
             return None, issues
 
         if np.issubdtype(values.dtype, np.number) and not np.isfinite(values).all():
-            issues.append(QualityIssue(_("{field} contains non-finite telemetry values").format(field=field_name)))
+            issues.append(AvailabilityIssue(_("{field} contains non-finite telemetry values").format(field=field_name)))
             return None, issues
 
         return values, issues
@@ -108,7 +108,7 @@ class BaseLogModel:
         fallback_name: str,
         *,
         not_logged_hint: str,
-    ) -> tuple[str, list[QualityIssue], bool]:
+    ) -> tuple[str, list[AvailabilityIssue], bool]:
         """
         Diagnose absence of a message via LOG_BITMASK.
 
@@ -124,7 +124,7 @@ class BaseLogModel:
             reason = _("{message} logging is disabled in LOG_BITMASK").format(message=fallback_name)
             suggested_value = float(int(bitmask) | (1 << log_bit))
             issues = [
-                QualityIssue(
+                AvailabilityIssue(
                     _("Enable {message} logging (LOG_BITMASK bit)").format(message=fallback_name),
                     step,
                     param_name="LOG_BITMASK",
@@ -136,7 +136,7 @@ class BaseLogModel:
         reason = _("{message} telemetry not logged but logging enabled; {hint}").format(
             message=fallback_name, hint=not_logged_hint
         )
-        issues = [QualityIssue(_("No {message} messages found").format(message=message_name), step)]
+        issues = [AvailabilityIssue(_("No {message} messages found").format(message=message_name), step)]
         return reason, issues, False
 
     def check_fields_present(
@@ -145,9 +145,9 @@ class BaseLogModel:
         field_names: tuple[str, ...],
         *,
         scaled: bool = True,
-    ) -> list[QualityIssue]:
+    ) -> list[AvailabilityIssue]:
         """Check that each field in field_names exists on message_name and has readable data."""
-        issues: list[QualityIssue] = []
+        issues: list[AvailabilityIssue] = []
         for field_name in field_names:
             _values, field_issues = self.field_values_or_issue(
                 message_name,
@@ -164,21 +164,21 @@ class BaseLogModel:
         return issues
 
 
-class BaseLogQualityModel(BaseLogModel):
-    """Base class for subsystem quality models."""
+class BaseLogAvailabilityModel(BaseLogModel):
+    """Base class for subsystem availability models."""
 
-    def check(self) -> LogQualityResult:
-        """Run the model-specific quality analysis and return a result."""
+    def check(self) -> LogAvailabilityResult:
+        """Run the model-specific availability analysis and return a result."""
         msg = f"{self.__class__.__name__} must implement check()"
         raise NotImplementedError(msg)
 
-    def build_result(self, issues: list[QualityIssue], name: str, related_step: str = "") -> LogQualityResult:
-        return LogQualityResult(
+    def build_result(self, issues: list[AvailabilityIssue], name: str, related_step: str = "") -> LogAvailabilityResult:
+        return LogAvailabilityResult(
             available=True,
-            state=LogQualityState.INFO if not issues else LogQualityState.WARNING,
+            state=LogAvailabilityState.INFO if not issues else LogAvailabilityState.WARNING,
             reason=_("{name} data present and good for analysis").format(name=name)
             if not issues
-            else _("{name} data has quality issues").format(name=name),
+            else _("{name} data has availability issues").format(name=name),
             issues=issues,
             name=name,
             related_step=related_step,

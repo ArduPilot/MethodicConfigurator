@@ -71,7 +71,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.parameter_editor_table.repopulate = MagicMock()
     editor.parameter_editor_table.get_upload_selected_params = MagicMock(return_value={})
     editor.parameter_editor_table.view_port = MagicMock()
-    editor._log_quality_report_window = None
+    editor._log_availability_report_window = None
     editor._log_report_return_pending = False
     focus_widget = MagicMock()
     editor.parameter_editor_table.view_port.focus_get.return_value = focus_widget
@@ -739,7 +739,9 @@ class TestAnalyseLogClick:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
                 side_effect=fake_thread,
             ),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogQualityReportWindow") as mock_report,
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogAvailabilityReportWindow"
+            ) as mock_report,
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
                 return_value=False,
@@ -807,7 +809,7 @@ class TestAnalyseLogClick:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
                 side_effect=fake_thread,
             ),
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogQualityReportWindow"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogAvailabilityReportWindow"),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
                 return_value=False,
@@ -931,7 +933,7 @@ class TestAnalyseLogClick:
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread",
                 side_effect=fake_thread,
             ) as mock_thread,
-            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogQualityReportWindow"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.LogAvailabilityReportWindow"),
             patch(
                 "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.UsagePopupWindow.should_display",
                 return_value=False,

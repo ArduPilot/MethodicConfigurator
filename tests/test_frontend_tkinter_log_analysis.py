@@ -32,21 +32,21 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysisResult
-    from ardupilot_methodic_configurator.log_analysis.data_model_log_quality import LogQualityResult
+    from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityResult
 
 MODULE = "ardupilot_methodic_configurator.frontend_tkinter_log_analysis"
 
 # pylint: disable=protected-access, redefined-outer-name
 
 
-def _make_quality_issue(message: str = "issue", config_step: str | None = None) -> MagicMock:
+def _make_availability_issue(message: str = "issue", config_step: str | None = None) -> MagicMock:
     issue = MagicMock()
     issue.message = message
     issue.config_step = config_step
     return issue
 
 
-def _make_quality_result(
+def _make_availability_result(
     *,
     name: str = "Battery",
     available: bool = True,
@@ -97,7 +97,7 @@ def _make_analysis_result(
     return result
 
 
-def _make_summary(quality_results: list[MagicMock], analysis_results: list[MagicMock]) -> LogSummary:
+def _make_summary(availability_results: list[MagicMock], analysis_results: list[MagicMock]) -> LogSummary:
     return LogSummary(
         flight_duration_sec=None,
         file_size_bytes=0,
@@ -106,7 +106,7 @@ def _make_summary(quality_results: list[MagicMock], analysis_results: list[Magic
         parameter_count=0,
         pm_status=None,
         pm_validation=None,
-        quality_results=cast("list[LogQualityResult]", quality_results),
+        availability_results=cast("list[LogAvailabilityResult]", availability_results),
         analysis_results=cast("list[LogAnalysisResult]", analysis_results),
         step_results=[],
         hardware_report=MagicMock(),
@@ -115,42 +115,42 @@ def _make_summary(quality_results: list[MagicMock], analysis_results: list[Magic
     )
 
 
-class TestPairedQualityAndAnalysisResults:
-    """Cover stable-key pairing between quality and analysis results."""
+class TestPairedAvailabilityAndAnalysisResults:
+    """Cover stable-key pairing between availability and analysis results."""
 
-    def test_pairs_available_quality_with_its_analysis_result(self) -> None:
+    def test_pairs_available_availability_with_its_analysis_result(self) -> None:
         """
-        Quality models with an analysis counterpart are paired when data is available.
+        Availability models with an analysis counterpart are paired when data is available.
 
-        GIVEN: Battery has an analysis class and its quality check was available
+        GIVEN: Battery has an analysis class and its availability check was available
         WHEN: Results are paired
-        THEN: The quality result is paired with the corresponding analysis result
+        THEN: The availability result is paired with the corresponding analysis result
         """
-        quality = _make_quality_result(name="Battery", available=True)
+        availability = _make_availability_result(name="Battery", available=True)
         analysis = _make_analysis_result(name="Battery Analysis")
-        summary = _make_summary([quality], [analysis])
+        summary = _make_summary([availability], [analysis])
 
-        pairs = summary.paired_quality_and_analysis_results()
+        pairs = summary.paired_availability_and_analysis_results()
 
-        assert pairs == [(quality, analysis)]
+        assert pairs == [(availability, analysis)]
 
-    def test_pairs_unavailable_quality_with_none(self) -> None:
+    def test_pairs_unavailable_availability_with_none(self) -> None:
         """
-        Quality models whose data was unavailable pair with None instead of an analysis result.
+        Availability models whose data was unavailable pair with None instead of an analysis result.
 
-        GIVEN: Battery has an analysis class but the quality check reported unavailable
+        GIVEN: Battery has an analysis class but the availability check reported unavailable
         WHEN: Results are paired
         THEN: The analysis side of the pair is None
         AND: No analysis result is consumed from the iterator
         """
-        quality = _make_quality_result(name="ESC telemetry", available=False)
-        summary = _make_summary([quality], [])
+        availability = _make_availability_result(name="ESC telemetry", available=False)
+        summary = _make_summary([availability], [])
 
-        pairs = summary.paired_quality_and_analysis_results()
+        pairs = summary.paired_availability_and_analysis_results()
 
-        assert pairs == [(quality, None)]
+        assert pairs == [(availability, None)]
 
-    def test_skips_quality_models_with_no_analysis_class(self) -> None:
+    def test_skips_availability_models_with_no_analysis_class(self) -> None:
         """
         Subsystems with no analysis model (analysis_cls is None) are excluded entirely.
 
@@ -158,65 +158,65 @@ class TestPairedQualityAndAnalysisResults:
         WHEN: Results are paired
         THEN: GPS does not appear in the paired output at all
         """
-        quality = _make_quality_result(name="GPS", available=True, subsystem_key="gps")
-        summary = _make_summary([quality], [])
+        availability = _make_availability_result(name="GPS", available=True, subsystem_key="gps")
+        summary = _make_summary([availability], [])
 
-        pairs = summary.paired_quality_and_analysis_results()
+        pairs = summary.paired_availability_and_analysis_results()
 
         assert not pairs
 
-    def test_ignores_unregistered_prepended_quality_result(self) -> None:
+    def test_ignores_unregistered_prepended_availability_result(self) -> None:
         """
-        A single extra quality result (e.g. System Performance) prepended by analyze_log().
+        A single extra availability result (e.g. System Performance) prepended by analyze_log().
 
         GIVEN: the extra result has no subsystem key
         WHEN: Results are paired
         THEN: the keyed Battery entry is paired, independently of list position
         """
-        prepended = _make_quality_result(name="System Performance", available=True, subsystem_key=None)
-        battery_quality = _make_quality_result(name="Battery", available=True)
+        prepended = _make_availability_result(name="System Performance", available=True, subsystem_key=None)
+        battery_availability = _make_availability_result(name="Battery", available=True)
         analysis = _make_analysis_result(name="Battery Analysis")
-        summary = _make_summary([prepended, battery_quality], [analysis])
+        summary = _make_summary([prepended, battery_availability], [analysis])
 
-        pairs = summary.paired_quality_and_analysis_results()
+        pairs = summary.paired_availability_and_analysis_results()
 
-        assert pairs == [(battery_quality, analysis)]
+        assert pairs == [(battery_availability, analysis)]
 
     def test_ignores_results_without_a_registered_subsystem_key(self) -> None:
         """
         Unknown or legacy result entries do not affect keyed pairing.
 
-        GIVEN: quality results have no registered subsystem keys
+        GIVEN: availability results have no registered subsystem keys
         WHEN: Results are paired
         THEN: no positional pairing is attempted
         """
         summary = _make_summary(
             [
-                _make_quality_result(subsystem_key=None),
-                _make_quality_result(subsystem_key=None),
-                _make_quality_result(subsystem_key=None),
+                _make_availability_result(subsystem_key=None),
+                _make_availability_result(subsystem_key=None),
+                _make_availability_result(subsystem_key=None),
             ],
             [],
         )
 
-        assert summary.paired_quality_and_analysis_results() == []
+        assert summary.paired_availability_and_analysis_results() == []
 
 
 class TestCollectLinks:
-    """Cover step_info link de-duplication across quality issues and analysis outcomes."""
+    """Cover step_info link de-duplication across availability issues and analysis outcomes."""
 
-    def test_collects_link_from_quality_issue_step_info(self) -> None:
+    def test_collects_link_from_availability_issue_step_info(self) -> None:
         """
-        A quality issue's step_info with a wiki_url is included in the collected links.
+        A availability issue's step_info with a wiki_url is included in the collected links.
 
-        GIVEN: One quality issue carries step_info with a wiki_url
+        GIVEN: One availability issue carries step_info with a wiki_url
         WHEN: Links are collected
         THEN: That step_info dict is present in the returned list
         """
         step_info = {"wiki_url": "https://ardupilot.org/wiki", "wiki_text": "Wiki"}
-        quality_dict = {"issues": [{"step_info": step_info}]}
+        availability_dict = {"issues": [{"step_info": step_info}]}
 
-        links = _collect_links(quality_dict, None)
+        links = _collect_links(availability_dict, None)
 
         assert links == [step_info]
 
@@ -239,14 +239,14 @@ class TestCollectLinks:
         """
         The same (wiki_url, blog_url) pair appearing on multiple findings is only listed once.
 
-        GIVEN: Two quality issues reference the same step_info wiki_url and blog_url
+        GIVEN: Two availability issues reference the same step_info wiki_url and blog_url
         WHEN: Links are collected
         THEN: Only one entry appears in the result
         """
         step_info = {"wiki_url": "https://ardupilot.org/wiki", "blog_url": None}
-        quality_dict = {"issues": [{"step_info": step_info}, {"step_info": dict(step_info)}]}
+        availability_dict = {"issues": [{"step_info": step_info}, {"step_info": dict(step_info)}]}
 
-        links = _collect_links(quality_dict, None)
+        links = _collect_links(availability_dict, None)
 
         assert len(links) == 1
 
@@ -258,17 +258,17 @@ class TestCollectLinks:
         WHEN: Links are collected
         THEN: No links are returned
         """
-        quality_dict = {"issues": [{"step_info": {"wiki_url": None, "blog_url": None}}]}
+        availability_dict = {"issues": [{"step_info": {"wiki_url": None, "blog_url": None}}]}
 
-        links = _collect_links(quality_dict, None)
+        links = _collect_links(availability_dict, None)
 
         assert links == []
 
-    def test_returns_empty_list_when_no_quality_or_analysis_dicts_given(self) -> None:
+    def test_returns_empty_list_when_no_availability_or_analysis_dicts_given(self) -> None:
         """
-        Missing quality/analysis dicts (e.g. pending subsystem) produce no links, not an error.
+        Missing availability/analysis dicts (e.g. pending subsystem) produce no links, not an error.
 
-        GIVEN: Both quality_dict and analysis_dict are None
+        GIVEN: Both availability_dict and analysis_dict are None
         WHEN: Links are collected
         THEN: An empty list is returned
         """
@@ -284,9 +284,9 @@ class TestCollectLinks:
         WHEN: Links are collected
         THEN: No exception is raised and no link is added
         """
-        quality_dict = {"issues": [{"message": "no step info here"}]}
+        availability_dict = {"issues": [{"message": "no step info here"}]}
 
-        links = _collect_links(quality_dict, None)
+        links = _collect_links(availability_dict, None)
 
         assert links == []
 
@@ -424,7 +424,7 @@ class TestWindowConstruction:
         self,
         mocker: MockerFixture,
         patched_widgets: dict[str, MagicMock],
-        quality_results: list[MagicMock],
+        availability_results: list[MagicMock],
         analysis_results: list[MagicMock],
         *,
         report: dict | None = None,
@@ -432,7 +432,7 @@ class TestWindowConstruction:
     ) -> LogAnalysisReportWindow:
         mocker.patch.object(LogAnalysisReportWindow, "calculate_scaled_geometry", return_value="1050x800")
         mocker.patch.object(LogAnalysisReportWindow, "center_window")
-        summary = _make_summary(quality_results, analysis_results)
+        summary = _make_summary(availability_results, analysis_results)
 
         root = MagicMock()
 
@@ -447,16 +447,18 @@ class TestWindowConstruction:
         """
         The subsystem selector is preset to the first available subsystem on open.
 
-        GIVEN: Two quality/analysis pairs are present, Battery first
+        GIVEN: Two availability/analysis pairs are present, Battery first
         WHEN: The window is constructed
         THEN: The selector's set() is called with the first subsystem's name
         """
-        quality_battery = _make_quality_result(name="Battery", subsystem_key="battery")
-        quality_imu = _make_quality_result(name="IMU", subsystem_key="imu")
+        availability_battery = _make_availability_result(name="Battery", subsystem_key="battery")
+        availability_imu = _make_availability_result(name="IMU", subsystem_key="imu")
         analysis_battery = _make_analysis_result(name="Battery Analysis", subsystem_key="battery")
         analysis_imu = _make_analysis_result(name="IMU Analysis", subsystem_key="imu")
 
-        window = self._build_window(mocker, patched_widgets, [quality_battery, quality_imu], [analysis_battery, analysis_imu])
+        window = self._build_window(
+            mocker, patched_widgets, [availability_battery, availability_imu], [analysis_battery, analysis_imu]
+        )
 
         window.selector.set.assert_called_once_with("Battery")
 
@@ -466,7 +468,7 @@ class TestWindowConstruction:
         """
         An empty pairing list does not attempt to set a selector value.
 
-        GIVEN: No quality/analysis pairs exist (empty registry)
+        GIVEN: No availability/analysis pairs exist (empty registry)
         WHEN: The window is constructed
         THEN: The selector's set() is never called
         """
@@ -548,17 +550,17 @@ class TestRenderSubsystem:
 
     def test_shows_pending_message_for_unpaired_analysis(self, bare_window: LogAnalysisReportWindow) -> None:
         """
-        A subsystem with no analysis result (pending) shows its quality reason as the analysis text.
+        A subsystem with no analysis result (pending) shows its availability reason as the analysis text.
 
-        GIVEN: A subsystem paired with None (quality gate not yet passed)
+        GIVEN: A subsystem paired with None (availability gate not yet passed)
         WHEN: That subsystem is rendered
-        THEN: The Analysis section body includes the quality result's reason
+        THEN: The Analysis section body includes the availability result's reason
         """
         window = self._window_for_render(bare_window)
-        quality = _make_quality_result(name="ESC telemetry", reason="ESC telemetry not logged")
-        window.pairs = [(quality, None)]
+        availability = _make_availability_result(name="ESC telemetry", reason="ESC telemetry not logged")
+        window.pairs = [(availability, None)]
         window.report = None
-        window._report_quality_by_name = {}
+        window._report_availability_by_name = {}
         window._report_analysis_by_name = {}
 
         with (
@@ -579,11 +581,11 @@ class TestRenderSubsystem:
         THEN: The Analysis section body includes "No findings."
         """
         window = self._window_for_render(bare_window)
-        quality = _make_quality_result(name="VIBE", reason="VIBE data present and good for analysis")
+        availability = _make_availability_result(name="VIBE", reason="VIBE data present and good for analysis")
         analysis = _make_analysis_result(name="Vibration Analysis", outcomes=[])
-        window.pairs = [(quality, analysis)]
+        window.pairs = [(availability, analysis)]
         window.report = None
-        window._report_quality_by_name = {}
+        window._report_availability_by_name = {}
         window._report_analysis_by_name = {}
 
         with (
@@ -604,11 +606,11 @@ class TestRenderSubsystem:
         """
         window = self._window_for_render(bare_window)
         outcomes = [_make_outcome(message="first"), _make_outcome(message="second")]
-        quality = _make_quality_result(name="Battery")
+        availability = _make_availability_result(name="Battery")
         analysis = _make_analysis_result(name="Battery Analysis", outcomes=outcomes)
-        window.pairs = [(quality, analysis)]
+        window.pairs = [(availability, analysis)]
         window.report = None
-        window._report_quality_by_name = {}
+        window._report_availability_by_name = {}
         window._report_analysis_by_name = {}
 
         with (
@@ -623,7 +625,7 @@ class TestRenderSubsystem:
         mock_outcome_line.assert_any_call(outcomes[1])
 
     def test_actionable_outcome_exposes_a_parameter_fix(self, bare_window: LogAnalysisReportWindow) -> None:
-        """Analysis recommendations should use the same parameter-fix workflow as quality issues."""
+        """Analysis recommendations should use the same parameter-fix workflow as availability issues."""
         outcome = _make_outcome(param_name="MOT_SPIN_MIN", suggested_value=0.15)
         bare_window.summary.related_parameter_values = {"MOT_SPIN_MIN": 0.1}
 
@@ -663,11 +665,11 @@ class TestRenderSubsystem:
         THEN: "Hardware & Connections" is never passed to _section_heading
         """
         window = self._window_for_render(bare_window)
-        quality = _make_quality_result(name="ARM")
+        availability = _make_availability_result(name="ARM")
         analysis = _make_analysis_result(name="ARM Analysis", outcomes=[])
-        window.pairs = [(quality, analysis)]
+        window.pairs = [(availability, analysis)]
         window.report = {"vehicle_components": {}}
-        window._report_quality_by_name = {}
+        window._report_availability_by_name = {}
         window._report_analysis_by_name = {}
 
         with (

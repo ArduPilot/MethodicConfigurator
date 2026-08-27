@@ -10,8 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest.mock import MagicMock, patch
 
-from ardupilot_methodic_configurator.frontend_tkinter_log_hardware_quality import build_hardware_tab
-from ardupilot_methodic_configurator.frontend_tkinter_log_quality import LogQualityReportWindow
+from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
+from ardupilot_methodic_configurator.frontend_tkinter_log_hardware_availability import build_hardware_tab
 from ardupilot_methodic_configurator.log_analysis.data_model_vehicle_overview import HardwareReport, VehicleInfo
 
 
@@ -54,7 +54,7 @@ def test_hardware_tab_shows_empty_state_when_report_has_no_sensors() -> None:
 
 def test_release_link_opens_with_backend_internet_browser_helper() -> None:
     """Clickable report links should reuse the application's browser helper."""
-    report_window = LogQualityReportWindow.__new__(LogQualityReportWindow)
+    report_window = LogAvailabilityReportWindow.__new__(LogAvailabilityReportWindow)
     report_window.default_font_size = 11
     parent = MagicMock()
     row = MagicMock()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for ardupilot_methodic_configurator/log_analysis/data_model_log_quality_check.py.
+Tests for ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py.
 
 SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 
@@ -11,13 +11,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import numpy as np
 import pytest
 
-from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
-from ardupilot_methodic_configurator.log_analysis.data_model_log_quality_check import (
+from ardupilot_methodic_configurator.log_analysis.data_model_log_availability_check import (
     check_cpu_performance_message,
     get_pm_status,
     validate_configuration_steps_data,
     validate_fmt_schema,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
 
 # pylint: disable=redefined-outer-name
 
