@@ -766,6 +766,27 @@
             "external_tool_url": "https://github.com/ArduPilot/ardupilot/blob/master/libraries/AP_Scripting/applets/VTOL-quicktune.md",
             "mandatory_text": "80% mandatory (20% optional)",
             "auto_changed_by": "VTOL-quicktune lua script",
+            "add_parameters": {
+                "ATC_RAT_PIT_D": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_PIT_FLTD": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_PIT_FLTT": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_PIT_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_PIT_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_PIT_SMAX": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_RLL_D": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_RLL_FLTD": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_RLL_FLTT": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_RLL_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_RLL_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_RLL_SMAX": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_YAW_D": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_YAW_FLTD": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_YAW_FLTE": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_YAW_FLTT": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_YAW_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_YAW_P": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" },
+                "ATC_RAT_YAW_SMAX": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) <= Version('4.7')", "Change Reason": "Tuned by quiktune" }
+            },
             "old_filenames": ["21_quick_tune_results.param", "23_quick_tune_results.param"]
         },
         "31_inflight_magnetometer_fit_setup.param": {
@@ -782,7 +803,20 @@
             "autoimport_nondefault_regexp": ["MAGH_.*"],
             "forced_parameters": {
                 "MAGH_LOG_ENABLE": { "New Value": 1, "Change Reason": "Activates the logging of the MAGH.Active message" },
+                "QUIK_ENABLE": { "New Value": 0, "Change Reason": "Quiktune is now completed. Disable it so that we can use the same RC switch to operate the wp-advance script" },
                 "SCR_ENABLE": { "New Value": 1, "Change Reason": "Use lua scripting for MagFit flight path automation" }
+            },
+            "add_parameters": {
+                "MAGH_ALT_DELTA": { },
+                "MAGH_B": { },
+                "MAGH_CMD": { },
+                "MAGH_COUNT": { },
+                "MAGH_MIN_SPEED": { },
+                "MAGH_NUM_WP": { },
+                "MAGH_USE_LOITER": { },
+                "WAYPT_ADVANCE": { },
+                "WAYPT_ANNOUNCE": { },
+                "WAYPT_ANNOUNCE_S": { }
             },
             "jump_possible": {"66_everyday_use.param": "If you are impatient and do not want a fully optimized flight controller\nYou can skip some steps now.\n\nJump to '66_everyday_use.param' file?"},
             "old_filenames": ["22_inflight_magnetometer_fit_setup.param", "24_inflight_magnetometer_fit_setup.param"],
