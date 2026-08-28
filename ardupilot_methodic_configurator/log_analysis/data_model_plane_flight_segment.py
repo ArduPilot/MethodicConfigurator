@@ -22,7 +22,12 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_data import Log
 
 
 class PlaneFlightSegmentDetector:  # pylint: disable=too-few-public-methods
-    """Detect Plane flights from persistent GPS groundspeed evidence."""
+    """
+    Detect Plane flights from persistent GPS groundspeed evidence.
+
+    When the GPS schema provides the ``U`` flag, only samples from the active
+    receiver are used. Older schemas without that flag use all GPS records.
+    """
 
     MINIMUM_SPEED_M_S: ClassVar[float] = 5.0
     STALL_SPEED_MULTIPLIER: ClassVar[float] = 0.5
@@ -46,6 +51,10 @@ class PlaneFlightSegmentDetector:  # pylint: disable=too-few-public-methods
 
         time_s = log_data.get_field("GPS", "TimeUS")
         speed_m_s = log_data.get_field("GPS", "Spd")
+        if "U" in field_names:
+            active_receiver_samples = log_data.get_field("GPS", "U") == 1
+            time_s = time_s[active_receiver_samples]
+            speed_m_s = speed_m_s[active_receiver_samples]
         if not cls._usable_gps_values(time_s, speed_m_s):
             return FlightSegmentationResult(available=False, reason="GPS time or groundspeed values are unusable")
 

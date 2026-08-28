@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
-"""Tests for reusable flight segments and ArduPlane flight segmentation."""
+"""
+Tests for reusable flight segments and ArduPlane flight segmentation.
+
+This file is part of ArduPilot Methodic Configurator. https://github.com/ArduPilot/MethodicConfigurator
+
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
 
 import numpy as np
 import pytest
@@ -204,6 +212,30 @@ def test_elapsed_timestamp_gaps_count_toward_persistence() -> None:
     result = _detect([(0.0, 6.0), (10.0, 6.0), (11.0, 0.0), (50.0, 0.0)])
 
     assert result.segments == (FlightSegment(start_s=0.0, end_s=10.0, is_complete=True),)
+
+
+def test_detector_uses_only_active_receiver_when_gps_use_flag_is_available() -> None:
+    log_data = LogData()
+    log_data.add_message_columns(
+        "GPS",
+        np.array(
+            [
+                (0.0, 6.0, 0, 1),
+                (0.1, 0.0, 1, 0),
+                (2.0, 6.0, 0, 1),
+                (2.1, 0.0, 1, 0),
+                (3.0, 0.0, 0, 1),
+                (3.1, 0.0, 1, 0),
+                (33.0, 0.0, 0, 1),
+                (33.1, 0.0, 1, 0),
+            ],
+            dtype=[("TimeUS", "f8"), ("Spd", "f8"), ("I", "u1"), ("U", "u1")],
+        ),
+    )
+
+    result = PlaneFlightSegmentDetector.detect(log_data, {})
+
+    assert result.segments == (FlightSegment(start_s=0.0, end_s=2.0, is_complete=True),)
 
 
 def test_detector_uses_log_data_scaled_seconds() -> None:
