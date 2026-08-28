@@ -2,573 +2,298 @@
 
 ## Overview
 
-The Flight Controller Communication sub-application establishes connection to the flight controller,
-retrieves hardware information, downloads parameters and their default values.
-This is a critical component that enables the ArduPilot Methodic Configurator to communicate with
-ArduPilot-based flight controllers using the MAVLink protocol.
+The Flight Controller Communication sub-application connects the application to an ArduPilot
+flight controller over MAVLink, retrieves controller information, and downloads or changes
+parameters. When the controller advertises MAVFTP support, it can also retrieve parameter defaults
+and transfer files.
+
+Communication operations are synchronous. Progress callbacks report work to the UI, but do not
+make MAVLink, MAVFTP, or command operations concurrent or non-blocking.
 
 ## Requirements Analysis
 
-### Functional Requirements - Implementation Status
+### Functional Requirements — Implementation Status
 
 1. **Connection Management**
-   - ✅ Supports multiple connection types via `discover_connections()` (USB, TCP, UDP, serial)
-   - ✅ Auto-detects available flight controllers using `serial.tools.list_ports` and network ports
-   - ✅ Handles connection establishment via `connect()`, maintenance via heartbeat, and termination via `disconnect()`
-   - ✅ Supports reconnection after connection loss with retry logic in `__create_connection_with_retry()`
-   - ✅ Validates connection integrity through MAVLink protocol and timeout handling
+   - ✅ Supports serial, TCP, and UDP connection strings.
+   - ✅ Enumerates local serial ports and presents configured network connection strings.
+   - ✅ Establishes a connection with `connect()`, validates it by receiving heartbeats, and closes it with `disconnect()`.
+   - ✅ Passes retry and `autoreconnect` settings to the pymavlink connection factory.
+   - ⚠️ The application does not implement a separate background heartbeat monitor, connection-state machine, or exponential-backoff policy.
 
 2. **Hardware Information Retrieval**
-   - ✅ Identifies flight controller type via `BackendFlightcontrollerInfo` class
-   - ✅ Retrieves firmware version information via `__process_autopilot_version()`
-   - ✅ Detects available sensors through MAVLink AUTOPILOT_VERSION message
-   - ✅ Reads hardware configuration and board type from autopilot version message
-   - ✅ Supports multiple ArduPilot vehicle types (Copter, Plane, Rover, etc.) via vehicle type detection
+   - ✅ Stores controller metadata in `FlightControllerInfo`.
+   - ✅ Retrieves and processes `AUTOPILOT_VERSION` through `_process_autopilot_version()`.
+   - ✅ Determines MAVLink capabilities, board details, firmware version, and vehicle type from MAVLink messages and banner text.
+   - ⚠️ Capability information describes protocol support; it is not a complete inventory of physical sensors.
 
 3. **Parameter Operations**
-   - ✅ Downloads all parameters via `download_params()` with both MAVLink and MAVFTP methods
-   - ✅ Retrieves parameter metadata using `annotate_params.Par` class
-   - ✅ Downloads default parameter values via `download_params_via_mavftp()`
-   - ✅ Handles parameter validation and bounds checking through parameter type validation
-   - ✅ Supports parameter upload via `set_param()` and verification
+   - ✅ Downloads parameters through MAVFTP when supported, with MAVLink `PARAM_REQUEST_LIST` fallback.
+   - ✅ Downloads parameter defaults only through the MAVFTP path.
+   - ✅ Validates parameter names and numeric value types before sending a parameter write.
+   - ⚠️ `set_param()` reports whether the send operation succeeded; MAVLink parameter writes have no command ACK here. Callers must use `fetch_param()` or re-download parameters to verify the controller state.
 
 4. **Protocol Support**
-   - ✅ Implements MAVLink parameter protocol using `pymavlink.mavutil`
-   - ✅ Supports FTP-over-MAVLink via `MAVFTP` class (1656 lines of implementation)
-   - ✅ Handles protocol version negotiation through mavutil connection
-   - ✅ Supports heartbeat and keepalive mechanisms built into pymavlink
-   - ✅ Handles message sequencing and acknowledgments via pymavlink framework
+   - ✅ Uses pymavlink for MAVLink messages, connection creation, retries, and reconnect support.
+   - ✅ Implements MAVFTP file and parameter transfers in `MAVFTP`.
+   - ✅ Handles command acknowledgements for MAVLink commands through `send_command_and_wait_ack()`.
+   - ⚠️ Protocol dialect/version handling and message validation are provided by pymavlink; this sub-application has no explicit protocol-version negotiation layer.
 
 5. **Error Recovery** ⚠️ **PARTIALLY IMPLEMENTED**
-   - ✅ Detects and handles communication timeouts via connection timeout parameters
-   - ✅ Retries failed operations with exponential backoff in `__create_connection_with_retry()`
-   - ⚠️ Partial parameter download recovery (basic retry logic, no resume capability)
-   - ✅ Recovers from protocol errors gracefully with comprehensive exception handling
-   - ✅ Maintains connection state awareness through connection status tracking
+   - ✅ Reports connection, timeout, and protocol errors with contextual guidance where available.
+   - ✅ Falls back from MAVFTP parameter download to MAVLink parameter download.
+   - ⚠️ Parameter transfers do not resume after interruption; an incomplete MAVLink download is rejected.
+   - ⚠️ There is no application-level operation-resumption or exponential-backoff mechanism.
 
-### Non-Functional Requirements - Implementation Status
+### Non-Functional Requirements — Implementation Status
 
 1. **Performance**
-   - ✅ Connection establishment completes efficiently with retry mechanism
-   - ✅ Parameter download handles 1000+ parameters via optimized MAVFTP and MAVLink methods
-   - ✅ Supports concurrent operations through progress callbacks and non-blocking operations
-   - ✅ Memory usage optimized for large parameter sets using streaming and chunked operations
+   - ✅ Uses MAVFTP when the controller advertises support and provides transfer progress callbacks.
+   - ⚠️ Download, command, and connection operations use polling and blocking waits. They should be invoked from an appropriate UI workflow to avoid blocking the event loop.
+   - ⚠️ No performance limit for parameter count or memory consumption is enforced or benchmarked by this component.
 
 2. **Reliability** ⚠️ **PARTIALLY IMPLEMENTED**
-   - ✅ Handles unstable connections gracefully with comprehensive error handling
-   - ✅ Parameter operations include verification via `set_param()` confirmation
-   - ✅ Maintains data integrity during transfers using MAVLink/MAVFTP protocols
-   - ❌ **TODO**: No operation resumption after interruption (would need state persistence)
+   - ✅ Checks for a connection before most controller operations and returns structured error messages for many failures.
+   - ✅ Verifies command results when the MAVLink command protocol provides `COMMAND_ACK`.
+   - ⚠️ Parameter writes require explicit read-back for verification.
+   - ❌ **TODO**: Interrupted operations cannot be resumed from persisted state.
 
 3. **Compatibility**
-   - ✅ Supports multiple ArduPilot firmware versions via dynamic protocol handling
-   - ✅ Handles different flight controller hardware variants through auto-detection
-   - ✅ Adapts to different MAVLink protocol versions via pymavlink compatibility layer
-   - ✅ Supports legacy and current parameter formats through flexible parameter parsing
+   - ✅ Supports ArduPilot vehicle types identified from MAVLink heartbeats.
+   - ✅ Uses MAVLink capabilities to select the MAVFTP parameter-download path.
+   - ⚠️ The connection flow requires `AUTOPILOT_VERSION`; its error message documents support for ArduPilot versions newer than 4.3.8.
 
 4. **Security** ⚠️ **PARTIALLY IMPLEMENTED**
-   - ✅ Validates received data through MAVLink protocol validation
-   - ✅ Protects against malformed messages via pymavlink message validation
-   - ❌ **TODO**: No authentication implementation (MAVLink auth not implemented)
-   - ✅ Parameter modification protection through validation and confirmation
+   - ✅ Validates parameter names and value types before sending parameter writes.
+   - ⚠️ Message parsing and transport-level validation are delegated to pymavlink; this is not an end-to-end integrity or authorization guarantee.
+   - ❌ **TODO**: MAVLink signing/authentication is not implemented by this component.
+   - ⚠️ Parameter-write confirmation requires an explicit read-back, not a `set_param()` acknowledgement.
 
 ## Architecture
 
-### Architectural Pattern - Delegation with Specialized Managers
+### Architectural Pattern — Delegation with Specialized Managers
 
-The flight controller communication system uses a **delegation pattern** where the main
-`FlightController` class acts as a facade, delegating operations to specialized manager classes.
-This architecture provides:
+`FlightController` is a facade that delegates work to specialized manager classes. The connection
+manager owns the live MAVLink connection and is the sole mutator of the shared
+`FlightControllerInfo` instance. Other managers hold references to the connection and parameter
+managers through protocols and query them as needed. The commands manager additionally caches the
+most recent battery telemetry for a short period.
 
-- **Clear separation of concerns**: Each manager handles one specific aspect
-- **Better testability**: Managers can be independently tested and mocked
-- **Dependency injection support**: Protocol definitions enable test doubles
-- **Single source of truth**: Connection manager owns connection state
-- **No shared mutable state**: Managers query each other rather than caching references
+This arrangement provides clear responsibilities, dependency injection for tests, and a single
+owner for connection state. It does include deliberately shared mutable state (`FlightControllerInfo`
+and the parameter dictionary); the ownership and mutation rules above are the relevant invariant.
 
 ### Components
 
 #### Flight Controller Facade
 
 - **File**: `backend_flightcontroller.py`
-- **Purpose**: Main entry point that delegates to specialized managers
-- **Key Classes**:
-  - `FlightController`: Facade class coordinating all operations
-- **Key Methods**:
-  - `connect()`: Delegates to connection manager
-  - `download_params()`: Delegates to params manager
-  - `set_param()`: Delegates to params manager (returns `tuple[bool, str]`)
-  - `test_motor()`: Delegates to commands manager
-  - `upload_file()`: Delegates to files manager
-- **Delegation Pattern**:
+- **Class**: `FlightController`
+- **Purpose**: Main entry point that creates or accepts the managers and delegates their public operations.
+- **Delegates**:
   - Connection operations → `_connection_manager`
   - Parameter operations → `_params_manager`
   - Command execution → `_commands_manager`
   - File operations → `_files_manager`
-- **Actual Dependencies**:
-  - `FlightControllerConnection` for connection management
-  - `FlightControllerParams` for parameter operations
-  - `FlightControllerCommands` for command execution
-  - `FlightControllerFiles` for file operations
-  - Protocol definitions for dependency injection
+- **Representative methods**: `connect()`, `download_params()`, `set_param()`, `test_motor()`, and `upload_file()`.
 
 #### Connection Manager
 
 - **File**: `backend_flightcontroller_connection.py`
-- **Purpose**: Manages flight controller connection lifecycle
-- **Key Classes**:
-  - `FlightControllerConnection`: Connection establishment and management
-  - `FakeSerialForTests`: Mock serial class for unit testing
-- **Key Methods**:
-  - `connect()`: Establishes connection with retry logic
-  - `disconnect()`: Closes connection gracefully
-  - `discover_connections(preserved_connections)`: Auto-detects available ports and merges caller-supplied
-    history entries that are not physically present on the bus
-  - `register_and_try_connect()`: Registers and connects to port
-  - `create_connection_with_retry()`: Connection with retry logic
-- **Responsibilities**:
-  - Port discovery (serial and network)
-  - Connection establishment and retries
-  - Heartbeat detection and vehicle identification
-  - Autopilot version and banner retrieval
-  - **Sole mutator of `FlightControllerInfo`** (single source of truth)
-- **Actual Dependencies**:
-  - `pymavlink.mavutil` for MAVLink protocol
-  - `serial.tools.list_ports` for port discovery
-  - `FlightControllerInfo` for metadata storage
-  - `time` and `logging` for operations
+- **Classes**: `FlightControllerConnection`, `FakeSerialForTests`
+- **Purpose**: Discovers connection choices, establishes and closes MAVLink connections, selects a supported autopilot from heartbeats, and populates `FlightControllerInfo`.
+- **Key methods**:
+  - `connect()` — connects to an explicit device or tries auto-detected choices.
+  - `disconnect()` — closes the current connection, clears the banner buffer, and resets controller information.
+  - `discover_connections(preserved_connections)` — merges locally enumerated serial ports, configured network endpoints, and persisted choices.
+  - `_register_and_try_connect()` and `create_connection_with_retry()` — internal connection helpers.
+- **Connection validation**: `_detect_vehicles_from_heartbeats()` is used during connection establishment; `_retrieve_autopilot_version_and_banner()` then requests controller details.
+- **Dependencies**: pymavlink, pyserial port discovery, `FlightControllerInfo`, time, and logging.
 
 #### Parameters Manager
 
 - **File**: `backend_flightcontroller_params.py`
-- **Purpose**: Manages all parameter-related operations
-- **Key Classes**:
-  - `FlightControllerParams`: Parameter download, set, and fetch
-- **Key Methods**:
-  - `download_params()`: Downloads via MAVLink or MAVFTP
-  - `set_param()`: Sets parameter (returns `tuple[bool, str]`)
-  - `fetch_param()`: Fetches single parameter with timeout
-  - `get_param()`: Gets parameter from cache with default
-- **Responsibilities**:
-  - Parameter downloads (MAVLink and MAVFTP)
-  - Parameter cache management
-  - Individual parameter operations
-  - Default parameter handling
-- **Query Pattern**: Queries connection manager for `master`, `info`, `comport_device`
-- **Actual Dependencies**:
-  - `FlightControllerConnectionProtocol` for connection state
-  - `MAVFTP` for efficient parameter downloads
-  - `ParDict` for parameter storage
+- **Class**: `FlightControllerParams`
+- **Purpose**: Downloads, stores, sends, fetches, and clears controller parameters.
+- **Key methods**:
+  - `download_params()` — tries `_download_params_via_mavftp()` when supported, otherwise uses `_download_params_via_mavlink()`.
+  - `set_param()` — validates then sends a parameter write; it does not verify the new value.
+  - `fetch_param()` — fetches one parameter and can be used for read-back verification.
+  - `get_param()` — reads the local parameter dictionary with a default.
+- **State**: Owns `fc_parameters`; it queries the connection manager for `master`, `info`, and `comport_device`.
+- **Dependencies**: `FlightControllerConnectionProtocol`, MAVFTP factory functions, `Par`, and `ParDict`.
 
 #### Commands Manager
 
 - **File**: `backend_flightcontroller_commands.py`
-- **Purpose**: Executes MAVLink commands and queries status
-- **Key Classes**:
-  - `FlightControllerCommands`: Command execution and status queries
-- **Key Methods**:
-  - `send_command_and_wait_ack()`: Sends command and waits for ACK
-  - `test_motor()`: Tests individual motor
-  - `test_all_motors()`: Tests all motors simultaneously
-  - `stop_all_motors()`: Emergency stop
-  - `get_battery_status()`: Queries battery telemetry
-  - `reset_all_parameters_to_default()`: Resets parameters
-- **Responsibilities**:
-  - Motor testing operations
-  - Battery status monitoring
-  - Command acknowledgment handling
-  - Parameter reset operations
-- **Query Pattern**:
-  - Queries params manager for parameter values (no caching)
-  - Queries connection manager for `master` connection
-- **Actual Dependencies**:
-  - `FlightControllerConnectionProtocol` for connection
-  - `FlightControllerParamsProtocol` for parameters
-  - Business logic functions for calculations
+- **Class**: `FlightControllerCommands`
+- **Purpose**: Sends MAVLink commands, waits for command acknowledgements, and provides controller-status helpers.
+- **Key methods**: `send_command_and_wait_ack()`, motor-test operations, `reset_all_parameters_to_default()`, and `get_battery_status()`.
+- **State and query pattern**: Queries the parameter manager for parameter values and the connection manager for `master`. It caches the latest battery telemetry briefly.
+- **Dependencies**: connection and parameter protocols plus pure business-logic functions.
 
 #### Files Manager
 
 - **File**: `backend_flightcontroller_files.py`
-- **Purpose**: Handles file operations via MAVFTP
-- **Key Classes**:
-  - `FlightControllerFiles`: File upload/download operations
-- **Key Methods**:
-  - `upload_file()`: Uploads file to flight controller
-  - `download_last_flight_log()`: Downloads latest log file
-- **Responsibilities**:
-  - File upload via MAVFTP
-  - File download via MAVFTP
-  - Directory scanning and log detection
-- **Query Pattern**: Queries connection manager for `master` and `info`
-- **Actual Dependencies**:
-  - `FlightControllerConnectionProtocol` for connection
-  - `MAVFTP` for file transfer protocol
+- **Class**: `FlightControllerFiles`
+- **Purpose**: Uploads files and downloads the latest flight log through MAVFTP.
+- **Key methods**: `upload_file()` and `download_last_flight_log()`.
+- **Query pattern**: Queries the connection manager for `master` and `info`; it checks MAVFTP support before downloading a log.
 
 #### Protocol Definitions
 
 - **File**: `backend_flightcontroller_protocols.py`
-- **Purpose**: Protocol interfaces for dependency injection and testing
-- **Key Protocols**:
-  - `FlightControllerConnectionProtocol`: Connection manager contract
-  - `FlightControllerParamsProtocol`: Parameters manager contract
-  - `FlightControllerCommandsProtocol`: Commands manager contract
-  - `FlightControllerFilesProtocol`: Files manager contract
-- **Type Conventions**: `preserved_connections` is typed as `Optional[Sequence[str]]` (read-only iterable contract)
-  rather than `list[str]`, allowing callers to pass tuples or other sequences without forcing materialisation.
-- **Type Checking Pattern**:
-
-  ```python
-  from typing import TYPE_CHECKING
-
-  if TYPE_CHECKING:
-      from backend_flightcontroller_protocols import FlightControllerConnectionProtocol
-  ```
-
-  This prevents circular imports while enabling type hints
-- **Benefits**:
-  - Enables dependency injection for testing
-  - Documents contracts between components
-  - Supports mock implementations
-  - Prevents circular import issues
+- **Purpose**: Defines structural contracts used for dependency injection and tests.
+- **Key protocols**: `FlightControllerConnectionProtocol`, `FlightControllerParamsProtocol`, `FlightControllerCommandsProtocol`, and `FlightControllerFilesProtocol`.
+- `preserved_connections` uses `Sequence[str] | None`, allowing callers to provide a list, tuple, or another sequence without requiring a mutable list.
 
 #### Business Logic Functions
 
 - **File**: `backend_flightcontroller_business_logic.py`
-- **Purpose**: Pure functions for calculations and validations
-- **Key Functions**:
-  - `calculate_voltage_thresholds()`: Battery voltage limits
-  - `is_battery_monitoring_enabled()`: Battery monitoring check
-  - `get_frame_info()`: Frame class and type extraction
-  - `validate_battery_voltage()`: Voltage safety validation
-- **Benefits**:
-  - Stateless and side-effect-free
-  - Easily testable without mocks
-  - Reusable across components
-  - Clear business rules
+- **Purpose**: Holds side-effect-free calculations and validations shared by controller commands.
+- **Representative functions**: `calculate_voltage_thresholds()`, `is_battery_monitoring_enabled()`, `get_frame_info()`, and `validate_battery_voltage()`.
 
-#### MAVFTP Utilities
+#### MAVFTP Factory and Backend
 
-- **File**: `backend_flightcontroller_factory_mavftp.py`
-- **Purpose**: Factory functions for MAVFTP instances
-- **Key Functions**:
-  - `create_mavftp()`: Creates MAVFTP instance with error handling
-  - `create_mavftp_safe()`: Safe creation returning None on failure
-- **Benefits**:
-  - Centralized MAVFTP creation
-  - Consistent error handling
-  - Mockable for testing
+- **Files**: `backend_flightcontroller_factory_mavftp.py`, `backend_mavftp.py`
+- **Purpose**: Create `MAVFTP` instances and implement MAVLink FTP operations.
+- `create_mavftp()` raises when no connection is available. `create_mavftp_safe()` returns `None` when creation is unavailable or fails.
+- `MAVFTP` implements file listing, uploads, downloads, parameter retrieval, progress reporting, CRC operations, and burst-read support.
 
-#### MAVLink FTP Backend
-
-- **File**: `backend_mavftp.py`
-- **Purpose**: File transfer operations over MAVLink (1656 lines of implementation)
-- **Key Classes**:
-  - `MAVFTP`: Complete FTP-over-MAVLink implementation
-- **Key Operations**:
-  - File upload/download via FTP-over-MAVLink protocol
-  - Directory operations and file management
-  - Large file transfer with progress tracking
-  - CRC32 file verification and burst read operations
-- **Actual Dependencies**:
-  - `pymavlink.mavutil` for MAVLink message handling
-  - `struct` for binary data packing/unpacking
-  - `random` for session ID generation
-  - `os` and `time` for file system operations
-
-#### Flight Controller Info Backend
+#### Flight Controller Information Model
 
 - **File**: `data_model_flightcontroller_info.py`
-- **Purpose**: Hardware information management and processing
-- **Key Classes**:
-  - `BackendFlightcontrollerInfo`: Processes and stores FC information
-- **Responsibilities**:
-  - Hardware type identification via autopilot version processing
-  - Capability detection from MAVLink messages
-  - Vehicle type determination and logging
-  - Firmware version parsing and validation
+- **Class**: `FlightControllerInfo`
+- **Purpose**: Stores and derives flight-controller metadata from heartbeat, `AUTOPILOT_VERSION`, and banner data, including capabilities, board information, firmware details, and vehicle type.
 
-#### Flight Controller ID data_model
+#### Flight Controller ID Model
 
-- **File**: `data_model_fc_ids.py` (Auto-generated)
-- **Purpose**: Flight controller hardware identification mappings
-- **Key Features**:
-  - Hardware type identification using board IDs
-  - Capability detection based on hardware database
-  - Board-specific configuration mapping
-  - Version compatibility checking against known hardware
+- **File**: `data_model_fc_ids.py`
+- **Purpose**: Provides board-ID mappings used while deriving controller hardware information.
 
 #### Connection Selection UI
 
 - **File**: `frontend_tkinter_connection_selection.py`
-- **Purpose**: User interface for connection management
-- **Key Classes**:
-  - `ConnectionSelectionWidgets`: Manages connection UI components
-  - `ConnectionSelectionWindow`: Main window for connection selection
-- **Key Features**:
-  - Connection type selection via `PairTupleCombobox`
-  - Auto-detection display of available ports
-  - Manual connection configuration with custom dialogs
-  - Connection status feedback via progress windows
-  - 3-second periodic port refresh via `_refresh_ports()` that preserves history entries not currently on the bus
-  - In-memory `_connection_history_cache` loaded once at init from `ProgramSettings` to avoid repeated disk I/O on every refresh cycle;
-    updated in-memory after each successful connection or manual add
-  - `reconnect()` persists the user-selected connection string (falling back to the detected device path for auto-connect) rather than
-    the possibly resolved symlink target (e.g. `/dev/ttyACM0`)
-- **Actual Dependencies**:
-  - `tkinter` and `tkinter.ttk` for GUI components
-  - `PairTupleCombobox` for connection selection widget
-  - `BaseWindow` for consistent window behavior
-  - `ProgressWindow` for connection progress display
-  - `ProgramSettings` for persistent connection history
+- **Classes**: `ConnectionSelectionWidgets`, `ConnectionSelectionWindow`
+- **Purpose**: Lets the user choose or add a connection and provides progress/status feedback.
+- **Key behavior**: `_refresh_ports()` refreshes choices every three seconds while preserving connection history cached from `ProgramSettings`. `reconnect()` persists the user-selected connection string where possible.
 
-#### Flight Controller Info UI
+#### Flight Controller Information UI
 
 - **File**: `frontend_tkinter_flightcontroller_info.py`
-- **Purpose**: Display flight controller information and download progress
-- **Key Classes**:
-  - `FlightControllerInfoPresenter`: Business logic separated from UI
-  - `FlightControllerInfoWindow`: Main information display window
-- **Key Features**:
-  - Hardware information display in formatted layout
-  - Parameter download progress with real-time updates
-  - Error message presentation via message boxes
-  - Operation status updates and logging integration
-- **Actual Dependencies**:
-  - `tkinter` and `tkinter.ttk` for GUI components
-  - `BaseWindow` for consistent window behavior
-  - `ProgressWindow` for parameter download progress
-  - `annotate_params.Par` for parameter handling
+- **Classes**: `FlightControllerInfoPresenter`, `FlightControllerInfoWindow`
+- **Purpose**: Presents flight-controller information and parameter-download progress.
 
 ### Data Flow
 
-1. **Application Startup and Connection Initialization**
-   - Called from `__main__.py` via `connect_to_fc_and_set_vehicle_type()` function
-   - `FlightController` facade created with dependency injection support
-   - Connection manager initialized with `FlightControllerInfo` instance
-   - Params, commands, and files managers initialized with protocol references
-   - `discover_connections()` delegates to connection manager for port detection
-   - If connection fails, `ConnectionSelectionWindow` is displayed for manual selection
+1. **Startup and initialization**
+   - `connect_to_fc_and_set_vehicle_type()` creates a `FlightController` facade.
+   - The facade constructs or receives the connection, parameter, command, and file managers.
+   - `discover_connections()` obtains serial choices and configured network endpoints; the UI can show `ConnectionSelectionWindow` when manual selection is needed.
 
-2. **Connection Establishment Phase**
-   - User selects connection via GUI or auto-detection attempts first available
-   - `FlightController.connect()` delegates to `connection_manager.connect()`
-   - Connection manager handles retry logic via `create_connection_with_retry()`
-   - Heartbeat detection via `_detect_vehicles_from_heartbeats()`
-   - Autopilot selection via `_select_supported_autopilot()`
-   - **Connection manager mutates `FlightControllerInfo`** (sole mutator)
-   - Connection validation via heartbeat and banner text reception
+2. **Connection establishment**
+   - `FlightController.connect()` delegates to the connection manager.
+   - The manager creates a pymavlink connection with configured retry and autoreconnect settings.
+   - It collects heartbeats, selects a supported ArduPilot autopilot, and stores the selected system/component IDs and vehicle type.
+   - It requests banner text and `AUTOPILOT_VERSION`, then updates `FlightControllerInfo`.
 
-3. **Hardware Information Gathering**
-   - Connection manager requests `AUTOPILOT_VERSION` message
-   - `_retrieve_autopilot_version_and_banner()` processes responses
-   - Hardware capabilities extracted via `_process_autopilot_version()`
-   - Firmware version, board type, and capabilities stored in `FlightControllerInfo`
-   - Banner text parsed for firmware type via `_extract_firmware_type_from_banner()`
-   - ChibiOS version validated via `_extract_chibios_version_from_banner()`
+3. **Parameter operations**
+   - `FlightController.download_params()` delegates to the parameters manager.
+   - When `info.is_mavftp_supported` is true, the manager first tries MAVFTP, including defaults when requested; otherwise it uses MAVLink parameter messages.
+   - If MAVFTP fails, it falls back to MAVLink. An incomplete MAVLink download returns no parameter set.
+   - `set_param()` only reports send success. A caller needing confirmation follows it with `fetch_param()` or another download.
 
-4. **Parameter Operations Phase**
-   - `FlightController.download_params()` delegates to params manager
-   - Params manager checks MAVFTP support via `info.is_mavftp_supported`
-   - Attempts MAVFTP download first, falls back to MAVLink if unavailable
-   - Progress tracking through callbacks to update GUI
-   - Parameters stored in `params_manager.fc_parameters` dictionary
-   - Default parameters downloaded separately when MAVFTP available
-   - Commands manager queries params manager for fresh parameter values (no caching)
+4. **Command and file operations**
+   - The commands manager sends `COMMAND_LONG` messages and waits synchronously for matching `COMMAND_ACK` messages.
+   - Battery status is read from telemetry and briefly cached.
+   - The files manager creates a MAVFTP instance for uploads and supported log downloads.
 
-5. **Command Execution Flow**
-   - `FlightController.test_motor()` delegates to commands manager
-   - Commands manager queries params manager for battery parameters
-   - `send_command_and_wait_ack()` handles MAVLink command protocol
-   - Battery status retrieved via `get_battery_status()` with caching
-   - Voltage thresholds calculated via business logic functions
-   - All operations check `master is not None` before execution
-
-6. **UI Updates and Status Reporting**
-   - Real-time progress updates via `ProgressWindow` during operations
-   - Error reporting through `show_no_connection_error()` and message boxes
-   - Connection status feedback via GUI state changes and tooltips
-   - Final status display in `FlightControllerInfoWindow` with formatted information
-   - `set_param()` now returns `tuple[bool, str]` for explicit error handling
+5. **UI updates**
+   - Synchronous operations invoke progress callbacks, which the UI uses to update `ProgressWindow` and status messages.
 
 ### Integration Points
 
-- **Main Application**: Integrated via `connect_to_fc_and_set_vehicle_type()` in `__main__.py`
-- **Parameter Editor**: Provides `FlightController` object with `fc_parameters` dict and `set_param()` method
-- **File System Backend**: Uses `backend_filesystem.py` for parameter file storage and metadata management
-- **Internet Backend**: Downloads parameter documentation via `backend_internet.py` when needed
-- **Command Line Interface**: Integrates with `common_arguments.py` for connection and reboot configuration
-- **Logging System**: Uses Python logging for comprehensive error, debug, and info messages
-- **GUI Framework**: Integrates with `BaseWindow`, `ProgressWindow`, and custom tkinter components
-- **Configuration System**: Connection history persisted to `ProgramSettings` (settings.json) and restored on startup
+- **Main application**: `connect_to_fc_and_set_vehicle_type()` in `__main__.py`.
+- **Parameter editor**: Receives the `FlightController`, its parameter dictionary, and parameter-operation methods.
+- **Configuration**: `ProgramSettings` persists connection history.
+- **GUI**: `BaseWindow`, `ProgressWindow`, and custom tkinter widgets present controller operations.
+- **Logging**: Python logging records diagnostic and user-facing status information.
 
 ### Protocol Implementation
 
 #### MAVLink Parameter Protocol
 
-- Implements standard MAVLink parameter messages
-- Handles parameter request/response cycles
-- Manages parameter indexing and naming
-- Supports parameter value validation
+- Uses `PARAM_REQUEST_LIST`/`PARAM_VALUE` for bulk MAVLink downloads.
+- Uses pymavlink parameter-send support for writes and `PARAM_VALUE` polling for individual reads.
+- Validates parameter names and numeric value types locally before writes.
 
 #### FTP-over-MAVLink
 
-- Implements file transfer protocol over MAVLink
-- Handles large file transfers efficiently
-- Provides progress reporting for transfers
-- Manages file system operations on flight controller
+- Uses MAVFTP for supported parameter-default downloads and file operations.
+- Supports directory operations, file uploads/downloads, progress reporting, CRC operations, and burst reads.
+- Falls back to MAVLink only for parameter download; arbitrary file operations require MAVFTP.
 
 ### Error Handling Strategy
 
-- **Connection Errors**: Retry with different parameters, guide user to solutions
-- **Timeout Errors**: Implement progressive timeout with user notification
-- **Protocol Errors**: Log details, attempt recovery, fall back to basic operations
-- **Parameter Errors**: Validate and sanitize, report specific parameter issues
+- **Connection errors**: Return error messages and, for several serial failures, actionable guidance. Pymavlink receives the configured retry/autoreconnect settings.
+- **Timeout errors**: Use operation-specific fixed timeouts and return an error when they expire.
+- **Parameter download errors**: Fall back from MAVFTP to MAVLink; reject incomplete MAVLink downloads.
+- **Parameter write errors**: Validate locally before sending. Read back the parameter when verification is required.
 
 ## Testing Strategy
 
-### Test Organization and Coverage
+### Test Organization
 
-The flight controller communication system has comprehensive test coverage organized by testing approach:
+The test suite separates manager/facade tests from SITL coverage:
 
-#### Unit Tests (Mocked Dependencies)
+- `test_backend_flightcontroller.py` exercises facade delegation, lifecycle, commands, parameter workflows, and error paths.
+- `test_backend_flightcontroller_business_logic.py` exercises pure calculations and validation functions.
+- `test_backend_flightcontroller_connection.py`, `test_backend_flightcontroller_params.py`, `test_backend_flightcontroller_commands.py`, and `test_backend_flightcontroller_files.py` exercise the specialized managers.
+- `test_backend_flightcontroller_sitl.py` uses a real ArduCopter SITL TCP connection and is marked with both `integration` and `sitl` where applicable.
 
-1. **test_backend_flightcontroller.py** - Main facade integration tests
-   - Connection lifecycle workflows (initialization, connection, disconnection)
-   - Parameter management workflows (download, modify, verify, reset)
-   - Motor testing workflows (individual, all motors, emergency stop)
-   - Battery monitoring workflows (enable, check status, verify configuration)
-   - Error handling and recovery scenarios
-   - All tests use `@pytest.mark.integration` for integration test scenarios
-   - Uses BDD (Behavior-Driven Development) naming: `test_user_can_*`
-   - GIVEN/WHEN/THEN structure in all test docstrings
-
-2. **test_backend_flightcontroller_business_logic.py** - Pure business logic tests
-   - Voltage threshold calculations and battery monitoring detection
-   - Frame information extraction and battery voltage validation
-   - Battery telemetry conversions and throttle validation
-   - Motor test duration validation and sequence number calculations
-   - Zero mocking (pure functions) - fastest test execution
-   - Comprehensive edge case coverage (boundaries, invalid inputs, missing data)
-
-3. **test_backend_flightcontroller_connection.py** - Connection manager tests
-   - Connection manager initialization and port discovery
-   - Connection lifecycle (connect/disconnect/reconnect)
-   - Baudrate configuration and custom connection strings
-   - Flight controller info management and property delegation
-   - 14 tests covering all connection management scenarios
-
-4. **test_backend_flightcontroller_params.py** - Parameters manager tests
-   - Parameter initialization and setting (with/without connection)
-   - Parameter fetching from flight controller and cache retrieval
-   - Cache clearing and constants validation (PARAM_FETCH_POLL_DELAY)
-   - Property delegation and parameter downloads
-   - File operations and error handling
-   - 18 tests covering all parameter operations
-
-5. **test_backend_flightcontroller_commands.py** - Commands manager tests
-   - Command manager initialization and motor testing
-   - Battery status requests and parameter reset commands
-   - Command acknowledgment waiting and timeout handling
-   - Property delegation to connection manager
-   - 10 tests covering all command execution scenarios
-
-6. **test_backend_flightcontroller_files.py** - Files manager tests
-   - Files manager initialization and file uploads via MAVFTP
-   - Log file downloads and MAVFTP availability handling
-   - Progress callback support and constants validation
-   - Property delegation and error handling
-   - 11 tests covering all file operation scenarios
-
-#### Integration Tests (Real SITL)
-
-1. **test_backend_flightcontroller_sitl.py** - Real MAVLink protocol tests
-   - Uses `@pytest.mark.integration` and `@pytest.mark.sitl` markers
-   - Real TCP connection to ArduCopter SITL simulation
-   - Actual MAVLink protocol behavior (not mocked)
-   - Tests validate:
-     - Real parameter downloads via MAVLink PARAM_REQUEST_LIST/PARAM_VALUE
-     - Authentic command acknowledgments (COMMAND_ACK with real timing)
-     - True async communication patterns and timeout behavior
-     - Actual telemetry streaming (BATTERY_STATUS messages)
-     - Real parameter persistence in SITL memory
-     - Genuine retry logic and error conditions
-   - 12 tests exercising real protocol that mocks cannot simulate
-   - Comprehensive module docstring explains "why SITL matters"
-   - Each test documents what real behavior is validated vs mocked tests
-
-### Test Quality Metrics
-
-- **BDD Compliance**: All tests follow GIVEN/WHEN/THEN structure
-- **User-Centric Naming**: Tests named `test_user_can_*` describing user workflows
-- **Minimal Mocking**: Only external dependencies mocked, system under test is real
-- **Test Independence**: Each test can run standalone, no shared mutable state
-- **Integration Markers**: Tests marked with `@pytest.mark.integration` and/or `@pytest.mark.sitl`
+Test names and marker use vary by test; do not treat BDD-style names or integration markers as universal conventions. Avoid recording fixed test counts here because they change as the suite evolves.
 
 ### Running Tests Selectively
 
 ```bash
-# Run all flight controller tests
+# Run all flight-controller tests
 pytest tests/test_*flightcontroller*.py -v
 
-# Run only unit tests (skip SITL integration tests)
+# Run flight-controller tests that are not marked SITL
 pytest tests/test_*flightcontroller*.py -m "not sitl" -v
 
-# Run only integration tests
+# Run integration-marked tests
 pytest -m integration tests/ -v
 
-# Run only SITL integration tests
+# Run SITL-marked tests
 pytest -m sitl tests/ -v
 
-# Run with coverage for backend flight controller modules
-pytest tests/test_*flightcontroller*.py --cov=ardupilot_methodic_configurator.backend_flightcontroller --cov-report=html
-
-# Run specific test file
+# Run a specific manager test module
 pytest tests/test_backend_flightcontroller_params.py -v
 ```
 
 ## File Structure
 
 ```text
-# Facade and coordination
-backend_flightcontroller.py              # Main facade delegating to managers
-
-# Specialized managers (delegation pattern)
-backend_flightcontroller_connection.py   # Connection management
-backend_flightcontroller_params.py       # Parameter operations
-backend_flightcontroller_commands.py     # Command execution
-backend_flightcontroller_files.py        # File operations via MAVFTP
-
-# Protocol definitions and utilities
-backend_flightcontroller_protocols.py    # Protocol interfaces for DI
-backend_flightcontroller_business_logic.py # Pure business logic functions
-backend_flightcontroller_factory_mavftp.py # MAVFTP factory functions
-
-# Data models and supporting files
-data_model_flightcontroller_info.py      # Flight controller metadata
-backend_mavftp.py                        # FTP-over-MAVLink implementation
-data_model_fc_ids.py                     # Hardware identification (auto-generated)
-
-# User interface
-frontend_tkinter_connection_selection.py # Connection selection GUI
-frontend_tkinter_flightcontroller_info.py # Information display GUI
+ardupilot_methodic_configurator/
+├── backend_flightcontroller.py
+├── backend_flightcontroller_connection.py
+├── backend_flightcontroller_params.py
+├── backend_flightcontroller_commands.py
+├── backend_flightcontroller_files.py
+├── backend_flightcontroller_protocols.py
+├── backend_flightcontroller_business_logic.py
+├── backend_flightcontroller_factory_mavftp.py
+├── backend_mavftp.py
+├── data_model_flightcontroller_info.py
+├── data_model_fc_ids.py
+├── frontend_tkinter_connection_selection.py
+└── frontend_tkinter_flightcontroller_info.py
 ```
 
 ## Dependencies
 
-- **Python Standard Library**:
-  - `socket` for network connections
-  - `serial` for USB/serial connections
-  - `threading` for non-blocking operations
-  - `time` for timeout handling
-  - `struct` for binary data packing
-
-- **Third-party Libraries**:
-  - `pymavlink` for MAVLink protocol implementation
-  - `tkinter` for GUI components
-  - `pyserial` for serial port communication
-
-- **ArduPilot Methodic Configurator Modules**:
-  - `backend_filesystem` for parameter file operations
-  - `backend_internet` for downloading documentation
-  - `frontend_tkinter_base_window` for GUI base classes
-  - `frontend_tkinter_progress_window` for progress dialogs
+- **Python standard library**: `contextlib`, `logging`, `os`, `pathlib`, `random`, `struct`, `time`, and typing utilities.
+- **Python standard-library GUI**: `tkinter` and `tkinter.ttk`.
+- **Third-party libraries**: `pymavlink` for MAVLink and `pyserial` for serial-port discovery and communication.
+- **Project modules**: parameter models (`Par`, `ParDict`), program settings, GUI base/progress windows, and the MAVFTP backend.
