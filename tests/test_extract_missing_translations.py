@@ -22,10 +22,10 @@ import pytest
 # Add the parent directory to the path to import the script
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../.github/skills/update-gui-translations/scripts")))
 
-# pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position,import-error
 import extract_missing_translations  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
-# pylint: enable=wrong-import-position
+# pylint: enable=wrong-import-position,import-error
 
 
 class TestExtractMissingTranslations(unittest.TestCase):

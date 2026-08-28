@@ -60,8 +60,8 @@ def _build_parameter_editor_window(root: object) -> tuple[ParameterEditorWindow,
     cast("Any", window).ui = ui
     cast("Any", window).upload_selected_params = upload_params
     cast("Any", window).on_skip_click = on_skip
-    cast("Any", window)._log_availability_report_window = None
-    cast("Any", window)._log_report_return_pending = False
+    cast("Any", window)._log_availability_report_window = None  # pylint: disable=protected-access
+    cast("Any", window)._log_report_return_pending = False  # pylint: disable=protected-access
 
     mocks = {
         "write_changes": write_changes,
