@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 MODULE = "ardupilot_methodic_configurator.frontend_tkinter_log_analysis"
 
-# pylint: disable=protected-access, redefined-outer-name
+# pylint: disable=protected-access, redefined-outer-name, use-implicit-booleaness-not-comparison
 
 
 def _make_availability_issue(message: str = "issue", config_step: str | None = None) -> MagicMock:
@@ -50,7 +50,7 @@ def _make_availability_issue(message: str = "issue", config_step: str | None = N
     return issue
 
 
-def _make_availability_result(
+def _make_availability_result(  # pylint: disable=too-many-arguments
     *,
     name: str = "Battery",
     available: bool = True,
@@ -424,7 +424,7 @@ def bare_window() -> LogAnalysisReportWindow:
 class TestWindowConstruction:
     """Cover LogAnalysisReportWindow's full __init__ flow with widgets mocked."""
 
-    def _build_window(
+    def _build_window(  # pylint: disable=too-many-arguments
         self,
         mocker: MockerFixture,
         patched_widgets: dict[str, MagicMock],
@@ -434,6 +434,7 @@ class TestWindowConstruction:
         report: dict | None = None,
         vehicle_dir: str = "/vehicle",
     ) -> LogAnalysisReportWindow:
+        _ = patched_widgets  # Keep the widget patches active while constructing the window.
         mocker.patch.object(LogAnalysisReportWindow, "calculate_scaled_geometry", return_value="1050x800")
         mocker.patch.object(LogAnalysisReportWindow, "center_window")
         summary = _make_summary(availability_results, analysis_results)
@@ -464,7 +465,7 @@ class TestWindowConstruction:
             mocker, patched_widgets, [availability_battery, availability_imu], [analysis_battery, analysis_imu]
         )
 
-        window.selector.set.assert_called_once_with("Battery")
+        cast("MagicMock", window.selector.set).assert_called_once_with("Battery")
 
     def test_no_selector_default_when_no_subsystems_present(
         self, mocker: MockerFixture, patched_widgets: dict[str, MagicMock]
@@ -478,15 +479,12 @@ class TestWindowConstruction:
         """
         window = self._build_window(mocker, patched_widgets, [], [])
 
-        window.selector.set.assert_not_called()
-
+        cast("MagicMock", window.selector.set).assert_not_called()
 
 class TestTuningGraphButton:
     """Cover the footer's Tuning Parameter Graph button state and click handler."""
 
-    def test_button_enabled_when_tuning_report_exists(
-        self, mocker: MockerFixture, patched_widgets: dict[str, MagicMock], tmp_path: Path
-    ) -> None:
+    def test_button_enabled_when_tuning_report_exists(self, patched_widgets: dict[str, MagicMock], tmp_path: Path) -> None:
         """
         The tuning graph button is enabled when tuning_report.csv exists in the vehicle directory.
 
@@ -505,9 +503,7 @@ class TestTuningGraphButton:
         button_mock = patched_widgets["button"].return_value
         button_mock.configure.assert_any_call(state="normal")
 
-    def test_button_disabled_when_tuning_report_missing(
-        self, mocker: MockerFixture, patched_widgets: dict[str, MagicMock], tmp_path: Path
-    ) -> None:
+    def test_button_disabled_when_tuning_report_missing(self, patched_widgets: dict[str, MagicMock], tmp_path: Path) -> None:
         """
         The tuning graph button is disabled when tuning_report.csv is absent.
 

@@ -195,7 +195,7 @@ def test_esc_analysis_does_not_report_zero_error_rates_as_findings() -> None:
 
     outcomes = EscLogAnalysis(log_data, _context({})).check_per_instance_errors()
 
-    assert outcomes == []
+    assert not outcomes
 
 
 def test_esc_analysis_ignores_a_single_zero_rpm_sample() -> None:
@@ -212,7 +212,7 @@ def test_esc_analysis_ignores_a_single_zero_rpm_sample() -> None:
 
     outcomes = EscLogAnalysis(log_data, _context({})).check_rpm_while_armed()
 
-    assert outcomes == []
+    assert not outcomes
 
 
 def test_esc_analysis_skips_dshot_rate_for_pwm_output() -> None:
@@ -228,4 +228,4 @@ def test_esc_analysis_skips_dshot_rate_for_pwm_output() -> None:
         ),
     )
 
-    assert model.check_dshot_output_rate() == []
+    assert not model.check_dshot_output_rate()

@@ -62,7 +62,7 @@ def test_availability_fix_accepts_non_false_upload_result(upload_result: bool | 
     fixes = [("MOT_SPIN_MIN", 0.1, 0.15, ["finding"])]
 
     # Act: apply the proposed change.
-    window._apply_param_fixes(fixes, dialog)
+    window._apply_param_fixes(fixes, dialog)  # pylint: disable=protected-access
 
     # Assert: None is not mistaken for an upload failure.
     assert window.summary.related_parameter_values == {"MOT_SPIN_MIN": 0.15}

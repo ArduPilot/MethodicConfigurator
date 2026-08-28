@@ -325,7 +325,7 @@ class TestNumpyAllocation:
         assert progress_calls == [(1, 3), (2, 3), (3, 3)]
 
 
-class TestExtractSchemas:  # pylint: disable=too-few-public-methods
+class TestExtractSchemas:
     """Tests for extract_schemas()."""
 
     def test_extract_schemas_populates_message_schema(self, empty_log_data: LogData) -> None:  # pylint: disable=redefined-outer-name
