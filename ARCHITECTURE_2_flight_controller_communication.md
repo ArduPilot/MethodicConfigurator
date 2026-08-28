@@ -31,7 +31,9 @@ make MAVLink, MAVFTP, or command operations concurrent or non-blocking.
    - ✅ Downloads parameters through MAVFTP when supported, with MAVLink `PARAM_REQUEST_LIST` fallback.
    - ✅ Downloads parameter defaults only through the MAVFTP path.
    - ✅ Validates parameter names and numeric value types before sending a parameter write.
-   - ⚠️ `set_param()` reports whether the send operation succeeded; MAVLink parameter writes have no command ACK here. Callers must use `fetch_param()` or re-download parameters to verify the controller state.
+   - ✅ Detects a matching MAVLink-2 `PARAM_ERROR` response from newer ArduPilot firmware and reports the controller's rejection reason.
+   - ⚠️ Older firmware does not acknowledge `PARAM_SET`; after the short `PARAM_ERROR` response window, `set_param()` can report only that the write was sent.
+     Callers that need positive confirmation must use `fetch_param()` or re-download parameters.
 
 4. **Protocol Support**
    - ✅ Uses pymavlink for MAVLink messages, connection creation, retries, and reconnect support.
@@ -49,13 +51,15 @@ make MAVLink, MAVFTP, or command operations concurrent or non-blocking.
 
 1. **Performance**
    - ✅ Uses MAVFTP when the controller advertises support and provides transfer progress callbacks.
-   - ⚠️ Download, command, and connection operations use polling and blocking waits. They should be invoked from an appropriate UI workflow to avoid blocking the event loop.
+   - ⚠️ Download, command, and connection operations use polling and blocking waits.
+     They should be invoked from an appropriate UI workflow to avoid blocking the event loop.
    - ⚠️ No performance limit for parameter count or memory consumption is enforced or benchmarked by this component.
 
 2. **Reliability** ⚠️ **PARTIALLY IMPLEMENTED**
    - ✅ Checks for a connection before most controller operations and returns structured error messages for many failures.
    - ✅ Verifies command results when the MAVLink command protocol provides `COMMAND_ACK`.
-   - ⚠️ Parameter writes require explicit read-back for verification.
+   - ✅ Reports explicit rejections from newer firmware through MAVLink-2 `PARAM_ERROR`.
+   - ⚠️ Parameter writes still require explicit read-back for positive verification, especially with older firmware that sends no response.
    - ❌ **TODO**: Interrupted operations cannot be resumed from persisted state.
 
 3. **Compatibility**
@@ -67,7 +71,7 @@ make MAVLink, MAVFTP, or command operations concurrent or non-blocking.
    - ✅ Validates parameter names and value types before sending parameter writes.
    - ⚠️ Message parsing and transport-level validation are delegated to pymavlink; this is not an end-to-end integrity or authorization guarantee.
    - ❌ **TODO**: MAVLink signing/authentication is not implemented by this component.
-   - ⚠️ Parameter-write confirmation requires an explicit read-back, not a `set_param()` acknowledgement.
+   - ⚠️ Newer firmware can explicitly reject writes with `PARAM_ERROR`, but positive parameter-write confirmation still requires an explicit read-back.
 
 ## Architecture
 
@@ -101,13 +105,15 @@ and the parameter dictionary); the ownership and mutation rules above are the re
 
 - **File**: `backend_flightcontroller_connection.py`
 - **Classes**: `FlightControllerConnection`, `FakeSerialForTests`
-- **Purpose**: Discovers connection choices, establishes and closes MAVLink connections, selects a supported autopilot from heartbeats, and populates `FlightControllerInfo`.
+- **Purpose**: Discovers connection choices, establishes and closes MAVLink connections, and selects a supported
+  autopilot from heartbeats before populating `FlightControllerInfo`.
 - **Key methods**:
   - `connect()` — connects to an explicit device or tries auto-detected choices.
   - `disconnect()` — closes the current connection, clears the banner buffer, and resets controller information.
   - `discover_connections(preserved_connections)` — merges locally enumerated serial ports, configured network endpoints, and persisted choices.
   - `_register_and_try_connect()` and `create_connection_with_retry()` — internal connection helpers.
-- **Connection validation**: `_detect_vehicles_from_heartbeats()` is used during connection establishment; `_retrieve_autopilot_version_and_banner()` then requests controller details.
+- **Connection validation**: `_detect_vehicles_from_heartbeats()` is used during connection establishment;
+  `_retrieve_autopilot_version_and_banner()` then requests controller details.
 - **Dependencies**: pymavlink, pyserial port discovery, `FlightControllerInfo`, time, and logging.
 
 #### Parameters Manager
@@ -164,7 +170,8 @@ and the parameter dictionary); the ownership and mutation rules above are the re
 
 - **File**: `data_model_flightcontroller_info.py`
 - **Class**: `FlightControllerInfo`
-- **Purpose**: Stores and derives flight-controller metadata from heartbeat, `AUTOPILOT_VERSION`, and banner data, including capabilities, board information, firmware details, and vehicle type.
+- **Purpose**: Stores and derives flight-controller metadata from heartbeat, `AUTOPILOT_VERSION`, and banner data,
+  including capabilities, board information, firmware details, and vehicle type.
 
 #### Flight Controller ID Model
 
@@ -176,7 +183,8 @@ and the parameter dictionary); the ownership and mutation rules above are the re
 - **File**: `frontend_tkinter_connection_selection.py`
 - **Classes**: `ConnectionSelectionWidgets`, `ConnectionSelectionWindow`
 - **Purpose**: Lets the user choose or add a connection and provides progress/status feedback.
-- **Key behavior**: `_refresh_ports()` refreshes choices every three seconds while preserving connection history cached from `ProgramSettings`. `reconnect()` persists the user-selected connection string where possible.
+- **Key behavior**: `_refresh_ports()` refreshes choices every three seconds while preserving connection history cached
+  from `ProgramSettings`. `reconnect()` persists the user-selected connection string where possible.
 
 #### Flight Controller Information UI
 
@@ -201,10 +209,12 @@ and the parameter dictionary); the ownership and mutation rules above are the re
    - `FlightController.download_params()` delegates to the parameters manager.
    - When `info.is_mavftp_supported` is true, the manager first tries MAVFTP, including defaults when requested; otherwise it uses MAVLink parameter messages.
    - If MAVFTP fails, it falls back to MAVLink. An incomplete MAVLink download returns no parameter set.
-   - `set_param()` only reports send success. A caller needing confirmation follows it with `fetch_param()` or another download.
+   - `set_param()` waits briefly for newer firmware's `PARAM_ERROR` rejection response. No response preserves compatibility
+     with older firmware, so a caller needing positive confirmation follows it with `fetch_param()` or another download.
 
 4. **Command and file operations**
-   - The commands manager sends `COMMAND_LONG` messages and waits synchronously for matching `COMMAND_ACK` messages.
+   - Command operations that use `send_command_and_wait_ack()` send `COMMAND_LONG` messages and wait synchronously
+     for matching `COMMAND_ACK` messages. Batched motor-test commands are sent without per-command acknowledgement waits.
    - Battery status is read from telemetry and briefly cached.
    - The files manager creates a MAVFTP instance for uploads and supported log downloads.
 
@@ -224,7 +234,8 @@ and the parameter dictionary); the ownership and mutation rules above are the re
 #### MAVLink Parameter Protocol
 
 - Uses `PARAM_REQUEST_LIST`/`PARAM_VALUE` for bulk MAVLink downloads.
-- Uses pymavlink parameter-send support for writes and `PARAM_VALUE` polling for individual reads.
+- Uses pymavlink parameter-send support for writes and locally registers the MAVLink-2 `PARAM_ERROR` decoder required
+  by the pinned pymavlink version. It polls `PARAM_VALUE` for individual reads.
 - Validates parameter names and numeric value types locally before writes.
 
 #### FTP-over-MAVLink
@@ -238,7 +249,8 @@ and the parameter dictionary); the ownership and mutation rules above are the re
 - **Connection errors**: Return error messages and, for several serial failures, actionable guidance. Pymavlink receives the configured retry/autoreconnect settings.
 - **Timeout errors**: Use operation-specific fixed timeouts and return an error when they expire.
 - **Parameter download errors**: Fall back from MAVFTP to MAVLink; reject incomplete MAVLink downloads.
-- **Parameter write errors**: Validate locally before sending. Read back the parameter when verification is required.
+- **Parameter write errors**: Validate locally before sending and report a matching newer-firmware `PARAM_ERROR`
+  rejection. Read back the parameter when positive verification is required or when the firmware provides no rejection response.
 
 ## Testing Strategy
 
@@ -246,21 +258,24 @@ and the parameter dictionary); the ownership and mutation rules above are the re
 
 The test suite separates manager/facade tests from SITL coverage:
 
-- `test_backend_flightcontroller.py` exercises facade delegation, lifecycle, commands, parameter workflows, and error paths.
+- `test_backend_flightcontroller.py` exercises facade delegation, lifecycle, commands, parameter workflows, and error
+  paths.
 - `test_backend_flightcontroller_business_logic.py` exercises pure calculations and validation functions.
-- `test_backend_flightcontroller_connection.py`, `test_backend_flightcontroller_params.py`, `test_backend_flightcontroller_commands.py`, and `test_backend_flightcontroller_files.py` exercise the specialized managers.
+- `test_backend_flightcontroller_connection.py`, `test_backend_flightcontroller_params.py`,
+  `test_backend_flightcontroller_commands.py`, and `test_backend_flightcontroller_files.py` exercise the specialized managers.
 - `test_backend_flightcontroller_sitl.py` uses a real ArduCopter SITL TCP connection and is marked with both `integration` and `sitl` where applicable.
 
-Test names and marker use vary by test; do not treat BDD-style names or integration markers as universal conventions. Avoid recording fixed test counts here because they change as the suite evolves.
+Test names and marker use vary by test; do not treat BDD-style names or integration markers as universal conventions.
+Avoid recording fixed test counts here because they change as the suite evolves.
 
 ### Running Tests Selectively
 
 ```bash
-# Run all flight-controller tests
-pytest tests/test_*flightcontroller*.py -v
+# Run all flight-controller tests, including unit-prefixed modules
+pytest tests/test_*flightcontroller*.py tests/unit_backend_flightcontroller*.py -v
 
 # Run flight-controller tests that are not marked SITL
-pytest tests/test_*flightcontroller*.py -m "not sitl" -v
+pytest tests/test_*flightcontroller*.py tests/unit_backend_flightcontroller*.py -m "not sitl" -v
 
 # Run integration-marked tests
 pytest -m integration tests/ -v
@@ -283,11 +298,16 @@ ardupilot_methodic_configurator/
 ├── backend_flightcontroller_files.py
 ├── backend_flightcontroller_protocols.py
 ├── backend_flightcontroller_business_logic.py
+├── backend_flightcontroller_factory_mavlink.py
 ├── backend_flightcontroller_factory_mavftp.py
+├── backend_flightcontroller_factory_serial.py
+├── backend_mavlink_param_error.py
 ├── backend_mavftp.py
+├── data_model_par_dict.py
 ├── data_model_flightcontroller_info.py
 ├── data_model_fc_ids.py
 ├── frontend_tkinter_connection_selection.py
+├── frontend_tkinter_flightcontroller_connection_progress.py
 └── frontend_tkinter_flightcontroller_info.py
 ```
 
