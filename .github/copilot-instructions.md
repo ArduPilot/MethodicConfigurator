@@ -23,6 +23,9 @@ Clean architecture with separation of concerns:
 - **Business logic**: Vehicle templates, configuration steps, parameter management
 - **Backend**: Filesystem operations (`backend_filesystem.py`), flight controller communication (`backend_flightcontroller.py`)
 
+When reviewing code, always apply the repository guidelines in `/COMPLIANCE.md` and `/CONTRIBUTING.md`.
+For changes affecting architecture, module boundaries, dependencies, data flow, generated files, or repository tooling such as repo graphing, also consult `/ARCHITECTURE.md`.
+
 ## Dependencies and Tools
 
 - **Dependency management**: Use `uv`, not `pip` directly. Update `pyproject.toml` and `credits/CREDITS.md` when adding dependencies

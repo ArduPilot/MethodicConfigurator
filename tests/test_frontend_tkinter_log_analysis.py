@@ -481,6 +481,7 @@ class TestWindowConstruction:
 
         cast("MagicMock", window.selector.set).assert_not_called()
 
+
 class TestTuningGraphButton:
     """Cover the footer's Tuning Parameter Graph button state and click handler."""
 
