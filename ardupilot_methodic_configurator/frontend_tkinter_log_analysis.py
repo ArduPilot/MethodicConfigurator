@@ -11,21 +11,28 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import tkinter as tk
+from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from enum import Enum
 from functools import partial
+from logging import basicConfig as logging_basicConfig
+from logging import getLevelName as logging_getLevelName
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 from typing import Any
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
+from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_tuning_report import TuningReportWindow
+from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
+from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 
@@ -120,7 +127,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
-        root_tk: tk.Tk | tk.Toplevel,
+        root_tk: tk.Tk | tk.Toplevel | None,
         summary: LogSummary,
         vehicle_dir: str,
         report: dict[str, Any] | None = None,
@@ -149,7 +156,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
 
         self.root.title(_("Log Analysis"))
         self.root.geometry(self.calculate_scaled_geometry(1050, 800))
-        self.center_window(self.root, root_tk)
+        self.center_window(self.root, root_tk if root_tk is not None else self.root)
         self.root.resizable(width=True, height=True)
 
         self._build_header()
@@ -387,3 +394,59 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
 
     def run(self) -> None:
         self.root.mainloop()
+
+
+def argument_parser() -> Namespace:  # pragma: no cover
+    """Parse command-line arguments for the standalone log-analysis report."""
+    parser = ArgumentParser(description=_("Display the detailed analysis of an ArduPilot flight log."))
+    parser.add_argument(
+        "logfile",
+        nargs="?",
+        help=_("ArduPilot binary flight log (.bin) to analyse; opens a file selector when omitted"),
+    )
+    parser = LocalFilesystem.add_argparse_arguments(parser)
+    return add_common_arguments(parser).parse_args()
+
+
+def main() -> None:  # pragma: no cover
+    """Open the detailed log-analysis report without starting the full application."""
+    args = argument_parser()
+    logging_basicConfig(level=logging_getLevelName(args.loglevel), format="%(asctime)s - %(levelname)s - %(message)s")
+
+    logfile = args.logfile
+    if not logfile:
+        selector_root = tk.Tk()
+        selector_root.withdraw()
+        try:
+            logfile = filedialog.askopenfilename(
+                parent=selector_root,
+                title=_("Select a flight log"),
+                filetypes=[(_("ArduPilot binary log files"), "*.bin"), (_("All files"), "*.*")],
+            )
+        finally:
+            selector_root.destroy()
+        if not logfile:
+            return
+
+    filesystem = LocalFilesystem(
+        args.vehicle_dir,
+        args.vehicle_type,
+        "",
+        args.allow_editing_template_files,
+        args.save_component_to_system_templates,
+    )
+    log_data = extract_log(logfile)
+    summary = analyze_log_data(
+        log_data,
+        project_vehicle_type=filesystem.vehicle_type,
+        project_firmware_version=filesystem.fw_version,
+        vehicle_components=(filesystem.vehicle_components_fs.data or {}).get("Components", {}),
+        configuration_steps=filesystem.configuration_steps,
+        apm_doc=filesystem.doc_dict or None,
+        validate_project=False,
+    )
+    LogAnalysisReportWindow(None, summary, filesystem.vehicle_dir).run()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

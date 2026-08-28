@@ -14,6 +14,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+import sys
+from argparse import Namespace
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
@@ -23,6 +25,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_log_analysis import (
     LogAnalysisReportWindow,
     _collect_links,
     _format_component,
+    argument_parser,
+    main,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
 
@@ -700,3 +704,97 @@ class TestRenderSubsystem:
 
         mock_heading.assert_not_called()
         mock_body.assert_not_called()
+
+
+class TestStandaloneLogAnalysis:
+    """Tests for the standalone log-analysis entry point."""
+
+    def test_argument_parser_accepts_an_omitted_logfile(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """
+        Users can launch the standalone report without a command-line log path.
+
+        GIVEN: The standalone command is launched without positional arguments
+        WHEN: Its arguments are parsed
+        THEN: The log-file argument is left unset so the file chooser can be displayed
+        """
+        # Arrange (Given): Simulate launching without a log path.
+        monkeypatch.setattr(sys, "argv", ["frontend_tkinter_log_analysis.py"])
+
+        # Act (When): Parse the command-line arguments.
+        args = argument_parser()
+
+        # Assert (Then): The main entry point can request the log interactively.
+        assert args.logfile is None
+
+    def test_main_returns_when_logfile_selection_is_cancelled(self, mocker: MockerFixture) -> None:
+        """
+        Users can cancel the interactive log-file selection without opening a report.
+
+        GIVEN: The standalone report has no command-line log path
+        WHEN: The user cancels the file chooser
+        THEN: The temporary selector closes and no vehicle project is loaded
+        """
+        # Arrange (Given): Provide the minimum arguments and a cancelled selection.
+        mocker.patch(f"{MODULE}.argument_parser", return_value=Namespace(logfile=None, loglevel="INFO"))
+        selector_root = mocker.patch(f"{MODULE}.tk.Tk").return_value
+        file_selector = mocker.patch(f"{MODULE}.filedialog.askopenfilename", return_value="")
+        local_filesystem = mocker.patch(f"{MODULE}.LocalFilesystem")
+
+        # Act (When): Start the standalone report.
+        main()
+
+        # Assert (Then): Clean up the chooser and skip all analysis work.
+        selector_root.withdraw.assert_called_once()
+        file_selector.assert_called_once()
+        selector_root.destroy.assert_called_once()
+        local_filesystem.assert_not_called()
+
+    def test_main_analyses_selected_log_and_opens_report(self, mocker: MockerFixture, tmp_path: Path) -> None:
+        """
+        Users can select a log interactively and open its detailed report.
+
+        GIVEN: The standalone report has no command-line log path and a vehicle project is available
+        WHEN: The user selects an ArduPilot binary log
+        THEN: The log is analysed with that project's metadata and the report opens
+        """
+        # Arrange (Given): Provide a selected log and representative vehicle metadata.
+        args = Namespace(
+            logfile=None,
+            loglevel="INFO",
+            vehicle_dir=str(tmp_path / "vehicle"),
+            vehicle_type="ArduCopter",
+            allow_editing_template_files=False,
+            save_component_to_system_templates=False,
+        )
+        mocker.patch(f"{MODULE}.argument_parser", return_value=args)
+        selector_root = mocker.patch(f"{MODULE}.tk.Tk").return_value
+        mocker.patch(f"{MODULE}.filedialog.askopenfilename", return_value=str(tmp_path / "flight.bin"))
+        filesystem = mocker.patch(f"{MODULE}.LocalFilesystem").return_value
+        filesystem.vehicle_dir = args.vehicle_dir
+        filesystem.vehicle_type = args.vehicle_type
+        filesystem.fw_version = "4.6.0"
+        filesystem.vehicle_components_fs.data = {"Components": {"Battery": {}}}
+        filesystem.configuration_steps = {"01_step.param": {}}
+        filesystem.doc_dict = {}
+        log_data = mocker.patch(f"{MODULE}.extract_log").return_value
+        summary = MagicMock()
+        analyze_log_data = mocker.patch(f"{MODULE}.analyze_log_data", return_value=summary)
+        report_window_class = mocker.patch(f"{MODULE}.LogAnalysisReportWindow")
+        report_window = report_window_class.return_value
+
+        # Act (When): Start the standalone report.
+        main()
+
+        # Assert (Then): Analyse the selected log and show its detailed report.
+        analyze_log_data.assert_called_once_with(
+            log_data,
+            project_vehicle_type="ArduCopter",
+            project_firmware_version="4.6.0",
+            vehicle_components={"Battery": {}},
+            configuration_steps={"01_step.param": {}},
+            apm_doc=None,
+            validate_project=False,
+        )
+        report_window_class.assert_called_once_with(None, summary, args.vehicle_dir)
+        report_window.run.assert_called_once()
+        selector_root.destroy.assert_called_once()
