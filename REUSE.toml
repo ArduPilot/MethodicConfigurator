@@ -31,7 +31,7 @@ SPDX-FileCopyrightText = "2024-2026 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 [[annotations]]
-path = ["ardupilot_methodic_configurator/images/*.png", "ardupilot_methodic_configurator/*.json", "ardupilot_methodic_configurator/plugins/*.json"]
+path = ["ardupilot_methodic_configurator/images/*.png", "ardupilot_methodic_configurator/*.json", "ardupilot_methodic_configurator/log_analysis/*.json", "ardupilot_methodic_configurator/plugins/*.json"]
 SPDX-FileCopyrightText = "2024-2026 Amilcar Lucas"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
