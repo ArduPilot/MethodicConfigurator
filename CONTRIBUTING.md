@@ -60,6 +60,22 @@ The above scripts will:
 * Set up pre-commit hooks for linting and formatting
 * Install GNU gettext tools for internationalization support
 
+### Optional local code graph
+
+For faster codebase exploration with Codex, CodeGraph can be installed as an
+optional local developer tool. It is not a project dependency and does not run
+in CI:
+
+```bash
+codegraph init .
+codegraph status .
+```
+
+The graph is stored in the ignored `.codegraph/` directory and is kept current
+by CodeGraph's local file watcher. Use `codegraph uninit .` to remove the local
+index. CodeGraph indexes source code; configuration relationships in JSON and
+`.param` files still need to be inspected directly.
+
 ## Alternative: Using Docker for Development
 
 As an alternative to setting up the development environment locally, you can use Docker to run the project in a containerized environment.
