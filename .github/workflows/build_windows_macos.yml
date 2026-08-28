@@ -11,7 +11,7 @@ on:
       - 'windows/**'
       - 'macos/**'
       - 'linux/**'
-      - 'workflows/build_windows_macos.yml' # Re-run build if workflow file itself changes
+      - '.github/workflows/build_windows_macos.yml' # Re-run build if workflow file itself changes
 
 concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}
