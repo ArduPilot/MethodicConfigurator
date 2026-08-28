@@ -2,6 +2,7 @@ __pycache__/
 __target__/
 .ruff_cache/
 .mypy_cache/
+.codegraph/
 ardupilot_methodic_configurator.egg-info/
 ardupilot_methodic_configurator/test.xml
 ardupilot_methodic_configurator_*_macos_setup.dmg
