@@ -22,6 +22,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 
@@ -57,6 +58,7 @@ def analyze_log_data(  # pylint: disable=too-many-arguments
         configuration_steps=configuration_steps or {},
         vehicle_components=vehicle_components or {},
         apm_doc=apm_doc,
+        parameter_history=ParameterHistory.from_log_data(log_data),
     )
     return analyze_log(log_data, context)
 
