@@ -15,6 +15,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_parameter_derivatio
     ConfigurationStepParameterDeriver,
     ParameterDeriver,
 )
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 
@@ -27,3 +28,4 @@ class LogAnalysisContext:
     vehicle_components: dict[str, Any] = field(default_factory=dict)
     apm_doc: APMDoc | None = None
     parameter_deriver: ParameterDeriver = field(default_factory=ConfigurationStepParameterDeriver)
+    parameter_history: ParameterHistory = field(default_factory=ParameterHistory)

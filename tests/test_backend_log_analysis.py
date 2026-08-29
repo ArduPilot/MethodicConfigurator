@@ -24,18 +24,21 @@ def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> N
     log_data.firmware_version = (4, 6, 3)
     log_data.add_message_columns(
         "PARM",
-        np.array([("LOG_BITMASK", 7.0)], dtype=[("Name", "U16"), ("Value", "f8")]),
+        np.array(
+            [(1.0, "LOG_BITMASK", 5.0), (2.0, "LOG_BITMASK", 7.0)],
+            dtype=[("TimeUS", "f8"), ("Name", "U16"), ("Value", "f8")],
+        ),
         MessageSchema(
             name="PARM",
             msg_type=1,
             length=1,
-            format="Nf",
-            fields=["Name", "Value"],
-            stored_units=["", ""],
-            scaled_units=["", ""],
-            multipliers=[None, None],
-            multipliers_applied_at_ingest=[False, False],
-            records=1,
+            format="QNf",
+            fields=["TimeUS", "Name", "Value"],
+            stored_units=["s", "", ""],
+            scaled_units=["s", "", ""],
+            multipliers=[None, None, None],
+            multipliers_applied_at_ingest=[False, False, False],
+            records=2,
         ),
     )
 
@@ -82,6 +85,8 @@ def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> N
     assert seen["validate"] == ("ArduCopter", (4, 6, 3), "ArduCopter", "4.6.3")
     assert seen["log_data"] is log_data
     assert seen["context"].parameters == {"LOG_BITMASK": 7.0}
+    assert seen["context"].parameter_history.value_at("LOG_BITMASK", 1.5) == 5.0
+    assert seen["context"].parameter_history.value_at("LOG_BITMASK", 2.0) == 7.0
     assert seen["context"].configuration_steps == {"05_battery.param": {}}
     assert seen["context"].vehicle_components == {"Frame": {}}
     assert seen["context"].apm_doc == {"LOG_BITMASK": {}}
