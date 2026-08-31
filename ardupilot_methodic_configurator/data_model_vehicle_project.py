@@ -187,7 +187,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             self.open_vehicle_directory(new_path)
         return new_path
 
-    def create_new_vehicle_from_bin_log(self, bin_file: str) -> str:
+    def create_new_vehicle_from_bin_log(self, bin_file: str) -> str:  # pylint: disable=too-many-locals
         """
         Create a new vehicle configuration directory from an ArduPilot .bin log file.
 
@@ -207,11 +207,10 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectCreationError: If creation, extraction, or template lookup fails
 
         """
-        firmware_info = self._creator.extract_firmware_version_from_bin_log(bin_file)
+        firmware_info, default_params, current_params = self._creator.extract_bin_log_data(bin_file)
         vehicle_type = firmware_info[0]
         fw_version = f"{firmware_info[1]}.{firmware_info[2]}.{firmware_info[3]}"
         template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
-        default_params, current_params = self._creator.extract_param_files_from_bin_log(bin_file)
         fc_parameters = {name: param.value for name, param in current_params.items()}
         settings = NewVehicleProjectSettings(
             blank_change_reason=True,
@@ -219,10 +218,12 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             use_fc_params=True,
         )
 
+        new_base_dir = str(LocalFilesystem.get_vehicles_default_dir())
+        new_vehicle_name = self._creator.vehicle_name_from_bin_log(bin_file)
         new_path = self._creator.create_new_vehicle_from_template(
             template_dir,
-            str(LocalFilesystem.get_vehicles_default_dir()),
-            self._creator.vehicle_name_from_bin_log(bin_file),
+            new_base_dir,
+            new_vehicle_name,
             settings,
             fc_connected=False,
             fc_parameters=fc_parameters,
@@ -255,22 +256,20 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             )
             self._local_filesystem.re_init(new_path, vehicle_type)
 
-        if self._flight_controller is not None:
-            self._flight_controller.fc_parameters = fc_parameters
-
         # Open the vehicle directory only after all file modifications are complete and filesystem state is synced.
         # This ensures the UI/session operates on the authoritative filesystem state, not stale in-memory cache.
         # Also note: infer_comp_specs_and_conn_from_fc_params and use_fc_params are reused for log-derived params
         # because the semantics align: we're supplying external parameter values for template substitution.
         self.open_vehicle_directory(new_path)
 
-        # Update manager state only after the whole import succeeds so that a failure in any preceding step
-        # (including open_vehicle_directory) does not leave the manager in a partially-updated state and
-        # does not pollute the recently-used template history with an incomplete project.
+        if self._flight_controller is not None:
+            self._flight_controller.fc_parameters = fc_parameters
+
+        # Store manager settings only after the whole import succeeds, so failed imports do not
+        # pollute the recently-used template history with an incomplete project.
         self._settings = settings
         self.configuration_template = self.get_directory_name_from_path(template_dir)
-        self.store_recently_used_template_dirs(template_dir, str(LocalFilesystem.get_vehicles_default_dir()))
-
+        self.store_recently_used_template_dirs(template_dir, new_base_dir)
         return new_path
 
     # Vehicle project opening operations

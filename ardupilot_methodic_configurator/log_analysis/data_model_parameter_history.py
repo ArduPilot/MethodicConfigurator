@@ -8,14 +8,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import math
 from bisect import bisect_right
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-
-from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+from types import MappingProxyType
 
 
 @dataclass(frozen=True, slots=True)
-class _ParameterValue:
-    """One logged parameter value and its scaled timestamp in seconds."""
+class ParameterChange:
+    """One effective parameter change after startup initialization."""
 
     time_s: float
     value: float
@@ -26,49 +26,46 @@ class ParameterHistory:
     """
     Resolve logged parameter values at analysis timestamps in seconds.
 
-    ArduPilot's initial parameter snapshot is emitted incrementally after log
-    startup. Therefore, the chronologically first record for a parameter is its
-    baseline from the beginning of the log, rather than becoming applicable
-    only at that record's timestamp. Later records take effect at their logged
-    timestamps. This is stepwise resolution, not interpolation.
+    Startup baselines are retained separately and apply from time zero. Later
+    records take effect at their logged timestamps. This is stepwise
+    resolution, not interpolation.
     """
 
-    _values_by_name: dict[str, tuple[_ParameterValue, ...]] = field(default_factory=dict)
+    initial_values: Mapping[str, float] = field(default_factory=dict)
+    changes: Mapping[str, tuple[ParameterChange, ...]] = field(default_factory=dict)
 
-    @classmethod
-    def from_log_data(cls, log_data: LogData) -> "ParameterHistory":
-        """Build history from scaled PARM records already extracted into ``log_data``."""
-        values_by_name: dict[str, list[_ParameterValue]] = {}
-        for record in log_data.iter_message_records("PARM"):
-            name = record.get("Name")
-            value = record.get("Value")
-            time_s = record.get("TimeUS")
-            if not isinstance(name, str) or not name or value is None or time_s is None:
-                continue
+    def __post_init__(self) -> None:
+        """Freeze mappings and change sequences so finalized histories are immutable."""
+        object.__setattr__(self, "initial_values", MappingProxyType(dict(self.initial_values)))
+        frozen_changes = {
+            parameter_name: tuple(sorted(changes, key=lambda change: change.time_s))
+            for parameter_name, changes in self.changes.items()
+        }
+        object.__setattr__(self, "changes", MappingProxyType(frozen_changes))
 
-            timestamp = float(time_s)
-            if not math.isfinite(timestamp):
-                msg = f"PARM timestamp for {name} must be finite"
-                raise ValueError(msg)
-            values_by_name.setdefault(name, []).append(_ParameterValue(timestamp, float(value)))
-
-        return cls({name: tuple(sorted(values, key=lambda item: item.time_s)) for name, values in values_by_name.items()})
+    @property
+    def latest_values(self) -> dict[str, float]:
+        """Return the final logged value of every valid parameter."""
+        latest_values = dict(self.initial_values)
+        for parameter_name, parameter_changes in self.changes.items():
+            if parameter_changes:
+                latest_values[parameter_name] = parameter_changes[-1].value
+        return latest_values
 
     def value_at(self, parameter_name: str, time_s: float) -> float | None:
         """
         Return the value applicable at ``time_s``, or ``None`` when absent.
 
-        The first logged value is the log-start baseline, including for queries
-        before its timestamp. At duplicate timestamps, the last logged record
-        at that timestamp wins.
+        An initial value applies from time zero until its first recorded change.
+        At duplicate timestamps, the last logged record at that timestamp wins.
         """
         if not math.isfinite(time_s):
             msg = "Parameter query time_s must be finite"
             raise ValueError(msg)
 
-        values = self._values_by_name.get(parameter_name)
-        if not values:
-            return None
+        changes = self.changes.get(parameter_name)
+        if not changes:
+            return self.initial_values.get(parameter_name)
 
-        index = bisect_right(values, time_s, key=lambda item: item.time_s) - 1
-        return values[max(index, 0)].value
+        index = bisect_right(changes, time_s, key=lambda item: item.time_s) - 1
+        return self.initial_values.get(parameter_name) if index < 0 else changes[index].value

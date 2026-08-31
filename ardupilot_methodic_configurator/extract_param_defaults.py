@@ -18,8 +18,8 @@ import logging
 import argcomplete
 from argcomplete.completers import FilesCompleter
 
+from ardupilot_methodic_configurator.backend_bin_log import close_log, open_log
 from ardupilot_methodic_configurator.data_model_par_dict import validate_param_name
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import close_log, open_log
 
 NO_DEFAULT_VALUES_MESSAGE = (
     "The .bin file contained no parameter default values. Update to a newer ArduPilot firmware version."
