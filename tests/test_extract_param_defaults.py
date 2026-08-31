@@ -82,7 +82,7 @@ class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-clas
 
 
 class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=missing-class-docstring
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_logfile_does_not_exist(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to raise an exception
         mock_mavlink_connection.side_effect = OSError("Test exception")
@@ -91,7 +91,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         with pytest.raises(OSError, match=r"^Error opening logfile dummy\.bin: Test exception$"):
             extract_parameter_values("dummy.bin")
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_extract_parameter_default_values(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection and the messages it returns
         mock_mlog = MagicMock()
@@ -108,7 +108,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         # Check if the defaults dictionary contains the correct parameters and values
         assert defaults == {"PARAM1": 1.1, "PARAM2": 2.0}
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_no_parameters(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to return no parameter messages
         mock_mlog = MagicMock()
@@ -120,7 +120,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
             extract_parameter_values("dummy.bin")
         assert str(cm.value) == NO_DEFAULT_VALUES_MESSAGE
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_no_parameter_defaults(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate no parameter default values in the .bin file
         mock_mlog = MagicMock()
@@ -132,7 +132,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
             extract_parameter_values("dummy.bin")
         assert str(cm.value) == NO_DEFAULT_VALUES_MESSAGE
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_invalid_parameter_name(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate an invalid parameter name
         mock_mlog = MagicMock()
@@ -143,7 +143,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         with pytest.raises(SystemExit):
             extract_parameter_values("dummy.bin")
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_long_parameter_name(self, mock_mavlink_connection) -> None:
         # Mock the mavlink connection to simulate a too long parameter name
         mock_mlog = MagicMock()
@@ -154,7 +154,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         with pytest.raises(SystemExit):
             extract_parameter_values("dummy.bin")
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_extract_values_conversion_error(self, mock_mavlink_connection) -> None:
         """Test error handling when Value can't be converted to float."""
         mock_mlog = MagicMock()
@@ -167,7 +167,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
             extract_parameter_values("dummy.bin", "values")
         assert "Error converting not_a_number to float" in str(excinfo.value)
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_extract_non_default_values_conversion_error(self, mock_mavlink_connection) -> None:
         """Test error handling when Value can't be converted to float in non_default_values mode."""
         mock_mlog = MagicMock()
@@ -180,7 +180,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
             extract_parameter_values("dummy.bin", "non_default_values")
         assert "Error converting not_a_number to float" in str(excinfo.value)
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_extract_values_missing_attributes(self, mock_mavlink_connection) -> None:
         """Test handling of parameters missing Value attribute in values mode."""
         mock_mlog = MagicMock()
@@ -207,7 +207,7 @@ class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=m
         assert values == {"PARAM2": 2.0}
         assert "PARAM1" not in values
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_extract_non_default_values_edge_cases(self, mock_mavlink_connection) -> None:
         """Test edge cases for non_default_values extraction."""
         mock_mlog = MagicMock()
@@ -501,7 +501,7 @@ class TestSortParams:
 class TestExtractParameterValues:
     """Tests for the extract_parameter_values function."""
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_extract_parameter_values(self, mock_mavlink_connection) -> None:
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -516,7 +516,7 @@ class TestExtractParameterValues:
         values = extract_parameter_values("dummy.bin", "values")
         assert values == {"PARAM1": 1.0, "PARAM2": 2.0}
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_extract_non_default_values(self, mock_mavlink_connection) -> None:
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -533,7 +533,7 @@ class TestExtractParameterValues:
         assert values == {"PARAM1": 1.0, "PARAM3": 3.0}
         assert "PARAM2" not in values
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_invalid_param_type(self, mock_mavlink_connection) -> None:
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -547,7 +547,7 @@ class TestExtractParameterValues:
             extract_parameter_values("dummy.bin", "invalid_type")
         assert "Invalid type" in str(excinfo.value)
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_duplicate_parameter_name(self, mock_mavlink_connection) -> None:
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog
@@ -562,7 +562,7 @@ class TestExtractParameterValues:
         values = extract_parameter_values("dummy.bin", "defaults")
         assert values == {"PARAM1": 1.0, "PARAM2": 2.0}
 
-    @patch("ardupilot_methodic_configurator.log_analysis.backend_log_extraction.mavutil.mavlink_connection")
+    @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_non_float_conversion_error(self, mock_mavlink_connection) -> None:
         mock_mlog = MagicMock()
         mock_mavlink_connection.return_value = mock_mlog

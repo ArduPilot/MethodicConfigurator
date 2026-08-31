@@ -446,38 +446,20 @@ class VehicleProjectCreator:
         return f"{next_prefix:02d}_imported_bin_log_parameters.param"
 
     @staticmethod
-    def extract_firmware_version_from_bin_log(bin_file: str) -> tuple[str, int, int, int]:
-        """
-        Extract vehicle type and firmware version from an ArduPilot .bin log file.
-
-        Returns:
-            (vehicle_type, major, minor, patch) e.g. ("ArduCopter", 4, 6, 3)
-
-        """
-        from ardupilot_methodic_configurator.log_analysis.backend_firmware_version import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
-            extract_firmware_version_and_vehicle_type,
+    def extract_bin_log_data(bin_file: str) -> tuple[tuple[str, int, int, int], ParDict, ParDict]:
+        """Extract firmware identity, defaults, and final values in one first pass."""
+        from ardupilot_methodic_configurator.backend_bin_log import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            extract_log_identity_and_parameter_snapshots,
         )
 
         try:
-            return extract_firmware_version_and_vehicle_type(bin_file)
-        except SystemExit as exc:
-            msg = str(exc) or _("Failed to read firmware version from the selected .bin log file")
+            firmware_info, default_values, current_values = extract_log_identity_and_parameter_snapshots(bin_file)
+            default_params = ParDict.from_float_dict(default_values)
+            current_params = ParDict.from_float_dict(current_values)
+        except (OSError, SystemExit, TypeError, ValueError) as exc:
+            msg = str(exc) or _("Failed to extract data from the selected .bin log file")
             raise VehicleProjectCreationError(_(".bin log import"), msg) from exc
-
-    @staticmethod
-    def extract_param_files_from_bin_log(bin_file: str) -> tuple[ParDict, ParDict]:
-        """Extract default and current parameter snapshots from an ArduPilot .bin log file."""
-        from ardupilot_methodic_configurator.extract_param_defaults import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
-            extract_parameter_values,
-        )
-
-        try:
-            default_params = ParDict.from_float_dict(extract_parameter_values(bin_file, "defaults"))
-            current_params = ParDict.from_float_dict(extract_parameter_values(bin_file, "values"))
-        except SystemExit as exc:
-            msg = str(exc) or _("Failed to extract parameters from the selected .bin log file")
-            raise VehicleProjectCreationError(_(".bin log import"), msg) from exc
-        return default_params, current_params
+        return firmware_info, default_params, current_params
 
     def create_new_vehicle_from_template(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,

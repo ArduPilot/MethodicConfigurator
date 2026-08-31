@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING, Optional, Protocol, Union, cast
 
 # from logging import critical as logging_critical
 from ardupilot_methodic_configurator import _, __version__
+from ardupilot_methodic_configurator.backend_bin_log import extract_log
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_freedesktop import FreeDesktop
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
@@ -71,7 +72,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import
 )
 from ardupilot_methodic_configurator.log_analysis.backend_data_sources import load_apm_pdef
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary, validate_log_matches_vehicle
 from ardupilot_methodic_configurator.plugins.plugin_factory import plugin_factory
 

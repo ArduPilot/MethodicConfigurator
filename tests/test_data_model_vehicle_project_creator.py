@@ -19,7 +19,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSetting,
     NewVehicleProjectSettings,
@@ -1068,6 +1067,37 @@ class TestGetFCDependentErrorMessageGuardClause:
 class TestBinLogImportHelpers:
     """Test static helper methods on VehicleProjectCreator used for .bin log imports."""
 
+    @pytest.mark.parametrize("error", [OSError("unreadable"), ValueError("malformed")])
+    def test_extract_bin_log_data_wraps_parser_errors(self, error: Exception) -> None:
+        """Parser failures are exposed through the creator's domain error."""
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_bin_log.extract_log_identity_and_parameter_snapshots",
+                side_effect=error,
+            ),
+            pytest.raises(VehicleProjectCreationError) as exc_info,
+        ):
+            VehicleProjectCreator.extract_bin_log_data("broken.bin")
+
+        assert exc_info.value.title == ".bin log import"
+        assert str(error) in exc_info.value.message
+
+    def test_extract_bin_log_data_uses_combined_log_extractor(self) -> None:
+        """The creator delegates firmware and parameter extraction to the central parser helper."""
+        default_values = {"PARAM_A": 1.0}
+        current_values = {"PARAM_A": 2.0}
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_bin_log.extract_log_identity_and_parameter_snapshots",
+            return_value=(("ArduCopter", 4, 6, 3), default_values, current_values),
+        ) as extract_snapshots:
+            result = VehicleProjectCreator.extract_bin_log_data("flight.bin")
+
+        extract_snapshots.assert_called_once_with("flight.bin")
+        assert result[0] == ("ArduCopter", 4, 6, 3)
+        assert result[1]["PARAM_A"].value == 1.0
+        assert result[2]["PARAM_A"].value == 2.0
+
     def test_template_dir_for_bin_import_returns_correct_path(self, tmp_path) -> None:
         """
         template_dir_for_bin_import returns the empty_{major}.{minor}.x path for a given vehicle type.
@@ -1122,42 +1152,6 @@ class TestBinLogImportHelpers:
         assert exc_info.value.title == ".bin log import"
         assert "UnknownVehicle" in exc_info.value.message
         assert "empty_9.9.x" in exc_info.value.message
-
-    def test_extract_firmware_version_from_bin_log_returns_vehicle_type_and_version(self) -> None:
-        """
-        extract_firmware_version_from_bin_log returns (vehicle_type, major, minor, patch).
-
-        GIVEN: A .bin log file whose VER message reports ArduCopter 4.6.3
-        WHEN: extract_firmware_version_from_bin_log is called
-        THEN: Returns ("ArduCopter", 4, 6, 3)
-        """
-        with patch(
-            "ardupilot_methodic_configurator.log_analysis.backend_firmware_version.extract_firmware_version_and_vehicle_type",
-            return_value=("ArduCopter", 4, 6, 3),
-        ):
-            result = VehicleProjectCreator.extract_firmware_version_from_bin_log("any.bin")
-
-        assert result == ("ArduCopter", 4, 6, 3)
-
-    def test_extract_firmware_version_from_bin_log_raises_creation_error_on_failure(self) -> None:
-        """
-        extract_firmware_version_from_bin_log converts SystemExit to VehicleProjectCreationError.
-
-        GIVEN: A .bin log file with no firmware version information
-        WHEN: extract_firmware_version_from_bin_log is called
-        THEN: VehicleProjectCreationError is raised with the .bin log import title
-        """
-        with (
-            patch(
-                "ardupilot_methodic_configurator.log_analysis.backend_firmware_version.extract_firmware_version_and_vehicle_type",  # pylint: disable=line-too-long
-                side_effect=SystemExit("No VER or MSG message found"),
-            ),
-            pytest.raises(VehicleProjectCreationError) as exc_info,
-        ):
-            VehicleProjectCreator.extract_firmware_version_from_bin_log("no_ver.bin")
-
-        assert ".bin log import" in exc_info.value.title
-        assert "No VER or MSG message found" in exc_info.value.message
 
     def test_vehicle_name_from_bin_log_uses_file_stem(self, project_creator) -> None:
         """
@@ -1269,55 +1263,6 @@ class TestBinLogImportHelpers:
 
         assert exc_info.value.title == "Parameter import"
         assert str(tmp_path) in exc_info.value.message
-
-    def test_extract_param_files_from_bin_log_returns_two_par_dicts(self) -> None:
-        """
-        extract_param_files_from_bin_log returns (defaults, current) ParDict pair.
-
-        GIVEN: A valid .bin log file that extract_parameter_values can parse
-        WHEN: extract_param_files_from_bin_log is called
-        THEN: Two non-empty ParDict objects are returned (defaults first, current second)
-        """
-        # Arrange
-        fake_defaults = {"PARAM_A": 1.0, "PARAM_B": 2.0}
-        fake_current = {"PARAM_A": 1.5, "PARAM_B": 2.0, "PARAM_C": 3.0}
-
-        with patch(
-            "ardupilot_methodic_configurator.extract_param_defaults.extract_parameter_values",
-            side_effect=[fake_defaults, fake_current],
-        ):
-            # Act
-            result_defaults, result_current = VehicleProjectCreator.extract_param_files_from_bin_log("any.bin")
-
-        # Assert: both results are ParDict instances with correct keys and values
-        assert isinstance(result_defaults, ParDict)
-        assert isinstance(result_current, ParDict)
-        assert set(result_defaults.keys()) == {"PARAM_A", "PARAM_B"}
-        assert result_defaults["PARAM_A"].value == pytest.approx(1.0)
-        assert result_defaults["PARAM_B"].value == pytest.approx(2.0)
-        assert set(result_current.keys()) == {"PARAM_A", "PARAM_B", "PARAM_C"}
-        assert result_current["PARAM_A"].value == pytest.approx(1.5)
-        assert result_current["PARAM_C"].value == pytest.approx(3.0)
-
-    def test_extract_param_files_raises_creation_error_when_extraction_fails(self) -> None:
-        """
-        extract_param_files_from_bin_log converts SystemExit into VehicleProjectCreationError.
-
-        GIVEN: A .bin log file that extract_parameter_values cannot parse
-        WHEN: extract_param_files_from_bin_log is called
-        THEN: VehicleProjectCreationError is raised with the .bin log import title
-        """
-        with (
-            patch(
-                "ardupilot_methodic_configurator.extract_param_defaults.extract_parameter_values",
-                side_effect=SystemExit("bad log"),
-            ),
-            pytest.raises(VehicleProjectCreationError) as exc_info,
-        ):
-            VehicleProjectCreator.extract_param_files_from_bin_log("corrupt.bin")
-
-        assert ".bin log import" in exc_info.value.title
-        assert "bad log" in exc_info.value.message
 
 
 class TestGetFCDependentErrorMessageWorksForParams:
