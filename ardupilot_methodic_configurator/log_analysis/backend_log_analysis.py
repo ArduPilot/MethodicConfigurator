@@ -14,7 +14,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from collections.abc import Callable
 from typing import Any
 
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
+from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_bin_log import extract_log
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import (
     LogSummary,
     analyze_log,
@@ -22,7 +23,6 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
-from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 from ardupilot_methodic_configurator.log_analysis.utils import APMDoc
 
 
@@ -39,7 +39,7 @@ def analyze_log_data(  # pylint: disable=too-many-arguments
     """Validate and analyze already extracted log data."""
     if validate_project:
         if log_data.vehicle_type is None or log_data.firmware_version is None:
-            msg = "No firmware version information found in parsed log"
+            msg = _("No firmware version information found in parsed log")
             raise ValueError(msg)
         validate_log_matches_vehicle(
             log_data.vehicle_type,
@@ -48,17 +48,17 @@ def analyze_log_data(  # pylint: disable=too-many-arguments
             project_firmware_version,
         )
 
-    parameters = {
-        record["Name"]: float(record["Value"])
-        for record in log_data.iter_message_records("PARM")
-        if record.get("Name") and record.get("Value") is not None
-    }
+    if log_data.parameter_history is None:
+        msg = _("Parsed log data has no parameter history")
+        raise ValueError(msg)
+
+    parameter_history = log_data.parameter_history
     context = LogAnalysisContext(
-        parameters=parameters,
+        parameters=parameter_history.latest_values,
         configuration_steps=configuration_steps or {},
         vehicle_components=vehicle_components or {},
         apm_doc=apm_doc,
-        parameter_history=ParameterHistory.from_log_data(log_data),
+        parameter_history=parameter_history,
     )
     return analyze_log(log_data, context)
 

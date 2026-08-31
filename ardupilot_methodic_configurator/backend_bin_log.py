@@ -13,19 +13,27 @@ SPDX-FileCopyrightText: 2026 Omkar Sarkar <omkarsarkar24@gmail.com>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from __future__ import annotations
+
 import contextlib
 import os
-from collections.abc import Callable, Iterator, Mapping
+from copy import deepcopy
 from dataclasses import dataclass
+from functools import lru_cache
 from logging import error as logging_error
-from typing import Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.data_model_par_dict import validate_param_name
 from ardupilot_methodic_configurator.log_analysis import data_model_log_data
 from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import parse_first_msg_version, parse_ver_fields
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterChange, ParameterHistory
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator, Mapping
 
 _NO_ID_ASSIGNED = "-"  # ArduPilot's FMTU convention: '-' marks a field with no unit/multiplier ID assigned
 
@@ -158,6 +166,122 @@ _FORMAT_TO_DTYPE: dict[str, Any] = {
 }
 
 _ARRAY_FIELD_LENGTH = 32
+# DataFlash has no explicit end marker for its incremental startup PARM
+# snapshot. This observed 110 ms gap is a deliberate, adjustable compromise:
+# it keeps first-pass storage compact today and can be tuned as more real-log
+# evidence becomes available.
+_PARAMETER_STARTUP_GAP_US = 110_000.0
+
+
+@dataclass(frozen=True)
+class _LogFileIdentity:
+    """Filesystem identity used to validate cached first-pass data."""
+
+    path: str
+    device: int
+    inode: int
+    size: int
+    modified_ns: int
+
+
+def _canonical_log_path(logfile: str) -> str:
+    """Return the normalized absolute path used as the first-pass cache key."""
+    return os.path.normcase(os.path.realpath(os.path.abspath(logfile)))
+
+
+def _log_file_identity(logfile: str) -> _LogFileIdentity:
+    """Read the filesystem identity needed to validate cached parser data."""
+    path = _canonical_log_path(logfile)
+    try:
+        file_stat = os.stat(path)
+    except OSError as error:
+        msg = _("Error opening logfile {logfile}: {error}").format(logfile=logfile, error=error)
+        raise OSError(msg) from error
+
+    return _LogFileIdentity(
+        path=path,
+        device=file_stat.st_dev,
+        inode=file_stat.st_ino,
+        size=file_stat.st_size,
+        modified_ns=file_stat.st_mtime_ns,
+    )
+
+
+@dataclass
+class _ParameterHistoryState:
+    """Compact PARM parsing state accumulated while reading a log."""
+
+    first_occurrence: dict[str, object]
+    default_values: dict[str, object]
+    current_values: dict[str, object]
+    changes: dict[str, list[tuple[object, object]]]
+    last_timestamp_us: float | None = None
+    initialization_complete: bool = False
+
+    @classmethod
+    def create(cls) -> _ParameterHistoryState:
+        return cls({}, {}, {}, {})
+
+    def record(self, payload: Mapping[str, object]) -> None:  # pylint: disable=too-many-branches
+        """Classify one raw PARM record using the shared startup-gap heuristic."""
+        name = payload.get("Name")
+        value = payload.get("Value")
+        if not isinstance(name, str) or not name or value is None:
+            return
+
+        is_valid, error_message = validate_param_name(name)
+        if not is_valid:
+            raise SystemExit(error_message)
+
+        try:
+            value = float(cast("Any", value))
+        except (TypeError, ValueError) as error:
+            msg = f"Error converting {value} to float"
+            raise SystemExit(msg) from error
+
+        default = payload.get("Default")
+        if default is not None:
+            try:
+                default = float(cast("Any", default))
+            except (TypeError, ValueError) as error:
+                msg = f"Error converting {default} to float"
+                raise SystemExit(msg) from error
+
+        timestamp_value = payload.get("TimeUS")
+        timestamp_us: float | None = None
+        if timestamp_value is not None:
+            try:
+                timestamp_us = float(cast("Any", timestamp_value))
+            except (TypeError, ValueError) as error:
+                msg = f"PARM timestamp for {name} must be numeric"
+                raise ValueError(msg) from error
+            if not np.isfinite(timestamp_us):
+                msg = f"PARM timestamp for {name} must be finite"
+                raise ValueError(msg)
+            if self.last_timestamp_us is not None and timestamp_us < self.last_timestamp_us:
+                msg = f"PARM timestamps for {name} must be non-decreasing"
+                raise ValueError(msg)
+            if self.last_timestamp_us is not None and timestamp_us - self.last_timestamp_us > _PARAMETER_STARTUP_GAP_US:
+                self.initialization_complete = True
+            self.last_timestamp_us = timestamp_us
+
+        if name not in self.default_values and default is not None:
+            self.default_values[name] = default
+
+        if not self.initialization_complete:
+            self.first_occurrence.setdefault(name, value)
+            self.current_values[name] = value
+            return
+
+        previous_value = self.current_values.get(name)
+        self.current_values[name] = value
+        if previous_value != value and timestamp_us is not None:
+            self.changes.setdefault(name, []).append((timestamp_us, value))
+
+    def sort_changes(self) -> None:
+        """Sort each parameter's raw timestamped changes once after parsing."""
+        for parameter_changes in self.changes.values():
+            parameter_changes.sort(key=lambda change: float(cast("Any", change[0])))
 
 
 def _schema_numpy_dtype(schema: data_model_log_data.MessageSchema) -> np.dtype[Any]:
@@ -231,18 +355,24 @@ def _set_log_identity(log_data: data_model_log_data.LogData, identity: tuple[str
 
 def _record_message_counts_fields_and_identity(
     mlog: mavutil.mavfile, log_data: data_model_log_data.LogData
-) -> dict[int, _FMTUDefinition]:
+) -> tuple[dict[int, _FMTUDefinition], _ParameterHistoryState]:
     """
-    First pass: count messages, capture FMTU unit/multiplier IDs, and find log identity.
+    First pass counts messages, captures FMTU definitions and identity, and retains compact parameter state.
 
     FMTU IDs map each field position to a UNIT and MULT entry, resolved later
     against pymavlink's completed lookup tables.
+
     """
     fmtu_definitions: dict[int, _FMTUDefinition] = {}
+    parameter_state = _ParameterHistoryState.create()
     msg_fallback_identity: tuple[str, int, int, int] | None = None
     for msg in _iter_messages(mlog):
         msg_type = msg.get_type()
         log_data.msg_count[msg_type] = log_data.msg_count.get(msg_type, 0) + 1
+        if msg_type == "PARM":
+            parameter_state.record(cast("Mapping[str, object]", msg.to_dict()))
+            continue
+
         if msg_type == "FMTU":
             fmtu_definitions[int(msg.FmtType)] = _FMTUDefinition(unit_ids=msg.UnitIds, mult_ids=msg.MultIds)
         elif msg_type == "VER" and log_data.vehicle_type is None:
@@ -255,7 +385,139 @@ def _record_message_counts_fields_and_identity(
     if log_data.vehicle_type is None and msg_fallback_identity is not None:
         _set_log_identity(log_data, msg_fallback_identity)
 
-    return fmtu_definitions
+    parameter_state.sort_changes()
+    return fmtu_definitions, parameter_state
+
+
+def _schema_field_multiplier(schema: data_model_log_data.MessageSchema, field_name: str) -> float:
+    """Return a raw-to-scaled multiplier for one field in a discovered schema."""
+    try:
+        field_index = schema.fields.index(field_name)
+    except ValueError:
+        return 1.0
+    if field_index >= len(schema.multipliers):
+        return 1.0
+    multiplier = schema.multipliers[field_index]
+    return 1.0 if multiplier is None else multiplier
+
+
+def _build_first_pass_parameter_history(
+    log_data: data_model_log_data.LogData, parameter_state: _ParameterHistoryState
+) -> ParameterHistory:
+    """Freeze the compact parameter state captured during the first log pass."""
+    schema = log_data.schemas.get("PARM")
+    if schema is None:
+        time_multiplier = value_multiplier = 1.0
+    else:
+        time_multiplier = _schema_field_multiplier(schema, "TimeUS")
+        value_multiplier = _schema_field_multiplier(schema, "Value")
+    return _finalize_parameter_history(log_data, parameter_state, time_multiplier, value_multiplier)
+
+
+def _finalize_parameter_history(
+    log_data: data_model_log_data.LogData,
+    parameter_state: _ParameterHistoryState,
+    time_multiplier: float,
+    value_multiplier: float,
+) -> ParameterHistory:
+    """Scale compact extractor state and finalize it as a timeline model."""
+    initial_values = {
+        name: float(cast("Any", value)) * value_multiplier for name, value in parameter_state.first_occurrence.items()
+    }
+    changes: dict[str, list[ParameterChange]] = {}
+    for name, parameter_changes in parameter_state.changes.items():
+        changes[name] = [
+            ParameterChange(
+                float(cast("Any", time_value)) * time_multiplier,
+                float(cast("Any", value)) * value_multiplier,
+            )
+            for time_value, value in parameter_changes
+        ]
+    log_data.parameter_defaults = {
+        name: float(cast("Any", value)) * value_multiplier for name, value in parameter_state.default_values.items()
+    }
+    return ParameterHistory(initial_values, {name: tuple(values) for name, values in changes.items()})
+
+
+def _extract_parameter_snapshots_from_log_data(
+    log_data: data_model_log_data.LogData,
+) -> tuple[dict[str, float], dict[str, float]]:
+    """Extract parameter snapshots from already parsed first-pass data."""
+    if not log_data.parameter_defaults:
+        msg = "No parameter default values found in log"
+        raise SystemExit(msg)
+    if log_data.parameter_history is None:
+        msg = "No parameter history found in log"
+        raise SystemExit(msg)
+    return log_data.parameter_defaults, log_data.parameter_history.latest_values
+
+
+def extract_parameter_snapshots_from_log(logfile: str) -> tuple[dict[str, float], dict[str, float]]:
+    """Extract PARM defaults and final values using only the first log pass."""
+    return _extract_parameter_snapshots_from_log_data(extract_log_first_pass(logfile))
+
+
+def extract_log_identity_and_parameter_snapshots(
+    logfile: str,
+) -> tuple[tuple[str, int, int, int], dict[str, float], dict[str, float]]:
+    """Extract firmware identity, PARM defaults, and final values in one first pass."""
+    log_data = extract_log_first_pass(logfile)
+    if log_data.vehicle_type is None or log_data.firmware_version is None:
+        msg = _("No firmware version information found in {logfile}").format(logfile=logfile)
+        raise SystemExit(msg)
+    default_values, current_values = _extract_parameter_snapshots_from_log_data(log_data)
+    return (log_data.vehicle_type, *log_data.firmware_version), default_values, current_values
+
+
+def _extract_log_first_pass_uncached(logfile: str, file_identity: _LogFileIdentity) -> data_model_log_data.LogData:
+    """Extract first-pass data without consulting the cache."""
+    log_data = data_model_log_data.LogData()
+    log_data.log_file_size = file_identity.size
+    mlog = open_log(logfile)
+    try:
+        fmtu_definitions, parameter_state = _record_message_counts_fields_and_identity(mlog, log_data)
+        extract_schemas(mlog, log_data, fmtu_definitions)
+        history = _build_first_pass_parameter_history(log_data, parameter_state)
+    finally:
+        close_log(mlog)
+    log_data.parameter_history = history
+    return log_data
+
+
+@lru_cache(maxsize=1)
+def _extract_log_first_pass_cached(file_identity: _LogFileIdentity) -> data_model_log_data.LogData:
+    """Return first-pass data cached by the source file identity."""
+    return _extract_log_first_pass_uncached(file_identity.path, file_identity)
+
+
+def _copy_log_data(log_data: data_model_log_data.LogData) -> data_model_log_data.LogData:
+    """Copy mutable LogData state while retaining immutable parameter history."""
+    return data_model_log_data.LogData(
+        schemas=deepcopy(log_data.schemas),
+        _raw_messages={message_name: columns.copy() for message_name, columns in log_data._raw_messages.items()},  # pylint: disable=protected-access # noqa: SLF001
+        msg_count=log_data.msg_count.copy(),
+        flight_duration_sec=log_data.flight_duration_sec,
+        log_file_size=log_data.log_file_size,
+        vehicle_type=log_data.vehicle_type,
+        firmware_version=log_data.firmware_version,
+        parameter_history=log_data.parameter_history,
+        parameter_defaults=log_data.parameter_defaults.copy(),
+    )
+
+
+def _get_first_pass_log_data(logfile: str) -> tuple[data_model_log_data.LogData, _LogFileIdentity]:
+    """Return an isolated first-pass copy, parsing only when the source changed."""
+    file_identity = _log_file_identity(logfile)
+    # The full extraction pass mutates LogData by adding raw message arrays and
+    # metadata. Keep the cached first-pass object compact and give each caller
+    # its own mutable instance.
+    return _copy_log_data(_extract_log_first_pass_cached(file_identity)), file_identity
+
+
+def extract_log_first_pass(logfile: str) -> data_model_log_data.LogData:
+    """Extract log identity, schemas, and compact PARM state without full arrays."""
+    log_data, _file_identity = _get_first_pass_log_data(logfile)
+    return log_data
 
 
 def _resolve_multipliers(fmt: Any, mult_ids: str | None, mult_lookup: dict[str, float]) -> list[float | None]:  # noqa: ANN401
@@ -323,8 +585,10 @@ def _raw_fixed_point_value(msg: Any, field_index: int, field_name: str) -> Any: 
 
 
 def _allocate_message_arrays(log_data: data_model_log_data.LogData) -> None:
-    """Allocate one structured numpy array per message type."""
+    """Allocate structured NumPy arrays, excluding PARM retained as compact history."""
     for message_name, schema in log_data.schemas.items():
+        if message_name == "PARM":
+            continue
         log_data._raw_messages[message_name] = np.empty(schema.records, dtype=_schema_numpy_dtype(schema))  # pylint: disable=protected-access # noqa: SLF001
 
 
@@ -398,6 +662,8 @@ def _fill_message_arrays(  # pylint: disable=too-many-locals
         write_positions[msg_type] = index + 1
 
     for message_name, schema in log_data.schemas.items():
+        if message_name == "PARM":
+            continue
         written = write_positions.get(message_name, 0)
         if written != schema.records:
             msg = _("Message count mismatch for {message_name}: expected {expected}, wrote {written}").format(
@@ -532,16 +798,16 @@ def extract_log(
         A populated LogData object.
 
     """
-    log_data = data_model_log_data.LogData()
+    # Reuse the compact first pass when this file was already inspected, for
+    # example by bin-log project creation. The second pass still populates the
+    # full message arrays required by analysis.
+    log_data, first_pass_identity = _get_first_pass_log_data(logfile)
 
-    # first pass: count messages, capture identity, and let pymavlink discover schemas for preallocated arrays
-    mlog = open_log(logfile)
-    try:
-        fmtu_definitions = _record_message_counts_fields_and_identity(mlog, log_data)
-        # extract_schemas should not raise any exception if it does it should fail
-        extract_schemas(mlog, log_data, fmtu_definitions)
-    finally:
-        close_log(mlog)
+    # A log may be copied or still be written between the two passes. Do not
+    # combine first-pass schemas/counts from one file state with second-pass
+    # records from another state.
+    if _log_file_identity(logfile) != first_pass_identity:
+        log_data, first_pass_identity = _get_first_pass_log_data(logfile)
 
     _allocate_message_arrays(log_data)
 

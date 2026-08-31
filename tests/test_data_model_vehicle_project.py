@@ -1054,10 +1054,13 @@ class TestCreateNewVehicleFromBinLog:
         empty_compound = ParDict.from_float_dict({})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl/ArduCopter/empty_4.6.x"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="my_flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), fake_defaults, fake_current),
+            ),
             patch.object(
                 manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/my_flight"
             ) as mock_create,
@@ -1099,10 +1102,13 @@ class TestCreateNewVehicleFromBinLog:
         empty_compound = ParDict.from_float_dict({})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), fake_defaults, fake_current),
+            ),
             patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
             patch.object(manager, "store_recently_used_template_dirs"),
@@ -1135,10 +1141,13 @@ class TestCreateNewVehicleFromBinLog:
         compound = ParDict.from_float_dict({"PARAM_A": 1.0})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), fake_defaults, fake_current),
+            ),
             patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
             patch.object(manager._creator, "next_import_filename", return_value="02_imported_bin_log_parameters.param"),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
@@ -1177,10 +1186,9 @@ class TestCreateNewVehicleFromBinLog:
         compound = ParDict.from_float_dict({"PARAM_A": 1.0, "PARAM_B": 2.0})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(params, params)),
+            patch.object(manager._creator, "extract_bin_log_data", return_value=(("ArduCopter", 4, 6, 3), params, params)),
             patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
             patch.object(manager, "store_recently_used_template_dirs"),
@@ -1221,10 +1229,13 @@ class TestCreateNewVehicleFromBinLog:
         empty_step_compound = ParDict.from_float_dict({})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(default_params, current_params)),
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), default_params, current_params),
+            ),
             patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
             patch.object(manager, "store_recently_used_template_dirs"),
@@ -1256,10 +1267,13 @@ class TestCreateNewVehicleFromBinLog:
         compound = ParDict.from_float_dict({"PARAM_A": 1.0})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(fake_defaults, fake_current)),
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), fake_defaults, fake_current),
+            ),
             patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
             patch.object(manager, "store_recently_used_template_dirs"),
@@ -1286,12 +1300,11 @@ class TestCreateNewVehicleFromBinLog:
         manager = self._make_manager()
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="bad"),
             patch.object(
                 manager._creator,
-                "extract_param_files_from_bin_log",
+                "extract_bin_log_data",
                 side_effect=VehicleProjectCreationError(".bin log import", "Corrupt log"),
             ),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
@@ -1316,7 +1329,7 @@ class TestCreateNewVehicleFromBinLog:
         with (
             patch.object(
                 manager._creator,
-                "extract_firmware_version_from_bin_log",
+                "extract_bin_log_data",
                 side_effect=VehicleProjectCreationError(".bin log import", "No VER or MSG found"),
             ),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
@@ -1345,10 +1358,9 @@ class TestCreateNewVehicleFromBinLog:
         compound = ParDict.from_float_dict({"PARAM_A": 1.0})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(params, params)),
+            patch.object(manager._creator, "extract_bin_log_data", return_value=(("ArduCopter", 4, 6, 3), params, params)),
             patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight") as mock_create,
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
             patch.object(manager, "store_recently_used_template_dirs"),
@@ -1380,10 +1392,9 @@ class TestCreateNewVehicleFromBinLog:
         compound = ParDict.from_float_dict({"PARAM_A": 1.0})
 
         with (
-            patch.object(manager._creator, "extract_firmware_version_from_bin_log", return_value=("ArduCopter", 4, 6, 3)),
             patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl/ArduCopter/empty_4.6.x"),
             patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
-            patch.object(manager._creator, "extract_param_files_from_bin_log", return_value=(params, params)),
+            patch.object(manager._creator, "extract_bin_log_data", return_value=(("ArduCopter", 4, 6, 3), params, params)),
             patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
             patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
             patch.object(manager, "store_recently_used_template_dirs"),

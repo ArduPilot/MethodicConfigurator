@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Integration tests for ardupilot_methodic_configurator/log_analysis/backend_log_extraction.py.
+Integration tests for ardupilot_methodic_configurator/backend_bin_log.py.
 
 These tests exercise real pymavlink parsing against a truncated ArduPilot .bin fixture.
 
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log, parse_log
+from ardupilot_methodic_configurator.backend_bin_log import extract_log, parse_log
 
 pytestmark = pytest.mark.integration
 

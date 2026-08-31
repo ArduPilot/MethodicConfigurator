@@ -15,6 +15,7 @@ import numpy as np
 from ardupilot_methodic_configurator.log_analysis import backend_log_analysis
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_file
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterChange, ParameterHistory
 
 
 def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> None:  # noqa: ANN401
@@ -40,6 +41,10 @@ def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> N
             multipliers_applied_at_ingest=[False, False, False],
             records=2,
         ),
+    )
+    log_data.parameter_history = ParameterHistory(
+        {"LOG_BITMASK": 5.0},
+        {"LOG_BITMASK": (ParameterChange(2.0, 7.0),)},
     )
 
     sentinel_summary = object()
@@ -70,6 +75,11 @@ def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> N
 
     monkeypatch.setattr(backend_log_analysis, "validate_log_matches_vehicle", fake_validate)
     monkeypatch.setattr(backend_log_analysis, "analyze_log", fake_analyze)
+    monkeypatch.setattr(
+        log_data,
+        "iter_message_records",
+        lambda _message_name: (_ for _ in ()).throw(AssertionError("analysis must reuse first-pass parameter data")),
+    )
 
     summary = analyze_log_file(
         "/fake/log.bin",

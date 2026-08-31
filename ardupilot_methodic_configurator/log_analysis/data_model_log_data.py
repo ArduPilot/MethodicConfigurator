@@ -16,6 +16,7 @@ from typing import Any
 import numpy as np
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 
 
 @dataclass
@@ -37,7 +38,7 @@ class MessageSchema:  # pylint: disable=too-many-instance-attributes
 
 
 @dataclass
-class LogData:
+class LogData:  # pylint: disable=too-many-instance-attributes
     """
     Store parsed log metadata and one structured numpy array per message type.
 
@@ -48,10 +49,17 @@ class LogData:
             ``scaled_units`` describes values returned with ``scaled=True``.
             ``multipliers_applied_at_ingest`` records fields whose multiplier
             has already been applied without widening the stored dtype.
-        _raw_messages: Per message type, a structured numpy array containing all
-            decoded values for that message type. Access via get_message_columns(),
-            get_field() or iter_message_records().
+        _raw_messages: Per message type, a structured numpy array containing
+            decoded values for that message type, except ``PARM``. Parameter
+            records are retained compactly in ``parameter_history`` instead of
+            materialized as a NumPy array. Array access is provided through
+            get_message_columns(), get_field() or iter_message_records().
         msg_count: Total number of decoded messages for each message type name.
+        parameter_defaults: Default values reported by PARM records, separate
+            from the timestamped parameter history.
+
+        ``PARM`` remains present in ``schemas`` and ``msg_count`` but has no
+        entry in ``_raw_messages`` when populated by the binary-log extractor.
 
     """
 
@@ -63,6 +71,10 @@ class LogData:
     log_file_size: int = 0
     vehicle_type: str | None = None
     firmware_version: tuple[int, int, int] | None = None
+    # Populated during the extractor's first pass. ``None`` permits lightweight
+    # in-memory LogData instances used by alternate backends and tests.
+    parameter_history: ParameterHistory | None = None
+    parameter_defaults: dict[str, float] = field(default_factory=dict)
 
     def get_message_columns(self, message_name: str) -> np.ndarray | None:
         """Return the structured numpy array for one message type, if present."""

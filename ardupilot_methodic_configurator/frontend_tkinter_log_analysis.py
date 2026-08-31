@@ -22,6 +22,7 @@ from tkinter import filedialog, messagebox, ttk
 from typing import Any
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.backend_bin_log import extract_log
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
@@ -32,7 +33,6 @@ from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import Scroll
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 from ardupilot_methodic_configurator.frontend_tkinter_tuning_report import TuningReportWindow
 from ardupilot_methodic_configurator.log_analysis.backend_log_analysis import analyze_log_data
-from ardupilot_methodic_configurator.log_analysis.backend_log_extraction import extract_log
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import LogSummary
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 
