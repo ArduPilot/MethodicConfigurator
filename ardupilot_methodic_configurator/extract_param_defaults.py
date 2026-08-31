@@ -77,7 +77,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "bin_file",
         help="The ArduPilot .bin log file to read",
-    ).completer = FilesCompleter(allowednames=[".bin"])  # type: ignore[attr-defined, no-untyped-call]
+    ).completer = FilesCompleter(allowednames=[".bin"])  # type: ignore[attr-defined]
 
     argcomplete.autocomplete(parser)
     return parser

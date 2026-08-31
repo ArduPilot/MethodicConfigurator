@@ -47,7 +47,7 @@ explaining how their new value relates to the default parameter value.
         "--directory",
         required=True,
         help="The directory where the parameter files are located.",
-    ).completer = DirectoriesCompleter()  # type: ignore[no-untyped-call]
+    ).completer = DirectoriesCompleter()  # pyright: ignore[reportAttributeAccessIssue]
     parser.add_argument(
         "-a",
         "--adjustment_factor",
@@ -65,7 +65,7 @@ explaining how their new value relates to the default parameter value.
     parser.add_argument(  # type: ignore[attr-defined]
         "optimized_param_file",
         help="The name of the optimized parameter file.",
-    ).completer = FilesCompleter(allowednames=[".param"])  # type: ignore[no-untyped-call]
+    ).completer = FilesCompleter(allowednames=[".param"])  # pyright: ignore[reportAttributeAccessIssue]
     argcomplete.autocomplete(parser)
     return parser
 
