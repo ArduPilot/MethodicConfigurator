@@ -6,4 +6,5 @@ MAGH_LOG_ENABLE,1  # Activates the logging of the MAGH.Active message
 MAGH_MIN_SPEED,4  # Starting speed for the mission; slowly adjusts to the general speed in auto-missions
 MAGH_NUM_WP,18  # Number of waypoints from which the eight is built
 MAGH_USE_LOITER,1  # Sets a Loiter_unlimited command at the beginning of the mission to check the generated waypoints
+QUIK_ENABLE,0  # Quiktune is now completed. Disable it so that we can use the same RC switch to operate the wp-advance script
 SCR_ENABLE,1  # Use lua scripting for MagFit flight path automation
