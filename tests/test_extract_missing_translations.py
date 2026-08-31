@@ -19,13 +19,15 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-# Add the parent directory to the path to import the script
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../.github/skills/update-gui-translations/scripts")))
+# Add the script directory to the path to import the standalone helper.
+script_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.github/skills/update-gui-translations/scripts"))
+sys.path.insert(0, script_dir)
 
-# pylint: disable=wrong-import-position,import-error
-import extract_missing_translations  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
+# The helper is intentionally outside the Python package and is imported by path.
+# pylint: disable=import-error,wrong-import-position
+import extract_missing_translations  # noqa: E402  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
-# pylint: enable=wrong-import-position,import-error
+# pylint: enable=import-error,wrong-import-position
 
 
 class TestExtractMissingTranslations(unittest.TestCase):
