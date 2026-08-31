@@ -221,10 +221,7 @@ class TestConfigurationStepIntegration:
 
         assert step["plugin"]["name"] == PLUGIN_ESC_RPM_SCALE
         assert step["plugin"]["placement"] == "left"
-        if vehicle_type == "ArduCopter":
-            assert step["plugin"].get("if") == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
-        else:
-            assert "if" not in step["plugin"]
+        assert step["plugin"].get("if") == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
         scripting_condition = step["derived_parameters"]["SCR_ENABLE"]["if"]
         assert scripting_condition == "vehicle_components['ESC']['ESC->FC Telemetry']['Protocol'] == 'Scripting'"
 

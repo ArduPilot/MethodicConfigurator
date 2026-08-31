@@ -34,8 +34,12 @@ TEMPLATES_ROOT = Path(__file__).parent.parent / "ardupilot_methodic_configurator
 _NUMBERED_PARAM_RE = re.compile(r"^(\d{2})_.+\.param$")
 
 # Numbers that must NEVER appear as a file prefix in any template.
-# 01: reserved / never used  58-59: intentional gap between 57 and 60
+# 01 and 58 are reserved / never used. 59 is reserved outside ArduPlane,
+# where it is used by the range-finder step in the empty template.
 ALWAYS_ABSENT: frozenset[int] = frozenset({1, 58, 59})
+
+# Prefixes with a vehicle-specific exception to ALWAYS_ABSENT.
+VEHICLE_SPECIFIC_PREFIXES: dict[int, str] = {59: "ArduPlane"}
 
 # Valid range for numeric prefixes
 PREFIX_MIN = 0
@@ -160,18 +164,20 @@ class TestVehicleTemplateParamFiles:
 
     def test_always_absent_prefixes_are_not_present(self, template_dir: Path) -> None:
         """
-        Reserved step numbers 01, 58, and 59 are never used as file prefixes.
+        Reserved step numbers 01 and 58 are never used, and 59 is only valid for ArduPlane.
 
         GIVEN: A vehicle template directory with numbered parameter files
         WHEN: The two-digit numeric prefixes of all .param files are inspected
-        THEN: Prefixes 01, 58, and 59 must not appear
-              (01 is reserved/never used; 58-59 are the intentional gap between step 57 and 60)
+        THEN: Prefixes 01 and 58 must not appear, and prefix 59 must only appear for ArduPlane
         """
         # Arrange
         numbered = _numbered_param_files(template_dir)
 
         # Act
-        forbidden = [(n, f.name) for n, f in numbered if n in ALWAYS_ABSENT]
+        vehicle_type = template_dir.relative_to(TEMPLATES_ROOT).parts[0]
+        forbidden = [
+            (n, f.name) for n, f in numbered if n in ALWAYS_ABSENT and VEHICLE_SPECIFIC_PREFIXES.get(n) != vehicle_type
+        ]
 
         # Assert
         assert not forbidden, f"[{template_dir.relative_to(TEMPLATES_ROOT)}] Forbidden prefix(es) found: {forbidden}"
