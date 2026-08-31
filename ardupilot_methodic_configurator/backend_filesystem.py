@@ -1131,7 +1131,7 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             help=_(
                 "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
             ),
-        ).completer = DirectoriesCompleter()  # type: ignore[no-untyped-call]
+        ).completer = DirectoriesCompleter()  # pyright: ignore[reportAttributeAccessIssue]
         parser.add_argument(
             "--n",
             type=int,
