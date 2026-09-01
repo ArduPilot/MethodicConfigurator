@@ -449,13 +449,11 @@ class VehicleProjectCreator:
     def extract_bin_log_data(bin_file: str) -> tuple[tuple[str, int, int, int], ParDict, ParDict]:
         """Extract firmware identity, defaults, and final values in one first pass."""
         from ardupilot_methodic_configurator.backend_bin_log import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
-            extract_log_identity_and_parameter_snapshots,
+            extract_bin_log_data,
         )
 
         try:
-            firmware_info, default_values, current_values = extract_log_identity_and_parameter_snapshots(bin_file)
-            default_params = ParDict.from_float_dict(default_values)
-            current_params = ParDict.from_float_dict(current_values)
+            firmware_info, default_params, current_params = extract_bin_log_data(bin_file)
         except (OSError, SystemExit, TypeError, ValueError) as exc:
             msg = str(exc) or _("Failed to extract data from the selected .bin log file")
             raise VehicleProjectCreationError(_(".bin log import"), msg) from exc
