@@ -29,6 +29,7 @@ def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> N
             [(1.0, "LOG_BITMASK", 5.0), (2.0, "LOG_BITMASK", 7.0)],
             dtype=[("TimeUS", "f8"), ("Name", "U16"), ("Value", "f8")],
         ),
+        # pylint: disable=duplicate-code
         MessageSchema(
             name="PARM",
             msg_type=1,
@@ -41,6 +42,7 @@ def test_analyze_log_file_loads_inputs_and_builds_context(monkeypatch: Any) -> N
             multipliers_applied_at_ingest=[False, False, False],
             records=2,
         ),
+        # pylint: enable=duplicate-code
     )
     log_data.parameter_history = ParameterHistory(
         {"LOG_BITMASK": 5.0},

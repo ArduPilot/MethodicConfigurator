@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSetting,
     NewVehicleProjectSettings,
@@ -1072,7 +1073,7 @@ class TestBinLogImportHelpers:
         """Parser failures are exposed through the creator's domain error."""
         with (
             patch(
-                "ardupilot_methodic_configurator.backend_bin_log.extract_log_identity_and_parameter_snapshots",
+                "ardupilot_methodic_configurator.backend_bin_log.extract_bin_log_data",
                 side_effect=error,
             ),
             pytest.raises(VehicleProjectCreationError) as exc_info,
@@ -1084,11 +1085,11 @@ class TestBinLogImportHelpers:
 
     def test_extract_bin_log_data_uses_combined_log_extractor(self) -> None:
         """The creator delegates firmware and parameter extraction to the central parser helper."""
-        default_values = {"PARAM_A": 1.0}
-        current_values = {"PARAM_A": 2.0}
+        default_values = ParDict.from_float_dict({"PARAM_A": 1.0})
+        current_values = ParDict.from_float_dict({"PARAM_A": 2.0})
 
         with patch(
-            "ardupilot_methodic_configurator.backend_bin_log.extract_log_identity_and_parameter_snapshots",
+            "ardupilot_methodic_configurator.backend_bin_log.extract_bin_log_data",
             return_value=(("ArduCopter", 4, 6, 3), default_values, current_values),
         ) as extract_snapshots:
             result = VehicleProjectCreator.extract_bin_log_data("flight.bin")

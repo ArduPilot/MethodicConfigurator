@@ -22,6 +22,7 @@ from ardupilot_methodic_configurator.backend_bin_log import (
     _fill_message_arrays,
     _FMTUDefinition,
     _ParameterHistoryState,
+    _ProgressReporter,
     _schema_numpy_dtype,
     close_log,
     extract_schemas,
@@ -215,6 +216,8 @@ class TestFirstPassCache:
 
         assert result is second_pass
         assert get_first_pass.call_count == 2
+        assert get_first_pass.call_args_list[0].args == (str(logfile), None)
+        assert get_first_pass.call_args_list[1].args == (str(logfile), None)
 
 
 class TestCloseLog:
@@ -451,6 +454,18 @@ class TestNumpyAllocation:
         assert history.latest_values == {"TEST": 2.0}
         assert log_data.parameter_defaults == {"TEST": 1.0}
 
+    def test_parameter_repeated_during_startup_uses_last_value_and_warns(self) -> None:
+        """A boot-time duplicate replaces the initial value and is reported."""
+        state = _ParameterHistoryState.create()
+
+        with patch.object(backend_bin_log, "logging_warning") as warning:
+            state.record({"TimeUS": 1_000_000, "Name": "TEST", "Value": 1.0})
+            state.record({"TimeUS": 1_050_000, "Name": "TEST", "Value": 2.0})
+
+        assert state.first_occurrence == {"TEST": 2.0}
+        assert state.current_values == {"TEST": 2.0}
+        warning.assert_called_once_with("Parameter TEST changed from 1.0 to 2.0 before boot process completed")
+
     def test_first_pass_uses_timestamp_gap_and_keeps_late_parameters_as_changes(self) -> None:
         """A late parameter is a timestamped first appearance, not an initial value."""
         log_data = LogData()
@@ -511,7 +526,7 @@ class TestNumpyAllocation:
         """Repeated post-startup values do not create redundant changes."""
         state = _ParameterHistoryState.create()
         state.record({"Name": "VALID", "TimeUS": 1.0, "Value": 1.0})
-        state.record({"Name": "OTHER", "TimeUS": 111_001.0, "Value": 2.0})
+        state.record({"Name": "OTHER", "TimeUS": 2.0, "Value": 2.0})
         state.record({"Name": "VALID", "TimeUS": 111_002.0, "Value": 1.0})
 
         assert state.changes == {}  # pylint: disable=use-implicit-booleaness-not-comparison
@@ -564,9 +579,13 @@ class TestNumpyAllocation:
         )
         progress_calls: list[tuple[int, int]] = []
 
-        _fill_message_arrays(mlog, log_data, lambda current, total: progress_calls.append((current, total)))
+        _fill_message_arrays(
+            mlog,
+            log_data,
+            _ProgressReporter(lambda current, total: progress_calls.append((current, total)), 0, 100),
+        )
 
-        assert progress_calls == [(1, 3), (2, 3), (3, 3)]
+        assert progress_calls == [(0, 100), (33, 100), (67, 100), (100, 100)]
         assert log_data.get_message_columns("PARM") is None
 
 

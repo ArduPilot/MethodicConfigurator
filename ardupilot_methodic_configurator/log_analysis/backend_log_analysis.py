@@ -89,7 +89,7 @@ def analyze_log_file(  # noqa: PLR0913 # pylint: disable=too-many-arguments
         log_vehicle_type: Optional vehicle type override for callers that already know the log identity.
         log_firmware_version: Optional firmware version override for callers that already know the log identity.
         validate_project: Whether to reject logs that do not match the active project.
-        progress_callback: Optional callback receiving second-pass parser progress as (current, total).
+        progress_callback: Optional callback receiving whole-extraction progress as (current, total).
 
     """
     log_data = extract_log(filepath, progress_callback=progress_callback)
