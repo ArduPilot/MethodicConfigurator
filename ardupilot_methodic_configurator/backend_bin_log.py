@@ -16,18 +16,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 
 import contextlib
+import math
 import os
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from logging import error as logging_error
+from logging import warning as logging_warning
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
-from ardupilot_methodic_configurator.data_model_par_dict import validate_param_name
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict, validate_param_name
 from ardupilot_methodic_configurator.log_analysis import data_model_log_data
 from ardupilot_methodic_configurator.log_analysis.data_model_firmware_version import parse_first_msg_version, parse_ver_fields
 from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterChange, ParameterHistory
@@ -134,6 +136,12 @@ class _SchemaSource(Protocol):  # pylint: disable=too-few-public-methods
     unit_lookup: dict[str, str]
 
 
+class _ProgressSource(Protocol):  # pylint: disable=too-few-public-methods
+    """Protocol for the pymavlink log reader's current byte offset."""
+
+    offset: int
+
+
 @dataclass(frozen=True)
 class _FMTUDefinition:
     """The UNIT and MULT identifiers assigned by one FMTU message."""
@@ -171,6 +179,39 @@ _ARRAY_FIELD_LENGTH = 32
 # it keeps first-pass storage compact today and can be tuned as more real-log
 # evidence becomes available.
 _PARAMETER_STARTUP_GAP_US = 110_000.0
+
+
+@dataclass
+class _ProgressReporter:
+    """Report throttled percentage progress for one extraction phase."""
+
+    callback: Callable[[int, int], None] | None
+    start: int
+    end: int
+    total: int = 0
+    last_position: int | None = None
+    last_progress: int | None = None
+
+    def set_total(self, total: int) -> None:
+        """Set the phase's total work units."""
+        self.total = max(0, total)
+
+    def report(self, position: int) -> None:
+        """Report progress, at most once per half percentage point."""
+        if self.callback is None:
+            return
+        position = min(max(position, 0), self.total)
+        increment = max(1, math.ceil(self.total * 0.005))
+        if self.last_position is not None and position < self.total and position - self.last_position < increment:
+            return
+        progress = self.end if self.total == 0 else self.start + (self.end - self.start) * position / self.total
+        reported_progress = round(progress)
+        if self.last_progress is not None and reported_progress <= self.last_progress:
+            self.last_position = position
+            return
+        self.last_position = position
+        self.last_progress = reported_progress
+        self.callback(reported_progress, 100)
 
 
 @dataclass(frozen=True)
@@ -269,7 +310,17 @@ class _ParameterHistoryState:
             self.default_values[name] = default
 
         if not self.initialization_complete:
-            self.first_occurrence.setdefault(name, value)
+            previous_value = self.current_values.get(name)
+            if previous_value is not None and previous_value != value:
+                logging_warning(
+                    _(
+                        "Parameter {parameter_name} changed from {previous_value} to {value} before boot process completed"
+                    ).format(parameter_name=name, previous_value=previous_value, value=value)
+                )
+            # The startup snapshot is not an immutable first occurrence: a
+            # parameter repeated during boot reflects its most recently
+            # observed boot-time value.
+            self.first_occurrence[name] = value
             self.current_values[name] = value
             return
 
@@ -354,7 +405,9 @@ def _set_log_identity(log_data: data_model_log_data.LogData, identity: tuple[str
 
 
 def _record_message_counts_fields_and_identity(
-    mlog: mavutil.mavfile, log_data: data_model_log_data.LogData
+    mlog: mavutil.mavfile,
+    log_data: data_model_log_data.LogData,
+    progress_reporter: _ProgressReporter | None = None,
 ) -> tuple[dict[int, _FMTUDefinition], _ParameterHistoryState]:
     """
     First pass counts messages, captures FMTU definitions and identity, and retains compact parameter state.
@@ -367,6 +420,8 @@ def _record_message_counts_fields_and_identity(
     parameter_state = _ParameterHistoryState.create()
     msg_fallback_identity: tuple[str, int, int, int] | None = None
     for msg in _iter_messages(mlog):
+        if progress_reporter is not None:
+            progress_reporter.report(getattr(cast("_ProgressSource", mlog), "offset", 0))
         msg_type = msg.get_type()
         log_data.msg_count[msg_type] = log_data.msg_count.get(msg_type, 0) + 1
         if msg_type == "PARM":
@@ -385,6 +440,8 @@ def _record_message_counts_fields_and_identity(
     if log_data.vehicle_type is None and msg_fallback_identity is not None:
         _set_log_identity(log_data, msg_fallback_identity)
 
+    if progress_reporter is not None:
+        progress_reporter.report(progress_reporter.total)
     parameter_state.sort_changes()
     return fmtu_definitions, parameter_state
 
@@ -452,30 +509,31 @@ def _extract_parameter_snapshots_from_log_data(
     return log_data.parameter_defaults, log_data.parameter_history.latest_values
 
 
-def extract_parameter_snapshots_from_log(logfile: str) -> tuple[dict[str, float], dict[str, float]]:
-    """Extract PARM defaults and final values using only the first log pass."""
-    return _extract_parameter_snapshots_from_log_data(extract_log_first_pass(logfile))
-
-
-def extract_log_identity_and_parameter_snapshots(
-    logfile: str,
-) -> tuple[tuple[str, int, int, int], dict[str, float], dict[str, float]]:
-    """Extract firmware identity, PARM defaults, and final values in one first pass."""
-    log_data = extract_log_first_pass(logfile)
+def extract_bin_log_data(bin_file: str) -> tuple[tuple[str, int, int, int], ParDict, ParDict]:
+    """Extract identity and default/final parameter ParDicts for project import."""
+    log_data = extract_log_first_pass(bin_file)
     if log_data.vehicle_type is None or log_data.firmware_version is None:
-        msg = _("No firmware version information found in {logfile}").format(logfile=logfile)
+        msg = _("No firmware version information found in {bin_file}").format(bin_file=bin_file)
         raise SystemExit(msg)
     default_values, current_values = _extract_parameter_snapshots_from_log_data(log_data)
-    return (log_data.vehicle_type, *log_data.firmware_version), default_values, current_values
+    return (
+        (log_data.vehicle_type, *log_data.firmware_version),
+        ParDict.from_float_dict(default_values),
+        ParDict.from_float_dict(current_values),
+    )
 
 
-def _extract_log_first_pass_uncached(logfile: str, file_identity: _LogFileIdentity) -> data_model_log_data.LogData:
+def _extract_log_first_pass_uncached(
+    logfile: str,
+    file_identity: _LogFileIdentity,
+    progress_reporter: _ProgressReporter | None = None,
+) -> data_model_log_data.LogData:
     """Extract first-pass data without consulting the cache."""
     log_data = data_model_log_data.LogData()
     log_data.log_file_size = file_identity.size
     mlog = open_log(logfile)
     try:
-        fmtu_definitions, parameter_state = _record_message_counts_fields_and_identity(mlog, log_data)
+        fmtu_definitions, parameter_state = _record_message_counts_fields_and_identity(mlog, log_data, progress_reporter)
         extract_schemas(mlog, log_data, fmtu_definitions)
         history = _build_first_pass_parameter_history(log_data, parameter_state)
     finally:
@@ -505,13 +563,21 @@ def _copy_log_data(log_data: data_model_log_data.LogData) -> data_model_log_data
     )
 
 
-def _get_first_pass_log_data(logfile: str) -> tuple[data_model_log_data.LogData, _LogFileIdentity]:
+def _get_first_pass_log_data(
+    logfile: str, progress_reporter: _ProgressReporter | None = None
+) -> tuple[data_model_log_data.LogData, _LogFileIdentity]:
     """Return an isolated first-pass copy, parsing only when the source changed."""
     file_identity = _log_file_identity(logfile)
     # The full extraction pass mutates LogData by adding raw message arrays and
     # metadata. Keep the cached first-pass object compact and give each caller
     # its own mutable instance.
-    return _copy_log_data(_extract_log_first_pass_cached(file_identity)), file_identity
+    if progress_reporter is not None:
+        progress_reporter.set_total(file_identity.size)
+        progress_reporter.report(0)
+        log_data = _extract_log_first_pass_uncached(logfile, file_identity, progress_reporter)
+    else:
+        log_data = _extract_log_first_pass_cached(file_identity)
+    return _copy_log_data(log_data), file_identity
 
 
 def extract_log_first_pass(logfile: str) -> data_model_log_data.LogData:
@@ -620,7 +686,7 @@ def _message_values(
 def _fill_message_arrays(  # pylint: disable=too-many-locals
     mlog: mavutil.mavfile,
     log_data: data_model_log_data.LogData,
-    progress_callback: Callable[[int, int], None] | None = None,
+    progress_reporter: _ProgressReporter | None = None,
 ) -> None:
     """
     Second pass: validate each decoded record and populate the preallocated arrays.
@@ -631,11 +697,14 @@ def _fill_message_arrays(  # pylint: disable=too-many-locals
     write_positions: dict[str, int] = dict.fromkeys(log_data._raw_messages, 0)  # pylint: disable=protected-access # noqa: SLF001
     parsed_messages = 0
     total_messages = sum(log_data.msg_count.values())
+    if progress_reporter is not None:
+        progress_reporter.set_total(total_messages)
+        progress_reporter.report(0)
 
     for msg in _iter_messages(mlog):
         parsed_messages += 1
-        if progress_callback is not None:
-            progress_callback(parsed_messages, total_messages)
+        if progress_reporter is not None:
+            progress_reporter.report(parsed_messages)
 
         msg_type = msg.get_type()
         array = log_data._raw_messages.get(msg_type)  # pylint: disable=protected-access # noqa: SLF001
@@ -660,6 +729,9 @@ def _fill_message_arrays(  # pylint: disable=too-many-locals
 
         array[index] = tuple(_message_values(msg, schema, payload, field_info))
         write_positions[msg_type] = index + 1
+
+    if progress_reporter is not None:
+        progress_reporter.report(total_messages)
 
     for message_name, schema in log_data.schemas.items():
         if message_name == "PARM":
@@ -792,29 +864,27 @@ def extract_log(
 
     Args:
         logfile: Path to the .bin log file.
-        progress_callback: Optional callback receiving second-pass parser progress as (current, total).
+        progress_callback: Optional callback receiving whole-extraction progress as (current, total).
 
     Returns:
         A populated LogData object.
 
     """
-    # Reuse the compact first pass when this file was already inspected, for
-    # example by bin-log project creation. The second pass still populates the
-    # full message arrays required by analysis.
-    log_data, first_pass_identity = _get_first_pass_log_data(logfile)
+    first_pass_progress = _ProgressReporter(progress_callback, 0, 50) if progress_callback is not None else None
+    log_data, first_pass_identity = _get_first_pass_log_data(logfile, first_pass_progress)
 
     # A log may be copied or still be written between the two passes. Do not
     # combine first-pass schemas/counts from one file state with second-pass
     # records from another state.
     if _log_file_identity(logfile) != first_pass_identity:
-        log_data, first_pass_identity = _get_first_pass_log_data(logfile)
+        log_data, first_pass_identity = _get_first_pass_log_data(logfile, first_pass_progress)
 
     _allocate_message_arrays(log_data)
 
     # second pass: validate data and read it into static sized numpy arrays
     mlog = open_log(logfile)
     try:
-        _fill_message_arrays(mlog, log_data, progress_callback)
+        _fill_message_arrays(mlog, log_data, _ProgressReporter(progress_callback, 50, 100))
     finally:
         close_log(mlog)
 
