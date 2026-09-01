@@ -509,9 +509,12 @@ def _extract_parameter_snapshots_from_log_data(
     return log_data.parameter_defaults, log_data.parameter_history.latest_values
 
 
-def extract_bin_log_data(bin_file: str) -> tuple[tuple[str, int, int, int], ParDict, ParDict]:
+def extract_bin_log_data(
+    bin_file: str,
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> tuple[tuple[str, int, int, int], ParDict, ParDict]:
     """Extract identity and default/final parameter ParDicts for project import."""
-    log_data = extract_log_first_pass(bin_file)
+    log_data = extract_log_first_pass(bin_file, progress_callback)
     if log_data.vehicle_type is None or log_data.firmware_version is None:
         msg = _("No firmware version information found in {bin_file}").format(bin_file=bin_file)
         raise SystemExit(msg)
@@ -580,9 +583,13 @@ def _get_first_pass_log_data(
     return _copy_log_data(log_data), file_identity
 
 
-def extract_log_first_pass(logfile: str) -> data_model_log_data.LogData:
+def extract_log_first_pass(
+    logfile: str,
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> data_model_log_data.LogData:
     """Extract log identity, schemas, and compact PARM state without full arrays."""
-    log_data, _file_identity = _get_first_pass_log_data(logfile)
+    progress_reporter = _ProgressReporter(progress_callback, 0, 100) if progress_callback is not None else None
+    log_data, _file_identity = _get_first_pass_log_data(logfile, progress_reporter)
     return log_data
 
 

@@ -11,6 +11,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Callable
 from dataclasses import MISSING, dataclass, fields
 from pathlib import Path
 from typing import ClassVar, NamedTuple
@@ -446,14 +447,17 @@ class VehicleProjectCreator:
         return f"{next_prefix:02d}_imported_bin_log_parameters.param"
 
     @staticmethod
-    def extract_bin_log_data(bin_file: str) -> tuple[tuple[str, int, int, int], ParDict, ParDict]:
+    def extract_bin_log_data(
+        bin_file: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[tuple[str, int, int, int], ParDict, ParDict]:
         """Extract firmware identity, defaults, and final values in one first pass."""
         from ardupilot_methodic_configurator.backend_bin_log import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
             extract_bin_log_data,
         )
 
         try:
-            firmware_info, default_params, current_params = extract_bin_log_data(bin_file)
+            firmware_info, default_params, current_params = extract_bin_log_data(bin_file, progress_callback=progress_callback)
         except (OSError, SystemExit, TypeError, ValueError) as exc:
             msg = str(exc) or _("Failed to extract data from the selected .bin log file")
             raise VehicleProjectCreationError(_(".bin log import"), msg) from exc

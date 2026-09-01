@@ -31,6 +31,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import
     BinLogSelectionWidgets,
     VehicleDirectorySelectionWidgets,
 )
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_show import show_tooltip
 
@@ -98,7 +99,18 @@ class VehicleProjectOpenerWindow(BaseWindow):
         )
 
         def on_bin_log_selected(bin_file: str) -> None:
-            self.project_manager.create_new_vehicle_from_bin_log(bin_file)
+            progress_window = ProgressWindow(
+                self.root,
+                _("Importing .bin log file"),
+                _("Parsing .bin log file: {}% complete"),
+            )
+            try:
+                self.project_manager.create_new_vehicle_from_bin_log(
+                    bin_file,
+                    progress_callback=progress_window.update_progress_bar,
+                )
+            finally:
+                progress_window.destroy()
             self.root.destroy()
 
         self.bin_log_selection_widgets = BinLogSelectionWidgets(

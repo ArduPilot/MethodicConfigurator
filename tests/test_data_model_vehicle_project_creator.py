@@ -1094,10 +1094,24 @@ class TestBinLogImportHelpers:
         ) as extract_snapshots:
             result = VehicleProjectCreator.extract_bin_log_data("flight.bin")
 
-        extract_snapshots.assert_called_once_with("flight.bin")
+        extract_snapshots.assert_called_once_with("flight.bin", progress_callback=None)
         assert result[0] == ("ArduCopter", 4, 6, 3)
         assert result[1]["PARAM_A"].value == 1.0
         assert result[2]["PARAM_A"].value == 2.0
+
+    def test_extract_bin_log_data_forwards_progress_callback(self) -> None:
+        """The creator forwards the optional progress callback to the parser."""
+        default_values = ParDict.from_float_dict({"PARAM_A": 1.0})
+        current_values = ParDict.from_float_dict({"PARAM_A": 2.0})
+        progress_callback = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_bin_log.extract_bin_log_data",
+            return_value=(("ArduCopter", 4, 6, 3), default_values, current_values),
+        ) as extract_snapshots:
+            VehicleProjectCreator.extract_bin_log_data("flight.bin", progress_callback)
+
+        extract_snapshots.assert_called_once_with("flight.bin", progress_callback=progress_callback)
 
     def test_template_dir_for_bin_import_returns_correct_path(self, tmp_path) -> None:
         """
