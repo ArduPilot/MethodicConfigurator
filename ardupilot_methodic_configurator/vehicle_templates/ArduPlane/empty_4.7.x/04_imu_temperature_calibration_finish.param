@@ -1,0 +1,3 @@
+BRD_HEAT_LOWMGN,0  # Now that IMU temperature is calibrated, arm ASAP
+BRD_HEAT_TARG,45
+LOG_DISARMED,0  # IMU temperature calibration is finished, we no longer need to log data when disarmed
