@@ -25,6 +25,7 @@ from ardupilot_methodic_configurator.backend_bin_log import (
     _ProgressReporter,
     _schema_numpy_dtype,
     close_log,
+    extract_log_first_pass,
     extract_schemas,
     open_log,
 )
@@ -146,6 +147,25 @@ class TestFirstPassCache:
         assert cached_first is not cached_second
         assert cached_first == cached_second
         assert first_identity == second_identity
+
+    def test_first_pass_forwards_progress_callback(self) -> None:
+        """The first pass wraps the callback in a byte-based progress reporter."""
+        log_data = LogData()
+        callback = MagicMock()
+
+        with patch.object(
+            backend_bin_log,
+            "_get_first_pass_log_data",
+            return_value=(log_data, object()),
+        ) as get_first_pass:
+            result = extract_log_first_pass("flight.bin", callback)
+
+        assert result is log_data
+        reporter = get_first_pass.call_args.args[1]
+        assert isinstance(reporter, _ProgressReporter)
+        assert reporter.callback is callback
+        assert reporter.start == 0
+        assert reporter.end == 100
 
     def test_full_pass_mutation_does_not_pollute_cached_first_pass(self, tmp_path: Path) -> None:
         """Full-pass mutations leave subsequent first-pass results compact."""

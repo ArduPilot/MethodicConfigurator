@@ -12,6 +12,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -187,7 +188,11 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             self.open_vehicle_directory(new_path)
         return new_path
 
-    def create_new_vehicle_from_bin_log(self, bin_file: str) -> str:  # pylint: disable=too-many-locals
+    def create_new_vehicle_from_bin_log(
+        self,
+        bin_file: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> str:  # pylint: disable=too-many-locals
         """
         Create a new vehicle configuration directory from an ArduPilot .bin log file.
 
@@ -200,6 +205,8 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         Args:
             bin_file: Path to the ArduPilot .bin log file
 
+            progress_callback: Optional callback receiving parsing progress as (current, total)
+
         Returns:
             The created vehicle directory path
 
@@ -207,7 +214,9 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectCreationError: If creation, extraction, or template lookup fails
 
         """
-        firmware_info, default_params, current_params = self._creator.extract_bin_log_data(bin_file)
+        firmware_info, default_params, current_params = self._creator.extract_bin_log_data(
+            bin_file, progress_callback=progress_callback
+        )
         vehicle_type = firmware_info[0]
         fw_version = f"{firmware_info[1]}.{firmware_info[2]}.{firmware_info[3]}"
         template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])

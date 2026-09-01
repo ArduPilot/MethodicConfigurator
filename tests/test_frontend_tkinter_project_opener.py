@@ -134,6 +134,29 @@ class TestVehicleProjectOpenerWindow:
         window.project_manager.get_introduction_message.assert_called_once()
         window.project_manager.get_recently_used_dirs.assert_called_once()
 
+    def test_bin_log_import_displays_progress_while_parsing(self, configured_opener_window) -> None:
+        """Selecting a .bin log creates a progress window and forwards its callback."""
+        window = configured_opener_window
+        progress_window = MagicMock()
+
+        with patch(
+            "ardupilot_methodic_configurator.frontend_tkinter_project_opener.ProgressWindow",
+            return_value=progress_window,
+        ) as progress_window_class:
+            window.bin_log_selection_widgets.on_select_file_callback("/logs/flight.bin")
+
+        progress_window_class.assert_called_once_with(
+            window.root,
+            "Importing .bin log file",
+            "Parsing .bin log file: {}% complete",
+        )
+        window.project_manager.create_new_vehicle_from_bin_log.assert_called_once_with(
+            "/logs/flight.bin",
+            progress_callback=progress_window.update_progress_bar,
+        )
+        progress_window.destroy.assert_called_once()
+        window.root.destroy.assert_called_once()
+
     def test_user_can_create_new_vehicle_from_template(self, configured_opener_window, mock_create_new_project_window) -> None:
         """
         User can create a new vehicle configuration by selecting the template option.
