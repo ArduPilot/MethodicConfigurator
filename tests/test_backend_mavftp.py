@@ -22,35 +22,17 @@ from unittest.mock import Mock, patch
 
 from pymavlink import mavutil
 
-# from ardupilot_methodic_configurator.backend_mavftp import ERR_NoErrorCodeInPayload
-# from ardupilot_methodic_configurator.backend_mavftp import ERR_NoErrorCodeInNack
-# from ardupilot_methodic_configurator.backend_mavftp import ERR_NoFilesystemErrorInPayload
-# from ardupilot_methodic_configurator.backend_mavftp import ERR_PayloadTooLarge
-# from ardupilot_methodic_configurator.backend_mavftp import ERR_InvalidOpcode
+# from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.backend_mavftp import (
     FTP_OP,
     MAVFTP,
-    ERR_EndOfFile,
-    ERR_Fail,
-    ERR_FailErrno,
-    ERR_FailToOpenLocalFile,
-    ERR_FileExists,
-    ERR_FileNotFound,
-    ERR_FileProtected,
-    ERR_InvalidArguments,
-    ERR_InvalidDataSize,
-    ERR_InvalidErrorCode,
-    ERR_InvalidSession,
-    ERR_None,
-    ERR_NoSessionsAvailable,
-    ERR_PutAlreadyInProgress,
-    ERR_RemoteReplyTimeout,
-    ERR_UnknownCommand,
+    FtpError,
     MAVFTPReturn,
     OP_Ack,
     OP_ListDirectory,
     OP_Nack,
     OP_ReadFile,
+    OP_ResetSessions,
 )
 
 PARAM_HEADER_STRUCT = struct.Struct("<HHH")
@@ -97,14 +79,46 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
 
         result = self.mav_ftp.cmd_getparams(["values.param", "defaults.param"])
 
-        assert result.error_code == ERR_Fail
+        assert result.error_code == FtpError.Fail
+
+    def test_successful_callback_does_not_write_virtual_remote_path(self) -> None:
+        """A callback consumes the download without creating a local remote-path file."""
+        self.mav_ftp.fh = BytesIO(b"data")
+        self.mav_ftp.filename = "param.pck?withdefaults=1"
+        self.mav_ftp.op_start = 1.0
+        self.mav_ftp.read_gaps = []
+        self.mav_ftp.reached_eof = True
+        self.mav_ftp.read_total = 4
+        self.mav_ftp.requested_offset = 0
+        self.mav_ftp.requested_size = 4
+        self.mav_ftp.callback = lambda _file: MAVFTPReturn("GetParams", FtpError.Success)
+
+        with patch("builtins.open", side_effect=AssertionError("callback data must not be published as a file")):
+            assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
 
     def test_process_ftp_reply_propagates_getparams_callback_failure(self) -> None:
         """A parameter-decoding callback failure makes the transfer fail, enabling fallback."""
-        callback_failure = MAVFTPReturn("GetParams", ERR_Fail)
-        packet_result = MAVFTPReturn("BurstReadFile", ERR_None)
+        callback_failure = MAVFTPReturn("GetParams", FtpError.Fail)
+        packet_result = MAVFTPReturn("BurstReadFile", FtpError.Success)
         self.mav_ftp.master = Mock()
-        self.mav_ftp.master.recv_match.return_value = Mock()
+        reply = FTP_OP(
+            seq=1,
+            session=0,
+            opcode=OP_Ack,
+            size=0,
+            req_opcode=OP_ResetSessions,
+            burst_complete=0,
+            offset=0,
+            payload=None,
+        )
+        packet = Mock()
+        packet.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+        packet.target_system = 1
+        packet.target_component = 1
+        packet.payload = reply.pack()
+        self.mav_ftp.master.source_system = 1
+        self.mav_ftp.master.source_component = 1
+        self.mav_ftp.master.recv_match.return_value = packet
 
         def simulate_finished_transfer(_message: object) -> MAVFTPReturn:
             self.mav_ftp.callback_failure = callback_failure
@@ -205,7 +219,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         result = self.mav_ftp.cmd_getparams(["values.param", "defaults.param"])
 
         # Assert (Then): The caller receives a recoverable FTP failure
-        assert result.error_code == ERR_Fail
+        assert result.error_code == FtpError.Fail
 
     @staticmethod
     def ftp_operation(seq: int, opcode: int, req_opcode: int, payload: bytearray) -> FTP_OP:
@@ -223,65 +237,69 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             },
             {
                 "name": "Generic Failure",
-                "op": self.ftp_operation(seq=2, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_Fail])),
+                "op": self.ftp_operation(seq=2, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.Fail])),
                 "expected_message": "ListDirectory failed, generic error",
             },
             {
                 "name": "System Error",
                 "op": self.ftp_operation(
-                    seq=3, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FailErrno, 1])
+                    seq=3, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.FailErrno, 1])
                 ),  # System error 1
                 "expected_message": "ListDirectory failed, system error 1",
             },
             {
                 "name": "Invalid Data Size",
                 "op": self.ftp_operation(
-                    seq=4, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_InvalidDataSize])
+                    seq=4, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.InvalidDataSize])
                 ),
                 "expected_message": "ListDirectory failed, invalid data size",
             },
             {
                 "name": "Invalid Session",
                 "op": self.ftp_operation(
-                    seq=5, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_InvalidSession])
+                    seq=5, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.InvalidSession])
                 ),
                 "expected_message": "ListDirectory failed, session is not currently open",
             },
             {
                 "name": "No Sessions Available",
                 "op": self.ftp_operation(
-                    seq=6, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_NoSessionsAvailable])
+                    seq=6, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.NoSessionsAvailable])
                 ),
                 "expected_message": "ListDirectory failed, no sessions available",
             },
             {
                 "name": "End of File",
-                "op": self.ftp_operation(seq=7, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_EndOfFile])),
+                "op": self.ftp_operation(
+                    seq=7, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.EndOfFile])
+                ),
                 "expected_message": "ListDirectory failed, offset past end of file",
             },
             {
                 "name": "Unknown Command",
                 "op": self.ftp_operation(
-                    seq=8, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_UnknownCommand])
+                    seq=8, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.UnknownCommand])
                 ),
                 "expected_message": "ListDirectory failed, unknown command",
             },
             {
                 "name": "File Exists",
-                "op": self.ftp_operation(seq=9, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FileExists])),
+                "op": self.ftp_operation(
+                    seq=9, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.FileExists])
+                ),
                 "expected_message": "ListDirectory failed, file/directory already exists",
             },
             {
                 "name": "File Protected",
                 "op": self.ftp_operation(
-                    seq=10, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FileProtected])
+                    seq=10, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.FileProtected])
                 ),
                 "expected_message": "ListDirectory failed, file/directory is protected",
             },
             {
                 "name": "File Not Found",
                 "op": self.ftp_operation(
-                    seq=11, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FileNotFound])
+                    seq=11, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.FileNotFound])
                 ),
                 "expected_message": "ListDirectory failed, file/directory not found",
             },
@@ -292,18 +310,22 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             },
             {
                 "name": "No Error Code in Nack",
-                "op": self.ftp_operation(seq=13, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_None])),
+                "op": self.ftp_operation(
+                    seq=13, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.Success])
+                ),
                 "expected_message": "ListDirectory failed, no error code",
             },
             {
                 "name": "No Filesystem Error in Payload",
-                "op": self.ftp_operation(seq=14, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FailErrno])),
+                "op": self.ftp_operation(
+                    seq=14, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.FailErrno])
+                ),
                 "expected_message": "ListDirectory failed, file-system error missing in payload",
             },
             {
                 "name": "Invalid Error Code",
                 "op": self.ftp_operation(
-                    seq=15, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_InvalidErrorCode])
+                    seq=15, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.InvalidErrorCode])
                 ),
                 "expected_message": "ListDirectory failed, invalid error code",
             },
@@ -320,14 +342,14 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             {
                 "name": "Unknown Opcode in Request",
                 "op": self.ftp_operation(
-                    seq=19, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_UnknownCommand])
+                    seq=19, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.UnknownCommand])
                 ),  # Assuming 100 is an unknown opcode
                 "expected_message": "ListDirectory failed, unknown command",
             },
             {
                 "name": "Payload with System Error",
                 "op": self.ftp_operation(
-                    seq=20, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([ERR_FailErrno, 2])
+                    seq=20, opcode=OP_Nack, req_opcode=OP_ListDirectory, payload=bytes([FtpError.FailErrno, 2])
                 ),  # System error 2
                 "expected_message": "ListDirectory failed, system error 2",
             },
@@ -360,7 +382,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
             self.log_stream.truncate(0)
 
         # Invalid Arguments
-        ret = MAVFTPReturn("Command arguments", ERR_InvalidArguments)
+        ret = MAVFTPReturn("Command arguments", FtpError.InvalidArguments)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
         assert "Command arguments failed, invalid arguments" in log_output, "Expected invalid arguments message"
@@ -380,7 +402,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         self.log_stream.truncate(0)
 
         # Put already in progress
-        ret = MAVFTPReturn("Put", ERR_PutAlreadyInProgress)
+        ret = MAVFTPReturn("Put", FtpError.PutAlreadyInProgress)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
         assert "Put failed, put already in progress" in log_output, "Expected put already in progress message"
@@ -388,7 +410,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         self.log_stream.truncate(0)
 
         # Fail to open local file
-        ret = MAVFTPReturn("Put", ERR_FailToOpenLocalFile)
+        ret = MAVFTPReturn("Put", FtpError.FailToOpenLocalFile)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
         assert "Put failed, failed to open local file" in log_output, "Expected fail to open local file message"
@@ -396,7 +418,7 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         self.log_stream.truncate(0)
 
         # Remote Reply Timeout
-        ret = MAVFTPReturn("Put", ERR_RemoteReplyTimeout)
+        ret = MAVFTPReturn("Put", FtpError.RemoteReplyTimeout)
         ret.display_message()
         log_output = self.log_stream.getvalue().strip()
         assert "Put failed, remote reply timeout" in log_output, "Expected remote reply timeout message"
