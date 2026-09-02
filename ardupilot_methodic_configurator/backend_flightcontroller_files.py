@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, ClassVar, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp_safe
+from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
@@ -27,17 +28,6 @@ if TYPE_CHECKING:
         MavlinkConnection,
     )
     from ardupilot_methodic_configurator.backend_mavftp import MAVFTP as MAVFTPType  # noqa: N811
-
-# Conditionally import MAVFTP if available
-try:
-    from ardupilot_methodic_configurator.backend_mavftp import MAVFTP, ERR_FileExists, ERR_None
-
-    # from pymavlink import mavftp
-    # MAVFTP = mavftp.MAVFTP
-except ImportError:
-    ERR_None = 0
-    ERR_FileExists = 8
-    MAVFTP = None  # type: ignore[assignment,misc]
 
 
 class FlightControllerFiles:
@@ -118,12 +108,12 @@ class FlightControllerFiles:
                 return False
 
             put_ret = mavftp_instance.cmd_put([local_filename, remote_filename], progress_callback=put_progress_callback)
-            if put_ret.error_code != ERR_None:
+            if put_ret.error_code != FtpError.Success:
                 put_ret.display_message()
                 return False
 
             ret = mavftp_instance.process_ftp_reply("CreateFile", timeout=self.MAVFTP_FILE_OPERATION_TIMEOUT)
-            if ret.error_code != 0:
+            if ret.error_code != FtpError.Success:
                 ret.display_message()
                 return False
             logging_info(
@@ -148,7 +138,7 @@ class FlightControllerFiles:
 
         for current_dir in parent_directories:
             ret = mavftp_instance.cmd_mkdir([current_dir])
-            if ret.error_code not in {ERR_None, ERR_FileExists}:
+            if ret.error_code not in {FtpError.Success, FtpError.FileExists}:
                 ret.display_message()
                 logging_error(_("Failed to create remote directory %(directory)s"), {"directory": current_dir})
                 return False
@@ -215,7 +205,7 @@ class FlightControllerFiles:
             logging_error(_("Error during flight log download: %(error)s"), {"error": str(e)})
             return False
 
-    def _get_last_log_number(self, mavftp_instance: "MAVFTP") -> int | None:  # pyright: ignore[reportInvalidTypeForm]
+    def _get_last_log_number(self, mavftp_instance: "MAVFTPType") -> int | None:  # pyright: ignore[reportInvalidTypeForm]
         """
         Get the last log number using multiple fallback methods.
 
@@ -246,7 +236,7 @@ class FlightControllerFiles:
 
     def _get_log_number_from_lastlog_txt(
         self,
-        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+        mavftp_instance: "MAVFTPType",  # pyright: ignore[reportInvalidTypeForm]
     ) -> int | None:
         """
         Try to get the log number from LASTLOG.TXT file.
@@ -263,7 +253,7 @@ class FlightControllerFiles:
             temp_lastlog_file = "temp_lastlog.txt"
             mavftp_instance.cmd_get(["/APM/LOGS/LASTLOG.TXT", temp_lastlog_file])
             ret = mavftp_instance.process_ftp_reply("OpenFileRO", timeout=self.MAVFTP_FILE_OPERATION_TIMEOUT)
-            if ret.error_code != 0:
+            if ret.error_code != FtpError.Success:
                 logging_warning(_("LASTLOG.TXT not available, trying alternative methods"))
                 return None
 
@@ -274,7 +264,7 @@ class FlightControllerFiles:
 
     def _get_log_number_from_directory_listing(
         self,
-        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+        mavftp_instance: "MAVFTPType",  # pyright: ignore[reportInvalidTypeForm]
     ) -> int | None:
         """
         Try to get the highest log number by listing the logs directory using MAVFTP.
@@ -289,11 +279,13 @@ class FlightControllerFiles:
         logging_info(_("Trying to get log number from directory listing"))
         try:
             result = mavftp_instance.cmd_list(["/APM/LOGS/"])
-            if not hasattr(result, "directory_listing") or not isinstance(result.directory_listing, dict):
+            listing = getattr(result, "directory_listing", None)
+            if not isinstance(listing, list):
                 logging_error(_("No directory listing found in MAVFTPReturn"))
                 return None
             highest = -1
-            for name in result.directory_listing:
+            for entry in listing:
+                name = entry.name
                 # Typical log file names: 00000036.BIN, 00000037.BIN, etc.
                 if name.endswith(".BIN") and name[:8].isdigit():
                     try:
@@ -312,7 +304,7 @@ class FlightControllerFiles:
 
     def _get_log_number_by_scanning(
         self,
-        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+        mavftp_instance: "MAVFTPType",  # pyright: ignore[reportInvalidTypeForm]
     ) -> int | None:
         """
         Try to find the last log using binary search for efficiency.
@@ -345,7 +337,7 @@ class FlightControllerFiles:
                 if os.path.exists(temp_test_file):
                     os.remove(temp_test_file)
 
-                if ret.error_code == 0:
+                if ret.error_code == FtpError.Success:
                     # File exists, search in upper half
                     last_found = mid
                     low = mid + 1
@@ -368,7 +360,7 @@ class FlightControllerFiles:
 
     def _download_log_file(
         self,
-        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+        mavftp_instance: "MAVFTPType",  # pyright: ignore[reportInvalidTypeForm]
         remote_filenumber: int,
         local_filename: str,
         get_progress_callback: Callable,
@@ -393,7 +385,7 @@ class FlightControllerFiles:
             # Download the actual log file
             mavftp_instance.cmd_get([remote_filename, local_filename], progress_callback=get_progress_callback)
             ret = mavftp_instance.process_ftp_reply("OpenFileRO", timeout=0)  # No timeout for large log files
-            if ret.error_code != 0:
+            if ret.error_code != FtpError.Success:
                 logging_error(_("Failed to download flight log %(remote)s"), {"remote": remote_filename})
                 ret.display_message()
                 return False
