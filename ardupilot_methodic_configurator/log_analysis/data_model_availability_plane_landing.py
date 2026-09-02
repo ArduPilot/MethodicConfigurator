@@ -26,6 +26,9 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingAttempt,
     PlaneLandingAttemptDetector,
     PlaneLandingEndReason,
+    PlaneLandingEvidenceExtractor,
+    PlaneLandingStage,
+    PlaneLandingStageEvidence,
 )
 
 if TYPE_CHECKING:
@@ -132,7 +135,11 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
             for flight_segment in segmentation.segments
             for attempt in PlaneLandingAttemptDetector.detect(self.log_data, flight_segment)
         )
-        outcomes = [self._attempt_outcome(index, attempt) for index, attempt in enumerate(attempts, start=1)]
+        outcomes: list[LogAnalysis] = []
+        for attempt_number, attempt in enumerate(attempts, start=1):
+            outcomes.append(self._attempt_outcome(attempt_number, attempt))
+            for evidence in PlaneLandingEvidenceExtractor.extract(self.log_data, attempt, self.parameter_history):
+                outcomes.extend(self._stage_outcomes(attempt_number, evidence))
         reason = (
             _("Detected {count} AUTO landing attempt(s)").format(count=len(attempts))
             if attempts
@@ -165,6 +172,72 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
             ),
             timestamp_us=round(attempt.start_s * 1_000_000),
             value=flare_altitude_m,
+        )
+
+    def _stage_outcomes(self, attempt_number: int, evidence: PlaneLandingStageEvidence) -> list[LogAnalysis]:
+        stage_name = _("preflare") if evidence.stage is PlaneLandingStage.PREFLARE else _("flare")
+        timestamp_us = round(evidence.time_s * 1_000_000)
+        outcomes = [
+            LogAnalysis(
+                message=_("Attempt {number}: LAND stage {stage} ({stage_name}) entered").format(
+                    number=attempt_number,
+                    stage=int(evidence.stage),
+                    stage_name=stage_name,
+                ),
+                timestamp_us=timestamp_us,
+                value=float(evidence.stage),
+            )
+        ]
+        measurements = (
+            (evidence.flight_height_m, _("LAND flight height"), _("m")),
+            (evidence.airspeed_m_s, _("ARSP airspeed"), _("m/s")),
+            (evidence.barometric_altitude_m, _("BARO altitude"), _("m")),
+            (evidence.rangefinder_distance_m, _("RFND distance"), _("m")),
+        )
+        for value, measurement_name, unit in measurements:
+            if value is not None:
+                outcomes.append(
+                    self._measurement_outcome(
+                        attempt_number,
+                        stage_name,
+                        timestamp_us,
+                        (measurement_name, value, unit),
+                    )
+                )
+        for parameter_name, value in evidence.parameter_values.items():
+            if value is not None:
+                outcomes.append(
+                    LogAnalysis(
+                        message=_("Attempt {number} {stage_name}: {parameter} effective value {value:g}").format(
+                            number=attempt_number,
+                            stage_name=stage_name,
+                            parameter=parameter_name,
+                            value=value,
+                        ),
+                        timestamp_us=timestamp_us,
+                        value=value,
+                    )
+                )
+        return outcomes
+
+    @staticmethod
+    def _measurement_outcome(
+        attempt_number: int,
+        stage_name: str,
+        timestamp_us: int,
+        measurement: tuple[str, float, str],
+    ) -> LogAnalysis:
+        measurement_name, value, unit = measurement
+        return LogAnalysis(
+            message=_("Attempt {number} {stage_name}: {measurement} {value:.3f} {unit}").format(
+                number=attempt_number,
+                stage_name=stage_name,
+                measurement=measurement_name,
+                value=value,
+                unit=unit,
+            ),
+            timestamp_us=timestamp_us,
+            value=value,
         )
 
     @staticmethod

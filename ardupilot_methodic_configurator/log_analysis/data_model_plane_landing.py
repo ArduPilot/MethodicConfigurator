@@ -6,14 +6,22 @@ SPDX-FileCopyrightText: 2026 Donald Smith
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from dataclasses import dataclass
-from enum import Enum
-from typing import ClassVar
+from __future__ import annotations
 
-import numpy as np
+import math
+from dataclasses import dataclass, field
+from enum import Enum, IntEnum
+from types import MappingProxyType
+from typing import TYPE_CHECKING, ClassVar
 
-from ardupilot_methodic_configurator.log_analysis.data_model_flight_segment import FlightSegment
-from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    import numpy as np
+
+    from ardupilot_methodic_configurator.log_analysis.data_model_flight_segment import FlightSegment
+    from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
+    from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 
 
 class PlaneLandingEndReason(str, Enum):
@@ -201,3 +209,153 @@ class PlaneLandingAttemptDetector:  # pylint: disable=too-few-public-methods
             else:
                 below_since_s = None
         return None
+
+
+class PlaneLandingStage(IntEnum):
+    """ArduPlane LAND controller stages used by the first evidence slice."""
+
+    PREFLARE = 2
+    FLARE = 3
+
+
+@dataclass(frozen=True, slots=True)
+class PlaneLandingStageEvidence:  # pylint: disable=too-many-instance-attributes
+    """Objective measurements associated with one LAND stage transition."""
+
+    attempt: PlaneLandingAttempt
+    stage: PlaneLandingStage
+    time_s: float
+    flight_height_m: float | None = None
+    airspeed_m_s: float | None = None
+    barometric_altitude_m: float | None = None
+    rangefinder_distance_m: float | None = None
+    parameter_values: Mapping[str, float | None] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Require the event to lie inside its attempt and freeze parameter evidence."""
+        if not self.attempt.start_s <= self.time_s <= self.attempt.end_s:
+            msg = "Plane landing stage evidence must be contained by its landing attempt"
+            raise ValueError(msg)
+        object.__setattr__(self, "parameter_values", MappingProxyType(dict(self.parameter_values)))
+
+
+class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
+    """Collect APT-compatible stage and nearest-telemetry evidence for one attempt."""
+
+    _PARAMETERS_BY_STAGE: ClassVar[dict[PlaneLandingStage, tuple[str, ...]]] = {
+        PlaneLandingStage.PREFLARE: ("LAND_PF_ALT", "LAND_PF_SEC"),
+        PlaneLandingStage.FLARE: ("LAND_FLARE_ALT", "LAND_FLARE_SEC", "LAND_PITCH_DEG"),
+    }
+
+    @classmethod
+    def extract(
+        cls,
+        log_data: LogData,
+        attempt: PlaneLandingAttempt,
+        parameter_history: ParameterHistory,
+    ) -> tuple[PlaneLandingStageEvidence, ...]:
+        """Return the first preflare and flare transitions found inside ``attempt``."""
+        return tuple(
+            cls._build_stage_evidence(log_data, attempt, parameter_history, transition)
+            for transition in cls._stage_transitions(log_data, attempt)
+        )
+
+    @classmethod
+    def _stage_transitions(
+        cls, log_data: LogData, attempt: PlaneLandingAttempt
+    ) -> list[tuple[PlaneLandingStage, float, float | None]]:
+        """Return the first scoped transition into each supported LAND stage."""
+        land = log_data.get_message_columns("LAND")
+        if land is None or not {"TimeUS", "stage"}.issubset(land.dtype.names or ()):
+            return []
+
+        flight_heights = log_data.get_field("LAND", "fh") if "fh" in (land.dtype.names or ()) else None
+        transitions: list[tuple[PlaneLandingStage, float, float | None]] = []
+        seen_stages: set[PlaneLandingStage] = set()
+        previous_stage: int | None = None
+
+        for index, (timestamp, stage_value) in enumerate(
+            zip(log_data.get_field("LAND", "TimeUS"), log_data.get_field("LAND", "stage"), strict=True)
+        ):
+            timestamp_s = float(timestamp)
+            if not attempt.start_s <= timestamp_s <= attempt.end_s:
+                continue
+            stage_number = int(stage_value)
+            changed_stage = stage_number != previous_stage
+            previous_stage = stage_number
+            try:
+                stage = PlaneLandingStage(stage_number)
+            except ValueError:
+                continue
+            if not changed_stage or stage in seen_stages:
+                continue
+            seen_stages.add(stage)
+            transitions.append(
+                (
+                    stage,
+                    timestamp_s,
+                    cls._finite_float(flight_heights[index]) if flight_heights is not None else None,
+                )
+            )
+        return transitions
+
+    @classmethod
+    def _build_stage_evidence(
+        cls,
+        log_data: LogData,
+        attempt: PlaneLandingAttempt,
+        parameter_history: ParameterHistory,
+        transition: tuple[PlaneLandingStage, float, float | None],
+    ) -> PlaneLandingStageEvidence:
+        stage, time_s, flight_height_m = transition
+        return PlaneLandingStageEvidence(
+            attempt=attempt,
+            stage=stage,
+            time_s=time_s,
+            flight_height_m=flight_height_m,
+            airspeed_m_s=cls._nearest_value(log_data, attempt, ("ARSP", "Airspeed"), time_s),
+            barometric_altitude_m=cls._nearest_value(log_data, attempt, ("BARO", "Alt"), time_s),
+            rangefinder_distance_m=cls._nearest_value(log_data, attempt, ("RFND", "Dist"), time_s),
+            parameter_values={
+                parameter_name: parameter_history.value_at(parameter_name, time_s)
+                for parameter_name in cls._PARAMETERS_BY_STAGE[stage]
+            },
+        )
+
+    @classmethod
+    def _nearest_value(
+        cls,
+        log_data: LogData,
+        attempt: PlaneLandingAttempt,
+        telemetry_field: tuple[str, str],
+        target_time_s: float,
+    ) -> float | None:
+        message_name, field_name = telemetry_field
+        records = log_data.get_message_columns(message_name)
+        if records is None or not {"TimeUS", field_name}.issubset(records.dtype.names or ()):
+            return None
+
+        nearest_value: float | None = None
+        nearest_offset: float | None = None
+        for timestamp, value in zip(
+            log_data.get_field(message_name, "TimeUS"),
+            log_data.get_field(message_name, field_name),
+            strict=True,
+        ):
+            timestamp_s = cls._finite_float(timestamp)
+            measured_value = cls._finite_float(value)
+            if timestamp_s is None or measured_value is None or not attempt.start_s <= timestamp_s <= attempt.end_s:
+                continue
+            offset = abs(timestamp_s - target_time_s)
+            if nearest_offset is None or offset < nearest_offset:
+                nearest_offset = offset
+                nearest_value = measured_value
+        return nearest_value
+
+    @staticmethod
+    def _finite_float(value: object) -> float | None:
+        try:
+            converted = float(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return None
+        return converted if math.isfinite(converted) else None
