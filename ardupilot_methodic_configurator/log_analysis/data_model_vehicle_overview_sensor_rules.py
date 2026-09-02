@@ -8,15 +8,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterable
 
-from ardupilot_methodic_configurator.log_analysis.decode_devid_lib import decode_device_id, get_device_type_name
+from ardupilot_methodic_configurator.decode_devid import DeviceCategory, decode_device_id, get_device_type_name
 
 
-def decode_name_and_bus(device_id: float | None, device_category: str) -> tuple[str | None, str | None]:
+def decode_name_and_bus(device_id: float | None, device_category: DeviceCategory) -> tuple[str | None, str | None]:
     """Decode a device id into a type name and bus name."""
     if device_id is None:
         return None, None
 
-    decoded = decode_device_id(int(device_id))
+    decoded, _error_message = decode_device_id(int(device_id))
+    if decoded is None:
+        return None, None
     return get_device_type_name(decoded["devtype"], device_category), decoded["bus_type_name"]
 
 

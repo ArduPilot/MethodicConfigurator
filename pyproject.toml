@@ -188,6 +188,8 @@ exclude = [
     "mavftp.py",
     "fix_with_statements.py",
     "find_exclusive_parameter_names.py",
+    # Synchronized verbatim from ArduPilot by update_flightcontroller_ids.yml.
+    "ardupilot_methodic_configurator/decode_devid.py",
 ]
 
 # https://docs.astral.sh/ruff/rules/
