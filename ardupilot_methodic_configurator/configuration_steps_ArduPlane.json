@@ -174,8 +174,10 @@
                 "placement": "left"
             },
             "auto_changed_by": "",
+            "autoimport_nondefault_regexp": ["Q_ENABLE", "Q_FRAME_CLASS"],
             "derived_parameters": {
-                "FRAME_CLASS": { "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
+                "FRAME_CLASS": { "if": "'FRAME_CLASS' in fc_parameters", "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" },
+                "Q_FRAME_CLASS": { "if": "'Q_FRAME_CLASS' in fc_parameters", "New Value": "vehicle_components['Frame']['Specifications']['Frame class']", "Change Reason": "Selected in the component editor" }
             },
             "old_filenames": ["04_board_orientation.param"]
         },

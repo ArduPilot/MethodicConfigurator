@@ -665,19 +665,20 @@ class TestFrameClassDict:
             names = list(sub_dict.values())
             assert len(names) == len(set(names)), f"Duplicate frame class names found in '{vtype}'"
 
-    def test_get_frame_class_valid_tuple_excludes_undefined_for_all_vehicle_types(self) -> None:
+    def test_get_frame_class_valid_tuple_allows_undefined_for_arduplane_only(self) -> None:
         """
-        get_frame_class_valid_tuple excludes 'Undefined' for every vehicle type.
+        ArduPlane allows 'Undefined' as the no-hover-frame state for normal fixed-wing aircraft.
 
         GIVEN: All vehicle types in FRAME_CLASS_DICT
         WHEN: Calling get_frame_class_valid_tuple for each type
-        THEN: The returned tuple must not contain 'Undefined' (invalid user selection)
+        THEN: Only ArduPlane contains 'Undefined'
         """
         for vtype in FRAME_CLASS_DICT:
             result = get_frame_class_valid_tuple(vtype)
-            assert "Undefined" not in result, (
-                f"'Undefined' must not appear in valid tuple for '{vtype}' (not a valid user selection)"
-            )
+            if vtype == "ArduPlane":
+                assert "Undefined" in result
+            else:
+                assert "Undefined" not in result
 
     def test_get_frame_class_valid_tuple_returns_tuple_of_strings(self) -> None:
         """

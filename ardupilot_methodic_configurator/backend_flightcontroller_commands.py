@@ -846,7 +846,8 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             tuple[int, int]: (frame_class, frame_type)
 
         """
-        return get_frame_info(self._params_manager.fc_parameters)
+        vehicle_type = getattr(self._connection_manager.info, "vehicle_type", "")
+        return get_frame_info(self._params_manager.fc_parameters, vehicle_type if isinstance(vehicle_type, str) else "")
 
     def start_compass_calibration(self) -> tuple[bool, str]:
         """

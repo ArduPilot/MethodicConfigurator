@@ -403,11 +403,14 @@ def get_frame_class_as_protocol_dict(vehicle_type: str) -> dict[str, dict[str, s
 
 def get_frame_class_valid_tuple(vehicle_type: str) -> tuple[str, ...]:
     """
-    Return the valid frame-class labels for the given vehicle type, excluding "Undefined".
+    Return the valid frame-class labels for the given vehicle type.
 
-    "Undefined" is not a valid user selection and should not appear in the combobox.
+    "Undefined" is a valid display value for ArduPlane because a normal fixed-wing
+    Plane has no multicopter frame class configured (Q_FRAME_CLASS == 0).
+    Other vehicle types exclude it because it is not a valid user selection there.
     """
-    return tuple(v for v in FRAME_CLASS_DICT.get(vehicle_type, FRAME_CLASS_DICT["ArduCopter"]).values() if v != "Undefined")
+    frame_classes = FRAME_CLASS_DICT.get(vehicle_type, FRAME_CLASS_DICT["ArduCopter"])
+    return tuple(v for v in frame_classes.values() if vehicle_type == "ArduPlane" or v != "Undefined")
 
 
 class ComponentDataModelValidation(ComponentDataModelBase):
