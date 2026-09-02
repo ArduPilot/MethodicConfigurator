@@ -188,11 +188,11 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             self.open_vehicle_directory(new_path)
         return new_path
 
-    def create_new_vehicle_from_bin_log(
+    def create_new_vehicle_from_bin_log(  # pylint: disable=too-many-locals
         self,
         bin_file: str,
         progress_callback: Callable[[int, int], None] | None = None,
-    ) -> str:  # pylint: disable=too-many-locals
+    ) -> str:
         """
         Create a new vehicle configuration directory from an ArduPilot .bin log file.
 
