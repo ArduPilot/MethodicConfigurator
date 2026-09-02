@@ -41,6 +41,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
         self.mav_type = ""
         self.flight_sw_version = ""
         self.flight_sw_version_and_type = ""
+        self.fw_supports_param_set_ack = False
         self.board_version = ""
         self.apj_board_id = ""
         self.flight_custom_version = ""
@@ -68,6 +69,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
         self.mav_type = ""
         self.flight_sw_version = ""
         self.flight_sw_version_and_type = ""
+        self.fw_supports_param_set_ack = False
         self.board_version = ""
         self.apj_board_id = ""
         self.flight_custom_version = ""
@@ -120,6 +122,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
         v_major, v_minor, v_patch, v_fw_type = self.__decode_flight_sw_version(version)
         self.flight_sw_version = f"{v_major}.{v_minor}.{v_patch}"
         self.flight_sw_version_and_type = self.flight_sw_version + " " + v_fw_type
+        self.fw_supports_param_set_ack = (v_major, v_minor, v_patch) >= (4, 7, 0)
 
     def set_board_version(self, board_version: int) -> None:
         self.board_version = str(board_version & 0x0FFFF)
