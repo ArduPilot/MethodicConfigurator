@@ -193,7 +193,7 @@ class ComponentDataModelImport(ComponentDataModelBase):
 
         # Process frame information if FRAME_CLASS or Q_FRAME_CLASS is present in FC parameters
         if "FRAME_CLASS" in fc_parameters or "Q_FRAME_CLASS" in fc_parameters:
-            frame_class, _ = get_frame_info(fc_parameters)
+            frame_class, _ = get_frame_info(fc_parameters, fw_type)
             frame_class_entry = frame_class_dict.get(str(frame_class))
             frame_class_label = frame_class_entry.get("protocol") if isinstance(frame_class_entry, dict) else "Undefined"
             self.set_component_value(("Frame", "Specifications", "Frame class"), frame_class_label)
