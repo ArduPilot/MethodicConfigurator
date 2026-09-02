@@ -63,12 +63,14 @@ def is_battery_monitoring_enabled(fc_parameters: dict[str, float]) -> bool:
     return fc_parameters.get("BATT_MONITOR", 0) != 0
 
 
-def get_frame_info(fc_parameters: dict[str, float]) -> tuple[int, int]:
+def get_frame_info(fc_parameters: dict[str, float], vehicle_type: str = "") -> tuple[int, int]:
     """
     Extract frame class and frame type from flight controller parameters.
 
     Args:
         fc_parameters: Dictionary of flight controller parameters
+        vehicle_type: ArduPilot vehicle type. ArduPlane uses the Q_ frame
+            parameters and therefore prefers Q_FRAME_CLASS/Q_FRAME_TYPE.
 
     Returns:
         tuple[int, int]: (frame_class, frame_type)
@@ -83,8 +85,12 @@ def get_frame_info(fc_parameters: dict[str, float]) -> tuple[int, int]:
         (1, 1)
 
     """
-    frame_class = int(fc_parameters.get("FRAME_CLASS", fc_parameters.get("Q_FRAME_CLASS", 1)))  # Default to QUAD
-    frame_type = int(fc_parameters.get("FRAME_TYPE", fc_parameters.get("Q_FRAME_TYPE", 1)))  # Default to X
+    if vehicle_type == "ArduPlane":
+        frame_class = int(fc_parameters.get("Q_FRAME_CLASS", fc_parameters.get("FRAME_CLASS", 1)))
+        frame_type = int(fc_parameters.get("Q_FRAME_TYPE", fc_parameters.get("FRAME_TYPE", 1)))
+    else:
+        frame_class = int(fc_parameters.get("FRAME_CLASS", fc_parameters.get("Q_FRAME_CLASS", 1)))
+        frame_type = int(fc_parameters.get("FRAME_TYPE", fc_parameters.get("Q_FRAME_TYPE", 1)))
     return (frame_class, frame_type)
 
 

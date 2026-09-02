@@ -169,6 +169,19 @@ class TestFrameInfo:
         frame_class, _ = get_frame_info(params)
         assert frame_class == 3  # Octa from FRAME_CLASS, not Quad from Q_FRAME_CLASS
 
+    def test_arduplane_prefers_q_frame_class_when_both_present(self) -> None:
+        """
+        ArduPlane uses Q_FRAME_CLASS when both frame-class parameter namespaces exist.
+
+        GIVEN: ArduPlane parameters containing both FRAME_CLASS and Q_FRAME_CLASS
+        WHEN: Extracting frame info for ArduPlane
+        THEN: Q_FRAME_CLASS and Q_FRAME_TYPE are preferred
+        """
+        params = {"FRAME_CLASS": 3.0, "Q_FRAME_CLASS": 2.0, "FRAME_TYPE": 2.0, "Q_FRAME_TYPE": 1.0}
+        frame_class, frame_type = get_frame_info(params, "ArduPlane")
+        assert frame_class == 2  # Hexa from Q_FRAME_CLASS
+        assert frame_type == 1  # X from Q_FRAME_TYPE
+
     def test_frame_type_takes_priority_over_q_frame_type_when_both_present(self) -> None:
         """
         FRAME_TYPE takes precedence over Q_FRAME_TYPE when both are present.

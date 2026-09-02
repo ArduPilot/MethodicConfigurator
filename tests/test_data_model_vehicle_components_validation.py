@@ -758,6 +758,20 @@ class TestComponentDataModelValidation(BasicTestMixin, RealisticDataTestMixin):
         assert "Invalid value" in errors[0]
         assert "Allowed values" in errors[0]
 
+    def test_validate_all_data_accepts_undefined_frame_class_for_arduplane(self, realistic_model) -> None:
+        """Normal fixed-wing ArduPlane may have no multicopter frame class configured."""
+        model = realistic_model
+        model.set_component_value(("Flight Controller", "Firmware", "Type"), "ArduPlane")
+        model.init_possible_choices({})
+
+        entries = {
+            ("Frame", "Specifications", "Frame class"): "Undefined",
+        }
+
+        is_valid, errors = model.validate_all_data(entries)
+        assert is_valid is True
+        assert errors == []
+
     def test_validate_all_data_duplicate_connections(self, realistic_model) -> None:
         """
         Test validate_all_data with duplicate FC connections.

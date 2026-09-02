@@ -448,6 +448,12 @@ def create_and_configure_component_editor(
     """
     component_editor_window = ComponentEditorWindow(version, local_filesystem, flight_controller.fc_parameters)
 
+    # Set the detected firmware type before importing FC parameters or creating widgets.
+    # Frame-class handling is vehicle-specific: ArduPlane uses Q_FRAME_CLASS, while
+    # ArduCopter uses FRAME_CLASS.  The data model also derives the frame-class
+    # combobox choices from this value.
+    component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
+
     # Infer component specifications from FC parameters if requested
     if (
         vehicle_project_manager is not None
@@ -458,7 +464,6 @@ def create_and_configure_component_editor(
 
     # Configure basic window properties
     component_editor_window.populate_frames()
-    component_editor_window.set_vehicle_type_and_version(vehicle_type, flight_controller.info.flight_sw_version_and_type)
     component_editor_window.set_fc_manufacturer(flight_controller.info.vendor)
     component_editor_window.set_fc_model(flight_controller.info.firmware_type)
     component_editor_window.set_mcu_series(flight_controller.info.mcu_series)
