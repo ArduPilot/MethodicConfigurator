@@ -191,6 +191,8 @@ exclude = [
     "find_exclusive_parameter_names.py",
     # Synchronized verbatim from ArduPilot by update_flightcontroller_ids.yml.
     "ardupilot_methodic_configurator/decode_devid.py",
+    # Maintained MAVProxy adaptation covered by focused MAVFTP tests.
+    "ardupilot_methodic_configurator/backend_mavftp.py",
 ]
 
 # https://docs.astral.sh/ruff/rules/
@@ -266,6 +268,11 @@ strict_equality = true
 warn_unused_configs = true
 
 files = ["ardupilot_methodic_configurator/*.py"]
+
+[[tool.mypy.overrides]]
+# The maintained MAVProxy adaptation is checked by focused runtime tests.
+module = "ardupilot_methodic_configurator.backend_mavftp"
+ignore_errors = true
 
 [tool.pyright]
 include = [
