@@ -1,5 +1,5 @@
 {
-    "Format version": 1,
+    "Format version": 2,
     "display_usage_popup": {
         "component_editor": true,
         "component_editor_validation": true,
