@@ -29,6 +29,10 @@ from ardupilot_methodic_configurator.log_analysis.data_model_availability_fft im
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_gnss import GPSLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_imu import ImuLogAnalysis, ImuLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_mode import ModeLogAvailabilityModel
+from ardupilot_methodic_configurator.log_analysis.data_model_availability_plane_landing import (
+    PlaneLandingAnalysis,
+    PlaneLandingAvailabilityModel,
+)
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_pm import PmLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_vibe import VibeLogAnalysis, VibeLogAvailabilityModel
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
@@ -72,6 +76,7 @@ LOG_ANALYSIS_SUBSYSTEMS: tuple[LogAnalysisModelSpec, ...] = (
     LogAnalysisModelSpec("pm", PmLogAvailabilityModel),
     LogAnalysisModelSpec("arm", ArmLogAvailabilityModel),
     LogAnalysisModelSpec("mode", ModeLogAvailabilityModel),
+    LogAnalysisModelSpec("plane_landing", PlaneLandingAvailabilityModel, PlaneLandingAnalysis),
 )
 
 ResolvedModel = tuple[type[BaseLogAvailabilityModel], type[BaseLogAnalysisModel] | None, str]
