@@ -1,4 +1,4 @@
 RC_OPTIONS,32
-RC_PROTOCOLS,1
+RC_PROTOCOLS,1  # Selected in the component editor
 RSSI_TYPE,0
 SERIAL2_PROTOCOL,2
