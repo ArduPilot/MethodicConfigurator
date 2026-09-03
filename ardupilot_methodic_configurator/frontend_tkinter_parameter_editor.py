@@ -26,7 +26,7 @@ from logging import getLevelName as logging_getLevelName
 from logging import warning as logging_warning
 from sys import exit as sys_exit
 from sys import platform as sys_platform
-from tkinter import filedialog, ttk
+from tkinter import filedialog, simpledialog, ttk
 from typing import TYPE_CHECKING, Optional, Protocol, Union, cast
 
 # from logging import critical as logging_critical
@@ -96,7 +96,7 @@ class _PaneConfigurable(Protocol):  # pylint: disable=too-few-public-methods
 class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
     """Container for UI dependencies injected into the parameter editor window."""
 
-    def __init__(  # noqa: PLR0913 # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         create_progress_window: Callable[[tk.Misc, str, str, bool], ProgressWindow],
         ask_yesno: Callable[[str, str], bool],
@@ -111,6 +111,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         analyze_log_data_callback: Callable[..., LogSummary],
         load_apm_doc: Callable[[str, str, str], APMDoc | None],
         askdirectory: Callable[..., str] | None = None,
+        askstring: Callable[..., str | None] | None = None,
     ) -> None:
         self.create_progress_window = create_progress_window
         self.ask_yesno = ask_yesno
@@ -121,6 +122,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         self.asksaveasfilename = asksaveasfilename
         self.askopenfilename = askopenfilename
         self.askdirectory = askdirectory or filedialog.askdirectory
+        self.askstring = askstring or simpledialog.askstring
         self.sys_exit = exit_callback
         self.extract_log_data = extract_log_data
         self.analyze_log_data = analyze_log_data_callback
@@ -157,6 +159,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             analyze_log_data_callback=analyze_log_data,
             load_apm_doc=_load_apm_doc,
             askdirectory=filedialog.askdirectory,
+            askstring=simpledialog.askstring,
         )
 
     def upload_params_with_progress(

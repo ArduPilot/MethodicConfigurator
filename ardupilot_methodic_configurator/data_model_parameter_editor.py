@@ -501,7 +501,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return False
 
-    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913
+    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913, PLR0917
         self,
         selected_file: str,
         forced: bool,
@@ -1407,6 +1407,48 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     def get_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
         """Return regular files in the selected remote directory."""
         return self._flight_controller.list_bin_log_files(remote_directory)
+
+    def get_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+        """Return files and directories in the selected remote directory."""
+        return self._flight_controller.list_remote_files(remote_directory)
+
+    def download_last_flight_log(
+        self,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download the last flight log through the flight-controller facade."""
+        return self._flight_controller.download_last_flight_log(local_filename, progress_callback)
+
+    def upload_file_to_fc(
+        self,
+        local_filename: str,
+        remote_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Upload one local file to the flight controller."""
+        return self._flight_controller.upload_file(local_filename, remote_filename, progress_callback)
+
+    def download_remote_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download one explicitly selected remote file."""
+        return self._flight_controller.download_remote_file(remote_path, local_filename, progress_callback)
+
+    def make_remote_directory(self, remote_directory: str) -> bool:
+        """Create one remote directory."""
+        return self._flight_controller.make_remote_directory(remote_directory)
+
+    def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool:
+        """Delete one remote file or directory."""
+        return self._flight_controller.delete_remote_path(remote_path, is_directory)
+
+    def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool:
+        """Rename one remote file or directory."""
+        return self._flight_controller.rename_remote_path(remote_path, new_remote_path)
 
     def download_selected_bin_logs_workflow(
         self,

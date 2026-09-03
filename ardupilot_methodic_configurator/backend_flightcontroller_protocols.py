@@ -298,9 +298,24 @@ class FlightControllerFilesProtocol(Protocol):
 
     def list_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list["FlightControllerLogFile"]: ...
 
+    def list_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list["FlightControllerLogFile"]: ...
+
     def download_bin_log_file(
         self,
         remote_path: str,
         local_filename: str,
         progress_callback: Callable[[int, int], None] | None,
     ) -> bool: ...
+
+    def download_remote_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> bool: ...
+
+    def make_remote_directory(self, remote_directory: str) -> bool: ...
+
+    def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool: ...
+
+    def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool: ...
