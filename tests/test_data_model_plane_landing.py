@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ruff: noqa: INP001
 
 """Focused tests for AMC-native ArduPlane landing-attempt analysis."""
 
@@ -63,6 +63,7 @@ def _plane_log(  # pylint: disable=too-many-arguments
     mode: Sequence[tuple[float, int]] | None = None,
     messages: Sequence[tuple[float, str]] | None = None,
     include_land: bool = True,
+    include_baro: bool = True,
 ) -> LogData:
     log_data = LogData(vehicle_type=vehicle_type, firmware_version=firmware_version)
     gps_records = (
@@ -91,6 +92,13 @@ def _plane_log(  # pylint: disable=too-many-arguments
         mode if mode is not None else ((0.0, 10),),
         [("TimeUS", "f8"), ("ModeNum", "i4")],
     )
+    if include_baro:
+        _add_columns(
+            log_data,
+            "BARO",
+            ((15.0, 100.0), (20.0, 99.0), (35.0, 98.0), (38.0, 97.0)),
+            [("TimeUS", "f8"), ("Alt", "f8")],
+        )
     if messages is not None:
         _add_columns(log_data, "MSG", messages, [("TimeUS", "f8"), ("Message", "U64")])
     return log_data
@@ -140,13 +148,48 @@ def test_missing_required_landing_evidence_is_unavailable() -> None:
     assert [issue.message for issue in result.issues] == ["No LAND messages found"]
 
 
+def test_missing_baro_is_unavailable() -> None:
+    result = _availability(_plane_log(include_baro=False))
+
+    assert result.available is False
+    assert [issue.message for issue in result.issues] == ["No BARO messages found"]
+
+
+@pytest.mark.parametrize(
+    ("records", "dtype", "expected_issue"),
+    [
+        (((100.0,),), [("Alt", "f8")], "TimeUS field not present in this firmware's BARO schema"),
+        (((0.0,),), [("TimeUS", "f8")], "Alt field not present in this firmware's BARO schema"),
+    ],
+)
+def test_missing_required_baro_field_is_unavailable(
+    records: Sequence[tuple[object, ...]],
+    dtype: list[tuple[str, str]],
+    expected_issue: str,
+) -> None:
+    log_data = _plane_log(include_baro=False)
+    _add_columns(log_data, "BARO", records, dtype)
+
+    result = _availability(log_data)
+
+    assert result.available is False
+    assert [issue.message for issue in result.issues] == [expected_issue]
+
+
+def test_valid_baro_allows_plane_landing_availability() -> None:
+    result = _availability(_plane_log())
+
+    assert result.available is True
+    assert not result.issues
+
+
 def test_optional_sensor_and_message_evidence_is_not_required() -> None:
     log_data = _plane_log(messages=None)
 
     result = _availability(log_data)
 
     assert result.available is True
-    for optional_message in ("ARSP", "BARO", "RFND", "CMD", "MSG"):
+    for optional_message in ("ARSP", "RFND", "CMD", "MSG"):
         assert log_data.get_message_columns(optional_message) is None
 
 
@@ -311,7 +354,7 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
     assert all(outcome.suggested_value is None for outcome in result.outcomes)
 
 
-def test_missing_optional_telemetry_omits_only_optional_measurements() -> None:
+def test_missing_optional_arsp_and_rfnd_omits_only_their_measurements() -> None:
     log_data = _plane_log(
         land=((5.0, 0, 0.0), (10.0, 1, 20.0), (15.0, 2, 5.5), (20.0, 3, 1.2)),
         messages=((40.0, "Throttle disarmed"),),
@@ -325,10 +368,10 @@ def test_missing_optional_telemetry_omits_only_optional_measurements() -> None:
     assert _availability(log_data).available is True
     assert len(evidence) == 2
     assert all(item.airspeed_m_s is None for item in evidence)
-    assert all(item.barometric_altitude_m is None for item in evidence)
+    assert all(item.barometric_altitude_m is not None for item in evidence)
     assert all(item.rangefinder_distance_m is None for item in evidence)
     assert not any("ARSP airspeed" in outcome.message for outcome in result.outcomes)
-    assert not any("BARO altitude" in outcome.message for outcome in result.outcomes)
+    assert any("BARO altitude" in outcome.message for outcome in result.outcomes)
     assert not any("RFND distance" in outcome.message for outcome in result.outcomes)
 
 

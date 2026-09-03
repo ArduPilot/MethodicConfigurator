@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
 _REQUIRED_FIELDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("GPS", ("TimeUS", "Spd")),
+    ("BARO", ("TimeUS", "Alt")),
     ("LAND", ("TimeUS", "stage")),
     ("MODE", ("TimeUS", "ModeNum")),
 )
