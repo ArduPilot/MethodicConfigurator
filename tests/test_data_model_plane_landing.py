@@ -27,6 +27,8 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingFirmwareFlareEvidence,
     PlaneLandingFirmwareGlideSlopeEvidence,
     PlaneLandingFirmwareMessageExtractor,
+    PlaneLandingMissionTarget,
+    PlaneLandingMissionTargetExtractor,
     PlaneLandingStage,
 )
 
@@ -105,6 +107,40 @@ def _plane_log(  # pylint: disable=too-many-arguments
         )
     if messages is not None:
         _add_columns(log_data, "MSG", messages, [("TimeUS", "f8"), ("Message", "U64")])
+    return log_data
+
+
+def _gps_stop_log(
+    cmd: Sequence[tuple[object, ...]] | None,
+    *,
+    messages: Sequence[tuple[float, str]] | None = None,
+) -> LogData:
+    """Return a synthetic GPS-ended landing with optional CMD snapshot records."""
+    log_data = _plane_log(
+        gps=((0.0, 6.0), (2.0, 6.0), (15.0, 5.0), (20.0, 2.0), (22.0, 2.0), (30.0, 6.0)),
+        land=((5.0, 0), (10.0, 1), (12.0, 2), (14.0, 3)),
+        messages=messages,
+    )
+    _add_columns(
+        log_data,
+        "GPS",
+        (
+            (0.0, 6.0, 0.0, 1.0),
+            (2.0, 6.0, 0.0, 1.0),
+            (15.0, 5.0, 0.0, 1.0),
+            (20.0, 2.0, 0.0, 1.001),
+            (22.0, 2.0, 0.0, 1.001),
+            (30.0, 6.0, 0.0, 1.001),
+        ),
+        [("TimeUS", "f8"), ("Spd", "f8"), ("Lat", "f8"), ("Lng", "f8")],
+    )
+    if cmd is not None:
+        _add_columns(
+            log_data,
+            "CMD",
+            cmd,
+            [("TimeUS", "f8"), ("CTot", "f8"), ("CNum", "f8"), ("CId", "f8"), ("Lat", "f8"), ("Lng", "f8")],
+        )
     return log_data
 
 
@@ -555,6 +591,134 @@ def test_multiple_attempts_do_not_cross_associate_firmware_messages() -> None:
     assert (second_flare.time_s, second_flare.altitude_m, second_glide.glide_slope_degrees) == (35.0, 3.0, 5.0)
     assert first_flare.attempt is attempts[0]
     assert second_flare.attempt is attempts[1]
+
+
+def test_complete_cmd_snapshot_produces_independent_mission_target_distance() -> None:
+    log_data = _gps_stop_log(
+        (
+            (1.0, 3, 0, 16, 0.0, 0.0),
+            (2.0, 3, 1, 21, 0.0, 1.0),
+            (3.0, 3, 2, 20, 0.0, 0.0),
+        ),
+        messages=((13.9999, "Flare 2.0m sink=1.0 speed=10.0 dist=32.6"),),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    target = PlaneLandingMissionTargetExtractor.target_for_attempt(log_data, attempt)
+    distance = PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt)
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    assert target == PlaneLandingMissionTarget(
+        attempt=attempt,
+        snapshot_completed_s=3.0,
+        latitude_deg=0.0,
+        longitude_deg=1.0,
+    )
+    assert distance is not None
+    assert (distance.time_s, distance.aircraft_position_time_s) == (20.0, 20.0)
+    assert (distance.aircraft_latitude_deg, distance.aircraft_longitude_deg) == (0.0, 1.001)
+    assert distance.distance_m == pytest.approx(111.1949266)
+    firmware_distance = [outcome for outcome in result.outcomes if "firmware flare: distance to target" in outcome.message]
+    computed_distance = [
+        outcome for outcome in result.outcomes if "computed distance to mission LAND target" in outcome.message
+    ]
+    assert [(outcome.timestamp_us, outcome.value) for outcome in firmware_distance] == [(13_999_900, 32.6)]
+    assert len(computed_distance) == 1
+    assert (computed_distance[0].timestamp_us, computed_distance[0].value) == pytest.approx((20_000_000, 111.1949266))
+    assert all(isinstance(outcome, LogAnalysis) for outcome in result.outcomes)
+    assert all(outcome.param_name is None and outcome.suggested_value is None for outcome in result.outcomes)
+    assert not any(
+        label in outcome.message.lower() for outcome in result.outcomes for label in ("good", "poor", "safe", "unsafe")
+    )
+    assert not any("touchdown" in outcome.message.lower() for outcome in result.outcomes)
+
+
+def test_missing_cmd_keeps_analysis_available_and_omits_target_evidence() -> None:
+    log_data = _gps_stop_log(None)
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    availability = _availability(log_data)
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    assert availability.available is True
+    assert PlaneLandingMissionTargetExtractor.target_for_attempt(log_data, attempt) is None
+    assert PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt) is None
+    assert not any("computed distance to mission LAND target" in outcome.message for outcome in result.outcomes)
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        ((1.0, 3, 0, 16, 0.0, 0.0), (2.0, 3, 2, 21, 0.0, 1.0)),
+        ((1.0, 2, 0, 21, 0.0, 1.0), (2.0, 2, 1, 21, 0.0, 2.0)),
+        ((1.0, 2, 0, 16, 0.0, 0.0), (2.0, 2, 1, 20, 0.0, 1.0)),
+    ],
+    ids=("incomplete", "ambiguous-land", "no-land"),
+)
+def test_unusable_cmd_snapshot_omits_target_evidence(cmd: Sequence[tuple[object, ...]]) -> None:
+    log_data = _gps_stop_log(cmd)
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert PlaneLandingMissionTargetExtractor.target_for_attempt(log_data, attempt) is None
+    assert PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt) is None
+
+
+@pytest.mark.parametrize(("latitude", "longitude"), [(0.0, 0.0), (float("nan"), 1.0), (0.0, float("inf"))])
+def test_malformed_mission_target_coordinates_are_rejected(latitude: float, longitude: float) -> None:
+    log_data = _gps_stop_log(((1.0, 1, 0, 21, latitude, longitude),))
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert PlaneLandingMissionTargetExtractor.target_for_attempt(log_data, attempt) is None
+    assert PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt) is None
+
+
+def test_latest_complete_snapshot_before_each_attempt_selects_the_correct_target() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (11.0, 3), (25.0, 0), (30.0, 1), (31.0, 3)),
+        messages=((20.0, "Landing aborted"), (50.0, "Throttle disarmed")),
+    )
+    _add_columns(
+        log_data,
+        "CMD",
+        (
+            (1.0, 2, 0, 16, 0.0, 0.0),
+            (2.0, 2, 1, 21, -35.0, 174.0),
+            (22.0, 2, 0, 16, 0.0, 0.0),
+            (23.0, 2, 1, 21, -36.0, 175.0),
+        ),
+        [("TimeUS", "f8"), ("CTot", "f8"), ("CNum", "f8"), ("CId", "f8"), ("Lat", "f8"), ("Lng", "f8")],
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempts = PlaneLandingAttemptDetector.detect(log_data, segment)
+
+    first = PlaneLandingMissionTargetExtractor.target_for_attempt(log_data, attempts[0])
+    second = PlaneLandingMissionTargetExtractor.target_for_attempt(log_data, attempts[1])
+
+    assert first is not None
+    assert second is not None
+    assert (first.snapshot_completed_s, first.latitude_deg, first.longitude_deg) == (2.0, -35.0, 174.0)
+    assert (second.snapshot_completed_s, second.latitude_deg, second.longitude_deg) == (23.0, -36.0, 175.0)
+    assert first.attempt is attempts[0]
+    assert second.attempt is attempts[1]
+
+
+def test_target_distance_does_not_use_gps_position_outside_attempt() -> None:
+    log_data = _gps_stop_log(((1.0, 1, 0, 21, 0.0, 1.0),))
+    gps = log_data.get_message_columns("GPS")
+    assert gps is not None
+    gps["Lat"][3] = float("nan")
+    gps["Lng"][3] = float("nan")
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    distance = PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt)
+
+    assert (attempt.end_s, attempt.end_reason) == (20.0, PlaneLandingEndReason.GPS_STOP)
+    assert distance is None
 
 
 def test_missing_optional_arsp_and_rfnd_omits_only_their_measurements() -> None:

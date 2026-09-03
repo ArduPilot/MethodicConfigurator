@@ -30,6 +30,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingFirmwareEvidence,
     PlaneLandingFirmwareFlareEvidence,
     PlaneLandingFirmwareMessageExtractor,
+    PlaneLandingMissionTargetExtractor,
     PlaneLandingStage,
     PlaneLandingStageEvidence,
 )
@@ -146,6 +147,16 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
                 outcomes.extend(self._stage_outcomes(attempt_number, stage_evidence))
             for firmware_evidence in PlaneLandingFirmwareMessageExtractor.extract(self.log_data, attempt):
                 outcomes.extend(self._firmware_message_outcomes(attempt_number, firmware_evidence))
+            target_distance = PlaneLandingMissionTargetExtractor.distance_at_gps_stop(self.log_data, attempt)
+            if target_distance is not None:
+                outcomes.append(
+                    self._measurement_outcome(
+                        attempt_number,
+                        _("GPS-stop"),
+                        round(target_distance.time_s * 1_000_000),
+                        (_("computed distance to mission LAND target"), target_distance.distance_m, _("m")),
+                    )
+                )
         reason = (
             _("Detected {count} AUTO landing attempt(s)").format(count=len(attempts))
             if attempts

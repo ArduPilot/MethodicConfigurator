@@ -382,6 +382,247 @@ class PlaneLandingFirmwareMessageExtractor:  # pylint: disable=too-few-public-me
         return converted if math.isfinite(converted) else None
 
 
+@dataclass(frozen=True, slots=True)
+class PlaneLandingMissionTarget:
+    """One unambiguous mission LAND target applicable to a landing attempt."""
+
+    attempt: PlaneLandingAttempt
+    snapshot_completed_s: float
+    latitude_deg: float
+    longitude_deg: float
+
+    def __post_init__(self) -> None:
+        """Require the mission snapshot to have completed before the attempt began."""
+        if self.snapshot_completed_s > self.attempt.start_s:
+            msg = "Plane mission target snapshot must complete at or before the landing attempt"
+            raise ValueError(msg)
+
+
+@dataclass(frozen=True, slots=True)
+class PlaneLandingTargetDistanceEvidence:
+    """Distance from the scoped GPS-stop position to the applicable mission LAND target."""
+
+    attempt: PlaneLandingAttempt
+    time_s: float
+    aircraft_position_time_s: float
+    aircraft_latitude_deg: float
+    aircraft_longitude_deg: float
+    target: PlaneLandingMissionTarget
+    distance_m: float
+
+    def __post_init__(self) -> None:
+        """Require GPS-stop and position evidence to remain inside the associated attempt."""
+        if self.attempt.end_reason is not PlaneLandingEndReason.GPS_STOP or self.time_s != self.attempt.end_s:
+            msg = "Plane target-distance evidence requires the authoritative GPS-stop attempt end"
+            raise ValueError(msg)
+        if not self.attempt.start_s <= self.aircraft_position_time_s <= self.attempt.end_s:
+            msg = "Plane target-distance position must be contained by its landing attempt"
+            raise ValueError(msg)
+        if self.target.attempt is not self.attempt:
+            msg = "Plane mission target must be associated with the same landing attempt"
+            raise ValueError(msg)
+
+
+_MissionCommandRecord = tuple[float, object, object, object, object, object]
+
+
+class PlaneLandingMissionTargetExtractor:
+    """Reconstruct APT-compatible mission targets and GPS-stop distance evidence."""
+
+    MAV_CMD_NAV_LAND: ClassVar[int] = 21
+    EARTH_RADIUS_M: ClassVar[float] = 6_371_000.0
+    _CMD_FIELDS: ClassVar[set[str]] = {"TimeUS", "CTot", "CNum", "CId", "Lat", "Lng"}
+
+    @classmethod
+    def target_for_attempt(cls, log_data: LogData, attempt: PlaneLandingAttempt) -> PlaneLandingMissionTarget | None:
+        """Return the single LAND target from the latest complete applicable CMD snapshot."""
+        snapshots = cls._complete_cmd_snapshots(log_data)
+        applicable = [snapshot for snapshot in snapshots if snapshot[-1][0] <= attempt.start_s]
+        if not applicable:
+            return None
+
+        snapshot = applicable[-1]
+        land_rows: list[_MissionCommandRecord] = []
+        for row in snapshot:
+            command_id = cls._integer(row[3])
+            if command_id is None:
+                return None
+            if command_id == cls.MAV_CMD_NAV_LAND:
+                land_rows.append(row)
+        if len(land_rows) != 1:
+            return None
+
+        latitude_deg = cls._finite_float(land_rows[0][4])
+        longitude_deg = cls._finite_float(land_rows[0][5])
+        if latitude_deg is None or longitude_deg is None or (latitude_deg == 0.0 and longitude_deg == 0.0):
+            return None
+        return PlaneLandingMissionTarget(
+            attempt=attempt,
+            snapshot_completed_s=snapshot[-1][0],
+            latitude_deg=latitude_deg,
+            longitude_deg=longitude_deg,
+        )
+
+    @classmethod
+    def distance_at_gps_stop(
+        cls,
+        log_data: LogData,
+        attempt: PlaneLandingAttempt,
+    ) -> PlaneLandingTargetDistanceEvidence | None:
+        """Return target distance when mission and attempt-scoped GPS-stop position are available."""
+        if attempt.end_reason is not PlaneLandingEndReason.GPS_STOP:
+            return None
+        target = cls.target_for_attempt(log_data, attempt)
+        if target is None:
+            return None
+
+        nearest_position = cls._nearest_gps_position(log_data, attempt.end_s)
+        if nearest_position is None:
+            return None
+
+        position_time_s, aircraft_latitude_deg, aircraft_longitude_deg = nearest_position
+        if not attempt.start_s <= position_time_s <= attempt.end_s:
+            return None
+        return PlaneLandingTargetDistanceEvidence(
+            attempt=attempt,
+            time_s=attempt.end_s,
+            aircraft_position_time_s=position_time_s,
+            aircraft_latitude_deg=aircraft_latitude_deg,
+            aircraft_longitude_deg=aircraft_longitude_deg,
+            target=target,
+            distance_m=cls._horizontal_distance(
+                target.latitude_deg,
+                target.longitude_deg,
+                aircraft_latitude_deg,
+                aircraft_longitude_deg,
+            ),
+        )
+
+    @classmethod
+    def _complete_cmd_snapshots(cls, log_data: LogData) -> tuple[tuple[_MissionCommandRecord, ...], ...]:
+        """Return complete consecutive CMD snapshots in timestamp order."""
+        snapshots: list[tuple[_MissionCommandRecord, ...]] = []
+        current: list[_MissionCommandRecord] = []
+        expected_total: int | None = None
+        expected_number = 0
+        for row in sorted(cls._cmd_records(log_data), key=lambda record: record[0]):
+            total = cls._integer(row[1])
+            number = cls._integer(row[2])
+            if total is None or number is None:
+                current = []
+                expected_total = None
+                expected_number = 0
+                continue
+
+            if total <= 0 or number < 0 or number >= total:
+                current = []
+                expected_total = None
+                expected_number = 0
+                continue
+            if number == 0:
+                current = [row]
+                expected_total = total
+                expected_number = 1
+            elif not current or total != expected_total or number != expected_number:
+                current = []
+                expected_total = None
+                expected_number = 0
+                continue
+            else:
+                current.append(row)
+                expected_number += 1
+            if expected_number == expected_total:
+                snapshots.append(tuple(current))
+                current = []
+                expected_total = None
+                expected_number = 0
+        return tuple(snapshots)
+
+    @classmethod
+    def _cmd_records(cls, log_data: LogData) -> list[_MissionCommandRecord]:
+        """Return finite-timestamp CMD fields in their scaled representation."""
+        cmd = log_data.get_message_columns("CMD")
+        if cmd is None or not cls._CMD_FIELDS.issubset(cmd.dtype.names or ()):
+            return []
+
+        records: list[_MissionCommandRecord] = []
+        for timestamp, total, number, command_id, latitude, longitude in zip(
+            log_data.get_field("CMD", "TimeUS"),
+            log_data.get_field("CMD", "CTot"),
+            log_data.get_field("CMD", "CNum"),
+            log_data.get_field("CMD", "CId"),
+            log_data.get_field("CMD", "Lat"),
+            log_data.get_field("CMD", "Lng"),
+            strict=True,
+        ):
+            timestamp_s = cls._finite_float(timestamp)
+            if timestamp_s is not None:
+                records.append((timestamp_s, total, number, command_id, latitude, longitude))
+        return records
+
+    @classmethod
+    def _nearest_gps_position(cls, log_data: LogData, target_time_s: float) -> tuple[float, float, float] | None:
+        """Return the nearest finite GPS position to the supplied time."""
+        gps = log_data.get_message_columns("GPS")
+        if gps is None or not {"TimeUS", "Lat", "Lng"}.issubset(gps.dtype.names or ()):
+            return None
+
+        nearest_position: tuple[float, float, float] | None = None
+        nearest_offset: float | None = None
+        for timestamp, latitude, longitude in zip(
+            log_data.get_field("GPS", "TimeUS"),
+            log_data.get_field("GPS", "Lat"),
+            log_data.get_field("GPS", "Lng"),
+            strict=True,
+        ):
+            timestamp_s = cls._finite_float(timestamp)
+            latitude_deg = cls._finite_float(latitude)
+            longitude_deg = cls._finite_float(longitude)
+            if timestamp_s is None or latitude_deg is None or longitude_deg is None:
+                continue
+            offset = abs(timestamp_s - target_time_s)
+            if nearest_offset is None or offset < nearest_offset:
+                nearest_offset = offset
+                nearest_position = (timestamp_s, latitude_deg, longitude_deg)
+        return nearest_position
+
+    @classmethod
+    def _horizontal_distance(
+        cls,
+        latitude_one_deg: float,
+        longitude_one_deg: float,
+        latitude_two_deg: float,
+        longitude_two_deg: float,
+    ) -> float:
+        """Return the APT great-circle horizontal distance in metres."""
+        latitude_one_rad = math.radians(latitude_one_deg)
+        latitude_two_rad = math.radians(latitude_two_deg)
+        delta_latitude = math.radians(latitude_two_deg - latitude_one_deg)
+        delta_longitude = math.radians(longitude_two_deg - longitude_one_deg)
+        haversine = (
+            math.sin(delta_latitude / 2.0) ** 2
+            + math.cos(latitude_one_rad) * math.cos(latitude_two_rad) * math.sin(delta_longitude / 2.0) ** 2
+        )
+        central_angle = 2.0 * math.atan2(math.sqrt(haversine), math.sqrt(1.0 - haversine))
+        return cls.EARTH_RADIUS_M * central_angle
+
+    @staticmethod
+    def _finite_float(value: object) -> float | None:
+        try:
+            converted = float(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return converted if math.isfinite(converted) else None
+
+    @staticmethod
+    def _integer(value: object) -> int | None:
+        try:
+            converted: int = int(value)  # type: ignore[call-overload]
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return converted
+
+
 class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
     """Collect APT-compatible stage and nearest-telemetry evidence for one attempt."""
 
