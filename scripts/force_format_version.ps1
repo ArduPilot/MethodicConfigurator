@@ -6,4 +6,4 @@
 
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-Get-ChildItem -Path "ardupilot_methodic_configurator\vehicle_templates" -Recurse -Filter "vehicle_components.json" | ForEach-Object { (Get-Content $_.FullName -Raw) -replace '"Format version": 1', '"Format version": 0' | Set-Content $_.FullName -NoNewline }
+Get-ChildItem -Path "ardupilot_methodic_configurator\vehicle_templates" -Recurse -Filter "vehicle_components.json" | ForEach-Object { (Get-Content $_.FullName -Raw) -replace '"Format version": \d+', '"Format version": 0' | Set-Content $_.FullName -NoNewline }

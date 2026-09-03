@@ -25,7 +25,7 @@ from pathlib import Path
 
 from ardupilot_methodic_configurator import _
 
-VEHICLE_COMPONENTS_FORMAT_VERSION = 1
+VEHICLE_COMPONENTS_FORMAT_VERSION = 2
 _VEHICLE_COMPONENTS_JSON_FILENAME = "vehicle_components.json"
 
 # ---------------------------------------------------------------------------
