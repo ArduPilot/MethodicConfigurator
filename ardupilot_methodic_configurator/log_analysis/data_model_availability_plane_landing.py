@@ -192,8 +192,11 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
         measurements = (
             (evidence.flight_height_m, _("LAND flight height"), _("m")),
             (evidence.airspeed_m_s, _("ARSP airspeed"), _("m/s")),
+            (evidence.gps_ground_speed_m_s, _("GPS groundspeed"), _("m/s")),
             (evidence.barometric_altitude_m, _("BARO altitude"), _("m")),
+            (evidence.barometric_sink_rate_m_s, _("BARO sink rate"), _("m/s")),
             (evidence.rangefinder_distance_m, _("RFND distance"), _("m")),
+            (evidence.flare_to_gps_stop_s, _("Flare to GPS stop"), _("s")),
         )
         for value, measurement_name, unit in measurements:
             if value is not None:

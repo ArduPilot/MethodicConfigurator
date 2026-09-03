@@ -14,6 +14,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_availability_plane_
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_flight_segment import FlightSegment
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import LogAvailabilityResult
 from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData, MessageSchema
 from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterChange, ParameterHistory
@@ -300,11 +301,29 @@ def test_attempt_times_use_scaled_seconds() -> None:
 
 def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
     log_data = _plane_log(
+        gps=(
+            (0.0, 6.0),
+            (2.0, 6.0),
+            (14.9, 8.0),
+            (15.0, 7.0),
+            (15.1, 9.0),
+            (19.9, 6.0),
+            (20.0, 5.0),
+            (20.1, 7.0),
+            (60.0, 6.0),
+            (61.0, 0.0),
+            (91.0, 0.0),
+        ),
         land=((5.0, 0, 0.0), (10.0, 1, 20.0), (15.0, 2, 5.5), (20.0, 3, 1.2)),
         messages=((40.0, "Throttle disarmed"),),
     )
     _add_columns(log_data, "ARSP", ((14.8, 12.0), (15.1, 13.0), (19.8, 9.0)), [("TimeUS", "f8"), ("Airspeed", "f8")])
-    _add_columns(log_data, "BARO", ((14.9, 100.0), (20.1, 90.0)), [("TimeUS", "f8"), ("Alt", "f8")])
+    _add_columns(
+        log_data,
+        "BARO",
+        ((14.5, 101.0), (14.9, 100.0), (15.5, 99.0), (19.5, 92.0), (20.1, 90.0), (20.5, 89.0)),
+        [("TimeUS", "f8"), ("Alt", "f8")],
+    )
     _add_columns(log_data, "RFND", ((14.7, 6.0), (20.2, 1.5)), [("TimeUS", "f8"), ("Dist", "f8")])
     history = ParameterHistory(
         {
@@ -329,9 +348,15 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
         100.0,
         6.0,
     )
+    assert preflare.gps_ground_speed_m_s == 7.0
+    assert preflare.barometric_sink_rate_m_s == 2.0
+    assert preflare.flare_to_gps_stop_s is None
     assert preflare.parameter_values == {"LAND_PF_ALT": 6.0, "LAND_PF_SEC": 2.0}
     assert (flare.time_s, flare.flight_height_m) == (20.0, 1.2)
     assert (flare.airspeed_m_s, flare.barometric_altitude_m, flare.rangefinder_distance_m) == (9.0, 90.0, 1.5)
+    assert flare.gps_ground_speed_m_s == 5.0
+    assert flare.barometric_sink_rate_m_s is None
+    assert flare.flare_to_gps_stop_s is None
     assert flare.parameter_values == {
         "LAND_FLARE_ALT": 3.0,
         "LAND_FLARE_SEC": 1.5,
@@ -343,7 +368,9 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
         "LAND stage 3 (flare) entered",
         "LAND flight height",
         "ARSP airspeed",
+        "GPS groundspeed",
         "BARO altitude",
+        "BARO sink rate",
         "RFND distance",
         "LAND_PF_ALT effective value",
         "LAND_FLARE_ALT effective value",
@@ -352,6 +379,50 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
         assert any(expected_measurement in message for message in outcome_messages)
     assert all(outcome.param_name is None for outcome in result.outcomes)
     assert all(outcome.suggested_value is None for outcome in result.outcomes)
+    assert all(isinstance(outcome, LogAnalysis) for outcome in result.outcomes)
+    assert not any(
+        label in outcome.message.lower() for outcome in result.outcomes for label in ("good", "poor", "safe", "unsafe")
+    )
+
+
+def test_flare_to_gps_stop_uses_the_authoritative_attempt_end() -> None:
+    log_data = _plane_log(
+        gps=((0.0, 6.0), (2.0, 6.0), (12.0, 5.0), (14.0, 4.0), (20.0, 2.0), (22.0, 2.0), (30.0, 6.0)),
+        land=((5.0, 0), (10.0, 1), (12.0, 2), (14.0, 3)),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    assert (attempt.start_s, attempt.end_s, attempt.end_reason) == (10.0, 20.0, PlaneLandingEndReason.GPS_STOP)
+    flare = next(item for item in evidence if item.stage is PlaneLandingStage.FLARE)
+    assert flare.flare_to_gps_stop_s == 6.0
+    outcomes = [outcome for outcome in result.outcomes if "Flare to GPS stop" in outcome.message]
+    assert [(outcome.timestamp_us, outcome.value) for outcome in outcomes] == [(14_000_000, 6.0)]
+
+
+def test_sparse_and_non_finite_baro_omits_preflare_sink_rate() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2), (20.0, 3)),
+        messages=((40.0, "Throttle disarmed"),),
+        include_baro=False,
+    )
+    _add_columns(
+        log_data,
+        "BARO",
+        ((float("nan"), 95.0), (14.5, float("nan")), (15.0, 100.0), (15.5, float("inf"))),
+        [("TimeUS", "f8"), ("Alt", "f8")],
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+
+    preflare = next(item for item in evidence if item.stage is PlaneLandingStage.PREFLARE)
+    assert preflare.barometric_altitude_m == 100.0
+    assert preflare.barometric_sink_rate_m_s is None
 
 
 def test_missing_optional_arsp_and_rfnd_omits_only_their_measurements() -> None:

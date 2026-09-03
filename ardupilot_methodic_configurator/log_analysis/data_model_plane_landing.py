@@ -227,8 +227,11 @@ class PlaneLandingStageEvidence:  # pylint: disable=too-many-instance-attributes
     time_s: float
     flight_height_m: float | None = None
     airspeed_m_s: float | None = None
+    gps_ground_speed_m_s: float | None = None
     barometric_altitude_m: float | None = None
+    barometric_sink_rate_m_s: float | None = None
     rangefinder_distance_m: float | None = None
+    flare_to_gps_stop_s: float | None = None
     parameter_values: Mapping[str, float | None] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -241,6 +244,8 @@ class PlaneLandingStageEvidence:  # pylint: disable=too-many-instance-attributes
 
 class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
     """Collect APT-compatible stage and nearest-telemetry evidence for one attempt."""
+
+    BARO_RATE_HALF_WINDOW_S: ClassVar[float] = 0.5
 
     _PARAMETERS_BY_STAGE: ClassVar[dict[PlaneLandingStage, tuple[str, ...]]] = {
         PlaneLandingStage.PREFLARE: ("LAND_PF_ALT", "LAND_PF_SEC"),
@@ -314,8 +319,19 @@ class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
             time_s=time_s,
             flight_height_m=flight_height_m,
             airspeed_m_s=cls._nearest_value(log_data, attempt, ("ARSP", "Airspeed"), time_s),
+            gps_ground_speed_m_s=cls._nearest_value(log_data, attempt, ("GPS", "Spd"), time_s),
             barometric_altitude_m=cls._nearest_value(log_data, attempt, ("BARO", "Alt"), time_s),
+            barometric_sink_rate_m_s=(
+                cls._barometric_sink_rate(log_data, attempt, time_s) if stage is PlaneLandingStage.PREFLARE else None
+            ),
             rangefinder_distance_m=cls._nearest_value(log_data, attempt, ("RFND", "Dist"), time_s),
+            flare_to_gps_stop_s=(
+                attempt.end_s - time_s
+                if stage is PlaneLandingStage.FLARE
+                and attempt.end_reason is PlaneLandingEndReason.GPS_STOP
+                and time_s <= attempt.end_s
+                else None
+            ),
             parameter_values={
                 parameter_name: parameter_history.value_at(parameter_name, time_s)
                 for parameter_name in cls._PARAMETERS_BY_STAGE[stage]
@@ -351,6 +367,41 @@ class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
                 nearest_offset = offset
                 nearest_value = measured_value
         return nearest_value
+
+    @classmethod
+    def _barometric_sink_rate(
+        cls,
+        log_data: LogData,
+        attempt: PlaneLandingAttempt,
+        target_time_s: float,
+    ) -> float | None:
+        """Return the APT-compatible local preflare sink rate, positive while descending."""
+        records = log_data.get_message_columns("BARO")
+        if records is None or not {"TimeUS", "Alt"}.issubset(records.dtype.names or ()):
+            return None
+
+        start_s = max(attempt.start_s, target_time_s - cls.BARO_RATE_HALF_WINDOW_S)
+        end_s = min(attempt.end_s, target_time_s + cls.BARO_RATE_HALF_WINDOW_S)
+        scoped_samples: list[tuple[float, float]] = []
+        for timestamp, altitude in zip(
+            log_data.get_field("BARO", "TimeUS"),
+            log_data.get_field("BARO", "Alt"),
+            strict=True,
+        ):
+            timestamp_s = cls._finite_float(timestamp)
+            altitude_m = cls._finite_float(altitude)
+            if timestamp_s is None or altitude_m is None or not start_s <= timestamp_s <= end_s:
+                continue
+            scoped_samples.append((timestamp_s, altitude_m))
+
+        if len(scoped_samples) < 2:
+            return None
+        first_sample = scoped_samples[0]
+        last_sample = scoped_samples[-1]
+        elapsed_s = last_sample[0] - first_sample[0]
+        if elapsed_s <= 0:
+            return None
+        return -(last_sample[1] - first_sample[1]) / elapsed_s
 
     @staticmethod
     def _finite_float(value: object) -> float | None:
