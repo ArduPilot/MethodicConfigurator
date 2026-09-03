@@ -43,8 +43,8 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "Analog",
-                "Protocol": "Analog Voltage and Current"
+                "Type": "None",
+                "Protocol": "Disabled"
             },
             "Notes": ""
         },
@@ -184,7 +184,7 @@
                 "Version": ""
             },
             "FC Connection": {
-                "Type": "SERIAL4",
+                "Type": "SERIAL1",
                 "Protocol": "MAVLink2"
             },
             "Notes": ""
