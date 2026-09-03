@@ -242,6 +242,146 @@ class PlaneLandingStageEvidence:  # pylint: disable=too-many-instance-attributes
         object.__setattr__(self, "parameter_values", MappingProxyType(dict(self.parameter_values)))
 
 
+@dataclass(frozen=True, slots=True)
+class PlaneLandingFirmwareFlareEvidence:
+    """Objective values reported by one complete attempt-scoped firmware Flare message."""
+
+    attempt: PlaneLandingAttempt
+    time_s: float
+    altitude_m: float
+    sink_rate_m_s: float
+    airspeed_m_s: float
+    distance_to_target_m: float
+
+    def __post_init__(self) -> None:
+        """Require the firmware message to lie inside its landing attempt."""
+        if not self.attempt.start_s <= self.time_s <= self.attempt.end_s:
+            msg = "Plane firmware flare evidence must be contained by its landing attempt"
+            raise ValueError(msg)
+
+
+@dataclass(frozen=True, slots=True)
+class PlaneLandingFirmwareGlideSlopeEvidence:
+    """Objective glide-slope value reported by one attempt-scoped firmware message."""
+
+    attempt: PlaneLandingAttempt
+    time_s: float
+    glide_slope_degrees: float
+
+    def __post_init__(self) -> None:
+        """Require the firmware message to lie inside its landing attempt."""
+        if not self.attempt.start_s <= self.time_s <= self.attempt.end_s:
+            msg = "Plane firmware glide-slope evidence must be contained by its landing attempt"
+            raise ValueError(msg)
+
+
+PlaneLandingFirmwareEvidence = PlaneLandingFirmwareFlareEvidence | PlaneLandingFirmwareGlideSlopeEvidence
+
+
+class PlaneLandingFirmwareMessageExtractor:  # pylint: disable=too-few-public-methods
+    """Parse the first complete APT-recognized firmware messages inside one attempt."""
+
+    _FLARE_PREFIX: ClassVar[str] = "Flare "
+    _GLIDE_SLOPE_PREFIX: ClassVar[str] = "Landing glide slope "
+
+    @classmethod
+    def extract(cls, log_data: LogData, attempt: PlaneLandingAttempt) -> tuple[PlaneLandingFirmwareEvidence, ...]:
+        """Return chronological, complete firmware flare and glide-slope evidence."""
+        messages = log_data.get_message_columns("MSG")
+        if messages is None or not {"TimeUS", "Message"}.issubset(messages.dtype.names or ()):
+            return ()
+
+        candidates: list[tuple[float, str]] = []
+        for timestamp, message in zip(
+            log_data.get_field("MSG", "TimeUS"),
+            log_data.get_field("MSG", "Message"),
+            strict=True,
+        ):
+            timestamp_s = cls._finite_float(timestamp)
+            if timestamp_s is not None and attempt.start_s <= timestamp_s <= attempt.end_s:
+                candidates.append((timestamp_s, str(message)))
+
+        evidence: list[PlaneLandingFirmwareEvidence] = []
+        flare_found = False
+        glide_slope_found = False
+        for timestamp_s, message in sorted(candidates, key=lambda item: item[0]):
+            if not flare_found and message.startswith(cls._FLARE_PREFIX):
+                flare = cls._parse_flare(attempt, timestamp_s, message)
+                if flare is not None:
+                    evidence.append(flare)
+                    flare_found = True
+            elif not glide_slope_found and message.startswith(cls._GLIDE_SLOPE_PREFIX):
+                glide_slope = cls._parse_glide_slope(attempt, timestamp_s, message)
+                if glide_slope is not None:
+                    evidence.append(glide_slope)
+                    glide_slope_found = True
+        return tuple(sorted(evidence, key=lambda item: item.time_s))
+
+    @classmethod
+    def _parse_flare(
+        cls,
+        attempt: PlaneLandingAttempt,
+        timestamp_s: float,
+        message: str,
+    ) -> PlaneLandingFirmwareFlareEvidence | None:
+        altitude_m = cls._prefixed_value(message, cls._FLARE_PREFIX, "m")
+        sink_rate_m_s = cls._named_value(message, "sink=")
+        airspeed_m_s = cls._named_value(message, "speed=")
+        distance_to_target_m = cls._named_value(message, "dist=")
+        if altitude_m is None or sink_rate_m_s is None or airspeed_m_s is None or distance_to_target_m is None:
+            return None
+        return PlaneLandingFirmwareFlareEvidence(
+            attempt=attempt,
+            time_s=timestamp_s,
+            altitude_m=altitude_m,
+            sink_rate_m_s=sink_rate_m_s,
+            airspeed_m_s=airspeed_m_s,
+            distance_to_target_m=distance_to_target_m,
+        )
+
+    @classmethod
+    def _parse_glide_slope(
+        cls,
+        attempt: PlaneLandingAttempt,
+        timestamp_s: float,
+        message: str,
+    ) -> PlaneLandingFirmwareGlideSlopeEvidence | None:
+        glide_slope_degrees = cls._prefixed_value(message, cls._GLIDE_SLOPE_PREFIX, " degrees")
+        if glide_slope_degrees is None:
+            return None
+        return PlaneLandingFirmwareGlideSlopeEvidence(
+            attempt=attempt,
+            time_s=timestamp_s,
+            glide_slope_degrees=glide_slope_degrees,
+        )
+
+    @classmethod
+    def _prefixed_value(cls, text: str, prefix: str, suffix: str) -> float | None:
+        if not text.startswith(prefix):
+            return None
+        value_text = text[len(prefix) :]
+        suffix_index = value_text.find(suffix)
+        if suffix_index < 0:
+            return None
+        return cls._finite_float(value_text[:suffix_index].strip())
+
+    @classmethod
+    def _named_value(cls, text: str, name: str) -> float | None:
+        name_index = text.find(name)
+        if name_index < 0:
+            return None
+        value_parts = text[name_index + len(name) :].split()
+        return cls._finite_float(value_parts[0]) if value_parts else None
+
+    @staticmethod
+    def _finite_float(value: object) -> float | None:
+        try:
+            converted = float(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return None
+        return converted if math.isfinite(converted) else None
+
+
 class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
     """Collect APT-compatible stage and nearest-telemetry evidence for one attempt."""
 

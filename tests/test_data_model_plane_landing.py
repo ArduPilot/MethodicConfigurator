@@ -24,6 +24,9 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingAttemptDetector,
     PlaneLandingEndReason,
     PlaneLandingEvidenceExtractor,
+    PlaneLandingFirmwareFlareEvidence,
+    PlaneLandingFirmwareGlideSlopeEvidence,
+    PlaneLandingFirmwareMessageExtractor,
     PlaneLandingStage,
 )
 
@@ -188,8 +191,14 @@ def test_optional_sensor_and_message_evidence_is_not_required() -> None:
     log_data = _plane_log(messages=None)
 
     result = _availability(log_data)
+    analysis = PlaneLandingAnalysis(log_data, _context()).analyse()
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
 
     assert result.available is True
+    assert analysis.available is True
+    assert not PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
+    assert not any("firmware" in outcome.message.lower() for outcome in analysis.outcomes)
     for optional_message in ("ARSP", "RFND", "CMD", "MSG"):
         assert log_data.get_message_columns(optional_message) is None
 
@@ -423,6 +432,129 @@ def test_sparse_and_non_finite_baro_omits_preflare_sink_rate() -> None:
     preflare = next(item for item in evidence if item.stage is PlaneLandingStage.PREFLARE)
     assert preflare.barometric_altitude_m == 100.0
     assert preflare.barometric_sink_rate_m_s is None
+
+
+def test_firmware_flare_and_glide_slope_messages_are_separate_from_land_stage() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2), (20.0, 3)),
+        messages=(
+            (10.1, "Landing glide slope 4.7 degrees"),
+            (19.9999, "Flare -160.1m sink=1.13 speed=13.5 dist=32.6"),
+            (40.0, "Throttle disarmed"),
+        ),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    stage_evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+    firmware_evidence = PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    stage_flare = next(item for item in stage_evidence if item.stage is PlaneLandingStage.FLARE)
+    glide_slope = next(item for item in firmware_evidence if isinstance(item, PlaneLandingFirmwareGlideSlopeEvidence))
+    firmware_flare = next(item for item in firmware_evidence if isinstance(item, PlaneLandingFirmwareFlareEvidence))
+    assert (glide_slope.time_s, glide_slope.glide_slope_degrees) == (10.1, 4.7)
+    assert firmware_flare == PlaneLandingFirmwareFlareEvidence(
+        attempt=attempt,
+        time_s=19.9999,
+        altitude_m=-160.1,
+        sink_rate_m_s=1.13,
+        airspeed_m_s=13.5,
+        distance_to_target_m=32.6,
+    )
+    assert stage_flare.time_s == 20.0
+    assert firmware_flare.time_s != stage_flare.time_s
+    firmware_outcomes = [outcome for outcome in result.outcomes if "firmware" in outcome.message.lower()]
+    assert [outcome.timestamp_us for outcome in firmware_outcomes] == [10_100_000] + [19_999_900] * 4
+    assert [outcome.value for outcome in firmware_outcomes] == [4.7, -160.1, 1.13, 13.5, 32.6]
+    assert all(isinstance(outcome, LogAnalysis) for outcome in firmware_outcomes)
+    assert all(outcome.param_name is None and outcome.suggested_value is None for outcome in firmware_outcomes)
+    assert not any(
+        label in outcome.message.lower() for outcome in firmware_outcomes for label in ("good", "poor", "safe", "unsafe")
+    )
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Flare malformed",
+        "Flare 1.2m sink=bad speed=10.0 dist=20.0",
+        "Flare 1.2m sink=0.5 speed=10.0",
+        "Flare 1.2m sink=nan speed=10.0 dist=20.0",
+    ],
+)
+def test_malformed_or_partial_firmware_flare_message_is_omitted(message: str) -> None:
+    log_data = _plane_log(messages=((15.0, message), (40.0, "Throttle disarmed")))
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
+
+    assert not any(isinstance(item, PlaneLandingFirmwareFlareEvidence) for item in evidence)
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Landing glide slope malformed",
+        "Landing glide slope nan degrees",
+        "Landing glide slope 4.7",
+    ],
+)
+def test_malformed_firmware_glide_slope_message_is_omitted(message: str) -> None:
+    log_data = _plane_log(messages=((15.0, message), (40.0, "Throttle disarmed")))
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
+
+    assert not any(isinstance(item, PlaneLandingFirmwareGlideSlopeEvidence) for item in evidence)
+
+
+def test_firmware_messages_outside_attempt_are_ignored() -> None:
+    log_data = _plane_log(
+        messages=(
+            (9.9, "Landing approach start at 20.0m"),
+            (9.95, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"),
+            (20.0, "Landing aborted"),
+            (20.1, "Landing glide slope 4.7 degrees"),
+        )
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
+
+    assert (attempt.start_s, attempt.end_s) == (10.0, 20.0)
+    assert not evidence
+
+
+def test_multiple_attempts_do_not_cross_associate_firmware_messages() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (11.0, 3), (25.0, 0), (30.0, 1), (31.0, 3)),
+        messages=(
+            (10.1, "Landing glide slope 4.0 degrees"),
+            (15.0, "Flare 2.0m sink=1.0 speed=10.0 dist=20.0"),
+            (20.0, "Landing aborted"),
+            (30.1, "Landing glide slope 5.0 degrees"),
+            (35.0, "Flare 3.0m sink=2.0 speed=11.0 dist=30.0"),
+            (50.0, "Throttle disarmed"),
+        ),
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempts = PlaneLandingAttemptDetector.detect(log_data, segment)
+
+    first = PlaneLandingFirmwareMessageExtractor.extract(log_data, attempts[0])
+    second = PlaneLandingFirmwareMessageExtractor.extract(log_data, attempts[1])
+
+    first_flare = next(item for item in first if isinstance(item, PlaneLandingFirmwareFlareEvidence))
+    second_flare = next(item for item in second if isinstance(item, PlaneLandingFirmwareFlareEvidence))
+    first_glide = next(item for item in first if isinstance(item, PlaneLandingFirmwareGlideSlopeEvidence))
+    second_glide = next(item for item in second if isinstance(item, PlaneLandingFirmwareGlideSlopeEvidence))
+    assert (first_flare.time_s, first_flare.altitude_m, first_glide.glide_slope_degrees) == (15.0, 2.0, 4.0)
+    assert (second_flare.time_s, second_flare.altitude_m, second_glide.glide_slope_degrees) == (35.0, 3.0, 5.0)
+    assert first_flare.attempt is attempts[0]
+    assert second_flare.attempt is attempts[1]
 
 
 def test_missing_optional_arsp_and_rfnd_omits_only_their_measurements() -> None:

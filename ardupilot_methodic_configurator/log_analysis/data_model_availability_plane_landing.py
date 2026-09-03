@@ -27,6 +27,9 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingAttemptDetector,
     PlaneLandingEndReason,
     PlaneLandingEvidenceExtractor,
+    PlaneLandingFirmwareEvidence,
+    PlaneLandingFirmwareFlareEvidence,
+    PlaneLandingFirmwareMessageExtractor,
     PlaneLandingStage,
     PlaneLandingStageEvidence,
 )
@@ -139,8 +142,10 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
         outcomes: list[LogAnalysis] = []
         for attempt_number, attempt in enumerate(attempts, start=1):
             outcomes.append(self._attempt_outcome(attempt_number, attempt))
-            for evidence in PlaneLandingEvidenceExtractor.extract(self.log_data, attempt, self.parameter_history):
-                outcomes.extend(self._stage_outcomes(attempt_number, evidence))
+            for stage_evidence in PlaneLandingEvidenceExtractor.extract(self.log_data, attempt, self.parameter_history):
+                outcomes.extend(self._stage_outcomes(attempt_number, stage_evidence))
+            for firmware_evidence in PlaneLandingFirmwareMessageExtractor.extract(self.log_data, attempt):
+                outcomes.extend(self._firmware_message_outcomes(attempt_number, firmware_evidence))
         reason = (
             _("Detected {count} AUTO landing attempt(s)").format(count=len(attempts))
             if attempts
@@ -223,6 +228,32 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
                     )
                 )
         return outcomes
+
+    def _firmware_message_outcomes(
+        self,
+        attempt_number: int,
+        evidence: PlaneLandingFirmwareEvidence,
+    ) -> list[LogAnalysis]:
+        timestamp_us = round(evidence.time_s * 1_000_000)
+        if isinstance(evidence, PlaneLandingFirmwareFlareEvidence):
+            measurements = (
+                (_("altitude"), evidence.altitude_m, _("m")),
+                (_("sink rate"), evidence.sink_rate_m_s, _("m/s")),
+                (_("airspeed"), evidence.airspeed_m_s, _("m/s")),
+                (_("distance to target"), evidence.distance_to_target_m, _("m")),
+            )
+            return [
+                self._measurement_outcome(attempt_number, _("firmware flare"), timestamp_us, measurement)
+                for measurement in measurements
+            ]
+        return [
+            self._measurement_outcome(
+                attempt_number,
+                _("firmware landing"),
+                timestamp_us,
+                (_("glide slope"), evidence.glide_slope_degrees, _("degrees")),
+            )
+        ]
 
     @staticmethod
     def _measurement_outcome(
