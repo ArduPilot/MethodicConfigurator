@@ -910,8 +910,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
         self.fh.seek(write_offset)
         self.fh.write(op.payload)
         self.read_total += len(op.payload)
-        if self.callback_progress is not None and self.remote_file_size:
-            self.callback_progress(self.read_total / self.remote_file_size)
+        if self.callback_progress is not None:
+            completion = self.read_total / self.remote_file_size if self.remote_file_size else 0.0
+            self.callback_progress(completion)
 
     def __read_position(self) -> int:
         """Return the current remote offset represented by the read buffer."""

@@ -491,6 +491,27 @@ class TestMAVFTPWritePathCrashes(unittest.TestCase):
         except ZeroDivisionError as e:
             self.fail(f"__handle_write_reply raised ZeroDivisionError for empty file: {e}")
 
+    def test_unknown_remote_size_still_reports_download_progress(self) -> None:
+        """Downloads without a reported size still notify callbacks so they can be cancelled."""
+        self.mav_ftp.fh = BytesIO()
+        self.mav_ftp.remote_file_size = 0
+        progress_callback = Mock()
+        operation = FTP_OP(
+            seq=1,
+            session=1,
+            opcode=OP_Ack,
+            size=4,
+            req_opcode=OP_ReadFile,
+            burst_complete=0,
+            offset=0,
+            payload=b"data",
+        )
+        self.mav_ftp.callback_progress = progress_callback
+
+        self.mav_ftp._MAVFTP__write_payload(operation)  # pylint: disable=protected-access
+
+        progress_callback.assert_called_once_with(0.0)
+
     def test_send_more_writes_none_guard_at_line_886(self) -> None:
         """Bug fix: Missing None guard before len(write_list) at line 886."""
         self.mav_ftp.write_list = None
