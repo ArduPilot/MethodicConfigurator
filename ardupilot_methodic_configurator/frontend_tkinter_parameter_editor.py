@@ -55,6 +55,7 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
 )
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
+from ardupilot_methodic_configurator.frontend_tkinter_download_bin_logs import DownloadBinLogsWindow
 from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
 from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
@@ -95,7 +96,7 @@ class _PaneConfigurable(Protocol):  # pylint: disable=too-few-public-methods
 class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
     """Container for UI dependencies injected into the parameter editor window."""
 
-    def __init__(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # noqa: PLR0913 # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         create_progress_window: Callable[[tk.Misc, str, str, bool], ProgressWindow],
         ask_yesno: Callable[[str, str], bool],
@@ -109,6 +110,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         extract_log_data: Callable[[str, Callable[[int, int], None] | None], LogData],
         analyze_log_data_callback: Callable[..., LogSummary],
         load_apm_doc: Callable[[str, str, str], APMDoc | None],
+        askdirectory: Callable[..., str] | None = None,
     ) -> None:
         self.create_progress_window = create_progress_window
         self.ask_yesno = ask_yesno
@@ -118,6 +120,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
         self.show_info = show_info
         self.asksaveasfilename = asksaveasfilename
         self.askopenfilename = askopenfilename
+        self.askdirectory = askdirectory or filedialog.askdirectory
         self.sys_exit = exit_callback
         self.extract_log_data = extract_log_data
         self.analyze_log_data = analyze_log_data_callback
@@ -153,6 +156,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             extract_log_data=extract_log,
             analyze_log_data_callback=analyze_log_data,
             load_apm_doc=_load_apm_doc,
+            askdirectory=filedialog.askdirectory,
         )
 
     def upload_params_with_progress(
@@ -557,11 +561,11 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             else _("No flight controller connected, upload not available"),
         )
 
-        # Create download last flight log button
+        # Create download .bin log files button
         download_log_button = ttk.Button(
             buttons_frame,
-            text=_("Download last flight log"),
-            command=self.on_download_last_flight_log_click,
+            text=_("Download .bin log file(s)"),
+            command=self.on_download_bin_logs_click,
         )
         download_log_button.configure(
             state=(
@@ -573,10 +577,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         download_log_button.pack(side=tk.LEFT, padx=(8, 8))  # Add padding on both sides of the download log button
         show_tooltip(
             download_log_button,
-            _(
-                "Download the last flight log from the flight controller\n"
-                "This will save the previous flight log to a file on your computer for analysis"
-            )
+            _("Browse files in the flight controller log directory and download one or more files")
             if (self.parameter_editor.is_fc_connected and self.parameter_editor.is_mavftp_supported)
             else _("No flight controller connected or MAVFTP not supported"),
         )
@@ -1540,6 +1541,10 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             self.ui.show_error(_("Upload Error"), f"{_('Failed to upload parameters:')} {e}")
             logging_exception("Parameter upload failed")
             return False
+
+    def on_download_bin_logs_click(self) -> None:
+        """Open the modal window for browsing and downloading FC log files."""
+        DownloadBinLogsWindow(self.root, self.parameter_editor, self.ui)
 
     def on_download_last_flight_log_click(self) -> None:
         """Handle the download last flight log button click."""
