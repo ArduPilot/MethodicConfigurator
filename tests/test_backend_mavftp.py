@@ -33,11 +33,46 @@ from ardupilot_methodic_configurator.backend_mavftp import (
     OP_Nack,
     OP_ReadFile,
     OP_ResetSessions,
+    auto_detect_serial,
 )
 
 PARAM_HEADER_STRUCT = struct.Struct("<HHH")
 PARAM_MAGIC = 0x671B
 PARAM_MAGIC_WITH_DEFAULTS = 0x671C
+
+
+class TestMAVFTPSerialDetection(unittest.TestCase):
+    """Test MAVFTP serial-port detection."""
+
+    def test_auto_detect_serial_uses_serial_discovery_on_posix_when_pymavlink_finds_none(self) -> None:
+        """
+        MAVFTP falls back to PySerial discovery when pymavlink finds no ports.
+
+        GIVEN: pymavlink auto-detection returns no ports on a POSIX system
+        AND: PySerial discovers a usable serial port
+        WHEN: MAVFTP auto-detection is called
+        THEN: the discovered serial port should be returned
+        """
+        mock_port = Mock()
+        mock_port.device = "/dev/cu.usbmodem1401"
+        mock_port.description = "MatekH743-bdshot"
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.name", "posix"),
+            patch(
+                "ardupilot_methodic_configurator.backend_mavftp.mavutil.auto_detect_serial",
+                return_value=[],
+            ),
+            patch(
+                "ardupilot_methodic_configurator.backend_mavftp.serial.tools.list_ports.comports",
+                return_value=[mock_port],
+            ),
+        ):
+            ports = auto_detect_serial()
+
+        assert len(ports) == 1
+        assert ports[0].device == "/dev/cu.usbmodem1401"
+        assert ports[0].description == "MatekH743-bdshot"
 
 
 class TestMAVFTPPayloadDecoding(unittest.TestCase):
