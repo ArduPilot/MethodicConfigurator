@@ -347,6 +347,44 @@ class TestParamDocsUpdate(unittest.TestCase):  # pylint: disable=missing-class-d
         assert "Code1: Value1" in updated_content
         assert "Code2: Value2" in updated_content
 
+    def test_user_can_annotate_utf16_parameter_file(self) -> None:
+        """
+        User can annotate a UTF-16 parameter file.
+
+        GIVEN: A valid UTF-16 parameter file containing a documented parameter
+        WHEN: Parameter documentation is added
+        THEN: The annotated output is written successfully as UTF-8 text
+        """
+        with open(self.temp_file.name, "wb") as file:
+            file.write("PARAM1,100\r\n".encode("utf-16"))
+
+        update_parameter_documentation(self.doc_dict, self.temp_file.name)
+
+        with open(self.temp_file.name, encoding="utf-8") as file:
+            updated_content = file.read()
+
+        assert "# Param 1" in updated_content
+        assert "PARAM1,100" in updated_content
+
+    def test_user_can_annotate_utf32_parameter_file(self) -> None:
+        """
+        User can annotate a UTF-32 parameter file.
+
+        GIVEN: A valid UTF-32 parameter file containing a documented parameter
+        WHEN: Parameter documentation is added
+        THEN: The annotated output is written successfully as UTF-8 text
+        """
+        with open(self.temp_file.name, "wb") as file:
+            file.write("PARAM1,100\r\n".encode("utf-32"))
+
+        update_parameter_documentation(self.doc_dict, self.temp_file.name)
+
+        with open(self.temp_file.name, encoding="utf-8") as file:
+            updated_content = file.read()
+
+        assert "# Param 1" in updated_content
+        assert "PARAM1,100" in updated_content
+
     def test_update_parameter_documentation_sorting_none(self) -> None:
         # Write some initial content to the temporary file
         # With stray leading and trailing whitespaces
