@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import posixpath
 from collections.abc import Callable
+from dataclasses import dataclass
 from logging import debug as logging_debug
 from logging import error as logging_error
 from logging import info as logging_info
@@ -31,6 +32,15 @@ if TYPE_CHECKING:
 from ardupilot_methodic_configurator.backend_mavftp import MAVFTP, FtpError
 
 
+@dataclass(frozen=True)
+class FlightControllerLogFile:
+    """A regular file exposed by a flight-controller directory listing."""
+
+    name: str
+    remote_path: str
+    size_bytes: int
+
+
 class FlightControllerFiles:
     """
     Handles file operations via MAVFTP protocol.
@@ -45,6 +55,7 @@ class FlightControllerFiles:
     # MAVFTP timeout constants
     MAVFTP_FILE_OPERATION_TIMEOUT: ClassVar[int] = 10
     MAVFTP_FILE_OPERATION_TIMEOUT_SHORT: ClassVar[int] = 5
+    DEFAULT_LOG_DIRECTORY: ClassVar[str] = "/APM/LOGS/"
 
     def __init__(
         self,
@@ -205,6 +216,124 @@ class FlightControllerFiles:
         except Exception as e:  # pylint: disable=broad-exception-caught
             logging_error(_("Error during flight log download: %(error)s"), {"error": str(e)})
             return False
+
+    @classmethod
+    def _normalize_remote_path(cls, remote_path: str, *, directory: bool = False) -> str:
+        """Normalize and validate an absolute MAVFTP path."""
+        if not isinstance(remote_path, str) or not remote_path.strip():
+            msg = _("Remote path must not be empty")
+            raise ValueError(msg)
+
+        path = remote_path.replace("\\", "/").strip()
+        if not path.startswith("/"):
+            msg = _("Remote path must be absolute")
+            raise ValueError(msg)
+
+        if ".." in path.split("/"):
+            msg = _("Remote path must not contain parent-directory segments")
+            raise ValueError(msg)
+
+        normalized = posixpath.normpath(path)
+        if not normalized.startswith("/"):
+            msg = _("Remote path must be absolute")
+            raise ValueError(msg)
+
+        if directory:
+            return normalized if normalized == "/" else f"{normalized}/"
+        return normalized
+
+    @classmethod
+    def _remote_file_path(cls, remote_directory: str, filename: str) -> str:
+        """Build a safe remote path for a direct child of a remote directory."""
+        if not filename or filename in {".", ".."} or posixpath.basename(filename) != filename:
+            msg = _("Remote directory entries must be regular file names")
+            raise ValueError(msg)
+        directory = cls._normalize_remote_path(remote_directory, directory=True)
+        return posixpath.join(directory, filename)
+
+    def list_bin_log_files(self, remote_directory: str = DEFAULT_LOG_DIRECTORY) -> list[FlightControllerLogFile]:  # noqa: PLR0911
+        """
+        List all regular files in a remote directory.
+
+        The historical method name is retained because this operation is launched
+        by the .bin-log UI, but the listing intentionally accepts every regular
+        file returned by MAVFTP.
+        """
+        if self.master is None:
+            logging_error(_("No flight controller connected"))
+            return []
+        if not self.info.is_mavftp_supported:
+            logging_error(_("MAVFTP is not supported by the flight controller"))
+            return []
+
+        try:
+            normalized_directory = self._normalize_remote_path(remote_directory, directory=True)
+        except ValueError as error:
+            logging_error(_("Invalid remote directory: %(error)s"), {"error": str(error)})
+            return []
+
+        mavftp_instance = create_mavftp_safe(self.master)
+        if mavftp_instance is None:
+            logging_error(_("MAVFTP is not available for file listing"))
+            return []
+
+        try:
+            result = mavftp_instance.cmd_list([normalized_directory])
+            listing = getattr(result, "directory_listing", None)
+            if not isinstance(listing, list):
+                logging_error(_("No directory listing found in MAVFTPReturn"))
+                return []
+
+            files: list[FlightControllerLogFile] = []
+            for entry in listing:
+                if entry.is_dir:
+                    continue
+                try:
+                    remote_path = self._remote_file_path(normalized_directory, entry.name)
+                except ValueError:
+                    logging_warning(_("Skipping invalid remote directory entry: %(name)s"), {"name": entry.name})
+                    continue
+                files.append(FlightControllerLogFile(entry.name, remote_path, max(0, int(entry.size_b))))
+            return files
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logging_error(_("Failed to list remote directory: %(error)s"), {"error": str(error)})
+            return []
+
+    def download_bin_log_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download one explicitly selected remote file."""
+        if self.master is None:
+            logging_error(_("No flight controller connected"))
+            return False
+        if not self.info.is_mavftp_supported:
+            logging_error(_("MAVFTP is not supported by the flight controller"))
+            return False
+
+        try:
+            normalized_remote_path = self._normalize_remote_path(remote_path)
+        except ValueError as error:
+            logging_error(_("Invalid remote file: %(error)s"), {"error": str(error)})
+            return False
+
+        mavftp_instance = create_mavftp_safe(self.master)
+        if mavftp_instance is None:
+            logging_error(_("MAVFTP is not available for file download"))
+            return False
+
+        def get_progress_callback(completion: float) -> None:
+            if progress_callback is not None and completion is not None:
+                progress_callback(int(completion * 100), 100)
+
+        return self._download_remote_file(
+            mavftp_instance,
+            normalized_remote_path,
+            local_filename,
+            get_progress_callback,
+        )
 
     def _get_last_log_number(self, mavftp_instance: "MAVFTP") -> int | None:  # pyright: ignore[reportInvalidTypeForm]
         """
@@ -380,6 +509,21 @@ class FlightControllerFiles:
 
         """
         remote_filename = f"/APM/LOGS/{remote_filenumber:08}.BIN"
+        return self._download_remote_file(
+            mavftp_instance,
+            remote_filename,
+            local_filename,
+            get_progress_callback,
+        )
+
+    def _download_remote_file(
+        self,
+        mavftp_instance: "MAVFTP",  # pyright: ignore[reportInvalidTypeForm]
+        remote_filename: str,
+        local_filename: str,
+        get_progress_callback: Callable,
+    ) -> bool:
+        """Download an explicitly named remote file through MAVFTP."""
         logging_info(_("Downloading flight log %(remote)s to %(local)s"), {"remote": remote_filename, "local": local_filename})
 
         try:

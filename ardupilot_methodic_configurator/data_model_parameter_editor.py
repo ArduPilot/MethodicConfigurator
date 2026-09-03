@@ -15,7 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import contextlib
 import platform
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from csv import writer as csv_writer
 from dataclasses import dataclass
@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
@@ -75,6 +76,15 @@ class LogAnalysisInputs:
     vehicle_components: dict[str, Any]
     configuration_steps: dict[str, Any]
     apm_doc: APMDoc | None
+
+
+@dataclass(frozen=True)
+class BinLogDownloadResult:
+    """Outcome of downloading one or more selected flight-controller files."""
+
+    successful: tuple[str, ...] = ()
+    failed: tuple[str, ...] = ()
+    cancelled: bool = False
 
 
 # Type aliases for callback functions used in workflow methods
@@ -491,7 +501,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return False
 
-    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913, PLR0917
+    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913
         self,
         selected_file: str,
         forced: bool,
@@ -1393,6 +1403,96 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_info(_("Success"), _("Flight log downloaded successfully to:\n%s") % filename)
         else:
             show_error(_("Error"), _("Failed to download flight log. Check the console for details."))
+
+    def get_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+        """Return regular files in the selected remote directory."""
+        return self._flight_controller.list_bin_log_files(remote_directory)
+
+    def download_selected_bin_logs_workflow(
+        self,
+        selected_files: Sequence[FlightControllerLogFile],
+        destination: str,
+        destination_is_directory: bool,
+        ask_overwrite: AskConfirmationCallback,
+        show_error: ShowErrorCallback,
+        show_info: ShowInfoCallback,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> BinLogDownloadResult:
+        """
+        Download selected remote files to one local file or a local directory.
+
+        The caller chooses the destination using the GUI. This workflow validates
+        the destination, asks once before a conflicting batch overwrite, and
+        delegates each transfer to the flight-controller facade.
+        """
+        files = tuple(selected_files)
+        if not files:
+            return BinLogDownloadResult()
+
+        if destination_is_directory:
+            destination_path = Path(destination)
+            if not destination_path.is_dir():
+                show_error(_("Download Error"), _("The selected destination directory does not exist."))
+                return BinLogDownloadResult(failed=tuple(file.name for file in files))
+            targets = tuple(destination_path / file.name for file in files)
+        elif len(files) == 1:
+            targets = (Path(destination),)
+        else:
+            show_error(_("Download Error"), _("A directory destination is required for multiple files."))
+            return BinLogDownloadResult(failed=tuple(file.name for file in files))
+
+        existing_targets = tuple(target for target in targets if target.exists())
+        if existing_targets:
+            existing_names = "\n".join(target.name for target in existing_targets)
+            if not ask_overwrite(
+                _("Overwrite existing files?"),
+                _("The following local file(s) already exist:\n\n%s\n\nOverwrite them?") % existing_names,
+            ):
+                return BinLogDownloadResult(
+                    failed=tuple(file.name for file in files),
+                    cancelled=True,
+                )
+
+        units = tuple(max(file.size_bytes, 1) for file in files)
+        total_units = sum(units)
+        completed_units = 0
+        successful: list[str] = []
+        failed: list[str] = []
+
+        for file, target, file_units in zip(files, targets, units, strict=True):
+
+            def update_progress(current: int, total: int, *, offset: int = completed_units, size: int = file_units) -> None:
+                if progress_callback is None:
+                    return
+                fraction = current / total if total else 0.0
+                progress_callback(min(total_units, int(offset + size * fraction)), total_units)
+
+            transfer_callback = update_progress if progress_callback is not None else None
+            if self._flight_controller.download_bin_log_file(file.remote_path, str(target), transfer_callback):
+                successful.append(file.name)
+            else:
+                failed.append(file.name)
+            completed_units += file_units
+            if progress_callback is not None:
+                progress_callback(completed_units, total_units)
+
+        result = BinLogDownloadResult(tuple(successful), tuple(failed))
+        summary_lines = [
+            *(_("Downloaded: %s") % filename for filename in successful),
+            *(_("Failed: %s") % filename for filename in failed),
+        ]
+        summary = "\n".join(summary_lines)
+        if failed:
+            show_error(
+                _("Download summary"),
+                summary,
+            )
+        else:
+            show_info(
+                _("Download summary"),
+                summary,
+            )
+        return result
 
     def is_configuration_step_optional(self, file_name: str | None = None, threshold_pct: int = 20) -> bool:
         """
