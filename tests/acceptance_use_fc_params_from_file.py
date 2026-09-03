@@ -106,8 +106,8 @@ class TestFileBasedParameterSimulation:
 
     def test_user_can_load_parameters_from_file_without_fc_connection(
         self,
-        temp_vehicle_dir: str,  # pylint: disable=unused-argument
         sample_params_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """
         User can load FC parameters from params.param file without physical flight controller.
@@ -117,7 +117,9 @@ class TestFileBasedParameterSimulation:
         THEN: Parameters should be loaded from the file
         AND: No physical FC connection should be required
         """
-        # Given: params.param file exists with test parameters
+        # Given: params.param file exists with test parameters in the current directory
+        monkeypatch.chdir(sample_params_file.parent)
+
         # Create a mock connection manager for file simulation mode
         mock_conn_mgr = MagicMock()
         mock_conn_mgr.master = None  # No actual connection
@@ -127,14 +129,8 @@ class TestFileBasedParameterSimulation:
         with patch("ardupilot_methodic_configurator.backend_flightcontroller.FlightController.discover_connections"):
             params_manager = FlightControllerParams(connection_manager=mock_conn_mgr)
 
-            # When: Download parameters in file simulation mode (change to temp dir first)
-            with patch("ardupilot_methodic_configurator.data_model_par_dict.open", create=True) as mock_open:
-                # Mock file reading to return our sample params content
-                mock_file = MagicMock()
-                mock_file.__enter__.return_value = sample_params_file.read_text(encoding="utf-8").split("\n")
-                mock_open.return_value = mock_file
-
-                params, _defaults = params_manager.download_params()
+            # When: Download parameters in file simulation mode
+            params, _defaults = params_manager.download_params()
 
             # Then: Parameters loaded from file successfully
             assert params is not None

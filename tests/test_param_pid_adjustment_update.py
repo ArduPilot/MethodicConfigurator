@@ -22,6 +22,7 @@ import unittest
 
 import pytest
 
+from ardupilot_methodic_configurator.data_model_par_dict import Par
 from ardupilot_methodic_configurator.param_pid_adjustment_update import (
     load_param_file_with_content,
     ranged_type,
@@ -63,6 +64,38 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         assert len(params) == 2
         assert params["PARAM1"].value == 1.0
         assert params["PARAM3"].value == 3.0
+
+    def test_user_can_load_utf16_parameter_file_with_content(self) -> None:
+        """
+        User can load a UTF-16 parameter file while retaining its header content.
+
+        GIVEN: A valid UTF-16 parameter file with a comment header
+        WHEN: The PID adjustment loader reads the file
+        THEN: Parameters and stripped source lines are returned
+        """
+        with open("temp.param", "wb") as f:
+            f.write("# HEADER\r\nPARAM1,1.0  # Comment\r\n".encode("utf-16"))
+
+        params, content = load_param_file_with_content("temp.param")
+
+        assert params == {"PARAM1": Par(1.0, "Comment")}
+        assert content == ["# HEADER", "PARAM1,1.0  # Comment"]
+
+    def test_user_can_load_utf32_parameter_file_with_content(self) -> None:
+        """
+        User can load a UTF-32 parameter file while retaining its header content.
+
+        GIVEN: A valid UTF-32 parameter file with a comment header
+        WHEN: The PID adjustment loader reads the file
+        THEN: Parameters and stripped source lines are returned
+        """
+        with open("temp.param", "wb") as f:
+            f.write("# HEADER\r\nPARAM1,1.0  # Comment\r\n".encode("utf-32"))
+
+        params, content = load_param_file_with_content("temp.param")
+
+        assert params == {"PARAM1": Par(1.0, "Comment")}
+        assert content == ["# HEADER", "PARAM1,1.0  # Comment"]
 
     def test_invalid_input(self) -> None:
         # Create a temporary file with invalid parameter data

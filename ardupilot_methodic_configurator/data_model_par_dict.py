@@ -11,7 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import re
-from collections.abc import Callable
+from codecs import BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
+from collections.abc import Callable, Iterator
+from io import TextIOWrapper
 from math import isfinite as math_isfinite
 from os import path as os_path
 from shutil import get_terminal_size
@@ -39,6 +41,47 @@ MANUAL_OVERRIDE_PREFIX = "@manual_override"
 
 class ParamFileError(ValueError):
     """Raised when a .param file contains invalid or malformed data."""
+
+
+def _has_zero_byte_pattern(sample: bytes, stride: int, zero_offsets: tuple[int, ...]) -> bool:
+    """Return whether the sample matches zero-byte offsets for a fixed-width encoding."""
+    usable_length = len(sample) - len(sample) % stride
+    return usable_length >= stride * 2 and all(
+        sample[offset] == 0 for zero_offset in zero_offsets for offset in range(zero_offset, usable_length, stride)
+    )
+
+
+def _detect_param_file_encoding(sample: bytes) -> str:
+    """Detect UTF-8/16/32 using a BOM or the zero-byte pattern of ASCII parameter text."""
+    for byte_order_mark, encoding in (
+        (BOM_UTF32_LE, "utf-32"),
+        (BOM_UTF32_BE, "utf-32"),
+        (BOM_UTF16_LE, "utf-16"),
+        (BOM_UTF16_BE, "utf-16"),
+    ):
+        if sample.startswith(byte_order_mark):
+            return encoding
+
+    for encoding, stride, zero_offsets in (
+        ("utf-32-le", 4, (1, 2, 3)),
+        ("utf-32-be", 4, (0, 1, 2)),
+        ("utf-16-le", 2, (1,)),
+        ("utf-16-be", 2, (0,)),
+    ):
+        if _has_zero_byte_pattern(sample, stride, zero_offsets):
+            return encoding
+
+    return "utf-8-sig"
+
+
+def read_param_file_lines(param_file: str) -> Iterator[str]:
+    """Yield parameter-file lines from UTF-8/16/32 files, with or without BOMs."""
+    with open(param_file, "rb") as binary_handle:
+        sample = binary_handle.read(256)
+        binary_handle.seek(0)
+        encoding = _detect_param_file_encoding(sample)
+        with TextIOWrapper(binary_handle, encoding=encoding) as text_handle:
+            yield from text_handle
 
 
 def validate_param_name(param_name: str) -> tuple[bool, str]:
@@ -151,37 +194,36 @@ class ParDict(dict[str, Par]):
         """
         parameter_dict = ParDict()
         try:
-            with open(param_file, encoding="utf-8-sig") as f_handle:
-                for i, f_line in enumerate(f_handle, start=1):
-                    original_line = f_line
-                    line = f_line.strip()
-                    comment = None
-                    if not line:
-                        continue  # skip empty lines
-                    if line[0] == "#":
-                        continue  # skip comments
-                    if "#" in line:
-                        line, comment = line.split("#", 1)  # strip trailing comments
-                        comment = comment.strip()
-                    if "," in line:
-                        # parse mission planner style parameter files
-                        parameter, value = line.split(",", 1)
-                    elif " " in line:
-                        # parse mavproxy style parameter files
-                        parameter, value = line.split(" ", 1)
-                    elif "\t" in line:
-                        parameter, value = line.split("\t", 1)
-                    else:
-                        msg = _("Missing parameter-value separator: {line} in {param_file} line {i}").format(
-                            line=line, param_file=param_file, i=i
-                        )
-                        raise ParamFileError(msg)
-                    # Strip whitespace from both parameter name and value immediately after splitting
-                    parameter = parameter.strip()
-                    value = value.strip()
-                    ParDict._validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
+            for i, f_line in enumerate(read_param_file_lines(param_file), start=1):
+                original_line = f_line
+                line = f_line.strip()
+                comment = None
+                if not line:
+                    continue  # skip empty lines
+                if line[0] == "#":
+                    continue  # skip comments
+                if "#" in line:
+                    line, comment = line.split("#", 1)  # strip trailing comments
+                    comment = comment.strip()
+                if "," in line:
+                    # parse mission planner style parameter files
+                    parameter, value = line.split(",", 1)
+                elif " " in line:
+                    # parse mavproxy style parameter files
+                    parameter, value = line.split(" ", 1)
+                elif "\t" in line:
+                    parameter, value = line.split("\t", 1)
+                else:
+                    msg = _("Missing parameter-value separator: {line} in {param_file} line {i}").format(
+                        line=line, param_file=param_file, i=i
+                    )
+                    raise ParamFileError(msg)
+                # Strip whitespace from both parameter name and value immediately after splitting
+                parameter = parameter.strip()
+                value = value.strip()
+                ParDict._validate_parameter(param_file, parameter_dict, i, original_line, comment, parameter, value)
         except UnicodeDecodeError as exp:
-            msg = _("Fatal error reading {param_file}, file must be UTF-8 encoded: {exp}").format(
+            msg = _("Fatal error reading {param_file}, file must be UTF-8, UTF-16, or UTF-32 encoded: {exp}").format(
                 param_file=param_file, exp=exp
             )
             raise ParamFileError(msg) from exp
