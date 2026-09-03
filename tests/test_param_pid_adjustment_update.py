@@ -17,7 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import os
-import shutil
+import tempfile
 import unittest
 
 import pytest
@@ -52,15 +52,19 @@ class TestRangedType(unittest.TestCase):
 class TestLoadParamFileIntoDict(unittest.TestCase):
     """Test cases for validating the LoadParamFileIntoDict class."""
 
+    def setUp(self) -> None:
+        self.temp_directory = tempfile.TemporaryDirectory()
+        self.param_file = os.path.join(self.temp_directory.name, "temp.param")
+
     def test_valid_input(self) -> None:
         # Create a temporary file with valid parameter data
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
             f.write("# PARAM2 2.0\n")
             f.write("PARAM3 3.0 # Comment\n")
 
         # Call the function and check the result
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
         assert len(params) == 2
         assert params["PARAM1"].value == 1.0
         assert params["PARAM3"].value == 3.0
@@ -73,10 +77,10 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         WHEN: The PID adjustment loader reads the file
         THEN: Parameters and stripped source lines are returned
         """
-        with open("temp.param", "wb") as f:
+        with open(self.param_file, "wb") as f:
             f.write("# HEADER\r\nPARAM1,1.0  # Comment\r\n".encode("utf-16"))
 
-        params, content = load_param_file_with_content("temp.param")
+        params, content = load_param_file_with_content(self.param_file)
 
         assert params == {"PARAM1": Par(1.0, "Comment")}
         assert content == ["# HEADER", "PARAM1,1.0  # Comment"]
@@ -89,175 +93,173 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
         WHEN: The PID adjustment loader reads the file
         THEN: Parameters and stripped source lines are returned
         """
-        with open("temp.param", "wb") as f:
+        with open(self.param_file, "wb") as f:
             f.write("# HEADER\r\nPARAM1,1.0  # Comment\r\n".encode("utf-32"))
 
-        params, content = load_param_file_with_content("temp.param")
-
+        params, content = load_param_file_with_content(self.param_file)
         assert params == {"PARAM1": Par(1.0, "Comment")}
         assert content == ["# HEADER", "PARAM1,1.0  # Comment"]
 
     def test_invalid_input(self) -> None:
         # Create a temporary file with invalid parameter data
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
             f.write("PARAM2\n")  # Missing value
             f.write("PARAM3 3.0 # Invalid comment\n")
 
             # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            load_param_file_with_content("temp.param")
+            load_param_file_with_content(self.param_file)
         assert "Missing parameter-value separator:" in str(cm.value)
 
     def test_empty_file(self) -> None:
         # Create an empty temporary file
-        with open("temp.param", "w", encoding="utf-8") as _f:
+        with open(self.param_file, "w", encoding="utf-8") as _f:
             pass
 
         # Call the function and check the result
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
         assert len(params) == 0
 
     def test_only_comments(self) -> None:
         # Create a temporary file with only comments
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("# Comment 1\n")
             f.write("# Comment 2\n")
 
         # Call the function and check the result
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
         assert len(params) == 0
 
     def test_missing_value(self) -> None:
         # Create a temporary file with a missing value
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1\n")
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            load_param_file_with_content("temp.param")
-        assert cm.value.args[0] == "Missing parameter-value separator: PARAM1 in temp.param line 1"
+            load_param_file_with_content(self.param_file)
+        assert cm.value.args[0] == f"Missing parameter-value separator: PARAM1 in {self.param_file} line 1"
 
     def test_space_separator(self) -> None:
         # Create a temporary file with a space as the separator
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
 
         # Call the function and check the result
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
         assert params["PARAM1"].value == 1.0
 
     def test_comma_separator(self) -> None:
         # Create a temporary file with a comma as the separator
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1,1.0\n")
 
         # Call the function and check the result
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
         assert params["PARAM1"].value == 1.0
 
     def test_tab_separator(self) -> None:
         # Create a temporary file with a tab as the separator
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1\t1.0\n")
 
         # Call the function and check the result
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
         assert params["PARAM1"].value == 1.0
 
     def test_invalid_characters(self) -> None:
         # Create a temporary file with invalid characters in the parameter name
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM-1 1.0\n")
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            load_param_file_with_content("temp.param")
-        assert cm.value.args[0] == "Invalid characters in parameter name PARAM-1 in temp.param line 1"
+            load_param_file_with_content(self.param_file)
+        assert cm.value.args[0] == f"Invalid characters in parameter name PARAM-1 in {self.param_file} line 1"
 
     def test_long_parameter_name(self) -> None:
         # Create a temporary file with a too long parameter name
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAMETER_THAT_IS_TOO_LONG 1.0\n")
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            load_param_file_with_content("temp.param")
-        assert cm.value.args[0] == "Too long parameter name: PARAMETER_THAT_IS_TOO_LONG in temp.param line 1"
+            load_param_file_with_content(self.param_file)
+        assert cm.value.args[0] == f"Too long parameter name: PARAMETER_THAT_IS_TOO_LONG in {self.param_file} line 1"
 
     def test_invalid_value(self) -> None:
         # Create a temporary file with an invalid value
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1 VALUE\n")
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            load_param_file_with_content("temp.param")
-        assert cm.value.args[0] == "Invalid parameter value VALUE in temp.param line 1"
+            load_param_file_with_content(self.param_file)
+        assert cm.value.args[0] == f"Invalid parameter value VALUE in {self.param_file} line 1"
 
     def test_duplicated_parameter(self) -> None:
         # Create a temporary file with duplicated parameters
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
             f.write("PARAM1 2.0\n")
 
         # Call the function and check that it raises an exception
         with pytest.raises(SystemExit) as cm:
-            load_param_file_with_content("temp.param")
-        assert cm.value.args[0] == "Duplicated parameter PARAM1 in temp.param line 2"
+            load_param_file_with_content(self.param_file)
+        assert cm.value.args[0] == f"Duplicated parameter PARAM1 in {self.param_file} line 2"
 
     def tearDown(self) -> None:
-        # Remove the temporary file after each test
-        if os.path.exists("temp.param"):
-            os.remove("temp.param")
+        self.temp_directory.cleanup()
 
 
 class TestExportToParam(unittest.TestCase):
     """Test cases for validating the ExportToParam class."""
 
+    def setUp(self) -> None:
+        self.temp_directory = tempfile.TemporaryDirectory()
+        self.param_file = os.path.join(self.temp_directory.name, "temp.param")
+        self.output_file = os.path.join(self.temp_directory.name, "output.param")
+
     def test_valid_input(self) -> None:
         # Create a temporary file with valid parameter data
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("PARAM1 1.0\n")
             f.write("PARAM2 2.0\n")
             f.write("PARAM3 3.0 # Comment\n")
 
         # Load the parameters into a dictionary
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
 
         # Export the parameters to a file
-        params.export_to_param("output.param")
+        params.export_to_param(self.output_file)
 
         # Check the contents of the output file
-        with open("output.param", encoding="utf-8") as f:
+        with open(self.output_file, encoding="utf-8") as f:
             output = f.read()
         assert output == "PARAM1,1\nPARAM2,2\nPARAM3,3  # Comment\n"
 
     def test_with_header(self) -> None:
         # Create a temporary file with valid parameter data
-        with open("temp.param", "w", encoding="utf-8") as f:
+        with open(self.param_file, "w", encoding="utf-8") as f:
             f.write("# HEADER\n")
             f.write("PARAM1 1.0\n")
             f.write("PARAM2 2.0\n")
             f.write("PARAM3 3.0\n")
 
         # Load the parameters into a dictionary
-        params, _ = load_param_file_with_content("temp.param")
+        params, _ = load_param_file_with_content(self.param_file)
 
         # Export the parameters to a file, including the header
-        params.export_to_param("output.param", content_header=["# HEADER"])
+        params.export_to_param(self.output_file, content_header=["# HEADER"])
 
         # Check the contents of the output file
-        with open("output.param", encoding="utf-8") as f:
+        with open(self.output_file, encoding="utf-8") as f:
             output = f.read()
         assert output == "# HEADER\nPARAM1,1\nPARAM2,2\nPARAM3,3\n"
 
     def tearDown(self) -> None:
-        # Remove the temporary files after each test
-        if os.path.exists("temp.param"):
-            os.remove("temp.param")
-        if os.path.exists("output.param"):
-            os.remove("output.param")
+        self.temp_directory.cleanup()
 
 
 class TestUpdatePidAdjustmentParams(unittest.TestCase):
@@ -265,8 +267,8 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def setUp(self) -> None:
         # Create a directory for the test files
-        self.test_dir = "test_directory"
-        os.mkdir(self.test_dir)
+        self.test_directory = tempfile.TemporaryDirectory()
+        self.test_dir = self.test_directory.name
         # Create a default, adjustment and optimized parameter file for testing
         self.default_param_file = os.path.join(self.test_dir, "00_default.param")
         self.adjustment_param_file = os.path.join(self.test_dir, "23_optional_pid_adjustment.param")
@@ -288,7 +290,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
 
         # Assert that the error message is as expected
-        assert cm.value.args[0] == f"Parameter PARAM2 is not present in {os.path.join('test_directory', '00_default.param')}"
+        assert cm.value.args[0] == f"Parameter PARAM2 is not present in {self.default_param_file}"
 
     def test_parameter_missing_from_default_file(self) -> None:
         # A parameter is missing from the default parameter file
@@ -296,7 +298,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f.write("PARAM1,1.0\nPARAM3,3.0\n")
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        assert cm.value.args[0] == f"Parameter PARAM2 is not present in {os.path.join('test_directory', '00_default.param')}"
+        assert cm.value.args[0] == f"Parameter PARAM2 is not present in {self.default_param_file}"
 
     def test_parameter_missing_from_optimized_file(self) -> None:
         # A parameter is missing from the optimized parameter file
@@ -306,7 +308,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         assert (
             cm.value.args[0]
-            == f"Parameter PARAM2 is not present in {os.path.join('test_directory', 'optimized_parameter_file.param')}"
+            == f"Parameter PARAM2 is not present in {self.optimized_param_file}"
         )
 
     def test_empty_files(self) -> None:
@@ -318,7 +320,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         assert (
-            cm.value.args[0] == f"Failed to load default parameters from {os.path.join('test_directory', '00_default.param')}"
+            cm.value.args[0] == f"Failed to load default parameters from {self.default_param_file}"
         )
 
     def test_empty_default_file(self) -> None:
@@ -328,7 +330,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         assert (
-            cm.value.args[0] == f"Failed to load default parameters from {os.path.join('test_directory', '00_default.param')}"
+            cm.value.args[0] == f"Failed to load default parameters from {self.default_param_file}"
         )
 
     def test_empty_optimized_file(self) -> None:
@@ -339,7 +341,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
         assert (
             cm.value.args[0]
-            == f"Failed to load optimized parameters from {os.path.join('test_directory', 'optimized_parameter_file.param')}"
+            == f"Failed to load optimized parameters from {self.optimized_param_file}"
         )
 
     def test_empty_adjustment_file(self) -> None:
@@ -348,8 +350,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        expected_path = os.path.join("test_directory", "23_optional_pid_adjustment.param")
-        assert cm.value.args[0] == f"Failed to load PID adjustment parameters from {expected_path}"
+        assert cm.value.args[0] == f"Failed to load PID adjustment parameters from {self.adjustment_param_file}"
 
     def test_zero_default_value(self) -> None:
         # Set a parameter in the default parameter file to zero
@@ -378,8 +379,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
         assert pid_adjustment_params_dict["PARAM1"].comment == " = 0.75 * (1 default)"
 
     def tearDown(self) -> None:
-        # Remove the test directory after each test
-        shutil.rmtree(self.test_dir)
+        self.test_directory.cleanup()
 
 
 if __name__ == "__main__":
