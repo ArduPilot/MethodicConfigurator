@@ -56,6 +56,12 @@ configuration step, write to the selected file, or ask whether temporary edits s
    Upload checkbox is not selected. Close the modal after a successful upload without advancing the
    AMC configuration step.
 
+7. **Post-upload synchronization**:
+   - After a successful upload and verification download, update the FC-value snapshot in each
+     external `ArduPilotParameter` object from the refreshed `fc_parameters` cache.
+   - Refresh the underlying parameter table whenever the compare-and-upload window closes so it
+     reflects the latest FC parameter values.
+
 ### Non-Functional Requirements
 
 - Avoid duplicating parameter table rendering and upload orchestration.
@@ -120,6 +126,8 @@ filesystem state.
   - Apply the changed-only filter.
   - Obtain the checked upload payload from the table.
   - Run upload precondition checks and delegate to the parent upload workflow.
+  - Synchronize external FC-value snapshots after successful upload verification.
+  - Refresh the parent parameter table when the modal closes.
   - Close without invoking project navigation or save operations.
 
 The modal upload button does not duplicate the entry-point connection-state gate. The upload
@@ -218,8 +226,9 @@ Each external parameter has four relevant pieces of state:
 | Manual selection | `ParameterTableOptions.manually_editable_parameters` | Modal lifetime | No |
 
 The FC value and parameter metadata in each external parameter object are snapshots supplied when
-the object is created. The shared upload workflow refreshes its FC parameter cache for verification;
-it does not convert the modal's original comparison values into project state.
+the object is created. After a successful external upload and verification download, the modal
+updates those FC-value snapshots from the refreshed cache before closing. Closing the modal also
+repopulates the underlying parameter table so it displays the latest FC values.
 
 ## Detailed Workflows
 
@@ -269,8 +278,10 @@ forced and derived parameters in AMC-managed configuration steps.
 6. Reset-required parameters, reconnection, remaining uploads, re-download, and validation follow
    the normal parameter editor rules.
 7. The user reviews the differences and may edit values temporarily before pressing `Upload selected params to the FC`.
-8. On success the modal closes.
-9. The current AMC configuration step is not saved, skipped, or advanced; no tuning report or
+8. On success the modal updates the external parameters' FC-value snapshots from the verified
+   download and closes.
+9. Closing the modal repopulates the underlying AMC parameter table with the latest FC values.
+10. The current AMC configuration step is not saved, skipped, or advanced; no tuning report or
    FC-difference export is written.
 
 ## Data Integrity Invariants
@@ -326,6 +337,8 @@ The following invariants define the boundary between external upload and project
 - Verify external-only names do not access `current_step_parameters`.
 - Verify only Upload-checked parameters enter the payload.
 - Verify the modal delegates to the shared upload workflow and never advances the project.
+- Verify successful uploads update external FC-value snapshots from the verified download.
+- Verify closing the modal refreshes the underlying parameter table.
 - Verify a failed model upload leaves the modal open.
 - Verify Manual toggles update only the affected row rather than rebuilding the static table.
 - Verify file-selection and parse-error orchestration.
