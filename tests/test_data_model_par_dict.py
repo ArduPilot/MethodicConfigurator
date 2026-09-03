@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
 import tempfile
+from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
@@ -119,6 +120,55 @@ BATT_CAPACITY   5000.000000
         f.flush()
         yield f.name
     os.unlink(f.name)
+
+
+@pytest.mark.parametrize(
+    ("encoding", "bom"),
+    [
+        ("utf-8", b""),
+        ("utf-8", BOM_UTF8),
+        ("utf-16-le", b""),
+        ("utf-16-le", BOM_UTF16_LE),
+        ("utf-16-be", b""),
+        ("utf-16-be", BOM_UTF16_BE),
+        ("utf-32-le", b""),
+        ("utf-32-le", BOM_UTF32_LE),
+        ("utf-32-be", b""),
+        ("utf-32-be", BOM_UTF32_BE),
+    ],
+    ids=[
+        "utf8-without-bom",
+        "utf8-with-bom",
+        "utf16-le-without-bom",
+        "utf16-le-with-bom",
+        "utf16-be-without-bom",
+        "utf16-be-with-bom",
+        "utf32-le-without-bom",
+        "utf32-le-with-bom",
+        "utf32-be-without-bom",
+        "utf32-be-with-bom",
+    ],
+)
+def test_user_can_load_parameter_file_in_all_supported_unicode_encodings(encoding: str, bom: bytes) -> None:
+    """
+    User can load parameter files in all supported Unicode encodings.
+
+    GIVEN: A valid parameter file encoded as UTF-8, UTF-16, or UTF-32
+    WHEN: The file uses either endian order and may or may not contain a BOM
+    THEN: The parameters and comments are parsed normally
+    """
+    content = "# Unicode parameter file\r\nACRO_YAW_P,4.5  # Yaw gain\r\n"
+    with tempfile.NamedTemporaryFile(mode="wb", suffix=".param", delete=False) as f:
+        f.write(bom + content.encode(encoding))
+        f.flush()
+        parameter_file = f.name
+
+    try:
+        param_dict = ParDict.load_param_file_into_dict(parameter_file)
+    finally:
+        os.unlink(parameter_file)
+
+    assert param_dict == {"ACRO_YAW_P": Par(4.5, "Yaw gain")}
 
 
 class TestParTolerance:
@@ -458,6 +508,50 @@ ACRO_YAW_P,6.0  # Duplicate parameter"""
                 ParDict.load_param_file_into_dict(bad_file)
         finally:
             os.unlink(bad_file)
+
+    def test_user_can_load_utf16_parameter_file_with_bom(self) -> None:
+        """
+        User can load parameter files saved by Windows tools as UTF-16.
+
+        GIVEN: A valid parameter file encoded as UTF-16 with a BOM
+        WHEN: They load it through load_param_file_into_dict
+        THEN: The parameters and comments are parsed normally
+        """
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".param", delete=False) as f:
+            f.write("# Saved by a Windows tool\r\nACRO_YAW_P,4.5  # Yaw gain\r\n".encode("utf-16"))
+            f.flush()
+            utf16_file = f.name
+
+        try:
+            param_dict = ParDict.load_param_file_into_dict(utf16_file)
+        finally:
+            os.unlink(utf16_file)
+
+        assert param_dict == {"ACRO_YAW_P": Par(4.5, "Yaw gain")}
+
+    def test_user_can_load_utf32_parameter_file_with_bom(self) -> None:
+        """
+        User can load UTF-32 parameter files with either byte order.
+
+        GIVEN: Valid UTF-32 parameter files with LE and BE BOMs
+        WHEN: They are loaded through load_param_file_into_dict
+        THEN: The parameters and comments are parsed normally
+        """
+        content = "# UTF-32 parameter file\r\nACRO_YAW_P,4.5  # Yaw gain\r\n"
+        encoded_files = [content.encode("utf-32"), BOM_UTF32_BE + content.encode("utf-32-be")]
+
+        for encoded_content in encoded_files:
+            with tempfile.NamedTemporaryFile(mode="wb", suffix=".param", delete=False) as f:
+                f.write(encoded_content)
+                f.flush()
+                utf32_file = f.name
+
+            try:
+                param_dict = ParDict.load_param_file_into_dict(utf32_file)
+            finally:
+                os.unlink(utf32_file)
+
+            assert param_dict == {"ACRO_YAW_P": Par(4.5, "Yaw gain")}
 
     def test_user_receives_traceback_hint_when_parameter_assignment_fails(self) -> None:
         """

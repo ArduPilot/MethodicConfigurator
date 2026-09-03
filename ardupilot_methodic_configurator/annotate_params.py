@@ -43,6 +43,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import (
     PARAM_NAME_REGEX,
     ParamFileError,
     ParDict,
+    read_param_file_lines,
 )
 
 # URL of the XML file
@@ -461,8 +462,7 @@ def update_parameter_documentation(
             continue
 
         # Read the entire file contents
-        with open(param_file, encoding="utf-8") as file:
-            lines = file.readlines()
+        lines = list(read_param_file_lines(param_file))
 
         update_parameter_documentation_file(
             doc, sort_type, param_default_dict, param_file, lines, delete_documentation_annotations
