@@ -29,6 +29,8 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingFirmwareMessageExtractor,
     PlaneLandingMissionTarget,
     PlaneLandingMissionTargetExtractor,
+    PlaneLandingRangefinderEvidence,
+    PlaneLandingRangefinderEvidenceExtractor,
     PlaneLandingStage,
 )
 
@@ -155,6 +157,25 @@ def _context(parameter_history: ParameterHistory | None = None) -> LogAnalysisCo
 
 def _availability(log_data: LogData) -> LogAvailabilityResult:
     return PlaneLandingAvailabilityModel(log_data, _context()).check()
+
+
+def _rangefinder_evidence(
+    records: Sequence[tuple[object, object]],
+    parameter_history: ParameterHistory | None = None,
+    *,
+    dtype: list[tuple[str, str]] | None = None,
+) -> tuple[LogData, PlaneLandingAttempt, PlaneLandingRangefinderEvidence | None]:
+    """Return one synthetic attempt and its optional RFND lifecycle evidence."""
+    log_data = _plane_log(messages=((40.0, "Throttle disarmed"),))
+    _add_columns(log_data, "RFND", records, dtype or [("TimeUS", "f8"), ("Dist", "f8")])
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+    evidence = PlaneLandingRangefinderEvidenceExtractor.extract(
+        log_data,
+        attempt,
+        parameter_history or ParameterHistory(),
+    )
+    return log_data, attempt, evidence
 
 
 def test_non_arduplane_log_is_unavailable() -> None:
@@ -740,6 +761,153 @@ def test_missing_optional_arsp_and_rfnd_omits_only_their_measurements() -> None:
     assert not any("ARSP airspeed" in outcome.message for outcome in result.outcomes)
     assert any("BARO altitude" in outcome.message for outcome in result.outcomes)
     assert not any("RFND distance" in outcome.message for outcome in result.outcomes)
+
+
+def test_missing_rfnd_omits_lifecycle_evidence_without_affecting_availability() -> None:
+    log_data = _plane_log(messages=((40.0, "Throttle disarmed"),))
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingRangefinderEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    assert _availability(log_data).available is True
+    assert evidence is None
+    assert not any("RFND lifecycle" in outcome.message for outcome in result.outcomes)
+
+
+def test_rfnd_active_threshold_and_first_active_sample() -> None:
+    _log_data, _attempt, evidence = _rangefinder_evidence(((10.0, 0.05), (11.0, 0.051), (12.0, 0.0)))
+
+    assert evidence is not None
+    assert (evidence.first_nonzero_time_s, evidence.first_nonzero_distance_m) == (11.0, 0.05)
+    assert (evidence.continuous_time_s, evidence.continuous_samples) == (11.0, 1)
+    assert evidence.disengagement_count == 1
+    assert (evidence.last_disengagement_time_s, evidence.last_disengagement_distance_m) == (12.0, 0.0)
+
+
+def test_rfnd_first_in_range_uses_parameter_value_at_each_sample_time() -> None:
+    history = ParameterHistory(
+        {"RNGFND1_MAX": 5.0},
+        {"RNGFND1_MAX": (ParameterChange(time_s=12.0, value=7.0),)},
+    )
+    _log_data, _attempt, evidence = _rangefinder_evidence(
+        ((10.0, 8.0), (11.0, 6.0), (12.0, 6.0)),
+        history,
+    )
+
+    assert evidence is not None
+    assert (evidence.first_nonzero_time_s, evidence.first_nonzero_distance_m) == (10.0, 8.0)
+    assert (evidence.first_in_range_time_s, evidence.first_in_range_distance_m) == (12.0, 6.0)
+
+
+def test_rfnd_median_sample_rate_and_exact_continuous_threshold() -> None:
+    assert (
+        PlaneLandingRangefinderEvidenceExtractor._required_continuous_samples(  # pylint: disable=protected-access
+            (10.0, 10.2, 10.4, 11.4)
+        )
+        == 5
+    )
+    _log_data, _attempt, evidence = _rangefinder_evidence(((10.0, 1.0), (10.2, 1.0), (10.4, 1.0), (10.6, 1.0), (10.8, 1.0)))
+
+    assert evidence is not None
+    assert (evidence.continuous_time_s, evidence.continuous_samples) == (10.0, 5)
+
+
+def test_rfnd_interrupted_run_resets_continuity_and_tracks_multiple_disengagements() -> None:
+    _log_data, _attempt, evidence = _rangefinder_evidence(
+        (
+            (10.0, 1.0),
+            (10.25, 1.0),
+            (10.5, 0.0),
+            (10.75, 2.0),
+            (11.0, 2.0),
+            (11.25, 2.0),
+            (11.5, 2.0),
+            (11.75, 0.04),
+        )
+    )
+
+    assert evidence is not None
+    assert (evidence.continuous_time_s, evidence.continuous_samples) == (10.75, 4)
+    assert evidence.disengagement_count == 2
+    assert (evidence.last_disengagement_time_s, evidence.last_disengagement_distance_m) == (11.75, 0.04)
+
+
+def test_rfnd_active_run_without_inactive_sample_has_no_disengagement() -> None:
+    _log_data, _attempt, evidence = _rangefinder_evidence(((10.0, 1.0), (11.0, 1.0)))
+
+    assert evidence is not None
+    assert evidence.disengagement_count == 0
+    assert evidence.last_disengagement_time_s is None
+    assert evidence.last_disengagement_distance_m is None
+
+
+def test_rfnd_lifecycle_is_restricted_to_attempt_and_does_not_change_boundaries() -> None:
+    log_data = _plane_log(messages=((40.0, "Throttle disarmed"),))
+    _add_columns(
+        log_data,
+        "RFND",
+        ((9.0, 9.0), (10.0, 1.0), (39.0, 1.0), (41.0, 0.0)),
+        [("TimeUS", "f8"), ("Dist", "f8")],
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    boundaries_before = PlaneLandingAttemptDetector.detect(log_data, segment)
+
+    evidence = PlaneLandingRangefinderEvidenceExtractor.extract(log_data, boundaries_before[0], ParameterHistory())
+    boundaries_after = PlaneLandingAttemptDetector.detect(log_data, segment)
+
+    assert evidence is not None
+    assert (evidence.first_nonzero_time_s, evidence.first_nonzero_distance_m) == (10.0, 1.0)
+    assert evidence.disengagement_count == 0
+    assert boundaries_after == boundaries_before
+
+
+def test_non_finite_and_malformed_rfnd_values_are_conservatively_invalid() -> None:
+    _log_data, _attempt, evidence = _rangefinder_evidence(
+        ((10.0, "bad"), ("bad", 9.0), (11.0, 1.0), (12.0, float("nan")), (float("inf"), 0.0)),
+        dtype=[("TimeUS", "O"), ("Dist", "O")],
+    )
+
+    assert evidence is not None
+    assert (evidence.first_nonzero_time_s, evidence.first_nonzero_distance_m) == (11.0, 1.0)
+    assert evidence.disengagement_count == 1
+    assert evidence.last_disengagement_time_s == 12.0
+    assert evidence.last_disengagement_distance_m is None
+
+
+def test_rfnd_lifecycle_flat_outcomes_leave_stage_point_measurement_unchanged() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0, 0.0), (10.0, 1, 20.0), (15.0, 2, 5.5), (20.0, 3, 1.2)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    _add_columns(
+        log_data,
+        "RFND",
+        ((14.7, 6.0), (15.0, 5.5), (20.2, 1.5), (21.0, 0.0)),
+        [("TimeUS", "f8"), ("Dist", "f8")],
+    )
+    history = ParameterHistory({"RNGFND1_MAX": 5.5})
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    stage_evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, history)
+    lifecycle_evidence = PlaneLandingRangefinderEvidenceExtractor.extract(log_data, attempt, history)
+    result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
+
+    preflare, flare = stage_evidence
+    assert (preflare.rangefinder_distance_m, flare.rangefinder_distance_m) == (5.5, 1.5)
+    assert lifecycle_evidence is not None
+    assert (lifecycle_evidence.first_nonzero_time_s, lifecycle_evidence.first_nonzero_distance_m) == (14.7, 6.0)
+    assert (lifecycle_evidence.first_in_range_time_s, lifecycle_evidence.first_in_range_distance_m) == (15.0, 5.5)
+    lifecycle_outcomes = [outcome for outcome in result.outcomes if "RFND lifecycle" in outcome.message]
+    assert [(outcome.timestamp_us, outcome.value) for outcome in lifecycle_outcomes] == [
+        (14_700_000, 6.0),
+        (15_000_000, 5.5),
+        (14_700_000, 1.0),
+        (21_000_000, 0.0),
+        (40_000_000, 1.0),
+    ]
 
 
 def test_event_time_parameters_change_between_attempts_without_changing_boundaries() -> None:

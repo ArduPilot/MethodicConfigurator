@@ -31,6 +31,8 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingFirmwareFlareEvidence,
     PlaneLandingFirmwareMessageExtractor,
     PlaneLandingMissionTargetExtractor,
+    PlaneLandingRangefinderEvidence,
+    PlaneLandingRangefinderEvidenceExtractor,
     PlaneLandingStage,
     PlaneLandingStageEvidence,
 )
@@ -147,6 +149,13 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
                 outcomes.extend(self._stage_outcomes(attempt_number, stage_evidence))
             for firmware_evidence in PlaneLandingFirmwareMessageExtractor.extract(self.log_data, attempt):
                 outcomes.extend(self._firmware_message_outcomes(attempt_number, firmware_evidence))
+            rangefinder_evidence = PlaneLandingRangefinderEvidenceExtractor.extract(
+                self.log_data,
+                attempt,
+                self.parameter_history,
+            )
+            if rangefinder_evidence is not None:
+                outcomes.extend(self._rangefinder_outcomes(attempt_number, rangefinder_evidence))
             target_distance = PlaneLandingMissionTargetExtractor.distance_at_gps_stop(self.log_data, attempt)
             if target_distance is not None:
                 outcomes.append(
@@ -265,6 +274,59 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
                 (_("glide slope"), evidence.glide_slope_degrees, _("degrees")),
             )
         ]
+
+    def _rangefinder_outcomes(
+        self,
+        attempt_number: int,
+        evidence: PlaneLandingRangefinderEvidence,
+    ) -> list[LogAnalysis]:
+        """Flatten optional RFND lifecycle evidence into objective findings."""
+        outcomes: list[LogAnalysis] = []
+        timed_measurements = (
+            (
+                evidence.first_nonzero_time_s,
+                evidence.first_nonzero_distance_m,
+                _("first non-zero distance"),
+                _("m"),
+            ),
+            (
+                evidence.first_in_range_time_s,
+                evidence.first_in_range_distance_m,
+                _("first in-range distance"),
+                _("m"),
+            ),
+            (
+                evidence.continuous_time_s,
+                evidence.continuous_samples,
+                _("continuous acquisition sample count"),
+                _("samples"),
+            ),
+            (
+                evidence.last_disengagement_time_s,
+                evidence.last_disengagement_distance_m,
+                _("last disengagement distance"),
+                _("m"),
+            ),
+        )
+        for timestamp_s, value, measurement_name, unit in timed_measurements:
+            if timestamp_s is not None and value is not None:
+                outcomes.append(
+                    self._measurement_outcome(
+                        attempt_number,
+                        _("RFND lifecycle"),
+                        round(timestamp_s * 1_000_000),
+                        (measurement_name, float(value), unit),
+                    )
+                )
+        outcomes.append(
+            self._measurement_outcome(
+                attempt_number,
+                _("RFND lifecycle"),
+                round(evidence.attempt.end_s * 1_000_000),
+                (_("disengagement count"), float(evidence.disengagement_count), _("events")),
+            )
+        )
+        return outcomes
 
     @staticmethod
     def _measurement_outcome(

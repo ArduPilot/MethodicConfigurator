@@ -14,10 +14,10 @@ from enum import Enum, IntEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
+import numpy as np
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    import numpy as np
 
     from ardupilot_methodic_configurator.log_analysis.data_model_flight_segment import FlightSegment
     from ardupilot_methodic_configurator.log_analysis.data_model_log_data import LogData
@@ -378,6 +378,143 @@ class PlaneLandingFirmwareMessageExtractor:  # pylint: disable=too-few-public-me
         try:
             converted = float(value)  # type: ignore[arg-type]
         except (TypeError, ValueError):
+            return None
+        return converted if math.isfinite(converted) else None
+
+
+@dataclass(frozen=True, slots=True)
+class PlaneLandingRangefinderEvidence:  # pylint: disable=too-many-instance-attributes
+    """APT-compatible RFND lifecycle evidence scoped to one landing attempt."""
+
+    attempt: PlaneLandingAttempt
+    first_nonzero_time_s: float | None
+    first_nonzero_distance_m: float | None
+    first_in_range_time_s: float | None
+    first_in_range_distance_m: float | None
+    continuous_time_s: float | None
+    continuous_samples: int | None
+    disengagement_count: int
+    last_disengagement_time_s: float | None
+    last_disengagement_distance_m: float | None
+
+
+class PlaneLandingRangefinderEvidenceExtractor:  # pylint: disable=too-few-public-methods,too-many-locals
+    """Extract the optional attempt-scoped RFND lifecycle used by APT."""
+
+    ZERO_THRESHOLD_M: ClassVar[float] = 0.05
+    CONTINUOUS_SECONDS: ClassVar[float] = 1.0
+    MAX_RANGE_PARAMETER: ClassVar[str] = "RNGFND1_MAX"
+
+    @classmethod
+    def extract(
+        cls,
+        log_data: LogData,
+        attempt: PlaneLandingAttempt,
+        parameter_history: ParameterHistory,
+    ) -> PlaneLandingRangefinderEvidence | None:
+        """Return RFND lifecycle evidence, or ``None`` when scoped RFND is unusable."""
+        records = log_data.get_message_columns("RFND")
+        if records is None or not {"TimeUS", "Dist"}.issubset(records.dtype.names or ()):
+            return None
+
+        samples: list[tuple[float, float | None]] = []
+        for timestamp, distance in zip(
+            log_data.get_field("RFND", "TimeUS"),
+            log_data.get_field("RFND", "Dist"),
+            strict=True,
+        ):
+            timestamp_s = cls._finite_float(timestamp)
+            if timestamp_s is None or not attempt.start_s <= timestamp_s <= attempt.end_s:
+                continue
+            samples.append((timestamp_s, cls._finite_float(distance)))
+
+        if not samples or not any(distance_m is not None for _, distance_m in samples):
+            return None
+
+        required_samples = cls._required_continuous_samples(tuple(timestamp_s for timestamp_s, _ in samples))
+        first_nonzero_time_s: float | None = None
+        first_nonzero_distance_m: float | None = None
+        first_in_range_time_s: float | None = None
+        first_in_range_distance_m: float | None = None
+        continuous_time_s: float | None = None
+        continuous_samples: int | None = None
+        disengagement_count = 0
+        last_disengagement_time_s: float | None = None
+        last_disengagement_distance_m: float | None = None
+        run_start_time_s: float | None = None
+        run_samples = 0
+        rangefinder_active = False
+
+        for timestamp_s, distance_m in samples:
+            if distance_m is None or distance_m <= cls.ZERO_THRESHOLD_M:
+                if rangefinder_active:
+                    disengagement_count += 1
+                    last_disengagement_time_s = timestamp_s
+                    last_disengagement_distance_m = cls._apt_distance(distance_m)
+                    rangefinder_active = False
+                run_start_time_s = None
+                run_samples = 0
+                continue
+
+            rangefinder_active = True
+            if first_nonzero_time_s is None:
+                first_nonzero_time_s = timestamp_s
+                first_nonzero_distance_m = cls._apt_distance(distance_m)
+
+            maximum_range_m = parameter_history.value_at(cls.MAX_RANGE_PARAMETER, timestamp_s)
+            if (
+                first_in_range_time_s is None
+                and maximum_range_m is not None
+                and math.isfinite(maximum_range_m)
+                and distance_m <= maximum_range_m
+            ):
+                first_in_range_time_s = timestamp_s
+                first_in_range_distance_m = cls._apt_distance(distance_m)
+
+            if run_samples == 0:
+                run_start_time_s = timestamp_s
+                run_samples = 1
+            else:
+                run_samples += 1
+
+            if continuous_time_s is None and run_samples >= required_samples:
+                continuous_time_s = run_start_time_s
+                continuous_samples = run_samples
+
+        return PlaneLandingRangefinderEvidence(
+            attempt=attempt,
+            first_nonzero_time_s=first_nonzero_time_s,
+            first_nonzero_distance_m=first_nonzero_distance_m,
+            first_in_range_time_s=first_in_range_time_s,
+            first_in_range_distance_m=first_in_range_distance_m,
+            continuous_time_s=continuous_time_s,
+            continuous_samples=continuous_samples,
+            disengagement_count=disengagement_count,
+            last_disengagement_time_s=last_disengagement_time_s,
+            last_disengagement_distance_m=last_disengagement_distance_m,
+        )
+
+    @classmethod
+    def _required_continuous_samples(cls, timestamps_s: tuple[float, ...]) -> int:
+        """Apply APT's median-delta sample-rate estimate and rounded count."""
+        if len(timestamps_s) < 2:
+            return 1
+        median_delta_s = float(np.median(np.diff(np.asarray(timestamps_s))))
+        if not math.isfinite(median_delta_s) or median_delta_s <= 0.0:
+            return 1
+        sample_rate_hz = 1.0 / median_delta_s
+        return max(1, round(sample_rate_hz * cls.CONTINUOUS_SECONDS))
+
+    @staticmethod
+    def _apt_distance(distance_m: float | None) -> float | None:
+        """Preserve APT's two-decimal event-detail round trip for distances."""
+        return None if distance_m is None else float(f"{distance_m:.2f}")
+
+    @staticmethod
+    def _finite_float(value: object) -> float | None:
+        try:
+            converted = float(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError, OverflowError):
             return None
         return converted if math.isfinite(converted) else None
 
