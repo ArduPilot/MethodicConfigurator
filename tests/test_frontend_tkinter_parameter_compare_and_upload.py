@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from unittest.mock import MagicMock, call, patch
 
+from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
@@ -382,6 +383,36 @@ def test_upload_uses_external_parameters_without_advancing_project() -> None:
     window.parent.upload_external_params.assert_called_once_with(selected_params)
     window.close.assert_called_once_with()
     window.parent.on_skip_click.assert_not_called()
+
+
+def test_successful_external_upload_updates_fc_values_before_closing() -> None:
+    """Refresh a real external parameter's FC-value snapshot after upload verification."""
+    window = _window_without_tk()
+    parameter = ArduPilotParameter("ROLL_P", Par(0.2), fc_value=0.1)
+    window.parameters = {"ROLL_P": parameter}
+    window.parent.parameter_editor.fc_parameters = {"ROLL_P": 0.2}
+    selected_params = ParDict({"ROLL_P": Par(0.2)})
+    window.table.get_upload_selected_params.return_value = selected_params
+    window.parent.parameter_editor.ensure_upload_preconditions.return_value = True
+    window.parent.upload_external_params.return_value = True
+    window.close = MagicMock()
+
+    window.upload_parameters()
+
+    assert parameter.fc_value_as_string == "0.2"
+    assert not parameter.is_different_from_fc
+    window.close.assert_called_once_with()
+
+
+def test_closing_external_upload_window_refreshes_parent_table() -> None:
+    """Refresh the normal parameter table after the modal is closed."""
+    window = _window_without_tk()
+    window.root = MagicMock()
+
+    window.close()
+
+    window.root.destroy.assert_called_once_with()
+    window.parent.repopulate_parameter_table.assert_called_once_with()
 
 
 def test_failed_external_upload_keeps_modal_open() -> None:

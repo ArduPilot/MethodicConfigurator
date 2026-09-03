@@ -143,7 +143,15 @@ class ParameterFileUploadWindow(BaseWindow):
         if not self.parent.parameter_editor.ensure_upload_preconditions(dict(selected_params), self.parent.ui.show_warning):
             return
         if self.parent.upload_external_params(selected_params):
+            self._update_fc_values_from_parent()
             self.close()
+
+    def _update_fc_values_from_parent(self) -> None:
+        """Update the external parameter snapshot after a verified FC upload."""
+        fc_parameters = self.parent.parameter_editor.fc_parameters
+        for param_name, parameter in self.parameters.items():
+            if param_name in fc_parameters:
+                parameter.set_fc_value(fc_parameters[param_name])
 
     def reset_all_parameters_to_default(self) -> None:
         """Confirm and reset all flight-controller parameters to their factory defaults."""
@@ -160,7 +168,8 @@ class ParameterFileUploadWindow(BaseWindow):
             self.close()
 
     def close(self) -> None:
-        """Close the modal window."""
+        """Close the modal window and refresh the underlying parameter table."""
         if sys_platform != "darwin":
             self.root.grab_release()
         self.root.destroy()
+        self.parent.repopulate_parameter_table()
