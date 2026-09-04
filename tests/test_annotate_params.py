@@ -42,7 +42,7 @@ from ardupilot_methodic_configurator.annotate_params import (
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-lines
 
 
 @pytest.fixture
