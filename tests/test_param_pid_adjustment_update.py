@@ -306,10 +306,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             f.write("PARAM1,1.5\nPARAM3,3.5\n")
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        assert (
-            cm.value.args[0]
-            == f"Parameter PARAM2 is not present in {self.optimized_param_file}"
-        )
+        assert cm.value.args[0] == f"Parameter PARAM2 is not present in {self.optimized_param_file}"
 
     def test_empty_files(self) -> None:
         # Both the default and optimized parameter files are empty
@@ -319,9 +316,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        assert (
-            cm.value.args[0] == f"Failed to load default parameters from {self.default_param_file}"
-        )
+        assert cm.value.args[0] == f"Failed to load default parameters from {self.default_param_file}"
 
     def test_empty_default_file(self) -> None:
         # Create an empty default parameter file
@@ -329,9 +324,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        assert (
-            cm.value.args[0] == f"Failed to load default parameters from {self.default_param_file}"
-        )
+        assert cm.value.args[0] == f"Failed to load default parameters from {self.default_param_file}"
 
     def test_empty_optimized_file(self) -> None:
         # Create an empty optimized parameter file
@@ -339,10 +332,7 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
             pass
         with pytest.raises(SystemExit) as cm:
             update_pid_adjustment_params(self.test_dir, os.path.basename(self.optimized_param_file), 0.5)
-        assert (
-            cm.value.args[0]
-            == f"Failed to load optimized parameters from {self.optimized_param_file}"
-        )
+        assert cm.value.args[0] == f"Failed to load optimized parameters from {self.optimized_param_file}"
 
     def test_empty_adjustment_file(self) -> None:
         # Create an empty adjustment parameter file
