@@ -1,6 +1,12 @@
 # ruff: noqa: INP001
 
-"""Focused tests for AMC-native ArduPlane landing-attempt analysis."""
+"""
+Focused tests for AMC-native ArduPlane landing-attempt analysis.
+
+SPDX-FileCopyrightText: 2026 Donald Smith
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
 
 # pylint: disable=too-many-lines
 
