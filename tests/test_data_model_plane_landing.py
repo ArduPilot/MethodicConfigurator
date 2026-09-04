@@ -2,6 +2,8 @@
 
 """Focused tests for AMC-native ArduPlane landing-attempt analysis."""
 
+# pylint: disable=too-many-lines
+
 from collections.abc import Sequence
 
 import numpy as np
@@ -363,6 +365,94 @@ def test_attempt_times_use_scaled_seconds() -> None:
     assert attempts[0].end_s == 20.0
     assert attempts[0].duration_s == 10.0
     assert evidence[0].time_s == 15.0
+
+
+def test_inactive_gps_receiver_cannot_create_false_stop() -> None:
+    log_data = _plane_log(messages=((40.0, "Throttle disarmed"),))
+    _add_columns(
+        log_data,
+        "GPS",
+        (
+            (0.0, 6.0, 0, 1),
+            (2.0, 6.0, 0, 1),
+            (11.0, 1.0, 1, 0),
+            (13.0, 1.0, 1, 0),
+            (20.0, 6.0, 0, 1),
+            (40.0, 6.0, 0, 1),
+        ),
+        [("TimeUS", "f8"), ("Spd", "f8"), ("I", "u1"), ("U", "u1")],
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert (attempt.start_s, attempt.end_s, attempt.end_reason) == (10.0, 40.0, PlaneLandingEndReason.DISARM)
+
+
+def test_inactive_gps_receiver_cannot_supply_stage_speed() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    _add_columns(
+        log_data,
+        "GPS",
+        (
+            (0.0, 6.0, 0, 1),
+            (2.0, 6.0, 0, 1),
+            (14.0, 7.0, 0, 1),
+            (15.0, 1.0, 1, 0),
+            (16.0, 8.0, 0, 1),
+            (40.0, 6.0, 0, 1),
+        ),
+        [("TimeUS", "f8"), ("Spd", "f8"), ("I", "u1"), ("U", "u1")],
+    )
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, ParameterHistory())
+
+    assert evidence[0].gps_ground_speed_m_s == 7.0
+
+
+def test_inactive_gps_receiver_cannot_supply_target_distance_position() -> None:
+    log_data = _gps_stop_log(((1.0, 1, 0, 21, 0.0, 1.0),))
+    _add_columns(
+        log_data,
+        "GPS",
+        (
+            (20.0, 2.0, 10.0, 10.0, 1, 0),
+            (20.0, 2.0, 0.0, 1.001, 0, 1),
+        ),
+        [("TimeUS", "f8"), ("Spd", "f8"), ("Lat", "f8"), ("Lng", "f8"), ("I", "u1"), ("U", "u1")],
+    )
+    segment = FlightSegment(start_s=0.0, end_s=30.0, is_complete=True)
+    attempt = PlaneLandingAttempt(
+        flight_segment=segment,
+        start_s=10.0,
+        end_s=20.0,
+        end_reason=PlaneLandingEndReason.GPS_STOP,
+    )
+
+    distance = PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt)
+
+    assert distance is not None
+    assert (distance.aircraft_latitude_deg, distance.aircraft_longitude_deg) == (0.0, 1.001)
+    assert distance.distance_m == pytest.approx(111.1949266)
+
+
+def test_gps_without_use_flag_retains_existing_stop_behavior() -> None:
+    log_data = _plane_log(
+        gps=((0.0, 6.0), (2.0, 6.0), (20.0, 2.0), (22.0, 2.0), (30.0, 6.0)),
+    )
+    gps = log_data.get_message_columns("GPS")
+    assert gps is not None
+    assert "U" not in (gps.dtype.names or ())
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    assert (attempt.end_s, attempt.end_reason) == (20.0, PlaneLandingEndReason.GPS_STOP)
 
 
 def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
@@ -907,6 +997,81 @@ def test_rfnd_lifecycle_flat_outcomes_leave_stage_point_measurement_unchanged() 
         (14_700_000, 1.0),
         (21_000_000, 0.0),
         (40_000_000, 1.0),
+    ]
+
+
+@pytest.mark.parametrize("non_finite_value", [float("nan"), float("inf"), float("-inf")])
+def test_non_finite_event_time_landing_parameters_are_unavailable(non_finite_value: float) -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2), (20.0, 3)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    parameter_names = ("LAND_PF_ALT", "LAND_PF_SEC", "LAND_FLARE_ALT", "LAND_FLARE_SEC", "LAND_PITCH_DEG")
+    history = ParameterHistory(dict.fromkeys(parameter_names, non_finite_value))
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+
+    evidence = PlaneLandingEvidenceExtractor.extract(log_data, attempt, history)
+    result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
+
+    assert all(value is None for item in evidence for value in item.parameter_values.values())
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing attempt"))
+    assert attempt_outcome.value is None
+    assert "LAND_FLARE_ALT was unavailable" in attempt_outcome.message
+    assert not any(
+        parameter_name in outcome.message and "effective value" in outcome.message
+        for parameter_name in parameter_names
+        for outcome in result.outcomes
+    )
+
+
+def test_finite_event_time_landing_parameters_are_emitted() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2), (20.0, 3)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    parameter_values = {
+        "LAND_PF_ALT": 6.0,
+        "LAND_PF_SEC": 2.0,
+        "LAND_FLARE_ALT": 3.0,
+        "LAND_FLARE_SEC": 1.5,
+        "LAND_PITCH_DEG": 4.0,
+    }
+
+    result = PlaneLandingAnalysis(log_data, _context(ParameterHistory(parameter_values))).analyse()
+
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing attempt"))
+    assert attempt_outcome.value == 3.0
+    parameter_outcomes = [outcome for outcome in result.outcomes if "effective value" in outcome.message]
+    emitted_parameter_names = {
+        parameter_name
+        for parameter_name in parameter_values
+        if any(parameter_name in item.message for item in parameter_outcomes)
+    }
+    assert emitted_parameter_names == set(parameter_values)
+
+
+def test_finite_parameter_change_at_event_time_remains_effective() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2), (20.0, 3)),
+        messages=((40.0, "Throttle disarmed"),),
+    )
+    history = ParameterHistory(
+        {"LAND_PF_ALT": 5.0, "LAND_FLARE_ALT": 3.0},
+        {
+            "LAND_PF_ALT": (ParameterChange(time_s=15.0, value=6.0),),
+            "LAND_FLARE_ALT": (ParameterChange(time_s=20.0, value=4.0),),
+        },
+    )
+
+    result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
+
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing attempt"))
+    assert attempt_outcome.value == 3.0
+    parameter_outcomes = [outcome for outcome in result.outcomes if "effective value" in outcome.message]
+    assert [(outcome.timestamp_us, outcome.value) for outcome in parameter_outcomes] == [
+        (15_000_000, 6.0),
+        (20_000_000, 4.0),
     ]
 
 

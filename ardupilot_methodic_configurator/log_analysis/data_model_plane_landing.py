@@ -24,6 +24,23 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.log_analysis.data_model_parameter_history import ParameterHistory
 
 
+def _active_gps_fields(log_data: LogData, *field_names: str) -> tuple[np.ndarray, ...] | None:
+    """Return scaled GPS fields, restricted to the active receiver when ``U`` is available."""
+    gps = log_data.get_message_columns("GPS")
+    if gps is None:
+        return None
+    names = gps.dtype.names or ()
+    if not set(field_names).issubset(names):
+        return None
+
+    values = tuple(log_data.get_field("GPS", field_name) for field_name in field_names)
+    if "U" not in names:
+        return values
+
+    active_receiver_samples = log_data.get_field("GPS", "U") == 1
+    return tuple(field_values[active_receiver_samples] for field_values in values)
+
+
 class PlaneLandingEndReason(str, Enum):
     """Objective evidence that bounded a detected AUTO landing attempt."""
 
@@ -188,16 +205,13 @@ class PlaneLandingAttemptDetector:  # pylint: disable=too-few-public-methods
 
     @classmethod
     def _first_gps_stop(cls, log_data: LogData, flight_segment: FlightSegment, start_s: float) -> float | None:
-        gps = log_data.get_message_columns("GPS")
-        if gps is None or not {"TimeUS", "Spd"}.issubset(gps.dtype.names or ()):
+        gps_fields = _active_gps_fields(log_data, "TimeUS", "Spd")
+        if gps_fields is None:
             return None
+        time_s, speed_m_s = gps_fields
 
         below_since_s: float | None = None
-        for timestamp, speed in zip(
-            log_data.get_field("GPS", "TimeUS"),
-            log_data.get_field("GPS", "Spd"),
-            strict=True,
-        ):
+        for timestamp, speed in zip(time_s, speed_m_s, strict=True):
             timestamp_s = float(timestamp)
             if not start_s <= timestamp_s <= flight_segment.end_s:
                 continue
@@ -700,18 +714,13 @@ class PlaneLandingMissionTargetExtractor:
     @classmethod
     def _nearest_gps_position(cls, log_data: LogData, target_time_s: float) -> tuple[float, float, float] | None:
         """Return the nearest finite GPS position to the supplied time."""
-        gps = log_data.get_message_columns("GPS")
-        if gps is None or not {"TimeUS", "Lat", "Lng"}.issubset(gps.dtype.names or ()):
+        gps_fields = _active_gps_fields(log_data, "TimeUS", "Lat", "Lng")
+        if gps_fields is None:
             return None
 
         nearest_position: tuple[float, float, float] | None = None
         nearest_offset: float | None = None
-        for timestamp, latitude, longitude in zip(
-            log_data.get_field("GPS", "TimeUS"),
-            log_data.get_field("GPS", "Lat"),
-            log_data.get_field("GPS", "Lng"),
-            strict=True,
-        ):
+        for timestamp, latitude, longitude in zip(*gps_fields, strict=True):
             timestamp_s = cls._finite_float(timestamp)
             latitude_deg = cls._finite_float(latitude)
             longitude_deg = cls._finite_float(longitude)
@@ -851,7 +860,7 @@ class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
                 else None
             ),
             parameter_values={
-                parameter_name: parameter_history.value_at(parameter_name, time_s)
+                parameter_name: cls._finite_float(parameter_history.value_at(parameter_name, time_s))
                 for parameter_name in cls._PARAMETERS_BY_STAGE[stage]
             },
         )
@@ -864,18 +873,22 @@ class PlaneLandingEvidenceExtractor:  # pylint: disable=too-few-public-methods
         telemetry_field: tuple[str, str],
         target_time_s: float,
     ) -> float | None:
-        message_name, field_name = telemetry_field
+        message_name = telemetry_field[0]
         records = log_data.get_message_columns(message_name)
-        if records is None or not {"TimeUS", field_name}.issubset(records.dtype.names or ()):
+        if records is None or not {"TimeUS", telemetry_field[1]}.issubset(records.dtype.names or ()):
+            return None
+
+        telemetry_fields = (
+            _active_gps_fields(log_data, "TimeUS", telemetry_field[1])
+            if message_name == "GPS"
+            else (log_data.get_field(message_name, "TimeUS"), log_data.get_field(message_name, telemetry_field[1]))
+        )
+        if telemetry_fields is None:
             return None
 
         nearest_value: float | None = None
         nearest_offset: float | None = None
-        for timestamp, value in zip(
-            log_data.get_field(message_name, "TimeUS"),
-            log_data.get_field(message_name, field_name),
-            strict=True,
-        ):
+        for timestamp, value in zip(*telemetry_fields, strict=True):
             timestamp_s = cls._finite_float(timestamp)
             measured_value = cls._finite_float(value)
             if timestamp_s is None or measured_value is None or not attempt.start_s <= timestamp_s <= attempt.end_s:

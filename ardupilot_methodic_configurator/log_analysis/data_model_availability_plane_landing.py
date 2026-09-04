@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 from ardupilot_methodic_configurator import _
@@ -179,7 +180,7 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
         )
 
     def _attempt_outcome(self, attempt_number: int, attempt: PlaneLandingAttempt) -> LogAnalysis:
-        flare_altitude_m = self.parameter_history.value_at("LAND_FLARE_ALT", attempt.start_s)
+        flare_altitude_m = self._finite_parameter_value(self.parameter_history.value_at("LAND_FLARE_ALT", attempt.start_s))
         parameter_evidence = (
             _("LAND_FLARE_ALT at attempt start: {value:.2f} m").format(value=flare_altitude_m)
             if flare_altitude_m is not None
@@ -248,6 +249,11 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
                     )
                 )
         return outcomes
+
+    @staticmethod
+    def _finite_parameter_value(value: float | None) -> float | None:
+        """Treat non-finite event-time parameter values as unavailable evidence."""
+        return value if value is not None and math.isfinite(value) else None
 
     def _firmware_message_outcomes(
         self,
