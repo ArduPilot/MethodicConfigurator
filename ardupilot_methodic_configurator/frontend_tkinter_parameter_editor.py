@@ -57,7 +57,9 @@ from ardupilot_methodic_configurator.frontend_tkinter_component_editor import Co
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import VehicleDirectorySelectionWidgets
 from ardupilot_methodic_configurator.frontend_tkinter_fc_banner_window import FlightControllerBannerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_font import get_safe_font_config
+from ardupilot_methodic_configurator.frontend_tkinter_log_analysis import LogAnalysisReportWindow
 from ardupilot_methodic_configurator.frontend_tkinter_log_availability import LogAvailabilityReportWindow
+from ardupilot_methodic_configurator.frontend_tkinter_paplan_log_analysis import PaplanLogAnalysisWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_compare_and_upload import ParameterFileUploadWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_documentation_frame import DocumentationFrame
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor_table import ParameterEditorTable
@@ -285,6 +287,7 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self.file_upload_progress_window: ProgressWindow | None = None
         self._param_download_progress_window: ProgressWindow | None = None
         self._log_availability_report_window: LogAvailabilityReportWindow | None = None
+        self._paplan_log_analysis_window: PaplanLogAnalysisWindow | None = None
         self._log_report_return_pending: bool = False
         self.inline_component_editor: ComponentEditorWindow | None = None
         self._inline_component_name: str | None = None
@@ -589,6 +592,15 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         analyse_log_button.pack(side=tk.LEFT, padx=(8, 8))
         show_tooltip(analyse_log_button, _("Open a .bin flight log and analyse its availability"))
 
+        # Create Paplan log analysis button
+        paplan_log_button = ttk.Button(
+            buttons_frame,
+            text=_("Analyze log\nin Paplan"),
+            command=self.on_analyse_log_in_paplan_click,
+        )
+        paplan_log_button.pack(side=tk.LEFT, padx=(8, 8))
+        show_tooltip(paplan_log_button, _("Select a .bin flight log to open the Paplan analysis window"))
+
         # Create Zip file for forum button
         zip_vehicle_for_forum_button = ttk.Button(
             buttons_frame,
@@ -734,6 +746,16 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if not filepath:
             return
         self._analyse_log_file(filepath)
+
+    def on_analyse_log_in_paplan_click(self) -> None:
+        """Open the placeholder Paplan log analysis window for a selected log."""
+        filepath = self.ui.askopenfilename(
+            title=_("Select a flight log"),
+            filetypes=[(_("ArduPilot binary log files"), "*.bin"), (_("All files"), "*.*")],
+        )
+        if not filepath:
+            return
+        self._paplan_log_analysis_window = PaplanLogAnalysisWindow(self.root, filepath)
 
     def _navigate_to_config_step(self, step: str) -> None:
         if not step or step not in self.file_selection_combobox["values"]:
