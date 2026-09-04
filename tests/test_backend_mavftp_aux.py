@@ -16,27 +16,7 @@ import pytest
 
 from ardupilot_methodic_configurator.backend_mavftp import (
     FTP_OP,
-    ERR_EndOfFile,
-    ERR_Fail,
-    ERR_FailErrno,
-    ERR_FailToOpenLocalFile,
-    ERR_FileExists,
-    ERR_FileNotFound,
-    ERR_FileProtected,
-    ERR_InvalidArguments,
-    ERR_InvalidDataSize,
-    ERR_InvalidErrorCode,
-    ERR_InvalidOpcode,
-    ERR_InvalidSession,
-    ERR_NoErrorCodeInNack,
-    ERR_NoErrorCodeInPayload,
-    ERR_NoFilesystemErrorInPayload,
-    ERR_None,
-    ERR_NoSessionsAvailable,
-    ERR_PayloadTooLarge,
-    ERR_PutAlreadyInProgress,
-    ERR_RemoteReplyTimeout,
-    ERR_UnknownCommand,
+    FtpError,
     MAVFTPReturn,
     MAVFTPSetting,
     MAVFTPSettings,
@@ -274,18 +254,18 @@ class TestMAVFTPReturn(unittest.TestCase):
 
     def test_init(self) -> None:
         """Test initialization with different parameters."""
-        ret = MAVFTPReturn("TestOp", ERR_None)
+        ret = MAVFTPReturn("TestOp", FtpError.Success)
         assert ret.operation_name == "TestOp"
-        assert ret.error_code == ERR_None
+        assert ret.error_code == FtpError.Success
         assert ret.system_error == 0
         assert ret.invalid_error_code == 0
         assert ret.invalid_opcode == 0
         assert ret.invalid_payload_size == 0
 
         # Test with all parameters
-        ret = MAVFTPReturn("TestOp", ERR_Fail, 1, 2, 3, 4)
+        ret = MAVFTPReturn("TestOp", FtpError.Fail, 1, 2, 3, 4)
         assert ret.operation_name == "TestOp"
-        assert ret.error_code == ERR_Fail
+        assert ret.error_code == FtpError.Fail
         assert ret.system_error == 1
         assert ret.invalid_error_code == 2
         assert ret.invalid_opcode == 3
@@ -293,15 +273,15 @@ class TestMAVFTPReturn(unittest.TestCase):
 
     def test_return_code(self) -> None:
         """Test return_code property."""
-        ret = MAVFTPReturn("TestOp", ERR_None)
-        assert ret.return_code == ERR_None
+        ret = MAVFTPReturn("TestOp", FtpError.Success)
+        assert ret.return_code == FtpError.Success
 
-        ret = MAVFTPReturn("TestOp", ERR_Fail)
-        assert ret.return_code == ERR_Fail
+        ret = MAVFTPReturn("TestOp", FtpError.Fail)
+        assert ret.return_code == FtpError.Fail
 
     def test_display_message_success(self) -> None:
         """Test display_message for successful operations."""
-        ret = MAVFTPReturn("TestOp", ERR_None)
+        ret = MAVFTPReturn("TestOp", FtpError.Success)
         with self.assertLogs(level="INFO") as cm:
             ret.display_message()
         assert "TestOp succeeded" in cm.output[0]
@@ -310,27 +290,27 @@ class TestMAVFTPReturn(unittest.TestCase):
         """Test display_message for various error conditions."""
         error_test_cases = [
             # ERROR level messages
-            (ERR_Fail, "TestOp failed, generic error", "ERROR"),
-            (ERR_FailErrno, "TestOp failed, system error 42", "ERROR"),
-            (ERR_InvalidDataSize, "TestOp failed, invalid data size", "ERROR"),
-            (ERR_InvalidSession, "TestOp failed, session is not currently open", "ERROR"),
-            (ERR_NoSessionsAvailable, "TestOp failed, no sessions available", "ERROR"),
-            (ERR_EndOfFile, "TestOp failed, offset past end of file", "ERROR"),
-            (ERR_UnknownCommand, "TestOp failed, unknown command", "ERROR"),
-            (ERR_NoErrorCodeInPayload, "TestOp failed, payload contains no error code", "ERROR"),
-            (ERR_NoErrorCodeInNack, "TestOp failed, no error code", "ERROR"),
-            (ERR_NoFilesystemErrorInPayload, "TestOp failed, file-system error missing in payload", "ERROR"),
-            (ERR_InvalidErrorCode, "TestOp failed, invalid error code 42", "ERROR"),
-            (ERR_PayloadTooLarge, "TestOp failed, payload is too long 42", "ERROR"),
-            (ERR_InvalidOpcode, "TestOp failed, invalid opcode 42", "ERROR"),
-            (ERR_InvalidArguments, "TestOp failed, invalid arguments", "ERROR"),
-            (ERR_PutAlreadyInProgress, "TestOp failed, put already in progress", "ERROR"),
-            (ERR_FailToOpenLocalFile, "TestOp failed, failed to open local file", "ERROR"),
-            (ERR_RemoteReplyTimeout, "TestOp failed, remote reply timeout", "ERROR"),
+            (FtpError.Fail, "TestOp failed, generic error", "ERROR"),
+            (FtpError.FailErrno, "TestOp failed, system error 42", "ERROR"),
+            (FtpError.InvalidDataSize, "TestOp failed, invalid data size", "ERROR"),
+            (FtpError.InvalidSession, "TestOp failed, session is not currently open", "ERROR"),
+            (FtpError.NoSessionsAvailable, "TestOp failed, no sessions available", "ERROR"),
+            (FtpError.EndOfFile, "TestOp failed, offset past end of file", "ERROR"),
+            (FtpError.UnknownCommand, "TestOp failed, unknown command", "ERROR"),
+            (FtpError.NoErrorCodeInPayload, "TestOp failed, payload contains no error code", "ERROR"),
+            (FtpError.NoErrorCodeInNack, "TestOp failed, no error code", "ERROR"),
+            (FtpError.NoFilesystemErrorInPayload, "TestOp failed, file-system error missing in payload", "ERROR"),
+            (FtpError.InvalidErrorCode, "TestOp failed, invalid error code 42", "ERROR"),
+            (FtpError.PayloadTooLarge, "TestOp failed, payload is too long 42", "ERROR"),
+            (FtpError.InvalidOpcode, "TestOp failed, invalid opcode 42", "ERROR"),
+            (FtpError.InvalidArguments, "TestOp failed, invalid arguments", "ERROR"),
+            (FtpError.PutAlreadyInProgress, "TestOp failed, put already in progress", "ERROR"),
+            (FtpError.FailToOpenLocalFile, "TestOp failed, failed to open local file", "ERROR"),
+            (FtpError.RemoteReplyTimeout, "TestOp failed, remote reply timeout", "ERROR"),
             # WARNING level messages
-            (ERR_FileExists, "TestOp failed, file/directory already exists", "WARNING"),
-            (ERR_FileProtected, "TestOp failed, file/directory is protected", "WARNING"),
-            (ERR_FileNotFound, "TestOp failed, file/directory not found", "WARNING"),
+            (FtpError.FileExists, "TestOp failed, file/directory already exists", "WARNING"),
+            (FtpError.FileProtected, "TestOp failed, file/directory is protected", "WARNING"),
+            (FtpError.FileNotFound, "TestOp failed, file/directory not found", "WARNING"),
         ]
 
         for error_code, expected_message, level in error_test_cases:

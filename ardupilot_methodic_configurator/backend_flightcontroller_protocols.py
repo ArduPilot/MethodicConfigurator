@@ -35,6 +35,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller_commands import CompassCalibrationUpdate
+    from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
 
 # Type alias for MAVLink connection to avoid type checker issues
 # We define MavlinkConnection as a protocol-like type to represent any MAVLink connection object
@@ -294,3 +295,27 @@ class FlightControllerFilesProtocol(Protocol):
     ) -> bool: ...
 
     def download_last_flight_log(self, local_filename: str, progress_callback: Callable[[int, int], None] | None) -> bool: ...
+
+    def list_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list["FlightControllerLogFile"]: ...
+
+    def list_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list["FlightControllerLogFile"]: ...
+
+    def download_bin_log_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> bool: ...
+
+    def download_remote_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> bool: ...
+
+    def make_remote_directory(self, remote_directory: str) -> bool: ...
+
+    def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool: ...
+
+    def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool: ...

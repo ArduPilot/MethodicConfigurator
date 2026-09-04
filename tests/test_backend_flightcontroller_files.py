@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles
+from ardupilot_methodic_configurator.backend_mavftp import DirectoryEntry
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 
@@ -601,12 +602,12 @@ class TestFlightControllerFilesLogDiscovery:
             """Directory listing result."""
 
             def __init__(self) -> None:
-                self.directory_listing: dict[str, dict[str, object]] = {
-                    "00000005.BIN": {},
-                    "README.TXT": {},
-                    "00000012.BIN": {},
-                    "junk": {},
-                }
+                self.directory_listing: list[DirectoryEntry] = [
+                    DirectoryEntry("00000005.BIN", is_dir=False, size_b=0),
+                    DirectoryEntry("README.TXT", is_dir=False, size_b=0),
+                    DirectoryEntry("00000012.BIN", is_dir=False, size_b=0),
+                    DirectoryEntry("junk", is_dir=False, size_b=0),
+                ]
 
         mock_mavftp.cmd_list.return_value = ListingResult()
 
@@ -747,10 +748,10 @@ class TestFlightControllerFilesLogDiscovery:
             """List the FTP directory contents."""
 
             def __init__(self) -> None:
-                self.directory_listing: dict[str, dict[str, object]] = {
-                    FakeName("12BADVAL.BIN"): {},
-                    "00000099.BIN": {},
-                }
+                self.directory_listing: list[DirectoryEntry] = [
+                    DirectoryEntry(FakeName("12BADVAL.BIN"), is_dir=False, size_b=0),
+                    DirectoryEntry("00000099.BIN", is_dir=False, size_b=0),
+                ]
 
         mock_mavftp.cmd_list.return_value = ListingResult()
 
@@ -767,7 +768,10 @@ class TestFlightControllerFilesLogDiscovery:
             """List the FTP directory contents."""
 
             def __init__(self) -> None:
-                self.directory_listing: dict[str, dict[str, object]] = {"README.TXT": {}, "notes.log": {}}
+                self.directory_listing: list[DirectoryEntry] = [
+                    DirectoryEntry("README.TXT", is_dir=False, size_b=0),
+                    DirectoryEntry("notes.log", is_dir=False, size_b=0),
+                ]
 
         mock_mavftp.cmd_list.return_value = ListingResult()
 

@@ -54,7 +54,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp imp
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import SystemMavlinkConnectionFactory
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles
-from ardupilot_methodic_configurator.backend_mavftp import ERR_FileExists
+from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ def _ensure_remote_logs_directory(mavftp) -> None:
         if result is None:
             continue
         error_code = getattr(result, "error_code", 0)
-        if error_code not in (0, ERR_FileExists):
+        if error_code not in (FtpError.Success, FtpError.FileExists):
             pytest.skip(f"Unable to create required directory {directory}: MAVFTP error {error_code}")
 
 
