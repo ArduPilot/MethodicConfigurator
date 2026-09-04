@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 Modal two-panel MAVFTP/local-file browser.
 
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
 
 
-class DownloadBinLogsUiServices(Protocol):
+class DownloadBinLogsUiServices(Protocol):  # pylint: disable=too-few-public-methods
     """UI callbacks required by the two-panel file browser."""
 
     asksaveasfilename: Callable[..., str]
@@ -57,11 +58,22 @@ class LocalFileEntry:
     is_directory: bool = False
 
 
+@dataclass(frozen=True)
+class RemoteDownloadPlan:
+    """Preflight plan for a recursive remote download."""
+
+    directories: tuple[Path, ...]
+    files: tuple[tuple[FlightControllerLogFile, Path], ...]
+    failed: tuple[str, ...] = ()
+
+
 class _TransferCancelledError(Exception):
     """Raised by a transfer progress callback when the user cancels."""
 
 
-class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-attributes
+class DownloadBinLogsWindow(  # pylint: disable=attribute-defined-outside-init, too-many-instance-attributes
+    BaseWindow
+):
     """Browse remote and local files and transfer or manage selected entries."""
 
     DEFAULT_REMOTE_DIRECTORY = "/APM/LOGS/"
@@ -92,7 +104,11 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._operation_thread: Thread | None = None
         self._operation_cancel_event: Event | None = None
         self._operation_progress: ProgressWindow | None = None
+        self._operation_completion: Callable[[list[str], list[str], bool], None] | None = None
         self._operation_active = False
+        self._remote_task_queue: queue.Queue[tuple[object, Exception | None]] = queue.Queue()
+        self._remote_task_thread: Thread | None = None
+        self._remote_task_completion: Callable[[object, Exception | None], None] | None = None
         self.remote_directory_var = tk.StringVar(master=self.root, value=self.DEFAULT_REMOTE_DIRECTORY)
         self.local_directory_var = tk.StringVar(
             master=self.root,
@@ -134,6 +150,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.download_selected_remote_entries,
         )
         download_button.pack(side=tk.LEFT)
+        self.download_button = download_button
         show_tooltip(
             download_button, _("Download selected files and directories from the flight controller to the local computer")
         )
@@ -144,6 +161,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.upload_selected_local_entries,
         )
         upload_button.pack(side=tk.LEFT, padx=(6, 0))
+        self.upload_button = upload_button
         show_tooltip(
             upload_button, _("Upload selected files and directories from the local computer to the flight controller")
         )
@@ -154,6 +172,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             command=self.download_last_flight_log,
         )
         last_log_button.pack(side=tk.LEFT, padx=(14, 0))
+        self.last_log_button = last_log_button
         show_tooltip(last_log_button, _("Download the last flight-controller .bin log file"))
 
         cancel_button = ttk.Button(action_frame, text=_("Cancel"), command=self._on_cancel_or_close)
@@ -275,42 +294,69 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def refresh_remote_panel(self) -> None:
         """Refresh the remote panel, including directory entries."""
+        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
+            return
         remote_directory = self.remote_directory_var.get()
         if not remote_directory.strip():
             self.ui.show_error(_("Remote directory error"), _("The remote destination must not be empty."))
             return
-        try:
-            entries = list(self.parameter_editor.get_remote_files(remote_directory))
-        except Exception as error:  # pylint: disable=broad-exception-caught
-            self.ui.show_error(_("Remote directory error"), str(error))
-            return
 
-        self.remote_entries = entries
-        self._populate_remote_tree()
-        self._update_parent_navigation_buttons()
-        self.remote_directory_label.configure(
-            text=_("Remote files in {remote_directory}").format(remote_directory=remote_directory)
+        def complete(result: object, error: Exception | None) -> None:
+            if error is not None:
+                self.ui.show_error(_("Remote directory error"), str(error))
+                return
+            entries = cast("list[FlightControllerLogFile] | None", result)
+            if entries is None:
+                self.ui.show_error(_("Remote directory error"), _("Could not list the remote directory."))
+                return
+            self.remote_entries = entries
+            self._populate_remote_tree()
+            self._update_parent_navigation_buttons()
+            self.remote_directory_label.configure(
+                text=_("Remote files in {remote_directory}").format(remote_directory=remote_directory)
+            )
+
+        self.remote_directory_label.configure(text=_("Loading remote directory…"))
+        self._start_remote_task(
+            lambda: self.parameter_editor.get_remote_files(remote_directory),
+            complete,
         )
 
     def refresh_remote_files(self) -> None:
         """Compatibility method that refreshes the original file-only listing."""
+        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
+            return
         remote_directory = self.remote_directory_var.get()
         if not remote_directory.strip():
             self.ui.show_error(_("Remote directory error"), _("The remote destination must not be empty."))
             return
-        try:
-            self.remote_files = list(self.parameter_editor.get_bin_log_files(remote_directory))
-        except Exception as error:  # pylint: disable=broad-exception-caught
-            self.remote_files = []
-            self.ui.show_error(_("Remote directory error"), str(error))
-            return
-        self.remote_entries = list(self.remote_files)
-        if hasattr(self, "remote_tree"):
-            self._populate_remote_tree()
-        else:
-            self._populate_tree()
-        self._update_parent_navigation_buttons()
-        self.remote_directory_label.configure(text=_("Files in {remote_directory}").format(remote_directory=remote_directory))
+
+        def complete(result: object, error: Exception | None) -> None:
+            if error is not None:
+                self.remote_files = []
+                self.ui.show_error(_("Remote directory error"), str(error))
+                return
+            files = cast("list[FlightControllerLogFile] | None", result)
+            if files is None:
+                self.remote_files = []
+                self.ui.show_error(_("Remote directory error"), _("Could not list the remote directory."))
+                return
+            self.remote_files = files
+            self.remote_entries = list(self.remote_files)
+            if hasattr(self, "remote_tree"):
+                self._populate_remote_tree()
+            else:
+                self._populate_tree()
+            self._update_parent_navigation_buttons()
+            self.remote_directory_label.configure(
+                text=_("Files in {remote_directory}").format(remote_directory=remote_directory)
+            )
+
+        self.remote_directory_label.configure(text=_("Loading remote directory…"))
+        self._start_remote_task(
+            lambda: self.parameter_editor.get_bin_log_files(remote_directory),
+            complete,
+        )
 
     def refresh_local_panel(self) -> None:
         """Refresh the local panel from the selected directory."""
@@ -341,13 +387,15 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
     def _update_parent_navigation_buttons(self) -> None:
         """Enable parent buttons only when the corresponding panel has a parent."""
         remote_button = getattr(self, "remote_parent_button", None)
-        if remote_button is not None:
-            remote_directory = self.remote_directory_var.get().rstrip("/")
+        remote_directory_var = getattr(self, "remote_directory_var", None)
+        if remote_button is not None and remote_directory_var is not None:
+            remote_directory = remote_directory_var.get().rstrip("/")
             remote_button.configure(state="normal" if remote_directory and remote_directory != "/" else "disabled")
 
         local_button = getattr(self, "local_parent_button", None)
-        if local_button is not None:
-            local_directory = Path(self.local_directory_var.get()).expanduser()
+        local_directory_var = getattr(self, "local_directory_var", None)
+        if local_button is not None and local_directory_var is not None:
+            local_directory = Path(local_directory_var.get()).expanduser()
             local_button.configure(state="normal" if local_directory.parent != local_directory else "disabled")
 
     def navigate_remote_parent(self) -> None:
@@ -661,15 +709,45 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         new_path = posixpath.join(posixpath.dirname(entry.remote_path.rstrip("/")), new_name)
         if not self._confirm_remote_mutation_scope(_("rename"), (entry.remote_path, new_path)):
             return False
-        if self.parameter_editor.rename_remote_path(entry.remote_path, new_path):
-            self.ui.show_info(
-                _("Rename summary"),
-                _("Renamed %(old)s to %(new)s.") % {"old": entry.name, "new": new_name},
+        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
+            return False
+        outcome: list[bool] = []
+
+        def worker(
+            _report_progress: Callable[[int, int], None],
+            cancel_event: Event,
+        ) -> tuple[list[str], list[str], bool]:
+            if cancel_event.is_set():
+                return [], [], True
+            success = self._call_remote_bool(
+                self.parameter_editor.rename_remote_path,
+                entry.remote_path,
+                new_path,
             )
-            self.refresh_remote_panel()
-            return True
-        self.ui.show_error(_("Rename error"), _("Could not rename the remote entry."))
-        return False
+            return ([entry.remote_path], [], False) if success else ([], [entry.remote_path], False)
+
+        def completion(succeeded: list[str], failed: list[str], cancelled: bool) -> None:
+            outcome.append(bool(succeeded) and not cancelled)
+            if cancelled:
+                self._show_summary(_("Rename summary"), succeeded, failed, cancelled)
+            elif succeeded:
+                self.ui.show_info(
+                    _("Rename summary"),
+                    _("Renamed %(old)s to %(new)s.") % {"old": entry.name, "new": new_name},
+                )
+                self.refresh_remote_panel()
+            else:
+                self.ui.show_error(_("Rename error"), _("Could not rename the remote entry."))
+
+        self._start_background_operation(
+            _("Renaming remote entry"),
+            _("Renaming remote entry"),
+            worker,
+            completion,
+        )
+        # Unit tests use a synchronous no-Tk seam; a real window reports the
+        # result asynchronously after the operation has been scheduled.
+        return outcome[0] if outcome else True
 
     def _rename_local_entry(self, entry: LocalFileEntry, new_name: str) -> bool:
         """Rename one local entry."""
@@ -779,12 +857,104 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """Return whether a user-provided rename is one safe path component."""
         return bool(name) and name not in {".", ".."} and "/" not in name and "\\" not in name
 
+    @staticmethod
+    def _local_path_key(path: Path) -> str:
+        """Return a platform-aware key for detecting local target collisions."""
+        return str(path.absolute()).casefold() if sys.platform == "win32" else str(path.absolute())
+
+    @classmethod
+    def _local_path_is_ancestor(cls, parent: Path, child: Path) -> bool:
+        """Return whether one planned local path is a strict ancestor of another."""
+        parent_key = cls._local_path_key(parent).rstrip("\\/")
+        child_key = cls._local_path_key(child)
+        return child_key.startswith((f"{parent_key}\\", f"{parent_key}/"))
+
+    def _set_remote_controls_state(self, state: str) -> None:
+        """Enable or disable controls that issue remote operations."""
+        for name in (
+            "remote_directory_entry",
+            "remote_parent_button",
+            "remote_tree",
+        ):
+            widget = getattr(self, name, None)
+            if widget is not None:
+                widget.configure(state=state)
+
+    def _set_operation_controls_state(self, state: str) -> None:
+        """Enable or disable all browser controls during a remote operation."""
+        self._set_remote_controls_state(state)
+        for name in (
+            "local_directory_entry",
+            "local_parent_button",
+            "local_tree",
+            "download_button",
+            "upload_button",
+            "last_log_button",
+        ):
+            widget = getattr(self, name, None)
+            if widget is not None:
+                widget.configure(state=state)
+
+    def _start_remote_task(
+        self,
+        task: Callable[[], object],
+        completion: Callable[[object, Exception | None], None],
+    ) -> bool:
+        """Run blocking remote listing/planning work away from Tk's event loop."""
+        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
+            return False
+        remote_task_queue = getattr(self, "_remote_task_queue", None)
+        if remote_task_queue is None:
+            remote_task_queue = queue.Queue()
+            self._remote_task_queue = remote_task_queue
+        self._remote_task_completion = completion
+        self._set_remote_controls_state("disabled")
+
+        def run() -> None:
+            try:
+                result = task()
+                error = None
+            except Exception as exception:  # pylint: disable=broad-exception-caught
+                result = None
+                error = exception
+            remote_task_queue.put((result, error))
+
+        if not isinstance(getattr(self, "root", None), tk.Misc):
+            run()
+            result, error = remote_task_queue.get()
+            self._remote_task_completion = None
+            self._set_remote_controls_state("normal")
+            completion(result, error)
+            return True
+
+        self._remote_task_thread = Thread(target=run, name="mavftp-remote-task", daemon=True)
+        self._remote_task_thread.start()
+        self.root.after(50, self._poll_remote_task)
+        return True
+
+    def _poll_remote_task(self) -> None:
+        """Apply a remote task result on the Tk thread."""
+        try:
+            result, error = self._remote_task_queue.get_nowait()
+        except queue.Empty:
+            if isinstance(getattr(self, "root", None), tk.Misc):
+                self.root.after(50, self._poll_remote_task)
+            return
+        self._remote_task_thread = None
+        completion = self._remote_task_completion
+        self._remote_task_completion = None
+        self._set_remote_controls_state("normal")
+        if completion is not None:
+            completion(result, error)
+
     def _progress_window(self, title: str, message: str) -> ProgressWindow:
         """Create a standard application progress window."""
-        return self.ui.create_progress_window(self.root, title, message, False)  # noqa: FBT003
+        return self.ui.create_progress_window(getattr(self, "root", None), title, message, False)  # noqa: FBT003
 
     def _on_cancel_or_close(self) -> None:
         """Cancel an active transfer, or close the browser when idle."""
+        if getattr(self, "_remote_task_thread", None) is not None:
+            return
         cancel_event = getattr(self, "_operation_cancel_event", None)
         if cancel_event is not None:
             cancel_event.set()
@@ -800,13 +970,13 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         completion: Callable[[list[str], list[str], bool], None],
     ) -> None:
         """Run one blocking MAVFTP operation away from Tk's event loop."""
-        if getattr(self, "_operation_active", False):
+        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
             return
 
         cancel_event = Event()
 
         def report_progress(current: int, total: int) -> None:
-            if hasattr(self, "root"):
+            if isinstance(getattr(self, "root", None), tk.Misc):
                 self._operation_queue.put(("progress", (current, total)))
             elif self._operation_progress is not None:
                 self._operation_progress.update_progress_bar(current, total)
@@ -820,7 +990,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
         # Unit-level tests construct this class with __new__ and no Tk root.
         # Keep that seam synchronous while real windows always use a worker.
-        if not hasattr(self, "root"):
+        if not isinstance(getattr(self, "root", None), tk.Misc):
             self._operation_progress = self._progress_window(title, message)
             result = worker(report_progress, cancel_event)
             self._operation_progress.destroy()
@@ -831,6 +1001,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         self._operation_cancel_event = cancel_event
         self._operation_completion = completion
         self._operation_progress = self._progress_window(title, message)
+        self._set_operation_controls_state("disabled")
         self.cancel_button.configure(text=_("Cancel operation"), state="normal")
         self._operation_thread = Thread(target=run, name="mavftp-transfer", daemon=True)
         self._operation_thread.start()
@@ -852,6 +1023,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
                     self._operation_thread = None
                     self._operation_cancel_event = None
                     self._operation_active = False
+                    self._set_operation_controls_state("normal")
                     self.cancel_button.configure(text=_("Cancel"), state="normal")
                     completion = getattr(self, "_operation_completion", None)
                     self._operation_completion = None
@@ -934,7 +1106,11 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         except Exception:  # pylint: disable=broad-exception-caught
             if failures is not None:
                 failures.append(entry.remote_path)
-            return directories, files
+            return [], []
+        if children is None:
+            if failures is not None:
+                failures.append(entry.remote_path)
+            return [], []
         for child in children:
             if child.name == "..":
                 continue
@@ -947,17 +1123,12 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             files.extend(child_files)
         return directories, files
 
-    def download_selected_remote_entries(self) -> None:  # noqa: PLR0915
-        """Recursively download selected remote entries into the local panel directory."""
-        if getattr(self, "_operation_active", False):
-            return
-        selected = [entry for entry in self._selected_remote_entries() if entry.name != ".."]
-        if not selected:
-            return
-        local_directory = Path(self.local_directory_var.get()).expanduser()
-        if not local_directory.is_dir():
-            self.ui.show_error(_("Download error"), _("The selected local directory does not exist."))
-            return
+    def _build_remote_download_plan(
+        self,
+        selected: Sequence[FlightControllerLogFile],
+        local_directory: Path,
+    ) -> RemoteDownloadPlan:
+        """Build a recursive remote download plan without touching Tk widgets."""
         directories: list[Path] = []
         files: list[tuple[FlightControllerLogFile, Path]] = []
         failed: list[str] = []
@@ -968,76 +1139,150 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             child_dirs, child_files = self._remote_download_plan(entry, local_directory / entry.name, failed)
             directories.extend(child_dirs)
             files.extend(child_files)
-        conflicts = [
-            path
-            for path in [*(path for _entry, path in files), *directories]
-            if path.exists() and (path.is_file() or (path in directories and not path.is_dir()))
-        ]
-        if conflicts and not self.ui.ask_yesno(
-            _("Overwrite existing local entries?"),
-            _("Some local entries already exist. Overwrite them?"),
-        ):
-            return
-        total = max(sum(max(entry.size_bytes, 1) for entry, _path in files), 1)
+        return RemoteDownloadPlan(tuple(directories), tuple(files), tuple(failed))
 
-        def worker(
-            report_progress: Callable[[int, int], None],
-            cancel_event: Event,
-        ) -> tuple[list[str], list[str], bool]:
-            completed = 0
-            succeeded: list[str] = []
-            worker_failed = list(failed)
-            for directory in directories:
-                if cancel_event.is_set():
-                    return succeeded, worker_failed, True
-                try:
-                    if directory.exists() and not directory.is_dir():
-                        worker_failed.append(str(directory))
-                        continue
-                    directory.mkdir(parents=True, exist_ok=True)
-                except OSError:
-                    worker_failed.append(str(directory))
-            for entry, target in files:
-                if cancel_event.is_set():
-                    return succeeded, worker_failed, True
-                units = max(entry.size_bytes, 1)
-                if target.parent.exists() and not target.parent.is_dir():
-                    worker_failed.append(entry.remote_path)
-                    completed += units
-                    report_progress(completed, total)
+    @classmethod
+    def _local_target_conflicts(
+        cls,
+        plan: RemoteDownloadPlan,
+    ) -> tuple[list[Path], list[Path]]:
+        """Return duplicate planned targets and existing incompatible targets."""
+        planned: dict[str, tuple[Path, bool]] = {}
+        duplicate_targets: list[Path] = []
+        for target, is_directory in (
+            *((target, True) for target in plan.directories),
+            *((target, False) for _entry, target in plan.files),
+        ):
+            key = cls._local_path_key(target)
+            if key in planned:
+                duplicate_targets.append(target)
+            else:
+                planned[key] = target, is_directory
+
+        file_targets = tuple(target for target, is_directory in planned.values() if not is_directory)
+        for file_target in file_targets:
+            for other_target, _is_directory in planned.values():
+                if cls._local_path_is_ancestor(file_target, other_target):
+                    duplicate_targets.append(other_target)
+
+        existing_conflicts: list[Path] = []
+        for target, is_directory in planned.values():
+            exists = target.exists() or target.is_symlink()
+            if exists and (target.is_symlink() or not is_directory or not target.is_dir()):
+                existing_conflicts.append(target)
+        return duplicate_targets, existing_conflicts
+
+    def _download_remote_plan_worker(
+        self,
+        plan: RemoteDownloadPlan,
+        total: int,
+        report_progress: Callable[[int, int], None],
+        cancel_event: Event,
+    ) -> tuple[list[str], list[str], bool]:
+        """Create local directories and transfer the files in a remote plan."""
+        completed = 0
+        succeeded: list[str] = []
+        failed = list(plan.failed)
+        for directory in plan.directories:
+            if cancel_event.is_set():
+                return succeeded, failed, True
+            try:
+                if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+                    failed.append(str(directory))
                     continue
-                callback = self._cancellable_progress(
-                    lambda current, maximum, offset=completed, size=units: report_progress(
-                        min(total, int(offset + size * (current / maximum if maximum else 0.0))),
-                        total,
-                    ),
-                    cancel_event,
-                )
-                try:
-                    success = self.parameter_editor.download_remote_file(entry.remote_path, str(target), callback)
-                except _TransferCancelledError:
-                    return succeeded, worker_failed, True
-                except Exception:  # pylint: disable=broad-exception-caught
-                    success = False
-                if cancel_event.is_set():
-                    return succeeded, worker_failed, True
-                if success:
-                    succeeded.append(entry.remote_path)
-                else:
-                    worker_failed.append(entry.remote_path)
+                directory.mkdir(parents=True, exist_ok=True)
+            except OSError:
+                failed.append(str(directory))
+
+        for entry, target in plan.files:
+            if cancel_event.is_set():
+                return succeeded, failed, True
+            units = max(entry.size_bytes, 1)
+            if target.is_symlink() or (target.parent.exists() and not target.parent.is_dir()):
+                failed.append(entry.remote_path)
                 completed += units
                 report_progress(completed, total)
-            return succeeded, worker_failed, False
+                continue
+            callback = self._cancellable_progress(
+                lambda current, maximum, offset=completed, size=units: report_progress(
+                    min(total, int(offset + size * (current / maximum if maximum else 0.0))),
+                    total,
+                ),
+                cancel_event,
+            )
+            try:
+                success = self.parameter_editor.download_remote_file(entry.remote_path, str(target), callback)
+            except _TransferCancelledError:
+                return succeeded, failed, True
+            except Exception:  # pylint: disable=broad-exception-caught
+                success = False
+            if cancel_event.is_set():
+                return succeeded, failed, True
+            if success:
+                succeeded.append(entry.remote_path)
+            else:
+                failed.append(entry.remote_path)
+            completed += units
+            report_progress(completed, total)
+        return succeeded, failed, False
 
-        def completion(succeeded: list[str], worker_failed: list[str], cancelled: bool) -> None:
-            self._show_summary(_("Download summary"), succeeded, worker_failed, cancelled)
-            self.refresh_local_panel()
+    def download_selected_remote_entries(self) -> None:
+        """Recursively download selected remote entries into the local panel directory."""
+        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
+            return
+        selected = [entry for entry in self._selected_remote_entries() if entry.name != ".."]
+        if not selected:
+            return
+        local_directory = Path(self.local_directory_var.get()).expanduser()
+        if not local_directory.is_dir():
+            self.ui.show_error(_("Download error"), _("The selected local directory does not exist."))
+            return
 
-        self._start_background_operation(
-            _("Downloading selected entries"),
-            _("Downloaded {} of {} bytes"),
-            worker,
-            completion,
+        def complete_plan(result: object, error: Exception | None) -> None:
+            if error is not None:
+                self.ui.show_error(_("Download error"), str(error))
+                return
+            if not isinstance(result, RemoteDownloadPlan):
+                self.ui.show_error(_("Download error"), _("Could not prepare the selected remote entries."))
+                return
+            duplicate_targets, existing_conflicts = self._local_target_conflicts(result)
+            if duplicate_targets:
+                names = "\n".join(str(path) for path in duplicate_targets)
+                self.ui.show_error(
+                    _("Download error"),
+                    _("Several selected entries map to the same local target:\n\n%s") % names,
+                )
+                return
+            if existing_conflicts and not self.ui.ask_yesno(
+                _("Overwrite existing local entries?"),
+                _("Some local entries already exist. Overwrite them?"),
+            ):
+                return
+            if not result.directories and not result.files:
+                self._show_summary(_("Download summary"), [], list(result.failed))
+                return
+            total = max(sum(max(entry.size_bytes, 1) for entry, _path in result.files), 1)
+
+            def worker(
+                report_progress: Callable[[int, int], None],
+                cancel_event: Event,
+            ) -> tuple[list[str], list[str], bool]:
+                return self._download_remote_plan_worker(result, total, report_progress, cancel_event)
+
+            def completion(succeeded: list[str], worker_failed: list[str], cancelled: bool) -> None:
+                self._show_summary(_("Download summary"), succeeded, worker_failed, cancelled)
+                self.refresh_local_panel()
+
+            self._start_background_operation(
+                _("Downloading selected entries"),
+                _("Downloaded {} of {} bytes"),
+                worker,
+                completion,
+            )
+
+        self._start_remote_task(
+            lambda: self._build_remote_download_plan(selected, local_directory),
+            complete_plan,
         )
 
     def _local_upload_plan(self, entry: LocalFileEntry, remote_target: str) -> tuple[list[str], list[tuple[Path, str, int]]]:
@@ -1148,10 +1393,14 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         """Delete one remote file or an empty remote directory."""
         if entry.is_directory:
             try:
-                children = [child for child in self.parameter_editor.get_remote_files(entry.remote_path) if child.name != ".."]
+                listing = self.parameter_editor.get_remote_files(entry.remote_path)
             except Exception:  # pylint: disable=broad-exception-caught
                 failed.append(entry.remote_path)
                 return
+            if listing is None:
+                failed.append(entry.remote_path)
+                return
+            children = [child for child in listing if child.name != ".."]
             if children:
                 failed.append(entry.remote_path)
                 return
@@ -1170,12 +1419,29 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             _("Delete selected files and empty directories?"),
         ):
             return
-        succeeded: list[str] = []
-        failed: list[str] = []
-        for entry in selected:
-            self._delete_remote_entry(entry, succeeded, failed)
-        self._show_summary(_("Remote delete summary"), succeeded, failed)
-        self.refresh_remote_panel()
+
+        def worker(
+            _report_progress: Callable[[int, int], None],
+            cancel_event: Event,
+        ) -> tuple[list[str], list[str], bool]:
+            succeeded: list[str] = []
+            failed: list[str] = []
+            for entry in selected:
+                if cancel_event.is_set():
+                    return succeeded, failed, True
+                self._delete_remote_entry(entry, succeeded, failed)
+            return succeeded, failed, False
+
+        def completion(succeeded: list[str], failed: list[str], cancelled: bool) -> None:
+            self._show_summary(_("Remote delete summary"), succeeded, failed, cancelled)
+            self.refresh_remote_panel()
+
+        self._start_background_operation(
+            _("Deleting remote entries"),
+            _("Deleted selected remote entries"),
+            worker,
+            completion,
+        )
 
     def delete_selected_local_entries(self) -> None:
         """Delete selected local files and empty directories after confirmation."""
@@ -1211,11 +1477,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         new_path = posixpath.join(posixpath.dirname(entry.remote_path.rstrip("/")), new_name)
         if not self._confirm_remote_mutation_scope(_("rename"), (entry.remote_path, new_path)):
             return
-        if self.parameter_editor.rename_remote_path(entry.remote_path, new_path):
-            self.ui.show_info(_("Rename summary"), _("Renamed %(old)s to %(new)s.") % {"old": entry.name, "new": new_name})
-            self.refresh_remote_panel()
-        else:
-            self.ui.show_error(_("Rename error"), _("Could not rename the remote entry."))
+        self._rename_remote_entry(entry, new_name)
 
     def rename_selected_local_entry(self) -> None:
         """Rename one selected local entry."""
@@ -1332,7 +1594,7 @@ class DownloadBinLogsWindow(BaseWindow):  # pylint: disable=too-many-instance-at
 
     def download_last_flight_log(self) -> None:
         """Download the last flight log without blocking the Tk event loop."""
-        if getattr(self, "_operation_active", False):
+        if getattr(self, "_operation_active", False) or getattr(self, "_remote_task_thread", None) is not None:
             return
         if not self.parameter_editor.is_fc_connected:
             self.ui.show_error(_("Error"), _("No flight controller connected"))

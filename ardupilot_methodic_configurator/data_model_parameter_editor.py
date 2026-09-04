@@ -1404,11 +1404,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         else:
             show_error(_("Error"), _("Failed to download flight log. Check the console for details."))
 
-    def get_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+    def get_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile] | None:
         """Return regular files in the selected remote directory."""
         return self._flight_controller.list_bin_log_files(remote_directory)
 
-    def get_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+    def get_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile] | None:
         """Return files and directories in the selected remote directory."""
         return self._flight_controller.list_remote_files(remote_directory)
 
@@ -1428,6 +1428,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     ) -> bool:
         """Upload one local file to the flight controller."""
         return self._flight_controller.upload_file(local_filename, remote_filename, progress_callback)
+
+    @staticmethod
+    def _local_download_target_key(path: Path) -> str:
+        """Return a platform-aware key for detecting local target collisions."""
+        target = str(path.absolute())
+        return target.casefold() if platform.system() == "Windows" else target
 
     def download_remote_file(
         self,
@@ -1450,6 +1456,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """Rename one remote file or directory."""
         return self._flight_controller.rename_remote_path(remote_path, new_remote_path)
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-branches
     def download_selected_bin_logs_workflow(
         self,
         selected_files: Sequence[FlightControllerLogFile],
@@ -1483,7 +1490,22 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_error(_("Download Error"), _("A directory destination is required for multiple files."))
             return BinLogDownloadResult(failed=tuple(file.name for file in files))
 
-        existing_targets = tuple(target for target in targets if target.exists())
+        target_keys: set[str] = set()
+        duplicate_targets: list[Path] = []
+        for target in targets:
+            key = self._local_download_target_key(target)
+            if key in target_keys:
+                duplicate_targets.append(target)
+            target_keys.add(key)
+        if duplicate_targets:
+            duplicate_names = "\n".join(str(target) for target in duplicate_targets)
+            show_error(
+                _("Download Error"),
+                _("Several selected files map to the same local target:\n\n%s") % duplicate_names,
+            )
+            return BinLogDownloadResult(failed=tuple(file.name for file in files))
+
+        existing_targets = tuple(target for target in targets if target.exists() or target.is_symlink())
         if existing_targets:
             existing_names = "\n".join(target.name for target in existing_targets)
             if not ask_overwrite(

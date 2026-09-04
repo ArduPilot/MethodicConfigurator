@@ -585,11 +585,11 @@ class FlightController:  # pylint: disable=too-many-public-methods
         """Download the last flight log from the flight controller - delegates to files manager."""
         return self._files_manager.download_last_flight_log(local_filename, progress_callback)
 
-    def list_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+    def list_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile] | None:
         """List regular files in a remote directory - delegates to files manager."""
         return self._files_manager.list_bin_log_files(remote_directory)
 
-    def list_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+    def list_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile] | None:
         """List files and directories in a remote directory - delegates to files manager."""
         return self._files_manager.list_remote_files(remote_directory)
 

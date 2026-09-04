@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pylint: disable=protected-access,too-many-lines,too-many-public-methods
 
 """
 BDD tests for flight-controller log-file listing and download workflows.
@@ -12,7 +13,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, cast
 from unittest.mock import ANY, MagicMock, call, patch
 
 from ardupilot_methodic_configurator.backend_flightcontroller_files import (
@@ -161,6 +161,18 @@ class TestFlightControllerLogListing:
             FlightControllerLogFile("log.bin", "/APM/LOGS/log.bin", 42),
         ]
 
+    def test_remote_listing_failure_is_distinct_from_an_empty_directory(self) -> None:
+        """A missing MAVFTP listing is reported as failure, not as an empty directory."""
+        files_manager = _files_manager()
+        mavftp = MagicMock()
+        mavftp.cmd_list.return_value = SimpleNamespace(directory_listing=None)
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_files.create_mavftp_safe",
+            return_value=mavftp,
+        ):
+            assert files_manager.list_remote_files() is None
+
     def test_remote_file_manager_supports_delete_rename_and_directory_creation(self) -> None:
         """
         Remote management operations delegate to MAVFTP safely.
@@ -205,7 +217,7 @@ class TestParameterEditorLogDownloadWorkflow:
         AND: The overwrite callback is called exactly once
         """
         model = _parameter_editor_model()
-        flight_controller = cast("Any", model._flight_controller)  # pylint: disable=protected-access
+        flight_controller = model._flight_controller  # pylint: disable=protected-access
         local_download_directory = Path("C:/downloads")
         existing_target = local_download_directory / "LASTLOG.TXT"
         selected = [
@@ -228,7 +240,7 @@ class TestParameterEditorLogDownloadWorkflow:
             )
 
         assert result.successful == ("LASTLOG.TXT", "00000012.BIN")
-        assert result.failed == ()
+        assert not result.failed
         ask_overwrite.assert_called_once()
         assert flight_controller.download_bin_log_file.call_count == 2
         flight_controller.download_bin_log_file.assert_any_call("/APM/LOGS/LASTLOG.TXT", str(existing_target), None)
@@ -245,7 +257,7 @@ class TestParameterEditorLogDownloadWorkflow:
         THEN: No remote file is downloaded
         """
         model = _parameter_editor_model()
-        flight_controller = cast("Any", model._flight_controller)  # pylint: disable=protected-access
+        flight_controller = model._flight_controller  # pylint: disable=protected-access
         local_download_directory = Path("C:/downloads")
         ask_overwrite = MagicMock(return_value=False)
 
@@ -277,7 +289,7 @@ class TestParameterEditorLogDownloadWorkflow:
         AND: The result summary identifies each file's outcome
         """
         model = _parameter_editor_model()
-        flight_controller = cast("Any", model._flight_controller)  # pylint: disable=protected-access
+        flight_controller = model._flight_controller  # pylint: disable=protected-access
         flight_controller.download_bin_log_file.side_effect = [False, True]
         show_error = MagicMock()
         selected = [
@@ -304,6 +316,33 @@ class TestParameterEditorLogDownloadWorkflow:
         summary = show_error.call_args.args[1]
         assert "Failed: missing.BIN" in summary
         assert "Downloaded: available.BIN" in summary
+
+    def test_batch_rejects_duplicate_local_targets_before_transfer(self) -> None:
+        """Duplicate selected basenames cannot cause one download to overwrite another."""
+        model = _parameter_editor_model()
+        flight_controller = model._flight_controller  # pylint: disable=protected-access
+        show_error = MagicMock()
+        selected = [
+            FlightControllerLogFile("same.bin", "/APM/LOGS/one.bin", 10),
+            FlightControllerLogFile("same.bin", "/APM/LOGS/two.bin", 20),
+        ]
+
+        with (
+            patch.object(Path, "is_dir", return_value=True),
+            patch.object(Path, "exists", return_value=False),
+        ):
+            result = model.download_selected_bin_logs_workflow(
+                selected_files=selected,
+                destination="C:/downloads",
+                destination_is_directory=True,
+                ask_overwrite=MagicMock(),
+                show_error=show_error,
+                show_info=MagicMock(),
+            )
+
+        assert result.failed == ("same.bin", "same.bin")
+        flight_controller.download_bin_log_file.assert_not_called()
+        show_error.assert_called_once()
 
 
 class TestDownloadBinLogsWindow:
@@ -451,6 +490,24 @@ class TestDownloadBinLogsWindow:
 
         assert directories == [Path("C:/downloads/folder"), Path("C:/downloads/folder/nested")]
         assert files == [(leaf, Path("C:/downloads/folder/nested/leaf.bin"))]
+
+    def test_remote_download_plan_does_not_create_directory_when_listing_fails(self) -> None:
+        """A failed recursive listing must not turn into a successful empty directory plan."""
+        window = DownloadBinLogsWindow.__new__(DownloadBinLogsWindow)
+        window.parameter_editor = MagicMock()
+        window.parameter_editor.get_remote_files.return_value = None
+        root = FlightControllerLogFile("folder", "/APM/LOGS/folder", 0, is_directory=True)
+        failures: list[str] = []
+
+        directories, files = window._remote_download_plan(  # pylint: disable=protected-access
+            root,
+            Path("C:/downloads/folder"),
+            failures,
+        )
+
+        assert not directories
+        assert not files
+        assert failures == ["/APM/LOGS/folder"]
 
     def test_local_upload_plan_expands_directories_recursively(self) -> None:
         """
@@ -611,6 +668,25 @@ class TestDownloadBinLogsWindow:
         ]
         window.ui.show_error.assert_called_once()
         window.refresh_remote_panel.assert_called_once_with()
+
+    def test_remote_delete_does_not_delete_directory_when_listing_fails(self) -> None:
+        """A failed directory listing never authorizes a remote directory deletion."""
+        window = DownloadBinLogsWindow.__new__(DownloadBinLogsWindow)
+        entry = FlightControllerLogFile("folder", "/APM/LOGS/folder", 0, is_directory=True)
+        window.remote_entries = [entry]
+        window.remote_tree = MagicMock()
+        window.remote_tree.selection.return_value = ("0",)
+        window.parameter_editor = MagicMock()
+        window.parameter_editor.get_remote_files.return_value = None
+        window.parameter_editor.delete_remote_path.return_value = True
+        window.ui = MagicMock()
+        window.ui.ask_yesno.return_value = True
+        window.refresh_remote_panel = MagicMock()
+
+        window.delete_selected_remote_entries()
+
+        window.parameter_editor.delete_remote_path.assert_not_called()
+        window.ui.show_error.assert_called_once()
 
     def test_local_delete_removes_files_and_empty_directories(self) -> None:
         """Local delete uses unlink/rmdir and continues across multiple selections."""
