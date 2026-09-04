@@ -1,6 +1,11 @@
 [FORMAT]
 max-line-length=127
 
+[MASTER]
+# Synchronized verbatim from ArduPilot by update_flightcontroller_ids.yml;
+# do not lint the local copy (same treatment as in [tool.ruff] exclude).
+ignore=decode_devid.py
+
 [MESSAGES CONTROL]
 disable=missing-function-docstring
 

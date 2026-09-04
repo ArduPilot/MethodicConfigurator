@@ -53,7 +53,8 @@ class TestLoadParamFileIntoDict(unittest.TestCase):
     """Test cases for validating the LoadParamFileIntoDict class."""
 
     def setUp(self) -> None:
-        self.temp_directory = tempfile.TemporaryDirectory()
+        # The directory lifetime spans the whole unittest method.
+        self.temp_directory = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.param_file = os.path.join(self.temp_directory.name, "temp.param")
 
     def test_valid_input(self) -> None:
@@ -217,7 +218,8 @@ class TestExportToParam(unittest.TestCase):
     """Test cases for validating the ExportToParam class."""
 
     def setUp(self) -> None:
-        self.temp_directory = tempfile.TemporaryDirectory()
+        # The directory lifetime spans the whole unittest method.
+        self.temp_directory = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.param_file = os.path.join(self.temp_directory.name, "temp.param")
         self.output_file = os.path.join(self.temp_directory.name, "output.param")
 
@@ -267,7 +269,8 @@ class TestUpdatePidAdjustmentParams(unittest.TestCase):
 
     def setUp(self) -> None:
         # Create a directory for the test files
-        self.test_directory = tempfile.TemporaryDirectory()
+        # The directory lifetime spans the whole unittest method.
+        self.test_directory = tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         self.test_dir = self.test_directory.name
         # Create a default, adjustment and optimized parameter file for testing
         self.default_param_file = os.path.join(self.test_dir, "00_default.param")
