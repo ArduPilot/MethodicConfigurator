@@ -18,45 +18,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import base64
 import json
-import struct
 import zlib
 from binascii import crc32
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 from ardupilot_methodic_configurator import _
 
-# Bootloader protocol bytes, from ArduPilot Tools/scripts/uploader.py
-INSYNC = b"\x12"
-EOC = b"\x20"
-OK = b"\x10"
-FAILED = b"\x11"
-INVALID = b"\x13"
-BAD_SILICON_REV = b"\x14"
-
-GET_SYNC = b"\x21"
-GET_DEVICE = b"\x22"
-CHIP_ERASE = b"\x23"
-CHIP_VERIFY = b"\x24"
-PROG_MULTI = b"\x27"
-READ_MULTI = b"\x28"
-GET_CRC = b"\x29"
-REBOOT = b"\x30"
-CHIP_FULL_ERASE = b"\x40"
-
-INFO_BL_REV = b"\x01"
-INFO_BOARD_ID = b"\x02"
-INFO_BOARD_REV = b"\x03"
-INFO_FLASH_SIZE = b"\x04"
-INFO_EXTF_SIZE = b"\x06"
-
 BL_REV_MIN = 2
 BL_REV_MAX = 5
-PROG_MULTI_MAX = 252  # protocol max is 255, must be a multiple of 4
-READ_MULTI_MAX = 252
 
-# Sanity bound on decompressed image size, well above any current flight controller flash
+# Sanity bound on each decompressed image, well above any current flight controller flash.
 MAX_IMAGE_SIZE = 64 * 1024 * 1024
 
 
@@ -80,6 +54,18 @@ class FirmwareCompatibilityError(FirmwareUploadError):
 
 class BootloaderProtocolError(FirmwareUploadError):
     """The bootloader answered something unexpected, or a protocol revision is unsupported."""
+
+    stage = "identifying"
+
+
+class FirmwareReconnectError(FirmwareUploadError):
+    """Firmware was flashed but the normal flight-controller connection did not return."""
+
+    stage = "reconnecting"
+
+
+class FirmwareUploadCancelledError(FirmwareUploadError):
+    """The user cancelled before firmware erase began."""
 
     stage = "identifying"
 
@@ -111,6 +97,10 @@ class FirmwareImage:
         for _unused in range(len(self.image), flash_size - 1, 4):
             state = crc32(b"\xff\xff\xff\xff", state)
         return state
+
+    def extf_crc(self) -> int:
+        """CRC32 of the unpadded external-flash payload."""
+        return crc32(self.extf_image[: self.metadata.extf_image_size], 0)
 
 
 @dataclass(frozen=True)
@@ -180,22 +170,19 @@ def next_stage(current: UploadStage, target: UploadStage) -> UploadStage:
     raise ValueError(msg)
 
 
-def load_apj(path: Path) -> FirmwareImage:
-    """Read and decode an APJ file, raising FirmwareFileError before any serial I/O can happen."""
-    if path.suffix.lower() != ".apj":
-        msg = _("unsupported firmware format {suffix}, only .apj is supported").format(suffix=path.suffix)
-        raise FirmwareFileError(msg)
+def parse_apj(contents: str | bytes, *, path: Path = Path()) -> FirmwareImage:
+    """Purely parse and validate APJ contents; callers own file-system access."""
     try:
-        desc = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        msg = _("cannot read APJ descriptor: {error}").format(error=exc)
+        desc: Any = json.loads(contents)
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
+        msg = _("cannot parse APJ descriptor: {error}").format(error=exc)
         raise FirmwareFileError(msg) from exc
     if not isinstance(desc, dict):
         msg = _("APJ descriptor is not a JSON object")
         raise FirmwareFileError(msg)
 
-    image = _decode_blob(desc, "image")
-    extf_image = _decode_blob(desc, "extf_image") if "extf_image" in desc else b""
+    raw_image = _decode_blob(desc, "image")
+    raw_extf_image = _decode_blob(desc, "extf_image") if "extf_image" in desc else b""
 
     try:
         board_id = int(desc["board_id"])
@@ -207,11 +194,16 @@ def load_apj(path: Path) -> FirmwareImage:
     if board_id < 0 or image_size <= 0 or extf_image_size < 0:
         msg = _("APJ metadata values are out of range")
         raise FirmwareFileError(msg)
-    if image_size > len(image) or extf_image_size > len(extf_image):
+    if image_size != len(raw_image) or extf_image_size != len(raw_extf_image):
         msg = _("APJ image_size does not match the decoded image")
         raise FirmwareFileError(msg)
 
     board_rev = desc.get("board_revision")
+    try:
+        parsed_board_rev = int(board_rev) if board_rev is not None else None
+    except (TypeError, ValueError) as exc:
+        msg = _("APJ descriptor is missing or has invalid metadata: {error}").format(error=exc)
+        raise FirmwareFileError(msg) from exc
     metadata = FirmwareImageMetadata(
         path=path,
         board_id=board_id,
@@ -219,21 +211,30 @@ def load_apj(path: Path) -> FirmwareImage:
         extf_image_size=extf_image_size,
         firmware_version=str(desc.get("version", "")),
         git_identity=str(desc.get("git_identity", "")),
-        board_revision=int(board_rev) if board_rev is not None else None,
+        board_revision=parsed_board_rev,
     )
-    return FirmwareImage(metadata=metadata, image=image, extf_image=extf_image)
+    return FirmwareImage(metadata=metadata, image=_pad4(raw_image), extf_image=_pad4(raw_extf_image))
 
 
 def _decode_blob(desc: dict, key: str) -> bytes:
     try:
-        raw = zlib.decompress(base64.b64decode(desc[key], validate=True), bufsize=MAX_IMAGE_SIZE)
+        compressed = base64.b64decode(desc[key], validate=True)
+        decompressor = zlib.decompressobj()
+        raw = decompressor.decompress(compressed, MAX_IMAGE_SIZE + 1)
+        if len(raw) > MAX_IMAGE_SIZE or decompressor.unconsumed_tail:
+            msg = _("APJ {key} exceeds {limit} bytes").format(key=key, limit=MAX_IMAGE_SIZE)
+            raise FirmwareFileError(msg)
+        raw += decompressor.flush(MAX_IMAGE_SIZE + 1 - len(raw))
+        if len(raw) > MAX_IMAGE_SIZE:
+            msg = _("APJ {key} exceeds {limit} bytes").format(key=key, limit=MAX_IMAGE_SIZE)
+            raise FirmwareFileError(msg)
+        if not decompressor.eof:
+            msg = _("APJ {key} is not valid base64+zlib data: truncated stream").format(key=key)
+            raise FirmwareFileError(msg)
     except (KeyError, TypeError, ValueError, zlib.error) as exc:
         msg = _("APJ {key} is not valid base64+zlib data: {error}").format(key=key, error=exc)
         raise FirmwareFileError(msg) from exc
-    if len(raw) > MAX_IMAGE_SIZE:
-        msg = _("APJ {key} exceeds {limit} bytes").format(key=key, limit=MAX_IMAGE_SIZE)
-        raise FirmwareFileError(msg)
-    return _pad4(raw)
+    return raw
 
 
 def _pad4(data: bytes) -> bytes:
@@ -246,97 +247,20 @@ def check_compatibility(image: FirmwareImage, bootloader: BootloaderInfo, *, for
         msg = _("unsupported bootloader protocol revision {revision}").format(revision=bootloader.protocol_revision)
         raise BootloaderProtocolError(msg)
     meta = image.metadata
-    if meta.board_id != bootloader.board_id and not force:
+    compatible_board_ids = {33: 9}
+    board_matches = meta.board_id == bootloader.board_id or compatible_board_ids.get(bootloader.board_id) == meta.board_id
+    if not board_matches and not force:
         msg = _("firmware is for board_id {image_id}, board reports {board_id}").format(
             image_id=meta.board_id, board_id=bootloader.board_id
         )
         raise FirmwareCompatibilityError(msg)
-    if meta.image_size > bootloader.flash_size:
+    if len(image.image) > bootloader.flash_size:
         msg = _("image of {size} bytes exceeds flash of {flash} bytes").format(
-            size=meta.image_size, flash=bootloader.flash_size
+            size=len(image.image), flash=bootloader.flash_size
         )
         raise FirmwareCompatibilityError(msg)
-    if meta.extf_image_size > bootloader.extf_size:
+    if len(image.extf_image) > bootloader.extf_size:
         msg = _("external image of {size} bytes exceeds external flash of {extf} bytes").format(
-            size=meta.extf_image_size, extf=bootloader.extf_size
+            size=len(image.extf_image), extf=bootloader.extf_size
         )
         raise FirmwareCompatibilityError(msg)
-
-
-# Bootloader protocol codec. Encoders build the bytes to write, decoders check what came back.
-
-
-def encode_get_sync() -> bytes:
-    """GET_SYNC command."""
-    return GET_SYNC + EOC
-
-
-def encode_get_device(param: bytes) -> bytes:
-    """GET_DEVICE command for one INFO_* parameter."""
-    return GET_DEVICE + param + EOC
-
-
-def encode_chip_erase(*, full: bool = False) -> bytes:
-    """CHIP_ERASE, or CHIP_FULL_ERASE when full is set."""
-    return (CHIP_FULL_ERASE if full else CHIP_ERASE) + EOC
-
-
-def encode_prog_multi(chunk: bytes) -> bytes:
-    """PROG_MULTI command carrying one chunk of at most PROG_MULTI_MAX bytes."""
-    if not 0 < len(chunk) <= PROG_MULTI_MAX or len(chunk) % 4:
-        msg = _("PROG_MULTI chunk must be 4..{limit} bytes and a multiple of 4, got {size}").format(
-            limit=PROG_MULTI_MAX, size=len(chunk)
-        )
-        raise ValueError(msg)
-    return PROG_MULTI + bytes([len(chunk)]) + chunk + EOC
-
-
-def encode_read_multi(length: int) -> bytes:
-    """READ_MULTI command for length bytes."""
-    if not 0 < length <= READ_MULTI_MAX:
-        msg = _("READ_MULTI length must be 1..{limit}, got {length}").format(limit=READ_MULTI_MAX, length=length)
-        raise ValueError(msg)
-    return READ_MULTI + bytes([length]) + EOC
-
-
-def encode_get_crc() -> bytes:
-    """GET_CRC command."""
-    return GET_CRC + EOC
-
-
-def encode_reboot() -> bytes:
-    """REBOOT command."""
-    return REBOOT + EOC
-
-
-def decode_sync(reply: bytes) -> None:
-    """Validate the two byte INSYNC/status reply that follows every command, raising on anything but OK."""
-    if len(reply) < 2:
-        msg = _("short reply, expected INSYNC and status, got {reply}").format(reply=reply)
-        raise BootloaderProtocolError(msg)
-    if reply[0:1] != INSYNC:
-        msg = _("expected INSYNC, got {byte}").format(byte=reply[0:1])
-        raise BootloaderProtocolError(msg)
-    status = reply[1:2]
-    if status == OK:
-        return
-    messages = {
-        INVALID: _("bootloader reports INVALID OPERATION"),
-        FAILED: _("bootloader reports OPERATION FAILED"),
-        BAD_SILICON_REV: _("programming not supported for this silicon revision"),
-    }
-    msg = messages.get(status) or _("unexpected status {status} instead of OK").format(status=status)
-    raise BootloaderProtocolError(msg)
-
-
-def decode_uint32(reply: bytes) -> int:
-    """Little endian u32 as returned by GET_DEVICE and GET_CRC, before the sync bytes."""
-    if len(reply) < 4:
-        msg = _("short reply, expected 4 bytes, got {size}").format(size=len(reply))
-        raise BootloaderProtocolError(msg)
-    return int(struct.unpack("<I", reply[:4])[0])
-
-
-def program_chunks(image: bytes) -> list[bytes]:
-    """Split a padded image into PROG_MULTI sized chunks, in flash order."""
-    return [image[i : i + PROG_MULTI_MAX] for i in range(0, len(image), PROG_MULTI_MAX)]

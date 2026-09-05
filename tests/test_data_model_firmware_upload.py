@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 
+from ardupilot_methodic_configurator import backend_flightcontroller_bootloader as bootloader
 from ardupilot_methodic_configurator import data_model_firmware_upload as fw
 
 # pylint: disable=redefined-outer-name, too-few-public-methods, too-many-return-statements
@@ -54,7 +55,7 @@ class TestApjLoading:
         WHEN: it is loaded
         THEN: metadata comes from the descriptor and the image is padded to 4 bytes with 0xFF
         """
-        image = fw.load_apj(write_apj(tmp_path, small_image))
+        image = bootloader.load_apj(write_apj(tmp_path, small_image))
 
         assert image.metadata.board_id == 9
         assert image.metadata.image_size == len(small_image)
@@ -75,7 +76,7 @@ class TestApjLoading:
         path.write_bytes(b"\x00" * 16)
 
         with pytest.raises(fw.FirmwareFileError, match=r"only \.apj"):
-            fw.load_apj(path)
+            bootloader.load_apj(path)
 
     @pytest.mark.parametrize(
         ("content", "reason"),
@@ -103,7 +104,7 @@ class TestApjLoading:
         path.write_text(content, encoding="utf-8")
 
         with pytest.raises(fw.FirmwareFileError, match=reason):
-            fw.load_apj(path)
+            bootloader.load_apj(path)
 
     def test_oversized_image_is_rejected(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """
@@ -118,7 +119,7 @@ class TestApjLoading:
         path = write_apj(tmp_path, big)
 
         with pytest.raises(fw.FirmwareFileError, match="exceeds"):
-            fw.load_apj(path)
+            bootloader.load_apj(path)
 
     def test_crc_matches_the_reference_uploader_computation(self, tmp_path: Path, small_image: bytes) -> None:
         """
@@ -128,7 +129,7 @@ class TestApjLoading:
         WHEN: the CRC is computed
         THEN: it equals crc32 over the image padded with 0xFF up to flash size, as Tools/scripts/uploader.py does
         """
-        image = fw.load_apj(write_apj(tmp_path, small_image))
+        image = bootloader.load_apj(write_apj(tmp_path, small_image))
         flash_size = 2048
         expected = crc32(image.image + b"\xff" * (flash_size - len(image.image)), 0)
 
@@ -140,7 +141,7 @@ class TestCompatibility:
 
     @pytest.fixture
     def image(self, tmp_path: Path, small_image: bytes) -> fw.FirmwareImage:
-        return fw.load_apj(write_apj(tmp_path, small_image))
+        return bootloader.load_apj(write_apj(tmp_path, small_image))
 
     def test_matching_board_and_enough_flash_is_accepted(self, image: fw.FirmwareImage) -> None:
         fw.check_compatibility(image, fw.BootloaderInfo(5, 9, 0, 2048))
@@ -208,52 +209,52 @@ class FakeBootloader:
         self.rebooted = False
 
     def exchange(self, request: bytes) -> bytes:  # noqa: PLR0911
-        assert request.endswith(fw.EOC)
+        assert request.endswith(bootloader.EOC)
         cmd, body = request[0:1], request[1:-1]
-        if cmd == fw.GET_SYNC:
-            return fw.INSYNC + fw.OK
-        if cmd == fw.GET_DEVICE:
+        if cmd == bootloader.GET_SYNC:
+            return bootloader.INSYNC + bootloader.OK
+        if cmd == bootloader.GET_DEVICE:
             values = {
-                fw.INFO_BL_REV: 5,
-                fw.INFO_BOARD_ID: self.board_id,
-                fw.INFO_BOARD_REV: 0,
-                fw.INFO_FLASH_SIZE: self.flash_size,
-                fw.INFO_EXTF_SIZE: 0,
+                bootloader.INFO_BL_REV: 5,
+                bootloader.INFO_BOARD_ID: self.board_id,
+                bootloader.INFO_BOARD_REV: 0,
+                bootloader.INFO_FLASH_SIZE: self.flash_size,
+                bootloader.INFO_EXTF_SIZE: 0,
             }
-            return struct.pack("<I", values[body]) + fw.INSYNC + fw.OK
-        if cmd == fw.CHIP_ERASE:
+            return struct.pack("<I", values[body]) + bootloader.INSYNC + bootloader.OK
+        if cmd == bootloader.CHIP_ERASE:
             self.erased, self.flash = True, b""
-            return fw.INSYNC + fw.OK
-        if cmd == fw.PROG_MULTI:
+            return bootloader.INSYNC + bootloader.OK
+        if cmd == bootloader.PROG_MULTI:
             if not self.erased:
-                return fw.INSYNC + fw.FAILED
+                return bootloader.INSYNC + bootloader.FAILED
             length, chunk = body[0], body[1:]
             assert len(chunk) == length
             self.flash += chunk
-            return fw.INSYNC + fw.OK
-        if cmd == fw.GET_CRC:
+            return bootloader.INSYNC + bootloader.OK
+        if cmd == bootloader.GET_CRC:
             padded = self.flash + b"\xff" * (self.flash_size - len(self.flash))
-            return struct.pack("<I", crc32(padded, 0)) + fw.INSYNC + fw.OK
-        if cmd == fw.REBOOT:
+            return struct.pack("<I", crc32(padded, 0)) + bootloader.INSYNC + bootloader.OK
+        if cmd == bootloader.REBOOT:
             self.rebooted = True
-            return fw.INSYNC + fw.OK
-        return fw.INSYNC + fw.INVALID
+            return bootloader.INSYNC + bootloader.OK
+        return bootloader.INSYNC + bootloader.INVALID
 
 
 def identify(bl: FakeBootloader) -> fw.BootloaderInfo:
-    fw.decode_sync(bl.exchange(fw.encode_get_sync()))
+    bootloader.decode_sync(bl.exchange(bootloader.encode_get_sync()))
 
     def info(param: bytes) -> int:
-        reply = bl.exchange(fw.encode_get_device(param))
-        fw.decode_sync(reply[4:])
-        return fw.decode_uint32(reply)
+        reply = bl.exchange(bootloader.encode_get_device(param))
+        bootloader.decode_sync(reply[4:])
+        return bootloader.decode_uint32(reply[:4])
 
     return fw.BootloaderInfo(
-        info(fw.INFO_BL_REV),
-        info(fw.INFO_BOARD_ID),
-        info(fw.INFO_BOARD_REV),
-        info(fw.INFO_FLASH_SIZE),
-        info(fw.INFO_EXTF_SIZE),
+        info(bootloader.INFO_BL_REV),
+        info(bootloader.INFO_BOARD_ID),
+        info(bootloader.INFO_BOARD_REV),
+        info(bootloader.INFO_FLASH_SIZE),
+        info(bootloader.INFO_EXTF_SIZE),
     )
 
 
@@ -268,56 +269,56 @@ class TestBootloaderCodec:
         WHEN: identify, erase, program every chunk, then GET_CRC
         THEN: the bootloader CRC equals the image CRC and the reboot is acknowledged
         """
-        image = fw.load_apj(write_apj(tmp_path, small_image))
+        image = bootloader.load_apj(write_apj(tmp_path, small_image))
         bl = FakeBootloader()
 
         info = identify(bl)
         fw.check_compatibility(image, info)
-        fw.decode_sync(bl.exchange(fw.encode_chip_erase()))
-        chunks = fw.program_chunks(image.image)
+        bootloader.decode_sync(bl.exchange(bootloader.encode_chip_erase()))
+        chunks = bootloader.program_chunks(image.image)
         for chunk in chunks:
-            fw.decode_sync(bl.exchange(fw.encode_prog_multi(chunk)))
-        crc_reply = bl.exchange(fw.encode_get_crc())
-        fw.decode_sync(crc_reply[4:])
-        fw.decode_sync(bl.exchange(fw.encode_reboot()))
+            bootloader.decode_sync(bl.exchange(bootloader.encode_prog_multi(chunk)))
+        crc_reply = bl.exchange(bootloader.encode_get_crc())
+        bootloader.decode_sync(crc_reply[4:])
+        bootloader.decode_sync(bl.exchange(bootloader.encode_reboot()))
 
         assert info == fw.BootloaderInfo(5, 9, 0, 2048, 0)
-        assert len(chunks) == -(-len(image.image) // fw.PROG_MULTI_MAX)
+        assert len(chunks) == -(-len(image.image) // bootloader.PROG_MULTI_MAX)
         assert bl.flash == image.image
-        assert fw.decode_uint32(crc_reply) == image.crc(info.flash_size)
+        assert bootloader.decode_uint32(crc_reply[:4]) == image.crc(info.flash_size)
         assert bl.rebooted
 
     def test_programming_before_erase_surfaces_as_a_protocol_error(self, tmp_path: Path, small_image: bytes) -> None:
-        image = fw.load_apj(write_apj(tmp_path, small_image))
+        image = bootloader.load_apj(write_apj(tmp_path, small_image))
         bl = FakeBootloader()
 
         with pytest.raises(fw.BootloaderProtocolError, match="OPERATION FAILED"):
-            fw.decode_sync(bl.exchange(fw.encode_prog_multi(fw.program_chunks(image.image)[0])))
+            bootloader.decode_sync(bl.exchange(bootloader.encode_prog_multi(bootloader.program_chunks(image.image)[0])))
 
     @pytest.mark.parametrize(
         ("reply", "reason"),
         [
             (b"", "short reply"),
             (b"\x00\x10", "expected INSYNC"),
-            (fw.INSYNC + fw.INVALID, "INVALID"),
-            (fw.INSYNC + fw.BAD_SILICON_REV, "silicon"),
-            (fw.INSYNC + b"\x7f", "unexpected status"),
+            (bootloader.INSYNC + bootloader.INVALID, "INVALID"),
+            (bootloader.INSYNC + bootloader.BAD_SILICON_REV, "silicon"),
+            (bootloader.INSYNC + b"\x7f", "unexpected status"),
         ],
     )
     def test_bad_sync_replies_are_typed_errors(self, reply: bytes, reason: str) -> None:
         with pytest.raises(fw.BootloaderProtocolError, match=reason):
-            fw.decode_sync(reply)
+            bootloader.decode_sync(reply)
 
-    @pytest.mark.parametrize("length", [0, 3, fw.PROG_MULTI_MAX + 4])
+    @pytest.mark.parametrize("length", [0, 3, bootloader.PROG_MULTI_MAX + 4])
     def test_prog_multi_refuses_chunks_the_bootloader_would_reject(self, length: int) -> None:
         with pytest.raises(ValueError, match="PROG_MULTI"):
-            fw.encode_prog_multi(b"\x00" * length)
+            bootloader.encode_prog_multi(b"\x00" * length)
 
     def test_read_multi_encodes_length_byte(self) -> None:
-        assert fw.encode_read_multi(252) == fw.READ_MULTI + b"\xfc" + fw.EOC
+        assert bootloader.encode_read_multi(252) == bootloader.READ_MULTI + b"\xfc" + bootloader.EOC
         with pytest.raises(ValueError, match="READ_MULTI"):
-            fw.encode_read_multi(253)
+            bootloader.encode_read_multi(253)
 
     def test_short_uint32_reply_is_a_protocol_error(self) -> None:
         with pytest.raises(fw.BootloaderProtocolError, match="4 bytes"):
-            fw.decode_uint32(b"\x01\x02")
+            bootloader.decode_uint32(b"\x01\x02")
