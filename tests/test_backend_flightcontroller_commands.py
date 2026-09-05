@@ -24,6 +24,26 @@ from ardupilot_methodic_configurator.backend_flightcontroller_commands import Fl
 # pylint: disable=too-many-lines
 
 
+def test_reboot_to_bootloader_holds_bootloader_without_force_flags() -> None:
+    """The reboot command must hold in bootloader mode and preserve param6=0."""
+    master = MagicMock()
+    master.target_system = 1
+    master.target_component = 1
+    acknowledgement = MagicMock()
+    acknowledgement.command = mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN
+    acknowledgement.result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+    master.recv_match.return_value = acknowledgement
+
+    connection = Mock()
+    connection.master = master
+    commands = FlightControllerCommands(params_manager=Mock(), connection_manager=connection)
+
+    assert commands.reboot_to_bootloader() == (True, "")
+
+    sent_parameters = master.mav.command_long_send.call_args.args[4:11]
+    assert sent_parameters == (3, 0, 0, 0, 0, 0, 0)
+
+
 class TestFlightControllerCommandsInitialization:
     """Test command manager initialization and setup."""
 

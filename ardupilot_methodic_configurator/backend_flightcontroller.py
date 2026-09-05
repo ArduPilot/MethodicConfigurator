@@ -14,6 +14,7 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from os import path as os_path
 from pathlib import Path
+from time import monotonic as time_monotonic
 from time import sleep as time_sleep
 from typing import TYPE_CHECKING, Any, cast
 
@@ -22,6 +23,17 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.argparse_check_range import CheckRange
+from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import (
+    CancellationRequested,
+    ConfirmationRequested,
+    FlightControllerBootloaderBackend,
+    ProgressCallback,
+    SerialFactory,
+    capture_serial_device_identity,
+    has_stable_bootloader_device_identity,
+    report_progress_safely,
+    resolve_bootloader_device,
+)
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import (
     CompassCalibrationUpdate,
     FlightControllerCommands,
@@ -41,6 +53,16 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     FlightControllerParamsProtocol,
     MavlinkConnection,
 )
+from ardupilot_methodic_configurator.data_model_firmware_upload import (
+    BootloaderInfo,
+    FirmwareBootloaderRecoveryError,
+    FirmwareConfirmationError,
+    FirmwareConnectionError,
+    FirmwareReconnectError,
+    UploadStage,
+    verify_expected_firmware_digest,
+    verify_reconnected_firmware,
+)
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
@@ -48,6 +70,7 @@ if TYPE_CHECKING:
     from pymavlink.dialects.v20.ardupilotmega import MAVLink_autopilot_version_message
 
 DEFAULT_REBOOT_TIME: int = 8
+FIRMWARE_RECONNECT_RESOLVE_TIMEOUT: float = 15.0
 
 # Re-export constants for backwards compatibility
 __all__ = [
@@ -337,6 +360,132 @@ class FlightController:  # pylint: disable=too-many-public-methods
         self._connection_manager.disconnect()
         # Clear parameter cache via params manager
         self._params_manager.clear_parameters()
+
+    def upload_apj_firmware(  # noqa: PLR0915 # pylint: disable=too-many-arguments,too-many-locals,too-many-statements
+        self,
+        path: Path,
+        *,
+        bootloader_baudrate: int = 115200,
+        bootloader_timeout: float = 2.0,
+        full_erase: bool = False,
+        expected_firmware_sha256: str | None = None,
+        serial_factory: SerialFactory | None = None,
+        cancellation_requested: CancellationRequested | None = None,
+        confirmation_requested: ConfirmationRequested | None = None,
+        progress_callback: ProgressCallback | None = None,
+    ) -> BootloaderInfo:
+        """
+        Flash an APJ through the active direct serial connection and reconnect.
+
+        This synchronous facade operation is intended for a worker thread.  It is
+        deliberately unavailable without the current MAVLink connection and its
+        directly-addressable serial device, so a UDP/TCP connection cannot be used
+        accidentally for bootloader flashing.
+        """
+        network_prefixes = ("udp:", "udpin:", "udpout:", "tcp:", "tcpin:", "tcpout:", "ws:", "wss:")
+        device = self.comport_device
+        if self.master is None or self.comport is None or not device or device.lower().startswith(network_prefixes):
+            msg = _("firmware upload requires an active direct serial flight-controller connection")
+            raise FirmwareConnectionError(msg)
+        if confirmation_requested is None:
+            msg = _("firmware upload requires explicit confirmation before entering the bootloader")
+            raise FirmwareConfirmationError(msg)
+        try:
+            connected_board_id = int(self.info.apj_board_id)
+            if connected_board_id < 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            msg = _("firmware upload requires the connected flight controller APJ board_id")
+            raise FirmwareConnectionError(msg) from None
+        device_identity = capture_serial_device_identity(device)
+        entered_bootloader = False
+
+        def report_progress(stage: UploadStage, completed: int, total: int) -> None:
+            """Keep presentation failures from interrupting the upload workflow."""
+            report_progress_safely(progress_callback, stage, completed, total)
+
+        def enter_bootloader() -> None:
+            nonlocal entered_bootloader
+            if self.master is None:
+                msg = _("flight-controller connection was lost before bootloader entry")
+                raise FirmwareConnectionError(msg)
+            accepted, error_message = self._commands_manager.reboot_to_bootloader()
+            if not accepted:
+                msg = _("flight controller rejected bootloader entry: {error}").format(error=error_message)
+                raise FirmwareConnectionError(msg)
+            # From this point on a failed callback, disconnect, or transport
+            # setup must attempt recovery before returning control to the caller.
+            entered_bootloader = True
+            time_sleep(0.3)  # Allow the MAVLink frame to leave before releasing the port.
+            self.disconnect()
+
+        def reconnect_after_bootloader() -> str:
+            active_baudrate = getattr(self._connection_manager, "active_baudrate", self.baudrate)
+            deadline = time_monotonic() + FIRMWARE_RECONNECT_RESOLVE_TIMEOUT
+            last_error: OSError | None = None
+            while time_monotonic() < deadline:
+                try:
+                    reconnect_device = resolve_bootloader_device(device, device_identity)
+                    return self.connect(reconnect_device, log_errors=False, baudrate=active_baudrate)
+                except OSError as exc:  # noqa: PERF203
+                    last_error = exc
+                    time_sleep(0.1)
+            return _("cannot resolve the flight-controller serial device: {error}").format(error=last_error)
+
+        backend_kwargs: dict[str, Any] = {
+            "timeout": bootloader_timeout,
+            "enter_bootloader": enter_bootloader,
+            "device_identity": device_identity,
+        }
+        if serial_factory is not None:
+            backend_kwargs["serial_factory"] = serial_factory
+        backend = FlightControllerBootloaderBackend(
+            device,
+            bootloader_baudrate,
+            **backend_kwargs,
+        )
+        image = backend.inspect_firmware(path)
+        if expected_firmware_sha256 is None:
+            msg = _("firmware upload requires a trusted SHA-256 for the selected APJ payload")
+            raise FirmwareConfirmationError(msg)
+        verify_expected_firmware_digest(image, expected_firmware_sha256)
+        if not has_stable_bootloader_device_identity(device, device_identity):
+            msg = _("firmware upload requires a stable USB serial number, USB location, or Linux by-path device")
+            raise FirmwareConnectionError(msg)
+        report_progress(UploadStage.ENTERING_BOOTLOADER, 0, 1)
+        try:
+            info = backend.upload(
+                image,
+                full_erase=full_erase,
+                cancellation_requested=cancellation_requested,
+                confirmation_requested=confirmation_requested,
+                progress_callback=report_progress,
+                connected_board_id=connected_board_id,
+            )
+        except Exception as exc:
+            if isinstance(exc, FirmwareBootloaderRecoveryError):
+                # ``hold_in_bootloader`` disables the normal boot timeout.  If
+                # no bootloader transport could be opened, no in-band reboot is
+                # possible and a MAVLink reconnect cannot succeed.
+                raise
+            if entered_bootloader and getattr(exc, "bootloader_rebooted", False):
+                recovery_error = reconnect_after_bootloader()
+                if recovery_error:
+                    logging_warning(_("Unable to reconnect after safe firmware-upload abort: %s"), recovery_error)
+            raise
+        # A flashed image invalidates every cached parameter.  The reconnect is a
+        # required part of success, rather than an optimistic best-effort step.
+        self._params_manager.clear_parameters()
+        report_progress(UploadStage.RECONNECTING, 0, 1)
+        reconnect_error = reconnect_after_bootloader()
+        if reconnect_error:
+            raise FirmwareReconnectError(reconnect_error)
+        verify_reconnected_firmware(
+            image,
+            board_id=self.info.apj_board_id,
+        )
+        report_progress(UploadStage.RECONNECTING, 1, 1)
+        return info
 
     @property
     def banner_text_buffer(self) -> list[str]:
