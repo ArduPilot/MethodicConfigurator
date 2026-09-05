@@ -98,6 +98,11 @@ class FlightControllerConnectionProtocol(Protocol):
         """Get the default baud rate for serial connections."""
         ...  # pylint: disable=unnecessary-ellipsis
 
+    @property
+    def active_baudrate(self) -> int:
+        """Get the baud rate used for the current or most recent serial session."""
+        ...  # pylint: disable=unnecessary-ellipsis
+
     def discover_connections(
         self,
         progress_callback: Callable[[int, int], None] | None = None,
@@ -232,6 +237,8 @@ class FlightControllerCommandsProtocol(Protocol):  # pylint: disable=too-many-pu
         param7: float,
         timeout: float,
     ) -> tuple[bool, str]: ...
+
+    def reboot_to_bootloader(self) -> tuple[bool, str]: ...
 
     def reset_all_parameters_to_default(self) -> tuple[bool, str]: ...
 

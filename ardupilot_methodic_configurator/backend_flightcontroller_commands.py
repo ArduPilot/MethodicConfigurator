@@ -200,6 +200,14 @@ class FlightControllerCommands:  # pylint: disable=too-many-public-methods
             logging_error(error_msg)
             return False, error_msg
 
+    def reboot_to_bootloader(self) -> tuple[bool, str]:
+        """Request reboot into the bootloader and wait for its command acknowledgment."""
+        return self.send_command_and_wait_ack(
+            mavutil.mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+            param1=3,
+            timeout=self.COMMAND_ACK_TIMEOUT,
+        )
+
     def reset_all_parameters_to_default(self) -> tuple[bool, str]:
         """
         Reset all parameters to their factory default values.
