@@ -32,12 +32,20 @@ BL_REV_MAX = 5
 
 # Sanity bound on each decompressed image, well above any current flight controller flash.
 MAX_IMAGE_SIZE = 64 * 1024 * 1024
+# A base64 APJ blob can be roughly 4/3 the compressed input.  Permit a small
+# compression-stream overhead while rejecting a descriptor before decoding it.
+MAX_ENCODED_BLOB_SIZE = ((MAX_IMAGE_SIZE + 65536) * 4 // 3) + 4
 
 
 class FirmwareUploadError(Exception):
     """Base class for typed firmware upload errors, `stage` names where it happened."""
 
     stage = "unknown"
+
+    def __init__(self, message: str, *, stage: str | None = None) -> None:
+        super().__init__(message)
+        if stage is not None:
+            self.stage = stage
 
 
 class FirmwareFileError(FirmwareUploadError):
@@ -68,6 +76,12 @@ class FirmwareUploadCancelledError(FirmwareUploadError):
     """The user cancelled before firmware erase began."""
 
     stage = "identifying"
+
+
+class FirmwareConfirmationError(FirmwareUploadError):
+    """An irreversible upload was requested without explicit confirmation."""
+
+    stage = "awaiting_confirmation"
 
 
 @dataclass(frozen=True)
@@ -218,7 +232,14 @@ def parse_apj(contents: str | bytes, *, path: Path = Path()) -> FirmwareImage:
 
 def _decode_blob(desc: dict, key: str) -> bytes:
     try:
-        compressed = base64.b64decode(desc[key], validate=True)
+        encoded = desc[key]
+        if not isinstance(encoded, (str, bytes)):
+            msg = _("APJ {key} is not valid base64+zlib data: expected text").format(key=key)
+            raise FirmwareFileError(msg)
+        if len(encoded) > MAX_ENCODED_BLOB_SIZE:
+            msg = _("APJ {key} exceeds {limit} encoded bytes").format(key=key, limit=MAX_ENCODED_BLOB_SIZE)
+            raise FirmwareFileError(msg)
+        compressed = base64.b64decode(encoded, validate=True)
         decompressor = zlib.decompressobj()
         raw = decompressor.decompress(compressed, MAX_IMAGE_SIZE + 1)
         if len(raw) > MAX_IMAGE_SIZE or decompressor.unconsumed_tail:

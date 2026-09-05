@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable
+from pathlib import Path
+from sys import platform as sys_platform
 from time import monotonic
 from time import sleep as time_sleep
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import Protocol, cast
 
 import serial
 
@@ -21,17 +23,18 @@ from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.data_model_firmware_upload import (
     BL_REV_MAX,
     BL_REV_MIN,
+    MAX_ENCODED_BLOB_SIZE,
     BootloaderInfo,
     BootloaderProtocolError,
+    FirmwareConfirmationError,
     FirmwareFileError,
     FirmwareImage,
     FirmwareUploadCancelledError,
+    FirmwareUploadError,
+    UploadStage,
     check_compatibility,
     parse_apj,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 # ArduPilot/PX4 bootloader protocol bytes, from Tools/scripts/uploader.py.
 INSYNC = b"\x12"
@@ -64,6 +67,7 @@ PROG_MULTI_MAX = 252  # protocol maximum is 255; writes must be word aligned
 READ_MULTI_MAX = 252
 ERASE_TIMEOUT = 20.0
 EXTF_CRC_TIMEOUT = 10.0
+MAX_APJ_DESCRIPTOR_SIZE = (MAX_ENCODED_BLOB_SIZE * 2) + (1024 * 1024)
 
 
 class BootloaderTransport(Protocol):
@@ -75,7 +79,31 @@ class BootloaderTransport(Protocol):
 
     def flush(self) -> None: ...
 
+    def reset_input_buffer(self) -> None: ...
+
     def close(self) -> None: ...
+
+
+ProgressCallback = Callable[[UploadStage, int, int], None]
+ConfirmationRequested = Callable[[FirmwareImage, BootloaderInfo], bool]
+CancellationRequested = Callable[[], bool]
+SerialFactory = Callable[[str, int, float], BootloaderTransport]
+BootloaderEntry = Callable[[], None]
+DeviceResolver = Callable[[str], str]
+
+
+def resolve_bootloader_device(device: str) -> str:
+    """Use Linux's stable USB by-path link when the current port can be mapped to it."""
+    if not sys_platform.startswith("linux"):
+        return device
+    try:
+        current = Path(device).resolve(strict=True)
+        for by_path in Path("/dev/serial/by-path").iterdir():
+            if by_path.resolve(strict=True) == current:
+                return str(by_path)
+    except OSError:
+        pass
+    return device
 
 
 def load_apj(path: Path) -> FirmwareImage:
@@ -84,7 +112,15 @@ def load_apj(path: Path) -> FirmwareImage:
         msg = _("unsupported firmware format {suffix}, only .apj is supported").format(suffix=path.suffix)
         raise FirmwareFileError(msg)
     try:
-        return parse_apj(path.read_bytes(), path=path)
+        if path.stat().st_size > MAX_APJ_DESCRIPTOR_SIZE:
+            msg = _("APJ descriptor exceeds {limit} bytes").format(limit=MAX_APJ_DESCRIPTOR_SIZE)
+            raise FirmwareFileError(msg)
+        with path.open("rb") as descriptor:
+            contents = descriptor.read(MAX_APJ_DESCRIPTOR_SIZE + 1)
+        if len(contents) > MAX_APJ_DESCRIPTOR_SIZE:
+            msg = _("APJ descriptor exceeds {limit} bytes").format(limit=MAX_APJ_DESCRIPTOR_SIZE)
+            raise FirmwareFileError(msg)
+        return parse_apj(contents, path=path)
     except OSError as exc:
         msg = _("cannot read APJ descriptor: {error}").format(error=exc)
         raise FirmwareFileError(msg) from exc
@@ -200,6 +236,23 @@ class BootloaderClient:
     def close(self) -> None:
         self._transport.close()
 
+    def _reset_input_buffer(self) -> None:
+        try:
+            self._transport.reset_input_buffer()
+        except (OSError, serial.SerialException) as exc:
+            msg = _("cannot clear bootloader serial input: {error}").format(error=exc)
+            raise BootloaderProtocolError(msg) from exc
+
+    @staticmethod
+    def _report(progress_callback: ProgressCallback | None, stage: UploadStage, completed: int, total: int) -> None:
+        if progress_callback is None:
+            return
+        try:
+            progress_callback(stage, completed, total)
+        except Exception:
+            # Progress presentation must not interrupt an irreversible write.
+            return
+
     def _write(self, request: bytes) -> None:
         try:
             written = self._transport.write(request)
@@ -208,9 +261,7 @@ class BootloaderClient:
             msg = _("bootloader transport write failed: {error}").format(error=exc)
             raise BootloaderProtocolError(msg) from exc
         if written != len(request):
-            msg = _("bootloader transport wrote {written} of {expected} bytes").format(
-                written=written, expected=len(request)
-            )
+            msg = _("bootloader transport wrote {written} of {expected} bytes").format(written=written, expected=len(request))
             raise BootloaderProtocolError(msg)
 
     def _read_exact(self, size: int, *, timeout: float | None = None) -> bytes:
@@ -242,6 +293,7 @@ class BootloaderClient:
         return reply
 
     def identify(self) -> BootloaderInfo:
+        self._reset_input_buffer()
         self._command(encode_get_sync())
         revision = decode_uint32(self._command(encode_get_device(INFO_BL_REV), 4))
         if not BL_REV_MIN <= revision <= BL_REV_MAX:
@@ -300,13 +352,16 @@ class BootloaderClient:
             msg = _("external firmware CRC verification failed")
             raise BootloaderProtocolError(msg)
 
-    def upload(
+    def upload(  # noqa: PLR0915
         self,
         image: FirmwareImage,
         *,
         force: bool = False,
         full_erase: bool = False,
         cancellation_requested: CancellationRequested | None = None,
+        confirmation_requested: ConfirmationRequested | None = None,
+        progress_callback: ProgressCallback | None = None,
+        bootloader: BootloaderInfo | None = None,
     ) -> BootloaderInfo:
         """
         Identify, validate, program all image regions, verify, and reboot.
@@ -315,35 +370,65 @@ class BootloaderClient:
         uses CHIP_VERIFY plus READ_MULTI and intentionally receives no reboot ACK;
         revision three and later use CRC and require that ACK.
         """
+        stage = UploadStage.IDENTIFYING
         try:
-            info = self.identify()
+            self._report(progress_callback, stage, 0, 1)
+            info = bootloader or self.identify()
+            self._report(progress_callback, stage, 1, 1)
             check_compatibility(image, info, force=force)
+            stage = UploadStage.AWAITING_CONFIRMATION
+            self._report(progress_callback, stage, 0, 1)
+            if confirmation_requested is not None and not confirmation_requested(image, info):
+                msg = _("firmware upload was not confirmed")
+                raise FirmwareUploadCancelledError(msg, stage=stage.value)
+            self._report(progress_callback, stage, 1, 1)
             if cancellation_requested is not None and cancellation_requested():
                 msg = _("firmware upload cancelled before erase")
-                raise FirmwareUploadCancelledError(msg)
+                raise FirmwareUploadCancelledError(msg, stage=stage.value)
             if image.metadata.extf_image_size:
+                stage = UploadStage.ERASING
+                self._report(progress_callback, stage, 0, 1)
                 self._erase_external(image.metadata.extf_image_size)
-                for chunk in program_chunks(image.extf_image):
+                self._report(progress_callback, stage, 1, 1)
+                stage = UploadStage.PROGRAMMING
+                chunks = program_chunks(image.extf_image)
+                for index, chunk in enumerate(chunks, start=1):
                     self._command(encode_extf_prog_multi(chunk))
+                    self._report(progress_callback, stage, index, len(chunks))
+                stage = UploadStage.VERIFYING
+                self._report(progress_callback, stage, 0, 1)
                 self._verify_external(image)
+                self._report(progress_callback, stage, 1, 1)
+            stage = UploadStage.ERASING
+            self._report(progress_callback, stage, 0, 1)
             self._write(encode_chip_erase(full=full_erase))
             self._sync(timeout=ERASE_TIMEOUT)
-            for chunk in program_chunks(image.image):
+            self._report(progress_callback, stage, 1, 1)
+            stage = UploadStage.PROGRAMMING
+            chunks = program_chunks(image.image)
+            for index, chunk in enumerate(chunks, start=1):
                 self._command(encode_prog_multi(chunk))
+                self._report(progress_callback, stage, index, len(chunks))
+            stage = UploadStage.VERIFYING
+            self._report(progress_callback, stage, 0, 1)
             if info.protocol_revision == 2:
                 self._verify_v2(image)
-                self._write(encode_reboot())
             else:
                 self._verify_v3(image, info.flash_size)
+            self._report(progress_callback, stage, 1, 1)
+            stage = UploadStage.REBOOTING
+            self._report(progress_callback, stage, 0, 1)
+            if info.protocol_revision == 2:
+                self._write(encode_reboot())
+            else:
                 self._command(encode_reboot())
+            self._report(progress_callback, stage, 1, 1)
             return info
+        except BootloaderProtocolError as exc:
+            exc.stage = stage.value
+            raise
         finally:
             self.close()
-
-
-SerialFactory = Callable[[str, int, float], BootloaderTransport]
-BootloaderEntry = Callable[[], None]
-CancellationRequested = Callable[[], bool]
 
 
 def open_serial_transport(device: str, baudrate: int, timeout: float) -> BootloaderTransport:
@@ -362,11 +447,12 @@ class FlightControllerBootloaderBackend:
         timeout: float = 2.0,
         enter_bootloader: BootloaderEntry | None = None,
         serial_factory: SerialFactory = open_serial_transport,
+        device_resolver: DeviceResolver = resolve_bootloader_device,
         open_retries: int = 5,
         retry_delay: float = 0.5,
         sleep: Callable[[float], None] = time_sleep,
     ) -> None:
-        self._device = device
+        self._device = device_resolver(device)
         self._baudrate = baudrate
         self._timeout = timeout
         self._enter_bootloader = enter_bootloader
@@ -385,30 +471,47 @@ class FlightControllerBootloaderBackend:
         force: bool = False,
         full_erase: bool = False,
         cancellation_requested: CancellationRequested | None = None,
+        confirmation_requested: ConfirmationRequested | None = None,
+        progress_callback: ProgressCallback | None = None,
     ) -> BootloaderInfo:
+        if confirmation_requested is None:
+            msg = _("firmware upload requires explicit confirmation")
+            raise FirmwareConfirmationError(msg)
         if self._enter_bootloader is not None:
             self._enter_bootloader()
-        transport = self._open_transport()
-        return BootloaderClient(transport).upload(
+        client, info = self._wait_for_bootloader()
+        return client.upload(
             image,
             force=force,
             full_erase=full_erase,
             cancellation_requested=cancellation_requested,
+            confirmation_requested=confirmation_requested,
+            progress_callback=progress_callback,
+            bootloader=info,
         )
 
-    def _open_transport(self) -> BootloaderTransport:
+    def _wait_for_bootloader(self) -> tuple[BootloaderClient, BootloaderInfo]:
         if self._open_retries < 1:
             msg = _("bootloader open retries must be at least one")
             raise ValueError(msg)
-        last_error: OSError | serial.SerialException | None = None
+        last_error: FirmwareUploadError | OSError | serial.SerialException | None = None
         for attempt in range(self._open_retries):
-            transport, last_error = self._try_open_transport()
+            transport, open_error = self._try_open_transport()
             if transport is not None:
-                return transport
+                client = BootloaderClient(transport)
+                try:
+                    return client, client.identify()
+                except BootloaderProtocolError as exc:
+                    last_error = exc
+                    client.close()
+            else:
+                last_error = open_error
             if attempt + 1 < self._open_retries:
                 self._sleep(self._retry_delay)
-        msg = _("cannot open bootloader serial port {device}: {error}").format(device=self._device, error=last_error)
-        raise BootloaderProtocolError(msg) from last_error
+        msg = _("cannot synchronize with bootloader on serial port {device}: {error}").format(
+            device=self._device, error=last_error
+        )
+        raise BootloaderProtocolError(msg, stage=UploadStage.ENTERING_BOOTLOADER.value) from last_error
 
     def _try_open_transport(self) -> tuple[BootloaderTransport | None, OSError | serial.SerialException | None]:
         try:

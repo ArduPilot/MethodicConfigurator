@@ -45,9 +45,9 @@ class FakeBootloaderTransport:
         self._reply = bytearray()
         self._read_offset = 0
 
-    def write(self, request: bytes) -> int:
-        assert request.endswith(bl.EOC)
-        command, body = request[:1], request[1:-1]
+    def write(self, data: bytes) -> int:
+        assert data.endswith(bl.EOC)
+        command, body = data[:1], data[1:-1]
         sync = bl.INSYNC + bl.OK
         if command == bl.GET_SYNC:
             self._reply.extend(sync)
@@ -87,7 +87,7 @@ class FakeBootloaderTransport:
             self._reply.extend(struct.pack("<I", crc32(padded, 0)) + sync)
         elif command == bl.REBOOT and self.revision >= 3:
             self._reply.extend(sync)
-        return len(request)
+        return len(data)
 
     def read(self, size: int = 1) -> bytes:
         # Deliberately emulate short serial reads.
@@ -98,6 +98,9 @@ class FakeBootloaderTransport:
 
     def flush(self) -> None:
         pass
+
+    def reset_input_buffer(self) -> None:
+        self._reply.clear()
 
     def close(self) -> None:
         self.closed = True
@@ -161,6 +164,22 @@ def test_bounded_decompression_rejects_before_full_output_is_allocated(monkeypat
         fw.parse_apj(apj(b"x" * 64))
 
 
+def test_parser_rejects_oversized_encoded_blob_before_base64_decode(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(fw, "MAX_ENCODED_BLOB_SIZE", 8)
+
+    with pytest.raises(fw.FirmwareFileError, match="encoded"):
+        fw.parse_apj(apj(b"abcd"))
+
+
+def test_reader_rejects_oversized_apj_descriptor_before_reading(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+    monkeypatch.setattr(bl, "MAX_APJ_DESCRIPTOR_SIZE", 8)
+
+    with pytest.raises(fw.FirmwareFileError, match="descriptor exceeds"):
+        bl.load_apj(path)
+
+
 class _Master:
     def __init__(self) -> None:
         self.held_in_bootloader = False
@@ -175,9 +194,11 @@ class _Connection:
         self.comport = object()
         self.comport_device = device
         self.baudrate = 115200
+        self.active_baudrate = 921600
         self.info = FlightControllerInfo()
         self.disconnected = False
         self.reconnected = False
+        self.reconnect_baudrate: int | None = None
 
     def discover_connections(self, **_kwargs: object) -> None:
         pass
@@ -186,8 +207,9 @@ class _Connection:
         self.disconnected = True
         self.master = None  # type: ignore[assignment]
 
-    def create_connection_with_retry(self, *_args: object, **_kwargs: object) -> str:
+    def create_connection_with_retry(self, *_args: object, **kwargs: object) -> str:
         self.reconnected = True
+        self.reconnect_baudrate = kwargs.get("baudrate") if isinstance(kwargs.get("baudrate"), int) else None
         return ""
 
 
@@ -213,11 +235,12 @@ def test_facade_enters_bootloader_releases_serial_and_reconnects(tmp_path: Path)
     path.write_bytes(apj(b"abcd"))
     master = connection.master
 
-    controller.upload_apj_firmware(path, serial_factory=lambda *_args: transport)
+    controller.upload_apj_firmware(path, serial_factory=lambda *_args: transport, confirmation_requested=lambda *_args: True)
 
     assert master.held_in_bootloader
     assert connection.disconnected
     assert connection.reconnected
+    assert connection.reconnect_baudrate == 921600
     assert transport.closed
     assert params.cleared == 2
 
@@ -264,11 +287,70 @@ def test_backend_retries_serial_open_after_bootloader_entry() -> None:
         sleep=delays.append,
     )
 
-    backend.upload(image)
+    backend.upload(image, confirmation_requested=lambda *_args: True)
 
     assert entered
     assert attempts == 2
     assert delays == [0.25]
+
+
+def test_backend_retries_bootloader_identification_after_stale_serial_data() -> None:
+    class StaleTransport(FakeBootloaderTransport):
+        def write(self, data: bytes) -> int:
+            if data[:1] == bl.GET_SYNC:
+                self._reply.extend(b"\x00\x10")
+                return len(data)
+            return super().write(data)
+
+    stale = StaleTransport()
+    working = FakeBootloaderTransport()
+    transports = iter([stale, working])
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=lambda *_args: next(transports),
+        open_retries=2,
+        retry_delay=0,
+        sleep=lambda _delay: None,
+    )
+
+    backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    assert stale.closed
+    assert working.closed
+
+
+def test_upload_reports_protocol_stages_and_confirmation_boundary() -> None:
+    events: list[bl.UploadStage] = []
+    confirmed: list[fw.BootloaderInfo] = []
+    transport = FakeBootloaderTransport()
+
+    bl.BootloaderClient(transport).upload(
+        fw.parse_apj(apj(b"abcd")),
+        confirmation_requested=lambda _image, info: confirmed.append(info) is None,
+        progress_callback=lambda stage, _done, _total: events.append(stage),
+    )
+
+    assert confirmed
+    assert fw.UploadStage.AWAITING_CONFIRMATION in events
+    assert fw.UploadStage.ERASING in events
+    assert fw.UploadStage.PROGRAMMING in events
+    assert fw.UploadStage.VERIFYING in events
+    assert fw.UploadStage.REBOOTING in events
+
+
+def test_verify_failure_reports_the_verifying_stage() -> None:
+    class BadCrcTransport(FakeBootloaderTransport):
+        def write(self, data: bytes) -> int:
+            if data[:1] == bl.GET_CRC:
+                self._reply.extend(struct.pack("<I", 0) + bl.INSYNC + bl.OK)
+                return len(data)
+            return super().write(data)
+
+    with pytest.raises(fw.BootloaderProtocolError, match="CRC") as error:
+        bl.BootloaderClient(BadCrcTransport()).upload(fw.parse_apj(apj(b"abcd")))
+
+    assert error.value.stage == fw.UploadStage.VERIFYING.value
 
 
 def test_cancellation_is_honoured_before_flash_is_erased() -> None:
@@ -280,3 +362,17 @@ def test_cancellation_is_honoured_before_flash_is_erased() -> None:
     assert transport.flash == b""
     assert transport.extf == b""
     assert transport.closed
+
+
+def test_facade_requires_explicit_confirmation(tmp_path: Path) -> None:
+    controller = FlightController(
+        connection_manager=_Connection(),  # type: ignore[arg-type]
+        params_manager=_Params(),  # type: ignore[arg-type]
+        commands_manager=object(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+
+    with pytest.raises(fw.FirmwareConfirmationError, match="explicit confirmation"):
+        controller.upload_apj_firmware(path)
