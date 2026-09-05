@@ -225,7 +225,7 @@ msgstr "Errore nell'apertura del logfile {logfile}: {error}"
 msgid ""
 "Parameter {parameter_name} changed from {previous_value} to {value} before "
 "boot process completed"
-msgstr ""
+msgstr "Il parametro {parameter_name} è cambiato da {previous_value} a {value} prima del completamento del processo di avvio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:341
 msgid "Schema {name} has mismatched field and format counts"
@@ -242,11 +242,11 @@ msgstr "Discrepanza nei campi per {name}. Mancanti: {missing}, extra: {extra}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:519
 msgid "No firmware version information found in {bin_file}"
-msgstr ""
+msgstr "Nessuna informazione sulla versione del firmware trovata in {bin_file}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:656
 msgid "pymavlink did not expose raw fixed-point field {field_name}"
-msgstr ""
+msgstr "pymavlink non ha esposto il campo grezzo a virgola fissa {field_name}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:724
 msgid "Message count for {message_type} exceeded the preallocated array size"
@@ -828,7 +828,7 @@ msgstr "Spiegazione del caricamento solo dei parametri modificati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:81
 msgid "Log availability report explanation"
-msgstr ""
+msgstr "Spiegazione del rapporto sulla disponibilità del log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_filesystem_program_settings.py:130
 msgid "Connection string cannot be empty or whitespace-only"
@@ -3605,7 +3605,7 @@ msgstr ""
 msgid ""
 "Quiktune is now completed. Disable it so that we can use the same RC switch "
 "to operate the wp-advance script"
-msgstr ""
+msgstr "Quiktune è ora completato. Disattivalo in modo da poter usare lo stesso interruttore RC per eseguire lo script wp-advance"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid "Restore value now that system identification is done"
@@ -4320,7 +4320,7 @@ msgstr "Separatore parametro-valore mancante: {line} in {param_file} riga {i}"
 msgid ""
 "Fatal error reading {param_file}, file must be UTF-8, UTF-16, or UTF-32 "
 "encoded: {exp}"
-msgstr ""
+msgstr "Errore fatale durante la lettura di {param_file}, il file deve essere codificato in UTF-8, UTF-16 o UTF-32: {exp}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_par_dict.py:243
 msgid "Too long parameter name: {parameter_name} in {param_file} line {i}"
@@ -5742,7 +5742,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:462
 msgid "Failed to extract data from the selected .bin log file"
-msgstr ""
+msgstr "Impossibile estrarre i dati dal file di log .bin selezionato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:506
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project_creator.py:556
@@ -6489,48 +6489,48 @@ msgstr "Download dei parametri non riuscito"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:55
 msgid "Severe"
-msgstr ""
+msgstr "Grave"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:56
 msgid "Needs attention"
-msgstr ""
+msgstr "Richiede attenzione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:57
 msgid "Informational"
-msgstr ""
+msgstr "Informativo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:61
 msgid "A serious issue that should be fixed before further flights"
-msgstr ""
+msgstr "Un problema serio che dovrebbe essere risolto prima di ulteriori voli"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:62
 msgid "Worth reviewing, may or may not need action"
-msgstr ""
+msgstr "Vale la pena esaminarlo, potrebbe richiedere o meno un intervento"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:63
 msgid "For your information only, no action expected"
-msgstr ""
+msgstr "Solo a scopo informativo, non è prevista alcuna azione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:107
 msgid "Firmware: {text}"
-msgstr ""
+msgstr "Firmware: {text}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:120
 msgid "Notes: {notes}"
-msgstr ""
+msgstr "Note: {notes}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:157
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:180
 msgid "Log Analysis"
-msgstr ""
+msgstr "Analisi del log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:184
 msgid "Subsystem:"
-msgstr ""
+msgstr "Sottosistema:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:189
 msgid "Select a subsystem to view its details"
-msgstr ""
+msgstr "Seleziona un sottosistema per visualizzarne i dettagli"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:201
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:438
@@ -6539,67 +6539,67 @@ msgstr "Legenda"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:203
 msgid "Severity of a finding"
-msgstr ""
+msgstr "Gravità di una segnalazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:230
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_tuning_report.py:36
 msgid "Tuning Parameter Graph"
-msgstr ""
+msgstr "Grafico dei parametri di messa a punto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:239
 msgid "Tuning Graph Error"
-msgstr ""
+msgstr "Errore del grafico di messa a punto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:253
 msgid "Links"
-msgstr ""
+msgstr "Collegamenti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:256
 msgid "No linked documentation for this subsystem."
-msgstr ""
+msgstr "Nessuna documentazione collegata per questo sottosistema."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:260
 msgid "Wiki"
-msgstr ""
+msgstr "Wiki"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:262
 msgid "Guide"
-msgstr ""
+msgstr "Guida"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:275
 msgid "Hardware & Connections"
-msgstr ""
+msgstr "Hardware e connessioni"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:281
 msgid "Availability"
-msgstr ""
+msgstr "Disponibilità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:286
 msgid "Analysis"
-msgstr ""
+msgstr "Analisi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:288
 msgid "Not yet analyzed - {reason}"
-msgstr ""
+msgstr "Non ancora analizzato - {reason}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:290
 msgid "No findings."
-msgstr ""
+msgstr "Nessun problema rilevato."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:329
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:412
 msgid "Fix"
-msgstr ""
+msgstr "Correggi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:342
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:173
 msgid "Review Parameter Changes"
-msgstr ""
+msgstr "Rivedi le modifiche ai parametri"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:348
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:179
 msgid "The following parameter change(s) are proposed:"
-msgstr ""
+msgstr "Sono proposte le seguenti modifiche ai parametri:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:365
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:203
@@ -6612,7 +6612,7 @@ msgstr "Annulla"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:368
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:207
 msgid "Apply & Upload"
-msgstr ""
+msgstr "Applica e carica"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:374
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:213
@@ -6622,13 +6622,13 @@ msgstr "Nessun controllore di volo connesso, caricamento non disponibile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:401
 msgid "Display the detailed analysis of an ArduPilot flight log."
-msgstr ""
+msgstr "Mostra l'analisi dettagliata di un log di volo ArduPilot."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:405
 msgid ""
 "ArduPilot binary flight log (.bin) to analyse; opens a file selector when "
 "omitted"
-msgstr ""
+msgstr "Log di volo binario ArduPilot (.bin) da analizzare; apre un selettore di file se omesso"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_analysis.py:423
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:731
@@ -6637,7 +6637,7 @@ msgstr "Seleziona un log di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:71
 msgid "Log Availability Report"
-msgstr ""
+msgstr "Rapporto di disponibilità del log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:125
 msgid "Open release page on GitHub"
@@ -6646,18 +6646,18 @@ msgstr "Apri la pagina delle release su GitHub"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:144
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:156
 msgid "Continue to Analysis"
-msgstr ""
+msgstr "Continua con l'analisi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:146
 msgid "Open the detailed log analysis for this flight"
-msgstr ""
+msgstr "Apri l'analisi dettagliata del log per questo volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:157
 msgid ""
 "The following subsystems don't have enough data and will be skipped:\n"
 "\n"
 "{names}"
-msgstr ""
+msgstr "I seguenti sottosistemi non hanno dati sufficienti e verranno saltati:\n\n{names}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:286
 msgid "Vehicle & Firmware"
@@ -6711,7 +6711,7 @@ msgstr "Cicli lunghi:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:330
 msgid "  Data Availability Report  "
-msgstr ""
+msgstr "Rapporto di disponibilità dei dati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:334
 msgid "  Hardware Overview  "
@@ -6728,11 +6728,11 @@ msgstr "Controlli superati"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:417
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:433
 msgid "Go to Step"
-msgstr ""
+msgstr "Vai al passaggio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:419
 msgid "Jump to the {step} configuration step"
-msgstr ""
+msgstr "Vai al passaggio di configurazione {step}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_hardware_availability.py:38
 msgid "IMUs"
@@ -7148,7 +7148,7 @@ msgstr "Analizza un log .bin"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:590
 msgid "Open a .bin flight log and analyse its availability"
-msgstr ""
+msgstr "Apri un log di volo .bin e analizzane la disponibilità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:595
 msgid "Zip Vehicle for Forum Help"
@@ -7244,7 +7244,7 @@ msgstr ""
 msgid ""
 "Log availability Report\n"
 "\n"
-msgstr ""
+msgstr "Rapporto di disponibilità del log\n\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:826
 msgid ""
@@ -7275,7 +7275,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:839
 msgid "Log availability Report"
-msgstr ""
+msgstr "Rapporto di disponibilità del log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:852
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:930
@@ -7383,11 +7383,11 @@ msgstr "Errore nel file dei parametri"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1515
 msgid "Continue Log availability Review"
-msgstr ""
+msgstr "Continua la revisione della disponibilità del log"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1516
 msgid "Parameters uploaded. Return to the log availability report to continue?"
-msgstr ""
+msgstr "Parametri caricati. Tornare al rapporto di disponibilità del log per continuare?"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:1540
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/plugins/frontend_tkinter_battery_monitor.py:252
@@ -7981,11 +7981,11 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:104
 msgid "Importing .bin log file"
-msgstr ""
+msgstr "Importazione del file di log .bin"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:105
 msgid "Parsing .bin log file: {}% complete"
-msgstr ""
+msgstr "Analisi del file di log .bin: {}% completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:127
 msgid "Open vehicle"
@@ -8296,19 +8296,19 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_tuning_report.py:52
 msgid "Parameters:"
-msgstr ""
+msgstr "Parametri:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_tuning_report.py:100
 msgid "Select one or more parameters to plot transitions"
-msgstr ""
+msgstr "Seleziona uno o piu parametri per tracciare le transizioni"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_tuning_report.py:188
 msgid "Step"
-msgstr ""
+msgstr "Passo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_tuning_report.py:188
 msgid "Value"
-msgstr ""
+msgstr "Valore"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_usage_popup_window.py:79
 msgid "Show this usage popup again"
@@ -8544,7 +8544,7 @@ msgstr "Errore nel file di configurazione '{config_file}': {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/backend_log_analysis.py:52
 msgid "Parsed log data has no parameter history"
-msgstr ""
+msgstr "I dati del log analizzati non contengono la cronologia dei parametri"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_arm.py:33
 msgid ""
@@ -8561,7 +8561,7 @@ msgstr "Nessun messaggio ARM trovato"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:99
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:162
 msgid "{field} contains non-finite telemetry values"
-msgstr ""
+msgstr "{field} contiene valori di telemetria non finiti"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:124
 msgid "{message} logging is disabled in LOG_BITMASK"
@@ -8595,7 +8595,7 @@ msgstr "Dati {name} presenti e validi per l'analisi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:181
 msgid "{name} data has availability issues"
-msgstr ""
+msgstr "I dati di {name} presentano problemi di disponibilita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:53
 msgid "check the battery monitor physical connection"
@@ -8614,11 +8614,11 @@ msgstr "Imposta BATT_MONITOR per abilitare il monitor della batteria"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:68
 msgid ""
 "Battery logging enabled but all configured battery monitors are disabled"
-msgstr ""
+msgstr "La registrazione della batteria e abilitata ma tutti i monitor della batteria configurati sono disabilitati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:71
 msgid "Enable a configured battery monitor"
-msgstr ""
+msgstr "Abilita un monitor della batteria configurato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:76
 msgid ""
@@ -8669,68 +8669,68 @@ msgstr "CurrTot mancante nei record BAT"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:130
 msgid "{prefix}low-voltage failsafe threshold disabled"
-msgstr ""
+msgstr "{prefix}soglia failsafe di bassa tensione disabilitata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:138
 msgid "{prefix}critical-voltage failsafe threshold disabled"
-msgstr ""
+msgstr "{prefix}soglia failsafe di tensione critica disabilitata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:163
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:181
 msgid "Battery Analysis"
-msgstr ""
+msgstr "Analisi della batteria"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:164
 msgid "No BAT data available for analysis"
-msgstr ""
+msgstr "Nessun dato BAT disponibile per l'analisi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:182
 msgid "Battery analysis complete"
-msgstr ""
+msgstr "Analisi della batteria completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:191
 msgid "TimeUS field not present in this firmware's BAT schema"
-msgstr ""
+msgstr "Il campo TimeUS non e presente nello schema BAT di questo firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:192
 msgid "TimeUS missing from BAT records"
-msgstr ""
+msgstr "TimeUS mancante nei record BAT"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:222
 msgid ""
 "Consumed {used:.1f}% of rated battery capacity ({capacity:.0f} mAh). This "
 "exceeds 100%, check BATT_CAPACITY is correct for your battery, or "
 "BATT_AMP_PERVLT."
-msgstr ""
+msgstr "Consumato il {used:.1f}% della capacita nominale della batteria ({capacity:.0f} mAh). Questo supera il 100%, verifica che BATT_CAPACITY sia corretto per la tua batteria o BATT_AMP_PERVLT."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:235
 msgid "Used {used:.1f}% of rated battery capacity ({capacity:.0f} mAh)"
-msgstr ""
+msgstr "Utilizzato il {used:.1f}% della capacita nominale della batteria ({capacity:.0f} mAh)"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:265
 msgid "Voltage spike to {v:.2f}V, or MOT_BAT_VOLT_MAX misconfigured"
-msgstr ""
+msgstr "Picco di tensione a {v:.2f}V, oppure MOT_BAT_VOLT_MAX e configurato in modo errato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:274
 msgid "Voltage sag to {v:.2f}V, or MOT_BAT_VOLT_MIN misconfigured"
-msgstr ""
+msgstr "Calo di tensione a {v:.2f}V, oppure MOT_BAT_VOLT_MIN e configurato in modo errato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:313
 msgid "Power efficiency: {eff:.0f} W/Kg"
-msgstr ""
+msgstr "Efficienza energetica: {eff:.0f} W/Kg"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:341
 msgid ""
 "BATT_CRT_VOLT ({crt:.1f}V) is not lower than BATT_LOW_VOLT ({low:.1f}V). "
 "ArduPilot's own arming check requires critical voltage to be below low "
 "voltage.{note}"
-msgstr ""
+msgstr "BATT_CRT_VOLT ({crt:.1f}V) non e inferiore a BATT_LOW_VOLT ({low:.1f}V). Il controllo di armamento interno di ArduPilot richiede che la tensione critica sia inferiore alla tensione bassa.{note}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:371
 msgid ""
 " ARMING_CHECK does not include 'All' or 'Battery Level', so this "
 "misconfiguration would not have blocked arming."
-msgstr ""
+msgstr "ARMING_CHECK non include 'All' o 'Battery Level', quindi questa configurazione errata non avrebbe impedito l'armamento."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:392
 msgid ""
@@ -8739,13 +8739,13 @@ msgid ""
 "is used to correctly scale the PID gains. It is the voltage of a healthy, "
 "fully charged battery read from your flight log immediately after takeoff "
 "(which is lower than the battery's true max voltage due to sag under load)."
-msgstr ""
+msgstr "{param} e {actual:.2f} ma dovrebbe essere {expected:.2f} secondo il parametro {source} in {step}, in base alle specifiche di vehicle_components. Questo serve a scalare correttamente i guadagni PID. E la tensione di una batteria sana e completamente carica letta dal tuo log di volo subito dopo il decollo (che e inferiore alla vera tensione massima della batteria a causa del calo sotto carico)."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:400
 msgid ""
 "{param} is {actual:.2f} but should be {expected:.2f} as per {source} "
 "parameter in {step}, based on your vehicle_components specifications."
-msgstr ""
+msgstr "{param} e {actual:.2f} ma dovrebbe essere {expected:.2f} secondo il parametro {source} in {step}, in base alle specifiche di vehicle_components."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_err.py:36
 msgid "No errors logged during this flight"
@@ -8811,22 +8811,22 @@ msgstr "Rilevato un tasso di errore ESC su almeno un'istanza ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:123
 msgid "No ESC data available"
-msgstr ""
+msgstr "Nessun dato ESC disponibile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:123
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:136
 msgid "ESC Analysis"
-msgstr ""
+msgstr "Analisi ESC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:137
 msgid "ESC analysis complete"
-msgstr ""
+msgstr "Analisi ESC completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:204
 msgid ""
 "ESC output {instance} reported zero RPM throughout an armed period "
 "({start:.1f}s to {end:.1f}s), the motor may not have responded."
-msgstr ""
+msgstr "L'uscita ESC {instance} ha riportato zero RPM per tutto un periodo in cui il sistema era armato ({start:.1f}s - {end:.1f}s); il motore potrebbe non aver risposto."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:225
 msgid ""
@@ -8834,18 +8834,18 @@ msgid ""
 "({required_min:.3f}). AMC's tuning guide requires MOT_SPIN_MIN to be at "
 "least {required:.2f} above MOT_SPIN_ARM ({spin_arm:.3f}). Motors may not "
 "spin reliably once armed."
-msgstr ""
+msgstr "MOT_SPIN_MIN ({spin_min:.3f}) è inferiore a MOT_SPIN_ARM + {required:.2f} ({required_min:.3f}). La guida di regolazione di AMC richiede che MOT_SPIN_MIN sia almeno {required:.2f} sopra MOT_SPIN_ARM ({spin_arm:.3f}). I motori potrebbero non girare in modo affidabile una volta armati."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:267
 msgid "ESC output {instance} peak error rate: {err:.1f}%"
-msgstr ""
+msgstr "Tasso di errore massimo dell'uscita ESC {instance}: {err:.1f}%"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:336
 msgid ""
 "ESC output {instance} drew {mean:.2f}A on average, current drawn by the "
 "other {n} ESC output(s) (median {median:.2f}A). If unexpected for this "
 "vehicle's configuration, check for a mechanical or wiring issue."
-msgstr ""
+msgstr "L'uscita ESC {instance} ha assorbito in media {mean:.2f}A, rispetto alla corrente assorbita dalle altre {n} uscite ESC (mediana {median:.2f}A). Se questo non è previsto per la configurazione di questo veicolo, controllare un problema meccanico o di cablaggio."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:371
 msgid ""
@@ -8853,7 +8853,7 @@ msgid ""
 "SERVO_DSHOT_RATE={dshot!r}), at or below the {threshold:.0f}Hz level Amilcar "
 "flagged as problematic. apm.pdef.xml also states SERVO_DSHOT_RATE should "
 "never be set below 500Hz."
-msgstr ""
+msgstr "La frequenza effettiva di uscita DShot è {rate:.0f}Hz (SCHED_LOOP_RATE={loop:.0f}Hz, SERVO_DSHOT_RATE={dshot!r}), pari o inferiore alla soglia di {threshold:.0f}Hz che Amilcar ha segnalato come problematica. apm.pdef.xml indica inoltre che SERVO_DSHOT_RATE non dovrebbe mai essere impostato sotto i 500Hz."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_fft.py:42
 msgid "Raw IMU batch logging is disabled (INS_LOG_BAT_MASK is 0)"
@@ -8983,27 +8983,27 @@ msgstr "{field} è zero ovunque, l'accelerometro potrebbe non leggere"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:163
 msgid "IMU Analysis"
-msgstr ""
+msgstr "Analisi IMU"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:164
 msgid "IMU analysis complete"
-msgstr ""
+msgstr "Analisi IMU completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:188
 msgid ""
 "IMU {n} temperature calibration is not enabled. Consider running it for "
 "better accuracy across temperature changes."
-msgstr ""
+msgstr "La calibrazione termica dell'IMU {n} non è abilitata. Valutare di eseguirla per una migliore accuratezza al variare della temperatura."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:204
 msgid "IMU {n} temperature calibration is in progress (not yet complete)."
-msgstr ""
+msgstr "La calibrazione termica dell'IMU {n} è in corso (non ancora completata)."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:218
 msgid ""
 "IMU {n} has an unexpected {param} value of {value}, neither disabled, "
 "learning, nor a recognized enabled state."
-msgstr ""
+msgstr "L'IMU {n} ha un valore {param} inatteso pari a {value}, che non corrisponde né a disabilitato, né ad apprendimento, né a uno stato abilitato riconosciuto."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:234
 msgid ""
@@ -9011,47 +9011,47 @@ msgid ""
 "calibration (CALTEMP) was never performed. This calibration data may be "
 "unreliable; run a 6-axis accel calibration and re-run temperature "
 "calibration."
-msgstr ""
+msgstr "L'IMU {n} risulta contrassegnata come calibrata in temperatura, ma la calibrazione accelerometro/giroscopio (CALTEMP) non è mai stata eseguita. Questi dati di calibrazione potrebbero non essere affidabili; eseguire una calibrazione accel a 6 assi e ripetere la calibrazione termica."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:251
 msgid ""
 "IMU {n} temperature calibration is enabled but TMIN/TMAX data is missing, an "
 "inconsistent state."
-msgstr ""
+msgstr "La calibrazione termica dell'IMU {n} è abilitata ma mancano i dati TMIN/TMAX; si tratta di uno stato incoerente."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:264
 msgid ""
 "IMU {n} temperature calibration's coldest recorded point was {tmin:.1f}C, "
 "above freezing. For best results, cool the flight controller down to around "
 "{rec:.0f}C or lower before starting calibration."
-msgstr ""
+msgstr "Il punto più freddo registrato dalla calibrazione termica dell'IMU {n} è stato {tmin:.1f}C, sopra lo zero. Per ottenere i migliori risultati, raffreddare il flight controller fino a circa {rec:.0f}C o meno prima di avviare la calibrazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:296
 msgid ""
 "{param} is set to ESC Telemetry tracking mode, but no ESC telemetry was "
 "present in this log. The notch filter could not track motor RPM, and did not "
 "remove motor noise. Motor vibration noise reached the PID controller inputs."
-msgstr ""
+msgstr "{param} è impostato sulla modalità di tracciamento ESC Telemetry, ma in questo log non era presente alcuna telemetria ESC. Il filtro notch non ha potuto seguire gli RPM del motore e non ha rimosso il rumore del motore. Il rumore delle vibrazioni del motore ha raggiunto gli ingressi del controllore PID."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:314
 msgid ""
 "IMU {n} temperature calibration spread is only {spread:.1f}C ({tmin:.1f}C to "
 "{tmax:.1f}C), below ArduPilot's required minimum of {min_req:.0f}C. "
 "Recalibration needed."
-msgstr ""
+msgstr "L'intervallo della calibrazione termica dell'IMU {n} è di soli {spread:.1f}C ({tmin:.1f}C - {tmax:.1f}C), inferiore al minimo richiesto da ArduPilot di {min_req:.0f}C. È necessaria una nuova calibrazione."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:319
 msgid ""
 "IMU {n} temperature calibration spread is {spread:.1f}C ({tmin:.1f}C to "
 "{tmax:.1f}C), meets the minimum but below the recommended {rec:.0f}C for "
 "best coverage."
-msgstr ""
+msgstr "L'intervallo della calibrazione termica dell'IMU {n} è {spread:.1f}C ({tmin:.1f}C - {tmax:.1f}C), soddisfa il minimo ma è inferiore ai {rec:.0f}C raccomandati per una copertura ottimale."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:324
 msgid ""
 "IMU {n} temperature calibration spread is {spread:.1f}C ({tmin:.1f}C to "
 "{tmax:.1f}C), good coverage."
-msgstr ""
+msgstr "L'intervallo della calibrazione termica dell'IMU {n} è {spread:.1f}C ({tmin:.1f}C - {tmax:.1f}C), buona copertura."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_mode.py:43
 msgid ""
@@ -9089,49 +9089,49 @@ msgstr "Valori di Clip mancanti nei record VIBE"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:97
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:109
 msgid "Vibration Analysis"
-msgstr ""
+msgstr "Analisi delle vibrazioni"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:98
 msgid "No VIBE data available for analysis"
-msgstr ""
+msgstr "Nessun dato VIBE disponibile per l'analisi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:110
 msgid "Vibration analysis complete"
-msgstr ""
+msgstr "Analisi delle vibrazioni completata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:119
 msgid "TimeUS field not present in this firmware's VIBE schema"
-msgstr ""
+msgstr "Campo TimeUS non presente nello schema VIBE di questo firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:120
 msgid "TimeUS missing from VIBE records"
-msgstr ""
+msgstr "TimeUS mancante nei record VIBE"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:136
 msgid "{field} field not present in this firmware's VIBE schema"
-msgstr ""
+msgstr "campo {field} non presente nello schema VIBE di questo firmware"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:137
 msgid "{field} values missing from VIBE records"
-msgstr ""
+msgstr "valori di {field} mancanti nei record VIBE"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:149
 msgid ""
 "{axis} peaked at {peak:.1f} m/s/s, above the {severe:.0f} m/s/s level at "
 "which position/altitude hold problems are nearly always present."
-msgstr ""
+msgstr "{axis} ha raggiunto un picco di {peak:.1f} m/s/s, oltre il livello di {severe:.0f} m/s/s al quale sono quasi sempre presenti problemi di mantenimento della posizione/altitudine."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:160
 msgid ""
 "{axis} peaked at {peak:.1f} m/s/s, above the {warn:.0f} m/s/s level that may "
 "cause position/altitude hold problems."
-msgstr ""
+msgstr "{axis} ha raggiunto un picco di {peak:.1f} m/s/s, oltre il livello di {warn:.0f} m/s/s che può causare problemi di mantenimento della posizione/altitudine."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:190
 msgid ""
 "Accelerometer reported {count:.0f} clipping event(s) during the flight, "
 "meaning the sensor physically saturated at some point."
-msgstr ""
+msgstr "L'accelerometro ha segnalato {count:.0f} evento/i di clipping durante il volo, il che significa che il sensore si è saturato fisicamente a un certo punto."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:105
 msgid "Performance monitor data present and good for analysis"
@@ -9140,7 +9140,7 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:107
 msgid "Performance monitor data has availability issues"
-msgstr ""
+msgstr "I dati del monitor delle prestazioni presentano problemi di disponibilità"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:175
 msgid ""
@@ -9196,11 +9196,11 @@ msgstr "Lunghezza del messaggio non valida"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:225
 msgid "Stored unit count mismatch"
-msgstr ""
+msgstr "Numero di unità memorizzate non corrispondente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:227
 msgid "Scaled unit count mismatch"
-msgstr ""
+msgstr "Numero di unità scalate non corrispondente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:229
 msgid "Multiplier count mismatch"
@@ -9208,7 +9208,7 @@ msgstr "Conteggio dei moltiplicatori non corrispondente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:231
 msgid "Multiplier ingestion state count mismatch"
-msgstr ""
+msgstr "Numero di stati di acquisizione del moltiplicatore non corrispondente"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_availability_check.py:234
 msgid "{message} has no logging data"
