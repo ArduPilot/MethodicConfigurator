@@ -1155,3 +1155,36 @@ def test_set_fc_value_maintains_comparison_state() -> None:
 
     # Assert: No longer different
     assert param.is_different_from_fc is False
+
+
+def test_set_new_value_multiple_choice_non_numeric_raises_friendly_error(param_fixture) -> None:
+    """
+    Bug fix: non-numeric input for a multiple-choice parameter raises a friendly ValueError.
+
+    GIVEN: A multiple-choice parameter (has a values dict)
+    WHEN: set_new_value is called with a non-numeric string like a choice label
+    THEN: A ValueError is raised with a user-friendly translated message,
+          not a raw Python 'could not convert string to float' error
+
+    Previously the is_multiple_choice branch called float(s) with no try/except,
+    while both the bitmask and numeric branches had proper error handling.
+    """
+    full_param = param_fixture["full_param"]
+
+    with pytest.raises(ValueError, match="must be a number"):
+        full_param.set_new_value("Zero")
+
+
+def test_set_new_value_multiple_choice_valid_numeric_string_succeeds(param_fixture) -> None:
+    """
+    A valid numeric string for a multiple-choice parameter is accepted correctly.
+
+    GIVEN: A multiple-choice parameter with choices {"0": "Zero", "10": "Ten", "20": "Twenty"}
+    WHEN: set_new_value is called with "0" (a valid numeric choice key)
+    THEN: The new value is set to 0.0 and returned
+    """
+    full_param = param_fixture["full_param"]
+
+    result = full_param.set_new_value("0")
+
+    assert result == 0.0
