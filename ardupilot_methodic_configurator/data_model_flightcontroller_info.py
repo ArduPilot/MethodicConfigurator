@@ -249,7 +249,7 @@ class FlightControllerInfo:  # pylint: disable=too-many-instance-attributes
             mavutil.mavlink.MAV_TYPE_FLAPPING_WING: "ArduPlane",
             mavutil.mavlink.MAV_TYPE_KITE: "ArduPlane",
             mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER: "AP_Periph",
-            mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR: "ArduPlane",
+            mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR: "ArduPlane or ArduCopter",
             mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR: "ArduPlane",
             mavutil.mavlink.MAV_TYPE_VTOL_TILTROTOR: "ArduPlane",
             mavutil.mavlink.MAV_TYPE_VTOL_RESERVED2: "ArduPlane",

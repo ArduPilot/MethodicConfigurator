@@ -476,6 +476,9 @@ class TestMotorTestDataModelFrameConfiguration:
             assert motor_test_model.frame_class == 2
             assert motor_test_model.frame_type == 1
             assert motor_test_model.motor_count == 6  # HEXA X has 6 motors
+            assert motor_test_model.motor_labels == ["A", "B", "C", "D", "E", "F"]
+            assert len(motor_test_model.motor_numbers) == 6
+            assert len(motor_test_model.motor_directions) == 6
 
     def test_user_can_update_frame_configuration_and_motor_count(self, motor_test_model) -> None:
         """
@@ -1696,6 +1699,57 @@ class TestMotorTestDataModelJSONLoading:
             with pytest.raises(RuntimeError, match="No motor configuration found for frame class 1 and type 1"):
                 MotorTestDataModel(mock_flight_controller, mock_filesystem)
 
+    def test_model_allows_correcting_invalid_frame_type(self, motor_test_model) -> None:
+        """
+        Model remains usable when the controller reports an unsupported type.
+
+        GIVEN: A frame class has a valid motor layout, but the controller reports an unsupported type
+        WHEN: The model configures the reported frame
+        THEN: It should keep the reported type and allow the user to select a valid type
+        """
+        motor_test_model._motor_data_loader.data = {
+            "layouts": [
+                {
+                    "Class": 1,
+                    "Type": 0,
+                    "motors": [{"Number": 1, "TestOrder": 1, "Rotation": "CW"}],
+                }
+            ]
+        }
+        motor_test_model.filesystem.doc_dict["FRAME_CLASS"]["values"]["10"] = "BI"
+        motor_test_model.filesystem.doc_dict["FRAME_TYPE"]["values"]["0"] = "BI: PLUS"
+        motor_test_model.flight_controller.fc_parameters["FRAME_CLASS"] = 10
+
+        motor_test_model._configure_frame_layout(frame_class=10, frame_type=1)
+
+        assert motor_test_model.frame_class == 10
+        assert motor_test_model.frame_type == 1
+        assert motor_test_model.motor_count == 0
+        assert motor_test_model.motor_directions == []
+        assert motor_test_model.invalid_frame_type_error == (
+            "No motor configuration found for frame class 10 and type 1; select a valid frame type"
+        )
+        assert motor_test_model.get_frame_type_pairs() == [("0", "0: PLUS")]
+
+    def test_model_uses_metadata_when_motor_layout_data_is_unavailable(self, motor_test_model) -> None:
+        """Metadata keeps recovery available when the motor-layout catalog cannot be loaded."""
+        motor_test_model._motor_data_loader.data = {"layouts": []}
+        motor_test_model.filesystem.doc_dict["FRAME_CLASS"]["values"]["10"] = "BI"
+        motor_test_model.filesystem.doc_dict["FRAME_TYPE"]["values"]["0"] = "BI: PLUS"
+
+        motor_test_model._configure_frame_layout(frame_class=10, frame_type=0)
+
+        assert motor_test_model.motor_count == 0
+        assert motor_test_model.invalid_frame_type_error is None
+
+    def test_metadata_frame_types_skip_invalid_class_codes(self, motor_test_model) -> None:
+        """Malformed class metadata entries do not prevent valid recovery options."""
+        motor_test_model.filesystem.doc_dict["FRAME_CLASS"]["values"]["not-a-code"] = "BROKEN"
+        motor_test_model.filesystem.doc_dict["FRAME_CLASS"]["values"]["10"] = "BI"
+        motor_test_model.filesystem.doc_dict["FRAME_TYPE"]["values"]["0"] = "BI: PLUS"
+
+        assert motor_test_model._get_frame_types_from_parameter_metadata(10) == {0: "PLUS"}
+
     def test_model_handles_json_loading_failure_gracefully(self, mock_flight_controller, mock_filesystem) -> None:
         """
         Model raises RuntimeError when JSON loading fails.
@@ -2483,6 +2537,9 @@ class TestMotorTestDataModelFrameSelectionWorkflows:  # pylint: disable=too-many
 
         spy.assert_called()
         assert motor_test_model.frame_type == 0
+        assert motor_test_model.motor_labels == ["A", "B", "C", "D"]
+        assert motor_test_model.motor_numbers == [3, 1, 4, 2]
+        assert motor_test_model.motor_directions == ["CW", "CCW", "CW", "CCW"]
 
     def test_user_updates_frame_type_using_combobox_key(self, motor_test_model) -> None:
         """
@@ -3171,13 +3228,13 @@ class TestNonSequentialFrameClassMapping:
         assert frame_types[0] == "PLUS"
         assert frame_types[1] == "DOTRIACONTA/X"
 
-    def test_user_receives_error_when_selecting_undefined_frame_class(self, motor_test_model) -> None:
+    def test_user_can_correct_frame_type_for_known_class_without_motor_layout(self, motor_test_model) -> None:
         """
-        User selecting undefined frame class sees helpful error.
+        User can correct a frame type for a known class without a motor layout.
 
         GIVEN: Motor data with classes 1, 2, 5, 15 (non-sequential)
-        WHEN: Flight controller reports FRAME_CLASS=10 (not defined)
-        THEN: Warning logged showing max defined class and empty dict returned
+        WHEN: Flight controller reports FRAME_CLASS=10 (BiCopter)
+        THEN: The valid type 0 option is available for correction
         """
         motor_test_model._motor_data_loader.data = {
             "layouts": [
@@ -3191,7 +3248,7 @@ class TestNonSequentialFrameClassMapping:
 
         frame_types = motor_test_model.get_current_frame_class_types()
 
-        assert frame_types == {}
+        assert frame_types == {0: "PLUS"}
 
     def test_dotriaconta_32_motors_configuration_loads_correctly(self, motor_test_model) -> None:
         """

@@ -442,7 +442,7 @@ class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
             (mavutil.mavlink.MAV_TYPE_HEXAROTOR, "ArduCopter"),
             (mavutil.mavlink.MAV_TYPE_OCTOROTOR, "ArduCopter"),
             (mavutil.mavlink.MAV_TYPE_TRICOPTER, "ArduCopter"),
-            (mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR, "ArduPlane"),
+            (mavutil.mavlink.MAV_TYPE_VTOL_DUOROTOR, "ArduPlane or ArduCopter"),
             (mavutil.mavlink.MAV_TYPE_VTOL_QUADROTOR, "ArduPlane"),
         ]:
             vehicle_type = FlightControllerInfo._FlightControllerInfo__classify_vehicle_type(mav_type)
