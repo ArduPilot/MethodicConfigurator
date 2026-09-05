@@ -22,6 +22,13 @@ from serial.tools.list_ports_common import ListPortInfo
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.argparse_check_range import CheckRange
+from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import (
+    CancellationRequested,
+    ConfirmationRequested,
+    FlightControllerBootloaderBackend,
+    ProgressCallback,
+    SerialFactory,
+)
 from ardupilot_methodic_configurator.backend_flightcontroller_commands import (
     CompassCalibrationUpdate,
     FlightControllerCommands,
@@ -40,6 +47,13 @@ from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     FlightControllerFilesProtocol,
     FlightControllerParamsProtocol,
     MavlinkConnection,
+)
+from ardupilot_methodic_configurator.data_model_firmware_upload import (
+    BootloaderInfo,
+    FirmwareConfirmationError,
+    FirmwareFileError,
+    FirmwareReconnectError,
+    UploadStage,
 )
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
@@ -337,6 +351,85 @@ class FlightController:  # pylint: disable=too-many-public-methods
         self._connection_manager.disconnect()
         # Clear parameter cache via params manager
         self._params_manager.clear_parameters()
+
+    def upload_apj_firmware(  # pylint: disable=too-many-arguments
+        self,
+        path: Path,
+        *,
+        bootloader_baudrate: int = 115200,
+        bootloader_timeout: float = 2.0,
+        force: bool = False,
+        full_erase: bool = False,
+        serial_factory: SerialFactory | None = None,
+        cancellation_requested: CancellationRequested | None = None,
+        confirmation_requested: ConfirmationRequested | None = None,
+        progress_callback: ProgressCallback | None = None,
+    ) -> BootloaderInfo:
+        """
+        Flash an APJ through the active direct serial connection and reconnect.
+
+        This synchronous facade operation is intended for a worker thread.  It is
+        deliberately unavailable without the current MAVLink connection and its
+        directly-addressable serial device, so a UDP/TCP connection cannot be used
+        accidentally for bootloader flashing.
+        """
+        network_prefixes = ("udp:", "udpin:", "udpout:", "tcp:", "tcpin:", "tcpout:", "ws:", "wss:")
+        device = self.comport_device
+        if self.master is None or self.comport is None or not device or device.lower().startswith(network_prefixes):
+            msg = _("firmware upload requires an active direct serial flight-controller connection")
+            raise FirmwareFileError(msg)
+        if confirmation_requested is None:
+            msg = _("firmware upload requires explicit confirmation before entering the bootloader")
+            raise FirmwareConfirmationError(msg)
+
+        def report_progress(stage: UploadStage, completed: int, total: int) -> None:
+            """Keep presentation failures from interrupting the upload workflow."""
+            if progress_callback is None:
+                return
+            try:
+                progress_callback(stage, completed, total)
+            except Exception:
+                return
+
+        def enter_bootloader() -> None:
+            if self.master is None:
+                msg = _("flight-controller connection was lost before bootloader entry")
+                raise FirmwareFileError(msg)
+            self.master.reboot_autopilot(hold_in_bootloader=True)  # pyright: ignore[reportAttributeAccessIssue]
+            time_sleep(0.3)  # Allow the MAVLink frame to leave before releasing the port.
+            self.disconnect()
+
+        backend_kwargs: dict[str, Any] = {
+            "timeout": bootloader_timeout,
+            "enter_bootloader": enter_bootloader,
+        }
+        if serial_factory is not None:
+            backend_kwargs["serial_factory"] = serial_factory
+        backend = FlightControllerBootloaderBackend(
+            device,
+            bootloader_baudrate,
+            **backend_kwargs,
+        )
+        image = backend.inspect_firmware(path)
+        report_progress(UploadStage.ENTERING_BOOTLOADER, 0, 1)
+        info = backend.upload(
+            image,
+            force=force,
+            full_erase=full_erase,
+            cancellation_requested=cancellation_requested,
+            confirmation_requested=confirmation_requested,
+            progress_callback=progress_callback,
+        )
+        # A flashed image invalidates every cached parameter.  The reconnect is a
+        # required part of success, rather than an optimistic best-effort step.
+        self._params_manager.clear_parameters()
+        report_progress(UploadStage.RECONNECTING, 0, 1)
+        active_baudrate = getattr(self._connection_manager, "active_baudrate", self.baudrate)
+        reconnect_error = self.create_connection_with_retry(None, baudrate=active_baudrate)
+        if reconnect_error:
+            raise FirmwareReconnectError(reconnect_error)
+        report_progress(UploadStage.RECONNECTING, 1, 1)
+        return info
 
     @property
     def banner_text_buffer(self) -> list[str]:
