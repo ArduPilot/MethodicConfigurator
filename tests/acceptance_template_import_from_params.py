@@ -237,6 +237,11 @@ def perform_component_inference(
     return True, ""
 
 
+def _sort_key(path: Path) -> str:
+    """Case-insensitive sort key, so directory order does not depend on the filesystem."""
+    return path.name.lower()
+
+
 def get_vehicle_template_directories() -> list[Path]:
     """
     Get all vehicle template directories that contain param files.
@@ -248,19 +253,21 @@ def get_vehicle_template_directories() -> list[Path]:
     template_base = Path(__file__).parent.parent / "ardupilot_methodic_configurator" / "vehicle_templates"
 
     vehicle_dirs = []
-    for vehicle_type_dir in template_base.iterdir():
+    # Path.iterdir() yields entries in filesystem order, so sort by lower-cased name to keep the
+    # discovery order identical on every platform. Tests below only examine the first few entries.
+    for vehicle_type_dir in sorted(template_base.iterdir(), key=_sort_key):
         if not vehicle_type_dir.is_dir():
             continue
 
         # Iterate through specific vehicle directories (e.g., diatone_taycan_mxc)
-        for vehicle_dir in vehicle_type_dir.iterdir():
+        for vehicle_dir in sorted(vehicle_type_dir.iterdir(), key=_sort_key):
             if not vehicle_dir.is_dir():
                 continue
 
             param_subdirs = [d for d in vehicle_dir.iterdir() if d.is_dir()]
 
             if param_subdirs:
-                vehicle_dirs.extend(param_subdirs)
+                vehicle_dirs.extend(sorted(param_subdirs, key=_sort_key))
             else:
                 # Check if this directory directly contains .param files
                 param_files = list(vehicle_dir.glob("*.param"))
