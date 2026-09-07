@@ -3,6 +3,8 @@
 """
 Tests for timestamped ArduPilot parameter history.
 
+SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
+
 SPDX-FileCopyrightText: 2026 Donald Smith
 
 SPDX-License-Identifier: GPL-3.0-or-later
