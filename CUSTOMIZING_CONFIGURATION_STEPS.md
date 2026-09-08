@@ -537,7 +537,7 @@ It contains the following top-level properties:
 
 ```json
 {
-  "Format version": 1,
+  "Format version": 2,
   "Program version": "x.x.x",
   "Configuration template": "Template Name",
   "Components": {
