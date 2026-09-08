@@ -47,7 +47,7 @@ def test_bootloader_port_refuses_an_ambiguous_macos_dual_cdc_match(monkeypatch: 
     console_port.interface = "2"
     monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [mavlink_port, console_port])
 
-    identity = bl.SerialDeviceIdentity(location="1-2.3", serial_number="FC-123", interface="0")
+    identity = bl.SerialDeviceIdentity(location="1-2.3", serial_number="FC-123")
 
     with pytest.raises(OSError, match="cannot uniquely"):
         bl.resolve_bootloader_device("/dev/cu.usbmodem14101", identity)
