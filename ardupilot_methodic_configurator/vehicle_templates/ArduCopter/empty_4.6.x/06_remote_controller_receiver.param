@@ -1,4 +1,3 @@
-BRD_ALT_CONFIG,0
 RC_OPTIONS,32
 RC_PROTOCOLS,1  # Selected in the component editor
 RSSI_TYPE,0
