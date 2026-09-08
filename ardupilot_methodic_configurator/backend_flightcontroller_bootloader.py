@@ -105,7 +105,6 @@ class SerialDeviceIdentity:
 
     location: str = ""
     serial_number: str = ""
-    interface: str = ""
     persistent_path: str = ""
 
 
@@ -134,7 +133,6 @@ def capture_serial_device_identity(device: str) -> SerialDeviceIdentity | None:
         identity = SerialDeviceIdentity(
             location=str(getattr(port, "location", "") or ""),
             serial_number=str(getattr(port, "serial_number", "") or ""),
-            interface=str(getattr(port, "interface", "") or ""),
             persistent_path=_capture_linux_persistent_path(device),
         )
         return identity if identity.location or identity.serial_number or identity.persistent_path else None
@@ -385,11 +383,6 @@ class BootloaderClient:
                     )
                     raise BootloaderProtocolError(msg)
                 received.extend(chunk)
-                if len(received) < size and self._clock() >= read_deadline:
-                    msg = _("timeout waiting for {expected} bootloader bytes; received {actual}").format(
-                        expected=size, actual=len(received)
-                    )
-                    raise BootloaderProtocolError(msg)
         except (OSError, serial.SerialException) as exc:
             msg = _("bootloader transport read failed: {error}").format(error=exc)
             raise BootloaderProtocolError(msg) from exc

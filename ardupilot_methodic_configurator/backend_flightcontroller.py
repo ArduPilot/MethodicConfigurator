@@ -422,14 +422,22 @@ class FlightController:  # pylint: disable=too-many-public-methods
         def reconnect_after_bootloader() -> str:
             active_baudrate = getattr(self._connection_manager, "active_baudrate", self.baudrate)
             deadline = time_monotonic() + FIRMWARE_RECONNECT_RESOLVE_TIMEOUT
-            last_error: OSError | None = None
+            last_error: str = ""
             while time_monotonic() < deadline:
                 try:
                     reconnect_device = resolve_bootloader_device(device, device_identity)
-                    return self.connect(reconnect_device, log_errors=False, baudrate=active_baudrate)
-                except OSError as exc:  # noqa: PERF203
-                    last_error = exc
+                except OSError as exc:
+                    last_error = str(exc)
                     time_sleep(0.1)
+                    continue
+                # connect() reports failure by returning a non-empty error string, not by
+                # raising, so a stable persistent_path that resolves immediately must still
+                # spend the retry budget until the re-enumerated board answers.
+                connect_error = self.connect(reconnect_device, log_errors=False, baudrate=active_baudrate)
+                if not connect_error:
+                    return ""
+                last_error = connect_error
+                time_sleep(0.1)
             return _("cannot resolve the flight-controller serial device: {error}").format(error=last_error)
 
         backend_kwargs: dict[str, Any] = {

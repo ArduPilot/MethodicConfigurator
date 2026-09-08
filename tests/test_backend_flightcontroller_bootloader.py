@@ -437,6 +437,32 @@ def test_reader_rejects_oversized_apj_descriptor_before_reading(tmp_path: Path, 
         bl.load_apj(path)
 
 
+def test_load_apj_rejects_non_apj_suffix(tmp_path: Path) -> None:
+    path = tmp_path / "firmware.bin"
+    path.write_bytes(b"whatever")
+
+    with pytest.raises(fw.FirmwareFileError, match="unsupported firmware format"):
+        bl.load_apj(path)
+
+
+def test_encode_extf_erase_rejects_out_of_range_size() -> None:
+    with pytest.raises(ValueError, match="external flash size"):
+        bl.encode_extf_erase(0)
+    with pytest.raises(ValueError, match="external flash size"):
+        bl.encode_extf_erase(0x1_0000_0000)
+
+
+def test_bootloader_client_rejects_non_positive_timeout() -> None:
+    with pytest.raises(ValueError, match="timeout must be positive"):
+        bl.BootloaderClient(FakeBootloaderTransport(), timeout=0)
+
+
+def test_identify_rejects_unsupported_protocol_revision() -> None:
+    transport = FakeBootloaderTransport(revision=1)
+    with pytest.raises(fw.BootloaderProtocolError, match="unsupported bootloader protocol revision"):
+        bl.BootloaderClient(transport).identify()
+
+
 def test_bootloader_port_is_re_resolved_by_usb_identity_and_ambiguity_is_refused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -687,6 +713,51 @@ def test_facade_waits_for_serial_identity_to_reappear_before_reconnecting(
     assert connection.reconnect_device == "COM13"
 
 
+def test_facade_retries_reconnect_when_connect_returns_an_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Reconnection keeps trying while connect() reports a transient failure.
+
+    GIVEN: resolve_bootloader_device succeeds at once but the board is not open yet
+    WHEN: connect() returns an error string on the first attempts then an empty string
+    THEN: The facade spends the retry budget and reports success once connect() succeeds
+    """
+    connect_results = iter(["port not ready", "port not ready", ""])
+
+    class _FlakyConnection(_Connection):
+        def connect(self, device: str, **kwargs: object) -> str:
+            self.reconnect_device = device
+            self.comport_device = device
+            self.master = _Master()
+            error = next(connect_results)
+            if not error:
+                self.reconnected = True
+            return error
+
+    connection = _FlakyConnection()
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=_Params(),  # type: ignore[arg-type]
+        commands_manager=_Commands(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+    monkeypatch.setattr(
+        "ardupilot_methodic_configurator.backend_flightcontroller.resolve_bootloader_device",
+        lambda _device, _identity: "COM13",
+    )
+
+    controller.upload_apj_firmware(
+        path,
+        expected_firmware_sha256=trusted_digest(b"abcd"),
+        serial_factory=lambda *_args: FakeBootloaderTransport(),
+        confirmation_requested=lambda *_args: True,
+    )
+
+    assert connection.reconnected
+    assert connection.reconnect_device == "COM13"
+
+
 def test_facade_reports_rejected_bootloader_entry_without_releasing_serial(tmp_path: Path) -> None:
     """
     A rejected bootloader command stops the upload before disconnecting MAVLink.
@@ -715,6 +786,27 @@ def test_facade_reports_rejected_bootloader_entry_without_releasing_serial(tmp_p
 
     assert not connection.disconnected
     assert connection.master is not None
+
+
+def test_facade_requires_trusted_sha_before_flashing(tmp_path: Path) -> None:
+    connection = _Connection()
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=_Params(),  # type: ignore[arg-type]
+        commands_manager=_Commands(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+
+    with pytest.raises(fw.FirmwareConfirmationError, match="trusted SHA-256"):
+        controller.upload_apj_firmware(
+            path,
+            expected_firmware_sha256=None,
+            serial_factory=lambda *_args: FakeBootloaderTransport(),
+            confirmation_requested=lambda *_args: True,
+        )
+    assert not connection.disconnected
 
 
 def test_facade_refuses_network_mavlink_connection() -> None:
