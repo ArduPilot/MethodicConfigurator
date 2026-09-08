@@ -516,6 +516,11 @@ The `Change Reason` field is extremely important because:
 
 In our setup, we used an advanced RC receiver that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Radio Calibration` menu.
 
+On some flight controllers, it might be necessary to add and change the `BRD_ALT_CONFIG`
+parameter, in order to be able to connect the RC receiver or ESC telemetry to a pin that can decode it.
+This is necessary if not enough serial ports are available when `BRD_ALT_CONFIG==0` or
+when DMA-capable servo-outputs conflict with serial ports.
+
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `06_remote_controller_receiver.param` file
 
 ### 6.2.2 Configure the RC controller
@@ -546,6 +551,11 @@ Once this is operating we no longer need the USB connection to the vehicle. We c
 ## 6.4 Configure the ESC
 
 In our setup, we used a [Bi-directional Dshot ESC](https://ardupilot.org/copter/docs/common-dshot-escs.html) that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Servo Output` menu.
+
+On some flight controllers, it might be necessary to add and change the `BRD_ALT_CONFIG`
+parameter, in order to be able to connect the RC receiver or ESC telemetry to a pin that can decode it.
+This is necessary if not enough serial ports are available when `BRD_ALT_CONFIG==0` or
+when DMA-capable servo-outputs conflict with serial ports.
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `09_esc_telemetry.param` file
 
