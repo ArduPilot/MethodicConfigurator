@@ -389,6 +389,10 @@
             }
         },
         "13_initial_atc.param": {
+            "instructions_popup": {
+                "type": "warning",
+                "msg": "Only do this step once. It sets initial values that later steps will improve."
+            },
             "why": "Propeller size has a big influence on the vehicle dynamics, this adapts the attitude controller response to it",
             "why_now": "Done before sensor calibration in Mission Planner to minimize the changes the user has to do in mission planner",
             "autoimport_nondefault_regexp": ["ATC_ACC(EL)?_[PRY]_MAX$", "ATC_ANG_(RLL|PIT|YAW)_P$", "ATC_RAT_(PIT|RLL|YAW)_FLT[DET]$", "INS_ACCEL_FILTER$", "MOT_THST_(EXPO|HOVER)$"],
@@ -638,7 +642,7 @@
         "23_optional_pid_adjustment.param": {
             "instructions_popup": {
               "type": "info",
-              "msg": "This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate"
+              "msg": "This step is optional, only perform it if your vehicle is tiny, huge, or its motor outputs oscillate.\nIt must be repeated multiple times until outputs no longer oscillate."
             },
             "why": "With very large or very small vehicles the default PID values are not suitable for the first flight",
             "why_now": "Most other parameters are done and these need to be corrected (depending on the vehicle size) before the first flight",
@@ -664,7 +668,7 @@
             "external_tool_text": "",
             "external_tool_url": "",
             "mandatory_text": "100% mandatory (0% optional)",
-            "auto_changed_by": "",
+            "auto_changed_by": "First flight in ALT_HOLD mode for at least 30 seconds. If you have not done it yet, close this application and go fly",
             "derived_parameters": {
                 "ATC_THR_MIX_MAN": { "New Value": "0.5", "Change Reason": "Because ALTHOLD flight mode was used for more than 30 seconds to correctly learn the MOT_THST_HOVER value" },
                 "PSC_ACCZ_I": { "if": "Version(vehicle_components['Flight Controller']['Firmware']['Version'].split(' ')[0]) < Version('4.7')", "New Value": "2*fc_parameters['MOT_THST_HOVER']", "Change Reason": "Use 2 * MOT_THST_HOVER assuming MOT_THST_HOVER has been correctly learned" },
@@ -678,6 +682,10 @@
             "old_filenames": ["19_throttle_controller.param", "20_throttle_controller.param"]
         },
         "25_motor_notch_filter_results.param": {
+            "instructions_popup": {
+                "type": "info",
+                "msg": "After the flight, analyze the .bin in the filter review tool, change the values here and upload to the FC.\nRepeat the procedure until all post-filter noise peaks are below -50dB."
+            },
             "why": "The notch filter(s) configuration depends on real-flight data.",
             "why_now": "real-flight data is only available after the first flight",
             "blog_text": "Configure the notch filter(s) based on the data collected from the first flight",
