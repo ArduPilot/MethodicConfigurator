@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tempfile
 from argparse import ArgumentParser
+from collections.abc import Callable
 from typing import Any, cast  # pylint: disable=unused-import
 from unittest.mock import MagicMock, patch
 
@@ -42,6 +43,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 def _build_flight_controller_with_mocks(
     reboot_time: int = 2,
+    sleep: Callable[[float], None] | None = None,
 ) -> tuple[FlightController, MagicMock, MagicMock, MagicMock, MagicMock, MagicMock]:
     """Helper returning a facade wired with MagicMock managers for delegation tests."""
     mock_master = MagicMock()
@@ -101,6 +103,7 @@ def _build_flight_controller_with_mocks(
         params_manager=mock_params_mgr,
         commands_manager=mock_commands_mgr,
         files_manager=mock_files_mgr,
+        sleep=sleep,
     )
     return fc, mock_conn_mgr, mock_params_mgr, mock_commands_mgr, mock_files_mgr, mock_master
 
@@ -701,17 +704,17 @@ class TestFlightControllerResetAndDelegation:
         THEN: The autopilot should reboot and reconnect using retries if needed
         AND: Progress callbacks should reflect each wait step
         """
-        fc, mock_conn_mgr, *_others, mock_master = _build_flight_controller_with_mocks(reboot_time=2)
+        sleeps: list[float] = []
+        fc, mock_conn_mgr, *_others, mock_master = _build_flight_controller_with_mocks(reboot_time=2, sleep=sleeps.append)
         mock_conn_mgr.create_connection_with_retry.return_value = "RECONNECTED"
         progress_updates: list[tuple[int, int]] = []
         connection_progress = MagicMock()
 
-        with patch("ardupilot_methodic_configurator.backend_flightcontroller.time_sleep", return_value=None):
-            result = fc.reset_and_reconnect(
-                reset_progress_callback=lambda current, total: progress_updates.append((current, total)),
-                connection_progress_callback=connection_progress,
-                extra_sleep_time=1,
-            )
+        result = fc.reset_and_reconnect(
+            reset_progress_callback=lambda current, total: progress_updates.append((current, total)),
+            connection_progress_callback=connection_progress,
+            extra_sleep_time=1,
+        )
 
         mock_master.reboot_autopilot.assert_called_once()
         mock_conn_mgr.disconnect.assert_called_once()
@@ -724,6 +727,7 @@ class TestFlightControllerResetAndDelegation:
         )
         assert progress_updates[0] == (0, 3)
         assert progress_updates[-1] == (3, 3)
+        assert sleeps == [0.3, 1, 1, 1]
         assert result == "RECONNECTED"
 
     def test_reset_and_reconnect_returns_immediately_when_disconnected(self) -> None:

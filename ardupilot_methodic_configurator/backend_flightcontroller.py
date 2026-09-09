@@ -28,6 +28,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_bootloader import 
     ConfirmationRequested,
     FlightControllerBootloaderBackend,
     ProgressCallback,
+    SerialDeviceIdentity,
     SerialFactory,
     capture_serial_device_identity,
     has_stable_bootloader_device_identity,
@@ -72,6 +73,77 @@ if TYPE_CHECKING:
 DEFAULT_REBOOT_TIME: int = 8
 FIRMWARE_RECONNECT_RESOLVE_TIMEOUT: float = 15.0
 
+
+class _BootloaderEntryCoordinator:  # pylint: disable=too-few-public-methods
+    """Enter bootloader mode and release the active MAVLink connection."""
+
+    def __init__(
+        self,
+        master_getter: Callable[[], MavlinkConnection | None],
+        reboot: Callable[[], tuple[bool, str]],
+        disconnect: Callable[[], None],
+        sleep: Callable[[float], None],
+    ) -> None:
+        self._master_getter = master_getter
+        self._reboot = reboot
+        self._disconnect = disconnect
+        self._sleep = sleep
+        self.entered = False
+
+    def __call__(self) -> None:
+        if self._master_getter() is None:
+            msg = _("flight-controller connection was lost before bootloader entry")
+            raise FirmwareConnectionError(msg)
+        accepted, error_message = self._reboot()
+        if not accepted:
+            msg = _("flight controller rejected bootloader entry: {error}").format(error=error_message)
+            raise FirmwareConnectionError(msg)
+        self.entered = True
+        self._sleep(0.3)  # Allow the MAVLink frame to leave before releasing the port.
+        self._disconnect()
+
+
+class _BootloaderReconnector:  # pylint: disable=too-few-public-methods
+    """Resolve and reconnect the flight controller after bootloader reboot."""
+
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        device: str,
+        identity: SerialDeviceIdentity | None,
+        active_baudrate: Callable[[], int],
+        resolve_device: Callable[[str, SerialDeviceIdentity | None], str],
+        connect: Callable[[str, int], str],
+        clock: Callable[[], float],
+        sleep: Callable[[float], None],
+    ) -> None:
+        self._device = device
+        self._identity = identity
+        self._active_baudrate = active_baudrate
+        self._resolve_device = resolve_device
+        self._connect = connect
+        self._clock = clock
+        self._sleep = sleep
+
+    def __call__(self) -> str:
+        deadline = self._clock() + FIRMWARE_RECONNECT_RESOLVE_TIMEOUT
+        last_error = ""
+        while self._clock() < deadline:
+            try:
+                reconnect_device = self._resolve_device(self._device, self._identity)
+            except OSError as exc:
+                last_error = str(exc)
+                self._sleep(0.1)
+                continue
+            # ``connect`` reports transient failures as strings rather than
+            # raising, so keep retrying until the deadline is exhausted.
+            connect_error = self._connect(reconnect_device, self._active_baudrate())
+            if not connect_error:
+                return ""
+            last_error = connect_error
+            self._sleep(0.1)
+        return _("cannot resolve the flight-controller serial device: {error}").format(error=last_error)
+
+
 # Re-export constants for backwards compatibility
 __all__ = [
     "DEFAULT_BAUDRATE",
@@ -84,7 +156,7 @@ __all__ = [
 ]
 
 
-class FlightController:  # pylint: disable=too-many-public-methods
+class FlightController:  # pylint: disable=too-many-public-methods,too-many-instance-attributes
     """
     Facade for flight controller operations using delegation pattern.
 
@@ -117,7 +189,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     """
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         reboot_time: int = DEFAULT_REBOOT_TIME,
         baudrate: int = DEFAULT_BAUDRATE,
@@ -128,6 +200,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
         commands_manager: FlightControllerCommandsProtocol | None = None,
         files_manager: FlightControllerFilesProtocol | None = None,
         progress_callback: Callable[[int, int], None] | None = None,
+        sleep: Callable[[float], None] | None = None,
+        clock: Callable[[], float] | None = None,
     ) -> None:
         """
         Initialize the FlightController communication object.
@@ -144,6 +218,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
             progress_callback: Optional callback function for displaying initialization progress.
                              If None, no progress updates are shown. Signature: callback(current, total)
                              Used to provide user feedback during component initialization phases
+            sleep: Optional delay function used by reset and firmware-upload recovery workflows.
+            clock: Optional monotonic clock used by firmware-upload reconnection retries.
 
         Note:
             If not provided, managers are created in dependency order:
@@ -159,6 +235,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
             progress_callback(5, 100)
 
         self._reboot_time = reboot_time
+        self._sleep = time_sleep if sleep is None else sleep
+        self._clock = time_monotonic if clock is None else clock
         self._network_ports = network_ports if network_ports is not None else FlightControllerConnection.DEFAULT_NETWORK_PORTS
 
         if progress_callback:
@@ -318,7 +396,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Issue a reset
         self.master.reboot_autopilot()
         logging_info(_("Reset command sent to ArduPilot."))
-        time_sleep(0.3)  # Short delay for command to be sent
+        self._sleep(0.3)  # Short delay for command to be sent
 
         self.disconnect()
 
@@ -335,7 +413,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 reset_progress_callback(current_step, sleep_time)
 
             # Wait for sleep_time seconds
-            time_sleep(1)
+            self._sleep(1)
             current_step += 1
 
         # Call the progress callback with the current progress
@@ -361,7 +439,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Clear parameter cache via params manager
         self._params_manager.clear_parameters()
 
-    def upload_apj_firmware(  # noqa: PLR0915 # pylint: disable=too-many-arguments,too-many-locals,too-many-statements
+    def upload_apj_firmware(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         path: Path,
         *,
@@ -398,52 +476,27 @@ class FlightController:  # pylint: disable=too-many-public-methods
             msg = _("firmware upload requires the connected flight controller APJ board_id")
             raise FirmwareConnectionError(msg) from None
         device_identity = capture_serial_device_identity(device)
-        entered_bootloader = False
-
-        def report_progress(stage: UploadStage, completed: int, total: int) -> None:
-            """Keep presentation failures from interrupting the upload workflow."""
-            report_progress_safely(progress_callback, stage, completed, total)
-
-        def enter_bootloader() -> None:
-            nonlocal entered_bootloader
-            if self.master is None:
-                msg = _("flight-controller connection was lost before bootloader entry")
-                raise FirmwareConnectionError(msg)
-            accepted, error_message = self._commands_manager.reboot_to_bootloader()
-            if not accepted:
-                msg = _("flight controller rejected bootloader entry: {error}").format(error=error_message)
-                raise FirmwareConnectionError(msg)
-            # From this point on a failed callback, disconnect, or transport
-            # setup must attempt recovery before returning control to the caller.
-            entered_bootloader = True
-            time_sleep(0.3)  # Allow the MAVLink frame to leave before releasing the port.
-            self.disconnect()
-
-        def reconnect_after_bootloader() -> str:
-            active_baudrate = getattr(self._connection_manager, "active_baudrate", self.baudrate)
-            deadline = time_monotonic() + FIRMWARE_RECONNECT_RESOLVE_TIMEOUT
-            last_error: str = ""
-            while time_monotonic() < deadline:
-                try:
-                    reconnect_device = resolve_bootloader_device(device, device_identity)
-                except OSError as exc:
-                    last_error = str(exc)
-                    time_sleep(0.1)
-                    continue
-                # connect() reports failure by returning a non-empty error string, not by
-                # raising, so a stable persistent_path that resolves immediately must still
-                # spend the retry budget until the re-enumerated board answers.
-                connect_error = self.connect(reconnect_device, log_errors=False, baudrate=active_baudrate)
-                if not connect_error:
-                    return ""
-                last_error = connect_error
-                time_sleep(0.1)
-            return _("cannot resolve the flight-controller serial device: {error}").format(error=last_error)
+        entry = _BootloaderEntryCoordinator(
+            lambda: self.master,
+            self._commands_manager.reboot_to_bootloader,
+            self.disconnect,
+            self._sleep,
+        )
+        reconnector = _BootloaderReconnector(
+            device,
+            device_identity,
+            lambda: getattr(self._connection_manager, "active_baudrate", self.baudrate),
+            resolve_bootloader_device,
+            lambda reconnect_device, baudrate: self.connect(reconnect_device, log_errors=False, baudrate=baudrate),
+            self._clock,
+            self._sleep,
+        )
 
         backend_kwargs: dict[str, Any] = {
             "timeout": bootloader_timeout,
-            "enter_bootloader": enter_bootloader,
+            "enter_bootloader": entry,
             "device_identity": device_identity,
+            "sleep": self._sleep,
         }
         if serial_factory is not None:
             backend_kwargs["serial_factory"] = serial_factory
@@ -458,16 +511,16 @@ class FlightController:  # pylint: disable=too-many-public-methods
             raise FirmwareConfirmationError(msg)
         verify_expected_firmware_digest(image, expected_firmware_sha256)
         if not has_stable_bootloader_device_identity(device, device_identity):
-            msg = _("firmware upload requires a stable USB serial number, USB location, or Linux by-path device")
+            msg = _("firmware upload requires a stable USB serial number or USB location")
             raise FirmwareConnectionError(msg)
-        report_progress(UploadStage.ENTERING_BOOTLOADER, 0, 1)
+        report_progress_safely(progress_callback, UploadStage.ENTERING_BOOTLOADER, 0, 1)
         try:
             info = backend.upload(
                 image,
                 full_erase=full_erase,
                 cancellation_requested=cancellation_requested,
                 confirmation_requested=confirmation_requested,
-                progress_callback=report_progress,
+                progress_callback=progress_callback,
                 connected_board_id=connected_board_id,
             )
         except Exception as exc:
@@ -476,23 +529,27 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 # no bootloader transport could be opened, no in-band reboot is
                 # possible and a MAVLink reconnect cannot succeed.
                 raise
-            if entered_bootloader and getattr(exc, "bootloader_rebooted", False):
-                recovery_error = reconnect_after_bootloader()
+            if entry.entered and getattr(exc, "bootloader_rebooted", False):
+                recovery_error = reconnector()
                 if recovery_error:
                     logging_warning(_("Unable to reconnect after safe firmware-upload abort: %s"), recovery_error)
             raise
         # A flashed image invalidates every cached parameter.  The reconnect is a
         # required part of success, rather than an optimistic best-effort step.
         self._params_manager.clear_parameters()
-        report_progress(UploadStage.RECONNECTING, 0, 1)
-        reconnect_error = reconnect_after_bootloader()
+        report_progress_safely(progress_callback, UploadStage.RECONNECTING, 0, 1)
+        reconnect_error = reconnector()
         if reconnect_error:
-            raise FirmwareReconnectError(reconnect_error)
+            msg = _(
+                "firmware was written and verified, but the flight controller could not be reconnected automatically: "
+                "{error}. Reconnect it manually before continuing."
+            ).format(error=reconnect_error)
+            raise FirmwareReconnectError(msg)
         verify_reconnected_firmware(
             image,
             board_id=self.info.apj_board_id,
         )
-        report_progress(UploadStage.RECONNECTING, 1, 1)
+        report_progress_safely(progress_callback, UploadStage.RECONNECTING, 1, 1)
         return info
 
     @property
