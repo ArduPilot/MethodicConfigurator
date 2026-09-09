@@ -17,6 +17,7 @@ import pytest
 
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
+    ParameterForcedOrDerivedError,
     ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
@@ -6149,8 +6150,32 @@ class TestCopyFlightControllerValuesEdgeCases:
         good = ArduPilotParameter("GOOD", Par(1.0))
         parameter_editor.current_step_parameters = {"BAD": bad, "GOOD": good}
 
-        assert parameter_editor._update_parameters_from_fc_values({"BAD": 1.0, "GOOD": 2.0}) is True
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_exception") as mock_exception:
+            assert parameter_editor._update_parameters_from_fc_values({"BAD": 1.0, "GOOD": 2.0}) is True
+
         assert good.get_new_value() == 2.0
+        mock_exception.assert_called_once_with("Failed to update in-memory value for %s after FC copy", "BAD")
+
+    def test_system_warns_without_a_traceback_when_a_parameter_is_forced_or_derived(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """
+        A forced or derived parameter cannot be replaced by a value from the flight controller.
+
+        GIVEN: A parameter that rejects an FC value because it is forced or derived
+        WHEN: The FC value is copied into the current file
+        THEN: Its error message is logged as a warning without an exception traceback
+        """
+        param = MagicMock()
+        error_message = "This parameter is forced or derived and cannot be changed."
+        error = ParameterForcedOrDerivedError(error_message)
+        param.set_new_value.side_effect = error
+        parameter_editor.current_step_parameters = {"FORCED": param}
+
+        with patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_warning") as mock_warning:
+            assert parameter_editor._update_parameters_from_fc_values({"FORCED": 1.0}) is False
+
+        mock_warning.assert_called_once_with("%s", error)
 
     def test_system_skips_a_flight_controller_value_absent_from_the_current_step(
         self, parameter_editor: ParameterEditor
