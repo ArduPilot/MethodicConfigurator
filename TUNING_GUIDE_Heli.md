@@ -132,8 +132,8 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
 1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).<br>
    ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Press the *Create a vehicle configuration directory from template* button.<br>
-   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
+1. Press the *Create a vehicle project from a template* button.<br>
+   ![Create a vehicle project from a template](images/App_screenshot_Vehicle_directory_create_from_template.png)
 1. Now using [New](USERMANUAL.md#new) subsection<br>
    ![New vehicle](images/App_screenshot_Vehicle_directory_create_from_template_source.png)
 1. From the existing templates, select the one most similar to your vehicle:<br>
@@ -151,7 +151,7 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
    creating a new vehicle configuration directory from a template.
    Only makes sense if your FC has already been correctly configured. This option is only available when a flight controller is connected.
    - *Blank parameter change reason* - Do not use the parameters change reason from the template.
-1. Select the destination directory, give it a name, and press the *Create a vehicle configuration directory from template* button.
+1. Select the destination directory, give it a name, and press the *Create a vehicle project from a template* button.
 1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):<br>
    ![Component editor window](images/App_screenshot_Component_Editor.png)
 

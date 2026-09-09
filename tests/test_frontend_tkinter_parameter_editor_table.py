@@ -2280,6 +2280,15 @@ class TestWidgetFactoryHelpers:
         assert parameter_editor_table.upload_checkbutton_var["PARAM"].get() is False
         assert button.instate(("disabled",))
 
+    def test_generated_import_parameters_owned_by_previous_steps_start_unticked(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        parameter_editor_table._parameters_owned_by_previous_steps = {"PARAM"}
+        button = parameter_editor_table._create_upload_checkbutton("PARAM")
+
+        assert parameter_editor_table.upload_checkbutton_var["PARAM"].get() is False
+        assert button.instate(("!disabled",))
+
 
 class TestHandlerEdgeCases:
     """Exercise handler helper edge cases for coverage."""
@@ -2340,6 +2349,19 @@ class TestUploadSelectionBehavior:
 
         result = parameter_editor_table.get_upload_selected_params("simple")
         assert result == ParDict({})
+
+    def test_get_upload_selected_params_simple_skips_parameters_owned_by_previous_steps(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        parameter_editor_table._should_show_upload_column = MagicMock(return_value=False)
+        parameter_editor_table.parameter_editor.get_parameters_as_par_dict.return_value = ParDict(
+            {"AUTO_OWNED": Par(1.0), "LOG_ONLY": Par(2.0)}
+        )
+        parameter_editor_table.parameter_editor.parameters_owned_by_previous_configuration_steps.return_value = {"AUTO_OWNED"}
+
+        result = parameter_editor_table.get_upload_selected_params("simple")
+
+        assert result == ParDict({"LOG_ONLY": Par(2.0)})
 
     def test_get_upload_selected_params_filters_checked(self, parameter_editor_table: ParameterEditorTable) -> None:
         parameter_editor_table._should_show_upload_column = MagicMock(return_value=True)

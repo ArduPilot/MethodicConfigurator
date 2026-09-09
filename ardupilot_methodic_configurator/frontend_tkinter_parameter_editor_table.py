@@ -113,6 +113,8 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self.parameters = parameters
         self._show_only_differences = False
         self._upload_selection_defaults: dict[str, bool] = {}
+        self._upload_selection_defaults_file: str | None = None
+        self._parameters_owned_by_previous_steps: set[str] = set()
         self._new_value_widgets: dict[str, PairTupleCombobox | ttk.Entry] = {}
         self._value_is_different_labels: dict[str, ttk.Label] = {}
         self._table_render_generation = 0
@@ -235,9 +237,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
     def repopulate_table(self, show_only_differences: bool, gui_complexity: str) -> None:
         self._show_only_differences = show_only_differences
-        self._upload_selection_defaults.update(
-            {name: variable.get() for name, variable in self.upload_checkbutton_var.items()}
-        )
+        if self.parameter_editor.current_file == self._upload_selection_defaults_file:
+            self._upload_selection_defaults.update(
+                {name: variable.get() for name, variable in self.upload_checkbutton_var.items()}
+            )
+        else:
+            self._upload_selection_defaults.clear()
+        self._upload_selection_defaults_file = self.parameter_editor.current_file
         for widget in self.view_port.winfo_children():
             widget.destroy()
         for row in range(1, self._reserved_table_rows + 1):
@@ -263,6 +269,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self._new_value_widgets = {}
 
         parameters = self.parameters if self.parameters is not None else self.parameter_editor.current_step_parameters
+        self._parameters_owned_by_previous_steps = (
+            self.parameter_editor.parameters_owned_by_previous_configuration_steps() if self.parameters is None else set()
+        )
         if show_only_differences:
             # Filter to show only different parameters
             different_params = (
@@ -956,7 +965,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
             initially_selected = is_uploadable and fc_connected and (param.is_different_from_fc or not param.has_fc_value)
         else:
             is_uploadable = True
-            initially_selected = fc_connected
+            initially_selected = fc_connected and param_name not in getattr(self, "_parameters_owned_by_previous_steps", set())
         selected = self._upload_selection_defaults.get(param_name, initially_selected) if is_uploadable else False
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=selected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
@@ -1301,7 +1310,10 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         # Check if we should show upload column based on GUI complexity
         if not self._should_show_upload_column(gui_complexity):
             # All parameters are selected for upload in simple mode
-            return self.parameter_editor.get_parameters_as_par_dict()
+            selected_params = self.parameter_editor.get_parameters_as_par_dict()
+            for param_name in self.parameter_editor.parameters_owned_by_previous_configuration_steps():
+                selected_params.pop(param_name, None)
+            return selected_params
 
         # Get only selected parameters
         selected_names = [name for name, checkbutton_state in self.upload_checkbutton_var.items() if checkbutton_state.get()]
