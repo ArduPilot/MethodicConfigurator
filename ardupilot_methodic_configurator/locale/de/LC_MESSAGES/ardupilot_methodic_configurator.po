@@ -9152,66 +9152,66 @@ msgstr "Keine MODE-Meldungen gefunden"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:68
 msgid "Plane landing analysis is available only for ArduPlane logs"
-msgstr ""
+msgstr "Die Analyse der Flugzeuglandung ist nur für ArduPlane-Protokolle verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:69
 msgid "Log vehicle type is not ArduPlane"
-msgstr ""
+msgstr "Der Fahrzeugtyp des Protokolls ist nicht ArduPlane"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:75
 msgid "Plane landing analysis currently supports ArduPlane 4.7.x only"
-msgstr ""
+msgstr "Die Analyse der Flugzeuglandung unterstützt derzeit nur ArduPlane 4.7.x"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:76
 msgid "Log firmware is not ArduPlane 4.7.x"
-msgstr ""
+msgstr "Die Protokoll-Firmware ist nicht ArduPlane 4.7.x"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:84
 msgid "Required Plane landing-attempt evidence is unavailable"
-msgstr ""
+msgstr "Erforderliche Nachweise für einen Flugzeug-Landungsversuch sind nicht verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:86
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:106
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:126
 msgid "Plane Landing"
-msgstr ""
+msgstr "Flugzeuglandung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:92
 msgid "Operational Plane flight segmentation is unavailable: {reason}"
-msgstr ""
+msgstr "Die Segmentierung des operationellen Flugzeugflugs ist nicht verfügbar: {reason}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:93
 msgid "No usable operational Plane flight scope"
-msgstr ""
+msgstr "Kein verwendbarer Bereich des operationellen Flugzeugflugs"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:97
 msgid "No operational Plane flight segments were detected"
-msgstr ""
+msgstr "Es wurden keine Segmente des operationellen Flugzeugflugs erkannt"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:98
 msgid "No operational Plane flight scope contains landing evidence"
-msgstr ""
+msgstr "Kein Bereich des operationellen Flugzeugflugs enthält Nachweise für eine Landung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:104
 msgid "Plane landing-attempt data present and good for analysis"
-msgstr ""
+msgstr "Daten zu Flugzeug-Landungsversuchen sind vorhanden und für die Analyse geeignet"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:144
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:189
 msgid "Plane Landing Analysis"
-msgstr ""
+msgstr "Analyse der Flugzeuglandung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:145
 msgid "Operational Plane flight segmentation is unavailable"
-msgstr ""
+msgstr "Die Segmentierung des operationellen Flugzeugflugs ist nicht verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:176
 msgid "GPS-stop"
-msgstr ""
+msgstr "GPS-Stopp"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:178
 msgid "computed distance to mission LAND target"
-msgstr ""
+msgstr "berechnete Entfernung zum LAND-Ziel der Mission"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:178
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:232
@@ -9223,49 +9223,49 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:361
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:373
 msgid "m"
-msgstr ""
+msgstr "m"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:182
 msgid "Detected {count} Plane landing attempt(s)"
-msgstr ""
+msgstr "{count} Flugzeug-Landungsversuch(e) erkannt"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:184
 msgid "No Plane landing attempts detected"
-msgstr ""
+msgstr "Keine Flugzeug-Landungsversuche erkannt"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:197
 msgid "LAND_FLARE_ALT at attempt start: {value:.2f} m"
-msgstr ""
+msgstr "LAND_FLARE_ALT zu Beginn des Versuchs: {value:.2f} m"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:199
 msgid "LAND_FLARE_ALT was unavailable at attempt start"
-msgstr ""
+msgstr "LAND_FLARE_ALT war zu Beginn des Versuchs nicht verfügbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:202
 msgid ""
 "{mode_name} landing attempt {number}: {start:.3f} s to {end:.3f} s; "
 "termination evidence: {end_reason}; {parameter_evidence}"
-msgstr ""
+msgstr "{mode_name} Landungsversuch {number}: {start:.3f} s bis {end:.3f} s; Nachweis für die Beendigung: {end_reason}; {parameter_evidence}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:218
 msgid "flare"
-msgstr ""
+msgstr "Abfangen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:218
 msgid "preflare"
-msgstr ""
+msgstr "Vorabfangen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:222
 msgid "Attempt {number}: LAND stage {stage} ({stage_name}) entered"
-msgstr ""
+msgstr "Versuch {number}: LAND-Stufe {stage} ({stage_name}) erreicht"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:232
 msgid "LAND flight height"
-msgstr ""
+msgstr "LAND-Flughöhe"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:233
 msgid "ARSP airspeed"
-msgstr ""
+msgstr "ARSP Fluggeschwindigkeit"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:233
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:234
@@ -9273,156 +9273,156 @@ msgstr ""
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:326
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:327
 msgid "m/s"
-msgstr ""
+msgstr "m/s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:234
 msgid "GPS groundspeed"
-msgstr ""
+msgstr "GPS-Bodengeschwindigkeit"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:235
 msgid "BARO altitude"
-msgstr ""
+msgstr "BARO-Hoehe"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:236
 msgid "BARO sink rate"
-msgstr ""
+msgstr "BARO-Sinkrate"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:237
 msgid "RFND distance"
-msgstr ""
+msgstr "RFND-Entfernung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:238
 msgid "Flare to GPS stop"
-msgstr ""
+msgstr "Abfangen bis GPS-Stopp"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:238
 msgid "s"
-msgstr ""
+msgstr "s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:265
 msgid "Attempt {number} {stage_name}: {parameter} effective value {value:g}"
-msgstr ""
+msgstr "Versuch {number} {stage_name}: effektiver Wert von {parameter} {value:g}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:287
 msgid "RFND status {status}"
-msgstr ""
+msgstr "RFND-Status {status}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:289
 msgid "RFND status {status_name} ({status}) — distance unavailable"
-msgstr ""
+msgstr "RFND-Status {status_name} ({status}) — Entfernung nicht verfuegbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:294
 msgid ""
 "RFND status {status_name} ({status}) — not usable as Plane landing-height "
 "evidence"
-msgstr ""
+msgstr "RFND-Status {status_name} ({status}) — nicht als Nachweis fuer die Landehoehe von Plane verwendbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:298
 msgid "RFND status {status_name} ({status}) — no current range measurement"
-msgstr ""
+msgstr "RFND-Status {status_name} ({status}) — keine aktuelle Entfernungsmessung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:303
 msgid "Attempt {number} {stage_name}: {status_evidence}"
-msgstr ""
+msgstr "Versuch {number} {stage_name}: {status_evidence}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:325
 msgid "altitude"
-msgstr ""
+msgstr "Hoehe"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:326
 msgid "sink rate"
-msgstr ""
+msgstr "Sinkrate"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:327
 msgid "groundspeed"
-msgstr ""
+msgstr "Geschwindigkeit ueber Grund"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:328
 msgid "distance to target"
-msgstr ""
+msgstr "Entfernung zum Ziel"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:331
 msgid "firmware flare"
-msgstr ""
+msgstr "Firmware-Abfangen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:337
 msgid "firmware landing"
-msgstr ""
+msgstr "Firmware-Landung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:339
 msgid "degrees"
-msgstr ""
+msgstr "Grad"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:339
 msgid "glide slope"
-msgstr ""
+msgstr "Gleitpfad"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:354
 msgid "first non-zero distance"
-msgstr ""
+msgstr "erste Entfernung ungleich null"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:360
 msgid "first in-range distance"
-msgstr ""
+msgstr "erste Entfernung im gueltigen Bereich"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:366
 msgid "continuous acquisition sample count"
-msgstr ""
+msgstr "Anzahl der Proben mit kontinuierlicher Erfassung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:367
 msgid "samples"
-msgstr ""
+msgstr "Stichproben"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:372
 msgid "last disengagement distance"
-msgstr ""
+msgstr "letzte Auskoppelungsdistanz"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:381
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:411
 msgid "RFND lifecycle"
-msgstr ""
+msgstr "RFND-Lebenszyklus"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:393
 msgid ""
 "Attempt {number} RFND lifecycle: last disengagement status {status_name} "
 "({status}); distance unavailable"
-msgstr ""
+msgstr "Versuch {number} RFND-Lebenszyklus: letzter Auskoppelungsstatus {status_name} ({status}); Distanz nicht verfuegbar"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:413
 msgid "disengagement count"
-msgstr ""
+msgstr "Anzahl der Auskoppelungen"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:413
 msgid "events"
-msgstr ""
+msgstr "Ereignisse"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:427
 msgid "Attempt {number} {stage_name}: {measurement} {value:.3f} {unit}"
-msgstr ""
+msgstr "Versuch {number} {stage_name}: {measurement} {value:.3f} {unit}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:441
 msgid "landing abort message"
-msgstr ""
+msgstr "Abbruchmeldung fuer die Landung"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:442
 msgid "throttle disarm message"
-msgstr ""
+msgstr "Meldung zum Entschaerfen des Gashebels"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:443
 msgid "transition away from landing mode"
-msgstr ""
+msgstr "Uebergang weg vom Landemodus"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:444
 msgid "sustained GPS low-speed rollout completion"
-msgstr ""
+msgstr "anhaltender Abschluss des GPS-Niedriggeschwindigkeitsausrollens"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:445
 msgid "new LAND active-stage transition"
-msgstr ""
+msgstr "neuer LAND-Uebergang der aktiven Phase"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:446
 msgid "operational flight-segment boundary"
-msgstr ""
+msgstr "Betriebsgrenze des Flugsegments"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_pm.py:43
 msgid "check firmware build supports performance monitor logging"
