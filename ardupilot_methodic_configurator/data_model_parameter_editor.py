@@ -36,6 +36,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller import FlightContr
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
+    ParameterForcedOrDerivedError,
     ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
@@ -347,6 +348,9 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 # Log warning but accept FC value anyway since it came from FC
                 logging_warning(_("Parameter %s value %s is out of range but accepted from FC"), param_name, value)
                 params_copied += 1
+            except ParameterForcedOrDerivedError as exc:
+                logging_warning("%s", exc)
+                continue
             except (ValueError, TypeError):
                 logging_exception(_("Failed to update in-memory value for %s after FC copy"), param_name)
                 continue

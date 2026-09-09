@@ -34,6 +34,10 @@ class ParameterOutOfRangeError(Exception):
     """
 
 
+class ParameterForcedOrDerivedError(ValueError):
+    """Raised when attempting to change a forced or derived parameter without a manual override."""
+
+
 class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-many-public-methods
     """Domain model representing an ArduPilot parameter with all its attributes."""
 
@@ -397,6 +401,8 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
 
         Raises:
             TypeError: if the provided value is not a string.
+            ParameterForcedOrDerivedError: if the parameter is forced or derived and
+                has no manual override.
             ValueError: if the value is invalid for this parameter (not in choices,
                         invalid bitmask bits, invalid numeric format, etc.).
             ParameterOutOfRangeError: if the value is outside min/max limits and
@@ -406,7 +412,7 @@ class ArduPilotParameter:  # pylint: disable=too-many-instance-attributes, too-m
 
         """
         if (self._is_forced or self._is_derived) and not self._is_manual_override:
-            raise ValueError(_("This parameter is forced or derived and cannot be changed."))
+            raise ParameterForcedOrDerivedError(_("This parameter is forced or derived and cannot be changed."))
 
         if not isinstance(value, str):
             raise TypeError(_("Parameter value must be provided as a string."))
