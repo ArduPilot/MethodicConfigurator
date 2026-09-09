@@ -9,6 +9,7 @@ exclude = [
     "mavproxy_ftp.py",
     "mavproxy_param.py",
     "mavftp.py",
+    "ardupilot_methodic_configurator/backend_mavftp.py",
     "fix_with_statements.py",
     "param_filter.py",
     "param_zip.py"
