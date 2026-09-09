@@ -1128,6 +1128,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 len(selected_params),
                 self.current_file,
             )
+            upload_start_time = time()
 
             # Get progress callbacks from factories if provided
             progress_callback_for_upload = get_upload_progress_callback() if get_upload_progress_callback else None
@@ -1191,6 +1192,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         continue
                     self._at_least_one_changed = False
                     return False
+                logging_info(
+                    _("Uploaded and verified %(parameter_count)d parameters in %(duration_ms)d ms"),
+                    {
+                        "parameter_count": len(selected_params),
+                        "duration_ms": int((time() - upload_start_time) * 1000),
+                    },
+                )
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
 
                 if persist_project_state and self._should_export_fc_params_diff:

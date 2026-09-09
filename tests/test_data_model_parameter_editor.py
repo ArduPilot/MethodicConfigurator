@@ -4113,6 +4113,35 @@ class TestParameterUploadNavigation:
         assert result is True
         mock_write.assert_called_once()
 
+    def test_system_logs_upload_and_verification_duration(self, parameter_editor) -> None:
+        """Log the elapsed time after uploaded parameters have been verified."""
+        parameter_editor._flight_controller.fc_parameters = {"P1": 1.0}
+
+        with (
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.time", side_effect=(100.0, 100.123)),
+            patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_info") as mock_log,
+            patch.multiple(
+                parameter_editor,
+                upload_parameters_that_require_reset_workflow=MagicMock(return_value=(False, set(), True)),
+                _upload_parameters_to_fc=MagicMock(return_value=1),
+                download_flight_controller_parameters=MagicMock(),
+                _write_current_file=MagicMock(),
+                _validate_uploaded_parameters=MagicMock(return_value=[]),
+            ),
+        ):
+            result = parameter_editor.upload_selected_params_workflow(
+                {"P1": Par(1.0)},
+                ask_confirmation=MagicMock(return_value=True),
+                ask_retry_cancel=MagicMock(),
+                show_error=MagicMock(),
+            )
+
+        assert result is True
+        mock_log.assert_any_call(
+            "Uploaded and verified %(parameter_count)d parameters in %(duration_ms)d ms",
+            {"parameter_count": 1, "duration_ms": 123},
+        )
+
     def test_system_prompts_retry_when_parameter_validation_finds_mismatch(self, parameter_editor) -> None:
         """
         System asks the user to retry when uploaded values do not match the re-downloaded FC state.
