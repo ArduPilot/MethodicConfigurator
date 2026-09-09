@@ -12,6 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import re
+from collections.abc import Mapping
 from logging import info as logging_info
 from logging import warning as logging_warning
 from typing import Any
@@ -24,6 +25,22 @@ from ardupilot_methodic_configurator.data_model_safe_evaluator import (
     ConfigurationStepEvalError,
     safe_evaluate,
 )
+
+
+def get_auto_importable_parameter_names(
+    step_dict: Mapping[str, Any],
+    fc_parameters: Mapping[str, float],
+    param_default_dict: Mapping[str, Par],
+) -> set[str]:
+    """Return non-default FC parameters eligible for auto-import into a step."""
+    regex_rules = step_dict.get("autoimport_nondefault_regexp", [])
+    return {
+        param_name
+        for param_name, live_value in fc_parameters.items()
+        if param_name in param_default_dict
+        and any(re.match(pattern, param_name) for pattern in regex_rules)
+        and not is_within_tolerance(live_value, param_default_dict[param_name].value)
+    }
 
 
 class ConfigurationStepProcessor:
@@ -67,6 +84,7 @@ class ConfigurationStepProcessor:
         set[str],
         list[tuple[str, str]],
         ParDict,
+        set[str],
     ]:
         """
         Process a configuration step including parameter computation and domain model creation.
@@ -83,6 +101,7 @@ class ConfigurationStepProcessor:
             - Set of parameter names to remove (duplicates from rename operations)
             - List of (old_name, new_name) pairs to rename
             - ParDict of derived parameters to apply to domain model
+            - Set of parameter names auto-imported from the flight controller
 
         """
         ui_errors: list[tuple[str, str]] = []
@@ -146,8 +165,11 @@ class ConfigurationStepProcessor:
         # Create domain model parameters
         current_step_parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
 
-        # Apply auto-imports for the current step
-        self._apply_auto_imports(selected_file, fc_parameters, current_step_parameters, parameters_to_delete)
+        # Apply auto-imports for the current step. The editor uses these names to
+        # track parameters that were added to the in-memory model and must be saved.
+        autoimported_parameters = self._apply_auto_imports(
+            selected_file, fc_parameters, current_step_parameters, parameters_to_delete
+        )
 
         # Check for ExpressLRS and add FLTMODE_CH warning
         if current_step_parameters.get("RC_OPTIONS") is not None or current_step_parameters.get("FLTMODE_CH") is not None:
@@ -166,7 +188,15 @@ class ConfigurationStepProcessor:
                         )
                     )
 
-        return current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params_to_apply
+        return (
+            current_step_parameters,
+            ui_errors,
+            ui_infos,
+            duplicates_to_remove,
+            renames_to_apply,
+            derived_params_to_apply,
+            autoimported_parameters,
+        )
 
     def _apply_auto_imports(
         self,
@@ -174,34 +204,30 @@ class ConfigurationStepProcessor:
         fc_parameters: dict[str, float],
         current_step_parameters: dict[str, ArduPilotParameter],
         parameters_to_delete: set[str] | None = None,
-    ) -> None:
-        """Automatically import non-default FC parameters matching regex rules into the domain model."""
+    ) -> set[str]:
+        """Automatically import non-default FC parameters and return their names."""
         step_dict = self.local_filesystem.configuration_steps.get(selected_file, {})
-        if "autoimport_nondefault_regexp" not in step_dict or not fc_parameters:
-            return
-
-        # Parameters that will be deleted take priority; skip auto-importing them
         if parameters_to_delete is None:
             parameters_to_delete = set()
 
-        regex_rules = step_dict["autoimport_nondefault_regexp"]
+        auto_importable_parameters = get_auto_importable_parameter_names(
+            step_dict, fc_parameters, self.local_filesystem.param_default_dict
+        )
+        imported_parameters: set[str] = set()
         for live_key, live_value in fc_parameters.items():
-            if live_key in current_step_parameters:
-                continue
-            if live_key in parameters_to_delete:
+            if (
+                live_key not in auto_importable_parameters
+                or live_key in current_step_parameters
+                or live_key in parameters_to_delete
+            ):
                 continue
 
-            is_matching_regex = any(re.match(pattern, live_key) for pattern in regex_rules)
-            is_in_defaults = live_key in self.local_filesystem.param_default_dict
+            # Create the parameter with a blank reason and inject it into the UI domain model
+            param = Par(float(live_value), "")
+            current_step_parameters[live_key] = self.create_ardupilot_parameter(live_key, param, selected_file, fc_parameters)
+            imported_parameters.add(live_key)
 
-            if is_matching_regex and is_in_defaults:
-                default_value = self.local_filesystem.param_default_dict[live_key].value
-                if not is_within_tolerance(live_value, default_value):
-                    # Create the parameter with a blank reason and inject it into the UI domain model
-                    param = Par(float(live_value), "")
-                    current_step_parameters[live_key] = self.create_ardupilot_parameter(
-                        live_key, param, selected_file, fc_parameters
-                    )
+        return imported_parameters
 
     def _handle_connection_renaming(
         self, selected_file: str, variables: dict

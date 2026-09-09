@@ -107,6 +107,19 @@ def mock_sys_exit() -> Generator[MagicMock, None, None]:
         yield mock
 
 
+@pytest.fixture
+def mocked_option1_widget_construction() -> Generator[MagicMock, None, None]:
+    """Fixture that captures option-one buttons without requiring real Tk widgets."""
+    with (
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Label"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.LabelFrame"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.ttk.Button") as mock_button,
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.BinLogSelectionWidgets"),
+        patch("ardupilot_methodic_configurator.frontend_tkinter_project_opener.show_tooltip"),
+    ):
+        yield mock_button
+
+
 # ==================== TEST CLASSES ====================
 
 
@@ -127,7 +140,7 @@ class TestVehicleProjectOpenerWindow:
 
         # Assert: Window properties are set correctly
         window.root.title.assert_called_once()
-        window.root.geometry.assert_called_once_with("600x450")
+        window.root.geometry.assert_called_once_with("600x470")
         window.root.protocol.assert_called_once_with("WM_DELETE_WINDOW", window.close_and_quit)
 
         # Assert: Project manager methods were called for initialization
@@ -194,6 +207,71 @@ class TestVehicleProjectOpenerWindow:
 
         # Assert: New project window is created with project manager
         mock_create_new_project_window.assert_called_once_with(window.project_manager)
+
+    def test_user_can_create_new_vehicle_from_flight_controller(
+        self, configured_opener_window, mock_create_new_project_window
+    ) -> None:
+        """The FC project option opens the minimal creator window."""
+        window = configured_opener_window
+
+        window.create_new_vehicle_from_flight_controller()
+
+        window.root.destroy.assert_called_once()
+        mock_create_new_project_window.assert_called_once_with(window.project_manager, from_flight_controller=True)
+
+    def test_user_sees_vehicle_creation_options_in_requested_order(
+        self, configured_opener_window, mocked_option1_widget_construction
+    ) -> None:
+        """
+        User sees template, configured-flight-controller, and bin-log options in order.
+
+        GIVEN: The vehicle opener window is displayed
+        WHEN: The vehicle creation options are rendered
+        THEN: The configured-flight-controller option appears between template and bin-log controls
+        """
+        window = configured_opener_window
+        window.project_manager.is_flight_controller_connected.return_value = True
+        window.project_manager.fc_parameters.return_value = {"PARAM1": 1.0}
+
+        window.create_option1_widgets()
+
+        button_texts = [call.kwargs["text"] for call in mocked_option1_widget_construction.call_args_list]
+        assert button_texts == [
+            "Create a vehicle project from a template",
+            "Create a vehicle project from an already configured flight controller",
+        ]
+
+    @pytest.mark.parametrize(
+        ("fc_connected", "fc_parameters", "expected_state"),
+        [
+            (False, {"PARAM1": 1.0}, tk.DISABLED),
+            (True, {}, tk.DISABLED),
+            (True, {"PARAM1": 1.0}, tk.NORMAL),
+        ],
+    )
+    def test_user_sees_flight_controller_option_only_when_fc_is_configured(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        configured_opener_window,
+        mocked_option1_widget_construction,
+        fc_connected: bool,
+        fc_parameters: dict[str, float],
+        expected_state: str,
+    ) -> None:
+        """
+        User can select the configured-flight-controller option only when FC data is ready.
+
+        GIVEN: The opener reports a flight-controller connection and parameter state
+        WHEN: The vehicle creation options are rendered
+        THEN: The configured-flight-controller button has the expected enabled state
+        """
+        window = configured_opener_window
+        window.project_manager.is_flight_controller_connected.return_value = fc_connected
+        window.project_manager.fc_parameters.return_value = fc_parameters
+
+        window.create_option1_widgets()
+
+        fc_button_call = mocked_option1_widget_construction.call_args_list[1]
+        assert fc_button_call.kwargs["state"] == expected_state
 
     def test_user_can_open_last_vehicle_directory_successfully(self, configured_opener_window) -> None:
         """
