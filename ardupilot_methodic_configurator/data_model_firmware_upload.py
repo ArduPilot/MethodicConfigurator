@@ -21,7 +21,6 @@ import hashlib
 import hmac
 import json
 import re
-import struct
 import zlib
 from binascii import Error as BinasciiError
 from dataclasses import dataclass
@@ -126,7 +125,6 @@ class FirmwareImageMetadata:  # pylint: disable=too-many-instance-attributes
     extf_image_size: int
     firmware_version: str
     git_identity: str
-    content_sha256: str
     apj_sha256: str
     board_revision: int | None = None
 
@@ -141,6 +139,9 @@ class FirmwareImage:
 
     def crc(self, flash_size: int) -> int:
         """CRC32 of the image padded with 0xFF up to flash_size, as computed by the bootloader GET_CRC."""
+        if flash_size < 0 or flash_size % 4:
+            msg = _("bootloader flash size must be a non-negative multiple of four")
+            raise ValueError(msg)
         state = bootloader_crc32(self.image)
         remaining = max(0, flash_size - len(self.image))
         while remaining:
@@ -152,12 +153,6 @@ class FirmwareImage:
     def extf_crc(self) -> int:
         """CRC32 of the unpadded external-flash payload."""
         return bootloader_crc32(self.extf_image[: self.metadata.extf_image_size])
-
-    def content_sha256(self) -> str:
-        """Return the digest of the exact, unpadded payload selected for upload."""
-        return firmware_content_sha256(
-            self.image[: self.metadata.image_size], self.extf_image[: self.metadata.extf_image_size]
-        )
 
 
 @dataclass(frozen=True)
@@ -229,12 +224,12 @@ def next_stage(current: UploadStage, target: UploadStage) -> UploadStage:
     raise ValueError(msg)
 
 
-def parse_apj(contents: str | bytes, *, path: Path = Path()) -> FirmwareImage:
+def parse_apj(contents: str | bytes, *, path: Path = Path()) -> FirmwareImage:  # pylint: disable=too-many-locals
     """Purely parse and validate APJ contents; callers own file-system access."""
-    source_bytes = contents.encode("utf-8") if isinstance(contents, str) else contents
     try:
+        source_bytes = contents.encode("utf-8") if isinstance(contents, str) else contents
         desc: Any = json.loads(contents)
-    except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
+    except (RecursionError, UnicodeError, ValueError, TypeError) as exc:
         msg = _("cannot parse APJ descriptor: {error}").format(error=exc)
         raise FirmwareFileError(msg) from exc
     if not isinstance(desc, dict):
@@ -258,6 +253,15 @@ def parse_apj(contents: str | bytes, *, path: Path = Path()) -> FirmwareImage:
         msg = _("APJ image_size does not match the decoded image")
         raise FirmwareFileError(msg)
 
+    firmware_version = desc.get("version", "")
+    if not isinstance(firmware_version, str):
+        msg = _("APJ version metadata must be text")
+        raise FirmwareFileError(msg)
+    git_identity = desc.get("git_identity", "")
+    if not isinstance(git_identity, str):
+        msg = _("APJ git_identity metadata must be text")
+        raise FirmwareFileError(msg)
+
     board_rev = desc.get("board_revision")
     try:
         parsed_board_rev = _parse_integer_metadata(board_rev) if board_rev is not None else None
@@ -269,9 +273,8 @@ def parse_apj(contents: str | bytes, *, path: Path = Path()) -> FirmwareImage:
         board_id=board_id,
         image_size=image_size,
         extf_image_size=extf_image_size,
-        firmware_version=str(desc.get("version", "")),
-        git_identity=str(desc.get("git_identity", "")),
-        content_sha256=firmware_content_sha256(raw_image, raw_extf_image),
+        firmware_version=firmware_version,
+        git_identity=git_identity,
         apj_sha256=hashlib.sha256(source_bytes).hexdigest(),
         board_revision=parsed_board_rev,
     )
@@ -304,12 +307,18 @@ def _decode_blob(desc: dict, key: str) -> bytes:
         if len(raw) > MAX_IMAGE_SIZE or decompressor.unconsumed_tail:
             msg = _("APJ {key} exceeds {limit} bytes").format(key=key, limit=MAX_IMAGE_SIZE)
             raise FirmwareFileError(msg)
-        raw += decompressor.flush(MAX_IMAGE_SIZE + 1 - len(raw))
+        # ``unconsumed_tail`` above proves the bounded decompress call consumed
+        # the entire stream.  ``flush`` merely releases the decoder's small
+        # pending buffer; its argument is not an output limit.
+        raw += decompressor.flush()
         if len(raw) > MAX_IMAGE_SIZE:
             msg = _("APJ {key} exceeds {limit} bytes").format(key=key, limit=MAX_IMAGE_SIZE)
             raise FirmwareFileError(msg)
         if not decompressor.eof:
             msg = _("APJ {key} is not valid base64+zlib data: truncated stream").format(key=key)
+            raise FirmwareFileError(msg)
+        if decompressor.unused_data:
+            msg = _("APJ {key} is not valid base64+zlib data: trailing bytes").format(key=key)
             raise FirmwareFileError(msg)
     except (BinasciiError, KeyError, TypeError, ValueError, zlib.error) as exc:
         msg = _("APJ {key} is not valid base64+zlib data: {error}").format(key=key, error=exc)
@@ -325,25 +334,12 @@ def bootloader_crc32(data: bytes, state: int = 0) -> int:
     """
     Return the raw CRC-32 state used by ArduPilot's bootloader protocol.
 
-    This intentionally differs from :func:`binascii.crc32`, which applies the
-    conventional CRC-32 initial/final XOR values.  ArduPilot's
-    ``crc32_small`` and ``Tools/scripts/uploader.py`` instead expose the raw
-    running state beginning at zero.
+    ArduPilot's ``crc32_small`` and ``Tools/scripts/uploader.py`` expose the
+    raw running state beginning at zero.  ``zlib.crc32`` uses the same update
+    table but applies conventional initial/final XOR values, so translate the
+    state at the boundary instead of processing one bit at a time in Python.
     """
-    for byte in data:
-        state ^= byte
-        for _bit in range(8):
-            state = (state >> 1) ^ (0xEDB88320 if state & 1 else 0)
-    return state & 0xFFFFFFFF
-
-
-def firmware_content_sha256(image: bytes, extf_image: bytes = b"") -> str:
-    """Hash both raw APJ payload regions with unambiguous length prefixes."""
-    digest = hashlib.sha256()
-    for region in (image, extf_image):
-        digest.update(struct.pack("<Q", len(region)))
-        digest.update(region)
-    return digest.hexdigest()
+    return zlib.crc32(data, state ^ 0xFFFFFFFF) ^ 0xFFFFFFFF
 
 
 def verify_expected_firmware_digest(image: FirmwareImage, expected_sha256: str) -> None:
@@ -383,6 +379,9 @@ def check_compatibility(image: FirmwareImage, bootloader: BootloaderInfo) -> Non
         msg = _("firmware is for board_id {image_id}, board reports {board_id}").format(
             image_id=meta.board_id, board_id=bootloader.board_id
         )
+        raise FirmwareCompatibilityError(msg)
+    if bootloader.flash_size < 0 or bootloader.flash_size % 4:
+        msg = _("bootloader reports an invalid flash size of {flash} bytes").format(flash=bootloader.flash_size)
         raise FirmwareCompatibilityError(msg)
     if len(image.image) > bootloader.flash_size:
         msg = _("image of {size} bytes exceeds flash of {flash} bytes").format(

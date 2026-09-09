@@ -17,7 +17,6 @@ import struct
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from sys import platform as sys_platform
 from time import monotonic
 from time import sleep as time_sleep
 from typing import Protocol, cast
@@ -33,6 +32,7 @@ from ardupilot_methodic_configurator.data_model_firmware_upload import (
     BootloaderInfo,
     BootloaderProtocolError,
     FirmwareBootloaderRecoveryError,
+    FirmwareCompatibilityError,
     FirmwareConfirmationError,
     FirmwareFileError,
     FirmwareImage,
@@ -76,6 +76,9 @@ READ_MULTI_MAX = 252
 ERASE_TIMEOUT = 20.0
 EXTF_CRC_TIMEOUT = 10.0
 MAX_APJ_DESCRIPTOR_SIZE = (MAX_ENCODED_BLOB_SIZE * 2) + (1024 * 1024)
+BOOTLOADER_ENUMERATION_TIMEOUT = 15.0
+BOOTLOADER_RETRY_DELAY = 0.5
+BOOTLOADER_OPEN_RETRIES = int(BOOTLOADER_ENUMERATION_TIMEOUT / BOOTLOADER_RETRY_DELAY) + 1
 
 
 class BootloaderTransport(Protocol):
@@ -105,50 +108,54 @@ class SerialDeviceIdentity:
 
     location: str = ""
     serial_number: str = ""
-    persistent_path: str = ""
+    interface: str = ""
 
 
 DeviceResolver = Callable[[str, SerialDeviceIdentity | None], str]
 
 
-def _capture_linux_persistent_path(device: str) -> str:
-    """Return the by-path link currently bound to a serial device, if any."""
-    if not sys_platform.startswith("linux"):
-        return ""
-    try:
-        current = Path(device).resolve(strict=True)
-        for by_path in Path("/dev/serial/by-path").iterdir():
-            if by_path.resolve(strict=True) == current:
-                return str(by_path)
-    except OSError:
-        pass
-    return ""
-
-
 def capture_serial_device_identity(device: str) -> SerialDeviceIdentity | None:
     """Capture stable USB location/serial metadata for the active serial port."""
+    try:
+        resolved_device = Path(device).resolve(strict=True)
+    except OSError:
+        resolved_device = None
     for port in serial.tools.list_ports.comports():
-        if port.device != device:
+        if port.device != device and (
+            resolved_device is None or not _serial_port_matches_device(port.device, resolved_device)
+        ):
             continue
         identity = SerialDeviceIdentity(
             location=str(getattr(port, "location", "") or ""),
             serial_number=str(getattr(port, "serial_number", "") or ""),
-            persistent_path=_capture_linux_persistent_path(device),
+            interface=str(getattr(port, "interface", "") or ""),
         )
-        return identity if identity.location or identity.serial_number or identity.persistent_path else None
+        return identity if identity.location or identity.serial_number else None
     return None
+
+
+def _serial_port_matches_device(port_device: str, resolved_device: Path) -> bool:
+    """Return whether a listed serial device resolves to the selected device."""
+    try:
+        return Path(port_device).resolve(strict=True) == resolved_device
+    except OSError:
+        return False
 
 
 def has_stable_bootloader_device_identity(device: str, identity: SerialDeviceIdentity | None) -> bool:
     """Return whether reopening this serial target can be tied to physical hardware."""
-    if identity is not None:
-        return True
-    return bool(_capture_linux_persistent_path(device))
+    del device  # The identity must have been captured before the reboot request.
+    return identity is not None and bool(identity.location or identity.serial_number)
+
+
+def _physical_usb_location(location: object) -> str:
+    """Return the USB device location without a platform interface suffix."""
+    return str(location or "").split(":", 1)[0]
 
 
 def resolve_bootloader_device(device: str, identity: SerialDeviceIdentity | None = None) -> str:
     """
-    Resolve by stable Linux path or captured USB identity after re-enumeration.
+    Resolve by captured USB identity after re-enumeration.
 
     With a known USB identity this is fail-closed: a stale port is never opened
     while the board is re-enumerating or the hardware match is ambiguous.
@@ -158,27 +165,38 @@ def resolve_bootloader_device(device: str, identity: SerialDeviceIdentity | None
     # belong to another controller, whereas the location or serial number
     # identifies the controller that was connected before the reboot.
     if identity is not None:
-        if identity.persistent_path:
-            return identity.persistent_path
-        matches = [
-            port
-            for port in serial.tools.list_ports.comports()
-            if all(
-                not expected or getattr(port, attribute, "") == expected
-                for attribute, expected in (
-                    ("location", identity.location),
-                    ("serial_number", identity.serial_number),
+        if identity.location or identity.serial_number:
+            matches = [
+                port
+                for port in serial.tools.list_ports.comports()
+                if all(
+                    not expected
+                    or (
+                        _physical_usb_location(getattr(port, attribute, "")) == _physical_usb_location(expected)
+                        if attribute == "location"
+                        else getattr(port, attribute, "") == expected
+                    )
+                    for attribute, expected in (
+                        ("location", identity.location),
+                        ("serial_number", identity.serial_number),
+                    )
                 )
-            )
-        ]
-        if len(matches) == 1:
-            return str(matches[0].device)
+            ]
+            # An application-port interface identifier need not be reproduced by the
+            # bootloader.  It can only disambiguate ports from one identified device;
+            # it must never eliminate a sole candidate or select between devices.
+            if len(matches) > 1 and identity.interface:
+                locations = {_physical_usb_location(getattr(port, "location", "")) for port in matches}
+                if len(locations) == 1 and locations != {""}:
+                    narrowed = [port for port in matches if str(getattr(port, "interface", "") or "") == identity.interface]
+                    if len(narrowed) == 1:
+                        matches = narrowed
+            if len(matches) == 1:
+                return str(matches[0].device)
+            msg = _("cannot uniquely locate the bootloader USB device")
+            raise OSError(msg)
         msg = _("cannot uniquely locate the bootloader USB device")
         raise OSError(msg)
-    if sys_platform.startswith("linux"):
-        persistent_path = _capture_linux_persistent_path(device)
-        if persistent_path:
-            return persistent_path
     return device
 
 
@@ -323,6 +341,7 @@ class BootloaderClient:
         *,
         timeout: float = 2.0,
         clock: Callable[[], float] = monotonic,
+        sleep: Callable[[float], None] = time_sleep,
     ) -> None:
         if timeout <= 0:
             msg = _("bootloader response timeout must be positive")
@@ -330,6 +349,7 @@ class BootloaderClient:
         self._transport = transport
         self._timeout = timeout
         self._clock = clock
+        self._sleep = sleep
 
     def close(self) -> None:
         self._transport.close()
@@ -376,7 +396,12 @@ class BootloaderClient:
                     raise BootloaderProtocolError(msg)
                 chunk = self._transport.read(size - len(received))
                 if not chunk:
-                    if self._clock() < read_deadline:
+                    remaining = read_deadline - self._clock()
+                    if remaining > 0:
+                        # A non-blocking transport can return empty reads in a tight
+                        # loop. Yield briefly so a malformed transport cannot consume
+                        # an entire CPU while the response deadline is pending.
+                        self._sleep(min(0.01, remaining))
                         continue
                     msg = _("timeout waiting for {expected} bootloader bytes; received {actual}").format(
                         expected=size, actual=len(received)
@@ -501,6 +526,13 @@ class BootloaderClient:
             self._report(progress_callback, stage, 1, 1)
             check_bootloader_matches_connected_board(info, connected_board_id)
             check_compatibility(image, info)
+            if full_erase:
+                # AP_Bootloader only implements CHIP_FULL_ERASE on STM32F7/H7.
+                # This client does not yet use the bootloader's MCU-identification
+                # responses to gate that capability, so refuse rather than send a
+                # command that an unsupported target may ignore until timeout.
+                msg = _("full firmware erase is unavailable because support cannot yet be determined safely")
+                raise FirmwareCompatibilityError(msg)
             stage = UploadStage.AWAITING_CONFIRMATION
             self._report(progress_callback, stage, 0, 1)
             if not confirmation_requested(image, info):
@@ -588,8 +620,8 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
         serial_factory: SerialFactory = open_serial_transport,
         device_resolver: DeviceResolver = resolve_bootloader_device,
         device_identity: SerialDeviceIdentity | None = None,
-        open_retries: int = 5,
-        retry_delay: float = 0.5,
+        open_retries: int = BOOTLOADER_OPEN_RETRIES,
+        retry_delay: float = BOOTLOADER_RETRY_DELAY,
         sleep: Callable[[float], None] = time_sleep,
     ) -> None:
         if timeout <= 0:
@@ -627,7 +659,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
             raise FirmwareUploadCancelledError(msg, stage=UploadStage.ENTERING_BOOTLOADER.value)
         if self._enter_bootloader is not None:
             self._enter_bootloader()
-        client, info = self._wait_for_bootloader()
+        client, info = self._wait_for_bootloader(cancellation_requested)
         return client.upload(
             image,
             full_erase=full_erase,
@@ -638,15 +670,23 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
             connected_board_id=connected_board_id,
         )
 
-    def _wait_for_bootloader(self) -> tuple[BootloaderClient, BootloaderInfo]:
+    def _wait_for_bootloader(
+        self, cancellation_requested: CancellationRequested | None = None
+    ) -> tuple[BootloaderClient, BootloaderInfo]:
         if self._open_retries < 1:
             msg = _("bootloader open retries must be at least one")
             raise ValueError(msg)
         last_error: FirmwareUploadError | OSError | serial.SerialException | None = None
         for attempt in range(self._open_retries):
+            if cancellation_requested is not None and cancellation_requested():
+                msg = _(
+                    "firmware upload was cancelled while waiting for the bootloader; "
+                    "power-cycle the flight controller before reconnecting"
+                )
+                raise FirmwareBootloaderRecoveryError(msg) from last_error
             transport, open_error = self._try_open_transport()
             if transport is not None:
-                client = BootloaderClient(transport, timeout=self._timeout)
+                client = BootloaderClient(transport, timeout=self._timeout, sleep=self._sleep)
                 try:
                     return client, client.identify()
                 except BootloaderProtocolError as exc:

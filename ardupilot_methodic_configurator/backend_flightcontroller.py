@@ -431,8 +431,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
                     time_sleep(0.1)
                     continue
                 # connect() reports failure by returning a non-empty error string, not by
-                # raising, so a stable persistent_path that resolves immediately must still
-                # spend the retry budget until the re-enumerated board answers.
+                # raising, so a resolved device must still spend the retry budget until
+                # the re-enumerated board answers.
                 connect_error = self.connect(reconnect_device, log_errors=False, baudrate=active_baudrate)
                 if not connect_error:
                     return ""
@@ -458,7 +458,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             raise FirmwareConfirmationError(msg)
         verify_expected_firmware_digest(image, expected_firmware_sha256)
         if not has_stable_bootloader_device_identity(device, device_identity):
-            msg = _("firmware upload requires a stable USB serial number, USB location, or Linux by-path device")
+            msg = _("firmware upload requires a stable USB serial number or USB location")
             raise FirmwareConnectionError(msg)
         report_progress(UploadStage.ENTERING_BOOTLOADER, 0, 1)
         try:
@@ -487,7 +487,11 @@ class FlightController:  # pylint: disable=too-many-public-methods
         report_progress(UploadStage.RECONNECTING, 0, 1)
         reconnect_error = reconnect_after_bootloader()
         if reconnect_error:
-            raise FirmwareReconnectError(reconnect_error)
+            msg = _(
+                "firmware was written and verified, but the flight controller could not be reconnected automatically: "
+                "{error}. Reconnect it manually before continuing."
+            ).format(error=reconnect_error)
+            raise FirmwareReconnectError(msg)
         verify_reconnected_firmware(
             image,
             board_id=self.info.apj_board_id,
