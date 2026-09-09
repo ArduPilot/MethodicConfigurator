@@ -27,14 +27,19 @@ def test_read_timeout_is_bounded_when_partial_reads_arrive_after_deadline() -> N
     class PartialReadTransport:  # pylint: disable=too-few-public-methods
         """Return one byte per read to exercise the response deadline."""
 
+        reads = 0
+
         def read(self, _size: int = 1) -> bytes:
+            self.reads += 1
             return b"x"
 
-    clock_values = iter([0.0, 1.0])
-    client = bl.BootloaderClient(PartialReadTransport(), timeout=1.0, clock=lambda: next(clock_values))
+    transport = PartialReadTransport()
+    clock_values = iter([0.0, 0.5, 1.0])
+    client = bl.BootloaderClient(transport, timeout=1.0, clock=lambda: next(clock_values))
 
     with pytest.raises(bl.BootloaderProtocolError, match="timeout waiting"):
         client._read_exact(2)  # pylint: disable=protected-access
+    assert transport.reads == 1
 
 
 @pytest.mark.parametrize("arrival_time", [2.0, 2.05])
@@ -53,3 +58,30 @@ def test_read_accepts_a_complete_reply_at_or_after_deadline(arrival_time: float)
     client = bl.BootloaderClient(CompleteReadTransport(), timeout=2.0, clock=lambda: now)
 
     assert client._read_exact(2) == b"\x12\x10"  # pylint: disable=protected-access
+
+
+def test_empty_reads_yield_until_the_deadline() -> None:
+    """A non-blocking empty transport must not busy-spin while awaiting bytes."""
+    now = 0.0
+    sleeps: list[float] = []
+
+    class EmptyReadTransport:  # pylint: disable=too-few-public-methods
+        """Always report no data without blocking."""
+
+        def read(self, _size: int = 1) -> bytes:
+            return b""
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        sleeps.append(delay)
+        now += delay
+
+    client = bl.BootloaderClient(EmptyReadTransport(), timeout=0.025, clock=clock, sleep=sleep)
+
+    with pytest.raises(bl.BootloaderProtocolError, match="timeout waiting"):
+        client._read_exact(1)  # pylint: disable=protected-access
+
+    assert sleeps == pytest.approx([0.01, 0.01, 0.005])
