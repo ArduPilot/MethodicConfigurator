@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.9.17\n"
-"POT-Creation-Date: 2026-09-05 07:48+0000\n"
+"POT-Creation-Date: 2026-09-09 20:41+0000\n"
 "PO-Revision-Date: 2024-12-02 13:37+0100\n"
 "Last-Translator: Dr.-Ing. Amilcar do Carmo Lucas <amilcar.lucas@iav.de>\n"
 "Language-Team: \n"
@@ -99,6 +99,7 @@ msgstr "将参数重置为默认值失败: %(error)s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:147
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_components_import.py:88
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_components_import.py:92
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:400
 msgid "Unknown"
 msgstr "未知"
 
@@ -208,7 +209,8 @@ msgstr "打开日志文件 {logfile} 时出错：{error}"
 msgid ""
 "Parameter {parameter_name} changed from {previous_value} to {value} before "
 "boot process completed"
-msgstr "参数 {parameter_name} 在启动过程完成前已从 {previous_value} 更改为 {value}"
+msgstr ""
+"参数 {parameter_name} 在启动过程完成前已从 {previous_value} 更改为 {value}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_bin_log.py:341
 msgid "Schema {name} has mismatched field and format counts"
@@ -3170,7 +3172,9 @@ msgstr "执行所有解锁检查。如果有问题请修复源头。不要更改
 msgid ""
 "Quiktune is now completed. Disable it so that we can use the same RC switch "
 "to operate the wp-advance script"
-msgstr "Quiktune 现已完成。请将其禁用，以便我们可以使用同一个 RC 开关来操作 wp-advance 脚本"
+msgstr ""
+"Quiktune 现已完成。请将其禁用，以便我们可以使用同一个 RC 开关来操作 wp-"
+"advance 脚本"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/configuration_steps_strings.py:324
 msgid "Restore value now that system identification is done"
@@ -3815,7 +3819,9 @@ msgstr "缺少参数-值分隔符: {line} 在 {param_file} 第 {i} 行"
 msgid ""
 "Fatal error reading {param_file}, file must be UTF-8, UTF-16, or UTF-32 "
 "encoded: {exp}"
-msgstr "读取 {param_file} 时发生致命错误，文件必须采用 UTF-8、UTF-16 或 UTF-32 编码：{exp}"
+msgstr ""
+"读取 {param_file} 时发生致命错误，文件必须采用 UTF-8、UTF-16 或 UTF-32 编码："
+"{exp}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_par_dict.py:243
 msgid "Too long parameter name: {parameter_name} in {param_file} line {i}"
@@ -6018,7 +6024,10 @@ msgid ""
 "The following subsystems don't have enough data and will be skipped:\n"
 "\n"
 "{names}"
-msgstr "以下子系统没有足够的数据，将被跳过：\n\n{names}"
+msgstr ""
+"以下子系统没有足够的数据，将被跳过：\n"
+"\n"
+"{names}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:286
 msgid "Vehicle & Firmware"
@@ -6054,7 +6063,7 @@ msgid "Total Msgs:"
 msgstr "消息总数:"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_log_availability.py:314
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:109
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:114
 msgid "System Performance"
 msgstr "系统性能"
 
@@ -6576,7 +6585,9 @@ msgstr "在已解析的日志中未找到固件版本信息"
 msgid ""
 "Log availability Report\n"
 "\n"
-msgstr "日志可用性报告\n\n"
+msgstr ""
+"日志可用性报告\n"
+"\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_parameter_editor.py:826
 msgid ""
@@ -7821,6 +7832,7 @@ msgid "{message} telemetry not logged but logging enabled; {hint}"
 msgstr "{message} 遥测未记录，但日志记录已启用；{hint}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_base.py:139
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:114
 msgid "No {message} messages found"
 msgstr "未找到 {message} 消息"
 
@@ -7940,7 +7952,9 @@ msgid ""
 "Consumed {used:.1f}% of rated battery capacity ({capacity:.0f} mAh). This "
 "exceeds 100%, check BATT_CAPACITY is correct for your battery, or "
 "BATT_AMP_PERVLT."
-msgstr "已消耗额定电池容量的 {used:.1f}%（{capacity:.0f} mAh）。这超过了 100%，请检查 BATT_CAPACITY 是否适用于您的电池，或检查 BATT_AMP_PERVLT。"
+msgstr ""
+"已消耗额定电池容量的 {used:.1f}%（{capacity:.0f} mAh）。这超过了 100%，请检"
+"查 BATT_CAPACITY 是否适用于您的电池，或检查 BATT_AMP_PERVLT。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:235
 msgid "Used {used:.1f}% of rated battery capacity ({capacity:.0f} mAh)"
@@ -7963,13 +7977,16 @@ msgid ""
 "BATT_CRT_VOLT ({crt:.1f}V) is not lower than BATT_LOW_VOLT ({low:.1f}V). "
 "ArduPilot's own arming check requires critical voltage to be below low "
 "voltage.{note}"
-msgstr "BATT_CRT_VOLT ({crt:.1f}V) 不低于 BATT_LOW_VOLT ({low:.1f}V)。ArduPilot 自身的解锁检查要求严重低电压必须低于低电压。{note}"
+msgstr ""
+"BATT_CRT_VOLT ({crt:.1f}V) 不低于 BATT_LOW_VOLT ({low:.1f}V)。ArduPilot 自身"
+"的解锁检查要求严重低电压必须低于低电压。{note}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:371
 msgid ""
 " ARMING_CHECK does not include 'All' or 'Battery Level', so this "
 "misconfiguration would not have blocked arming."
-msgstr "ARMING_CHECK 不包含 'All' 或 'Battery Level'，因此此错误配置本不会阻止解锁。"
+msgstr ""
+"ARMING_CHECK 不包含 'All' 或 'Battery Level'，因此此错误配置本不会阻止解锁。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:392
 msgid ""
@@ -7978,13 +7995,19 @@ msgid ""
 "is used to correctly scale the PID gains. It is the voltage of a healthy, "
 "fully charged battery read from your flight log immediately after takeoff "
 "(which is lower than the battery's true max voltage due to sag under load)."
-msgstr "{param} 当前为 {actual:.2f}，但根据您在 vehicle_components 中的规格说明，按照 {step} 中的 {source} 参数，应为 {expected:.2f}。这用于正确缩放 PID 增益。该值是在起飞后立即从您的飞行日志中读取的健康满电电池电压（由于负载下的压降，它低于电池的真实最高电压）。"
+msgstr ""
+"{param} 当前为 {actual:.2f}，但根据您在 vehicle_components 中的规格说明，按"
+"照 {step} 中的 {source} 参数，应为 {expected:.2f}。这用于正确缩放 PID 增益。"
+"该值是在起飞后立即从您的飞行日志中读取的健康满电电池电压（由于负载下的压降，"
+"它低于电池的真实最高电压）。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_battery.py:400
 msgid ""
 "{param} is {actual:.2f} but should be {expected:.2f} as per {source} "
 "parameter in {step}, based on your vehicle_components specifications."
-msgstr "{param} 当前为 {actual:.2f}，但根据您在 vehicle_components 中的规格说明，按照 {step} 中的 {source} 参数，应为 {expected:.2f}。"
+msgstr ""
+"{param} 当前为 {actual:.2f}，但根据您在 vehicle_components 中的规格说明，按"
+"照 {step} 中的 {source} 参数，应为 {expected:.2f}。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_err.py:36
 msgid "No errors logged during this flight"
@@ -8061,7 +8084,9 @@ msgstr "ESC 分析完成"
 msgid ""
 "ESC output {instance} reported zero RPM throughout an armed period "
 "({start:.1f}s to {end:.1f}s), the motor may not have responded."
-msgstr "ESC 输出 {instance} 在整个解锁期间（{start:.1f}s 到 {end:.1f}s）报告的 RPM 一直为零，电机可能没有响应。"
+msgstr ""
+"ESC 输出 {instance} 在整个解锁期间（{start:.1f}s 到 {end:.1f}s）报告的 RPM 一"
+"直为零，电机可能没有响应。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:225
 msgid ""
@@ -8069,7 +8094,10 @@ msgid ""
 "({required_min:.3f}). AMC's tuning guide requires MOT_SPIN_MIN to be at "
 "least {required:.2f} above MOT_SPIN_ARM ({spin_arm:.3f}). Motors may not "
 "spin reliably once armed."
-msgstr "MOT_SPIN_MIN ({spin_min:.3f}) 低于 MOT_SPIN_ARM + {required:.2f} ({required_min:.3f})。AMC 的调参指南要求 MOT_SPIN_MIN 至少比 MOT_SPIN_ARM ({spin_arm:.3f}) 高 {required:.2f}。电机在解锁后可能无法可靠地转动。"
+msgstr ""
+"MOT_SPIN_MIN ({spin_min:.3f}) 低于 MOT_SPIN_ARM + {required:.2f} "
+"({required_min:.3f})。AMC 的调参指南要求 MOT_SPIN_MIN 至少比 MOT_SPIN_ARM "
+"({spin_arm:.3f}) 高 {required:.2f}。电机在解锁后可能无法可靠地转动。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:267
 msgid "ESC output {instance} peak error rate: {err:.1f}%"
@@ -8080,7 +8108,9 @@ msgid ""
 "ESC output {instance} drew {mean:.2f}A on average, current drawn by the "
 "other {n} ESC output(s) (median {median:.2f}A). If unexpected for this "
 "vehicle's configuration, check for a mechanical or wiring issue."
-msgstr "ESC 输出 {instance} 的平均电流为 {mean:.2f}A，而其他 {n} 个 ESC 输出的电流中位数为 {median:.2f}A。如果这不符合此机型配置的预期，请检查机械或接线问题。"
+msgstr ""
+"ESC 输出 {instance} 的平均电流为 {mean:.2f}A，而其他 {n} 个 ESC 输出的电流中"
+"位数为 {median:.2f}A。如果这不符合此机型配置的预期，请检查机械或接线问题。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_esc.py:371
 msgid ""
@@ -8088,7 +8118,11 @@ msgid ""
 "SERVO_DSHOT_RATE={dshot!r}), at or below the {threshold:.0f}Hz level Amilcar "
 "flagged as problematic. apm.pdef.xml also states SERVO_DSHOT_RATE should "
 "never be set below 500Hz."
-msgstr "有效的 DShot 输出速率为 {rate:.0f}Hz（SCHED_LOOP_RATE={loop:.0f}Hz，SERVO_DSHOT_RATE={dshot!r}），处于或低于 Amilcar 标记为有问题的 {threshold:.0f}Hz 水平。apm.pdef.xml 还指出 SERVO_DSHOT_RATE 绝不应设置为低于 500Hz。"
+msgstr ""
+"有效的 DShot 输出速率为 {rate:.0f}Hz（SCHED_LOOP_RATE={loop:.0f}Hz，"
+"SERVO_DSHOT_RATE={dshot!r}），处于或低于 Amilcar 标记为有问题的 "
+"{threshold:.0f}Hz 水平。apm.pdef.xml 还指出 SERVO_DSHOT_RATE 绝不应设置为低"
+"于 500Hz。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_fft.py:42
 msgid "Raw IMU batch logging is disabled (INS_LOG_BAT_MASK is 0)"
@@ -8223,7 +8257,8 @@ msgstr "IMU 分析完成"
 msgid ""
 "IMU {n} temperature calibration is not enabled. Consider running it for "
 "better accuracy across temperature changes."
-msgstr "IMU {n} 未启用温度校准。建议运行该校准，以便在温度变化时获得更好的精度。"
+msgstr ""
+"IMU {n} 未启用温度校准。建议运行该校准，以便在温度变化时获得更好的精度。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:204
 msgid "IMU {n} temperature calibration is in progress (not yet complete)."
@@ -8233,7 +8268,9 @@ msgstr "IMU {n} 温度校准正在进行中（尚未完成）。"
 msgid ""
 "IMU {n} has an unexpected {param} value of {value}, neither disabled, "
 "learning, nor a recognized enabled state."
-msgstr "IMU {n} 的 {param} 值 {value} 不符合预期，既不是禁用、学习中，也不是可识别的启用状态。"
+msgstr ""
+"IMU {n} 的 {param} 值 {value} 不符合预期，既不是禁用、学习中，也不是可识别的"
+"启用状态。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:234
 msgid ""
@@ -8241,7 +8278,9 @@ msgid ""
 "calibration (CALTEMP) was never performed. This calibration data may be "
 "unreliable; run a 6-axis accel calibration and re-run temperature "
 "calibration."
-msgstr "IMU {n} 被标记为已进行温度校准，但从未执行过加速度计/陀螺仪校准（CALTEMP）。该校准数据可能不可靠；请运行一次 6 轴加速度计校准，然后重新进行温度校准。"
+msgstr ""
+"IMU {n} 被标记为已进行温度校准，但从未执行过加速度计/陀螺仪校准（CALTEMP）。"
+"该校准数据可能不可靠；请运行一次 6 轴加速度计校准，然后重新进行温度校准。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:251
 msgid ""
@@ -8254,34 +8293,44 @@ msgid ""
 "IMU {n} temperature calibration's coldest recorded point was {tmin:.1f}C, "
 "above freezing. For best results, cool the flight controller down to around "
 "{rec:.0f}C or lower before starting calibration."
-msgstr "IMU {n} 温度校准记录到的最低点为 {tmin:.1f}C，高于冰点。为获得最佳结果，请在开始校准前将飞控冷却到约 {rec:.0f}C 或更低。"
+msgstr ""
+"IMU {n} 温度校准记录到的最低点为 {tmin:.1f}C，高于冰点。为获得最佳结果，请在"
+"开始校准前将飞控冷却到约 {rec:.0f}C 或更低。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:296
 msgid ""
 "{param} is set to ESC Telemetry tracking mode, but no ESC telemetry was "
 "present in this log. The notch filter could not track motor RPM, and did not "
 "remove motor noise. Motor vibration noise reached the PID controller inputs."
-msgstr "{param} 已设置为 ESC 遥测跟踪模式，但此日志中不存在 ESC 遥测数据。陷波滤波器无法跟踪电机 RPM，也未能去除电机噪声。电机振动噪声已进入 PID 控制器输入端。"
+msgstr ""
+"{param} 已设置为 ESC 遥测跟踪模式，但此日志中不存在 ESC 遥测数据。陷波滤波器"
+"无法跟踪电机 RPM，也未能去除电机噪声。电机振动噪声已进入 PID 控制器输入端。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:314
 msgid ""
 "IMU {n} temperature calibration spread is only {spread:.1f}C ({tmin:.1f}C to "
 "{tmax:.1f}C), below ArduPilot's required minimum of {min_req:.0f}C. "
 "Recalibration needed."
-msgstr "IMU {n} 温度校准的温差范围仅为 {spread:.1f}C（{tmin:.1f}C 到 {tmax:.1f}C），低于 ArduPilot 要求的最小值 {min_req:.0f}C。需要重新校准。"
+msgstr ""
+"IMU {n} 温度校准的温差范围仅为 {spread:.1f}C（{tmin:.1f}C 到 {tmax:.1f}C），"
+"低于 ArduPilot 要求的最小值 {min_req:.0f}C。需要重新校准。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:319
 msgid ""
 "IMU {n} temperature calibration spread is {spread:.1f}C ({tmin:.1f}C to "
 "{tmax:.1f}C), meets the minimum but below the recommended {rec:.0f}C for "
 "best coverage."
-msgstr "IMU {n} 温度校准的温差范围为 {spread:.1f}C（{tmin:.1f}C 到 {tmax:.1f}C），达到了最低要求，但低于获得最佳覆盖范围所建议的 {rec:.0f}C。"
+msgstr ""
+"IMU {n} 温度校准的温差范围为 {spread:.1f}C（{tmin:.1f}C 到 {tmax:.1f}C），达"
+"到了最低要求，但低于获得最佳覆盖范围所建议的 {rec:.0f}C。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_imu.py:324
 msgid ""
 "IMU {n} temperature calibration spread is {spread:.1f}C ({tmin:.1f}C to "
 "{tmax:.1f}C), good coverage."
-msgstr "IMU {n} 温度校准的温差范围为 {spread:.1f}C（{tmin:.1f}C 到 {tmax:.1f}C），覆盖范围良好。"
+msgstr ""
+"IMU {n} 温度校准的温差范围为 {spread:.1f}C（{tmin:.1f}C 到 {tmax:.1f}C），覆"
+"盖范围良好。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_mode.py:43
 msgid ""
@@ -8292,6 +8341,280 @@ msgstr "未找到 MODE 消息，这不符合预期，因为模式变化总会被
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_mode.py:44
 msgid "No MODE messages found"
 msgstr "未找到 MODE 消息"
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:68
+msgid "Plane landing analysis is available only for ArduPlane logs"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:69
+msgid "Log vehicle type is not ArduPlane"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:75
+msgid "Plane landing analysis currently supports ArduPlane 4.7.x only"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:76
+msgid "Log firmware is not ArduPlane 4.7.x"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:84
+msgid "Required Plane landing-attempt evidence is unavailable"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:86
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:106
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:126
+msgid "Plane Landing"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:92
+msgid "Operational Plane flight segmentation is unavailable: {reason}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:93
+msgid "No usable operational Plane flight scope"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:97
+msgid "No operational Plane flight segments were detected"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:98
+msgid "No operational Plane flight scope contains landing evidence"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:104
+msgid "Plane landing-attempt data present and good for analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:144
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:189
+msgid "Plane Landing Analysis"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:145
+msgid "Operational Plane flight segmentation is unavailable"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:176
+msgid "GPS-stop"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:178
+msgid "computed distance to mission LAND target"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:178
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:232
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:235
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:237
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:325
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:328
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:355
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:361
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:373
+msgid "m"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:182
+msgid "Detected {count} Plane landing attempt(s)"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:184
+msgid "No Plane landing attempts detected"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:197
+msgid "LAND_FLARE_ALT at attempt start: {value:.2f} m"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:199
+msgid "LAND_FLARE_ALT was unavailable at attempt start"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:202
+msgid ""
+"{mode_name} landing attempt {number}: {start:.3f} s to {end:.3f} s; "
+"termination evidence: {end_reason}; {parameter_evidence}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:218
+msgid "flare"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:218
+msgid "preflare"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:222
+msgid "Attempt {number}: LAND stage {stage} ({stage_name}) entered"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:232
+msgid "LAND flight height"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:233
+msgid "ARSP airspeed"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:233
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:234
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:236
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:326
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:327
+msgid "m/s"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:234
+msgid "GPS groundspeed"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:235
+msgid "BARO altitude"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:236
+msgid "BARO sink rate"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:237
+msgid "RFND distance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:238
+msgid "Flare to GPS stop"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:238
+msgid "s"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:265
+msgid "Attempt {number} {stage_name}: {parameter} effective value {value:g}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:287
+msgid "RFND status {status}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:289
+msgid "RFND status {status_name} ({status}) — distance unavailable"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:294
+msgid ""
+"RFND status {status_name} ({status}) — not usable as Plane landing-height "
+"evidence"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:298
+msgid "RFND status {status_name} ({status}) — no current range measurement"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:303
+msgid "Attempt {number} {stage_name}: {status_evidence}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:325
+msgid "altitude"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:326
+msgid "sink rate"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:327
+msgid "groundspeed"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:328
+msgid "distance to target"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:331
+msgid "firmware flare"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:337
+msgid "firmware landing"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:339
+msgid "degrees"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:339
+msgid "glide slope"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:354
+msgid "first non-zero distance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:360
+msgid "first in-range distance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:366
+msgid "continuous acquisition sample count"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:367
+msgid "samples"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:372
+msgid "last disengagement distance"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:381
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:411
+msgid "RFND lifecycle"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:393
+msgid ""
+"Attempt {number} RFND lifecycle: last disengagement status {status_name} "
+"({status}); distance unavailable"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:413
+msgid "disengagement count"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:413
+msgid "events"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:427
+msgid "Attempt {number} {stage_name}: {measurement} {value:.3f} {unit}"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:441
+msgid "landing abort message"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:442
+msgid "throttle disarm message"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:443
+msgid "transition away from landing mode"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:444
+msgid "sustained GPS low-speed rollout completion"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:445
+msgid "new LAND active-stage transition"
+msgstr ""
+
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:446
+msgid "operational flight-segment boundary"
+msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_pm.py:43
 msgid "check firmware build supports performance monitor logging"
@@ -8344,36 +8667,42 @@ msgstr "VIBE 记录中缺少 {field} 值"
 msgid ""
 "{axis} peaked at {peak:.1f} m/s/s, above the {severe:.0f} m/s/s level at "
 "which position/altitude hold problems are nearly always present."
-msgstr "{axis} 峰值达到 {peak:.1f} m/s/s，高于 {severe:.0f} m/s/s 的水平，在这种水平下几乎总会出现位置/高度保持问题。"
+msgstr ""
+"{axis} 峰值达到 {peak:.1f} m/s/s，高于 {severe:.0f} m/s/s 的水平，在这种水平"
+"下几乎总会出现位置/高度保持问题。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:160
 msgid ""
 "{axis} peaked at {peak:.1f} m/s/s, above the {warn:.0f} m/s/s level that may "
 "cause position/altitude hold problems."
-msgstr "{axis} 峰值达到 {peak:.1f} m/s/s，高于 {warn:.0f} m/s/s 的水平，这可能导致位置/高度保持问题。"
+msgstr ""
+"{axis} 峰值达到 {peak:.1f} m/s/s，高于 {warn:.0f} m/s/s 的水平，这可能导致位"
+"置/高度保持问题。"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_vibe.py:190
 msgid ""
 "Accelerometer reported {count:.0f} clipping event(s) during the flight, "
 "meaning the sensor physically saturated at some point."
-msgstr "加速度计在飞行期间报告了 {count:.0f} 次削顶事件，这意味着传感器在某个时刻发生了物理饱和。"
+msgstr ""
+"加速度计在飞行期间报告了 {count:.0f} 次削顶事件，这意味着传感器在某个时刻发生"
+"了物理饱和。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:105
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:110
 msgid "Performance monitor data present and good for analysis"
 msgstr "性能监视器数据已记录且适合分析"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:107
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:112
 msgid "Performance monitor data has availability issues"
 msgstr "性能监视器数据存在可用性问题"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:175
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:180
 msgid ""
 "The selected log is from {log_vehicle_type}, but the currently open vehicle "
 "is {project_vehicle_type}."
 msgstr ""
 "所选日志来自 {log_vehicle_type}，但当前打开的载具是 {project_vehicle_type}。"
 
-#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:182
+#: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_log_analysis.py:187
 msgid ""
 "The selected log firmware version is {log_version}, but the currently open "
 "vehicle firmware version is {project_version}."
