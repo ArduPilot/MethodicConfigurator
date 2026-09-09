@@ -119,6 +119,15 @@ class ParameterValueUpdateResult:
     message: str | None = None
 
 
+@dataclass(frozen=True)
+class FcParameterCopyResult:
+    """Counts describing the outcome of copying flight-controller values."""
+
+    copied: int = 0
+    unchanged: int = 0
+    failed: int = 0
+
+
 # pylint: disable=too-many-lines
 
 
@@ -308,7 +317,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return True, relevant_fc_params, auto_changed_by
         return False, None, auto_changed_by
 
-    def _update_parameters_from_fc_values(self, relevant_fc_params: dict[str, float]) -> bool:
+    def _update_parameters_from_fc_values(self, relevant_fc_params: dict[str, float]) -> FcParameterCopyResult:
         """
         Update in-memory parameter values from flight controller values.
 
@@ -325,7 +334,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             relevant_fc_params: Dictionary of parameter names and FC values to copy.
 
         Returns:
-            bool: True if at least one parameter was successfully updated in memory.
+            FcParameterCopyResult: Counts of copied, unchanged, and failed parameter values.
 
         Note:
             This method bypasses range checking since values came from the FC and were
@@ -334,27 +343,40 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         """
         params_copied = 0
+        params_unchanged = 0
+        params_failed = 0
         for param_name, value in relevant_fc_params.items():
             param = self.current_step_parameters.get(param_name)
             if param is None:
                 logging_error(_("Parameter %s not in current step parameters"), param_name)
+                params_failed += 1
                 continue
             try:
                 param.set_new_value(str(value), ignore_out_of_range=True)
                 params_copied += 1
             except ParameterUnchangedError:
-                continue  # Expected, not an error
+                params_unchanged += 1
             except ParameterOutOfRangeError:
                 # Log warning but accept FC value anyway since it came from FC
-                logging_warning(_("Parameter %s value %s is out of range but accepted from FC"), param_name, value)
+                logging_warning(
+                    _("Parameter {parameter} value {value} is out of range but accepted from FC").format(
+                        parameter=param_name, value=value
+                    )
+                )
                 params_copied += 1
             except ParameterForcedOrDerivedError as exc:
-                logging_warning("%s", exc)
-                continue
+                logging_warning(
+                    _("Parameter {parameter} could not be updated because it is forced or derived: {error}").format(
+                        parameter=param_name, error=exc
+                    )
+                )
+                params_failed += 1
             except (ValueError, TypeError):
-                logging_exception(_("Failed to update in-memory value for %s after FC copy"), param_name)
-                continue
-        return bool(params_copied)
+                logging_exception(
+                    _("Failed to update in-memory value for {parameter} after FC copy").format(parameter=param_name)
+                )
+                params_failed += 1
+        return FcParameterCopyResult(params_copied, params_unchanged, params_failed)
 
     def handle_copy_fc_values_workflow(
         self,
@@ -389,11 +411,21 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             user_choice = ask_user_choice(_("Update file with values from FC?"), msg, [_("Close"), _("Yes"), _("No")])
 
             if user_choice is True:  # Yes option
-                params_copied = self._update_parameters_from_fc_values(relevant_fc_params)
-                if params_copied:
+                copy_result = self._update_parameters_from_fc_values(relevant_fc_params)
+                if copy_result.copied:
                     show_info(
                         _("Parameters copied"),
                         _("FC values have been copied to {selected_file}").format(selected_file=selected_file),
+                    )
+                elif copy_result.unchanged and not copy_result.failed:
+                    show_info(
+                        _("Parameters already up to date"),
+                        _("FC values already match {selected_file}.").format(selected_file=selected_file),
+                    )
+                else:
+                    show_info(
+                        _("No parameters copied"),
+                        _("No FC values could be copied to {selected_file}.").format(selected_file=selected_file),
                     )
             return user_choice
         return False
@@ -1885,9 +1917,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._connection_renames.clear()
 
         # Process configuration step and get operations to apply
-        self.current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params = (
-            self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
-        )
+        (
+            self.current_step_parameters,
+            ui_errors,
+            ui_infos,
+            duplicates_to_remove,
+            renames_to_apply,
+            derived_params,
+            autoimported_parameters,
+        ) = self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
+        self._added_parameters.update(autoimported_parameters)
 
         # Apply derived parameters to domain model using specialized setters
         for param_name, derived_par in derived_params.items():

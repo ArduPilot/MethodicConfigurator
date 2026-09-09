@@ -23,6 +23,7 @@ from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
 )
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParamFileError, ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import (
+    FcParameterCopyResult,
     InvalidParameterNameError,
     OperationNotPossibleError,
     ParameterEditor,
@@ -1583,7 +1584,7 @@ class TestFileCopyWorkflows:
 
         GIVEN: A user has relevant FC parameters to copy that exist in current_step_parameters
         WHEN: They call _update_parameters_from_fc_values
-        THEN: The in-memory parameter values should be updated and the method reports success
+        THEN: The in-memory parameter values should be updated and the result counts both updates
         """
         # Arrange (Given): Set up parameters in current_step_parameters
         param1 = ArduPilotParameter(
@@ -1607,7 +1608,7 @@ class TestFileCopyWorkflows:
         result = parameter_editor._update_parameters_from_fc_values(relevant_params)
 
         # Assert (Then): In-memory values were updated
-        assert result is True
+        assert result == FcParameterCopyResult(copied=2)
         assert param1.get_new_value() == pytest.approx(1.0)
         assert param2.get_new_value() == pytest.approx(2.0)
 
@@ -1649,7 +1650,7 @@ class TestFileCopyWorkflows:
 
         # Assert (Then):
         # 1) Method reports success
-        assert result is True
+        assert result == FcParameterCopyResult(copied=2)
 
         # 2) In-memory ArduPilotParameter values were updated to match FC values
         assert param1.get_new_value() == pytest.approx(1.0)
@@ -1666,7 +1667,7 @@ class TestFileCopyWorkflows:
 
         GIVEN: A copy operation that fails
         WHEN: User attempts to copy values
-        THEN: False should be returned
+        THEN: The result should count the failed copy
         """
         # Arrange: Set up failed copy - current_step_parameters is empty by default
         # so trying to copy PARAM1 will fail because it doesn't exist in current_step_parameters
@@ -1676,7 +1677,7 @@ class TestFileCopyWorkflows:
         result = parameter_editor._update_parameters_from_fc_values(relevant_params)
 
         # Assert: Copy failed
-        assert result is False
+        assert result == FcParameterCopyResult(failed=1)
 
     def test_partial_update_when_some_params_fail(self, parameter_editor) -> None:
         """
@@ -1709,7 +1710,7 @@ class TestFileCopyWorkflows:
         result = parameter_editor._update_parameters_from_fc_values(relevant_params)
 
         # Assert: Partial success
-        assert result is True  # At least some succeeded
+        assert result == FcParameterCopyResult(copied=2, failed=1)
         assert param1.get_new_value() == pytest.approx(1.0)
         assert param2.get_new_value() == pytest.approx(2.0)
         # PARAM3 was logged as error but didn't prevent other updates
@@ -3520,6 +3521,7 @@ class TestDerivedParameterApplication:
                 [],  # duplicates_to_remove
                 [],  # renames_to_apply
                 derived_params,  # derived_params
+                set(),  # autoimported_parameters
             ),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
@@ -3565,6 +3567,7 @@ class TestDerivedParameterApplication:
                     [],  # duplicates_to_remove
                     [],  # renames_to_apply
                     derived_params,  # derived_params
+                    set(),  # autoimported_parameters
                 ),
             ),
             patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
@@ -3613,6 +3616,7 @@ class TestDerivedParameterApplication:
                     [],
                     [],
                     derived_params,
+                    set(),
                 ),
             ),
             patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
@@ -3652,6 +3656,7 @@ class TestDerivedParameterApplication:
                 [],
                 [],
                 derived_params,
+                set(),
             ),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
@@ -3681,7 +3686,7 @@ class TestDerivedParameterApplication:
             patch.object(
                 parameter_editor._config_step_processor,
                 "process_configuration_step",
-                return_value=({}, [], [], set(), [], ParDict()),
+                return_value=({}, [], [], set(), [], ParDict(), set()),
             ),
             patch.object(
                 parameter_editor._config_step_processor,
@@ -3694,6 +3699,38 @@ class TestDerivedParameterApplication:
         assert "NEW_FORCED" in parameter_editor.current_step_parameters
         assert parameter_editor.current_step_parameters["NEW_FORCED"] is mock_ap_param
         assert "NEW_FORCED" in parameter_editor._added_parameters
+
+    def test_autoimported_parameter_is_tracked_for_saving(self, parameter_editor) -> None:
+        """
+        Auto-imported parameters trigger the normal save workflow.
+
+        GIVEN: A configuration step adds a non-default FC parameter automatically
+        WHEN: The step is repopulated and the user confirms saving changes
+        THEN: The imported parameter is treated as an unsaved file change
+        AND: The current file is exported through the normal save path
+        """
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._last_time_asked_to_save = 0.0
+        autoimported = ArduPilotParameter("AUTO_IMPORTED", Par(2.0), fc_value=2.0)
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "process_configuration_step",
+            return_value=({"AUTO_IMPORTED": autoimported}, [], [], set(), [], ParDict(), {"AUTO_IMPORTED"}),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters()
+
+        assert parameter_editor._has_unsaved_changes()
+
+        with patch.object(parameter_editor, "_export_current_file") as mock_export:
+            assert (
+                parameter_editor.handle_write_changes_workflow(
+                    annotate_params_into_files=False,
+                    ask_user_confirmation=MagicMock(return_value=True),
+                )
+                is True
+            )
+
+        mock_export.assert_called_once_with(annotate_doc=False)
 
     def test_connected_editor_delegates_plugin_model_creation_to_registry(self, parameter_editor) -> None:
         """The editor supplies shared dependencies without importing concrete plugin models."""
@@ -3791,13 +3828,13 @@ class TestEditorStateInitialization:
         assert result is None
         mock_factory.create_model.assert_not_called()
 
-    def test_system_returns_false_when_fc_parameter_is_not_in_current_step(self, parameter_editor) -> None:
+    def test_system_counts_missing_fc_parameter_as_failed_copy(self, parameter_editor) -> None:
         """
-        System returns False and logs an error when the FC supplies a parameter absent from the current step.
+        System counts a missing current-step parameter as a failed copy and logs an error.
 
         GIVEN: A parameter editor whose current step contains no parameters
         WHEN: _update_parameters_from_fc_values receives a value for an unknown parameter
-        THEN: It should return False (zero parameters were successfully updated)
+        THEN: It should report one failed copy and zero successful updates
         """
         # Arrange: Empty current step
         parameter_editor.current_step_parameters = {}
@@ -3807,15 +3844,15 @@ class TestEditorStateInitialization:
             result = parameter_editor._update_parameters_from_fc_values({"MISSING_PARAM": 1.0})
 
         # Assert
-        assert result is False
+        assert result == FcParameterCopyResult(failed=1)
 
-    def test_system_returns_false_when_parameter_update_fails_with_type_error(self, parameter_editor) -> None:
+    def test_system_counts_type_error_as_failed_copy(self, parameter_editor) -> None:
         """
-        System returns False when set_new_value raises TypeError for the supplied FC value.
+        System counts a TypeError from set_new_value as a failed copy.
 
         GIVEN: A current step parameter whose set_new_value raises TypeError
         WHEN: _update_parameters_from_fc_values supplies a value that triggers the error
-        THEN: It should return False (zero parameters were successfully updated)
+        THEN: It should report one failed copy and zero successful updates
         """
         # Arrange: Parameter that rejects the value
         mock_param = MagicMock()
@@ -3826,7 +3863,7 @@ class TestEditorStateInitialization:
         result = parameter_editor._update_parameters_from_fc_values({"P1": None})
 
         # Assert
-        assert result is False
+        assert result == FcParameterCopyResult(failed=1)
 
 
 class TestWorkflowEdgeCases:
@@ -3867,7 +3904,11 @@ class TestWorkflowEdgeCases:
         # Arrange
         with (
             patch.object(parameter_editor, "_should_copy_fc_values_to_file", return_value=(True, {"P": 1.0}, "SomeTool")),
-            patch.object(parameter_editor, "_update_parameters_from_fc_values", return_value=True) as mock_update,
+            patch.object(
+                parameter_editor,
+                "_update_parameters_from_fc_values",
+                return_value=FcParameterCopyResult(copied=1),
+            ) as mock_update,
         ):
             mock_ask = MagicMock(return_value=True)
 
@@ -3877,6 +3918,60 @@ class TestWorkflowEdgeCases:
         # Assert
         assert result is True
         mock_update.assert_called_once_with({"P": 1.0})
+
+    def test_user_is_told_when_fc_values_are_already_up_to_date(self, parameter_editor) -> None:
+        """
+        User is told when the confirmed FC values already match the file.
+
+        GIVEN: The user confirms copying FC values and every value is unchanged
+        WHEN: The copy workflow processes the values
+        THEN: The user is told that the parameters are already up to date
+        """
+        with (
+            patch.object(parameter_editor, "_should_copy_fc_values_to_file", return_value=(True, {"P": 1.0}, "SomeTool")),
+            patch.object(
+                parameter_editor,
+                "_update_parameters_from_fc_values",
+                return_value=FcParameterCopyResult(unchanged=1),
+            ),
+        ):
+            mock_ask = MagicMock(return_value=True)
+            mock_show_info = MagicMock()
+
+            result = parameter_editor.handle_copy_fc_values_workflow("step.param", mock_ask, mock_show_info)
+
+        assert result is True
+        mock_show_info.assert_called_once_with(
+            "Parameters already up to date",
+            "FC values already match step.param.",
+        )
+
+    def test_user_is_told_when_fc_values_fail_to_copy(self, parameter_editor) -> None:
+        """
+        User is told when confirmed FC values cannot be copied.
+
+        GIVEN: The user confirms copying FC values and the copy operation fails
+        WHEN: The copy workflow processes the values
+        THEN: The user is told that no parameters were copied
+        """
+        with (
+            patch.object(parameter_editor, "_should_copy_fc_values_to_file", return_value=(True, {"P": 1.0}, "SomeTool")),
+            patch.object(
+                parameter_editor,
+                "_update_parameters_from_fc_values",
+                return_value=FcParameterCopyResult(failed=1),
+            ),
+        ):
+            mock_ask = MagicMock(return_value=True)
+            mock_show_info = MagicMock()
+
+            result = parameter_editor.handle_copy_fc_values_workflow("step.param", mock_ask, mock_show_info)
+
+        assert result is True
+        mock_show_info.assert_called_once_with(
+            "No parameters copied",
+            "No FC values could be copied to step.param.",
+        )
 
     def test_system_skips_copy_when_user_declines(self, parameter_editor) -> None:
         """
@@ -4502,7 +4597,7 @@ class TestParameterManagementBehavior:
             patch.object(
                 parameter_editor._config_step_processor,
                 "process_configuration_step",
-                return_value=({"OLD": MagicMock()}, [], [], [], [("OLD", "NEW")], ParDict()),
+                return_value=({"OLD": MagicMock()}, [], [], [], [("OLD", "NEW")], ParDict(), set()),
             ),
             patch.object(parameter_editor._config_step_processor, "create_ardupilot_parameter", return_value=mock_new_param),
         ):
@@ -4530,7 +4625,7 @@ class TestParameterManagementBehavior:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"DER": mock_der}, [], [], [], [], ParDict({"DER": Par(2.0, "because math")})),
+            return_value=({"DER": mock_der}, [], [], [], [], ParDict({"DER": Par(2.0, "because math")}), set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6118,7 +6213,7 @@ class TestCopyFlightControllerValuesEdgeCases:
         param.set_new_value.side_effect = ParameterOutOfRangeError("out of range")
         parameter_editor.current_step_parameters = {"PARAM1": param}
 
-        assert parameter_editor._update_parameters_from_fc_values({"PARAM1": 999.0}) is True
+        assert parameter_editor._update_parameters_from_fc_values({"PARAM1": 999.0}) == FcParameterCopyResult(copied=1)
         param.set_new_value.assert_called_once_with("999.0", ignore_out_of_range=True)
 
     def test_user_sees_no_change_when_the_flight_controller_values_already_match(
@@ -6135,7 +6230,7 @@ class TestCopyFlightControllerValuesEdgeCases:
         param.set_new_value.side_effect = ParameterUnchangedError("unchanged")
         parameter_editor.current_step_parameters = {"PARAM1": param}
 
-        assert parameter_editor._update_parameters_from_fc_values({"PARAM1": 1.0}) is False
+        assert parameter_editor._update_parameters_from_fc_values({"PARAM1": 1.0}) == FcParameterCopyResult(unchanged=1)
 
     def test_system_skips_a_flight_controller_value_that_cannot_be_converted(self, parameter_editor: ParameterEditor) -> None:
         """
@@ -6151,10 +6246,11 @@ class TestCopyFlightControllerValuesEdgeCases:
         parameter_editor.current_step_parameters = {"BAD": bad, "GOOD": good}
 
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_exception") as mock_exception:
-            assert parameter_editor._update_parameters_from_fc_values({"BAD": 1.0, "GOOD": 2.0}) is True
+            result = parameter_editor._update_parameters_from_fc_values({"BAD": 1.0, "GOOD": 2.0})
 
         assert good.get_new_value() == 2.0
-        mock_exception.assert_called_once_with("Failed to update in-memory value for %s after FC copy", "BAD")
+        assert result == FcParameterCopyResult(copied=1, failed=1)
+        mock_exception.assert_called_once_with("Failed to update in-memory value for BAD after FC copy")
 
     def test_system_warns_without_a_traceback_when_a_parameter_is_forced_or_derived(
         self, parameter_editor: ParameterEditor
@@ -6173,9 +6269,13 @@ class TestCopyFlightControllerValuesEdgeCases:
         parameter_editor.current_step_parameters = {"FORCED": param}
 
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_warning") as mock_warning:
-            assert parameter_editor._update_parameters_from_fc_values({"FORCED": 1.0}) is False
+            result = parameter_editor._update_parameters_from_fc_values({"FORCED": 1.0})
 
-        mock_warning.assert_called_once_with("%s", error)
+        assert result == FcParameterCopyResult(failed=1)
+        mock_warning.assert_called_once_with(
+            "Parameter FORCED could not be updated because it is forced or derived: "
+            "This parameter is forced or derived and cannot be changed."
+        )
 
     def test_system_skips_a_flight_controller_value_absent_from_the_current_step(
         self, parameter_editor: ParameterEditor
@@ -6189,7 +6289,7 @@ class TestCopyFlightControllerValuesEdgeCases:
         """
         parameter_editor.current_step_parameters = {}
 
-        assert parameter_editor._update_parameters_from_fc_values({"ABSENT": 1.0}) is False
+        assert parameter_editor._update_parameters_from_fc_values({"ABSENT": 1.0}) == FcParameterCopyResult(failed=1)
 
 
 class TestFlightControllerParameterDiffExport:
@@ -6324,7 +6424,7 @@ class TestConfigurationStepParameterRepopulation:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({}, [], [], [], [], {}),
+            return_value=({}, [], [], [], [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6349,7 +6449,7 @@ class TestConfigurationStepParameterRepopulation:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"OLD_PARAM": MagicMock()}, [], [], [], [], {}),
+            return_value=({"OLD_PARAM": MagicMock()}, [], [], [], [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6771,7 +6871,7 @@ class TestDuplicateParameterRemoval:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}),
+            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6797,7 +6897,7 @@ class TestDuplicateParameterRemoval:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}),
+            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 

@@ -312,6 +312,22 @@ def test_repopulate_empty_parameters(parameter_editor_table: ParameterEditorTabl
     parameter_editor_table.add_parameter_row.assert_not_called()
 
 
+def test_repopulate_resets_upload_selection_when_file_changes(parameter_editor_table: ParameterEditorTable) -> None:
+    """Selections from one file must not become defaults for the next file."""
+    parameter_editor_table._upload_selection_defaults_file = "first.param"
+    parameter_editor_table.parameter_editor.current_file = "first.param"
+    parameter_editor_table.upload_checkbutton_var = {"PARAM": tk.BooleanVar(value=False)}
+    parameter_editor_table._render_table = MagicMock()
+
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+    assert parameter_editor_table._upload_selection_defaults == {"PARAM": False}
+
+    parameter_editor_table.parameter_editor.current_file = "second.param"
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+
+    assert parameter_editor_table._upload_selection_defaults == {}
+
+
 def test_repopulate_clears_existing_content(parameter_editor_table: ParameterEditorTable) -> None:
     """
     ParameterEditorTable clears existing content before repopulating.

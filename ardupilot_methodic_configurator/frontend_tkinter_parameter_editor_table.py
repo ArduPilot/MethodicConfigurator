@@ -113,6 +113,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self.parameters = parameters
         self._show_only_differences = False
         self._upload_selection_defaults: dict[str, bool] = {}
+        self._upload_selection_defaults_file: str | None = None
         self._new_value_widgets: dict[str, PairTupleCombobox | ttk.Entry] = {}
         self._value_is_different_labels: dict[str, ttk.Label] = {}
         self._table_render_generation = 0
@@ -235,9 +236,13 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
 
     def repopulate_table(self, show_only_differences: bool, gui_complexity: str) -> None:
         self._show_only_differences = show_only_differences
-        self._upload_selection_defaults.update(
-            {name: variable.get() for name, variable in self.upload_checkbutton_var.items()}
-        )
+        if self.parameter_editor.current_file == self._upload_selection_defaults_file:
+            self._upload_selection_defaults.update(
+                {name: variable.get() for name, variable in self.upload_checkbutton_var.items()}
+            )
+        else:
+            self._upload_selection_defaults.clear()
+        self._upload_selection_defaults_file = self.parameter_editor.current_file
         for widget in self.view_port.winfo_children():
             widget.destroy()
         for row in range(1, self._reserved_table_rows + 1):

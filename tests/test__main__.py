@@ -1920,6 +1920,75 @@ class TestEditorBackupAndMainOrchestration:
             # Assert
             mock_err.assert_called()
 
+    def test_main_processes_component_results_before_parameter_editor_starts(self) -> None:
+        """
+        Component changes are processed before the parameter editor starts.
+
+        WHEN: The application completes component editing
+        THEN: process_component_editor_results runs before parameter_editor_and_uploader
+        """
+        fc_mock = MagicMock()
+        fc_mock.fc_parameters = {}
+        events: list[str] = []
+
+        def _init_fs(state: object) -> None:
+            state.flight_controller = fc_mock  # type: ignore[union-attr]
+            state.local_filesystem = MagicMock()  # type: ignore[union-attr]
+            state.local_filesystem.file_parameters = {}
+            state.local_filesystem.doc_dict = {}
+            state.local_filesystem.vehicle_dir = "/fake"
+            state.local_filesystem.get_fc_fw_version_from_vehicle_components_json.return_value = "4.7.0"
+            state.param_default_values_dirty = False  # type: ignore[union-attr]
+
+        with (
+            patch("ardupilot_methodic_configurator.__main__.create_argument_parser") as mock_parser,
+            patch("ardupilot_methodic_configurator.__main__.register_plugins"),
+            patch("ardupilot_methodic_configurator.__main__.FreeDesktop.create_desktop_icon_if_needed"),
+            patch("ardupilot_methodic_configurator.__main__.setup_logging"),
+            patch("ardupilot_methodic_configurator.__main__.ProgramSettings.migrate_settings_to_latest_version"),
+            patch("ardupilot_methodic_configurator.__main__.check_updates", return_value=False),
+            patch("ardupilot_methodic_configurator.__main__.PopupWindow.should_display", return_value=False),
+            patch(
+                "ardupilot_methodic_configurator.__main__.ProgramSettings.get_setting",
+                side_effect=lambda key: False if key != "gui_complexity" else "normal",
+            ),
+            patch("ardupilot_methodic_configurator.__main__.initialize_flight_controller"),
+            patch("ardupilot_methodic_configurator.__main__.initialize_filesystem", side_effect=_init_fs),
+            patch("ardupilot_methodic_configurator.__main__.vehicle_directory_selection"),
+            patch("ardupilot_methodic_configurator.__main__.plugin_factory.validate_configuration_steps"),
+            patch(
+                "ardupilot_methodic_configurator.__main__.component_editor",
+                side_effect=lambda _state: events.append("component_editor"),
+            ),
+            patch("ardupilot_methodic_configurator.__main__.process_component_editor_results") as mock_process,
+            patch("ardupilot_methodic_configurator.__main__.backup_fc_parameters"),
+            patch("ardupilot_methodic_configurator.__main__.upgrade_parameters_for_firmware_version"),
+            patch(
+                "ardupilot_methodic_configurator.__main__.parameter_editor_and_uploader",
+                side_effect=lambda _state: events.append("parameter_editor"),
+            ),
+            patch("ardupilot_methodic_configurator.__main__.sys_exit"),
+        ):
+            mock_process.side_effect = lambda *_args, **_kwargs: events.append("process_components")
+            mock_parser.return_value.parse_args.return_value = argparse.Namespace(
+                loglevel="INFO",
+                skip_check_for_updates=False,
+                vehicle_dir=None,
+                vehicle_type=None,
+                device=None,
+                reboot_time=5,
+                baudrate=115200,
+                n=0,
+                skip_component_editor=False,
+                allow_editing_template_files=False,
+                export_fc_params_missing_or_different=False,
+            )
+
+            main()
+
+        mock_process.assert_called_once()
+        assert events == ["component_editor", "process_components", "parameter_editor"]
+
     def test_main_disconnect_and_exit_0_on_normal_completion(self) -> None:
         """
         main() calls flight_controller.disconnect and sys_exit(0) on normal completion.
