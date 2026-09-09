@@ -2143,8 +2143,11 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes
             count += 1
 
         if count != num_params:
-            logging.error("paramftp: bad count %u should be %u", count, num_params)
-            return None
+            # Some flight-controller versions can report an estimate in the
+            # packed-file header that differs from the number of records that
+            # were actually transferred.  The records have already passed all
+            # structural checks, so keep the decoded data and warn only.
+            logging.warning("paramftp: bad count %u should be %u", count, num_params)
 
         return pdata
 

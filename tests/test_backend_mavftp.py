@@ -158,6 +158,19 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
         assert result is not None
         assert result.params == [(b"TEST", 12.5, 4)]
 
+    def test_param_decode_keeps_records_when_header_count_differs(self) -> None:
+        """A valid transfer remains usable when the FC reports an estimated count."""
+        payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC, 1, 2)
+        payload += b"\x04\x30TEST" + struct.pack("<f", 12.5)
+        payload += b"\x04\x30RATE" + struct.pack("<f", 10.0)
+
+        with patch("ardupilot_methodic_configurator.backend_mavftp.logging.warning") as mock_warning:
+            result = MAVFTP.ftp_param_decode(payload)
+
+        assert result is not None
+        assert result.params == [(b"TEST", 12.5, 4), (b"RATE", 10.0, 4)]
+        mock_warning.assert_called_once_with("paramftp: bad count %u should be %u", 2, 1)
+
     def test_param_decode_decodes_explicit_default_value(self) -> None:
         """A defaults record keeps the transmitted default value."""
         payload = PARAM_HEADER_STRUCT.pack(PARAM_MAGIC_WITH_DEFAULTS, 1, 1)
