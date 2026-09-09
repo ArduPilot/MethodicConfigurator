@@ -19,6 +19,7 @@ import pytest
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     VehicleProjectCreationError,
 )
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_project_creator import VehicleProjectCreatorWindow
 
@@ -163,6 +164,69 @@ class TestVehicleProjectCreatorWindow:
         # Assert: Project manager creates the project and window closes
         window.project_manager.create_new_vehicle_from_template.assert_called_once()
         window.root.destroy.assert_called_once()
+
+    def test_user_can_create_new_vehicle_from_flight_controller_successfully(self, configured_creator_window) -> None:
+        """The minimal creator forwards the base directory and name to the project manager."""
+        window = configured_creator_window
+        window.new_base_dir = MagicMock()
+        window.new_base_dir.get_selected_directory.return_value = "/path/to/base"
+        window.new_dir = MagicMock()
+        window.new_dir.get_selected_directory.return_value = "ConfiguredVehicle"
+
+        window.create_new_vehicle_from_flight_controller()
+
+        window.project_manager.create_new_vehicle_from_flight_controller.assert_called_once_with(
+            "/path/to/base", "ConfiguredVehicle"
+        )
+        window.root.destroy.assert_called_once()
+
+    def test_user_sees_open_error_after_flight_controller_project_creation(
+        self, configured_creator_window, mock_messagebox
+    ) -> None:
+        """An error opening the newly created project is shown by the creator window."""
+        window = configured_creator_window
+        window.new_base_dir = MagicMock()
+        window.new_base_dir.get_selected_directory.return_value = "/path/to/base"
+        window.new_dir = MagicMock()
+        window.new_dir.get_selected_directory.return_value = "ConfiguredVehicle"
+        error = VehicleProjectOpenError("Open failed", "The new project could not be opened.")
+        window.project_manager.create_new_vehicle_from_flight_controller.side_effect = error
+
+        window.create_new_vehicle_from_flight_controller()
+
+        mock_messagebox.showerror.assert_called_once_with(error.title, error.message)
+        window.root.destroy.assert_not_called()
+
+    def test_flight_controller_mode_omits_template_and_settings_widgets(self, configured_creator_window) -> None:
+        """The FC workflow only builds controls for the destination and vehicle name."""
+        window = configured_creator_window
+        window.main_frame = MagicMock()
+        window._create_template_selection_widgets = MagicMock()
+        window._create_settings_widgets = MagicMock()
+        window.calculate_scaled_geometry = MagicMock(return_value="800x200")
+
+        with (
+            patch.object(BaseWindow, "center_window_on_screen"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Label"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.LabelFrame"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.ttk.Button"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.show_tooltip"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.DirectorySelectionWidgets"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_project_creator.PathEntryWidget"),
+        ):
+            window.create_option1_widgets(
+                "/templates/ArduCopter/empty_4.6.x",
+                "/path/to/projects",
+                "ConfiguredVehicle",
+                fc_connected=True,
+                fc_parameters={"PARAM1": 1.0},
+                connected_fc_vehicle_type="ArduCopter",
+                from_flight_controller=True,
+            )
+
+        window._create_template_selection_widgets.assert_not_called()
+        window._create_settings_widgets.assert_not_called()
+        window.calculate_scaled_geometry.assert_called_once_with(800, 200)
 
     def test_user_sees_error_when_project_creation_fails(self, configured_creator_window, mock_messagebox) -> None:
         """

@@ -34,13 +34,16 @@ from unittest.mock import MagicMock, patch
 import pyautogui
 from PIL import Image, ImageDraw
 
+from ardupilot_methodic_configurator import _ as translate
 from ardupilot_methodic_configurator import __version__
+from ardupilot_methodic_configurator.__main__ import register_plugins
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import ParameterEditor
 from ardupilot_methodic_configurator.frontend_tkinter_about_popup_window import AboutWindow
+from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_info import FlightControllerInfoWindow
 from ardupilot_methodic_configurator.frontend_tkinter_parameter_editor import ParameterEditorWindow
@@ -48,8 +51,8 @@ from ardupilot_methodic_configurator.frontend_tkinter_project_creator import Veh
 from ardupilot_methodic_configurator.frontend_tkinter_project_opener import VehicleProjectOpenerWindow
 from ardupilot_methodic_configurator.frontend_tkinter_template_overview import TemplateOverviewWindow
 from ardupilot_methodic_configurator.frontend_tkinter_usage_popup_windows import display_parameter_editor_usage_popup
-from ardupilot_methodic_configurator.plugins.data_model_motor_test import MotorTestDataModel
-from ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test import MotorTestView, MotorTestWindow
+from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_MOTOR_TEST
+from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -85,28 +88,38 @@ TARGETS: tuple[CaptureTarget, ...] = (
         "param_04_simple",
         scale=0.666,
         gui_complexity="simple",
-        current_file="04_board_orientation.param",
+        current_file="05_board_orientation.param",
     ),
     CaptureTarget(
         "App_screenshot_Parameter_file_editor_and_uploader4_4.png",
         "param_04_normal",
         scale=0.666,
         gui_complexity="normal",
-        current_file="04_board_orientation.param",
+        current_file="05_board_orientation.param",
     ),
     CaptureTarget(
         "App_screenshot_Parameter_file_editor_and_uploader4.png",
         "param_20_normal",
         scale=0.666,
         gui_complexity="normal",
-        current_file="20_throttle_controller.param",
+        current_file="24_throttle_controller.param",
     ),
     CaptureTarget("App_screenshot_Vehicle_directory.png", "vehicle_opener"),
     CaptureTarget("App_screenshot_Vehicle_directory10.png", "vehicle_opener"),
     CaptureTarget("App_screenshot_Vehicle_directory_create_from_template.png", "vehicle_opener_from_template", scale=0.8),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_flight_controller.png",
+        "vehicle_opener_from_flight_controller",
+        scale=0.8,
+    ),
     CaptureTarget("App_screenshot_Vehicle_directory_create_from_bin.png", "vehicle_opener_from_bin", scale=0.8),
     CaptureTarget("App_screenshot_Vehicle_directory4.png", "vehicle_opener_legacy4", scale=0.8),
     CaptureTarget("App_screenshot_Vehicle_directory11.png", "vehicle_creator"),
+    CaptureTarget(
+        "App_screenshot_Vehicle_directory_create_from_flight_controller_creator.png",
+        "vehicle_creator_from_flight_controller",
+        scale=0.8,
+    ),
     CaptureTarget(
         "App_screenshot_Vehicle_directory_create_from_template_source.png",
         "create_from_template_source",
@@ -131,31 +144,13 @@ TARGETS: tuple[CaptureTarget, ...] = (
         scale=0.8,
         variant="from_configured_source",
     ),
-    CaptureTarget(
-        "App_screenshot_Vehicle_directory_create_from_configured_options.png",
-        "vehicle_creator_options",
-        scale=0.8,
-        variant="from_configured_options",
-    ),
-    CaptureTarget(
-        "App_screenshot_Vehicle_directory_create_from_configured_name.png",
-        "vehicle_creator_name",
-        scale=0.8,
-        variant="from_configured_name",
-    ),
-    CaptureTarget(
-        "App_screenshot_Vehicle_directory_create_from_configured_create.png",
-        "vehicle_creator_create",
-        scale=0.8,
-        variant="from_configured_create",
-    ),
     CaptureTarget("App_screenshot_Vehicle_overview.png", "template_overview"),
     CaptureTarget(
         "App_screenshot1.png",
         "param_20_normal",
         scale=0.666,
         gui_complexity="normal",
-        current_file="20_throttle_controller.param",
+        current_file="24_throttle_controller.param",
     ),
 )
 
@@ -260,6 +255,9 @@ class FakeProjectManager:
 
     def get_recently_used_dirs(self) -> tuple[str, str, str]:
         return self._template_dir, self._base_dir, self._vehicle_dir
+
+    def get_fc_default_template_dir(self) -> str:
+        return self._template_dir
 
     def get_recent_vehicle_dirs(self) -> list[str]:
         return [self._vehicle_dir]
@@ -373,6 +371,20 @@ def _find_descendant(widget: tk.Misc, predicate: Callable[[tk.Misc], bool]) -> t
         if predicate(candidate):
             return candidate
     return None
+
+
+def _press_no_on_fc_copy_prompt(root: tk.Tk) -> None:
+    """Dismiss the file-24 FC-copy prompt by choosing its No button."""
+    prompt_title = translate("Update file with values from FC?")
+    for child in root.winfo_children():
+        if not isinstance(child, tk.Toplevel) or not child.winfo_exists():
+            continue
+        if child.title() != prompt_title:
+            continue
+        no_button = _find_descendant(child, lambda widget: _widget_text(widget) == translate("No"))
+        if no_button is not None:
+            no_button.invoke()
+        return
 
 
 def _widget_screen_box(widget: tk.Misc, margin: int = 2) -> tuple[int, int, int, int]:
@@ -589,12 +601,22 @@ def _vehicle_opener_highlight_box(window: VehicleProjectOpenerWindow, action: st
     if action == "vehicle_opener_from_template":
         template_button = _find_descendant(
             window.main_frame,
-            lambda w: _widget_text(w).startswith("Create a vehicle configuration directory from template"),
+            lambda w: _widget_text(w).startswith("Create a vehicle project from a template"),
         )
         if template_button is None:
             msg = "Could not find create from template button"
             raise RuntimeError(msg)
         return _widget_screen_box(template_button, margin=2)
+
+    if action == "vehicle_opener_from_flight_controller":
+        fc_button = _find_descendant(
+            window.main_frame,
+            lambda w: _widget_text(w).startswith("Create a vehicle project from an already configured flight controller"),
+        )
+        if fc_button is None:
+            msg = "Could not find create from flight controller button"
+            raise RuntimeError(msg)
+        return _widget_screen_box(fc_button, margin=2)
 
     if action == "vehicle_opener_from_bin":
         bin_button = _find_descendant(
@@ -617,8 +639,16 @@ def _capture_vehicle_opener_with_highlight(  # pylint: disable=too-many-argument
     vehicle_dir: Path,
     action: str = "vehicle_opener_legacy4",
     scale: float = 1.0,
+    fc_connected: bool = False,
 ) -> None:
-    manager = FakeProjectManager(vehicle_dir, vehicle_dir.parent, vehicle_dir)
+    fc_params = _load_fc_params_from_file(vehicle_dir) if fc_connected else None
+    manager = FakeProjectManager(
+        vehicle_dir,
+        vehicle_dir.parent,
+        vehicle_dir,
+        fc_connected=fc_connected,
+        fc_parameters=fc_params,
+    )
     window = VehicleProjectOpenerWindow(manager)  # type: ignore[arg-type]
     try:
         settle_tk(window.root, cycles=6, delay=0.05)
@@ -639,7 +669,9 @@ def _capture_vehicle_creator(output_path: Path, delay: float, padding: int, vehi
             window.root.destroy()
 
 
-def _create_vehicle_creator_window(vehicle_dir: Path, fc_connected: bool = False) -> VehicleProjectCreatorWindow:
+def _create_vehicle_creator_window(
+    vehicle_dir: Path, fc_connected: bool = False, from_flight_controller: bool = False
+) -> VehicleProjectCreatorWindow:
     fc_params = _load_fc_params_from_file(vehicle_dir) if fc_connected else {}
     manager = FakeProjectManager(
         vehicle_dir,
@@ -648,9 +680,19 @@ def _create_vehicle_creator_window(vehicle_dir: Path, fc_connected: bool = False
         fc_connected=fc_connected,
         fc_parameters=fc_params if fc_connected else None,
     )
-    window = VehicleProjectCreatorWindow(manager)  # type: ignore[arg-type]
+    window = VehicleProjectCreatorWindow(manager, from_flight_controller=from_flight_controller)  # type: ignore[arg-type]
     settle_tk(window.root, cycles=6, delay=0.05)
     return window
+
+
+def _capture_vehicle_creator_from_flight_controller(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
+    """Capture the minimal creator dialog for an already configured flight controller."""
+    window = _create_vehicle_creator_window(vehicle_dir, fc_connected=True, from_flight_controller=True)
+    try:
+        capture_widget(window.root, output_path, delay, padding)
+    finally:
+        if window.root.winfo_exists():
+            window.root.destroy()
 
 
 def _find_template_browse_button(window: VehicleProjectCreatorWindow) -> tuple[int, int, int, int]:
@@ -683,7 +725,7 @@ def _find_create_button(window: VehicleProjectCreatorWindow) -> tuple[int, int, 
     """Find and return bounding box for create vehicle directory button."""
     create_button = _find_descendant(
         window.main_frame,
-        lambda w: _widget_text(w).startswith("Create a vehicle configuration directory"),
+        lambda w: _widget_text(w).startswith("Create a vehicle project from a template"),
     )
     if create_button is None:
         msg = "Could not find create vehicle directory button"
@@ -786,6 +828,26 @@ def _load_fc_params_from_file(vehicle_dir: Path) -> dict[str, float]:
     return {name: param.value for name, param in pardict.items()}
 
 
+def _configure_fake_flight_controller(flight_controller: FlightController, fc_params: dict[str, float]) -> None:
+    """Configure a connected, non-blocking FC double for screenshot-only GUI workflows."""
+    flight_controller.set_master_for_testing(MagicMock())
+    flight_controller.fc_parameters = fc_params
+    flight_controller.request_scaled_imu_messages = MagicMock(return_value=(True, ""))
+    flight_controller.poll_scaled_imu = MagicMock(return_value=None)
+    flight_controller.request_periodic_battery_status = MagicMock(return_value=(True, ""))
+    flight_controller.get_battery_status = MagicMock(return_value=(None, ""))
+
+
+def _cleanup_plugin_view(plugin_view: object) -> None:
+    """Call optional plugin cleanup hooks on a dynamically-created view."""
+    on_deactivate = getattr(plugin_view, "on_deactivate", None)
+    if callable(on_deactivate):
+        on_deactivate()
+    destroy = getattr(plugin_view, "destroy", None)
+    if callable(destroy):
+        destroy()
+
+
 def _build_parameter_editor(
     current_file: str,
     vehicle_dir: Path,
@@ -810,19 +872,28 @@ def _build_parameter_editor(
     flight_controller = FlightController()
 
     # Fake an FC connection so the table renders FC values instead of "N/A".
-    flight_controller.set_master_for_testing(MagicMock())  # make master non-None
-    flight_controller.fc_parameters = fc_params  # pre-populate parameter cache
+    # Stub telemetry requests as well, because plugin activation runs during Tk event settling.
+    _configure_fake_flight_controller(flight_controller, fc_params)
 
     # Patch download_params so the window startup download returns our fake data
     # without attempting any real MAVLink communication.
     try:
-        with patch.object(
-            FlightController,
-            "download_params",
-            return_value=(fc_params, ParDict()),
+        with (
+            patch.object(
+                FlightController,
+                "download_params",
+                return_value=(fc_params, ParDict()),
+            ),
+            patch.object(ParameterEditor, "open_documentation_in_browser"),
         ):
             editor = ParameterEditor(current_file, flight_controller, filesystem)
             window = ParameterEditorWindow(editor)
+            if current_file == "24_throttle_controller.param":
+                # This step asks whether the FC values should be copied into the
+                # file. Choose No before the startup workflow can block on it.
+                # Leave enough time for the dialog to finish its own setup
+                # (including focus_set()) before destroying it.
+                window.root.after(500, lambda: _press_no_on_fc_copy_prompt(window.root))
             settle_tk(window.root, cycles=8, delay=0.05)
     finally:
         # Restore prior settings to avoid persistent side effects on the user's config.
@@ -852,14 +923,11 @@ def _capture_parameter_editor(  # pylint: disable=too-many-arguments, too-many-p
         try:
             capture_widget(window.root, output_path, delay, padding, scale)
         finally:
+            if window.current_plugin_view is not None:
+                _cleanup_plugin_view(window.current_plugin_view)
             if window.root.winfo_exists():
                 window.root.destroy()
             flight_controller.disconnect()
-
-
-def _suppress_motor_view_periodic_updates(_view: MotorTestView) -> None:
-    """Disable periodic updates to keep capture deterministic and non-blocking."""
-    return
 
 
 def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_dir: Path) -> None:
@@ -881,17 +949,36 @@ def _capture_motor_test(output_path: Path, delay: float, padding: int, vehicle_d
             save_component_to_system_templates=False,
         )
         flight_controller = FlightController()
-        flight_controller.set_master_for_testing(MagicMock())
-        flight_controller.fc_parameters = fc_params
+        _configure_fake_flight_controller(flight_controller, fc_params)
         flight_controller.stop_all_motors = MagicMock(return_value=(True, ""))
 
-        model = MotorTestDataModel(flight_controller, filesystem)
-        with patch.object(MotorTestView, "_update_view", _suppress_motor_view_periodic_updates):
-            window = MotorTestWindow(model)
+        model = plugin_factory.create_model(
+            PLUGIN_MOTOR_TEST,
+            PluginModelContext(
+                flight_controller=flight_controller,
+                local_filesystem=filesystem,
+                parameter_editor=cast("ParameterEditor", MagicMock()),
+            ),
+        )
+        if model is None:
+            msg = f"Could not create {PLUGIN_MOTOR_TEST} plugin model"
+            raise RuntimeError(msg)
+
+        window = BaseWindow()
+        window.root.title(translate("ArduPilot Motor Test"))
+        window.root.geometry(window.calculate_scaled_geometry(400, 610))
+        plugin_view = plugin_factory.create(PLUGIN_MOTOR_TEST, window.main_frame, model, window)
+        if plugin_view is None:
+            window.root.destroy()
+            msg = f"Could not create {PLUGIN_MOTOR_TEST} plugin view"
+            raise RuntimeError(msg)
+        plugin_view.pack(fill="both", expand=True)
         try:
             capture_widget(window.root, output_path, delay, padding)
         finally:
-            window.on_close()
+            _cleanup_plugin_view(plugin_view)
+            window.root.destroy()
+            flight_controller.disconnect()
 
 
 def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Namespace) -> None:  # pylint: disable=too-many-branches
@@ -925,12 +1012,25 @@ def capture_target(target: CaptureTarget, output_path: Path, args: argparse.Name
         )
     elif action == "vehicle_opener":
         _capture_vehicle_opener(output_path, args.delay, args.padding, args.vehicle_dir)
-    elif action in ("vehicle_opener_from_template", "vehicle_opener_legacy4", "vehicle_opener_from_bin"):
+    elif action in (
+        "vehicle_opener_from_template",
+        "vehicle_opener_from_flight_controller",
+        "vehicle_opener_legacy4",
+        "vehicle_opener_from_bin",
+    ):
         _capture_vehicle_opener_with_highlight(
-            output_path, args.delay, args.padding, args.vehicle_dir, action=action, scale=target.scale
+            output_path,
+            args.delay,
+            args.padding,
+            args.vehicle_dir,
+            action=action,
+            scale=target.scale,
+            fc_connected=action == "vehicle_opener_from_flight_controller",
         )
     elif action == "vehicle_creator":
         _capture_vehicle_creator(output_path, args.delay, args.padding, args.vehicle_dir)
+    elif action == "vehicle_creator_from_flight_controller":
+        _capture_vehicle_creator_from_flight_controller(output_path, args.delay, args.padding, args.vehicle_dir)
     elif action.startswith("vehicle_creator_"):
         if target.variant is None:
             msg = f"variant required for {action}"
@@ -970,6 +1070,9 @@ def main() -> int:
     """Program entrypoint."""
     args = parse_args()
     configure_logging(args.log_level)
+    # Screenshot windows are created directly rather than through application
+    # startup, so explicitly initialize the same plugin registry first.
+    register_plugins()
 
     pyautogui.FAILSAFE = True
 

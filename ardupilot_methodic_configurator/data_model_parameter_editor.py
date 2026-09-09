@@ -346,13 +346,23 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 continue  # Expected, not an error
             except ParameterOutOfRangeError:
                 # Log warning but accept FC value anyway since it came from FC
-                logging_warning(_("Parameter %s value %s is out of range but accepted from FC"), param_name, value)
+                logging_warning(
+                    _("Parameter {parameter} value {value} is out of range but accepted from FC").format(
+                        parameter=param_name, value=value
+                    )
+                )
                 params_copied += 1
             except ParameterForcedOrDerivedError as exc:
-                logging_warning("%s", exc)
+                logging_warning(
+                    _("Parameter {parameter} could not be updated because it is forced or derived: {error}").format(
+                        parameter=param_name, error=exc
+                    )
+                )
                 continue
             except (ValueError, TypeError):
-                logging_exception(_("Failed to update in-memory value for %s after FC copy"), param_name)
+                logging_exception(
+                    _("Failed to update in-memory value for {parameter} after FC copy").format(parameter=param_name)
+                )
                 continue
         return bool(params_copied)
 
@@ -394,6 +404,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                     show_info(
                         _("Parameters copied"),
                         _("FC values have been copied to {selected_file}").format(selected_file=selected_file),
+                    )
+                else:
+                    show_info(
+                        _("No parameters copied"),
+                        _("No FC values could be copied to {selected_file}.").format(selected_file=selected_file),
                     )
             return user_choice
         return False
@@ -1888,6 +1903,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self.current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params = (
             self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
         )
+        self._added_parameters.update(self._config_step_processor.autoimported_parameters)
 
         # Apply derived parameters to domain model using specialized setters
         for param_name, derived_par in derived_params.items():

@@ -425,8 +425,8 @@ class VehicleProjectCreator:
         return Path(bin_file).stem
 
     @staticmethod
-    def next_import_filename(vehicle_dir: str) -> str:
-        """Return the next available numbered parameter filename for imported log parameters."""
+    def next_import_filename(vehicle_dir: str, source: str = "bin_log") -> str:
+        """Return the next available numbered parameter filename for imported parameters."""
         highest_prefix = 0
         try:
             for file_path in Path(vehicle_dir).iterdir():
@@ -444,7 +444,7 @@ class VehicleProjectCreator:
         if next_prefix > 99:
             msg = _("Could not create an import parameter file because no numbered slot is available in {vehicle_dir}")
             raise VehicleProjectCreationError(_("Parameter import"), msg.format(vehicle_dir=vehicle_dir))
-        return f"{next_prefix:02d}_imported_bin_log_parameters.param"
+        return f"{next_prefix:02d}_imported_{source}_parameters.param"
 
     @staticmethod
     def extract_bin_log_data(

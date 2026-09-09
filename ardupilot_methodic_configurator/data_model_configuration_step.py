@@ -55,6 +55,7 @@ class ConfigurationStepProcessor:
         # Ensure transient helper variables are not persisted across steps
         self.variables.pop("fc_parameters", None)
         self.variables.pop("new_connection_prefix", None)
+        self.autoimported_parameters: set[str] = set()
 
     def process_configuration_step(  # pylint: disable=too-many-locals
         self,
@@ -146,8 +147,11 @@ class ConfigurationStepProcessor:
         # Create domain model parameters
         current_step_parameters = self._create_domain_model_parameters(selected_file, fc_parameters)
 
-        # Apply auto-imports for the current step
-        self._apply_auto_imports(selected_file, fc_parameters, current_step_parameters, parameters_to_delete)
+        # Apply auto-imports for the current step. The editor uses these names to
+        # track parameters that were added to the in-memory model and must be saved.
+        self.autoimported_parameters = self._apply_auto_imports(
+            selected_file, fc_parameters, current_step_parameters, parameters_to_delete
+        )
 
         # Check for ExpressLRS and add FLTMODE_CH warning
         if current_step_parameters.get("RC_OPTIONS") is not None or current_step_parameters.get("FLTMODE_CH") is not None:
@@ -174,17 +178,18 @@ class ConfigurationStepProcessor:
         fc_parameters: dict[str, float],
         current_step_parameters: dict[str, ArduPilotParameter],
         parameters_to_delete: set[str] | None = None,
-    ) -> None:
-        """Automatically import non-default FC parameters matching regex rules into the domain model."""
+    ) -> set[str]:
+        """Automatically import non-default FC parameters and return their names."""
         step_dict = self.local_filesystem.configuration_steps.get(selected_file, {})
         if "autoimport_nondefault_regexp" not in step_dict or not fc_parameters:
-            return
+            return set()
 
         # Parameters that will be deleted take priority; skip auto-importing them
         if parameters_to_delete is None:
             parameters_to_delete = set()
 
         regex_rules = step_dict["autoimport_nondefault_regexp"]
+        imported_parameters: set[str] = set()
         for live_key, live_value in fc_parameters.items():
             if live_key in current_step_parameters:
                 continue
@@ -202,6 +207,9 @@ class ConfigurationStepProcessor:
                     current_step_parameters[live_key] = self.create_ardupilot_parameter(
                         live_key, param, selected_file, fc_parameters
                     )
+                    imported_parameters.add(live_key)
+
+        return imported_parameters
 
     def _handle_connection_renaming(
         self, selected_file: str, variables: dict

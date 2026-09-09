@@ -236,6 +236,7 @@ class TestConfigurationStepProcessorWorkflows:
         assert "BATT_OPTIONS" in parameters
         assert parameters["BATT_OPTIONS"].get_new_value() == 5.0
         assert parameters["BATT_OPTIONS"].change_reason == ""
+        assert processor.autoimported_parameters == {"BATT_OPTIONS"}
 
         # BATT_MONITOR should remain untouched (protecting the user comment)
         assert "BATT_MONITOR" in parameters
@@ -1337,12 +1338,15 @@ class TestDeleteParametersPriority:
         current_step_parameters: dict = {}
 
         # Act (When): run auto-import with the delete set
-        processor._apply_auto_imports(selected_file, fc_params, current_step_parameters, parameters_to_delete)
+        imported_parameters = processor._apply_auto_imports(
+            selected_file, fc_params, current_step_parameters, parameters_to_delete
+        )
 
         # Assert (Then): imported param present with correct value; deleted param absent
         assert "BATT_OPTIONS" in current_step_parameters
         assert current_step_parameters["BATT_OPTIONS"].get_new_value() == 5.0
         assert "BATT_MONITOR" not in current_step_parameters
+        assert imported_parameters == {"BATT_OPTIONS"}
 
     def test_apply_auto_imports_with_none_delete_set_behaves_as_empty_set(self, processor) -> None:
         """

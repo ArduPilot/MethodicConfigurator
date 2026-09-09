@@ -3695,6 +3695,33 @@ class TestDerivedParameterApplication:
         assert parameter_editor.current_step_parameters["NEW_FORCED"] is mock_ap_param
         assert "NEW_FORCED" in parameter_editor._added_parameters
 
+    def test_autoimported_parameter_is_tracked_for_saving(self, parameter_editor) -> None:
+        """Auto-imported parameters trigger the normal save workflow."""
+        parameter_editor.current_file = "test_file.param"
+        parameter_editor._last_time_asked_to_save = 0.0
+        autoimported = ArduPilotParameter("AUTO_IMPORTED", Par(2.0), fc_value=2.0)
+        parameter_editor._config_step_processor.autoimported_parameters = {"AUTO_IMPORTED"}
+
+        with patch.object(
+            parameter_editor._config_step_processor,
+            "process_configuration_step",
+            return_value=({"AUTO_IMPORTED": autoimported}, [], [], set(), [], ParDict()),
+        ):
+            parameter_editor._repopulate_configuration_step_parameters()
+
+        assert parameter_editor._has_unsaved_changes()
+
+        with patch.object(parameter_editor, "_export_current_file") as mock_export:
+            assert (
+                parameter_editor.handle_write_changes_workflow(
+                    annotate_params_into_files=False,
+                    ask_user_confirmation=MagicMock(return_value=True),
+                )
+                is True
+            )
+
+        mock_export.assert_called_once_with(annotate_doc=False)
+
     def test_connected_editor_delegates_plugin_model_creation_to_registry(self, parameter_editor) -> None:
         """The editor supplies shared dependencies without importing concrete plugin models."""
         parameter_editor._flight_controller.master = MagicMock()
@@ -6154,7 +6181,7 @@ class TestCopyFlightControllerValuesEdgeCases:
             assert parameter_editor._update_parameters_from_fc_values({"BAD": 1.0, "GOOD": 2.0}) is True
 
         assert good.get_new_value() == 2.0
-        mock_exception.assert_called_once_with("Failed to update in-memory value for %s after FC copy", "BAD")
+        mock_exception.assert_called_once_with("Failed to update in-memory value for BAD after FC copy")
 
     def test_system_warns_without_a_traceback_when_a_parameter_is_forced_or_derived(
         self, parameter_editor: ParameterEditor
@@ -6175,7 +6202,10 @@ class TestCopyFlightControllerValuesEdgeCases:
         with patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_warning") as mock_warning:
             assert parameter_editor._update_parameters_from_fc_values({"FORCED": 1.0}) is False
 
-        mock_warning.assert_called_once_with("%s", error)
+        mock_warning.assert_called_once_with(
+            "Parameter FORCED could not be updated because it is forced or derived: "
+            "This parameter is forced or derived and cannot be changed."
+        )
 
     def test_system_skips_a_flight_controller_value_absent_from_the_current_step(
         self, parameter_editor: ParameterEditor
