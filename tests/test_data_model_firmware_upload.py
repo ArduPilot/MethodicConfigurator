@@ -60,8 +60,7 @@ class TestApjLoading:
         assert image.metadata.board_id == 9
         assert image.metadata.image_size == len(small_image)
         assert image.metadata.firmware_version == "4.6.0"
-        assert image.metadata.content_sha256 == fw.firmware_content_sha256(small_image)
-        assert image.content_sha256() == image.metadata.content_sha256
+        assert image.metadata.board_revision is None
         assert image.metadata.apj_sha256 == hashlib.sha256((tmp_path / "arducopter.apj").read_bytes()).hexdigest()
         assert image.image == small_image + b"\xff"
         assert len(image.image) % 4 == 0
@@ -161,17 +160,37 @@ class TestApjLoading:
 
         assert image.crc(flash_size) == expected
 
-    def test_crc_pads_to_an_unaligned_flash_size(self, tmp_path: Path) -> None:
-        """CRC padding covers exactly the remaining bytes for an unaligned flash size."""
+    def test_crc_rejects_an_unaligned_flash_size(self, tmp_path: Path) -> None:
+        """CRC cannot safely represent an unaligned bootloader flash region."""
         image = bootloader.load_apj(write_apj(tmp_path, b"abcd"))
         flash_size = 7
 
-        assert image.crc(flash_size) == fw.bootloader_crc32(b"abcd\xff\xff\xff")
+        with pytest.raises(ValueError, match="multiple of four"):
+            image.crc(flash_size)
 
     def test_crc_matches_ardupilot_uploader_known_vector(self) -> None:
         """The uploader's raw CRC state is not Python's finalized binascii CRC-32."""
         assert fw.bootloader_crc32(b"abc") == 0xCA6598D0
         assert fw.bootloader_crc32(b"bc", fw.bootloader_crc32(b"a")) == 0xCA6598D0
+
+    def test_external_crc_uses_only_the_declared_unpadded_payload(self, tmp_path: Path) -> None:
+        external_image = b"ext"
+        image = bootloader.load_apj(
+            write_apj(
+                tmp_path,
+                b"abcd",
+                extf_image_size=len(external_image),
+                extf_image=base64.b64encode(zlib.compress(external_image)).decode(),
+            )
+        )
+
+        assert image.extf_image == external_image + b"\xff"
+        assert image.extf_crc() == fw.bootloader_crc32(external_image)
+
+    def test_valid_board_revision_is_preserved(self, tmp_path: Path) -> None:
+        image = bootloader.load_apj(write_apj(tmp_path, b"abcd", board_revision=7))
+
+        assert image.metadata.board_revision == 7
 
 
 class TestCompatibility:
@@ -202,6 +221,10 @@ class TestCompatibility:
     def test_image_larger_than_flash_is_refused(self, image: fw.FirmwareImage) -> None:
         with pytest.raises(fw.FirmwareCompatibilityError, match="exceeds flash"):
             fw.check_compatibility(image, fw.BootloaderInfo(5, 9, 0, 512))
+
+    def test_unaligned_bootloader_flash_size_is_refused(self, image: fw.FirmwareImage) -> None:
+        with pytest.raises(fw.FirmwareCompatibilityError, match="invalid flash size"):
+            fw.check_compatibility(image, fw.BootloaderInfo(5, 9, 0, 513))
 
     def test_reconnected_firmware_board_identity_is_required(self, image: fw.FirmwareImage) -> None:
         with pytest.raises(fw.FirmwareIdentityError, match="did not report an APJ board_id"):
