@@ -117,7 +117,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     """
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # noqa: PLR0913, PLR0917 # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         reboot_time: int = DEFAULT_REBOOT_TIME,
         baudrate: int = DEFAULT_BAUDRATE,
@@ -128,6 +128,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         commands_manager: FlightControllerCommandsProtocol | None = None,
         files_manager: FlightControllerFilesProtocol | None = None,
         progress_callback: Callable[[int, int], None] | None = None,
+        sleep: Callable[[float], None] | None = None,
     ) -> None:
         """
         Initialize the FlightController communication object.
@@ -144,6 +145,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             progress_callback: Optional callback function for displaying initialization progress.
                              If None, no progress updates are shown. Signature: callback(current, total)
                              Used to provide user feedback during component initialization phases
+            sleep: Optional delay function used by reset and firmware-upload recovery workflows.
 
         Note:
             If not provided, managers are created in dependency order:
@@ -159,6 +161,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             progress_callback(5, 100)
 
         self._reboot_time = reboot_time
+        self._sleep = time_sleep if sleep is None else sleep
         self._network_ports = network_ports if network_ports is not None else FlightControllerConnection.DEFAULT_NETWORK_PORTS
 
         if progress_callback:
@@ -318,7 +321,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
         # Issue a reset
         self.master.reboot_autopilot()
         logging_info(_("Reset command sent to ArduPilot."))
-        time_sleep(0.3)  # Short delay for command to be sent
+        self._sleep(0.3)  # Short delay for command to be sent
 
         self.disconnect()
 
@@ -335,7 +338,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 reset_progress_callback(current_step, sleep_time)
 
             # Wait for sleep_time seconds
-            time_sleep(1)
+            self._sleep(1)
             current_step += 1
 
         # Call the progress callback with the current progress
@@ -416,7 +419,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             # From this point on a failed callback, disconnect, or transport
             # setup must attempt recovery before returning control to the caller.
             entered_bootloader = True
-            time_sleep(0.3)  # Allow the MAVLink frame to leave before releasing the port.
+            self._sleep(0.3)  # Allow the MAVLink frame to leave before releasing the port.
             self.disconnect()
 
         def reconnect_after_bootloader() -> str:
@@ -428,7 +431,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
                     reconnect_device = resolve_bootloader_device(device, device_identity)
                 except OSError as exc:
                     last_error = str(exc)
-                    time_sleep(0.1)
+                    self._sleep(0.1)
                     continue
                 # connect() reports failure by returning a non-empty error string, not by
                 # raising, so a resolved device must still spend the retry budget until
@@ -437,13 +440,14 @@ class FlightController:  # pylint: disable=too-many-public-methods
                 if not connect_error:
                     return ""
                 last_error = connect_error
-                time_sleep(0.1)
+                self._sleep(0.1)
             return _("cannot resolve the flight-controller serial device: {error}").format(error=last_error)
 
         backend_kwargs: dict[str, Any] = {
             "timeout": bootloader_timeout,
             "enter_bootloader": enter_bootloader,
             "device_identity": device_identity,
+            "sleep": self._sleep,
         }
         if serial_factory is not None:
             backend_kwargs["serial_factory"] = serial_factory

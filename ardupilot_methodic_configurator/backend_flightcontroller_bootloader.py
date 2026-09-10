@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import struct
 from collections.abc import Callable, Iterator
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic
@@ -361,12 +362,25 @@ class BootloaderClient:
         self._sleep = sleep
 
     def close(self) -> None:
-        self._transport.close()
+        # Cleanup must never replace the protocol error which caused the upload
+        # to fail.  pyserial reports close failures as OSError/SerialException,
+        # while test and third-party transports may use another Exception type.
+        with suppress(Exception):
+            self._transport.close()
 
-    def abort_before_erase(self) -> bool:
-        """Best-effort reboot for a declined or failed upload before anything was erased."""
+    def abort_before_erase(self, *, deadline: float | None = None, expect_ack: bool = True) -> bool:
+        """
+        Best-effort reboot for a declined or failed upload before anything was erased.
+
+        Protocol revision two reboots without an acknowledgement.  Later revisions
+        must acknowledge the reboot so a failed command is not mistaken for a safe
+        abort.
+        """
         try:
-            self._write(encode_reboot())
+            if expect_ack:
+                self._command(encode_reboot(), deadline=deadline)
+            else:
+                self._write(encode_reboot())
         except BootloaderProtocolError:
             return False
         return True
@@ -422,19 +436,19 @@ class BootloaderClient:
             raise BootloaderProtocolError(msg) from exc
         return bytes(received)
 
-    def _sync(self, *, timeout: float | None = None) -> None:
-        decode_sync(self._read_exact(2, timeout=timeout))
+    def _sync(self, *, timeout: float | None = None, deadline: float | None = None) -> None:
+        decode_sync(self._read_exact(2, timeout=timeout, deadline=deadline))
 
-    def _command(self, request: bytes, reply_size: int = 0) -> bytes:
+    def _command(self, request: bytes, reply_size: int = 0, *, deadline: float | None = None) -> bytes:
         self._write(request)
-        reply = self._read_exact(reply_size) if reply_size else b""
-        self._sync()
+        reply = self._read_exact(reply_size, deadline=deadline) if reply_size else b""
+        self._sync(deadline=deadline)
         return reply
 
-    def identify(self) -> BootloaderInfo:
+    def identify(self, *, deadline: float | None = None) -> BootloaderInfo:
         self._reset_input_buffer()
-        self._command(encode_get_sync())
-        revision = decode_uint32(self._command(encode_get_device(INFO_BL_REV), 4))
+        self._command(encode_get_sync(), deadline=deadline)
+        revision = decode_uint32(self._command(encode_get_device(INFO_BL_REV), 4, deadline=deadline))
         if not BL_REV_MIN <= revision <= BL_REV_MAX:
             msg = _("unsupported bootloader protocol revision {revision}").format(revision=revision)
             raise BootloaderProtocolError(msg)
@@ -442,16 +456,16 @@ class BootloaderClient:
         # Old bootloaders can reject this newer optional query.  Resynchronize and
         # conservatively report no external flash in that case.
         try:
-            extf_size = decode_uint32(self._command(encode_get_device(INFO_EXTF_SIZE), 4))
+            extf_size = decode_uint32(self._command(encode_get_device(INFO_EXTF_SIZE), 4, deadline=deadline))
         except BootloaderProtocolError:
             extf_size = 0
             self._reset_input_buffer()
-            self._command(encode_get_sync())
+            self._command(encode_get_sync(), deadline=deadline)
         return BootloaderInfo(
             protocol_revision=revision,
-            board_id=decode_uint32(self._command(encode_get_device(INFO_BOARD_ID), 4)),
-            board_revision=decode_uint32(self._command(encode_get_device(INFO_BOARD_REV), 4)),
-            flash_size=decode_uint32(self._command(encode_get_device(INFO_FLASH_SIZE), 4)),
+            board_id=decode_uint32(self._command(encode_get_device(INFO_BOARD_ID), 4, deadline=deadline)),
+            board_revision=decode_uint32(self._command(encode_get_device(INFO_BOARD_REV), 4, deadline=deadline)),
+            flash_size=decode_uint32(self._command(encode_get_device(INFO_FLASH_SIZE), 4, deadline=deadline)),
             extf_size=extf_size,
         )
 
@@ -503,7 +517,7 @@ class BootloaderClient:
             msg = _("external firmware CRC verification failed")
             raise BootloaderProtocolError(msg)
 
-    def upload(  # noqa: PLR0915 # pylint: disable=too-many-arguments,too-many-branches,too-many-statements
+    def upload(  # noqa: PLR0915 # pylint: disable=too-many-arguments,too-many-branches,too-many-statements,too-many-locals
         self,
         image: FirmwareImage,
         *,
@@ -522,6 +536,7 @@ class BootloaderClient:
         revision three and later use CRC and require that ACK.
         """
         stage = UploadStage.AWAITING_CONFIRMATION
+        info = bootloader
         try:
             if confirmation_requested is None:
                 msg = _("firmware upload requires explicit confirmation")
@@ -531,7 +546,7 @@ class BootloaderClient:
                 raise FirmwareUploadCancelledError(msg, stage=stage.value)
             stage = UploadStage.IDENTIFYING
             self._report(progress_callback, stage, 0, 1)
-            info = bootloader or self.identify()
+            info = info or self.identify()
             self._report(progress_callback, stage, 1, 1)
             check_bootloader_matches_connected_board(info, connected_board_id)
             check_compatibility(image, info)
@@ -592,20 +607,36 @@ class BootloaderClient:
             self._report(progress_callback, stage, 1, 1)
             return info
         except FirmwareUploadError as exc:
-            if stage in {UploadStage.IDENTIFYING, UploadStage.AWAITING_CONFIRMATION} and not self.abort_before_erase():
+            if stage in {UploadStage.IDENTIFYING, UploadStage.AWAITING_CONFIRMATION} and not self.abort_before_erase(
+                expect_ack=info is None or info.protocol_revision != 2
+            ):
                 msg = _("cannot reboot the held bootloader; power-cycle the flight controller before reconnecting")
                 raise FirmwareBootloaderRecoveryError(msg) from exc
             if stage in {UploadStage.IDENTIFYING, UploadStage.AWAITING_CONFIRMATION}:
                 exc.bootloader_rebooted = True  # type: ignore[attr-defined]
             if isinstance(exc, BootloaderProtocolError):
                 exc.stage = stage.value
+            if stage in {UploadStage.ERASING, UploadStage.PROGRAMMING, UploadStage.VERIFYING, UploadStage.REBOOTING}:
+                recovery_message = _(
+                    "firmware upload failed during {stage}; the firmware flash may be incomplete. "
+                    "power-cycle the flight controller before reconnecting"
+                ).format(stage=stage.value)
+                exc.args = (f"{exc.args[0]}; {recovery_message}", *exc.args[1:])
             raise
         except Exception as exc:
-            if stage in {UploadStage.IDENTIFYING, UploadStage.AWAITING_CONFIRMATION} and not self.abort_before_erase():
+            if stage in {UploadStage.IDENTIFYING, UploadStage.AWAITING_CONFIRMATION} and not self.abort_before_erase(
+                expect_ack=info is None or info.protocol_revision != 2
+            ):
                 msg = _("cannot reboot the held bootloader; power-cycle the flight controller before reconnecting")
                 raise FirmwareBootloaderRecoveryError(msg) from exc
             if stage in {UploadStage.IDENTIFYING, UploadStage.AWAITING_CONFIRMATION}:
                 exc.bootloader_rebooted = True  # type: ignore[attr-defined]
+            if stage in {UploadStage.ERASING, UploadStage.PROGRAMMING, UploadStage.VERIFYING, UploadStage.REBOOTING}:
+                recovery_message = _(
+                    "firmware upload failed during {stage}; the firmware flash may be incomplete. "
+                    "power-cycle the flight controller before reconnecting"
+                ).format(stage=stage.value)
+                exc.args = (f"{exc.args[0]}; {recovery_message}", *exc.args[1:])
             raise
         finally:
             self.close()
@@ -632,6 +663,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
         open_retries: int = BOOTLOADER_OPEN_RETRIES,
         retry_delay: float = BOOTLOADER_RETRY_DELAY,
         sleep: Callable[[float], None] = time_sleep,
+        clock: Callable[[], float] = monotonic,
     ) -> None:
         if timeout <= 0:
             msg = _("bootloader response timeout must be positive")
@@ -646,6 +678,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
         self._open_retries = open_retries
         self._retry_delay = retry_delay
         self._sleep = sleep
+        self._clock = clock
 
     def inspect_firmware(self, path: Path) -> FirmwareImage:
         return load_apj(path)
@@ -686,6 +719,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
             msg = _("bootloader open retries must be at least one")
             raise ValueError(msg)
         last_error: FirmwareUploadError | OSError | serial.SerialException | None = None
+        deadline = self._clock() + BOOTLOADER_ENUMERATION_TIMEOUT
         for attempt in range(self._open_retries):
             if cancellation_requested is not None and cancellation_requested():
                 msg = _(
@@ -693,15 +727,25 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
                     "power-cycle the flight controller before reconnecting"
                 )
                 raise FirmwareBootloaderRecoveryError(msg) from last_error
-            transport, open_error = self._try_open_transport()
+            remaining = deadline - self._clock()
+            if remaining <= 0:
+                break
+            attempt_timeout = min(self._timeout, remaining)
+            transport, open_error = self._try_open_transport(attempt_timeout)
             if transport is not None:
-                client = BootloaderClient(transport, timeout=self._timeout, sleep=self._sleep)
+                client = BootloaderClient(
+                    transport,
+                    timeout=attempt_timeout,
+                    clock=self._clock,
+                    sleep=self._sleep,
+                )
                 try:
-                    return client, client.identify()
+                    return client, client.identify(deadline=deadline)
                 except BootloaderProtocolError as exc:
                     last_error = exc
-                    if attempt + 1 == self._open_retries:
-                        if not client.abort_before_erase():
+                    retry_would_exhaust_budget = self._clock() + self._retry_delay >= deadline
+                    if attempt + 1 == self._open_retries or retry_would_exhaust_budget:
+                        if not client.abort_before_erase(deadline=deadline):
                             client.close()
                             msg = _("cannot reboot the held bootloader; power-cycle the flight controller before reconnecting")
                             raise FirmwareBootloaderRecoveryError(msg) from exc
@@ -711,7 +755,9 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
             else:
                 last_error = open_error
             if attempt + 1 < self._open_retries:
-                self._sleep(self._retry_delay)
+                remaining = deadline - self._clock()
+                if remaining > 0:
+                    self._sleep(min(self._retry_delay, remaining))
         if isinstance(last_error, BootloaderProtocolError):
             raise last_error
         msg = _(
@@ -720,9 +766,11 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
         ).format(device=self._device, error=last_error)
         raise FirmwareBootloaderRecoveryError(msg) from last_error
 
-    def _try_open_transport(self) -> tuple[BootloaderTransport | None, OSError | serial.SerialException | None]:
+    def _try_open_transport(
+        self, timeout: float | None = None
+    ) -> tuple[BootloaderTransport | None, OSError | serial.SerialException | None]:
         try:
             device = self._device_resolver(self._device, self._device_identity)
-            return self._serial_factory(device, self._baudrate, self._timeout), None
+            return self._serial_factory(device, self._baudrate, self._timeout if timeout is None else timeout), None
         except (OSError, serial.SerialException) as exc:
             return None, exc

@@ -1079,6 +1079,60 @@ def test_client_reports_recovery_error_when_pre_erase_reboot_fails() -> None:
     assert transport.closed
 
 
+def test_abort_before_erase_requires_a_successful_reboot_ack() -> None:
+    class FailedRebootTransport(FakeBootloaderTransport):
+        """Reject the best-effort reboot command instead of merely accepting its write."""
+
+        def write(self, data: bytes) -> int:
+            if data[:1] == bl.REBOOT:
+                self._reply.extend(bl.INSYNC + bl.FAILED)
+                return len(data)
+            return super().write(data)
+
+    assert not bl.BootloaderClient(FailedRebootTransport()).abort_before_erase()
+
+
+def test_client_accepts_no_ack_reboot_when_pre_erase_abort_uses_protocol_v2() -> None:
+    class V2NoAckRebootTransport(FakeBootloaderTransport):
+        """Protocol revision two reboots immediately and does not acknowledge it."""
+
+        def write(self, data: bytes) -> int:
+            if data[:1] == bl.REBOOT:
+                self.rebooted = True
+                self.commands.append(bl.REBOOT)
+                self.requests.append(data)
+                return len(data)
+            return super().write(data)
+
+    transport = V2NoAckRebootTransport(revision=2)
+
+    with pytest.raises(fw.FirmwareUploadCancelledError, match="not confirmed"):
+        bl.BootloaderClient(transport).upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: False)
+
+    assert transport.rebooted
+    assert transport.closed
+
+
+def test_close_failure_does_not_mask_upload_failure() -> None:
+    class CloseFailureTransport(FakeBootloaderTransport):
+        """Raise while closing so cleanup cannot hide the protocol failure."""
+
+        def close(self) -> None:
+            msg = "close failed"
+            raise RuntimeError(msg)
+
+        def write(self, data: bytes) -> int:
+            if data[:1] == bl.PROG_MULTI:
+                msg = "programming write failed"
+                raise OSError(msg)
+            return super().write(data)
+
+    with pytest.raises(fw.BootloaderProtocolError, match="programming write failed"):
+        bl.BootloaderClient(CloseFailureTransport()).upload(
+            fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True
+        )
+
+
 def test_full_erase_is_refused_before_any_flash_command() -> None:
     """The client refuses full erase until it can determine the board capability safely."""
     transport = FakeBootloaderTransport()
@@ -1682,6 +1736,50 @@ def test_backend_default_open_retry_budget_covers_bootloader_enumeration() -> No
     assert backend._open_retries * bl.BOOTLOADER_RETRY_DELAY >= bl.BOOTLOADER_ENUMERATION_TIMEOUT  # pylint: disable=protected-access
 
 
+def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
+    now = 0.0
+    attempts = 0
+    timeouts: list[float] = []
+
+    class EmptyTransport(FakeBootloaderTransport):
+        """Never answer identification, as with a serial port in the wrong mode."""
+
+        def read(self, size: int = 1) -> bytes:
+            del size
+            return b""
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        now += delay
+
+    def open_transport(_device: str, _baudrate: int, timeout: float) -> bl.BootloaderTransport:
+        nonlocal attempts
+        attempts += 1
+        timeouts.append(timeout)
+        return EmptyTransport()
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=100,
+        timeout=2.0,
+        retry_delay=0.5,
+        clock=clock,
+        sleep=sleep,
+    )
+
+    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match="power-cycle"):
+        backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    assert now <= bl.BOOTLOADER_ENUMERATION_TIMEOUT
+    assert attempts < 100
+    assert all(timeout <= 2.0 for timeout in timeouts)
+
+
 def test_backend_requires_manual_recovery_when_the_held_bootloader_never_opens() -> None:
     entered = False
 
@@ -1971,7 +2069,7 @@ def test_facade_does_not_reboot_or_reconnect_after_programming_failure(
     path = tmp_path / "firmware.apj"
     path.write_bytes(apj(b"abcd"))
 
-    with pytest.raises(fw.BootloaderProtocolError, match="programming write failed"):
+    with pytest.raises(fw.BootloaderProtocolError, match=r"programming write failed.*incomplete.*power-cycle"):
         controller.upload_apj_firmware(
             path,
             expected_firmware_sha256=trusted_digest(b"abcd"),

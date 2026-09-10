@@ -54,10 +54,19 @@ The following invariants apply throughout the workflow:
   expose different CDC interfaces. Ambiguous matches fail closed.
 - Network MAVLink connections and force flashing are unsupported.
 - Cancellation is checked at safe boundaries and never interrupts a bootloader
-  packet. Before erase, the held bootloader is rebooted when possible; otherwise
-  the error requires a power cycle.
-- Every serial transport is closed on success and error, and the source APJ is not
-  modified. A failed verify or reconnect is never reported as success.
+  packet. Before erase, the held bootloader is rebooted only after an explicit
+  successful reboot acknowledgement, except for protocol revision 2 which does
+  not send one; otherwise the error requires a power cycle.
+- Bootloader discovery has a 15-second wall-clock budget. Serial response timeouts
+  and retry delays are capped by the remaining budget, so a port that opens but
+  does not answer cannot extend discovery indefinitely.
+- After erase begins, any erase, programming, verification, or reboot failure
+  reports that the flash may be incomplete and instructs the user to power-cycle
+  before reconnecting. The facade does not attempt a normal MAVLink reconnect
+  unless a safe bootloader abort has confirmed a reboot.
+- Every serial transport is closed on success and error, and cleanup cannot mask
+  the original upload failure. The source APJ is not modified, and a failed verify
+  or reconnect is never reported as success.
 - Full-chip erase is refused because the client cannot yet determine target MCU
   capability safely; normal erase remains supported.
 
@@ -68,8 +77,9 @@ The following invariants apply throughout the workflow:
 `FlightControllerBootloaderBackend` loads the APJ, enters and discovers the held
 bootloader, and passes the image to `BootloaderClient`. The client handles protocol
 synchronization, board and capacity checks, erase/program/verify, reboot, retry, and
-transport cleanup. Discovery resolves the captured USB identity before each open and
-fails closed on zero or multiple matches.
+transport cleanup. Discovery resolves the captured USB identity before each open,
+fails closed on zero or multiple matches, and shares an injected monotonic clock and
+sleep function with the client for bounded, testable timing.
 
 ### `data_model_firmware_upload.py`
 
