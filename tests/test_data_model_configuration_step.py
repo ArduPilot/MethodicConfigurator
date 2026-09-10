@@ -128,7 +128,7 @@ class TestConfigurationStepProcessorWorkflows:
         selected_file = "test_file.param"
 
         # Act: Process the configuration step
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
 
         # Assert: Basic processing completed successfully
         assert isinstance(parameters, dict)
@@ -154,7 +154,7 @@ class TestConfigurationStepProcessorWorkflows:
         processor.local_filesystem.merge_forced_or_derived_parameters.return_value = True
 
         # Act: Process configuration step with derived parameters
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Derived parameters were processed
         # compute_parameters is now called twice: once for "forced", once for "derived"
@@ -185,7 +185,7 @@ class TestConfigurationStepProcessorWorkflows:
         )
 
         # Act: Process configuration step with failing computation
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Error feedback provided to UI layer
         # Both forced and derived computation report errors since compute_parameters always returns error
@@ -227,7 +227,9 @@ class TestConfigurationStepProcessorWorkflows:
         }
 
         # Act: Process configuration step
-        parameters, ui_errors, _, _, _, _ = processor.process_configuration_step(selected_file, test_fc_parameters)
+        parameters, ui_errors, _, _, _, _, imported_parameters = processor.process_configuration_step(
+            selected_file, test_fc_parameters
+        )
 
         # Assert: No errors
         assert ui_errors == []
@@ -236,7 +238,7 @@ class TestConfigurationStepProcessorWorkflows:
         assert "BATT_OPTIONS" in parameters
         assert parameters["BATT_OPTIONS"].get_new_value() == 5.0
         assert parameters["BATT_OPTIONS"].change_reason == ""
-        assert processor.autoimported_parameters == {"BATT_OPTIONS"}
+        assert imported_parameters == {"BATT_OPTIONS"}
 
         # BATT_MONITOR should remain untouched (protecting the user comment)
         assert "BATT_MONITOR" in parameters
@@ -266,7 +268,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         processor.local_filesystem.configuration_steps = {selected_file: {"rename_connection": "selected_can"}}
 
         # Act: Process configuration step with connection renaming
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Connection renaming completed successfully
         assert len(ui_infos) > 0  # Should have info messages about renaming
@@ -287,7 +289,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
             selected_file: {"rename_connection": "vehicle_components['GNSS Receiver']['FC Connection']['Type']"}
         }
 
-        parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, _ = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )
 
@@ -314,7 +316,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         # Act: Process configuration step with potential duplicates
         with patch.object(processor, "calculate_connection_rename_operations") as mock_apply:
             mock_apply.return_value = ({"CAN_P2_DRIVER"}, [("CAN_P1_DRIVER", "CAN_P2_DRIVER")])
-            _parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+            _parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(
                 selected_file, fc_parameters
             )  # Assert: User informed about duplicate removal
             assert len(ui_infos) > 0  # Should have info about parameter removal
@@ -341,7 +343,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
         processor.local_filesystem.merge_forced_or_derived_parameters.return_value = True
 
         # Act: Process configuration step without connection renaming
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Only derived parameters processed, no connection renaming
         # compute_parameters is now called twice: once for "forced", once for "derived"
@@ -377,6 +379,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
             _duplicates_first,
             renames_first,
             _derived_first,
+            _autoimported_first,
         ) = processor.process_configuration_step(rename_step, fc_parameters)
         assert renames_first  # Sanity check that renaming took place
 
@@ -388,6 +391,7 @@ class TestConfigurationStepProcessorConnectionRenaming:
             _duplicates_second,
             renames_second,
             _derived_second,
+            _autoimported_second,
         ) = processor.process_configuration_step(later_step, fc_parameters)
         assert renames_second == []
         assert ui_infos_second == []
@@ -875,7 +879,7 @@ class TestConfigurationStepProcessorErrorHandling:
         processor.local_filesystem.file_parameters[selected_file] = {}  # Add empty file entry
 
         # Act: Process configuration step
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
 
         # Assert: Processing completed without errors
         assert isinstance(parameters, dict)
@@ -897,7 +901,7 @@ class TestConfigurationStepProcessorErrorHandling:
         processor.local_filesystem.file_parameters[selected_file] = {}
 
         # Act: Process configuration step
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(selected_file, fc_parameters)
 
         # Assert: Empty file handled gracefully
         assert isinstance(parameters, dict)
@@ -953,7 +957,7 @@ class TestConfigurationStepProcessorErrorHandling:
         processor.local_filesystem.configuration_steps = {selected_file: {"rename_connection": "selected_can"}}
 
         # Act: Process complex connection renaming
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Complex scenarios handled correctly
         assert isinstance(parameters, dict)
@@ -975,7 +979,7 @@ class TestConfigurationStepProcessorErrorHandling:
         selected_file = "test_file.param"
 
         # Act: Process with empty variables
-        parameters, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(
+        parameters, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(
             selected_file, fc_parameters
         )  # Assert: Processing completed successfully
         assert isinstance(parameters, dict)
@@ -1004,7 +1008,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 5
 
         # Act: Process configuration step
-        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: ExpressLRS warning is present
         assert len(ui_infos) == 1
@@ -1035,7 +1039,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 6
 
         # Act: Process configuration step
-        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: No ExpressLRS warning
         assert ui_infos == []
@@ -1061,7 +1065,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 5
 
         # Act: Process configuration step
-        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: No ExpressLRS warning
         assert ui_infos == []
@@ -1087,7 +1091,7 @@ class TestConfigurationStepProcessorErrorHandling:
         test_fc_params["FLTMODE_CH"] = 5
 
         # Act: Process configuration step
-        _, ui_errors, ui_infos, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
+        _, ui_errors, ui_infos, _, _, _, _ = processor.process_configuration_step(selected_file, test_fc_params)
 
         # Assert: ExpressLRS warning is present
         assert len(ui_infos) == 1
@@ -1126,9 +1130,15 @@ class TestDerivedParametersFiltering:
         # FC only has SERIAL1_PROTOCOL (not CAN_P1_DRIVER)
         limited_fc_params = {"SERIAL1_PROTOCOL": 4.0}
 
-        _params, ui_errors, _ui_infos, _duplicates, _renames, derived_to_apply = processor.process_configuration_step(
-            selected_file, limited_fc_params
-        )
+        (
+            _params,
+            ui_errors,
+            _ui_infos,
+            _duplicates,
+            _renames,
+            derived_to_apply,
+            _autoimported,
+        ) = processor.process_configuration_step(selected_file, limited_fc_params)
 
         assert ui_errors == []
         # SERIAL1_PROTOCOL is in both file and FC, so it should be in derived_to_apply
@@ -1166,9 +1176,15 @@ class TestDerivedParametersFiltering:
 
         fc_params = {"SERIAL1_PROTOCOL": 4.0, "NEW_PARAM": 99.0}
 
-        _params, ui_errors, _ui_infos, _duplicates, _renames, derived_to_apply = processor.process_configuration_step(
-            selected_file, fc_params
-        )
+        (
+            _params,
+            ui_errors,
+            _ui_infos,
+            _duplicates,
+            _renames,
+            derived_to_apply,
+            _autoimported,
+        ) = processor.process_configuration_step(selected_file, fc_params)
 
         assert ui_errors == []
         # Parameters in file should be included
@@ -1203,9 +1219,15 @@ class TestDerivedParametersFiltering:
         }
 
         # No FC parameters (empty dict simulates offline mode)
-        _params, ui_errors, _ui_infos, _duplicates, _renames, derived_to_apply = processor.process_configuration_step(
-            selected_file, {}
-        )
+        (
+            _params,
+            ui_errors,
+            _ui_infos,
+            _duplicates,
+            _renames,
+            derived_to_apply,
+            _autoimported,
+        ) = processor.process_configuration_step(selected_file, {})
 
         assert ui_errors == []
         # Both should be included since fc_param_keys is empty (no FC filter)
@@ -1299,7 +1321,15 @@ class TestDeleteParametersPriority:
 
         # Act (When): process the step with a non-default FC value for the to-be-deleted param
         fc_params = {"BATT_OPTIONS": 5.0}
-        parameters, ui_errors, _ui_infos, _dup, _ren, _derived = processor.process_configuration_step(selected_file, fc_params)
+        (
+            parameters,
+            ui_errors,
+            _ui_infos,
+            _dup,
+            _ren,
+            _derived,
+            _autoimported,
+        ) = processor.process_configuration_step(selected_file, fc_params)
 
         # Assert (Then): BATT_OPTIONS absent because it is in the delete set
         assert "BATT_OPTIONS" not in parameters

@@ -1900,10 +1900,16 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._connection_renames.clear()
 
         # Process configuration step and get operations to apply
-        self.current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params = (
-            self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
-        )
-        self._added_parameters.update(self._config_step_processor.autoimported_parameters)
+        (
+            self.current_step_parameters,
+            ui_errors,
+            ui_infos,
+            duplicates_to_remove,
+            renames_to_apply,
+            derived_params,
+            autoimported_parameters,
+        ) = self._config_step_processor.process_configuration_step(self.current_file, self.fc_parameters)
+        self._added_parameters.update(autoimported_parameters)
 
         # Apply derived parameters to domain model using specialized setters
         for param_name, derived_par in derived_params.items():

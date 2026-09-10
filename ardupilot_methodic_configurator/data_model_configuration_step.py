@@ -55,7 +55,6 @@ class ConfigurationStepProcessor:
         # Ensure transient helper variables are not persisted across steps
         self.variables.pop("fc_parameters", None)
         self.variables.pop("new_connection_prefix", None)
-        self.autoimported_parameters: set[str] = set()
 
     def process_configuration_step(  # pylint: disable=too-many-locals
         self,
@@ -68,6 +67,7 @@ class ConfigurationStepProcessor:
         set[str],
         list[tuple[str, str]],
         ParDict,
+        set[str],
     ]:
         """
         Process a configuration step including parameter computation and domain model creation.
@@ -84,6 +84,7 @@ class ConfigurationStepProcessor:
             - Set of parameter names to remove (duplicates from rename operations)
             - List of (old_name, new_name) pairs to rename
             - ParDict of derived parameters to apply to domain model
+            - Set of parameter names auto-imported from the flight controller
 
         """
         ui_errors: list[tuple[str, str]] = []
@@ -149,7 +150,7 @@ class ConfigurationStepProcessor:
 
         # Apply auto-imports for the current step. The editor uses these names to
         # track parameters that were added to the in-memory model and must be saved.
-        self.autoimported_parameters = self._apply_auto_imports(
+        autoimported_parameters = self._apply_auto_imports(
             selected_file, fc_parameters, current_step_parameters, parameters_to_delete
         )
 
@@ -170,7 +171,15 @@ class ConfigurationStepProcessor:
                         )
                     )
 
-        return current_step_parameters, ui_errors, ui_infos, duplicates_to_remove, renames_to_apply, derived_params_to_apply
+        return (
+            current_step_parameters,
+            ui_errors,
+            ui_infos,
+            duplicates_to_remove,
+            renames_to_apply,
+            derived_params_to_apply,
+            autoimported_parameters,
+        )
 
     def _apply_auto_imports(
         self,

@@ -3520,6 +3520,7 @@ class TestDerivedParameterApplication:
                 [],  # duplicates_to_remove
                 [],  # renames_to_apply
                 derived_params,  # derived_params
+                set(),  # autoimported_parameters
             ),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
@@ -3565,6 +3566,7 @@ class TestDerivedParameterApplication:
                     [],  # duplicates_to_remove
                     [],  # renames_to_apply
                     derived_params,  # derived_params
+                    set(),  # autoimported_parameters
                 ),
             ),
             patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
@@ -3613,6 +3615,7 @@ class TestDerivedParameterApplication:
                     [],
                     [],
                     derived_params,
+                    set(),
                 ),
             ),
             patch("ardupilot_methodic_configurator.data_model_parameter_editor.logging_error") as mock_log_error,
@@ -3652,6 +3655,7 @@ class TestDerivedParameterApplication:
                 [],
                 [],
                 derived_params,
+                set(),
             ),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
@@ -3681,7 +3685,7 @@ class TestDerivedParameterApplication:
             patch.object(
                 parameter_editor._config_step_processor,
                 "process_configuration_step",
-                return_value=({}, [], [], set(), [], ParDict()),
+                return_value=({}, [], [], set(), [], ParDict(), set()),
             ),
             patch.object(
                 parameter_editor._config_step_processor,
@@ -3700,12 +3704,10 @@ class TestDerivedParameterApplication:
         parameter_editor.current_file = "test_file.param"
         parameter_editor._last_time_asked_to_save = 0.0
         autoimported = ArduPilotParameter("AUTO_IMPORTED", Par(2.0), fc_value=2.0)
-        parameter_editor._config_step_processor.autoimported_parameters = {"AUTO_IMPORTED"}
-
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"AUTO_IMPORTED": autoimported}, [], [], set(), [], ParDict()),
+            return_value=({"AUTO_IMPORTED": autoimported}, [], [], set(), [], ParDict(), {"AUTO_IMPORTED"}),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -4529,7 +4531,7 @@ class TestParameterManagementBehavior:
             patch.object(
                 parameter_editor._config_step_processor,
                 "process_configuration_step",
-                return_value=({"OLD": MagicMock()}, [], [], [], [("OLD", "NEW")], ParDict()),
+                return_value=({"OLD": MagicMock()}, [], [], [], [("OLD", "NEW")], ParDict(), set()),
             ),
             patch.object(parameter_editor._config_step_processor, "create_ardupilot_parameter", return_value=mock_new_param),
         ):
@@ -4557,7 +4559,7 @@ class TestParameterManagementBehavior:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"DER": mock_der}, [], [], [], [], ParDict({"DER": Par(2.0, "because math")})),
+            return_value=({"DER": mock_der}, [], [], [], [], ParDict({"DER": Par(2.0, "because math")}), set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6354,7 +6356,7 @@ class TestConfigurationStepParameterRepopulation:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({}, [], [], [], [], {}),
+            return_value=({}, [], [], [], [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6379,7 +6381,7 @@ class TestConfigurationStepParameterRepopulation:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"OLD_PARAM": MagicMock()}, [], [], [], [], {}),
+            return_value=({"OLD_PARAM": MagicMock()}, [], [], [], [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6801,7 +6803,7 @@ class TestDuplicateParameterRemoval:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}),
+            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
@@ -6827,7 +6829,7 @@ class TestDuplicateParameterRemoval:
         with patch.object(
             parameter_editor._config_step_processor,
             "process_configuration_step",
-            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}),
+            return_value=({"DUP_PARAM": MagicMock()}, [], [], {"DUP_PARAM"}, [], {}, set()),
         ):
             parameter_editor._repopulate_configuration_step_parameters()
 
