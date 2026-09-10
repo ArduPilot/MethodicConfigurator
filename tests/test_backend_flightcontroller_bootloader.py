@@ -670,6 +670,39 @@ def test_client_uses_injected_sleep_for_empty_nonblocking_reads() -> None:
     assert sleeps == [0.01]
 
 
+def test_backend_passes_its_injected_sleep_to_the_bootloader_client() -> None:
+    """
+    Bootloader discovery keeps the client's nonblocking-read yield injectable.
+
+    GIVEN: Opening the bootloader succeeds but its first read is empty
+    WHEN: The backend uploads firmware with an injected sleep function
+    THEN: The bootloader client uses that function rather than module-global sleep
+    """
+
+    class EmptyOnceTransport(FakeBootloaderTransport):
+        """Return one empty read before providing the bootloader response."""
+
+        empty_reads = 1
+
+        def read(self, size: int = 1) -> bytes:
+            if self.empty_reads:
+                self.empty_reads -= 1
+                return b""
+            return super().read(size)
+
+    sleeps: list[float] = []
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=lambda *_args: EmptyOnceTransport(),
+        sleep=sleeps.append,
+    )
+
+    backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    assert sleeps == [0.01]
+
+
 @pytest.mark.parametrize(
     ("operation", "error_type", "message"),
     [
