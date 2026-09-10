@@ -182,9 +182,18 @@ def resolve_bootloader_device(device: str, identity: SerialDeviceIdentity | None
                     )
                 )
             ]
+            # Prefer the captured, interface-qualified location when application
+            # firmware exposes several CDC ports.  The bootloader commonly exposes
+            # only one port with a different suffix, so retain physical matches when
+            # there is no exact match.
+            if len(matches) > 1 and identity.location:
+                exact = [port for port in matches if str(getattr(port, "location", "") or "") == identity.location]
+                if len(exact) == 1:
+                    matches = exact
             # An application-port interface identifier need not be reproduced by the
             # bootloader.  It can only disambiguate ports from one identified device;
             # it must never eliminate a sole candidate or select between devices.
+            # Linux and Windows typically leave this field unset for ArduPilot CDC ports.
             if len(matches) > 1 and identity.interface:
                 locations = {_physical_usb_location(getattr(port, "location", "")) for port in matches}
                 if len(locations) == 1 and locations != {""}:

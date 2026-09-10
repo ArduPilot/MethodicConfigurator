@@ -68,6 +68,23 @@ def test_bootloader_port_matches_linux_interface_qualified_location(monkeypatch:
     assert bl.resolve_bootloader_device("/dev/ttyACM1", identity) == "/dev/ttyACM0"
 
 
+def test_application_port_prefers_an_exact_interface_qualified_location(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A dual-CDC application reconnects to the originally selected port."""
+    mavlink_port = ListPortInfo("/dev/ttyACM0")
+    mavlink_port.location = "1-2.3:1.0"
+    mavlink_port.serial_number = "FC-123"
+    mavlink_port.interface = None
+    console_port = ListPortInfo("/dev/ttyACM1")
+    console_port.location = "1-2.3:1.2"
+    console_port.serial_number = "FC-123"
+    console_port.interface = None
+    monkeypatch.setattr(bl.serial.tools.list_ports, "comports", lambda: [mavlink_port, console_port])
+
+    identity = bl.SerialDeviceIdentity(location="1-2.3:1.0", serial_number="FC-123")
+
+    assert bl.resolve_bootloader_device("/dev/ttyACM0", identity) == "/dev/ttyACM0"
+
+
 def test_bootloader_port_refuses_identical_macos_dual_cdc_interfaces(monkeypatch: pytest.MonkeyPatch) -> None:
     """Identical CDC metadata must remain fail-closed after reboot."""
     first_port = ListPortInfo("/dev/cu.usbmodem14101")
