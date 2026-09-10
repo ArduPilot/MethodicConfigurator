@@ -14,11 +14,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
+from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import FakeMavlinkConnection
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
@@ -101,6 +103,7 @@ class TestFlightControllerParamsSetParameter:
         """
         # Given: Connected FC
         mock_master = MagicMock()
+        mock_master.recv_msg.return_value = None
         mock_conn_mgr = Mock()
         mock_conn_mgr.master = mock_master
         mock_conn_mgr.info = FlightControllerInfo()
@@ -115,6 +118,142 @@ class TestFlightControllerParamsSetParameter:
         assert error == ""
         mock_master.param_set_send.assert_called_once_with("BATT_MONITOR", 4.0)
         # Note: fc_parameters is NOT updated by set_param to ensure cache accuracy
+
+    def test_user_is_told_when_newer_firmware_rejects_parameter_write(self) -> None:
+        """
+        User receives an error returned by newer ArduPilot firmware.
+
+        GIVEN: A connected controller that returns PARAM_ERROR for a parameter write
+        WHEN: User sets that parameter
+        THEN: The write should fail with the controller's rejection reason
+        """
+        mock_master = MagicMock()
+        mock_master.recv_msg.return_value = SimpleNamespace(param_id="BATT_MONITOR", error=5)
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.info.set_flight_sw_version(0x040701FF)
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        success, error = params_mgr.set_param("BATT_MONITOR", 4.0)
+
+        assert success is False
+        assert "read-only" in error.lower()
+        mock_master.param_set_send.assert_called_once_with("BATT_MONITOR", 4.0)
+
+    def test_legacy_firmware_without_parameter_error_keeps_send_only_behavior(self) -> None:
+        """
+        Legacy firmware remains compatible when it does not acknowledge writes.
+
+        GIVEN: A connected controller that sends no PARAM_ERROR response
+        WHEN: User sets a parameter
+        THEN: The write should retain the existing send-only success result
+        """
+        mock_master = MagicMock()
+        mock_master.recv_msg.return_value = None
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_sleep"):
+            success, error = params_mgr.set_param("BATT_MONITOR", 4.0)
+
+        assert success is True
+        assert error == ""
+        mock_master.recv_msg.assert_not_called()
+
+    def test_no_error_parameter_response_is_not_treated_as_rejection(self) -> None:
+        """A PARAM_ERROR response with code zero acknowledges a successful write."""
+        mock_master = MagicMock()
+        mock_master.recv_msg.return_value = SimpleNamespace(param_id="BATT_MONITOR", error=0)
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.info.set_flight_sw_version(0x040701FF)
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        success, error = params_mgr.set_param("BATT_MONITOR", 4.0)
+
+        assert success is True
+        assert error == ""
+
+    def test_unrelated_messages_are_buffered_while_waiting_for_parameter_error(self) -> None:
+        """Waiting for PARAM_ERROR does not discard another MAVLink message."""
+        mock_master = FakeMavlinkConnection("/dev/ttyUSB0", 115200)
+        unrelated = SimpleNamespace(get_type=lambda: "PARAM_VALUE", param_id="OTHER", param_value=2.0)
+        rejection = SimpleNamespace(get_type=lambda: "PARAM_ERROR", param_id="BATT_MONITOR", error=5)
+        mock_master.add_message(unrelated)
+        mock_master.add_message(rejection)
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.info.set_flight_sw_version(0x040701FF)
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        success, error = params_mgr.set_param("BATT_MONITOR", 4.0)
+
+        assert success is False
+        assert "read-only" in error.lower()
+        assert params_mgr._pop_pending_message("PARAM_VALUE", "OTHER") is unrelated  # pylint: disable=protected-access
+
+    def test_buffered_parameter_value_is_available_to_fetch_param(self) -> None:
+        """A PARAM_VALUE read while waiting for PARAM_ERROR is later consumed by fetch_param."""
+        mock_master = FakeMavlinkConnection("/dev/ttyUSB0", 115200)
+        mock_master.mav = MagicMock()
+        mock_master.target_system = 1
+        mock_master.target_component = 1
+        param_value = SimpleNamespace(get_type=lambda: "PARAM_VALUE", param_id="BATT_MONITOR", param_value=4.0)
+        mock_master.add_message(param_value)
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        mock_conn_mgr.info.set_flight_sw_version(0x040701FF)
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        with patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_time", side_effect=[0.0, 0.0, 1.0]):
+            success, error = params_mgr.set_param("BATT_MONITOR", 4.0)
+
+        assert success is True
+        assert error == ""
+        assert params_mgr.fetch_param("BATT_MONITOR") == 4.0
+        mock_master.mav.param_request_read_send.assert_called_once()
+
+    def test_unmatched_parameter_rejection_is_not_reused_for_a_later_write(self) -> None:
+        """
+        A PARAM_ERROR without a matching in-flight write is discarded.
+
+        GIVEN: A delayed PARAM_ERROR for another parameter
+        WHEN: The first write observes it and a second write is sent
+        THEN: The stale response is not attributed to the second write
+        """
+        mock_master = MagicMock()
+        stale_error = SimpleNamespace(get_type=lambda: "PARAM_ERROR", param_id="SECOND_PARAM", error=5)
+        mock_master.recv_msg.side_effect = [stale_error, None]
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_params.time_time",
+            side_effect=[0.0, 0.0, 1.0],
+        ):
+            success, error = params_mgr.set_param("FIRST_PARAM", 1.0)
+
+        assert success is True
+        assert error == ""
+
+        mock_master.recv_msg.side_effect = None
+        mock_master.recv_msg.return_value = None
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_params.time_time",
+            side_effect=[2.0, 2.0, 3.0],
+        ):
+            success, error = params_mgr.set_param("SECOND_PARAM", 2.0)
+
+        assert success is True
+        assert error == ""
 
     def test_set_parameter_fails_without_connection(self) -> None:
         """
@@ -294,6 +433,27 @@ class TestFlightControllerParamsFetchParameter:
             with pytest.raises(TimeoutError, match="NONEXISTENT"):
                 params_mgr.fetch_param("NONEXISTENT", timeout=1)
 
+    def test_mavlink_download_uses_buffered_parameter_values(self) -> None:
+        """A buffered PARAM_VALUE is included when downloading all parameters."""
+        mock_master = MagicMock()
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+        buffered_value = SimpleNamespace(
+            get_type=lambda: "PARAM_VALUE",
+            to_dict=lambda: {"param_id": "BATT_MONITOR", "param_value": 4.0},
+            param_count=1,
+        )
+        params_mgr._pending_messages.append(buffered_value)  # pylint: disable=protected-access
+
+        values, complete = params_mgr._download_params_via_mavlink()  # pylint: disable=protected-access
+
+        assert complete is True
+        assert values == {"BATT_MONITOR": 4.0}
+        mock_master.mav.param_request_list_send.assert_called_once()
+        mock_master.recv_match.assert_not_called()  # pylint: disable=no-member
+
 
 class TestFlightControllerParamsGetParameter:
     """Test parameter retrieval from cache."""
@@ -383,14 +543,13 @@ class TestFlightControllerParamsConstants:
 
     def test_param_set_propagation_delay_allows_fc_processing(self) -> None:
         """
-        Parameter set propagation delay allows FC time to process.
+        Parameter set propagation delay allows FC and telemetry-link processing.
 
         GIVEN: Parameter manager class
         WHEN: Checking propagation delay constant
-        THEN: Value should allow FC to process parameter change
+        THEN: Value should allow a meaningful response window
         AND: Value should not cause excessive delays
         """
-        # Then: Reasonable propagation delay
         assert FlightControllerParams.PARAM_SET_PROPAGATION_DELAY >= 0.1
         assert FlightControllerParams.PARAM_SET_PROPAGATION_DELAY < 2.0
 

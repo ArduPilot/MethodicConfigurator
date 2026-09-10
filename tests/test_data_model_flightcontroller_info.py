@@ -142,6 +142,21 @@ class TestFlightcontrollerInfo:  # pylint: disable=too-many-public-methods
             fc_info.set_flight_sw_version(0)
             assert fc_info.flight_sw_version == "4.3.2"
             assert fc_info.flight_sw_version_and_type == "4.3.2 beta"
+            assert fc_info.fw_supports_param_set_ack is False
+
+    @pytest.mark.parametrize(
+        ("version_code", "expected_support"),
+        [
+            (0x040606FF, False),
+            (0x040700FF, True),
+            (0x040701FF, True),
+        ],
+    )
+    def test_param_set_ack_support_depends_on_firmware_version(self, fc_info, version_code, expected_support) -> None:
+        """Firmware 4.7.0 and newer supports PARAM_ERROR acknowledgements."""
+        fc_info.set_flight_sw_version(version_code)
+
+        assert fc_info.fw_supports_param_set_ack is expected_support
 
     @pytest.mark.parametrize(
         ("version_code", "expected_major", "expected_minor", "expected_patch", "expected_type"),

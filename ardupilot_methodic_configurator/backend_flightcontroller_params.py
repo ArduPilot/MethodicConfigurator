@@ -8,6 +8,7 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+from collections import deque
 from collections.abc import Callable
 from logging import debug as logging_debug
 from logging import error as logging_error
@@ -15,13 +16,19 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from math import nan
 from pathlib import Path
+from time import monotonic as time_monotonic
 from time import sleep as time_sleep
 from time import time as time_time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
+from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import BufferedMavlinkConnection
+from ardupilot_methodic_configurator.backend_mavlink_param_error import (
+    get_param_error_message,
+    install_param_error_message,
+)
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, validate_param_name
 
@@ -65,11 +72,24 @@ class FlightControllerParams:
     """
 
     # Parameter operation timeout constants
-    PARAM_SET_PROPAGATION_DELAY: float = 0.5
-    FILE_SYNC_DELAY: float = 0.3
     PARAM_FETCH_POLL_DELAY: float = 0.01
+    # Give the flight controller and a normal telemetry link time to return an
+    # error.  This is deliberately independent from the 10 ms polling cadence.
+    PARAM_SET_PROPAGATION_DELAY: float = 0.1
+    FILE_SYNC_DELAY: float = 0.3
     PARAM_RESET_TIMEOUT: float = 10.0
     MAVFTP_GETPARAMS_TIMEOUT: float = 40.0
+
+    PARAM_ERROR_MESSAGES: ClassVar[dict[int, str]] = {
+        1: _("Parameter does not exist"),
+        2: _("Parameter value is out of range"),
+        3: _("Permission denied while setting parameter"),
+        4: _("Target component was not found"),
+        5: _("Parameter is read-only"),
+        6: _("Parameter type is not supported"),
+        7: _("Parameter type does not match"),
+        8: _("Parameter read failed"),
+    }
 
     def __init__(
         self,
@@ -90,6 +110,10 @@ class FlightControllerParams:
         self._connection_manager: FlightControllerConnectionProtocol = connection_manager
         # Use provided fc_parameters dict or create new one
         self.fc_parameters: dict[str, float] = fc_parameters if fc_parameters is not None else {}
+        # These queues hold only messages received during a bounded parameter
+        # operation.  Do not silently discard a message: a later fetch/download
+        # must be able to consume every preserved PARAM_VALUE.
+        self._pending_messages: deque[object] = deque()
 
     @property
     def master(self) -> Optional["MavlinkConnection"]:
@@ -194,7 +218,9 @@ class FlightControllerParams:
         try:
             # Loop to receive all parameters
             while True:
-                m = self.master.recv_match(type="PARAM_VALUE", blocking=True, timeout=10)
+                m = self._pop_pending_message("PARAM_VALUE")
+                if m is None:
+                    m = self.master.recv_match(type="PARAM_VALUE", blocking=True, timeout=10)
                 if m is None:
                     return parameters, False
                 message = m.to_dict()
@@ -278,16 +304,21 @@ class FlightControllerParams:
         """
         Set a parameter on the flight controller.
 
-        Note: This method sends the parameter but does NOT wait for confirmation.
-        This is an ArduPilot limitation - the parameter_set command does not return an ACK.
+        Newer ArduPilot firmware may reply with MAVLink-2 ``PARAM_ERROR`` when it
+        rejects a parameter write. Older firmware does not send an acknowledgement,
+        so expiration of the short response window is treated as an unknown-but-sent
+        result. Callers that require positive confirmation must still read the
+        parameter back with :meth:`fetch_param`.
 
         Args:
             param_name: The name of the parameter to set
             param_value: The value to set the parameter to
 
         Returns:
-            tuple[bool, str]: (True, "") if command sent successfully,
-                             (False, error_message) if no connection available or invalid parameters
+            tuple[bool, str]: ``(True, "")`` when the command was sent without an
+                              observed rejection; ``(False, error_message)`` on a
+                              local validation failure, missing connection, or a
+                              matching ``PARAM_ERROR`` response.
 
         """
         if self.master is None:
@@ -306,11 +337,84 @@ class FlightControllerParams:
             return False, error_msg
 
         self.master.param_set_send(param_name, param_value)
+        error_code = self._wait_for_param_error(param_name)
+        if error_code is not None:
+            error_msg = self.PARAM_ERROR_MESSAGES.get(error_code, _("Flight controller rejected parameter write"))
+            error_msg = _("Failed to set %(name)s: %(error)s") % {"name": param_name, "error": error_msg}
+            logging_error(error_msg)
+            return False, error_msg
+
         # Note: We do NOT update fc_parameters here because:
-        # 1. ArduPilot's param_set doesn't send confirmation (no ACK)
-        # 2. The parameter should only be updated when read back from FC (via MAVFTP or fetch_param)
+        # 1. Successful PARAM_SET messages do not have a universal acknowledgement.
+        # 2. The parameter should only be updated when read back from FC (via MAVFTP or fetch_param).
         # 3. This ensures fc_parameters always reflects the actual FC state
         return True, ""
+
+    def _wait_for_param_error(self, param_name: str) -> int | None:
+        """
+        Wait briefly for a PARAM_ERROR response to a just-sent PARAM_SET.
+
+        A timeout is successful from this method's perspective because legacy
+        ArduPilot versions do not emit a response for successful or rejected writes.
+
+        """
+        if self.master is None:
+            return None
+
+        if not self._connection_manager.info.fw_supports_param_set_ack:
+            return None
+
+        install_param_error_message()
+        start_time = time_monotonic()
+        while time_monotonic() - start_time < self.PARAM_SET_PROPAGATION_DELAY:
+            remaining = self.PARAM_SET_PROPAGATION_DELAY - (time_monotonic() - start_time)
+            message = self._receive_next_message(timeout=remaining)
+            if message is not None:
+                message_type = getattr(message, "get_type", lambda: None)()
+                if message_type not in (None, "PARAM_ERROR"):
+                    # recv_match(type=...) discards non-matching MAVLink messages.
+                    # Read unfiltered messages instead and retain them for the
+                    # parameter operations that may be waiting for them.
+                    self._pending_messages.append(message)
+                    continue
+                error_code = get_param_error_message(message, param_name)
+                if error_code is not None:
+                    # MAV_PARAM_ERROR_NO_ERROR is an acknowledgement, not a rejection.
+                    return error_code or None
+                # PARAM_ERROR has no request sequence or value.  A non-matching
+                # response cannot safely be assigned to a future write (including
+                # a same-name retry), so it is deliberately not buffered.
+                logging_debug("Discarding unmatched PARAM_ERROR while setting %s", param_name)
+                continue
+            time_sleep(self.PARAM_FETCH_POLL_DELAY)
+        return None
+
+    def _receive_next_message(self, timeout: float | None = None) -> object | None:
+        """Receive one unfiltered MAVLink message without dropping other types."""
+        if self.master is None:
+            return None
+
+        # The production connection adapter filters without dropping unrelated
+        # messages. Keep the recv_msg fallback for lightweight test doubles.
+        if isinstance(self.master, BufferedMavlinkConnection):
+            return self.master.recv_match(type="PARAM_ERROR", blocking=True, timeout=timeout)  # type: ignore[union-attr]
+        return self.master.recv_msg()  # type: ignore[union-attr]
+
+    def _pop_pending_message(self, message_type: str, param_name: str = "") -> object | None:
+        """Remove and return a buffered message of the requested parameter type."""
+        for message in list(self._pending_messages):
+            if getattr(message, "get_type", lambda: None)() != message_type:
+                continue
+            if not param_name:
+                self._pending_messages.remove(message)
+                return message
+            received_name = getattr(message, "param_id", "")
+            if isinstance(received_name, bytes):
+                received_name = received_name.decode("ascii", errors="replace")
+            if isinstance(received_name, str) and received_name.rstrip("\x00") == param_name:
+                self._pending_messages.remove(message)
+                return message
+        return None
 
     def get_param(self, param_name: str, default: float = nan) -> float:
         """
@@ -363,7 +467,9 @@ class FlightControllerParams:
         # Wait for PARAM_VALUE response
         start_time = time_time()
         while time_time() - start_time < timeout:
-            param_msg: Any = self.master.recv_match(type="PARAM_VALUE", blocking=False)
+            param_msg: Any = self._pop_pending_message("PARAM_VALUE", param_name)
+            if param_msg is None:
+                param_msg = self.master.recv_match(type="PARAM_VALUE", blocking=False)
             if param_msg is not None:
                 # Check if this is the parameter we requested
                 received_param_name = param_msg.param_id.rstrip("\x00")

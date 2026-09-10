@@ -21,6 +21,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_connection import 
     FlightControllerConnection,
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import (
+    BufferedMavlinkConnection,
     FakeMavlinkConnectionFactory,
     SystemMavlinkConnectionFactory,
 )
@@ -142,6 +143,18 @@ class TestMavlinkConnectionFactoryService:
         assert conn.recv_match(blocking=False) == "message_3"
         assert conn.recv_match(blocking=False) is None  # Empty queue
 
+    def test_fake_mavlink_connection_receives_unfiltered_messages(self) -> None:
+        """FakeMavlinkConnection mirrors pymavlink's unfiltered recv_msg API."""
+        fake_factory = FakeMavlinkConnectionFactory()
+        conn = fake_factory.create(device="/dev/ttyUSB0", baudrate=115200)
+        assert conn is not None
+        conn.add_message("message_1")
+        conn.add_message("message_2")
+
+        assert conn.recv_msg() == "message_1"
+        assert conn.recv_msg() == "message_2"
+        assert conn.recv_msg() is None
+
     def test_fake_mavlink_connection_message_clearing(self) -> None:
         """
         Fake MAVLink connection supports clearing message queue.
@@ -198,23 +211,95 @@ class TestMavlinkConnectionFactoryService:
         # When/Then: Send should not raise (no-op for fake)
         assert conn is not None
         conn.mav_send("test_message")  # Should not raise
+        conn.param_set_send("BATT_MONITOR", 4.0)  # Should not raise
 
-    def test_fake_mavlink_factory_get_connection_not_stored(self) -> None:
+    def test_fake_mavlink_factory_get_connection_returns_created_connection(self) -> None:
         """
-        FakeMavlinkConnectionFactory.get_connection returns None for unstored device.
+        FakeMavlinkConnectionFactory.get_connection returns a created connection.
 
         GIVEN: Fake factory
-        WHEN: Getting connection for device that was never created
-        THEN: Should return None
+        WHEN: Creating and then getting a connection by device
+        THEN: The same connection should be returned
         """
-        # Given: Fake factory (connections not explicitly stored in _connections dict)
+        # Given: Fake factory
         fake_factory = FakeMavlinkConnectionFactory()
 
-        # When: Get connection that doesn't exist
+        # When: Create and get the connection
+        created = fake_factory.create(device="/dev/ttyUSB0", baudrate=115200)
         result = fake_factory.get_connection("/dev/ttyUSB0")
 
-        # Then: Returns None
-        assert result is None
+        # Then: Returns the created connection
+        assert result is created
+
+    def test_fake_mavlink_connection_filters_messages_by_type(self) -> None:
+        """FakeMavlinkConnection accepts pymavlink's type filter and preserves non-matching messages."""
+
+        # Given: Fake connection with MAVLink-like messages
+        class FakeMessage:  # pylint: disable=too-few-public-methods
+            """Minimal MAVLink message double used to exercise type filtering."""
+
+            def __init__(self, message_type: str) -> None:
+                self.message_type = message_type
+
+            def get_type(self) -> str:
+                return self.message_type
+
+        fake_factory = FakeMavlinkConnectionFactory()
+        conn = fake_factory.create(device="/dev/ttyUSB0", baudrate=115200)
+        assert conn is not None
+        heartbeat = FakeMessage("HEARTBEAT")
+        command_ack = FakeMessage("COMMAND_ACK")
+        conn.add_message(command_ack)
+        conn.add_message(heartbeat)
+
+        # When/Then: A filtered receive returns only the matching message
+        assert conn.recv_match(type="HEARTBEAT", blocking=False) is heartbeat
+        assert conn.recv_match(type="COMMAND_ACK", blocking=False) is command_ack
+
+    def test_buffered_connection_preserves_messages_skipped_by_filter(self) -> None:
+        """A filtered read does not hide another consumer's MAVLink message."""
+
+        class FakeMessage:  # pylint: disable=too-few-public-methods
+            """Minimal MAVLink message double."""
+
+            def __init__(self, message_type: str) -> None:
+                self.message_type = message_type
+
+            def get_type(self) -> str:
+                return self.message_type
+
+        raw_connection = mock.Mock()
+        command_ack = FakeMessage("COMMAND_ACK")
+        param_error = FakeMessage("PARAM_ERROR")
+        raw_connection.recv_msg.side_effect = [command_ack, param_error, None]
+        buffered = BufferedMavlinkConnection(raw_connection)
+
+        # A non-blocking poll buffers at most one unrelated message. This
+        # prevents an endless telemetry stream from monopolising the caller.
+        assert buffered.recv_match(type="PARAM_ERROR", blocking=False) is None
+        assert buffered.recv_match(type="PARAM_ERROR", blocking=False) is param_error
+        assert buffered.recv_match(type="COMMAND_ACK", blocking=False) is command_ack
+
+    def test_buffered_connection_honors_timeout_while_telemetry_is_continuous(self) -> None:
+        """A filtered blocking receive exits at its deadline on a busy link."""
+
+        class FakeMessage:  # pylint: disable=too-few-public-methods
+            """Minimal continuous telemetry message."""
+
+            def get_type(self) -> str:
+                return "HEARTBEAT"
+
+        raw_connection = mock.Mock()
+        raw_connection.recv_msg.return_value = FakeMessage()
+        buffered = BufferedMavlinkConnection(raw_connection)
+
+        with mock.patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink.monotonic",
+            side_effect=[0.0, 0.0, 0.2],
+        ):
+            assert buffered.recv_match(type="PARAM_ERROR", blocking=True, timeout=0.1) is None
+
+        assert raw_connection.recv_msg.call_count == 1
 
     def test_system_mavlink_factory_preserves_oserror(self) -> None:
         """
