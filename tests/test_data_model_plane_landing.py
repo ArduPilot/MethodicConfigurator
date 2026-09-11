@@ -378,7 +378,7 @@ def test_autoland_only_attempt_preserves_mode_and_flat_result_label() -> None:
 
     assert len(attempts) == 1
     assert attempts[0].mode_number == PlaneLandingAttemptDetector.AUTOLAND_MODE_NUMBER
-    assert any(outcome.message.startswith("AUTOLAND landing:") for outcome in result.outcomes)
+    assert any(outcome.message.startswith("AUTOLAND landing →") for outcome in result.outcomes)
 
 
 def test_stage_one_transition_is_ignored_when_current_mode_is_not_auto() -> None:
@@ -969,7 +969,8 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
     assert all(outcome.suggested_value is None for outcome in result.outcomes)
     assert all(isinstance(outcome, LogAnalysis) for outcome in result.outcomes)
     assert result.outcomes[0].group == "Attempt 1 — Summary"
-    assert result.outcomes[0].message.startswith("AUTO landing: 0:10.0 → 0:40.0\nTermination:")
+    assert result.outcomes[0].message.startswith("AUTO landing → 0:40.0\nTermination:")
+    assert result.outcomes[0].timestamp_us == 10_000_000
     assert any(outcome.message == "ARSP airspeed: 12.2 m/s" and outcome.value == 12.154 for outcome in result.outcomes)
     assert all(not outcome.message.startswith("Attempt 1") for outcome in result.outcomes)
     assert any(outcome.group == "Attempt 1 — Preflare" for outcome in result.outcomes)
@@ -2948,7 +2949,7 @@ def test_non_finite_event_time_landing_parameters_are_unavailable(non_finite_val
     result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
 
     assert all(value is None for item in evidence for value in item.parameter_values.values())
-    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing:"))
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →"))
     assert attempt_outcome.value is None
     assert "LAND_FLARE_ALT at start: unavailable" in attempt_outcome.message
     assert not any(
@@ -2973,7 +2974,7 @@ def test_finite_event_time_landing_parameters_are_emitted() -> None:
 
     result = PlaneLandingAnalysis(log_data, _context(ParameterHistory(parameter_values))).analyse()
 
-    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing:"))
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →"))
     assert attempt_outcome.value == 3.0
     parameter_outcomes = [outcome for outcome in result.outcomes if "effective value" in outcome.message]
     emitted_parameter_names = {
@@ -2999,7 +3000,7 @@ def test_finite_parameter_change_at_event_time_remains_effective() -> None:
 
     result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
 
-    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing:"))
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →"))
     assert attempt_outcome.value == 3.0
     parameter_outcomes = [outcome for outcome in result.outcomes if "effective value" in outcome.message]
     assert [(outcome.timestamp_us, outcome.value) for outcome in parameter_outcomes] == [
@@ -3057,7 +3058,7 @@ def test_analysis_resolves_landing_parameter_at_each_attempt_time() -> None:
 
     assert result.available is True
     assert result.reason == "Detected 2 Plane landing attempt(s)"
-    attempt_outcomes = [outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing:")]
+    attempt_outcomes = [outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →")]
     assert [outcome.timestamp_us for outcome in attempt_outcomes] == [10_000_000, 30_000_000]
     assert [outcome.value for outcome in attempt_outcomes] == [2.0, 4.0]
     assert all(outcome.param_name is None for outcome in attempt_outcomes)

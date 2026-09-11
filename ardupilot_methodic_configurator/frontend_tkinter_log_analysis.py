@@ -332,12 +332,12 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         label.bind("<Configure>", partial(self._set_wraplength, label))
 
     def _outcome_line(self, outcome: LogAnalysis) -> None:
-        timestamp_text = f" ({format_elapsed_time(outcome.timestamp_us / 1e6)})" if outcome.timestamp_us is not None else ""
+        timestamp_text = f"{format_elapsed_time(outcome.timestamp_us / 1e6)}  " if outcome.timestamp_us is not None else ""
         row = ttk.Frame(self.body_frame)
         row.pack(anchor=tk.W, padx=(10, 0), pady=5, fill=tk.X)
         label = ttk.Label(
             row,
-            text=f"{outcome.message}{timestamp_text}",
+            text=f"{timestamp_text}{outcome.message}",
             font=("TkDefaultFont", 14),
             justify=tk.LEFT,
         )

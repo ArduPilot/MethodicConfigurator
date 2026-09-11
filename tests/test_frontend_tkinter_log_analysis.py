@@ -503,19 +503,43 @@ class TestResponsiveWrapping:
 
         label.configure.assert_called_once_with(wraplength=10)
 
-    def test_outcome_timestamp_uses_clock_display_without_mutating_evidence(
+    @pytest.mark.parametrize(
+        ("timestamp_us", "expected_text"),
+        [
+            (65_400_000, "1:05.4  Finding"),
+            (3_600_000_000, "1:00:00.0  Finding"),
+            (8_263_200_000, "2:17:43.2  Finding"),
+        ],
+    )
+    def test_outcome_timestamp_precedes_message_without_mutating_evidence(
         self,
         bare_window: LogAnalysisReportWindow,
         patched_widgets: dict[str, MagicMock],
+        timestamp_us: int,
+        expected_text: str,
     ) -> None:
-        """Format the timestamp suffix while retaining the original microseconds."""
-        outcome = _make_outcome(message="Finding", timestamp_us=3_600_000_000)
+        """Format the timestamp first while retaining the original microseconds."""
+        outcome = _make_outcome(message="Finding", timestamp_us=timestamp_us)
         bare_window.body_frame = MagicMock()
 
         bare_window._outcome_line(outcome)
 
-        assert patched_widgets["label"].call_args.kwargs["text"] == "Finding (1:00:00.0)"
-        assert outcome.timestamp_us == 3_600_000_000
+        assert patched_widgets["label"].call_args.kwargs["text"] == expected_text
+        assert outcome.timestamp_us == timestamp_us
+
+    def test_untimestamped_outcome_renders_message_without_placeholder(
+        self,
+        bare_window: LogAnalysisReportWindow,
+        patched_widgets: dict[str, MagicMock],
+    ) -> None:
+        """Leave untimestamped outcome text clean and unchanged."""
+        outcome = _make_outcome(message="Static finding")
+        bare_window.body_frame = MagicMock()
+
+        bare_window._outcome_line(outcome)
+
+        assert patched_widgets["label"].call_args.kwargs["text"] == "Static finding"
+        assert outcome.timestamp_us is None
 
 
 class TestOutcomeGrouping:

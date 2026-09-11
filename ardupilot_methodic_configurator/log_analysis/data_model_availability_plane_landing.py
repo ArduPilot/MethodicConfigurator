@@ -206,9 +206,8 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
             else _("LAND_FLARE_ALT at start: unavailable")
         )
         return LogAnalysis(
-            message=_("{mode_name} landing: {start} → {end}\nTermination: {end_reason}\n{parameter_evidence}").format(
+            message=_("{mode_name} landing → {end}\nTermination: {end_reason}\n{parameter_evidence}").format(
                 mode_name=mode_name,
-                start=format_elapsed_time(attempt.start_s),
                 end=format_elapsed_time(attempt.end_s),
                 end_reason=self._end_reason_text(attempt.end_reason),
                 parameter_evidence=parameter_evidence,
