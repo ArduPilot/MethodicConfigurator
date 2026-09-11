@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp import create_mavftp
+from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict, validate_param_name
 
@@ -256,7 +257,7 @@ class FlightControllerParams:
 
             # Add a file sync operation to ensure the file is completely written.
             time_sleep(self.FILE_SYNC_DELAY)
-            if ret.error_code == 0:
+            if ret.error_code == FtpError.Success:
                 par_dict = ParDict.from_file(complete_param_filename)
                 pdict = {name: data.value for name, data in par_dict.items()}
                 defdict = ParDict.from_file(default_param_filename)

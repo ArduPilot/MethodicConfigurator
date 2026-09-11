@@ -32,7 +32,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_connection import 
     SUPPORTED_BAUDRATES,
     FlightControllerConnection,
 )
-from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles
+from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles, FlightControllerLogFile
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
 from ardupilot_methodic_configurator.backend_flightcontroller_protocols import (
     FlightControllerCommandsProtocol,
@@ -584,6 +584,44 @@ class FlightController:  # pylint: disable=too-many-public-methods
     ) -> bool:
         """Download the last flight log from the flight controller - delegates to files manager."""
         return self._files_manager.download_last_flight_log(local_filename, progress_callback)
+
+    def list_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+        """List regular files in a remote directory - delegates to files manager."""
+        return self._files_manager.list_bin_log_files(remote_directory)
+
+    def list_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile]:
+        """List files and directories in a remote directory - delegates to files manager."""
+        return self._files_manager.list_remote_files(remote_directory)
+
+    def download_bin_log_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download an explicitly selected remote file - delegates to files manager."""
+        return self._files_manager.download_bin_log_file(remote_path, local_filename, progress_callback)
+
+    def download_remote_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download one remote file - delegates to files manager."""
+        return self._files_manager.download_remote_file(remote_path, local_filename, progress_callback)
+
+    def make_remote_directory(self, remote_directory: str) -> bool:
+        """Create a remote directory - delegates to files manager."""
+        return self._files_manager.make_remote_directory(remote_directory)
+
+    def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool:
+        """Delete a remote file or directory - delegates to files manager."""
+        return self._files_manager.delete_remote_path(remote_path, is_directory)
+
+    def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool:
+        """Rename a remote file or directory - delegates to files manager."""
+        return self._files_manager.rename_remote_path(remote_path, new_remote_path)
 
     # Static methods and properties
 
