@@ -236,6 +236,10 @@
           "type": ["number", "null"],
           "description": "Suggested value for param_name, used to drive the Fix button in the UI."
         },
+        "group": {
+          "type": ["string", "null"],
+          "description": "Optional presentation group for consecutive analysis outcomes."
+        },
         "step_info": {
           "$ref": "#/$defs/step_info"
         },

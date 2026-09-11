@@ -17,7 +17,7 @@ from __future__ import annotations
 import sys
 from argparse import Namespace
 from typing import TYPE_CHECKING, cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -75,12 +75,14 @@ def _make_outcome(
     timestamp_us: float | None = None,
     param_name: str | None = None,
     suggested_value: float | None = None,
+    group: str | None = None,
 ) -> MagicMock:
     outcome = MagicMock()
     outcome.message = message
     outcome.timestamp_us = timestamp_us
     outcome.param_name = param_name
     outcome.suggested_value = suggested_value
+    outcome.group = group
     return outcome
 
 
@@ -480,6 +482,97 @@ class TestWindowConstruction:
         window = self._build_window(mocker, patched_widgets, [], [])
 
         cast("MagicMock", window.selector.set).assert_not_called()
+
+
+class TestResponsiveWrapping:
+    """Cover width-responsive wrapping used by report text labels."""
+
+    def test_wraplength_tracks_allocated_label_width(self) -> None:
+        """Keep a small edge inset while using the label's available width."""
+        label = MagicMock()
+
+        LogAnalysisReportWindow._set_wraplength(label, MagicMock(width=600))
+
+        label.configure.assert_called_once_with(wraplength=585)
+
+    def test_wraplength_has_a_safe_minimum(self) -> None:
+        """Avoid invalid wrapping when a label receives an initial tiny width."""
+        label = MagicMock()
+
+        LogAnalysisReportWindow._set_wraplength(label, MagicMock(width=1))
+
+        label.configure.assert_called_once_with(wraplength=10)
+
+    def test_outcome_timestamp_uses_clock_display_without_mutating_evidence(
+        self,
+        bare_window: LogAnalysisReportWindow,
+        patched_widgets: dict[str, MagicMock],
+    ) -> None:
+        """Format the timestamp suffix while retaining the original microseconds."""
+        outcome = _make_outcome(message="Finding", timestamp_us=3_600_000_000)
+        bare_window.body_frame = MagicMock()
+
+        bare_window._outcome_line(outcome)
+
+        assert patched_widgets["label"].call_args.kwargs["text"] == "Finding (1:00:00.0)"
+        assert outcome.timestamp_us == 3_600_000_000
+
+
+class TestOutcomeGrouping:
+    """Cover optional consecutive grouping in the shared outcome renderer."""
+
+    def test_ungrouped_outcomes_render_without_headings(self, bare_window: LogAnalysisReportWindow) -> None:
+        """Preserve the rendering behavior of analyses that do not provide groups."""
+        outcomes = [_make_outcome(message="first"), _make_outcome(message="second")]
+
+        with (
+            patch.object(bare_window, "_group_heading") as group_heading,
+            patch.object(bare_window, "_outcome_line") as outcome_line,
+        ):
+            bare_window._render_outcomes(outcomes)
+
+        group_heading.assert_not_called()
+        assert outcome_line.call_args_list == [call(outcomes[0]), call(outcomes[1])]
+
+    def test_consecutive_same_group_renders_one_heading(self, bare_window: LogAnalysisReportWindow) -> None:
+        """Share one heading between consecutive outcomes with the same group."""
+        outcomes = [_make_outcome(group="Summary"), _make_outcome(group="Summary")]
+
+        with (
+            patch.object(bare_window, "_group_heading") as group_heading,
+            patch.object(bare_window, "_outcome_line"),
+        ):
+            bare_window._render_outcomes(outcomes)
+
+        group_heading.assert_called_once_with("Summary")
+
+    def test_group_change_renders_new_heading(self, bare_window: LogAnalysisReportWindow) -> None:
+        """Render a heading whenever the current outcome's group changes."""
+        outcomes = [_make_outcome(group="Summary"), _make_outcome(group="Flare")]
+
+        with (
+            patch.object(bare_window, "_group_heading") as group_heading,
+            patch.object(bare_window, "_outcome_line"),
+        ):
+            bare_window._render_outcomes(outcomes)
+
+        assert group_heading.call_args_list == [call("Summary"), call("Flare")]
+
+    def test_returning_to_previous_group_renders_heading_again(self, bare_window: LogAnalysisReportWindow) -> None:
+        """Follow list order instead of globally collecting outcomes by group."""
+        outcomes = [
+            _make_outcome(group="Summary"),
+            _make_outcome(group="Flare"),
+            _make_outcome(group="Summary"),
+        ]
+
+        with (
+            patch.object(bare_window, "_group_heading") as group_heading,
+            patch.object(bare_window, "_outcome_line"),
+        ):
+            bare_window._render_outcomes(outcomes)
+
+        assert group_heading.call_args_list == [call("Summary"), call("Flare"), call("Summary")]
 
 
 class TestTuningGraphButton:

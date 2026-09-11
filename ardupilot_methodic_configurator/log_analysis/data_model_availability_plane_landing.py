@@ -12,6 +12,7 @@ import math
 from typing import TYPE_CHECKING
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.formatting import format_elapsed_time
 from ardupilot_methodic_configurator.log_analysis.data_model_availability_base import (
     BaseLogAnalysisModel,
     BaseLogAvailabilityModel,
@@ -30,6 +31,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_plane_landing impor
     PlaneLandingEvidenceExtractor,
     PlaneLandingFirmwareEvidence,
     PlaneLandingFirmwareFlareEvidence,
+    PlaneLandingFirmwareGlideSlopeEvidence,
     PlaneLandingFirmwareMessageExtractor,
     PlaneLandingMissionTargetExtractor,
     PlaneLandingRangefinderEvidence,
@@ -161,21 +163,26 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
             start=1,
         ):
             stage_evidence_items, rangefinder_evidence = attempt_evidence
+            firmware_evidence_items = PlaneLandingFirmwareMessageExtractor.extract(self.log_data, attempt)
             outcomes.append(self._attempt_outcome(attempt_number, attempt))
+            outcomes.append(self._start_of_final_altitude_outcome(attempt_number, attempt))
+            for firmware_evidence in firmware_evidence_items:
+                if isinstance(firmware_evidence, PlaneLandingFirmwareGlideSlopeEvidence):
+                    outcomes.extend(self._firmware_message_outcomes(attempt_number, firmware_evidence))
             for stage_evidence in stage_evidence_items:
                 outcomes.extend(self._stage_outcomes(attempt_number, stage_evidence))
-            for firmware_evidence in PlaneLandingFirmwareMessageExtractor.extract(self.log_data, attempt):
-                outcomes.extend(self._firmware_message_outcomes(attempt_number, firmware_evidence))
+            for firmware_evidence in firmware_evidence_items:
+                if not isinstance(firmware_evidence, PlaneLandingFirmwareGlideSlopeEvidence):
+                    outcomes.extend(self._firmware_message_outcomes(attempt_number, firmware_evidence))
             if rangefinder_evidence is not None:
                 outcomes.extend(self._rangefinder_outcomes(attempt_number, rangefinder_evidence))
             target_distance = PlaneLandingMissionTargetExtractor.distance_at_gps_stop(self.log_data, attempt)
             if target_distance is not None:
                 outcomes.append(
                     self._measurement_outcome(
-                        attempt_number,
-                        _("GPS-stop"),
                         round(target_distance.time_s * 1_000_000),
-                        (_("computed distance to mission LAND target"), target_distance.distance_m, _("m")),
+                        (_("Computed distance to mission LAND target"), target_distance.distance_m, _("m")),
+                        group=self._group_label(attempt_number, _("Mission-target evidence")),
                     )
                 )
         reason = (
@@ -194,38 +201,49 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
         flare_altitude_m = self._finite_parameter_value(self.parameter_history.value_at("LAND_FLARE_ALT", attempt.start_s))
         mode_name = self._mode_name(attempt.mode_number)
         parameter_evidence = (
-            _("LAND_FLARE_ALT at attempt start: {value:.2f} m").format(value=flare_altitude_m)
+            _("LAND_FLARE_ALT at start: {value:.1f} m").format(value=flare_altitude_m)
             if flare_altitude_m is not None
-            else _("LAND_FLARE_ALT was unavailable at attempt start")
+            else _("LAND_FLARE_ALT at start: unavailable")
         )
         return LogAnalysis(
-            message=_(
-                "{mode_name} landing attempt {number}: {start:.3f} s to {end:.3f} s; "
-                "termination evidence: {end_reason}; {parameter_evidence}"
-            ).format(
+            message=_("{mode_name} landing: {start} → {end}\nTermination: {end_reason}\n{parameter_evidence}").format(
                 mode_name=mode_name,
-                number=attempt_number,
-                start=attempt.start_s,
-                end=attempt.end_s,
+                start=format_elapsed_time(attempt.start_s),
+                end=format_elapsed_time(attempt.end_s),
                 end_reason=self._end_reason_text(attempt.end_reason),
                 parameter_evidence=parameter_evidence,
             ),
             timestamp_us=round(attempt.start_s * 1_000_000),
             value=flare_altitude_m,
+            group=self._group_label(attempt_number, _("Summary")),
+        )
+
+    def _start_of_final_altitude_outcome(self, attempt_number: int, attempt: PlaneLandingAttempt) -> LogAnalysis:
+        altitude_m = PlaneLandingEvidenceExtractor.start_of_final_altitude_m(self.log_data, attempt)
+        group = self._group_label(attempt_number, _("Summary"))
+        timestamp_us = round(attempt.start_s * 1_000_000)
+        if altitude_m is not None:
+            return self._measurement_outcome(
+                timestamp_us,
+                (_("Start-of-final altitude"), altitude_m, _("m")),
+                group=group,
+            )
+        return LogAnalysis(
+            message=_("Start-of-final altitude: unavailable"),
+            timestamp_us=timestamp_us,
+            group=group,
         )
 
     def _stage_outcomes(self, attempt_number: int, evidence: PlaneLandingStageEvidence) -> list[LogAnalysis]:
-        stage_name = _("preflare") if evidence.stage is PlaneLandingStage.PREFLARE else _("flare")
+        group_name = _("Preflare") if evidence.stage is PlaneLandingStage.PREFLARE else _("Flare")
+        group = self._group_label(attempt_number, group_name)
         timestamp_us = round(evidence.time_s * 1_000_000)
         outcomes = [
             LogAnalysis(
-                message=_("Attempt {number}: LAND stage {stage} ({stage_name}) entered").format(
-                    number=attempt_number,
-                    stage=int(evidence.stage),
-                    stage_name=stage_name,
-                ),
+                message=_("LAND stage {stage} entered").format(stage=int(evidence.stage)),
                 timestamp_us=timestamp_us,
                 value=float(evidence.stage),
+                group=group,
             )
         ]
         measurements = (
@@ -241,10 +259,9 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
             if value is not None:
                 outcomes.append(
                     self._measurement_outcome(
-                        attempt_number,
-                        stage_name,
                         timestamp_us,
                         (measurement_name, value, unit),
+                        group=group,
                     )
                 )
         if evidence.rangefinder_status is not None and not (
@@ -252,34 +269,31 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
         ):
             outcomes.append(
                 self._rangefinder_status_outcome(
-                    attempt_number,
-                    stage_name,
                     timestamp_us,
                     evidence.rangefinder_status,
+                    group,
                 )
             )
         for parameter_name, value in evidence.parameter_values.items():
             if value is not None:
                 outcomes.append(
                     LogAnalysis(
-                        message=_("Attempt {number} {stage_name}: {parameter} effective value {value:g}").format(
-                            number=attempt_number,
-                            stage_name=stage_name,
+                        message=_("{parameter} effective value: {value:g}").format(
                             parameter=parameter_name,
                             value=value,
                         ),
                         timestamp_us=timestamp_us,
                         value=value,
+                        group=group,
                     )
                 )
         return outcomes
 
     @staticmethod
     def _rangefinder_status_outcome(
-        attempt_number: int,
-        stage_name: str,
         timestamp_us: int,
         status: int,
+        group: str,
     ) -> LogAnalysis:
         """Report selected RFND firmware status without conflating it with lifecycle evidence."""
         status_name = _RFND_STATUS_NAMES.get(status)
@@ -300,13 +314,10 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
                 status=status,
             )
         return LogAnalysis(
-            message=_("Attempt {number} {stage_name}: {status_evidence}").format(
-                number=attempt_number,
-                stage_name=stage_name,
-                status_evidence=status_evidence,
-            ),
+            message=status_evidence,
             timestamp_us=timestamp_us,
             value=float(status),
+            group=group,
         )
 
     @staticmethod
@@ -321,22 +332,26 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
     ) -> list[LogAnalysis]:
         timestamp_us = round(evidence.time_s * 1_000_000)
         if isinstance(evidence, PlaneLandingFirmwareFlareEvidence):
+            group = self._group_label(attempt_number, _("Firmware evidence"))
             measurements = (
-                (_("altitude"), evidence.altitude_m, _("m")),
-                (_("sink rate"), evidence.sink_rate_m_s, _("m/s")),
-                (_("groundspeed"), evidence.groundspeed_m_s, _("m/s")),
-                (_("distance to target"), evidence.distance_to_target_m, _("m")),
+                (_("Flare altitude"), evidence.altitude_m, _("m")),
+                (_("Flare sink rate"), evidence.sink_rate_m_s, _("m/s")),
+                (_("Flare groundspeed"), evidence.groundspeed_m_s, _("m/s")),
+                (_("Flare distance to target"), evidence.distance_to_target_m, _("m")),
             )
             return [
-                self._measurement_outcome(attempt_number, _("firmware flare"), timestamp_us, measurement)
+                self._measurement_outcome(
+                    timestamp_us,
+                    measurement,
+                    group=group,
+                )
                 for measurement in measurements
             ]
         return [
             self._measurement_outcome(
-                attempt_number,
-                _("firmware landing"),
                 timestamp_us,
-                (_("glide slope"), evidence.glide_slope_degrees, _("degrees")),
+                (_("Glide slope"), evidence.glide_slope_degrees, _("degrees")),
+                group=self._group_label(attempt_number, _("Summary")),
             )
         ]
 
@@ -347,29 +362,30 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
     ) -> list[LogAnalysis]:
         """Flatten optional RFND lifecycle evidence into objective findings."""
         outcomes: list[LogAnalysis] = []
+        group = self._group_label(attempt_number, _("Rangefinder evidence"))
         timed_measurements = (
             (
                 evidence.first_nonzero_time_s,
                 evidence.first_nonzero_distance_m,
-                _("first non-zero distance"),
+                _("First non-zero distance"),
                 _("m"),
             ),
             (
                 evidence.first_in_range_time_s,
                 evidence.first_in_range_distance_m,
-                _("first in-range distance"),
+                _("First in-range distance"),
                 _("m"),
             ),
             (
                 evidence.continuous_time_s,
                 evidence.continuous_samples,
-                _("continuous acquisition sample count"),
+                _("Continuous acquisition sample count"),
                 _("samples"),
             ),
             (
                 evidence.last_disengagement_time_s,
                 evidence.last_disengagement_distance_m,
-                _("last disengagement distance"),
+                _("Last disengagement distance"),
                 _("m"),
             ),
         )
@@ -377,10 +393,9 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
             if timestamp_s is not None and value is not None:
                 outcomes.append(
                     self._measurement_outcome(
-                        attempt_number,
-                        _("RFND lifecycle"),
                         round(timestamp_s * 1_000_000),
                         (measurement_name, float(value), unit),
+                        group=group,
                     )
                 )
         if (
@@ -390,11 +405,7 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
         ):
             outcomes.append(
                 LogAnalysis(
-                    message=_(
-                        "Attempt {number} RFND lifecycle: last disengagement status {status_name} ({status}); "
-                        "distance unavailable"
-                    ).format(
-                        number=attempt_number,
+                    message=_("Last disengagement status: {status_name} ({status}); distance unavailable").format(
                         status_name=_RFND_STATUS_NAMES.get(
                             evidence.last_disengagement_status,
                             _("Unknown"),
@@ -403,36 +414,46 @@ class PlaneLandingAnalysis(BaseLogAnalysisModel):
                     ),
                     timestamp_us=round(evidence.last_disengagement_time_s * 1_000_000),
                     value=float(evidence.last_disengagement_status),
+                    group=group,
                 )
             )
         outcomes.append(
             self._measurement_outcome(
-                attempt_number,
-                _("RFND lifecycle"),
                 round(evidence.attempt.end_s * 1_000_000),
-                (_("disengagement count"), float(evidence.disengagement_count), _("events")),
+                (_("Disengagement count"), float(evidence.disengagement_count), _("events")),
+                group=group,
             )
         )
         return outcomes
 
     @staticmethod
+    def _group_label(attempt_number: int, category: str) -> str:
+        """Return a one-level presentation group for an attempt's existing evidence."""
+        return _("Attempt {number} — {category}").format(number=attempt_number, category=category)
+
+    @staticmethod
     def _measurement_outcome(
-        attempt_number: int,
-        stage_name: str,
         timestamp_us: int,
         measurement: tuple[str, float, str],
+        *,
+        group: str | None = None,
     ) -> LogAnalysis:
         measurement_name, value, unit = measurement
-        return LogAnalysis(
-            message=_("Attempt {number} {stage_name}: {measurement} {value:.3f} {unit}").format(
-                number=attempt_number,
-                stage_name=stage_name,
+        if unit == _("degrees"):
+            measurement_text = _("{measurement}: {value:.1f}°").format(measurement=measurement_name, value=value)
+        elif unit in {_("samples"), _("events")}:
+            measurement_text = _("{measurement}: {value:.0f}").format(measurement=measurement_name, value=value)
+        else:
+            measurement_text = _("{measurement}: {value:.1f} {unit}").format(
                 measurement=measurement_name,
                 value=value,
                 unit=unit,
-            ),
+            )
+        return LogAnalysis(
+            message=measurement_text,
             timestamp_us=timestamp_us,
             value=value,
+            group=group,
         )
 
     @staticmethod
