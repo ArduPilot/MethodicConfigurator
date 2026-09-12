@@ -143,6 +143,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         self.master: MavlinkConnection | None = None
         self.comport: mavutil.SerialPort | serial.tools.list_ports_common.ListPortInfo | None = None
         self._baudrate = baudrate
+        self._active_baudrate = baudrate
         self._network_ports = list(network_ports) if network_ports is not None else self.DEFAULT_NETWORK_PORTS[:]
         self._connection_tuples: list[tuple[str, str]] = []
         self._logged_connection_tuples: list[tuple[str, str]] | None = None  # None = never logged
@@ -327,6 +328,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
         """
         connection_baudrate = baudrate if baudrate is not None else self._baudrate
+        self._active_baudrate = connection_baudrate
 
         # Always clear cached metadata before attempting a new connection so UI
         # components never display stale data while we probe ports.
@@ -870,6 +872,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
                 indicating a successful connection.
 
         """
+        self._active_baudrate = baudrate
         if self.comport is None or self.comport.device == DEVICE_FC_PARAM_FROM_FILE:
             # will read parameters from a params.param file instead of a from a flight controller
             return ""
@@ -938,6 +941,11 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     def baudrate(self) -> int:
         """Get the default baud rate for serial connections."""
         return self._baudrate
+
+    @property
+    def active_baudrate(self) -> int:
+        """Get the baud rate used for the current or most recent serial session."""
+        return self._active_baudrate
 
     def set_master_for_testing(
         self,
