@@ -22,6 +22,7 @@ class LogAnalysis:
     related_step: str | None = None
     param_name: str | None = None
     suggested_value: int | float | None = None
+    group: str | None = None
 
 
 @dataclass

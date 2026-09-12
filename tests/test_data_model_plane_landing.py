@@ -305,6 +305,7 @@ def test_optional_sensor_and_message_evidence_is_not_required() -> None:
     assert analysis.available is True
     assert not PlaneLandingFirmwareMessageExtractor.extract(log_data, attempt)
     assert not any("firmware" in outcome.message.lower() for outcome in analysis.outcomes)
+    assert not any("glide slope" in outcome.message.lower() for outcome in analysis.outcomes)
     for optional_message in ("ARSP", "RFND", "CMD", "MSG"):
         assert log_data.get_message_columns(optional_message) is None
 
@@ -377,7 +378,7 @@ def test_autoland_only_attempt_preserves_mode_and_flat_result_label() -> None:
 
     assert len(attempts) == 1
     assert attempts[0].mode_number == PlaneLandingAttemptDetector.AUTOLAND_MODE_NUMBER
-    assert any(outcome.message.startswith("AUTOLAND landing attempt 1") for outcome in result.outcomes)
+    assert any(outcome.message.startswith("AUTOLAND landing →") for outcome in result.outcomes)
 
 
 def test_stage_one_transition_is_ignored_when_current_mode_is_not_auto() -> None:
@@ -902,7 +903,7 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
         land=((5.0, 0, 0.0), (10.0, 1, 20.0), (15.0, 2, 5.5), (20.0, 3, 1.2)),
         messages=((40.0, "Throttle disarmed"),),
     )
-    _add_columns(log_data, "ARSP", ((14.8, 12.0), (15.1, 13.0), (19.8, 9.0)), [("TimeUS", "f8"), ("Airspeed", "f8")])
+    _add_columns(log_data, "ARSP", ((14.8, 12.0), (15.1, 12.154), (19.8, 9.0)), [("TimeUS", "f8"), ("Airspeed", "f8")])
     _add_columns(
         log_data,
         "BARO",
@@ -929,7 +930,7 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
     preflare, flare = evidence
     assert (preflare.time_s, preflare.flight_height_m) == (15.0, 5.5)
     assert (preflare.airspeed_m_s, preflare.barometric_altitude_m, preflare.rangefinder_distance_m) == (
-        13.0,
+        12.154,
         100.0,
         6.0,
     )
@@ -951,8 +952,8 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
     }
     outcome_messages = [outcome.message for outcome in result.outcomes]
     for expected_measurement in (
-        "LAND stage 2 (preflare) entered",
-        "LAND stage 3 (flare) entered",
+        "LAND stage 2 entered",
+        "LAND stage 3 entered",
         "LAND flight height",
         "ARSP airspeed",
         "GPS groundspeed",
@@ -967,9 +968,63 @@ def test_stage_evidence_uses_land_and_nearest_optional_telemetry() -> None:
     assert all(outcome.param_name is None for outcome in result.outcomes)
     assert all(outcome.suggested_value is None for outcome in result.outcomes)
     assert all(isinstance(outcome, LogAnalysis) for outcome in result.outcomes)
+    assert result.outcomes[0].group == "Attempt 1 — Summary"
+    assert result.outcomes[0].message.startswith("AUTO landing → 0:40.0\nTermination:")
+    assert result.outcomes[0].timestamp_us == 10_000_000
+    assert any(outcome.message == "ARSP airspeed: 12.2 m/s" and outcome.value == 12.154 for outcome in result.outcomes)
+    assert all(not outcome.message.startswith("Attempt 1") for outcome in result.outcomes)
+    assert any(outcome.group == "Attempt 1 — Preflare" for outcome in result.outcomes)
+    assert any(outcome.group == "Attempt 1 — Flare" for outcome in result.outcomes)
     assert not any(
         label in outcome.message.lower() for outcome in result.outcomes for label in ("good", "poor", "safe", "unsafe")
     )
+
+
+def test_start_of_final_altitude_uses_nearest_attempt_scoped_primary_baro_observation() -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2)),
+        messages=((40.0, "Throttle disarmed"),),
+        include_baro=False,
+    )
+    _add_columns(
+        log_data,
+        "BARO",
+        ((9.99, 20.0, 0), (10.05, 999.0, 1), (10.2, 18.8, 0)),
+        [("TimeUS", "f8"), ("Alt", "f8"), ("I", "u1")],
+    )
+
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    altitude_outcome = next(outcome for outcome in result.outcomes if "start-of-final altitude" in outcome.message.lower())
+    assert (attempt.start_s, attempt.end_s, attempt.end_reason) == (10.0, 40.0, PlaneLandingEndReason.DISARM)
+    assert (altitude_outcome.timestamp_us, altitude_outcome.value) == (10_000_000, 18.8)
+    assert altitude_outcome.group == "Attempt 1 — Summary"
+
+
+@pytest.mark.parametrize("baro_records", [None, ((10.1, np.nan),)])
+def test_missing_or_invalid_start_of_final_altitude_is_reported_unavailable(
+    baro_records: tuple[tuple[float, float], ...] | None,
+) -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, 1), (15.0, 2)),
+        messages=((40.0, "Throttle disarmed"),),
+        include_baro=False,
+    )
+    if baro_records is not None:
+        _add_columns(log_data, "BARO", baro_records, [("TimeUS", "f8"), ("Alt", "f8")])
+
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    altitude_outcome = next(outcome for outcome in result.outcomes if "start-of-final altitude" in outcome.message.lower())
+    assert (attempt.start_s, attempt.end_s, attempt.end_reason) == (10.0, 40.0, PlaneLandingEndReason.DISARM)
+    assert altitude_outcome.timestamp_us == 10_000_000
+    assert altitude_outcome.value is None
+    assert "unavailable" in altitude_outcome.message
+    assert altitude_outcome.group == "Attempt 1 — Summary"
 
 
 @pytest.mark.parametrize(("nonprimary_used", "nonprimary_healthy"), [(1, 1), (0, 1), (1, 0)])
@@ -1366,13 +1421,25 @@ def test_firmware_flare_and_glide_slope_messages_are_separate_from_land_stage() 
     assert stage_flare.airspeed_m_s == 17.0
     assert firmware_flare.groundspeed_m_s == 13.5
     assert firmware_flare.time_s != stage_flare.time_s
-    firmware_outcomes = [outcome for outcome in result.outcomes if "firmware" in outcome.message.lower()]
-    assert [outcome.timestamp_us for outcome in firmware_outcomes] == [10_100_000] + [19_999_900] * 4
-    assert [outcome.value for outcome in firmware_outcomes] == [4.7, -160.1, 1.13, 13.5, 32.6]
-    assert any("firmware flare: groundspeed 13.500 m/s" in outcome.message for outcome in firmware_outcomes)
-    assert not any("firmware flare: airspeed" in outcome.message for outcome in firmware_outcomes)
-    assert all(isinstance(outcome, LogAnalysis) for outcome in firmware_outcomes)
+    glide_slope_outcomes = [outcome for outcome in result.outcomes if outcome.message.startswith("Glide slope:")]
+    firmware_outcomes = [outcome for outcome in result.outcomes if outcome.group == "Attempt 1 — Firmware evidence"]
+    start_altitude_index = next(
+        index for index, outcome in enumerate(result.outcomes) if "start-of-final altitude" in outcome.message.lower()
+    )
+    glide_slope_indices = [
+        index for index, outcome in enumerate(result.outcomes) if outcome.message.startswith("Glide slope:")
+    ]
+    preflare_index = next(index for index, outcome in enumerate(result.outcomes) if "LAND stage 2" in outcome.message)
+    assert len(glide_slope_indices) == 1
+    assert start_altitude_index < glide_slope_indices[0] < preflare_index
+    assert [(outcome.timestamp_us, outcome.value) for outcome in glide_slope_outcomes] == [(10_100_000, 4.7)]
+    assert [outcome.timestamp_us for outcome in firmware_outcomes] == [19_999_900] * 4
+    assert [outcome.value for outcome in firmware_outcomes] == [-160.1, 1.13, 13.5, 32.6]
+    assert glide_slope_outcomes[0].message == "Glide slope: 4.7°"
+    assert any(outcome.message == "Flare groundspeed: 13.5 m/s" for outcome in firmware_outcomes)
+    assert all(isinstance(outcome, LogAnalysis) for outcome in glide_slope_outcomes + firmware_outcomes)
     assert all(outcome.param_name is None and outcome.suggested_value is None for outcome in firmware_outcomes)
+    assert glide_slope_outcomes[0].group == "Attempt 1 — Summary"
     assert not any(
         label in outcome.message.lower() for outcome in firmware_outcomes for label in ("good", "poor", "safe", "unsafe")
     )
@@ -1709,13 +1776,15 @@ def test_complete_cmd_snapshot_produces_independent_mission_target_distance() ->
     assert (distance.time_s, distance.aircraft_position_time_s) == (20.0, 20.0)
     assert (distance.aircraft_latitude_deg, distance.aircraft_longitude_deg) == (0.0, 1.001)
     assert distance.distance_m == pytest.approx(111.1949266)
-    firmware_distance = [outcome for outcome in result.outcomes if "firmware flare: distance to target" in outcome.message]
+    firmware_distance = [outcome for outcome in result.outcomes if outcome.message.startswith("Flare distance to target:")]
     computed_distance = [
-        outcome for outcome in result.outcomes if "computed distance to mission LAND target" in outcome.message
+        outcome for outcome in result.outcomes if "computed distance to mission land target" in outcome.message.lower()
     ]
     assert [(outcome.timestamp_us, outcome.value) for outcome in firmware_distance] == [(13_999_900, 32.6)]
+    assert {outcome.group for outcome in firmware_distance} == {"Attempt 1 — Firmware evidence"}
     assert len(computed_distance) == 1
     assert (computed_distance[0].timestamp_us, computed_distance[0].value) == pytest.approx((20_000_000, 111.1949266))
+    assert computed_distance[0].group == "Attempt 1 — Mission-target evidence"
     assert all(isinstance(outcome, LogAnalysis) for outcome in result.outcomes)
     assert all(outcome.param_name is None and outcome.suggested_value is None for outcome in result.outcomes)
     assert not any(
@@ -1735,7 +1804,7 @@ def test_missing_cmd_keeps_analysis_available_and_omits_target_evidence() -> Non
     assert availability.available is True
     assert PlaneLandingMissionTargetExtractor.target_for_attempt(log_data, attempt) is None
     assert PlaneLandingMissionTargetExtractor.distance_at_gps_stop(log_data, attempt) is None
-    assert not any("computed distance to mission LAND target" in outcome.message for outcome in result.outcomes)
+    assert not any("computed distance to mission land target" in outcome.message.lower() for outcome in result.outcomes)
 
 
 @pytest.mark.parametrize(
@@ -1922,7 +1991,7 @@ def test_missing_rfnd_omits_lifecycle_evidence_without_affecting_availability() 
 
     assert _availability(log_data).available is True
     assert evidence is None
-    assert not any("RFND lifecycle" in outcome.message for outcome in result.outcomes)
+    assert not any(outcome.group == "Attempt 1 — Rangefinder evidence" for outcome in result.outcomes)
 
 
 def test_rfnd_uses_configured_landing_orientation_instead_of_instance_zero() -> None:
@@ -2461,7 +2530,7 @@ def test_rfnd_stage_flat_output_reports_observation_status_and_usability(
 
     result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
 
-    stage_messages = [outcome.message for outcome in result.outcomes if "Attempt 1 preflare" in outcome.message]
+    stage_messages = [outcome.message for outcome in result.outcomes if outcome.group == "Attempt 1 — Preflare"]
     assert any(f"RFND status {status_name} ({status})" in message for message in stage_messages) is (status != 4)
     if usability_text is not None:
         assert any(usability_text in message for message in stage_messages)
@@ -2483,8 +2552,8 @@ def test_unknown_rfnd_status_is_reported_numerically_without_current_distance() 
 
     result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
 
-    stage_messages = [outcome.message for outcome in result.outcomes if "Attempt 1 preflare" in outcome.message]
-    assert any(message.endswith("RFND status 5") for message in stage_messages)
+    stage_messages = [outcome.message for outcome in result.outcomes if outcome.group == "Attempt 1 — Preflare"]
+    assert "RFND status 5" in stage_messages
     assert not any("RFND distance" in message for message in stage_messages)
 
 
@@ -2541,13 +2610,13 @@ def test_rfnd_no_current_data_disengagement_flat_output_preserves_status_without
     history = ParameterHistory({"RNGFND_LND_ORNT": 25.0, "RNGFND1_MAX": 10.0})
 
     result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
-    lifecycle_messages = [outcome for outcome in result.outcomes if "RFND lifecycle" in outcome.message]
+    lifecycle_messages = [outcome for outcome in result.outcomes if outcome.group == "Attempt 1 — Rangefinder evidence"]
 
-    status_outcome = next(outcome for outcome in lifecycle_messages if "last disengagement status" in outcome.message)
+    status_outcome = next(outcome for outcome in lifecycle_messages if "disengagement status" in outcome.message.lower())
     assert status_name in status_outcome.message
     assert "distance unavailable" in status_outcome.message
     assert (status_outcome.timestamp_us, status_outcome.value) == (16_000_000, float(status))
-    assert not any("last disengagement distance" in outcome.message for outcome in lifecycle_messages)
+    assert not any("disengagement distance" in outcome.message.lower() for outcome in lifecycle_messages)
 
 
 def test_rfnd_good_status_is_reported_when_distance_is_unavailable() -> None:
@@ -2818,7 +2887,8 @@ def test_rfnd_lifecycle_flat_outcomes_leave_stage_point_measurement_unchanged() 
     assert lifecycle_evidence is not None
     assert (lifecycle_evidence.first_nonzero_time_s, lifecycle_evidence.first_nonzero_distance_m) == (14.7, 6.0)
     assert (lifecycle_evidence.first_in_range_time_s, lifecycle_evidence.first_in_range_distance_m) == (15.0, 5.5)
-    lifecycle_outcomes = [outcome for outcome in result.outcomes if "RFND lifecycle" in outcome.message]
+    lifecycle_outcomes = [outcome for outcome in result.outcomes if outcome.group == "Attempt 1 — Rangefinder evidence"]
+    assert {outcome.group for outcome in lifecycle_outcomes} == {"Attempt 1 — Rangefinder evidence"}
     assert [(outcome.timestamp_us, outcome.value) for outcome in lifecycle_outcomes] == [
         (14_700_000, 6.0),
         (15_000_000, 5.5),
@@ -2826,6 +2896,8 @@ def test_rfnd_lifecycle_flat_outcomes_leave_stage_point_measurement_unchanged() 
         (21_000_000, 0.0),
         (40_000_000, 1.0),
     ]
+    assert any(outcome.message == "Continuous acquisition sample count: 2" for outcome in lifecycle_outcomes)
+    assert lifecycle_outcomes[-1].message == "Disengagement count: 1"
 
 
 def test_rfnd_lifecycle_and_stage_distance_use_only_instance_zero() -> None:
@@ -2877,9 +2949,9 @@ def test_non_finite_event_time_landing_parameters_are_unavailable(non_finite_val
     result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
 
     assert all(value is None for item in evidence for value in item.parameter_values.values())
-    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing attempt"))
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →"))
     assert attempt_outcome.value is None
-    assert "LAND_FLARE_ALT was unavailable" in attempt_outcome.message
+    assert "LAND_FLARE_ALT at start: unavailable" in attempt_outcome.message
     assert not any(
         parameter_name in outcome.message and "effective value" in outcome.message
         for parameter_name in parameter_names
@@ -2902,7 +2974,7 @@ def test_finite_event_time_landing_parameters_are_emitted() -> None:
 
     result = PlaneLandingAnalysis(log_data, _context(ParameterHistory(parameter_values))).analyse()
 
-    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing attempt"))
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →"))
     assert attempt_outcome.value == 3.0
     parameter_outcomes = [outcome for outcome in result.outcomes if "effective value" in outcome.message]
     emitted_parameter_names = {
@@ -2928,7 +3000,7 @@ def test_finite_parameter_change_at_event_time_remains_effective() -> None:
 
     result = PlaneLandingAnalysis(log_data, _context(history)).analyse()
 
-    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing attempt"))
+    attempt_outcome = next(outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →"))
     assert attempt_outcome.value == 3.0
     parameter_outcomes = [outcome for outcome in result.outcomes if "effective value" in outcome.message]
     assert [(outcome.timestamp_us, outcome.value) for outcome in parameter_outcomes] == [
@@ -2986,7 +3058,7 @@ def test_analysis_resolves_landing_parameter_at_each_attempt_time() -> None:
 
     assert result.available is True
     assert result.reason == "Detected 2 Plane landing attempt(s)"
-    attempt_outcomes = [outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing attempt")]
+    attempt_outcomes = [outcome for outcome in result.outcomes if outcome.message.startswith("AUTO landing →")]
     assert [outcome.timestamp_us for outcome in attempt_outcomes] == [10_000_000, 30_000_000]
     assert [outcome.value for outcome in attempt_outcomes] == [2.0, 4.0]
     assert all(outcome.param_name is None for outcome in attempt_outcomes)

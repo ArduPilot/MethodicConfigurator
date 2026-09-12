@@ -27,6 +27,7 @@ from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_internet import webbrowser_open_url
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.data_model_par_dict import Par
+from ardupilot_methodic_configurator.formatting import format_elapsed_time
 from ardupilot_methodic_configurator.frontend_tkinter_autoresize_combobox import AutoResizeCombobox
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
@@ -155,7 +156,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
                 self._report_analysis_by_name[name.removesuffix(" Analysis")] = entry
 
         self.root.title(_("Log Analysis"))
-        self.root.geometry(self.calculate_scaled_geometry(1050, 800))
+        self.root.geometry(self.calculate_scaled_geometry(1200, 800))
         self.center_window(self.root, root_tk if root_tk is not None else self.root)
         self.root.resizable(width=True, height=True)
 
@@ -289,17 +290,35 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         elif not analysis_result.outcomes:
             self._section_body(_("No findings."))
         else:
-            for outcome in analysis_result.outcomes:
-                self._outcome_line(outcome)
+            self._render_outcomes(analysis_result.outcomes)
 
     def _section_heading(self, text: str) -> None:
         ttk.Label(self.body_frame, text=text, font=("TkDefaultFont", 16, "bold"), foreground="#333333").pack(
             anchor=tk.W, pady=(16, 6)
         )
 
+    @staticmethod
+    def _set_wraplength(label: ttk.Label, event: tk.Event) -> None:
+        """Wrap report text to the width allocated to its label."""
+        label.configure(wraplength=max(10, event.width - 15))
+
+    def _render_outcomes(self, outcomes: list[LogAnalysis]) -> None:
+        """Render outcomes in list order with optional consecutive group headings."""
+        previous_group: str | None = None
+        for outcome in outcomes:
+            if outcome.group is not None and outcome.group != previous_group:
+                self._group_heading(outcome.group)
+            self._outcome_line(outcome)
+            previous_group = outcome.group
+
+    def _group_heading(self, text: str) -> None:
+        ttk.Label(self.body_frame, text=text, font=("TkDefaultFont", 13, "bold")).pack(anchor=tk.W, padx=(10, 0), pady=(12, 3))
+
     def _section_body(self, text: str, *, bold: bool = False) -> None:
         font = ("TkDefaultFont", 14, "bold") if bold else ("TkDefaultFont", 14)
-        ttk.Label(self.body_frame, text=text, font=font, wraplength=950, justify=tk.LEFT).pack(anchor=tk.W, pady=2, fill=tk.X)
+        label = ttk.Label(self.body_frame, text=text, font=font, justify=tk.LEFT)
+        label.pack(anchor=tk.W, pady=2, fill=tk.X)
+        label.bind("<Configure>", partial(self._set_wraplength, label))
 
     def _bullet_line(self, text: str) -> None:
         row = ttk.Frame(self.body_frame)
@@ -308,21 +327,22 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         ttk.Label(row, text="\u2022", font=("TkDefaultFont", 16), foreground="#666666").pack(
             side=tk.LEFT, padx=(10, 8), anchor=tk.N, pady=(0, 0)
         )
-        ttk.Label(row, text=text, font=("TkDefaultFont", 14), wraplength=920, justify=tk.LEFT).pack(
-            side=tk.LEFT, fill=tk.X, expand=True
-        )
+        label = ttk.Label(row, text=text, font=("TkDefaultFont", 14), justify=tk.LEFT)
+        label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        label.bind("<Configure>", partial(self._set_wraplength, label))
 
     def _outcome_line(self, outcome: LogAnalysis) -> None:
-        timestamp_text = f" ({outcome.timestamp_us / 1e6:.1f}s)" if outcome.timestamp_us is not None else ""
+        timestamp_text = f"{format_elapsed_time(outcome.timestamp_us / 1e6)}  " if outcome.timestamp_us is not None else ""
         row = ttk.Frame(self.body_frame)
-        row.pack(anchor=tk.W, padx=(10, 0), pady=3, fill=tk.X)
-        ttk.Label(
+        row.pack(anchor=tk.W, padx=(10, 0), pady=5, fill=tk.X)
+        label = ttk.Label(
             row,
-            text=f"{outcome.message}{timestamp_text}",
+            text=f"{timestamp_text}{outcome.message}",
             font=("TkDefaultFont", 14),
-            wraplength=950,
             justify=tk.LEFT,
-        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        )
+        label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        label.bind("<Configure>", partial(self._set_wraplength, label))
 
         fixes = self._fix_for_outcome(outcome)
         if fixes:
