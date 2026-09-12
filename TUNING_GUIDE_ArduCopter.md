@@ -133,8 +133,8 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
 1. Connect the flight controller to the PC via a USB cable and wait 7 seconds.
 1. Open *ArduPilot Methodic Configurator*, and [connect it to the vehicle](USERMANUAL.md#step-1-flight-controller-connection).<br>
    ![FC connection and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Press the *Create a vehicle configuration directory from template* button.<br>
-   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
+1. Press the *Create a vehicle project from a template* button.<br>
+   ![Create a vehicle project from a template](images/App_screenshot_Vehicle_directory_create_from_template.png)
 1. Now using [New vehicle](USERMANUAL.md#create-a-new-vehicle-configuration-directory) subsection<br>
    ![New vehicle](images/App_screenshot_Vehicle_directory_create_from_template_source.png)
 1. From the existing templates, select the one most similar to your vehicle:<br>
@@ -152,7 +152,7 @@ So, [start the ArduPilot Methodic Configurator and select a vehicle that resembl
    creating a new vehicle configuration directory from a template.
    Only makes sense if your FC has already been correctly configured. This option is only available when a flight controller is connected.
    - *Blank parameter change reason* - Do not use the parameters change reason from the template.
-1. Select the destination directory, give it a name, and press the *Create a vehicle configuration directory from template* button.
+1. Select the destination directory, give it a name, and press the *Create a vehicle project from a template* button.
 1. On the component editor window, **add all the details of the components of your system** as we did in [Section 1.2](#12-our-example-vehicle):<br>
    ![Component editor window](images/App_screenshot_Component_Editor.png)
 
@@ -516,6 +516,11 @@ The `Change Reason` field is extremely important because:
 
 In our setup, we used an advanced RC receiver that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Radio Calibration` menu.
 
+On some flight controllers, it might be necessary to add and change the `BRD_ALT_CONFIG`
+parameter, in order to be able to connect the RC receiver or ESC telemetry to a pin that can decode it.
+This is necessary if not enough serial ports are available when `BRD_ALT_CONFIG==0` or
+when DMA-capable servo-outputs conflict with serial ports.
+
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `06_remote_controller_receiver.param` file
 
 ### 6.2.2 Configure the RC controller
@@ -546,6 +551,11 @@ Once this is operating we no longer need the USB connection to the vehicle. We c
 ## 6.4 Configure the ESC
 
 In our setup, we used a [Bi-directional Dshot ESC](https://ardupilot.org/copter/docs/common-dshot-escs.html) that cannot be fully configured using Mission Planner's `SETUP >> Mandatory Hardware >> Servo Output` menu.
+
+On some flight controllers, it might be necessary to add and change the `BRD_ALT_CONFIG`
+parameter, in order to be able to connect the RC receiver or ESC telemetry to a pin that can decode it.
+This is necessary if not enough serial ports are available when `BRD_ALT_CONFIG==0` or
+when DMA-capable servo-outputs conflict with serial ports.
 
 Repeat the steps from [Section 6.1.1](#611-use-ardupilot-methodic-configurator-to-edit-the-parameter-file-and-upload-it-to-the-flight-controller) to edit and upload the `09_esc_telemetry.param` file
 

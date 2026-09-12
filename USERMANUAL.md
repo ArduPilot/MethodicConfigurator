@@ -43,33 +43,36 @@ flowchart TD
     subgraph "Step 2: Select Project"
         C --> E{Existing Project?}
         E -->|Yes| F[Open Vehicle Directory]
-        E -->|No| G[Select Template]
-        G --> H[Create New Project]
-        F --> I[Component Editor]
-        H --> I
+        E -->|No| G{Configured FC?}
+        G -->|Yes| H[Create from Configured FC]
+        G -->|No| I[Select Template]
+        I --> J[Create New Project]
+        F --> K[Component Editor]
+        H --> K
+        J --> K
     end
 
     subgraph "Step 3: Edit FC Components"
-        I --> J[Validate Components]
-        J --> K{Valid?}
-        K -->|No| I
-        K -->|Yes| L[Parameter Editor]
+        K --> L[Validate Components]
+        L --> M{Valid?}
+        M -->|No| K
+        M -->|Yes| N[Parameter Editor]
     end
 
     subgraph "Step 4: Edit FC Parameters"
-        L --> M[Configure Parameters]
-        M --> N[Upload to FC]
-        N --> O{Experiment Required?}
-        O -->|Yes| P[Close AMC]
-        P --> Q[Perform Experiment/Flight]
-        Q --> R[Start AMC]
-        R --> S[Read Results from FC]
-        S --> T[Write Results to File]
-        T --> U{More Files?}
-        O -->|No| U
-        U -->|Yes| L
-        U -->|No| V[Generate Summary]
-        V -->     W[Configuration Complete]
+        N --> O[Configure Parameters]
+        O --> P[Upload to FC]
+        P --> Q{Experiment Required?}
+        Q -->|Yes| R[Close AMC]
+        R --> S[Perform Experiment/Flight]
+        S --> T[Start AMC]
+        T --> U[Read Results from FC]
+        U --> V[Write Results to File]
+        V --> W{More Files?}
+        Q -->|No| W
+        W -->|Yes| N
+        W -->|No| X[Generate Summary]
+        X -->     Y[Configuration Complete]
     end
 ```
 
@@ -168,7 +171,23 @@ It provides three main options for selecting a vehicle directory:
 
 #### New
 
-Create a new vehicle configuration directory, either from a template or from a `.bin` log file.
+Create a new vehicle configuration directory from a template, an already configured flight controller, or a `.bin` log file.
+
+When a correctly configured flight controller is connected, you can create a project directly from it:
+
+- Click **Create a vehicle project from an already configured flight controller** in the **New** panel.
+- In the creator window, select the **Destination base directory** and enter the **Destination new vehicle name**.
+- The software automatically selects the empty template matching the flight controller's vehicle type and major/minor firmware version.
+- Component information and parameter values are taken from the connected flight controller.
+- The FC's default parameter values are written to `00_default.param`.
+- If live FC values differ from the selected template/default baseline, they are written to an
+  `xx_imported_flight_controller_parameters.param` file for review.
+
+![Create vehicle from an already configured flight controller](images/App_screenshot_Vehicle_directory_create_from_flight_controller.png)
+<figure align="center">
+<br>
+  <ins><b><i>Create vehicle from an already configured flight controller</i></b></ins>
+</figure>
 
 #### Open
 
@@ -200,7 +219,26 @@ It's useful for setting up a new vehicle configuration quickly.
   will use the parameter values from the flight controller instead.
 - Use the "Destination base directory" `...` button to select the existing directory where the new vehicle directory will be created.
 - Enter the name for the new vehicle directory in the "Destination new vehicle name" field.
-- Click the "Create vehicle directory from template" button to create the new vehicle directory on the base directory and copy the template files to it.
+- Click the "Create a vehicle project from a template" button to create the new vehicle directory on the base directory and copy the template files to it.
+
+### Create a New Vehicle Configuration Directory from an Already Configured Flight Controller
+
+This workflow is intended for a vehicle whose flight controller is already configured.
+It creates a new project using the live flight controller values and hardware information, while selecting the matching empty firmware template automatically.
+
+![Create vehicle project from an already configured flight controller](images/App_screenshot_Vehicle_directory_create_from_flight_controller_creator.png)
+<figure align="center">
+<br>
+  <ins><b><i>Create vehicle project from an already configured flight controller</i></b></ins>
+</figure>
+
+1. In the **New** panel, click **Create a vehicle project from an already configured flight controller**.
+1. Select the destination base directory.
+1. Enter a name for the new vehicle directory.
+1. Click the create button. AMC copies the matching empty template, substitutes the downloaded
+   FC parameter values, and derives component specifications and connections from those values.
+1. AMC writes the FC's default values to `00_default.param`. Values that differ from the template
+   baseline are written to `xx_imported_flight_controller_parameters.param`.
 
 ### Create a New Vehicle Configuration Directory from a .bin Log File
 

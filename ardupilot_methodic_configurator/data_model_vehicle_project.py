@@ -18,8 +18,12 @@ from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
-from ardupilot_methodic_configurator.data_model_par_dict import is_within_tolerance
-from ardupilot_methodic_configurator.data_model_vehicle_project_creator import NewVehicleProjectSettings, VehicleProjectCreator
+from ardupilot_methodic_configurator.data_model_par_dict import ParamFileError, ParDict, is_within_tolerance
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
+    NewVehicleProjectSettings,
+    VehicleProjectCreationError,
+    VehicleProjectCreator,
+)
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpener
 
 if TYPE_CHECKING:
@@ -176,19 +180,178 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
 
         """
         fc_connected = self.is_flight_controller_connected()
+        # The filesystem holds the defaults downloaded from the connected FC.
+        # Preserve them before opening the newly copied template, whose
+        # re_init() would otherwise replace them with template defaults.
+        fc_default_params = self._local_filesystem.param_default_dict.deep_copy() if settings.use_fc_params is True else None
         new_path = self._creator.create_new_vehicle_from_template(
             template_dir, new_base_dir, new_vehicle_name, settings, fc_connected, self.fc_parameters()
         )
         if new_path:
-            self._settings = settings
-            self.configuration_template = self.get_directory_name_from_path(template_dir)
-            # History updates belong in the manager/facade layer so they are
-            # performed consistently for both project creation and opening.
-            self.store_recently_used_template_dirs(template_dir, new_base_dir)
-            self.open_vehicle_directory(new_path)
+            try:
+                if fc_default_params:
+                    self._local_filesystem.re_init(new_path, self._local_filesystem.vehicle_type)
+                    self._local_filesystem.write_param_default_values_to_file(fc_default_params)
+                self._settings = settings
+                self.configuration_template = self.get_directory_name_from_path(template_dir)
+                # History updates belong in the manager/facade layer so they are
+                # performed consistently for both project creation and opening.
+                self.store_recently_used_template_dirs(template_dir, new_base_dir)
+                self.open_vehicle_directory(new_path)
+            except (OSError, ParamFileError, ValueError, TypeError, SystemExit) as exc:
+                raise VehicleProjectCreationError(
+                    _("Vehicle project creation"),
+                    _("Could not finish creating the vehicle project: {error}").format(error=exc),
+                ) from exc
         return new_path
 
-    def create_new_vehicle_from_bin_log(  # pylint: disable=too-many-locals
+    def create_new_vehicle_from_flight_controller(self, new_base_dir: str, new_vehicle_name: str) -> str:
+        """Create a vehicle project from the connected flight controller's configuration."""
+        if not self.is_flight_controller_connected():
+            raise VehicleProjectCreationError(
+                _("Flight controller"),
+                _("Cannot create a vehicle project: no flight controller is connected."),
+            )
+
+        fc_parameters = self.fc_parameters()
+        if fc_parameters is None or not NewVehicleProjectSettings.has_fc_parameters(fc_parameters):
+            raise VehicleProjectCreationError(
+                _("Flight controller"),
+                _("Cannot create a vehicle project: no flight controller parameters are available."),
+            )
+
+        template_dir = self._get_fc_template_dir_for_project_creation()
+
+        settings = NewVehicleProjectSettings(
+            infer_comp_specs_and_conn_from_fc_params=True,
+            use_fc_params=True,
+        )
+        new_path = self._creator.create_new_vehicle_from_template(
+            template_dir,
+            new_base_dir,
+            new_vehicle_name,
+            settings,
+            fc_connected=True,
+            fc_parameters=fc_parameters,
+        )
+
+        flight_controller = self._flight_controller
+        if flight_controller is None:  # pragma: no cover - guarded by the connection check above
+            raise VehicleProjectCreationError(
+                _("Flight controller"),
+                _("Cannot create a vehicle project: no flight controller is connected."),
+            )
+        fc_info = flight_controller.info
+        vehicle_type = fc_info.vehicle_type
+        fw_version = fc_info.flight_sw_version
+        try:
+            self._complete_imported_vehicle_project_creation(
+                template_dir,
+                new_base_dir,
+                settings,
+                new_path,
+                vehicle_type,
+                fw_version,
+                ParDict.from_fc_parameters(fc_parameters),
+                import_source="flight_controller",
+            )
+        except (OSError, ParamFileError, ValueError, TypeError, SystemExit) as exc:
+            raise VehicleProjectCreationError(
+                _("Vehicle project creation"),
+                _("Could not finish creating the vehicle project: {error}").format(error=exc),
+            ) from exc
+        return new_path
+
+    def _get_fc_template_dir_for_project_creation(self) -> str:
+        """Resolve the exact empty template matching the connected FC firmware."""
+        if self._flight_controller is None:  # pragma: no cover - guarded by the public method
+            raise VehicleProjectCreationError(
+                _("Flight controller"),
+                _("Cannot create a vehicle project: no flight controller is connected."),
+            )
+
+        fc_info = getattr(self._flight_controller, "info", None)
+        vehicle_type = getattr(fc_info, "vehicle_type", "")
+        firmware_version = getattr(fc_info, "flight_sw_version", "")
+        version_parts = firmware_version.split(".") if isinstance(firmware_version, str) else []
+        if not isinstance(vehicle_type, str) or not vehicle_type or len(version_parts) < 2:
+            raise VehicleProjectCreationError(
+                _("Vehicle template directory"),
+                _(
+                    "Could not determine the connected flight controller's vehicle type and firmware version "
+                    "needed to select an empty template."
+                ),
+            )
+
+        try:
+            major, minor = int(version_parts[0]), int(version_parts[1])
+        except ValueError as exc:
+            raise VehicleProjectCreationError(
+                _("Vehicle template directory"),
+                _(
+                    "Could not determine the connected flight controller's vehicle type and firmware version "
+                    "needed to select an empty template."
+                ),
+            ) from exc
+
+        try:
+            return self._creator.template_dir_for_bin_import(vehicle_type, major, minor)
+        except VehicleProjectCreationError as exc:
+            raise VehicleProjectCreationError(
+                _("Vehicle template directory"),
+                _(
+                    "Could not find an empty vehicle template matching the connected flight controller's "
+                    "vehicle type and firmware version.\n"
+                )
+                + exc.message,
+            ) from exc
+
+    def _complete_imported_vehicle_project_creation(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self,
+        template_dir: str,
+        new_base_dir: str,
+        settings: NewVehicleProjectSettings,
+        new_path: str,
+        vehicle_type: str,
+        fw_version: str,
+        current_params: ParDict,
+        default_params: ParDict | None = None,
+        import_source: str = "bin_log",
+    ) -> str:
+        """Persist imported project metadata, any remaining parameters, and manager state."""
+        # Capture the source defaults before re_init() points the filesystem at the
+        # destination. The destination currently contains the template's defaults,
+        # which would otherwise become the baseline for FC project creation.
+        if default_params is None:
+            default_params = self._local_filesystem.param_default_dict.deep_copy()
+
+        # Point the filesystem at the new vehicle before reading or writing files. Set the
+        # firmware first so re_init() does not replace it with the template's placeholder.
+        self._local_filesystem.fw_version = fw_version
+        self._local_filesystem.re_init(new_path, vehicle_type)
+        self._local_filesystem.set_fc_fw_version_and_type_in_components_json(fw_version, vehicle_type, new_path)
+
+        if default_params is not None:
+            self._local_filesystem.write_param_default_values_to_file(default_params)
+
+        compounded_step_params, _first_config_step = self._local_filesystem.compound_params(skip_default=True)
+        baseline_params = default_params.deep_copy()
+        baseline_params.update(compounded_step_params)
+        if imported_params := current_params.get_missing_or_different(baseline_params, is_within_tolerance):
+            self._local_filesystem.export_to_param(
+                imported_params,
+                self._creator.next_import_filename(new_path, source=import_source),
+                annotate_doc=False,
+            )
+            self._local_filesystem.re_init(new_path, vehicle_type)
+
+        self.open_vehicle_directory(new_path)
+        self._settings = settings
+        self.configuration_template = self.get_directory_name_from_path(template_dir)
+        self.store_recently_used_template_dirs(template_dir, new_base_dir)
+        return new_path
+
+    def create_new_vehicle_from_bin_log(
         self,
         bin_file: str,
         progress_callback: Callable[[int, int], None] | None = None,
@@ -238,47 +401,25 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             fc_parameters=fc_parameters,
         )
 
-        # Point the filesystem at the new vehicle directory before any reads or writes.
-        # write_param_default_values_to_file() and compound_params() rely on vehicle_dir,
-        # so re_init() must be called here to avoid accidentally operating on the previously-open project.
-        # Set fw_version first so re_init() does not override it with the template's placeholder version.
-        self._local_filesystem.fw_version = fw_version
-        self._local_filesystem.re_init(new_path, vehicle_type)
-        # Persist the correct firmware version and type into vehicle_components.json so subsequent
-        # re_init calls (and the user when they inspect the project) see the actual recorded firmware.
-        self._local_filesystem.set_fc_fw_version_and_type_in_components_json(fw_version, vehicle_type, new_path)
-
-        self._local_filesystem.write_param_default_values_to_file(default_params)
-
-        # Build the baseline from log-extracted defaults plus compounded AMC step files.
-        # This avoids exporting params that merely match 00_default.param but are absent
-        # from the numbered step files.
-        compounded_step_params, _first_config_step = self._local_filesystem.compound_params(skip_default=True)
-        baseline_params = default_params.deep_copy()
-        baseline_params.update(compounded_step_params)
-
-        if imported_params := current_params.get_missing_or_different(baseline_params, is_within_tolerance):
-            self._local_filesystem.export_to_param(
-                imported_params,
-                self._creator.next_import_filename(new_path),
-                annotate_doc=False,
+        try:
+            self._complete_imported_vehicle_project_creation(
+                template_dir,
+                new_base_dir,
+                settings,
+                new_path,
+                vehicle_type,
+                fw_version,
+                current_params,
+                default_params,
             )
-            self._local_filesystem.re_init(new_path, vehicle_type)
-
-        # Open the vehicle directory only after all file modifications are complete and filesystem state is synced.
-        # This ensures the UI/session operates on the authoritative filesystem state, not stale in-memory cache.
-        # Also note: infer_comp_specs_and_conn_from_fc_params and use_fc_params are reused for log-derived params
-        # because the semantics align: we're supplying external parameter values for template substitution.
-        self.open_vehicle_directory(new_path)
+        except (OSError, ParamFileError, ValueError, TypeError, SystemExit) as exc:
+            raise VehicleProjectCreationError(
+                _("Vehicle project creation"),
+                _("Could not finish creating the vehicle project: {error}").format(error=exc),
+            ) from exc
 
         if self._flight_controller is not None:
             self._flight_controller.fc_parameters = fc_parameters
-
-        # Store manager settings only after the whole import succeeds, so failed imports do not
-        # pollute the recently-used template history with an incomplete project.
-        self._settings = settings
-        self.configuration_template = self.get_directory_name_from_path(template_dir)
-        self.store_recently_used_template_dirs(template_dir, new_base_dir)
         return new_path
 
     # Vehicle project opening operations

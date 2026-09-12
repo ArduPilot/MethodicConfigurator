@@ -2,10 +2,9 @@
 
 ## Overview
 
-The Vehicle Configuration Directory Selection sub-application allows users to either create a new vehicle
-configuration project or open an existing one. It manages the selection and creation of vehicle directories,
-handles template selection, and downloads parameter documentation metadata corresponding to the flight
-controller firmware version to the project directory.
+The Vehicle Configuration Directory Selection sub-application allows users to create a new vehicle
+configuration project, import one from a configured flight controller or `.bin` log, or open an existing
+project. It manages directory selection and downloads parameter documentation for the project firmware.
 
 The architecture follows a clean layered design with dependency injection, where the frontend components
 depend on the VehicleProjectManager factory/container class, which provides a unified interface to all
@@ -116,7 +115,7 @@ This architecture ensures:
 ![frontend_tkinter_project_opener](images/App_screenshot_Vehicle_directory10.png)
 
 - **File**: `frontend_tkinter_project_opener.py`
-- **Purpose**: Main interface for opening existing vehicle projects and launching new project creation
+- **Purpose**: Main interface for opening existing projects and launching new project creation
 - **Responsibilities**:
   - Present three main options: Create New, Open Existing, Re-open Last Used
   - Handle user interactions and directory selection through callback patterns
@@ -130,9 +129,10 @@ This architecture ensures:
 ![frontend_tkinter_project_creator](images/App_screenshot_Vehicle_directory11.png)
 
 - **File**: `frontend_tkinter_project_creator.py`
-- **Purpose**: Dedicated interface for creating new vehicle projects from templates
+- **Purpose**: Dedicated interface for creating new vehicle projects from templates or a configured flight controller
 - **Responsibilities**:
-  - Present template selection and project configuration options
+  - Present template selection and project configuration options for template-based creation
+  - Present destination controls for configured-flight-controller creation
   - Handle new project settings and customization dynamically based on flight controller connection state
   - Coordinate template selection through TemplateOverviewWindow
   - Delegate project creation to VehicleProjectManager
@@ -179,18 +179,17 @@ This architecture ensures:
 #### Project Creation Services
 
 - **File**: `data_model_vehicle_project_creator.py`
-- **Purpose**: Handle creation of new vehicle projects from templates
+- **Purpose**: Handle creation of new vehicle projects from templates and imported FC data
 - **Responsibilities**:
-  - Template copying and customization (with optional transformations in a single pass)
+  - Template copying and customization
   - Project directory initialization
-  - Optional one-time import of FC parameter values when `use_fc_params=True`
+  - Optional substitution of FC parameter values and import of values not represented by the template
   - Configuration file setup
   - Project metadata creation
 - **Access**: Through VehicleProjectManager factory methods
 
-When `use_fc_params=True` and FC parameters are available, `LocalFilesystem.copy_template_files_to_new_vehicle_dir()`
-applies both `blank_change_reason` and FC value substitution in a single `ParDict`-based parse-modify-write
-pass per `.param` file, before `re_init` loads the directory.
+When FC values are supplied, template parameter files are transformed during copying; the manager then persists
+firmware metadata and writes any remaining values to a numbered import file before opening the project.
 
 #### Project Opening Services
 
@@ -237,50 +236,27 @@ The data flow follows the layered architecture pattern with clear separation of 
 
 2. **Project Selection Flow**
    - User interacts with VehicleProjectOpenerWindow main interface
-   - Three options presented: Create New, Open Existing, Re-open Last Used
-   - For new projects: VehicleProjectOpenerWindow launches VehicleProjectCreatorWindow
+   - New-project choices include template, configured-flight-controller, and `.bin` log creation
+   - VehicleProjectOpenerWindow launches VehicleProjectCreatorWindow for template or configured-FC creation
    - For existing projects: callback functions handle directory selection through VehicleDirectorySelectionWidgets
 
 3. **New Project Creation Flow**
    - VehicleProjectCreatorWindow instantiated with project_manager reference
-   - User optionally enables `use_fc_params`
-   - VehicleProjectCreator creates the directory from template
-   - During the copy step, FC source values and/or blank-change-reason are applied in a single
-     `ParDict`-based pass so that `re_init` reads fully-initialized files with no further writes
-   - Frontend presents template selection and project configuration options
-   - User selects template through TemplateOverviewWindow integration
-   - Frontend delegates to `project_manager.create_new_vehicle_from_template()`
-   - VehicleProjectManager coordinates with project creator services
-   - Project creation delegated to specialized creator services
-   - Success/failure feedback provided through manager interface
+   - Template creation presents a selectable template and optional settings
+   - Configured-FC creation resolves the matching empty firmware template automatically and uses live FC values
+   - VehicleProjectManager delegates copying to VehicleProjectCreator, persists project metadata, imports any
+     remaining FC values, opens the project, and updates recent-directory history
+   - Success and failure feedback is provided through the manager interface
 
 4. **.bin Log Import Flow**
    - User clicks *Create a vehicle project from a .bin log file* in VehicleProjectOpenerWindow (option-1 panel, via `BinLogSelectionWidgets`)
    - Frontend opens a file-picker; user selects a `.bin` ArduPilot log file
    - Frontend delegates to `project_manager.create_new_vehicle_from_bin_log(bin_file)`
-   - `VehicleProjectManager` orchestrates the following steps via `VehicleProjectCreator`:
-     1. `extract_firmware_version_from_bin_log()` — reads the `VER` (or `MSG`) record from the
-        log to determine vehicle type (e.g. `ArduCopter`) and firmware version (e.g. `4.6.3`);
-        `pymavlink` is imported lazily at call time so it does not slow application startup
-     2. `template_dir_for_bin_import()` — resolves and validates the matching template directory
-        (e.g. `ArduCopter/empty_4.6.x`); raises a user-friendly error if none is installed
-     3. `create_new_vehicle_from_template()` — copies the template with `fc_connected=False`
-        so no live FC values are injected
-     4. `extract_param_files_from_bin_log()` — extracts default and current parameter values
-        from the log's `PARM` messages; also imported lazily
-     5. `LocalFilesystem.fw_version` is set to `"major.minor.patch"` before `re_init()` is
-        called, preventing the template's placeholder version from being used
-     6. `re_init()` — points the filesystem at the new vehicle directory
-     7. `set_fc_fw_version_and_type_in_components_json()` — persists the detected firmware
-        version and type into `vehicle_components.json`
-     8. `write_param_default_values_to_file()` — overwrites `00_default.param` with the
-        log-extracted defaults
-     9. Parameters present in the log but absent/different in the template files are exported
-        to `xx_imported_bin_log_parameters.param`; `re_init()` is called again to pick up
-        the new file
-     10. Manager state (`_settings`, `configuration_template`, recent-dir history) is updated
-         only after `open_vehicle_directory()` succeeds, ensuring manager metadata
-         is committed only on success
+   - `VehicleProjectManager` asks `VehicleProjectCreator` to extract firmware/default/current parameters,
+     resolve the matching empty template, and copy it without live-FC injection
+   - The shared import finalization persists firmware metadata, replaces `00_default.param` with extracted
+     defaults, and exports remaining values to a numbered import file
+   - The project is opened and manager history/state are updated only after file preparation succeeds
    - Success/failure feedback provided through manager interface; on failure the new directory
      is not registered in session history and manager in-memory state is not updated,
      though filesystem changes to the new project directory are not rolled back
@@ -294,14 +270,7 @@ The data flow follows the layered architecture pattern with clear separation of 
    - Project state is reconstructed and validated
    - Error handling managed through consistent interface
 
-6. **Architecture Benefits**
-   - Frontend never directly accesses backend services
-   - All business logic centralized in VehicleProjectManager
-   - Easy to test with mock VehicleProjectManager
-   - Changes to backend services don't affect frontend code
-   - Clean separation between project opening and project creation concerns
-
-7. **Recent Directories History Flow**
+6. **Recent Directories History Flow**
    - On application startup, `ProgramSettings.get_recent_vehicle_dirs()` loads history from settings.json; the history is passed through the manager
    - History is passed to VehicleProjectOpenerWindow to populate the combobox widget
    - User selects a directory from the combobox dropdown
@@ -571,34 +540,3 @@ The architecture implements dependency injection where:
 - **Better Testing**: Each layer can be tested in isolation with appropriate mocks
 - **Code Reuse**: VehicleProjectManager can be used by multiple frontend components
 - **Consistent Interface**: All vehicle project operations go through unified interface
-
-## Template System Features
-
-### Template Categories
-
-- **Vehicle Type Based**: Organized by ArduPilot vehicle type
-- **Size Categories**: Small, medium, large vehicle templates
-- **Application Specific**: Racing, photography, mapping, etc.
-- **Hardware Specific**: Specific flight controller or component combinations
-
-### Template Validation
-
-- Schema validation for all template configuration files
-- Parameter file syntax checking
-- Dependency verification between configuration steps
-- Compatibility checking with different firmware versions
-
-### Template Customization
-
-- User can modify templates after copying
-- Support for local template libraries
-- Template versioning and update mechanisms
-- Template sharing and import/export functionality
-
-## Performance Optimization
-
-- Lazy loading of template metadata
-- Efficient directory scanning algorithms
-- Parallel file operations where safe
-- Caching of frequently accessed templates
-- Progress reporting for long operations

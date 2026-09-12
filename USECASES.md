@@ -34,8 +34,8 @@ as this would require reconfiguring everything from scratch.
 1. Open the *ArduPilot Methodic Configurator* software.
 1. The software should now automatically detect and connect to your flight controller.<br>
    ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Press the *Create a vehicle configuration directory from template* button.<br>
-   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
+1. Press the *Create a vehicle project from a template* button.<br>
+   ![Create a vehicle project from a template](images/App_screenshot_Vehicle_directory_create_from_template.png)
 1. Select source template directory to use.<br>
    ![AMC template selection1](images/App_screenshot_Vehicle_directory_create_from_template_source.png)
 1. Select the vehicle template that better resembles your vehicle, it does not need to fully match your vehicle.<br>
@@ -55,7 +55,7 @@ as this would require reconfiguring everything from scratch.
    - *Blank parameter change reason* - Do not use the parameters change reason from the template.
 1. Give a name to your vehicle.<br>
    ![AMC new vehicle name](images/App_screenshot_Vehicle_directory_create_from_template_name.png)
-1. Press *Create a vehicle configuration directory from template*.<br>
+1. Press *Create a vehicle project from a template*.<br>
    ![AMC new vehicle create](images/App_screenshot_Vehicle_directory_create_from_template_create.png)
 1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.
    Please scroll down and make sure you do not miss a property.<br>
@@ -137,26 +137,15 @@ If something is not clear, read the [ArduPilot Methodic Configurator user manual
 1. Open the *ArduPilot Methodic Configurator* software.
 1. The software should now automatically detect and connect to your flight controller.<br>
    ![AMC FC info and parameter download](images/App_screenshot_FC_info_and_param_download.png)
-1. Press the *Create a vehicle configuration directory from template* button.<br>
-   ![Create a vehicle configuration directory from template](images/App_screenshot_Vehicle_directory_create_from_template.png)
-1. Select the vehicle template that better resembles your vehicle.<br>
-   ![AMC template selection1](images/App_screenshot_Vehicle_directory_vehicle_params0.png)
-   ![AMC template selection2](images/App_screenshot_Vehicle_overview.png)
-1. **select the `Infer component specifications and FC connections from FC Parameters, not from template files`
-   and the `Use parameter values from connected FC, not from template files` checkboxes**
-   - *Infer component specifications and FC connections from FC parameters, not from template files* - When creating a new vehicle configuration,
-     extract component specifications and connection information directly from the connected flight controller instead of using the specifications
-     defined in the template files.
-     This helps ensure the configuration accurately matches your actual hardware.
-     Note: you will not see the information from the correctly configured vehicle template. This option is only available when a flight controller is connected.
-   - *Use parameter values from connected FC, not from template files* - Use the parameter values from the connected flight controller instead of
-     the template files when creating a new vehicle configuration directory from a template.
-     Only makes sense if your FC has already been correctly configured. This option is only available when a flight controller is connected.<br>
-   ![AMC template options](images/App_screenshot_Vehicle_directory_create_from_configured_options.png)
-1. Give a name to your vehicle.<br>
-   ![AMC new vehicle name](images/App_screenshot_Vehicle_directory_create_from_configured_name.png)
-1. Press *Create a vehicle configuration directory from template*.<br>
-   ![AMC new vehicle create](images/App_screenshot_Vehicle_directory_create_from_configured_create.png)
+1. In the **New** panel, click **Create a vehicle project from an already configured flight controller**.<br>
+   ![Create a vehicle project from an already configured flight controller](images/App_screenshot_Vehicle_directory_create_from_flight_controller.png)
+1. Select the **Destination base directory** and enter the **Destination new vehicle name**.<br>
+   ![Create vehicle project from an already configured flight controller](images/App_screenshot_Vehicle_directory_create_from_flight_controller_creator.png)
+1. Click **Create a vehicle project from an already configured flight controller**.
+   The software automatically selects the empty template matching the flight controller's vehicle type and
+   firmware version, and imports the component information and parameter values from the connected vehicle.
+   The FC's default values are written to `00_default.param`; values that differ from the template/default
+   baseline are written to `xx_imported_flight_controller_parameters.param` for review.
 1. Edit all the components of your vehicle to match your own in the *Vehicle Component Editor* window.<br>
    ![AMC component editor](images/App_screenshot_Component_Editor.png)
 1. Press *Save data and start configuration*.
@@ -165,7 +154,7 @@ If something is not clear, read the [ArduPilot Methodic Configurator user manual
    Correct those entries and press the `Save data and start configuration` button again.
 1. You should now see the *Parameter file editor and uploader* window.<br>
    ![AMC parameter file editor and uploader](images/App_screenshot2.png)
-1. Follow the procedure to [configure the vehicle parameters](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface)
+1. Follow the procedure to [configure the vehicle parameters](USERMANUAL.md#step-4-parameter-file-editor-and-uploader-interface).
 
 If something is not clear, read the [ArduPilot Methodic Configurator user manual](USERMANUAL.md)
 
