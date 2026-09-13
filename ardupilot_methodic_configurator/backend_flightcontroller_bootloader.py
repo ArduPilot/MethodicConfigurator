@@ -80,6 +80,9 @@ MAX_APJ_DESCRIPTOR_SIZE = (MAX_ENCODED_BLOB_SIZE * 2) + (1024 * 1024)
 BOOTLOADER_ENUMERATION_TIMEOUT = 15.0
 BOOTLOADER_RETRY_DELAY = 0.5
 BOOTLOADER_OPEN_RETRIES = int(BOOTLOADER_ENUMERATION_TIMEOUT / BOOTLOADER_RETRY_DELAY) + 1
+# Recovery is best-effort; do not let an unresponsive held bootloader delay the
+# caller for longer than a normal bootloader command timeout.
+BOOTLOADER_ABORT_TIMEOUT = 2.0
 
 
 class BootloaderTransport(Protocol):
@@ -101,6 +104,51 @@ ConfirmationRequested = Callable[[FirmwareImage, BootloaderInfo], bool]
 CancellationRequested = Callable[[], bool]
 SerialFactory = Callable[[str, int, float], BootloaderTransport]
 BootloaderEntry = Callable[[], None]
+
+
+def _append_recovery_message(exc: Exception, recovery_message: str) -> None:
+    """
+    Append recovery guidance without breaking exception formatting.
+
+    ``OSError`` keeps its rendered message in ``errno``/``strerror`` rather
+    than deriving it from ``args``.  Updating only ``args`` therefore loses
+    the guidance for errors such as ``OSError(5, "Input/output error")``.
+    Third-party exceptions may also have no arguments at all.
+    """
+    if isinstance(exc, OSError) and exc.errno is not None:
+        strerror = exc.strerror or ""
+        updated = f"{strerror}; {recovery_message}" if strerror else recovery_message
+        exc.strerror = updated
+        args = exc.args
+        if len(args) >= 2:
+            exc.args = (args[0], updated, *args[2:])
+        elif args:
+            exc.args = (args[0], updated)
+        else:
+            exc.args = (exc.errno, updated)
+        return
+
+    args = exc.args
+    if args:
+        exc.args = (f"{args[0]}; {recovery_message}", *args[1:])
+    else:
+        exc.args = (recovery_message,)
+
+
+def _restore_transport_timeout(transport: BootloaderTransport, timeout: float) -> None:
+    """Restore the normal command timeout after a discovery attempt succeeds."""
+    # pyserial exposes both properties; lightweight test/third-party
+    # transports are not required to, so leave those transports unchanged.
+    try:
+        if hasattr(transport, "timeout"):
+            transport.timeout = timeout  # pyright: ignore[reportAttributeAccessIssue]
+    except (AttributeError, OSError, ValueError):
+        pass
+    try:
+        if hasattr(transport, "write_timeout"):
+            transport.write_timeout = timeout  # pyright: ignore[reportAttributeAccessIssue]
+    except (AttributeError, OSError, ValueError):
+        pass
 
 
 @dataclass(frozen=True)
@@ -621,7 +669,7 @@ class BootloaderClient:
                     "firmware upload failed during {stage}; the firmware flash may be incomplete. "
                     "power-cycle the flight controller before reconnecting"
                 ).format(stage=stage.value)
-                exc.args = (f"{exc.args[0]}; {recovery_message}", *exc.args[1:])
+                _append_recovery_message(exc, recovery_message)
             raise
         except Exception as exc:
             if stage in {UploadStage.IDENTIFYING, UploadStage.AWAITING_CONFIRMATION} and not self.abort_before_erase(
@@ -636,7 +684,7 @@ class BootloaderClient:
                     "firmware upload failed during {stage}; the firmware flash may be incomplete. "
                     "power-cycle the flight controller before reconnecting"
                 ).format(stage=stage.value)
-                exc.args = (f"{exc.args[0]}; {recovery_message}", *exc.args[1:])
+                _append_recovery_message(exc, recovery_message)
             raise
         finally:
             self.close()
@@ -712,7 +760,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
             connected_board_id=connected_board_id,
         )
 
-    def _wait_for_bootloader(
+    def _wait_for_bootloader(  # pylint: disable=too-many-locals
         self, cancellation_requested: CancellationRequested | None = None
     ) -> tuple[BootloaderClient, BootloaderInfo]:
         if self._open_retries < 1:
@@ -735,17 +783,27 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
             if transport is not None:
                 client = BootloaderClient(
                     transport,
-                    timeout=attempt_timeout,
+                    # Identification belongs to this retry attempt and must not
+                    # consume the remaining global discovery budget through a
+                    # stale transport timeout.
+                    timeout=self._timeout,
                     clock=self._clock,
                     sleep=self._sleep,
                 )
                 try:
-                    return client, client.identify(deadline=deadline)
+                    # The global deadline controls how long discovery retries;
+                    # each identification attempt gets its own bounded deadline
+                    # so a slow re-enumeration can be retried.
+                    attempt_deadline = min(deadline, self._clock() + attempt_timeout)
+                    info = client.identify(deadline=attempt_deadline)
+                    _restore_transport_timeout(transport, self._timeout)
+                    return client, info
                 except BootloaderProtocolError as exc:
                     last_error = exc
                     retry_would_exhaust_budget = self._clock() + self._retry_delay >= deadline
                     if attempt + 1 == self._open_retries or retry_would_exhaust_budget:
-                        if not client.abort_before_erase(deadline=deadline):
+                        abort_deadline = self._clock() + min(self._timeout, BOOTLOADER_ABORT_TIMEOUT)
+                        if not client.abort_before_erase(deadline=abort_deadline, expect_ack=True):
                             client.close()
                             msg = _("cannot reboot the held bootloader; power-cycle the flight controller before reconnecting")
                             raise FirmwareBootloaderRecoveryError(msg) from exc

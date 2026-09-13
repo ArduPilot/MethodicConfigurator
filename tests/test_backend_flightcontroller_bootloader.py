@@ -1264,6 +1264,41 @@ def test_facade_reconnects_using_the_reenumerated_serial_device(tmp_path: Path, 
     assert params.cleared == 2
 
 
+def test_facade_routes_bootloader_and_entry_delays_to_injected_sleep(tmp_path: Path) -> None:
+    sleeps: list[float] = []
+
+    class EmptyOnceTransport(FakeBootloaderTransport):
+        """Return one empty read before providing the bootloader response."""
+
+        empty_reads = 1
+
+        def read(self, size: int = 1) -> bytes:
+            if self.empty_reads:
+                self.empty_reads -= 1
+                return b""
+            return super().read(size)
+
+    connection = _Connection()
+    controller = FlightController(
+        connection_manager=connection,  # type: ignore[arg-type]
+        params_manager=_Params(),  # type: ignore[arg-type]
+        commands_manager=_Commands(),  # type: ignore[arg-type]
+        files_manager=object(),  # type: ignore[arg-type]
+        sleep=sleeps.append,
+    )
+    path = tmp_path / "firmware.apj"
+    path.write_bytes(apj(b"abcd"))
+
+    controller.upload_apj_firmware(
+        path,
+        expected_firmware_sha256=trusted_digest(b"abcd"),
+        serial_factory=lambda *_args: EmptyOnceTransport(),
+        confirmation_requested=lambda *_args: True,
+    )
+
+    assert sleeps == [0.3, 0.01]
+
+
 def test_facade_verifies_board_identity_after_reconnect(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """
     A successful serial reconnect still requires the expected APJ board identity.
@@ -1695,6 +1730,39 @@ def test_backend_requires_manual_recovery_after_all_serial_open_retries_fail() -
     assert "bootloader port is still absent" in str(error.value)
 
 
+def test_backend_clamps_final_retry_sleep_to_remaining_budget() -> None:
+    delays: list[float] = []
+    now = 0.0
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        delays.append(delay)
+        now += delay
+
+    def open_transport(*_args: object) -> bl.BootloaderTransport:
+        msg = "bootloader port is still absent"
+        raise OSError(msg)
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=10,
+        retry_delay=10.0,
+        clock=clock,
+        sleep=sleep,
+    )
+
+    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match="power-cycle"):
+        backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    assert delays == [10.0, 5.0]
+    assert now == bl.BOOTLOADER_ENUMERATION_TIMEOUT
+
+
 def test_backend_honours_cancellation_during_bootloader_discovery() -> None:
     attempts = 0
 
@@ -1775,7 +1843,9 @@ def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
     with pytest.raises(fw.FirmwareBootloaderRecoveryError, match="power-cycle"):
         backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
 
-    assert now <= bl.BOOTLOADER_ENUMERATION_TIMEOUT
+    # A final identification read may start just before the global deadline,
+    # and the best-effort reboot gets its own bounded recovery budget.
+    assert now <= bl.BOOTLOADER_ENUMERATION_TIMEOUT + bl.BOOTLOADER_ABORT_TIMEOUT
     assert attempts < 100
     assert all(timeout <= 2.0 for timeout in timeouts)
 
@@ -1848,6 +1918,31 @@ def test_backend_retries_bootloader_identification_after_stale_serial_data() -> 
     assert working.closed
     assert entries == 1
     assert not stale.rebooted
+
+
+def test_backend_restores_command_timeout_after_discovery() -> None:
+    class TimeoutAwareTransport(FakeBootloaderTransport):
+        """Expose pyserial-like timeout attributes for the restoration check."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.timeout = 0.1
+            self.write_timeout = 0.1
+
+    transport = TimeoutAwareTransport()
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        timeout=3.0,
+        serial_factory=lambda *_args: transport,
+        open_retries=1,
+    )
+
+    backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    assert transport.timeout == 3.0
+    assert transport.write_timeout == 3.0
 
 
 def test_upload_reports_protocol_stages_and_confirmation_boundary() -> None:
@@ -2079,3 +2174,18 @@ def test_facade_does_not_reboot_or_reconnect_after_programming_failure(
 
     assert not transport.rebooted
     assert not connection.reconnected
+
+
+def test_client_preserves_recovery_guidance_for_empty_argument_exceptions() -> None:
+    class EmptyMessageFailureTransport(FakeBootloaderTransport):
+        """Raise an exception with no message during programming."""
+
+        def write(self, data: bytes) -> int:
+            if data[:1] == bl.PROG_MULTI:
+                raise RuntimeError
+            return super().write(data)
+
+    with pytest.raises(RuntimeError, match="power-cycle"):
+        bl.BootloaderClient(EmptyMessageFailureTransport()).upload(
+            fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True
+        )

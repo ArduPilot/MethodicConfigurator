@@ -48,10 +48,11 @@ The following invariants apply throughout the workflow:
 
 - Never erase or program before APJ validation, board matching, capacity checks,
   trusted-digest verification, and final confirmation pass.
-- Reconnection is bound to the captured USB serial number and/or location. Every
-  populated identity field must match the same physical device. Interface suffixes
-  such as Linux `1-2.3:1.2` are ignored because the application and bootloader can
-  expose different CDC interfaces. Ambiguous matches fail closed.
+- Reconnection is bound to the captured USB serial number and/or physical location.
+  Interface metadata is only a disambiguation hint and may differ because the
+  application and bootloader can expose different CDC interfaces; interface suffixes
+  such as Linux `1-2.3:1.2` are ignored for physical matching. Ambiguous matches fail
+  closed.
 - Network MAVLink connections and force flashing are unsupported.
 - Cancellation is checked at safe boundaries and never interrupts a bootloader
   packet. Before erase, the held bootloader is rebooted only after an explicit
@@ -64,9 +65,9 @@ The following invariants apply throughout the workflow:
   reports that the flash may be incomplete and instructs the user to power-cycle
   before reconnecting. The facade does not attempt a normal MAVLink reconnect
   unless a safe bootloader abort has confirmed a reboot.
-- Every serial transport is closed on success and error, and cleanup cannot mask
-  the original upload failure. The source APJ is not modified, and a failed verify
-  or reconnect is never reported as success.
+- Serial transports are closed on successful uploads and handled protocol/error
+  paths, and cleanup cannot mask the original upload failure. The source APJ is not
+  modified, and a failed verify or reconnect is never reported as success.
 - Full-chip erase is refused because the client cannot yet determine target MCU
   capability safely; normal erase remains supported.
 
@@ -76,10 +77,11 @@ The following invariants apply throughout the workflow:
 
 `FlightControllerBootloaderBackend` loads the APJ, enters and discovers the held
 bootloader, and passes the image to `BootloaderClient`. The client handles protocol
-synchronization, board and capacity checks, erase/program/verify, reboot, retry, and
-transport cleanup. Discovery resolves the captured USB identity before each open,
-fails closed on zero or multiple matches, and shares an injected monotonic clock and
-sleep function with the client for bounded, testable timing.
+synchronization, board and capacity checks, erase/program/verify, reboot, and
+transport cleanup; the backend owns serial-open retries and their wall-clock budget.
+Discovery resolves the captured USB identity before each open, fails closed on zero
+or multiple matches, and shares an injected monotonic clock and sleep function with
+the client for bounded, testable timing.
 
 ### `data_model_firmware_upload.py`
 
