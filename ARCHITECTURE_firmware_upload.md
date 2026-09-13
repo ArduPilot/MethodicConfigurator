@@ -94,7 +94,7 @@ functions are usable without serial or GUI dependencies.
 
 `FlightController.upload_apj_firmware()` validates the active connection, trusted
 digest, and pre-reboot board identity; delegates bootloader entry and post-reboot
-reconnection to injectable collaborators; and verifies the returned
+reconnection to dedicated collaborators; and verifies the returned
 `AUTOPILOT_VERSION` board ID. A successful flash also invalidates cached parameters.
 
 ## Domain and error model

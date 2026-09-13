@@ -1835,19 +1835,117 @@ def test_backend_bootloader_discovery_uses_a_wall_clock_budget() -> None:
         serial_factory=open_transport,
         open_retries=100,
         timeout=2.0,
+        retry_delay=0.7,
+        clock=clock,
+        sleep=sleep,
+    )
+
+    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match=r"could not confirm reboot.*power-cycle"):
+        backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    # The final identification attempt starts with only 1.5 seconds remaining,
+    # and the best-effort reboot gets its own bounded recovery budget.
+    assert now == pytest.approx(bl.BOOTLOADER_ENUMERATION_TIMEOUT + bl.BOOTLOADER_ABORT_TIMEOUT)
+    assert attempts == 6
+    assert timeouts[-1] == pytest.approx(1.5)
+
+
+def test_backend_retries_after_a_silent_port_until_the_bootloader_appears() -> None:
+    """A silent serial port must not consume the entire discovery deadline."""
+    now = 0.0
+    attempts = 0
+
+    class SilentTransport(FakeBootloaderTransport):
+        """Accept opens but never answer bootloader identification."""
+
+        def read(self, size: int = 1) -> bytes:
+            del size
+            return b""
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        now += delay
+
+    def open_transport(_device: str, _baudrate: int, _timeout: float) -> bl.BootloaderTransport:
+        nonlocal attempts
+        attempts += 1
+        return SilentTransport() if now < 3.0 else FakeBootloaderTransport()
+
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=10,
+        timeout=2.0,
         retry_delay=0.5,
         clock=clock,
         sleep=sleep,
     )
 
-    with pytest.raises(fw.FirmwareBootloaderRecoveryError, match="power-cycle"):
-        backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+    info = backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
 
-    # A final identification read may start just before the global deadline,
-    # and the best-effort reboot gets its own bounded recovery budget.
-    assert now <= bl.BOOTLOADER_ENUMERATION_TIMEOUT + bl.BOOTLOADER_ABORT_TIMEOUT
-    assert attempts < 100
-    assert all(timeout <= 2.0 for timeout in timeouts)
+    assert info.board_id == 9
+    assert attempts == 3
+    assert now == pytest.approx(5.0)
+
+
+def test_backend_keeps_command_timeout_when_final_open_attempt_is_clamped(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A short final discovery attempt must not shorten later bootloader commands."""
+    now = 0.0
+    attempts = 0
+    open_timeouts: list[float] = []
+    client_timeouts: list[float] = []
+    info = bl.BootloaderInfo(5, 9, 0, 2048, 1024)
+
+    def clock() -> float:
+        return now
+
+    def sleep(delay: float) -> None:
+        nonlocal now
+        now += delay
+
+    def open_transport(_device: str, _baudrate: int, timeout: float) -> object:
+        nonlocal attempts
+        attempts += 1
+        open_timeouts.append(timeout)
+        if attempts == 1:
+            msg = "bootloader port has not appeared yet"
+            raise OSError(msg)
+        return object()
+
+    class StubBootloaderClient:
+        """Record discovery construction without requiring protocol traffic."""
+
+        def __init__(self, _transport: object, *, timeout: float, **_kwargs: object) -> None:
+            client_timeouts.append(timeout)
+
+        def identify(self, *, deadline: float | None = None) -> bl.BootloaderInfo:
+            del deadline
+            return info
+
+        def upload(self, *_args: object, **_kwargs: object) -> bl.BootloaderInfo:
+            return info
+
+    monkeypatch.setattr(bl, "BootloaderClient", StubBootloaderClient)
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        serial_factory=open_transport,
+        open_retries=2,
+        timeout=2.0,
+        retry_delay=14.0,
+        clock=clock,
+        sleep=sleep,
+    )
+
+    result = backend.upload(fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True)
+
+    assert result is info
+    assert open_timeouts == [2.0, 1.0]
+    assert client_timeouts == [2.0]
 
 
 def test_backend_requires_manual_recovery_when_the_held_bootloader_never_opens() -> None:
@@ -2189,3 +2287,13 @@ def test_client_preserves_recovery_guidance_for_empty_argument_exceptions() -> N
         bl.BootloaderClient(EmptyMessageFailureTransport()).upload(
             fw.parse_apj(apj(b"abcd")), confirmation_requested=lambda *_args: True
         )
+
+
+def test_recovery_guidance_preserves_oserror_text_and_errno() -> None:
+    error = OSError(5, "Input/output error")
+
+    bl._append_recovery_message(error, "power-cycle the flight controller")  # pylint: disable=protected-access
+
+    assert error.errno == 5
+    assert error.strerror == "Input/output error; power-cycle the flight controller"
+    assert str(error) == "[Errno 5] Input/output error; power-cycle the flight controller"

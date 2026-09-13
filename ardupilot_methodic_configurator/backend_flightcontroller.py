@@ -439,7 +439,7 @@ class FlightController:  # pylint: disable=too-many-public-methods,too-many-inst
         # Clear parameter cache via params manager
         self._params_manager.clear_parameters()
 
-    def upload_apj_firmware(  # pylint: disable=too-many-arguments
+    def upload_apj_firmware(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         path: Path,
         *,

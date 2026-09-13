@@ -814,7 +814,10 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
                         abort_deadline = self._clock() + min(self._timeout, BOOTLOADER_ABORT_TIMEOUT)
                         if not client.abort_before_erase(deadline=abort_deadline, expect_ack=True):
                             client.close()
-                            msg = _("cannot reboot the held bootloader; power-cycle the flight controller before reconnecting")
+                            msg = _(
+                                "could not confirm reboot of the held bootloader; "
+                                "power-cycle the flight controller before reconnecting"
+                            )
                             raise FirmwareBootloaderRecoveryError(msg) from exc
                         exc.bootloader_rebooted = True  # type: ignore[attr-defined]
                         exc.stage = UploadStage.IDENTIFYING.value
