@@ -764,6 +764,35 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             lfs.save_vehicle_params_to_files(list(lfs.file_parameters))
             mock_export.assert_called_once_with(os_path.join("vehicle_dir", "test.param"))
 
+    def test_persist_computed_changes_writes_only_affected_files_and_reloads(self) -> None:
+        """
+        Persisting computed changes updates only affected files and reloads them.
+
+        GIVEN: The filesystem has an affected and an unaffected parameter file
+        WHEN: Computed changes are persisted
+        THEN: Only the affected filename is sent to the writer
+        AND: The in-memory file state is replaced with the reloaded disk state
+        """
+        lfs = LocalFilesystem(
+            None, "ArduCopter", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        affected = ParDict({"PARAM1": Par(2.0)})
+        lfs.file_parameters = {
+            "02_affected.param": ParDict({"PARAM1": Par(1.0)}),
+            "03_unaffected.param": ParDict({"PARAM2": Par(3.0)}),
+        }
+        reloaded = {"02_affected.param": affected}
+
+        with (
+            patch.object(lfs, "save_vehicle_params_to_files") as mock_save,
+            patch.object(lfs, "read_params_from_files", return_value=reloaded) as mock_reload,
+        ):
+            lfs.persist_computed_changes({"02_affected.param": affected})
+
+        mock_save.assert_called_once_with(["02_affected.param"])
+        mock_reload.assert_called_once_with()
+        assert lfs.file_parameters is reloaded
+
     def test_write_param_default_values_to_file(self) -> None:
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
