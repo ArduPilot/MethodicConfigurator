@@ -696,7 +696,14 @@ def open_serial_transport(device: str, baudrate: int, timeout: float) -> Bootloa
 
 
 class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-attributes
-    """Production-facing adapter with injectable bootloader entry and serial transport."""
+    """
+    Internal bootloader transport adapter with injectable entry and serial transport.
+
+    The public upload workflow is ``FlightController.upload_apj_firmware``.  It
+    performs the trusted-digest and stable-USB-identity checks before invoking
+    this lower-level adapter; direct callers are responsible for those policy
+    preconditions.
+    """
 
     def __init__(  # noqa: PLR0913 # pylint: disable=too-many-arguments
         self,
@@ -750,6 +757,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
         if self._enter_bootloader is not None:
             self._enter_bootloader()
         client, info = self._wait_for_bootloader(cancellation_requested)
+        # pylint: disable=duplicate-code
         return client.upload(
             image,
             full_erase=full_erase,
@@ -759,6 +767,7 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
             bootloader=info,
             connected_board_id=connected_board_id,
         )
+        # pylint: enable=duplicate-code
 
     def _wait_for_bootloader(  # pylint: disable=too-many-locals
         self, cancellation_requested: CancellationRequested | None = None

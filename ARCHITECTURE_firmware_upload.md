@@ -75,13 +75,14 @@ The following invariants apply throughout the workflow:
 
 ### `backend_flightcontroller_bootloader.py`
 
-`FlightControllerBootloaderBackend` loads the APJ, enters and discovers the held
-bootloader, and passes the image to `BootloaderClient`. The client handles protocol
-synchronization, board and capacity checks, erase/program/verify, reboot, and
-transport cleanup; the backend owns serial-open retries and their wall-clock budget.
-Discovery resolves the captured USB identity before each open, fails closed on zero
-or multiple matches, and shares an injected monotonic clock and sleep function with
-the client for bounded, testable timing.
+`FlightControllerBootloaderBackend` is an internal transport adapter. It loads the
+APJ, enters and discovers the held bootloader, and passes the image to
+`BootloaderClient`. The public facade performs trusted-digest and stable-USB-identity
+policy checks before invoking it. The client handles protocol synchronization, board
+and capacity checks, erase/program/verify, reboot, and transport cleanup; the backend
+owns serial-open retries and their wall-clock budget. Discovery resolves the captured
+USB identity before each open, fails closed on zero or multiple matches, and shares
+injected clock and sleep functions with the client for bounded, testable timing.
 
 ### `data_model_firmware_upload.py`
 
@@ -92,9 +93,9 @@ functions are usable without serial or GUI dependencies.
 ### `backend_flightcontroller.py`
 
 `FlightController.upload_apj_firmware()` validates the active connection, trusted
-digest, and pre-reboot board identity; coordinates bootloader entry; reconnects after
-reboot; and verifies the returned `AUTOPILOT_VERSION` board ID. A successful flash
-also invalidates cached parameters.
+digest, and pre-reboot board identity; delegates bootloader entry and post-reboot
+reconnection to injectable collaborators; and verifies the returned
+`AUTOPILOT_VERSION` board ID. A successful flash also invalidates cached parameters.
 
 ## Domain and error model
 

@@ -1464,8 +1464,6 @@ def test_facade_reports_reconnect_retry_exhaustion_after_a_verified_flash(
             self.master = _Master()
             return "port not ready"
 
-    monkeypatch.setattr("ardupilot_methodic_configurator.backend_flightcontroller.time_monotonic", clock)
-    monkeypatch.setattr("ardupilot_methodic_configurator.backend_flightcontroller.time_sleep", sleep)
     monkeypatch.setattr("ardupilot_methodic_configurator.backend_flightcontroller.FIRMWARE_RECONNECT_RESOLVE_TIMEOUT", 0.25)
     monkeypatch.setattr(
         "ardupilot_methodic_configurator.backend_flightcontroller.resolve_bootloader_device",
@@ -1477,6 +1475,8 @@ def test_facade_reports_reconnect_retry_exhaustion_after_a_verified_flash(
         params_manager=_Params(),  # type: ignore[arg-type]
         commands_manager=_Commands(),  # type: ignore[arg-type]
         files_manager=object(),  # type: ignore[arg-type]
+        sleep=sleep,
+        clock=clock,
     )
     path = tmp_path / "firmware.apj"
     path.write_bytes(apj(b"abcd"))
