@@ -53,6 +53,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self._creator = VehicleProjectCreator(local_filesystem)
         self._opener = VehicleProjectOpener(local_filesystem)
         self._settings: NewVehicleProjectSettings | None = None  # It will be set if a new project is created successfully
+        self._initial_import_workflow = False
         self.configuration_template: str = ""  # It will be set if a new project is created successfully
 
     # Directory and path operations
@@ -260,6 +261,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                 _("Vehicle project creation"),
                 _("Could not finish creating the vehicle project: {error}").format(error=exc),
             ) from exc
+        self._initial_import_workflow = True
         return new_path
 
     def _get_fc_template_dir_for_project_creation(self) -> str:
@@ -419,6 +421,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                 _("Could not finish creating the vehicle project: {error}").format(error=exc),
             ) from exc
 
+        self._initial_import_workflow = True
         if self._flight_controller is not None:
             self._flight_controller.fc_parameters = fc_parameters
         return new_path
@@ -513,6 +516,11 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
     def use_fc_params(self) -> bool:
         """Whether to use flight controller parameters values instead of template values when creating a project."""
         return self._settings is not None and self._settings.use_fc_params
+
+    @property
+    def initial_import_workflow(self) -> bool:
+        """Whether the current startup followed an FC or .bin initial import."""
+        return self._initial_import_workflow
 
     # Flight controller operations
     def is_flight_controller_connected(self) -> bool:

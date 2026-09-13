@@ -374,6 +374,7 @@ class TestVehicleProjectCreation:
             result = manager.create_new_vehicle_from_flight_controller("/base", "ConfiguredVehicle")
 
         assert result == "/base/ConfiguredVehicle"
+        assert manager.initial_import_workflow is True
         mock_template_lookup.assert_called_once_with("ArduCopter", 4, 6)
         template_dir, new_base_dir, vehicle_name, settings = mock_create.call_args.args[:4]
         assert template_dir == "/templates/ArduCopter/empty_4.6.x"
@@ -685,6 +686,7 @@ class TestVehicleProjectCreation:
 
             # Assert: correct path returned and manager state updated
             assert result == "/new/vehicle/path"
+            assert manager.initial_import_workflow is False
             assert manager._settings is mock_settings
             assert manager.configuration_template == "path"  # last component of template path
 
@@ -694,6 +696,31 @@ class TestVehicleProjectCreation:
                 "/template/path", "/base/path", "NewVehicle", mock_settings, fc_connected, mock_flight_controller.fc_parameters
             )
             mock_open.assert_called_once_with("/new/vehicle/path")
+
+    def test_template_creation_with_fc_parameters_marks_initial_import(self) -> None:
+        """
+        Using FC parameter values in a template project enables initial-import handling.
+
+        GIVEN: A connected flight controller and the use-FC-parameters setting
+        WHEN: A new vehicle project is created from a template
+        THEN: The project manager marks the workflow as an initial import
+        """
+        mock_filesystem = MagicMock(spec=LocalFilesystem)
+        mock_flight_controller = MagicMock()
+        mock_flight_controller.master = MagicMock()
+        manager = VehicleProjectManager(mock_filesystem, mock_flight_controller)
+        settings = NewVehicleProjectSettings(use_fc_params=True)
+        mock_filesystem.param_default_dict = ParDict()
+
+        with (
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/new/vehicle/path"),
+            patch.object(manager._opener, "open_vehicle_directory", return_value="/new/vehicle/path"),
+            patch.object(LocalFilesystem, "store_recently_used_template_dirs"),
+            patch.object(LocalFilesystem, "store_recently_used_vehicle_dir"),
+        ):
+            manager.create_new_vehicle_from_template("/template/path", "/base/path", "NewVehicle", settings)
+
+        assert manager.initial_import_workflow is True
 
     def test_user_sees_error_when_vehicle_creation_fails(self) -> None:
         """
@@ -1446,6 +1473,7 @@ class TestCreateNewVehicleFromBinLog:
 
         # Assert: correct path returned
         assert result == "/vehicles/my_flight"
+        assert manager.initial_import_workflow is True
         # Assert: template creation called with fc_connected=False (key difference from normal flow)
         _args, kwargs = mock_create.call_args
         assert kwargs.get("fc_connected") is False

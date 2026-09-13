@@ -966,6 +966,23 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         """
         self.file_parameters.update(computed_changes)
 
+    def persist_computed_changes(self, computed_changes: dict[str, ParDict]) -> None:
+        """
+        Apply computed changes, save affected files, and reload file state.
+
+        Only files present in ``computed_changes`` are written. Reloading all
+        parameter files afterwards ensures the in-memory model matches the
+        serialized files before the parameter editor is created.
+
+        Args:
+            computed_changes: Mapping of affected filenames to their fully
+                computed parameter dictionaries.
+
+        """
+        self.apply_computed_changes(computed_changes)
+        self.save_vehicle_params_to_files(list(computed_changes))
+        self.file_parameters = self.read_params_from_files()
+
     def merge_forced_or_derived_parameters(
         self,
         filename: str,

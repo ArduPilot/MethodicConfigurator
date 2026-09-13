@@ -267,6 +267,58 @@ class TestUserNotificationWorkflow:
         # AND: No disk write occurred
         mock_fs.save_vehicle_params_to_files.assert_not_called()
 
+    @patch("ardupilot_methodic_configurator.__main__.show_warning_message")
+    def test_initial_import_persists_pending_changes(self, mock_warning) -> None:
+        """
+        Initial import changes are persisted before the parameter editor opens.
+
+        GIVEN: The component editor completed during an FC or .bin initial import
+        AND: The backend detected computed changes in two parameter files
+        WHEN: process_component_editor_results is called for the initial import
+        THEN: The computed changes are applied, saved, and reloaded
+        """
+        # pylint: disable=import-outside-toplevel
+        from ardupilot_methodic_configurator.__main__ import (  # noqa: PLC0415
+            process_component_editor_results,
+        )
+
+        mock_fs = MagicMock()
+        mock_controller = MagicMock()
+        computed_changes = {
+            "08_batt1.param": MagicMock(),
+            "12_motor.param": MagicMock(),
+        }
+        mock_fs.calculate_derived_and_forced_param_changes.return_value = computed_changes
+
+        process_component_editor_results(mock_controller, mock_fs, initial_import=True)
+
+        mock_fs.persist_computed_changes.assert_called_once_with(computed_changes)
+        mock_warning.assert_called_once()
+
+    @patch("ardupilot_methodic_configurator.__main__.show_warning_message")
+    def test_existing_project_does_not_persist_pending_changes(self, mock_warning) -> None:
+        """
+        Existing projects retain the review-before-apply behavior.
+
+        GIVEN: The component editor completed for an existing project
+        AND: The backend detected computed changes
+        WHEN: process_component_editor_results is called without initial import
+        THEN: Changes remain pending for the normal review workflow
+        """
+        # pylint: disable=import-outside-toplevel
+        from ardupilot_methodic_configurator.__main__ import (  # noqa: PLC0415
+            process_component_editor_results,
+        )
+
+        mock_fs = MagicMock()
+        mock_controller = MagicMock()
+        mock_fs.calculate_derived_and_forced_param_changes.return_value = {"08_batt1.param": MagicMock()}
+
+        process_component_editor_results(mock_controller, mock_fs)
+
+        mock_fs.persist_computed_changes.assert_not_called()
+        mock_warning.assert_called_once()
+
     @patch("ardupilot_methodic_configurator.__main__.show_error_message")
     @patch("ardupilot_methodic_configurator.__main__.sys_exit")
     def test_value_error_shows_error_dialog_and_exits(self, mock_exit, mock_error_dialog) -> None:

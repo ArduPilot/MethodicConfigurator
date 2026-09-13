@@ -557,6 +557,7 @@ def component_editor(state: ApplicationState) -> None:
 def process_component_editor_results(
     flight_controller: FlightController,
     local_filesystem: LocalFilesystem,
+    initial_import: bool = False,
 ) -> None:
     """
     Process the results after component editor completion.
@@ -564,6 +565,9 @@ def process_component_editor_results(
     Args:
         flight_controller: Flight controller instance
         local_filesystem: Local filesystem instance
+        initial_import: Whether this startup created the project from the
+            flight controller or a .bin log. Initial imports persist the
+            computed changes before opening the parameter editor.
 
     Raises:
         SystemExit: If there's an error in derived parameters
@@ -589,6 +593,9 @@ def process_component_editor_results(
         return  # to make the tests work, even though sys_exit is mocked in the tests # pylint: disable=unreachable
 
     if component_dependent_param_changes:
+        if initial_import:
+            local_filesystem.persist_computed_changes(component_dependent_param_changes)
+
         simple_gui: bool = ProgramSettings.get_setting("gui_complexity") == "simple"
         msg = (
             _("The component or connection changes you just did will have repercussions on the following parameter files:\n\n")
@@ -765,7 +772,11 @@ def main() -> None:
     component_editor(state)
 
     # Process results after component editor GUI closes
-    process_component_editor_results(state.flight_controller, state.local_filesystem)
+    process_component_editor_results(
+        state.flight_controller,
+        state.local_filesystem,
+        initial_import=(state.vehicle_project_manager is not None and state.vehicle_project_manager.initial_import_workflow),
+    )
 
     # Write parameter default values to file if they have been modified
     if state.param_default_values_dirty:
