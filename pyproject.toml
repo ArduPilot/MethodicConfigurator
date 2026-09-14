@@ -103,21 +103,21 @@ win_dist = [
     "pip==26.2.1",
     "pywin32==312",
     "pyinstaller==6.20.0",
-    "pyinstaller-hooks-contrib==2026.6",
+    "pyinstaller-hooks-contrib==2026.7",
     "packaging==26.3",
 ]
 
 mac_dist = [
     "pip==26.2.1",
     "pyinstaller==6.20.0",
-    "pyinstaller-hooks-contrib==2026.6",
+    "pyinstaller-hooks-contrib==2026.7",
     "packaging==26.3",
 ]
 
 linux_dist = [
     "pip==26.2.1",
     "pyinstaller==6.20.0",
-    "pyinstaller-hooks-contrib==2026.6",
+    "pyinstaller-hooks-contrib==2026.7",
     "packaging==26.3",
 ]
 
