@@ -8889,7 +8889,7 @@ msgstr "運用中のPlane飛行区間分割は利用できません"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:184
 msgid "Computed distance to mission LAND target"
-msgstr ""
+msgstr "ミッションLAND目標までの計算距離"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:184
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:227
@@ -8906,7 +8906,7 @@ msgstr "m"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:185
 msgid "Mission-target evidence"
-msgstr ""
+msgstr "ミッション目標の根拠"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:189
 msgid "Detected {count} Plane landing attempt(s)"
@@ -8918,44 +8918,44 @@ msgstr "Plane着陸試行は検出されませんでした"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:204
 msgid "LAND_FLARE_ALT at start: {value:.1f} m"
-msgstr ""
+msgstr "開始時のLAND_FLARE_ALT: {value:.1f} m"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:206
 msgid "LAND_FLARE_ALT at start: unavailable"
-msgstr ""
+msgstr "開始時のLAND_FLARE_ALT: 利用不可"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:209
 msgid ""
 "{mode_name} landing → {end}\n"
 "Termination: {end_reason}\n"
 "{parameter_evidence}"
-msgstr ""
+msgstr "{mode_name} 着陸 → {end}\n終了: {end_reason}\n{parameter_evidence}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:217
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:222
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:353
 msgid "Summary"
-msgstr ""
+msgstr "概要"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:227
 msgid "Start-of-final altitude"
-msgstr ""
+msgstr "最終進入開始高度"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:231
 msgid "Start-of-final altitude: unavailable"
-msgstr ""
+msgstr "最終進入開始高度: 利用不可"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:237
 msgid "Flare"
-msgstr ""
+msgstr "フレア"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:237
 msgid "Preflare"
-msgstr ""
+msgstr "プリフレア"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:242
 msgid "LAND stage {stage} entered"
-msgstr ""
+msgstr "LANDステージ {stage} に移行"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:249
 msgid "LAND flight height"
@@ -8999,7 +8999,7 @@ msgstr "s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:280
 msgid "{parameter} effective value: {value:g}"
-msgstr ""
+msgstr "{parameter} の有効値: {value:g}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:300
 msgid "RFND status {status}"
@@ -9024,27 +9024,27 @@ msgstr ""
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:334
 msgid "Firmware evidence"
-msgstr ""
+msgstr "ファームウェアの根拠"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:336
 msgid "Flare altitude"
-msgstr ""
+msgstr "フレア高度"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:337
 msgid "Flare sink rate"
-msgstr ""
+msgstr "フレア降下率"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:338
 msgid "Flare groundspeed"
-msgstr ""
+msgstr "フレア対地速度"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:339
 msgid "Flare distance to target"
-msgstr ""
+msgstr "フレア目標までの距離"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:352
 msgid "Glide slope"
-msgstr ""
+msgstr "グライドスロープ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:352
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:441
@@ -9053,19 +9053,19 @@ msgstr "度"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:364
 msgid "Rangefinder evidence"
-msgstr ""
+msgstr "レンジファインダーの根拠"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:369
 msgid "First non-zero distance"
-msgstr ""
+msgstr "最初の非ゼロ距離"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:375
 msgid "First in-range distance"
-msgstr ""
+msgstr "最初の範囲内距離"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:381
 msgid "Continuous acquisition sample count"
-msgstr ""
+msgstr "連続取得サンプル数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:382
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:443
@@ -9074,16 +9074,16 @@ msgstr "サンプル"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:387
 msgid "Last disengagement distance"
-msgstr ""
+msgstr "最後の解除距離"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:407
 msgid ""
 "Last disengagement status: {status_name} ({status}); distance unavailable"
-msgstr ""
+msgstr "最後の解除ステータス: {status_name} ({status}); 距離は利用不可"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:422
 msgid "Disengagement count"
-msgstr ""
+msgstr "解除回数"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:422
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:443
@@ -9092,19 +9092,19 @@ msgstr "イベント"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:431
 msgid "Attempt {number} — {category}"
-msgstr ""
+msgstr "試行 {number} — {category}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:442
 msgid "{measurement}: {value:.1f}°"
-msgstr ""
+msgstr "{measurement}: {value:.1f}°"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:444
 msgid "{measurement}: {value:.0f}"
-msgstr ""
+msgstr "{measurement}: {value:.0f}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:446
 msgid "{measurement}: {value:.1f} {unit}"
-msgstr ""
+msgstr "{measurement}: {value:.1f} {unit}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/log_analysis/data_model_availability_plane_landing.py:461
 msgid "landing abort message"
