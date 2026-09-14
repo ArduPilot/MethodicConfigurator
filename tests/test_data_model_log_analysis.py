@@ -8,6 +8,9 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import json
+from dataclasses import asdict
+from pathlib import Path
 from typing import Any, ClassVar
 
 import pytest
@@ -23,6 +26,7 @@ from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis import
     validate_log_matches_vehicle,
 )
 from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_context import LogAnalysisContext
+from ardupilot_methodic_configurator.log_analysis.data_model_log_analysis_result import LogAnalysis
 from ardupilot_methodic_configurator.log_analysis.data_model_log_availability import (
     LogAvailabilityResult,
     LogAvailabilityState,
@@ -82,6 +86,20 @@ class RecordingParameterDeriver:
     def derived_and_forced_parameters_matching(self, pattern: str, _inputs: object) -> dict[str, str]:
         self.matching_pattern = pattern
         return {"TEST_PARAM": "01_test.param"}
+
+
+def test_log_analysis_optional_group_is_serializable_and_declared_in_schema() -> None:
+    """Keep grouping optional while preserving it in the dataclass and report schema."""
+    grouped = LogAnalysis("finding", group="Attempt 1 — Summary")
+
+    assert LogAnalysis("ungrouped").group is None
+    assert asdict(grouped)["group"] == "Attempt 1 — Summary"
+
+    schema_path = Path(__file__).parents[1] / "ardupilot_methodic_configurator/log_analysis/log_analysis_report_schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    analysis_outcome = schema["$defs"]["analysis_outcome"]
+    assert analysis_outcome["properties"]["group"]["type"] == ["string", "null"]
+    assert "group" not in analysis_outcome["required"]
 
 
 def test_analyze_log_passes_context_to_availability_models(monkeypatch: Any) -> None:  # noqa: ANN401
