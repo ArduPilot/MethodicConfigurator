@@ -1,3 +1,4 @@
+FS_THR_VALUE,970
 RC_OPTIONS,32
 RC_PROTOCOLS,8  # Selected in the component editor
 RSSI_TYPE,3  # FrSky FPort protocol supports RSSI to report RF link quality
