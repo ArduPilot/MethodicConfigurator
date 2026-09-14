@@ -10,7 +10,7 @@
             },
             "Firmware": {
                 "Type": "ArduCopter",
-                "Version": "4.6.2 official"
+                "Version": "4.6.3 official"
             },
             "Specifications": {
                 "MCU Series": "STM32F7xx"
@@ -133,7 +133,7 @@
             "Product": {
                 "Manufacturer": "FrSky",
                 "Model": "Taranis Q X7",
-                "Version": "",
+                "Version": "EU LBT",
                 "URL": "https://www.frsky-rc.com/product/taranis-q-x7-2/"
             },
             "Firmware": {

@@ -3,3 +3,4 @@ BATT_CURR_PIN,3
 BATT_MONITOR,4  # Selected in component editor window
 BATT_VOLT_MULT,18.181999  # Provided by the manufacturer
 BATT_VOLT_PIN,2
+BRD_TYPE,24
