@@ -1,4 +1,7 @@
-INS_LOG_BAT_MASK,1  # PID notch filters require batch logging, not raw logging
+INS_LOG_BAT_CNT,32
+INS_LOG_BAT_MASK,1  # PID notch filters require EKF primary batch logging, not raw logging
 INS_LOG_BAT_OPT,4  # PID notch filters require batch pre- and post- filters logging
 INS_RAW_LOG_OPT,0  # PID notch filters require batch logging, not raw logging
 LOG_BITMASK,407517  # Log relevant data for PID notch filters tuning. Later on we'll change this to other subsystems
+LOG_FILE_BUFSIZE,200
+LOG_FILE_DSRMROT,1
