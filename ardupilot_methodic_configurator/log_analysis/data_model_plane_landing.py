@@ -1291,6 +1291,8 @@ class PlaneLandingEvidenceExtractor:  # pylint: disable=too-many-locals
     @classmethod
     def start_of_final_altitude_m(cls, log_data: LogData, attempt: PlaneLandingAttempt) -> float | None:
         """Return nearest attempt-scoped BARO altitude at the start of final approach."""
+        if attempt.start_stage != 1:
+            return None
         return cls._nearest_value(log_data, attempt, ("BARO", "Alt"), attempt.start_s)
 
     @classmethod

@@ -1003,6 +1003,37 @@ def test_start_of_final_altitude_uses_nearest_attempt_scoped_primary_baro_observ
     assert altitude_outcome.group == "Attempt 1 — Summary"
 
 
+@pytest.mark.parametrize("start_stage", [2, 3])
+def test_start_of_final_altitude_is_unavailable_when_attempt_starts_after_final(start_stage: int) -> None:
+    log_data = _plane_log(
+        land=((5.0, 0), (10.0, start_stage)),
+        messages=((40.0, "Throttle disarmed"),),
+        include_baro=False,
+    )
+    _add_columns(
+        log_data,
+        "BARO",
+        ((10.0, 20.0), (10.2, 18.8)),
+        [("TimeUS", "f8"), ("Alt", "f8")],
+    )
+
+    segment = PlaneFlightSegmentDetector.detect(log_data, {}).segments[0]
+    attempt = PlaneLandingAttemptDetector.detect(log_data, segment)[0]
+    result = PlaneLandingAnalysis(log_data, _context()).analyse()
+
+    altitude_outcome = next(outcome for outcome in result.outcomes if "start-of-final altitude" in outcome.message.lower())
+    assert (attempt.start_s, attempt.start_stage, attempt.end_s, attempt.end_reason) == (
+        10.0,
+        start_stage,
+        40.0,
+        PlaneLandingEndReason.DISARM,
+    )
+    assert altitude_outcome.timestamp_us == 10_000_000
+    assert altitude_outcome.value is None
+    assert altitude_outcome.message == "Start-of-final altitude: unavailable"
+    assert altitude_outcome.group == "Attempt 1 — Summary"
+
+
 @pytest.mark.parametrize("baro_records", [None, ((10.1, np.nan),)])
 def test_missing_or_invalid_start_of_final_altitude_is_reported_unavailable(
     baro_records: tuple[tuple[float, float], ...] | None,

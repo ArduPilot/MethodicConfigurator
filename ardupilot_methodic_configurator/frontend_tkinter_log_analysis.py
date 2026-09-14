@@ -12,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import tkinter as tk
 from argparse import ArgumentParser, Namespace
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import Enum
 from functools import partial
 from logging import basicConfig as logging_basicConfig
@@ -302,7 +302,7 @@ class LogAnalysisReportWindow(BaseWindow):  # pylint: disable=too-many-instance-
         """Wrap report text to the width allocated to its label."""
         label.configure(wraplength=max(10, event.width - 15))
 
-    def _render_outcomes(self, outcomes: list[LogAnalysis]) -> None:
+    def _render_outcomes(self, outcomes: Sequence[LogAnalysis]) -> None:
         """Render outcomes in list order with optional consecutive group headings."""
         previous_group: str | None = None
         for outcome in outcomes:
