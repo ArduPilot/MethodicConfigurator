@@ -70,6 +70,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.parameter_editor_table = MagicMock()
     editor.parameter_editor_table.repopulate = MagicMock()
     editor.parameter_editor_table.get_upload_selected_params = MagicMock(return_value={})
+    editor.parameter_editor_table.get_parameters_omitted_by_import_precedence = MagicMock(return_value={})
     editor.parameter_editor_table.view_port = MagicMock()
     editor._log_availability_report_window = None
     editor._log_report_return_pending = False
@@ -2038,6 +2039,24 @@ class TestParameterUploads:
         )
         parameter_editor_window.parameter_editor.load_external_parameter_file.assert_called_once_with("C:/tmp/tune.parm")
         upload_window.assert_called_once_with(parameter_editor_window, "C:/tmp/tune.parm", parameters)
+
+    def test_user_is_warned_when_simple_mode_omits_import_duplicates(
+        self, parameter_editor_window: ParameterEditorWindow
+    ) -> None:
+        """Simple-mode uploads explain imported parameters omitted by earlier-step precedence."""
+        parameter_editor_window.parameter_editor_table.get_parameters_omitted_by_import_precedence.return_value = {
+            "AUTO_OWNED": "15_general_configuration.param"
+        }
+        parameter_editor_window.parameter_editor_table.get_upload_selected_params.return_value = {"LOG_ONLY": 2.0}
+        parameter_editor_window.parameter_editor.ensure_upload_preconditions.return_value = False
+
+        parameter_editor_window.on_upload_selected_click()
+
+        parameter_editor_window.ui.show_warning.assert_any_call(
+            "Imported parameters already provided by earlier steps",
+            "The following imported parameters will not be uploaded from this file because they are already "
+            "provided by an earlier configuration step:\n\nAUTO_OWNED (15_general_configuration.param)",
+        )
 
     def test_external_parameter_file_parse_error_is_reported(self, parameter_editor_window: ParameterEditorWindow) -> None:
         """Invalid external files produce an error and do not open the preview."""

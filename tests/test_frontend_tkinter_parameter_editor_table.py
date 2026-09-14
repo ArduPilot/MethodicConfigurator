@@ -152,6 +152,8 @@ def parameter_editor_table(
         mock_param_editor._local_filesystem = mock_local_filesystem
         mock_param_editor.current_file = "test_file"
         mock_param_editor.is_fc_connected = True
+        mock_param_editor.parameters_owned_by_previous_configuration_steps.return_value = set()
+        mock_param_editor.parameter_ownership_sources_for_current_import.return_value = {}
 
         # Set up get_parameters_as_par_dict to return the right parameters
         def get_current_file_parameters() -> ParDict:
@@ -442,6 +444,7 @@ def test_repopulate_preserves_checkbutton_states(parameter_editor_table: Paramet
     param1_var = tk.BooleanVar(value=True)
     param2_var = tk.BooleanVar(value=False)
     parameter_editor_table.upload_checkbutton_var = {"PARAM1": param1_var, "PARAM2": param2_var}
+    parameter_editor_table._upload_selection_defaults_file = test_file
     parameter_editor_table.parameter_editor._local_filesystem.file_parameters = ParDict(
         {test_file: ParDict({"PARAM1": Par(1.0, "test comment"), "PARAM2": Par(2.0, "test comment")})}
     )
@@ -457,6 +460,33 @@ def test_repopulate_preserves_checkbutton_states(parameter_editor_table: Paramet
     parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
 
     # Assert: Checkbutton states were preserved (implicitly tested through repopulate_table call)
+    assert parameter_editor_table._upload_selection_defaults == {"PARAM1": True, "PARAM2": False}
+
+
+def test_repopulate_clears_checkbutton_states_when_file_changes(parameter_editor_table: ParameterEditorTable) -> None:
+    """Upload selections from one file are not applied to a different file."""
+    parameter_editor_table._upload_selection_defaults_file = "other_file"
+    parameter_editor_table.upload_checkbutton_var = {"PARAM1": tk.BooleanVar(value=True)}
+    parameter_editor_table.parameter_editor._local_filesystem.file_parameters = ParDict({"test_file": ParDict()})
+
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+
+    assert parameter_editor_table._upload_selection_defaults == {}
+
+
+def test_repopulate_wires_import_ownership_to_rendered_table(parameter_editor_table: ParameterEditorTable) -> None:
+    """Repopulation passes imported-parameter ownership into row rendering."""
+    parameter_editor_table.parameter_editor.parameters_owned_by_previous_configuration_steps.return_value = {"AUTO_OWNED"}
+    parameter_editor_table.parameter_editor.parameter_ownership_sources_for_current_import.return_value = {
+        "AUTO_OWNED": "15_general_configuration.param"
+    }
+    parameter_editor_table._create_headers_and_tooltips = MagicMock(return_value=((), ()))
+    parameter_editor_table._render_table = MagicMock()
+
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+
+    assert parameter_editor_table._parameters_owned_by_previous_steps == {"AUTO_OWNED"}
+    assert parameter_editor_table._parameter_ownership_sources == {"AUTO_OWNED": "15_general_configuration.param"}
 
 
 def test_repopulate_show_only_differences(parameter_editor_table: ParameterEditorTable) -> None:
@@ -2280,6 +2310,15 @@ class TestWidgetFactoryHelpers:
         assert parameter_editor_table.upload_checkbutton_var["PARAM"].get() is False
         assert button.instate(("disabled",))
 
+    def test_generated_import_parameters_owned_by_previous_steps_start_unticked(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        parameter_editor_table._parameters_owned_by_previous_steps = {"PARAM"}
+        button = parameter_editor_table._create_upload_checkbutton("PARAM")
+
+        assert parameter_editor_table.upload_checkbutton_var["PARAM"].get() is False
+        assert button.instate(("!disabled",))
+
 
 class TestHandlerEdgeCases:
     """Exercise handler helper edge cases for coverage."""
@@ -2340,6 +2379,19 @@ class TestUploadSelectionBehavior:
 
         result = parameter_editor_table.get_upload_selected_params("simple")
         assert result == ParDict({})
+
+    def test_get_upload_selected_params_simple_skips_parameters_owned_by_previous_steps(
+        self, parameter_editor_table: ParameterEditorTable
+    ) -> None:
+        parameter_editor_table._should_show_upload_column = MagicMock(return_value=False)
+        parameter_editor_table.parameter_editor.get_parameters_as_par_dict.return_value = ParDict(
+            {"AUTO_OWNED": Par(1.0), "LOG_ONLY": Par(2.0)}
+        )
+        parameter_editor_table.parameter_editor.parameters_owned_by_previous_configuration_steps.return_value = {"AUTO_OWNED"}
+
+        result = parameter_editor_table.get_upload_selected_params("simple")
+
+        assert result == ParDict({"LOG_ONLY": Par(2.0)})
 
     def test_get_upload_selected_params_filters_checked(self, parameter_editor_table: ParameterEditorTable) -> None:
         parameter_editor_table._should_show_upload_column = MagicMock(return_value=True)

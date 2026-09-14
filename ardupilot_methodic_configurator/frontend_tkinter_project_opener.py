@@ -57,7 +57,7 @@ class VehicleProjectOpenerWindow(BaseWindow):
             + _(" - Select vehicle configuration directory")
         )
 
-        self.root.geometry(self.calculate_scaled_geometry(600, 450))  # Set the window size
+        self.root.geometry(self.calculate_scaled_geometry(600, 470))  # Set the window size
         self.center_window_on_screen(self.root)
 
         # Explain why we are here
@@ -89,13 +89,32 @@ class VehicleProjectOpenerWindow(BaseWindow):
 
         create_vehicle_directory_from_template_button = ttk.Button(
             option1_label_frame,
-            text=_("Create a vehicle configuration directory from template"),
+            text=_("Create a vehicle project from a template"),
             command=self.create_new_vehicle_from_template,
         )
         create_vehicle_directory_from_template_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
         show_tooltip(
             create_vehicle_directory_from_template_button,
             _("Create a new vehicle configuration directory, choose this option when using the software for the first time"),
+        )
+
+        create_vehicle_from_fc_button = ttk.Button(
+            option1_label_frame,
+            text=_("Create a vehicle project from an already configured flight controller"),
+            command=self.create_new_vehicle_from_flight_controller,
+            state=(
+                tk.NORMAL
+                if self.project_manager.is_flight_controller_connected() and self.project_manager.fc_parameters()
+                else tk.DISABLED
+            ),
+        )
+        create_vehicle_from_fc_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
+        show_tooltip(
+            create_vehicle_from_fc_button,
+            _(
+                "Create a new vehicle configuration directory using the connected flight controller's "
+                "parameters and component information."
+            ),
         )
 
         def on_bin_log_selected(bin_file: str) -> None:
@@ -245,6 +264,11 @@ class VehicleProjectOpenerWindow(BaseWindow):
         # close this window and open a VehicleProjectCreatorWindow instance
         self.root.destroy()
         VehicleProjectCreatorWindow(self.project_manager)
+
+    def create_new_vehicle_from_flight_controller(self) -> None:
+        """Open the minimal project creator for a connected, already configured FC."""
+        self.root.destroy()
+        VehicleProjectCreatorWindow(self.project_manager, from_flight_controller=True)
 
     def open_last_vehicle_directory(self, last_vehicle_dir: str) -> None:
         # Attempt to open the last opened vehicle configuration directory

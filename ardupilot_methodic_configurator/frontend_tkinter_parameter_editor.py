@@ -1496,6 +1496,21 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
         if isinstance(self.root, tk.Tk) and UsagePopupWindow.should_display("only_changed_get_uploaded"):
             only_upload_changed_parameters_usage_popup(self.root)
         self.write_changes_to_intermediate_parameter_file()
+        omitted_by_import_precedence = self.parameter_editor_table.get_parameters_omitted_by_import_precedence(
+            self.gui_complexity
+        )
+        if omitted_by_import_precedence:
+            self.ui.show_warning(
+                _("Imported parameters already provided by earlier steps"),
+                _(
+                    "The following imported parameters will not be uploaded from this file because they are already "
+                    "provided by an earlier configuration step:\n\n{parameter_names}"
+                ).format(
+                    parameter_names="\n".join(
+                        f"{name} ({omitted_by_import_precedence[name]})" for name in sorted(omitted_by_import_precedence)
+                    )
+                ),
+            )
         selected_params: ParDict = self.parameter_editor_table.get_upload_selected_params(self.gui_complexity)
         precondition_payload: dict[str, object] = dict(selected_params)
         if not self.parameter_editor.ensure_upload_preconditions(precondition_payload, self.ui.show_warning):

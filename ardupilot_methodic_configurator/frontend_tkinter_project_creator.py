@@ -29,6 +29,7 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSettings,
     VehicleProjectCreationError,
 )
+from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.frontend_tkinter_directory_selection import (
     DirectorySelectionWidgets,
@@ -46,7 +47,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
     destination directory, and project options. Integrates with VehicleProjectManager for project creation.
     """
 
-    def __init__(self, project_manager: VehicleProjectManager) -> None:
+    def __init__(self, project_manager: VehicleProjectManager, from_flight_controller: bool = False) -> None:
         super().__init__()
         self.project_manager = project_manager
         self.root.title(
@@ -61,9 +62,16 @@ class VehicleProjectCreatorWindow(BaseWindow):
         # Initialize settings variables dynamically from data model
         self.new_project_settings_vars: dict[str, tk.BooleanVar] = {}
         self.new_project_settings_widgets: dict[str, ttk.Checkbutton] = {}
+        # Created only for the regular template workflow; initialize the attribute here so
+        # static analysis also recognizes it when the flight-controller workflow is used.
+        self.template_dir: DirectorySelectionWidgets
 
         recent_template_dir, new_base_dir, vehicle_dir = self.project_manager.get_recently_used_dirs()
-        template_dir = self.project_manager.get_fc_default_template_dir() if fc_connected else recent_template_dir
+        template_dir = (
+            self.project_manager.get_fc_default_template_dir()
+            if fc_connected and not from_flight_controller
+            else recent_template_dir
+        )
         logging_debug("template_dir: %s", template_dir)  # this string is intentionally left untranslated
         logging_debug("new_base_dir: %s", new_base_dir)  # this string is intentionally left untranslated
         logging_debug("vehicle_dir: %s", vehicle_dir)  # this string is intentionally left untranslated
@@ -74,6 +82,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
             fc_connected,
             fc_parameters,
             project_manager.get_vehicle_type(),
+            from_flight_controller=from_flight_controller,
         )
 
         # Bind the close_connection_and_quit function to the window close event
@@ -82,7 +91,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
     def close_and_quit(self) -> None:
         sys_exit(0)
 
-    def create_option1_widgets(  # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
+    def create_option1_widgets(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         initial_template_dir: str,
         initial_base_dir: str,
@@ -90,11 +99,76 @@ class VehicleProjectCreatorWindow(BaseWindow):
         fc_connected: bool,
         fc_parameters: dict[str, float] | None,
         connected_fc_vehicle_type: str,
+        from_flight_controller: bool = False,
     ) -> None:
-        # Option 1 - Create a new vehicle configuration directory based on an existing template
-        option1_label = ttk.Label(self.main_frame, text=_("New vehicle"), style="Bold.TLabel")
+        option1_label = ttk.Label(
+            self.main_frame,
+            text=_("New vehicle"),
+            style="Bold.TLabel",
+        )
         option1_label_frame = ttk.LabelFrame(self.main_frame, labelwidget=option1_label)
         option1_label_frame.pack(expand=True, fill=tk.X, padx=6, pady=6)
+
+        if from_flight_controller:
+            window_height = 200
+        else:
+            self._create_template_selection_widgets(option1_label_frame, initial_template_dir, connected_fc_vehicle_type)
+            window_height = self._create_settings_widgets(option1_label_frame, fc_connected, fc_parameters)
+        self.root.geometry(self.calculate_scaled_geometry(800, window_height))  # Set the window size
+
+        self.center_window_on_screen(self.root)
+        new_base_dir_edit_tooltip = _("Existing directory where the new vehicle configuration directory will be created")
+        new_base_dir_btn_tooltip = _("Select the directory where the new vehicle configuration directory will be created")
+        self.new_base_dir = DirectorySelectionWidgets(
+            parent=self,
+            parent_frame=option1_label_frame,
+            initialdir=initial_base_dir,
+            label_text=_("Destination base directory:"),
+            autoresize_width=False,
+            dir_tooltip=new_base_dir_edit_tooltip,
+            button_tooltip=new_base_dir_btn_tooltip,
+            on_directory_selected_callback=None,  # Use default file dialog behavior
+        )
+        self.new_base_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
+        new_dir_edit_tooltip = _(
+            "A new vehicle configuration directory with this name will be created at the (destination) base directory"
+        )
+        self.new_dir = PathEntryWidget(
+            option1_label_frame, initial_new_dir, _("Destination new vehicle name:"), new_dir_edit_tooltip
+        )
+        self.new_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
+        create_vehicle_button = ttk.Button(
+            option1_label_frame,
+            text=(
+                _("Create a vehicle project from an already configured flight controller")
+                if from_flight_controller
+                else _("Create a vehicle project from a template")
+            ),
+            command=(
+                self.create_new_vehicle_from_flight_controller
+                if from_flight_controller
+                else self.create_new_vehicle_from_template
+            ),
+        )
+        create_vehicle_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
+        show_tooltip(
+            create_vehicle_button,
+            _(
+                "Create a new vehicle configuration directory using the connected flight controller's\n"
+                "parameters and component information."
+            )
+            if from_flight_controller
+            else _(
+                "Create a new vehicle configuration directory on the (destination) base directory,\n"
+                "copy the template files from the (source) template directory to it and\n"
+                "load the newly created files into the application"
+            ),
+        )
+
+    def _create_template_selection_widgets(
+        self, parent_frame: ttk.LabelFrame, initial_template_dir: str, connected_fc_vehicle_type: str
+    ) -> None:
+        """Create the template directory selector and its template overview callback."""
         template_dir_edit_tooltip = _(
             "Existing vehicle template directory containing the intermediate\n"
             "parameter files to be copied to the new vehicle configuration directory"
@@ -123,7 +197,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
 
         self.template_dir = DirectorySelectionWidgets(
             parent=self,
-            parent_frame=option1_label_frame,
+            parent_frame=parent_frame,
             initialdir=initial_template_dir,
             label_text=_("Source Template directory:"),
             autoresize_width=False,
@@ -133,21 +207,19 @@ class VehicleProjectCreatorWindow(BaseWindow):
         )
         self.template_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
 
-        # Create checkboxes dynamically from settings metadata
+    def _create_settings_widgets(
+        self, parent_frame: ttk.LabelFrame, fc_connected: bool, fc_parameters: dict[str, float] | None
+    ) -> int:
+        """Create the dynamic project-setting checkboxes and return the required window height."""
         settings_metadata = NewVehicleProjectSettings.get_all_settings_metadata(fc_connected, fc_parameters)
         new_project_settings_default_values = NewVehicleProjectSettings.get_default_values()
         for setting_name in settings_metadata:
             default_value = new_project_settings_default_values.get(setting_name, False)
             self.new_project_settings_vars[setting_name] = tk.BooleanVar(value=default_value)
 
-        # Set dynamic window size based on number of settings
-        window_height = 250 + (len(settings_metadata) * 23)
-        self.root.geometry(self.calculate_scaled_geometry(800, window_height))  # Set the window size
-        self.center_window_on_screen(self.root)
-
         for setting_name, metadata in settings_metadata.items():
             checkbox = ttk.Checkbutton(
-                option1_label_frame,
+                parent_frame,
                 variable=self.new_project_settings_vars[setting_name],
                 text=metadata.label,
                 state=tk.NORMAL if metadata.enabled else tk.DISABLED,
@@ -156,40 +228,7 @@ class VehicleProjectCreatorWindow(BaseWindow):
             show_tooltip(checkbox, metadata.tooltip)
             self.new_project_settings_widgets[setting_name] = checkbox
 
-        new_base_dir_edit_tooltip = _("Existing directory where the new vehicle configuration directory will be created")
-        new_base_dir_btn_tooltip = _("Select the directory where the new vehicle configuration directory will be created")
-        self.new_base_dir = DirectorySelectionWidgets(
-            parent=self,
-            parent_frame=option1_label_frame,
-            initialdir=initial_base_dir,
-            label_text=_("Destination base directory:"),
-            autoresize_width=False,
-            dir_tooltip=new_base_dir_edit_tooltip,
-            button_tooltip=new_base_dir_btn_tooltip,
-            on_directory_selected_callback=None,  # Use default file dialog behavior
-        )
-        self.new_base_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
-        new_dir_edit_tooltip = _(
-            "A new vehicle configuration directory with this name will be created at the (destination) base directory"
-        )
-        self.new_dir = PathEntryWidget(
-            option1_label_frame, initial_new_dir, _("Destination new vehicle name:"), new_dir_edit_tooltip
-        )
-        self.new_dir.container_frame.pack(expand=False, fill=tk.X, padx=3, pady=5, anchor=tk.NW)
-        create_vehicle_directory_from_template_button = ttk.Button(
-            option1_label_frame,
-            text=_("Create a vehicle configuration directory from template"),
-            command=self.create_new_vehicle_from_template,
-        )
-        create_vehicle_directory_from_template_button.pack(expand=False, fill=tk.X, padx=20, pady=5, anchor=tk.CENTER)
-        show_tooltip(
-            create_vehicle_directory_from_template_button,
-            _(
-                "Create a new vehicle configuration directory on the (destination) base directory,\n"
-                "copy the template files from the (source) template directory to it and\n"
-                "load the newly created files into the application"
-            ),
-        )
+        return 250 + (len(settings_metadata) * 23)
 
     def create_new_vehicle_from_template(self) -> None:
         # Get the selected template directory and new vehicle configuration directory name
@@ -207,7 +246,17 @@ class VehicleProjectCreatorWindow(BaseWindow):
         try:
             self.project_manager.create_new_vehicle_from_template(template_dir, new_base_dir, new_vehicle_name, settings)
             self.root.destroy()
-        except VehicleProjectCreationError as e:
+        except (VehicleProjectCreationError, VehicleProjectOpenError) as e:
+            messagebox.showerror(e.title, e.message)
+
+    def create_new_vehicle_from_flight_controller(self) -> None:
+        """Create a vehicle project using the connected flight controller's configuration."""
+        new_base_dir = self.new_base_dir.get_selected_directory()
+        new_vehicle_name = self.new_dir.get_selected_directory()
+        try:
+            self.project_manager.create_new_vehicle_from_flight_controller(new_base_dir, new_vehicle_name)
+            self.root.destroy()
+        except (VehicleProjectCreationError, VehicleProjectOpenError) as e:
             messagebox.showerror(e.title, e.message)
 
 

@@ -18,6 +18,7 @@ import pytest
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
     BitmaskHelper,
+    ParameterForcedOrDerivedError,
     ParameterOutOfRangeError,
     ParameterUnchangedError,
 )
@@ -284,7 +285,7 @@ def test_set_new_value(param_fixture) -> None:
     original_value = param_fixture["forced_param"]._new_value
 
     # Act & Assert: User attempts to change forced parameter
-    with pytest.raises(ValueError, match="forced or derived"):
+    with pytest.raises(ParameterForcedOrDerivedError, match="forced or derived"):
         param_fixture["forced_param"].set_new_value(new_value)
 
     # Assert: Forced parameter value unchanged
@@ -294,7 +295,7 @@ def test_set_new_value(param_fixture) -> None:
     original_value = param_fixture["derived_param"]._new_value
 
     # Act & Assert: User attempts to change derived parameter
-    with pytest.raises(ValueError, match="forced or derived"):
+    with pytest.raises(ParameterForcedOrDerivedError, match="forced or derived"):
         param_fixture["derived_param"].set_new_value(new_value)
 
     # Assert: Derived parameter value unchanged

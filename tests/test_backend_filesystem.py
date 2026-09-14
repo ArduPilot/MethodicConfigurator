@@ -764,6 +764,29 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             lfs.save_vehicle_params_to_files(list(lfs.file_parameters))
             mock_export.assert_called_once_with(os_path.join("vehicle_dir", "test.param"))
 
+    def test_compound_params_can_preserve_precedence_of_earlier_steps(self) -> None:
+        """Generated import values do not override an earlier configuration step when requested."""
+        lfs = LocalFilesystem(
+            "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
+        )
+        lfs.file_parameters = {
+            "15_general_configuration.param": ParDict({"AUTO_OWNED": Par(230.0), "STEP_ONLY": Par(1.0)}),
+            "67_imported_bin_log_parameters.param": ParDict({"AUTO_OWNED": Par(115.0), "LOG_ONLY": Par(2.0)}),
+        }
+        lfs.configuration_steps = {"15_general_configuration.param": {}}
+
+        compound, first_filename = lfs.compound_params(
+            last_filename="67_imported_bin_log_parameters.param",
+            respect_import_precedence=True,
+        )
+
+        assert first_filename == "15_general_configuration.param"
+        assert {name: param.value for name, param in compound.items()} == {
+            "AUTO_OWNED": 230.0,
+            "STEP_ONLY": 1.0,
+            "LOG_ONLY": 2.0,
+        }
+
     def test_write_param_default_values_to_file(self) -> None:
         lfs = LocalFilesystem(
             "vehicle_dir", "vehicle_type", None, allow_editing_template_files=False, save_component_to_system_templates=False
