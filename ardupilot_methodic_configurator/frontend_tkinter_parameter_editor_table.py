@@ -115,6 +115,7 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self._upload_selection_defaults: dict[str, bool] = {}
         self._upload_selection_defaults_file: str | None = None
         self._parameters_owned_by_previous_steps: set[str] = set()
+        self._parameter_ownership_sources: dict[str, str] = {}
         self._new_value_widgets: dict[str, PairTupleCombobox | ttk.Entry] = {}
         self._value_is_different_labels: dict[str, ttk.Label] = {}
         self._table_render_generation = 0
@@ -271,6 +272,9 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         parameters = self.parameters if self.parameters is not None else self.parameter_editor.current_step_parameters
         self._parameters_owned_by_previous_steps = (
             self.parameter_editor.parameters_owned_by_previous_configuration_steps() if self.parameters is None else set()
+        )
+        self._parameter_ownership_sources = (
+            self.parameter_editor.parameter_ownership_sources_for_current_import() if self.parameters is None else {}
         )
         if show_only_differences:
             # Filter to show only different parameters
@@ -970,7 +974,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self.upload_checkbutton_var[param_name] = tk.BooleanVar(value=selected)
         upload_checkbutton = ttk.Checkbutton(self.view_port, variable=self.upload_checkbutton_var[param_name])
         upload_checkbutton.configure(state="normal" if fc_connected and is_uploadable else "disabled")
-        msg = _("When selected upload {param_name} new value to the flight controller")
+        owner = getattr(self, "_parameter_ownership_sources", {}).get(param_name)
+        msg = (
+            _("This imported parameter is already provided by {owner}. It is not selected by default here.")
+            if owner
+            else _("When selected upload {param_name} new value to the flight controller")
+        )
         self._show_tooltip(upload_checkbutton, msg.format(**locals()))
         return upload_checkbutton
 
@@ -1326,6 +1335,12 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                 }
             )
         return self.parameter_editor.get_parameters_as_par_dict(selected_names)
+
+    def get_parameters_omitted_by_import_precedence(self, gui_complexity: str) -> dict[str, str]:
+        """Return imported parameters omitted automatically in simple mode and their owners."""
+        if self._should_show_upload_column(gui_complexity):
+            return {}
+        return self.parameter_editor.parameter_ownership_sources_for_current_import()
 
     def get_unselected_manually_edited_different_parameter_names(self) -> list[str]:
         """Return temporary manual edits that differ from the FC but are not selected for upload."""

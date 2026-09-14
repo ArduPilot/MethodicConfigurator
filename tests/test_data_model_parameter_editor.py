@@ -63,8 +63,24 @@ def mock_local_filesystem() -> MagicMock:
     mock_fs.export_to_param = MagicMock()
     mock_fs.vehicle_components_fs.has_unsaved_changes.return_value = False
 
+    def imported_parameter_owners(imported_filename: str) -> dict[str, str]:
+        """Mirror LocalFilesystem's import ownership lookup for editor tests."""
+        if "_imported_" not in imported_filename:
+            return {}
+        owners: dict[str, str] = {}
+        for filename in mock_fs.file_parameters:
+            if filename == imported_filename:
+                break
+            if filename in mock_fs.configuration_steps:
+                owners.update(dict.fromkeys(mock_fs.file_parameters[filename], filename))
+        return owners
+
+    mock_fs.imported_parameter_owners.side_effect = imported_parameter_owners
+
     # Mock compound_params to compute first config filename based on file_parameters
-    def mock_compound_params(last_filename=None, skip_default=True) -> tuple[ParDict, str | None]:
+    def mock_compound_params(
+        last_filename=None, skip_default=True, respect_import_precedence=False
+    ) -> tuple[ParDict, str | None]:
         """Mock compound_params that mimics the real behavior."""
         compound = ParDict()
         first_config_step_filename = None
@@ -79,11 +95,15 @@ def mock_local_filesystem() -> MagicMock:
                 first_config_step_filename = file_name
 
             # Append parameters from this file (file_params could be dict or ParDict)
-            if isinstance(file_params, ParDict):
-                compound.append(file_params)
+            params_to_append = file_params
+            if respect_import_precedence and "_imported_" in file_name:
+                owners = imported_parameter_owners(file_name)
+                params_to_append = {name: value for name, value in file_params.items() if name not in owners}
+            if isinstance(params_to_append, ParDict):
+                compound.append(params_to_append)
             else:
                 # Convert dict to ParDict if needed
-                for param_name, param_value in file_params.items():
+                for param_name, param_value in params_to_append.items():
                     compound[param_name] = param_value
 
             # Stop at the specified filename if provided
@@ -162,6 +182,9 @@ class TestGeneratedImportFileUploadPrecedence:
         parameter_editor.current_file = "67_imported_bin_log_parameters.param"
 
         assert parameter_editor.parameters_owned_by_previous_configuration_steps() == {"AUTO_OWNED"}
+        assert parameter_editor.parameter_ownership_sources_for_current_import() == {
+            "AUTO_OWNED": "15_general_configuration.param"
+        }
 
     def test_regular_step_files_do_not_filter_upload_parameters(self, parameter_editor, mock_local_filesystem) -> None:
         mock_local_filesystem.file_parameters = {"15_general_configuration.param": {"AUTO_OWNED": Par(2.0)}}
@@ -6333,6 +6356,23 @@ class TestFlightControllerParameterDiffExport:
 
         exported_name = parameter_editor._local_filesystem.export_to_param.call_args[0][1]
         assert exported_name.endswith("01_first_to_01_first.param")
+
+    def test_diff_export_respects_precedence_of_earlier_steps_over_import_file(
+        self, parameter_editor: ParameterEditor
+    ) -> None:
+        """Generated import values do not create false FC differences."""
+        parameter_editor._local_filesystem.file_parameters = {
+            "15_general_configuration.param": ParDict({"AUTO_OWNED": Par(230.0)}),
+            "67_imported_bin_log_parameters.param": ParDict({"AUTO_OWNED": Par(115.0)}),
+        }
+        parameter_editor._local_filesystem.configuration_steps = {"15_general_configuration.param": {}}
+        parameter_editor._local_filesystem.export_to_param.reset_mock()
+
+        parameter_editor._export_fc_params_missing_or_different_in_amc_files(
+            ParDict({"AUTO_OWNED": Par(230.0)}), "67_imported_bin_log_parameters.param"
+        )
+
+        parameter_editor._local_filesystem.export_to_param.assert_not_called()
 
     def test_boot_calibration_parameters_are_never_exported_as_a_difference(self, parameter_editor: ParameterEditor) -> None:
         """

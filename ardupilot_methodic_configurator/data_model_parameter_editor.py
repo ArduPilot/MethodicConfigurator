@@ -1334,7 +1334,10 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             return
 
         # Create the compounded state of all parameters stored in the AMC .param files
-        compound, first_config_step_filename = self._local_filesystem.compound_params(last_filename=last_filename)
+        compound, first_config_step_filename = self._local_filesystem.compound_params(
+            last_filename=last_filename,
+            respect_import_precedence=True,
+        )
 
         # Calculate parameters that only exist in fc_parameters or have a different value from compound
         params_missing_in_the_amc_param_files = fc_parameters.get_missing_or_different(compound, is_within_tolerance)
@@ -2381,24 +2384,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
     def parameter_files(self) -> list[str]:
         return list(self._local_filesystem.file_parameters.keys())
 
+    def parameter_ownership_sources_for_current_import(self) -> dict[str, str]:
+        """Return the earlier configuration step owning each duplicate import parameter."""
+        return self._local_filesystem.imported_parameter_owners(self.current_file)
+
     def parameters_owned_by_previous_configuration_steps(self) -> set[str]:
-        """Return parameters in earlier step files that take precedence over a generated import file."""
-        if "_imported_" not in self.current_file:
-            return set()
-
-        filenames = list(self._local_filesystem.file_parameters)
-        try:
-            current_file_index = filenames.index(self.current_file)
-        except ValueError:
-            return set()
-
-        configuration_steps = getattr(self._local_filesystem, "configuration_steps", {}) or {}
-        return {
-            param_name
-            for filename in filenames[:current_file_index]
-            if filename in configuration_steps
-            for param_name in self._local_filesystem.file_parameters[filename]
-        }
+        """Return parameters in earlier steps that take precedence over this import file."""
+        return set(self.parameter_ownership_sources_for_current_import())
 
     def parameter_documentation_available(self) -> bool:
         return bool(self._local_filesystem.doc_dict)

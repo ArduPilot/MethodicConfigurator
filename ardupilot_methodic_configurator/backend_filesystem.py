@@ -358,7 +358,26 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             logging_error(_("Error: %s is not a directory."), self.vehicle_dir)
         return parameters
 
-    def compound_params(self, last_filename: str | None = None, skip_default: bool = True) -> tuple[ParDict, str | None]:
+    def imported_parameter_owners(self, imported_filename: str) -> dict[str, str]:
+        """Return the earlier configuration step owning each duplicate import parameter."""
+        if "_imported_" not in imported_filename:
+            return {}
+
+        owners: dict[str, str] = {}
+        configuration_steps = self.configuration_steps or {}
+        for filename in self.file_parameters:
+            if filename == imported_filename:
+                break
+            if filename in configuration_steps:
+                owners.update(dict.fromkeys(self.file_parameters[filename], filename))
+        return owners
+
+    def compound_params(
+        self,
+        last_filename: str | None = None,
+        skip_default: bool = True,
+        respect_import_precedence: bool = False,
+    ) -> tuple[ParDict, str | None]:
         """
         Compound parameters from multiple .param files into a single ParDict.
 
@@ -370,6 +389,9 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             last_filename: Optional filename to stop processing at (inclusive).
                           If None, processes all files.
             skip_default: If True, skips 00_default.param. Default is True.
+            respect_import_precedence: If True, values in generated import files
+                are ignored when the same parameter is already present in an
+                earlier configuration step. Default is False.
 
         Returns:
             tuple[ParDict, Optional[str]]: A tuple containing:
@@ -389,8 +411,15 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             if first_config_step_filename is None:
                 first_config_step_filename = file_name
 
+            # Generated import files are supplementary. Earlier configuration
+            # steps own duplicate names and therefore retain precedence.
+            params_to_append = file_params
+            if respect_import_precedence and "_imported_" in file_name:
+                owners = self.imported_parameter_owners(file_name)
+                params_to_append = ParDict({name: param for name, param in file_params.items() if name not in owners})
+
             # Append parameters from this file
-            compound.append(file_params)
+            compound.append(params_to_append)
 
             # Stop at the specified filename if provided
             if last_filename and file_name == last_filename:
