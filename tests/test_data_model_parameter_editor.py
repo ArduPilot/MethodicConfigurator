@@ -319,7 +319,7 @@ class TestExternalParameterUploadWorkflow:
         assert reset_happened is True
         assert reset_succeeded is True
         assert uploaded == {"BRD_BOOT_DELAY"}
-        parameter_editor._flight_controller.reset_and_reconnect.assert_called_once_with(None, None, 8)
+        parameter_editor._flight_controller.reset_and_reconnect.assert_called_once_with(None, 8)
 
 
 class TestParameterFilteringWorkflows:
@@ -1433,7 +1433,7 @@ class TestFlightControllerResetWorkflows:
         assert result is None
         parameter_editor._flight_controller.reset_and_reconnect.assert_called_once()
         args = parameter_editor._flight_controller.reset_and_reconnect.call_args[0]
-        assert args[2] == 3  # Calculated sleep time
+        assert args[1] == 3  # Calculated sleep time
 
     def test_user_can_reset_with_custom_sleep_time(self, parameter_editor) -> None:
         """
@@ -1452,7 +1452,7 @@ class TestFlightControllerResetWorkflows:
 
         # Assert: Custom time was used
         args = parameter_editor._flight_controller.reset_and_reconnect.call_args[0]
-        assert args[2] == custom_sleep_time
+        assert args[1] == custom_sleep_time
 
     def test_user_handles_reset_failure(self, parameter_editor) -> None:
         """
@@ -1483,21 +1483,18 @@ class TestFlightControllerResetWorkflows:
         parameter_editor._flight_controller.reset_all_parameters_to_default_and_reconnect.return_value = (True, "")
         parameter_editor.download_flight_controller_parameters = MagicMock(return_value=({"P1": 1.0}, ParDict()))
         show_error = MagicMock()
-        reset_progress_callback = MagicMock()
-        connection_progress_callback = MagicMock()
+        progress_callback = MagicMock()
         get_download_progress_callback = MagicMock()
 
         result = parameter_editor.reset_all_parameters_to_default(
             show_error,
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
             get_download_progress_callback,
         )
 
         assert result is True
         parameter_editor._flight_controller.reset_all_parameters_to_default_and_reconnect.assert_called_once_with(
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
         )
         parameter_editor.download_flight_controller_parameters.assert_called_once_with(get_download_progress_callback)
         show_error.assert_not_called()
@@ -2757,8 +2754,7 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        reset_progress_callback_mock = MagicMock()
-        connection_progress_callback_mock = MagicMock()
+        progress_callback_mock = MagicMock()
 
         # Mock successful reset
         with patch.object(parameter_editor, "_reset_and_reconnect_flight_controller", return_value=None):
@@ -2768,8 +2764,7 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=[],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                reset_progress_callback=reset_progress_callback_mock,
-                connection_progress_callback=connection_progress_callback_mock,
+                progress_callback=progress_callback_mock,
             )
 
         # Assert: Workflow completed successfully
@@ -2792,8 +2787,7 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock(return_value=True)  # User confirms
         show_error_mock = MagicMock()
-        reset_progress_callback_mock = MagicMock()
-        connection_progress_callback_mock = MagicMock()
+        progress_callback_mock = MagicMock()
 
         # Mock successful reset
         with patch.object(parameter_editor, "_reset_and_reconnect_flight_controller", return_value=None):
@@ -2803,8 +2797,7 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=["PARAM1", "PARAM2"],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                reset_progress_callback=reset_progress_callback_mock,
-                connection_progress_callback=connection_progress_callback_mock,
+                progress_callback=progress_callback_mock,
             )
 
         # Assert: Workflow completed successfully
@@ -2831,8 +2824,7 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock(return_value=False)  # User declines
         show_error_mock = MagicMock()
-        reset_progress_callback_mock = MagicMock()
-        connection_progress_callback_mock = MagicMock()
+        progress_callback_mock = MagicMock()
 
         # Act: Execute workflow with uncertain parameters
         result = parameter_editor.reset_and_reconnect_workflow(
@@ -2840,8 +2832,7 @@ class TestResetAndReconnectWorkflow:
             fc_reset_unsure=["PARAM1"],
             ask_confirmation=ask_confirmation_mock,
             show_error=show_error_mock,
-            reset_progress_callback=reset_progress_callback_mock,
-            connection_progress_callback=connection_progress_callback_mock,
+            progress_callback=progress_callback_mock,
         )
 
         # Assert: Workflow completed without reset
@@ -2864,8 +2855,7 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        reset_progress_callback_mock = MagicMock()
-        connection_progress_callback_mock = MagicMock()
+        progress_callback_mock = MagicMock()
 
         # Mock failed reset with error message
         error_message = "Connection timeout during reset"
@@ -2876,8 +2866,7 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=[],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                reset_progress_callback=reset_progress_callback_mock,
-                connection_progress_callback=connection_progress_callback_mock,
+                progress_callback=progress_callback_mock,
             )
 
         # Assert: Workflow failed
@@ -2897,8 +2886,7 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        reset_progress_callback_mock = MagicMock()
-        connection_progress_callback_mock = MagicMock()
+        progress_callback_mock = MagicMock()
 
         # Mock reset returning error message
         error_message = "Failed to reset flight controller: Communication error"
@@ -2909,8 +2897,7 @@ class TestResetAndReconnectWorkflow:
                 fc_reset_unsure=[],
                 ask_confirmation=ask_confirmation_mock,
                 show_error=show_error_mock,
-                reset_progress_callback=reset_progress_callback_mock,
-                connection_progress_callback=connection_progress_callback_mock,
+                progress_callback=progress_callback_mock,
             )
 
         # Assert: Workflow failed
@@ -2930,8 +2917,7 @@ class TestResetAndReconnectWorkflow:
         # Arrange: Set up mock callbacks
         ask_confirmation_mock = MagicMock()
         show_error_mock = MagicMock()
-        reset_progress_callback_mock = MagicMock()
-        connection_progress_callback_mock = MagicMock()
+        progress_callback_mock = MagicMock()
 
         # Act: Execute workflow with no reset requirements
         result = parameter_editor.reset_and_reconnect_workflow(
@@ -2939,8 +2925,7 @@ class TestResetAndReconnectWorkflow:
             fc_reset_unsure=[],
             ask_confirmation=ask_confirmation_mock,
             show_error=show_error_mock,
-            reset_progress_callback=reset_progress_callback_mock,
-            connection_progress_callback=connection_progress_callback_mock,
+            progress_callback=progress_callback_mock,
         )
 
         # Assert: Workflow completed without reset

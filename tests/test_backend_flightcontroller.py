@@ -664,7 +664,7 @@ class TestFlightControllerResetAndDelegation:
         assert success is True
         assert error_message == ""
         mock_commands_mgr.reset_all_parameters_to_default.assert_called_once_with()
-        fc.reset_and_reconnect.assert_called_once_with(None, None, None)
+        fc.reset_and_reconnect.assert_called_once_with(None, None)
 
     def test_resetting_all_parameters_reports_a_reconnect_failure(self) -> None:
         """The combined workflow returns the reconnect error after a successful reset."""
@@ -703,27 +703,25 @@ class TestFlightControllerResetAndDelegation:
         """
         fc, mock_conn_mgr, *_others, mock_master = _build_flight_controller_with_mocks(reboot_time=2)
         mock_conn_mgr.create_connection_with_retry.return_value = "RECONNECTED"
-        progress_updates: list[tuple[int, int]] = []
-        connection_progress = MagicMock()
+        progress_callback = MagicMock()
 
         with patch("ardupilot_methodic_configurator.backend_flightcontroller.time_sleep", return_value=None):
             result = fc.reset_and_reconnect(
-                reset_progress_callback=lambda current, total: progress_updates.append((current, total)),
-                connection_progress_callback=connection_progress,
+                progress_callback=progress_callback,
                 extra_sleep_time=1,
             )
 
         mock_master.reboot_autopilot.assert_called_once()
         mock_conn_mgr.disconnect.assert_called_once()
         mock_conn_mgr.create_connection_with_retry.assert_called_once_with(
-            progress_callback=connection_progress,
+            progress_callback=None,
             retries=3,
             timeout=5,
             baudrate=mock_conn_mgr.baudrate,
             log_errors=True,
+            reconnect_progress_callback=progress_callback,
         )
-        assert progress_updates[0] == (0, 3)
-        assert progress_updates[-1] == (3, 3)
+        progress_callback.assert_called_once_with(10, 100)
         assert result == "RECONNECTED"
 
     def test_reset_and_reconnect_returns_immediately_when_disconnected(self) -> None:

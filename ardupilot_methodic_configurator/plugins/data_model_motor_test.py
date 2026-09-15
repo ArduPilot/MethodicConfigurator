@@ -378,12 +378,11 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 }
             )
 
-    def set_parameter(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def set_parameter(
         self,
         param_name: str,
         value: float,
-        reset_progress_callback: Callable[[int, int], None] | None = None,
-        connection_progress_callback: Callable[[int, int], None] | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = 0,
     ) -> None:
         """
@@ -392,8 +391,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
         Args:
             param_name: Parameter name (e.g., "MOT_SPIN_ARM")
             value: Parameter value
-            reset_progress_callback: Optional callback for reset progress updates
-            connection_progress_callback: Optional callback for connection progress updates
+            progress_callback: Optional callback for reset and reconnect progress updates
             extra_sleep_time: Optional additional sleep time before re-connecting
 
         Raises:
@@ -444,9 +442,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
             if actual_value is not None and abs(actual_value - value) < 0.001:  # Allow small floating-point tolerance
                 logging_info(_("Parameter %(param)s set to %(value).3f"), {"param": param_name, "value": value})
                 if requires_reset:
-                    self.flight_controller.reset_and_reconnect(
-                        reset_progress_callback, connection_progress_callback, extra_sleep_time
-                    )
+                    self.flight_controller.reset_and_reconnect(progress_callback, extra_sleep_time)
                 return
             raise ParameterError(
                 _("Parameter %(param)s verification failed: expected %(expected).3f, got %(actual)s")
@@ -538,8 +534,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def set_motor_spin_arm_value(
         self,
         value: float,
-        reset_progress_callback: Callable[[int, int], None] | None = None,
-        connection_progress_callback: Callable[[int, int], None] | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> None:
         """Set MOT_SPIN_ARM ensuring a 0.02 margin relative to MOT_SPIN_MIN."""
         spin_min = self.get_parameter("MOT_SPIN_MIN")
@@ -548,7 +543,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
                 _("MOT_SPIN_ARM must stay at least 0.02 below MOT_SPIN_MIN (current %(min).2f).") % {"min": spin_min}
             )
 
-        self.set_parameter("MOT_SPIN_ARM", value, reset_progress_callback, connection_progress_callback)
+        self.set_parameter("MOT_SPIN_ARM", value, progress_callback)
 
     def set_motor_spin_min_value(self, value: float) -> None:
         """Set MOT_SPIN_MIN ensuring it keeps 0.02 margin above MOT_SPIN_ARM."""
@@ -1150,8 +1145,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def update_frame_type_from_selection(
         self,
         selected_text: str,
-        reset_progress_callback: Callable[[int, int], None] | None = None,
-        connection_progress_callback: Callable[[int, int], None] | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = None,
     ) -> bool:
         """
@@ -1159,8 +1153,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
         Args:
             selected_text: Selected text in format "Frame Class: Frame Type"
-            reset_progress_callback: Callback for resetting progress
-            connection_progress_callback: Callback for connection progress
+            progress_callback: Callback for reset and reconnect progress
             extra_sleep_time: Additional sleep time before setting parameters
 
         Returns:
@@ -1177,13 +1170,9 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
             # Immediately upload parameters to flight controller
             if self.frame_class != frame_class_code:
-                self.set_parameter(
-                    "FRAME_CLASS", frame_class_code, reset_progress_callback, connection_progress_callback, extra_sleep_time
-                )
+                self.set_parameter("FRAME_CLASS", frame_class_code, progress_callback, extra_sleep_time)
             if self.frame_type != frame_type_code:
-                self.set_parameter(
-                    "FRAME_TYPE", frame_type_code, reset_progress_callback, connection_progress_callback, extra_sleep_time
-                )
+                self.set_parameter("FRAME_TYPE", frame_type_code, progress_callback, extra_sleep_time)
 
             logging_info(
                 _("Updated frame configuration: FRAME_CLASS=%(class)d, FRAME_TYPE=%(type)d"),
@@ -1218,8 +1207,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
     def update_frame_type_by_key(
         self,
         selected_key: str,
-        reset_progress_callback: Callable[[int, int], None] | None = None,
-        connection_progress_callback: Callable[[int, int], None] | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = None,
     ) -> bool:
         """Update frame configuration using the combobox key directly."""
@@ -1235,8 +1223,7 @@ class MotorTestDataModel:  # pylint: disable=too-many-public-methods, too-many-i
 
         return self.update_frame_type_from_selection(
             frame_type_name,
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
             extra_sleep_time,
         )
 

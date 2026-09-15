@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from time import time as real_time
 from typing import TYPE_CHECKING, NoReturn, Optional
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 import serial.tools.list_ports_common
@@ -1825,6 +1825,61 @@ class TestFlightControllerConnectionProcessAutopilotVersion:
 
 class TestFlightControllerConnectionRetry:
     """Test create_connection_with_retry edge cases."""
+
+    def test_create_connection_retries_when_usb_port_is_not_ready_after_reboot(self) -> None:
+        """
+        Reconnection retries a transient serial-port-open failure.
+
+        GIVEN: A USB flight controller whose COM port is not yet available
+        WHEN: The first connection attempt fails and the second succeeds
+        THEN: The connection should succeed without reporting an error
+        """
+        master = Mock()
+
+        class DelayedPortFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
+            ) -> Mock:  # type: ignore[override]
+                self.calls += 1
+                if self.calls == 1:
+                    error_message = "COM31 is temporarily unavailable"
+                    raise ConnectionError(error_message)
+                return master
+
+        factory = DelayedPortFactory()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=factory,
+        )
+        connection.comport = mavutil.SerialPort(device="COM31", description="ArduPilot MAVLink")
+        reconnect_progress = Mock()
+
+        with (
+            patch.object(connection, "_detect_vehicles_from_heartbeats", return_value={(1, 1): Mock()}),
+            patch.object(connection, "_select_supported_autopilot", return_value=""),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep") as mock_sleep,
+        ):
+            result = connection.create_connection_with_retry(
+                progress_callback=None,
+                retries=3,
+                timeout=1,
+                reconnect_progress_callback=reconnect_progress,
+            )
+
+        assert result == ""
+        assert factory.calls == 2
+        mock_sleep.assert_called_once_with(connection.CONNECTION_RETRY_DELAY)
+        assert connection.master is master
+        assert reconnect_progress.call_args_list == [
+            call(30, 100),
+            call(50, 100),
+            call(90, 100),
+            call(100, 100),
+        ]
 
     def test_create_connection_udp_device_logs_without_baudrate(self) -> None:
         """

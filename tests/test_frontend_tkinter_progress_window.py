@@ -100,6 +100,14 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name
         assert progress_window.progress_bar["value"] == 75
         assert progress_window.progress_label.cget("text") == "Progress: 75/100"
 
+    def test_user_sees_progress_message_change_during_task_execution(self, progress_window) -> None:
+        """A caller can replace the progress message for a new task stage."""
+        progress_window.update_progress_bar_with_message(30, 100, "Reconnect attempt 1 of 3")
+
+        assert progress_window.progress_bar["value"] == 30
+        assert progress_window.progress_bar["maximum"] == 100
+        assert progress_window.progress_label.cget("text") == "Reconnect attempt 1 of 3"
+
     def test_user_sees_progress_window_close_when_task_completes(self, progress_window) -> None:
         """
         User sees progress window automatically close when task completes.

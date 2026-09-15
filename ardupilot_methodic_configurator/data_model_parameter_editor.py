@@ -731,13 +731,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return fc_parameters, param_default_values
 
-    def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
+    def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals
         self,
         selected_params: dict,
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
     ) -> tuple[bool, set[str], bool]:
         """
         Upload parameters that require reset to the flight controller.
@@ -746,8 +745,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             selected_params: Dictionary of parameters to upload.
             ask_confirmation: Callback to ask user for confirmation.
             show_error: Callback to show error messages.
-            reset_progress_callback: Optional callback for reset progress updates.
-            connection_progress_callback: Optional callback for connection progress updates.
+            progress_callback: Optional callback for reset and reconnect progress updates.
             selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
         Returns:
@@ -817,8 +815,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             reset_unsure_params,
             ask_confirmation,
             show_error,
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
             selected_params,
         )
 
@@ -846,8 +843,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _reset_and_reconnect_flight_controller(
         self,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
         sleep_time: int | None = None,
         selected_params: dict | None = None,
     ) -> str | None:
@@ -855,8 +851,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         Reset and reconnect to the flight controller.
 
         Args:
-            reset_progress_callback: Optional callback function for progress updates.
-            connection_progress_callback: Optional callback function for connection progress updates.
+            progress_callback: Optional callback function for reset and reconnect progress updates.
             sleep_time: Optional sleep time override. If None, calculates based on boot delay parameters.
             selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
@@ -867,22 +862,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if sleep_time is None:
             sleep_time = self._calculate_reset_time(selected_params)
 
-        # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-        return self._flight_controller.reset_and_reconnect(
-            reset_progress_callback, connection_progress_callback, int(sleep_time)
-        )
+        return self._flight_controller.reset_and_reconnect(progress_callback, int(sleep_time))
 
     def reset_all_parameters_to_default(
         self,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
         get_download_progress_callback: Callable[[], Callable | None] | None = None,
     ) -> bool:
         """Reset all flight-controller parameters, then reboot and reconnect."""
         success, error_message = self._flight_controller.reset_all_parameters_to_default_and_reconnect(
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
         )
         if not success:
             show_error(_("ArduPilot methodic configurator"), error_message)
@@ -902,8 +892,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         fc_reset_unsure: list[str],
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
         selected_params: dict | None = None,
     ) -> bool:
         """
@@ -919,8 +908,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             fc_reset_unsure: List of parameters that potentially require reset
             ask_confirmation: Callback to ask user for confirmation
             show_error: Callback to show error messages
-            reset_progress_callback: Optional callback for reset progress updates
-            connection_progress_callback: Optional callback for connection progress updates
+            progress_callback: Optional callback for reset and reconnect progress updates
             selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
         Returns:
@@ -937,8 +925,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         if should_reset:
             error_message = self._reset_and_reconnect_flight_controller(
-                reset_progress_callback,
-                connection_progress_callback,
+                progress_callback,
                 selected_params=selected_params,
             )
             if error_message:
@@ -1095,7 +1082,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ask_retry_cancel: AskRetryCancelCallback,
         show_error: ShowErrorCallback,
         get_upload_progress_callback: Callable[[], Callable | None] | None = None,
-        get_reset_progress_callback: Callable[[], Callable | None] | None = None,
         get_connection_progress_callback: Callable[[], Callable | None] | None = None,
         get_download_progress_callback: Callable[[], Callable | None] | None = None,
         *,
@@ -1110,8 +1096,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             ask_retry_cancel: Callback to ask user to retry or cancel on upload error.
             show_error: Callback to show error messages.
             get_upload_progress_callback: Optional factory function that creates and returns an upload progress callback.
-            get_reset_progress_callback: Optional factory function that creates and returns a reset progress callback.
-            get_connection_progress_callback: Optional factory function that creates and returns a connection prog. callback.
+            get_connection_progress_callback: Optional factory function that creates and returns a reset/reconnect progress
+                                              callback.
             get_download_progress_callback: Optional factory function that creates and returns a download progress callback.
             persist_project_state: Whether to write AMC step state, tuning reports, and FC-difference exports.
 
@@ -1132,12 +1118,11 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
             # Get progress callbacks from factories if provided
             progress_callback_for_upload = get_upload_progress_callback() if get_upload_progress_callback else None
-            progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
             progress_callback_for_connection = get_connection_progress_callback() if get_connection_progress_callback else None
             progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
             # Upload parameters that require reset
             reset_happened, already_uploaded_params, reset_succeeded = self.upload_parameters_that_require_reset_workflow(
-                selected_params, ask_confirmation, show_error, progress_callback_for_reset, progress_callback_for_connection
+                selected_params, ask_confirmation, show_error, progress_callback_for_connection
             )
             if not reset_succeeded:
                 self._at_least_one_changed = False
@@ -1216,7 +1201,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ask_retry_cancel: AskRetryCancelCallback,
         show_error: ShowErrorCallback,
         get_upload_progress_callback: Callable[[], Callable | None] | None = None,
-        get_reset_progress_callback: Callable[[], Callable | None] | None = None,
         get_connection_progress_callback: Callable[[], Callable | None] | None = None,
         get_download_progress_callback: Callable[[], Callable | None] | None = None,
     ) -> bool:
@@ -1227,7 +1211,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             ask_retry_cancel,
             show_error,
             get_upload_progress_callback,
-            get_reset_progress_callback,
             get_connection_progress_callback,
             get_download_progress_callback,
             persist_project_state=False,
