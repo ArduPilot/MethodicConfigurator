@@ -61,7 +61,6 @@ from pymavlink.mavftp_op import (
     OP_CreateDirectory,
     OP_CreateFile,
     OP_ListDirectory,
-    OP_ListDirectoryWithTime,
     OP_Nack,
     OP_None,
     OP_OpenFileRO,
@@ -75,6 +74,15 @@ from pymavlink.mavftp_op import (
     OP_TruncateFile,
     OP_WriteFile,
 )
+
+# ``OP_ListDirectoryWithTime`` was added after pymavlink 2.4.49, while the
+# extension is still useful with older installations (servers that support it
+# use opcode 16). Keep the project compatible with its pinned pymavlink
+# dependency and with newer versions that export the name.
+try:
+    from pymavlink.mavftp_op import OP_ListDirectoryWithTime
+except ImportError:
+    OP_ListDirectoryWithTime = 16
 
 ParameterDataType = Union[str, int]
 SettingValue = Union[int, float]
