@@ -123,6 +123,7 @@ class FlightControllerConnectionProtocol(Protocol):
         timeout: int,
         baudrate: int,
         log_errors: bool,
+        reconnect_progress_callback: Callable[[int, int], None] | None = None,
     ) -> str: ...
 
     def get_serial_ports(self) -> list[serial.tools.list_ports_common.ListPortInfo]:

@@ -157,6 +157,11 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
             msg = _("Updating progress widgets: {_e}")
             logging_error(msg.format(**locals()))
 
+    def update_progress_bar_with_message(self, current_value: int, max_value: int, message: str) -> None:
+        """Update the progress bar while replacing its displayed message."""
+        self.message = message
+        self.update_progress_bar(current_value, max_value)
+
     def destroy(self) -> None:
         try:
             if self.progress_window.winfo_exists():

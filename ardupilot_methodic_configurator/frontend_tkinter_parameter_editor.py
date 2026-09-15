@@ -176,8 +176,7 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
 
         """
         upload_progress_window: ProgressWindow | None = None
-        reset_progress_window: ProgressWindow | None = None
-        connection_progress_window: ProgressWindow | None = None
+        reset_reconnect_progress_window: ProgressWindow | None = None
         download_progress_window: ProgressWindow | None = None
 
         def get_upload_progress_callback() -> Callable[[int, int], None] | None:
@@ -192,29 +191,33 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             )
             return upload_progress_window.update_progress_bar
 
-        def get_reset_progress_callback() -> Callable[[int, int], None] | None:
-            """Create and return progress window callback for FC reset only when needed."""
-            nonlocal reset_progress_window
-            show_only_on_update = True
-            reset_progress_window = self.create_progress_window(
-                parent_window,
-                _("Resetting Flight Controller"),
-                _("Waiting for {} of {} seconds"),
-                show_only_on_update,
-            )
-            return reset_progress_window.update_progress_bar
-
         def get_connection_progress_callback() -> Callable[[int, int], None] | None:
-            """Create and return progress window callback for FC connection only when needed."""
-            nonlocal connection_progress_window
-            show_only_on_update = True
-            connection_progress_window = self.create_progress_window(
-                parent_window,
-                _("Reconnecting to Flight Controller"),
-                _("{} of {} percent"),
-                show_only_on_update,
-            )
-            return connection_progress_window.update_progress_bar
+            """Create and return the shared reset/reconnect progress callback."""
+            nonlocal reset_reconnect_progress_window
+            if reset_reconnect_progress_window is None:
+                reset_reconnect_progress_window = self.create_progress_window(
+                    parent_window,
+                    _("Restarting Flight Controller"),
+                    _("Reset command sent"),
+                    True,  # noqa: FBT003
+                )
+            progress_window = reset_reconnect_progress_window
+
+            def update_connection_progress(current: int, total: int) -> None:
+                # pylint: disable=duplicate-code
+                if current == 10 and total == 100:
+                    message = _("Reset command sent")
+                elif current == 90 and total == 100:
+                    message = _("Waiting for MAVLink HEARTBEAT")
+                elif current == 100 and total == 100:
+                    message = _("Flight Controller connected")
+                else:
+                    attempt = max(1, (current - 10) // 20)
+                    message = _("Reconnect attempt %(attempt)d of 3") % {"attempt": attempt}
+                progress_window.update_progress_bar_with_message(current, total, message)
+                # pylint: enable=duplicate-code
+
+            return update_connection_progress
 
         def get_download_progress_callback() -> Callable[[int, int], None] | None:
             """Create and return progress window callback for parameter download only when needed."""
@@ -236,7 +239,6 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
                     ask_retry_cancel=self.ask_retry_cancel,
                     show_error=self.show_error,
                     get_upload_progress_callback=get_upload_progress_callback,
-                    get_reset_progress_callback=get_reset_progress_callback,
                     get_connection_progress_callback=get_connection_progress_callback,
                     get_download_progress_callback=get_download_progress_callback,
                 )
@@ -245,10 +247,8 @@ class ParameterEditorUiServices:  # pylint: disable=too-many-instance-attributes
             # Clean up progress windows if they were created
             if upload_progress_window is not None:
                 upload_progress_window.destroy()
-            if reset_progress_window is not None:
-                reset_progress_window.destroy()
-            if connection_progress_window is not None:
-                connection_progress_window.destroy()
+            if reset_reconnect_progress_window is not None:
+                reset_reconnect_progress_window.destroy()
             if download_progress_window is not None:
                 download_progress_window.destroy()
 
@@ -1656,31 +1656,38 @@ class ParameterEditorWindow(BaseWindow):  # pylint: disable=too-many-instance-at
             )
             return download_progress_window.update_progress_bar
 
-        reset_progress_window = self.ui.create_progress_window(
+        reset_reconnect_progress_window = self.ui.create_progress_window(
             self.root,
-            _("Resetting Flight Controller"),
-            _("Waiting for {} of {} seconds"),
+            _("Restarting Flight Controller"),
+            _("Reset command sent"),
             True,  # noqa: FBT003
         )
-        connection_progress_window = self.ui.create_progress_window(
-            self.root,
-            _("Reconnecting to Flight Controller"),
-            _("{} of {} percent"),
-            True,  # noqa: FBT003
-        )
+
+        def update_progress(current: int, total: int) -> None:
+            # pylint: disable=duplicate-code
+            if current == 10 and total == 100:
+                message = _("Reset command sent")
+            elif current == 90 and total == 100:
+                message = _("Waiting for MAVLink HEARTBEAT")
+            elif current == 100 and total == 100:
+                message = _("Flight Controller connected")
+            else:
+                attempt = max(1, (current - 10) // 20)
+                message = _("Reconnect attempt %(attempt)d of 3") % {"attempt": attempt}
+            reset_reconnect_progress_window.update_progress_bar_with_message(current, total, message)
+            # pylint: enable=duplicate-code
+
         try:
             success = self.parameter_editor.reset_all_parameters_to_default(
                 self.ui.show_error,
-                reset_progress_window.update_progress_bar,
-                connection_progress_window.update_progress_bar,
+                update_progress,
                 get_download_progress_callback,
             )
             if success:
                 self.repopulate_parameter_table()
             return success
         finally:
-            reset_progress_window.destroy()
-            connection_progress_window.destroy()
+            reset_reconnect_progress_window.destroy()
             if download_progress_window is not None:
                 download_progress_window.destroy()
 

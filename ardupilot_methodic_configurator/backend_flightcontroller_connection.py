@@ -111,6 +111,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     CONNECTION_RETRY_COUNT: ClassVar[int] = 3
     CONNECTION_TIMEOUT: ClassVar[int] = 5
     CONNECTION_RETRY_TIMEOUT: ClassVar[int] = 2
+    CONNECTION_RETRY_DELAY: ClassVar[float] = 1.0
     HEARTBEAT_POLL_DELAY: ClassVar[float] = 0.1
     BANNER_RECEIVE_TIMEOUT: ClassVar[float] = 1.0
 
@@ -841,13 +842,14 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
     # pylint: enable=duplicate-code
 
-    def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals, too-many-branches
         self,
         progress_callback: Callable[[int, int], None] | None,
         retries: int = 3,
         timeout: int = 5,
         baudrate: int = DEFAULT_BAUDRATE,
         log_errors: bool = True,
+        reconnect_progress_callback: Callable[[int, int], None] | None = None,
     ) -> str:
         """
         Attempts to create a connection to the flight controller with retries.
@@ -860,10 +862,11 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         Args:
             progress_callback (callable, optional): A callback function to report the progress
                                                     of the connection attempt. Default is None.
-            retries (int, optional): The number of retries before giving up. Default is 3.
+            retries (int, optional): The number of connection attempts before giving up. Default is 3.
             timeout (int, optional): The timeout in seconds for each connection attempt. Default is 5.
             baudrate (int, optional): The baud rate for the connection. Default is DEFAULT_BAUDRATE.
             log_errors (bool): log errors.
+            reconnect_progress_callback: Optional reset/reconnect UI progress callback.
 
         Returns:
             str: An error message if the connection fails after all retries, otherwise an empty string
@@ -877,45 +880,72 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             logging_info(_("Will connect to %s"), self.comport.device)
         else:
             logging_info(_("Will connect to %s @ %u baud"), self.comport.device, baudrate)
-        try:
-            # Create the connection
-            self.master = self._create_mavlink_connection(
-                device=self.comport.device,
-                baudrate=baudrate,
-                timeout=timeout,
-                retries=retries,
-                progress_callback=progress_callback,
-            )
-            logging_debug(_("Waiting for MAVLink heartbeats..."))
-            if not self.master:
-                msg = f"Failed to create mavlink connect to {self.comport.device}"
-                raise ConnectionError(msg)
+        attempts = max(1, retries)
+        last_error: Exception | None = None
+        for attempt in range(1, attempts + 1):
+            try:
+                if reconnect_progress_callback:
+                    attempt_progress = 30 + int((attempt - 1) * 40 / max(1, attempts - 1))
+                    reconnect_progress_callback(attempt_progress, 100)
 
-            # Detect all vehicles from HEARTBEAT messages
-            detected_vehicles = self._detect_vehicles_from_heartbeats(timeout)
+                # The USB CDC device can still be absent when the reboot countdown
+                # completes.  Retry opening the port as well as waiting for a
+                # heartbeat; pymavlink's retries do not retry a failed port open.
+                self.master = self._create_mavlink_connection(
+                    device=self.comport.device,
+                    baudrate=baudrate,
+                    timeout=timeout,
+                    retries=retries,
+                    progress_callback=progress_callback,
+                )
+                logging_debug(_("Waiting for MAVLink heartbeats..."))
+                if not self.master:
+                    msg = f"Failed to create mavlink connect to {self.comport.device}"
+                    raise ConnectionError(msg)
 
-            # Select a supported autopilot
-            error = self._select_supported_autopilot(detected_vehicles)
-            if error:
+                # Detect all vehicles from HEARTBEAT messages
+                detected_vehicles = self._detect_vehicles_from_heartbeats(timeout)
+                if detected_vehicles and reconnect_progress_callback:
+                    reconnect_progress_callback(90, 100)
+
+                # Select a supported autopilot
+                error = self._select_supported_autopilot(detected_vehicles)
+                if error:
+                    raise ConnectionError(error)
+
+                # Retrieve autopilot version and banner information
+                error = self._retrieve_autopilot_version_and_banner(timeout)
+                if error:
+                    raise ConnectionError(error)
+                if reconnect_progress_callback:
+                    reconnect_progress_callback(100, 100)
+                return ""
+
+            except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as error:  # noqa: PERF203
+                last_error = error
                 self.disconnect()
-                return error
+                if attempt < attempts:
+                    logging_debug(
+                        _("Connection attempt %d/%d failed: %s. Retrying in %.1f seconds."),
+                        attempt,
+                        attempts,
+                        error,
+                        self.CONNECTION_RETRY_DELAY,
+                    )
+                    time_sleep(self.CONNECTION_RETRY_DELAY)
 
-            # Retrieve autopilot version and banner information
-            error = self._retrieve_autopilot_version_and_banner(timeout)
-            if error:
-                self.disconnect()
-            return error
-
-        except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
+        if last_error is not None:
             self.disconnect()
             if log_errors:
-                logging_warning(_("Connection failed: %s"), e)
-                logging_error(_("Failed to connect after %d attempts."), retries)
-            error_message = str(e)
-            guidance = self._get_connection_error_guidance(e, self.comport.device if self.comport else "")
+                logging_warning(_("Connection failed: %s"), last_error)
+                logging_error(_("Failed to connect after %d attempts."), attempts)
+            error_message = str(last_error)
+            guidance = self._get_connection_error_guidance(last_error, self.comport.device if self.comport else "")
             if guidance:
                 error_message = f"{error_message}\n\n{guidance}"
             return error_message
+
+        return _("Connection failed.")
 
     def get_connection_tuples(self) -> list[tuple[str, str]]:
         """
