@@ -246,6 +246,10 @@ class TestDirectoryManagement:
         # Valid names should pass validation
         assert ProgramSettings.valid_directory_name("valid_dir_name-123") is True
         assert ProgramSettings.valid_directory_name("valid_dir_name") is True
+        assert ProgramSettings.valid_directory_name("valid vehicle name") is True
+        assert ProgramSettings.valid_directory_name(" vehicle name") is False
+        assert ProgramSettings.valid_directory_name("vehicle name ") is False
+        assert ProgramSettings.valid_directory_name("   ") is False
 
         # Path separators and traversal are not valid in a vehicle name
         assert ProgramSettings.valid_directory_name("valid_dir_name/child") is False
