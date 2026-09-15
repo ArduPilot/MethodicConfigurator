@@ -1177,13 +1177,13 @@ class TestBinLogImportHelpers:
         THEN: Only the filename without extension or directory is returned
         """
         # Arrange
-        bin_file = "/logs/2024-04-24/my_flight.bin"
+        bin_file = "/logs/2024-04-24/my flight log.bin"
 
         # Act
         result = VehicleProjectCreator.vehicle_name_from_bin_log(bin_file)
 
         # Assert
-        assert result == "my_flight"
+        assert result == "my flight log"
 
     def test_next_import_filename_starts_at_one_when_no_param_files_exist(self, tmp_path) -> None:
         """
