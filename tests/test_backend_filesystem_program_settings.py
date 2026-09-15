@@ -246,6 +246,12 @@ class TestDirectoryManagement:
         # Valid names should pass validation
         assert ProgramSettings.valid_directory_name("valid_dir_name-123") is True
         assert ProgramSettings.valid_directory_name("valid_dir_name") is True
+        assert ProgramSettings.valid_directory_name("valid vehicle name") is True
+        assert ProgramSettings.valid_directory_name("vehicle\tname") is False
+        assert ProgramSettings.valid_directory_name("vehicle\u00a0name") is False
+        assert ProgramSettings.valid_directory_name(" vehicle name") is False
+        assert ProgramSettings.valid_directory_name("vehicle name ") is False
+        assert ProgramSettings.valid_directory_name("   ") is False
 
         # Path separators and traversal are not valid in a vehicle name
         assert ProgramSettings.valid_directory_name("valid_dir_name/child") is False
@@ -269,6 +275,11 @@ class TestDirectoryManagement:
         with patch("ardupilot_methodic_configurator.backend_filesystem_program_settings.IS_WINDOWS", new=True):
             assert ProgramSettings.valid_directory_name("CON") is False
             assert ProgramSettings.valid_directory_name("Lpt1.param") is False
+            assert ProgramSettings.valid_directory_name("CON .param") is False
+            for reserved_name in ("CON", "PRN", "AUX", "NUL", "COM1", "LPT1"):
+                assert ProgramSettings.valid_directory_name(f"{reserved_name} .txt") is False
+                assert ProgramSettings.valid_directory_name(f"{reserved_name}  .param") is False
+                assert ProgramSettings.valid_directory_name(f"{reserved_name.lower()} .param") is False
             assert ProgramSettings.valid_directory_name("vehicle.") is False
             assert ProgramSettings.valid_directory_name("vehicle.v1") is True
 
