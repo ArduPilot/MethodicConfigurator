@@ -17,7 +17,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
+    ProgressWindow,
+    update_flight_controller_restart_progress,
+)
 
 
 @pytest.fixture
@@ -100,6 +103,26 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name
         assert progress_window.progress_bar["value"] == 75
         assert progress_window.progress_label.cget("text") == "Progress: 75/100"
 
+    def test_user_sees_progress_message_change_during_task_execution(self, progress_window) -> None:
+        """A caller can replace the progress message for a new task stage."""
+        progress_window.update_progress_bar_with_message(30, 100, "Reconnect attempt 1 of 3")
+
+        assert progress_window.progress_bar["value"] == 30
+        assert progress_window.progress_bar["maximum"] == 100
+        assert progress_window.progress_label.cget("text") == "Reconnect attempt 1 of 3"
+
+    def test_restart_progress_does_not_assume_three_reconnect_attempts(self) -> None:
+        """The restart UI leaves the retry count unspecified when it is not supplied."""
+        progress_window = MagicMock()
+
+        update_flight_controller_restart_progress(progress_window, 43, 100)
+
+        progress_window.update_progress_bar_with_message.assert_called_once_with(
+            43,
+            100,
+            "Reconnecting to flight controller",
+        )
+
     def test_user_sees_progress_window_close_when_task_completes(self, progress_window) -> None:
         """
         User sees progress window automatically close when task completes.
@@ -113,6 +136,22 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name
 
         # Window should be destroyed
         assert not progress_window.progress_window.winfo_exists()
+
+    def test_user_can_reuse_restart_progress_window_after_reconnect(self, tk_root) -> None:
+        """Restart progress remains available if a later validation retry resets the FC again."""
+        window = ProgressWindow(
+            tk_root,
+            title="Restarting Flight Controller",
+            message="Reset command sent",
+            auto_close_on_complete=False,
+        )
+
+        update_flight_controller_restart_progress(window, 100, 100)
+        assert window.progress_window.winfo_exists()
+
+        update_flight_controller_restart_progress(window, 10, 100)
+        assert window.progress_label.cget("text") == "Reset command sent"
+        window.destroy()
 
     def test_user_sees_special_progress_for_long_running_tasks(self, progress_window) -> None:
         """

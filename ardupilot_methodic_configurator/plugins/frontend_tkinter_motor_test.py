@@ -45,7 +45,10 @@ from ardupilot_methodic_configurator.frontend_tkinter_base_window import (
     BaseWindow,
 )
 from ardupilot_methodic_configurator.frontend_tkinter_pair_tuple_combobox import PairTupleCombobox
-from ardupilot_methodic_configurator.frontend_tkinter_progress_window import ProgressWindow
+from ardupilot_methodic_configurator.frontend_tkinter_progress_window import (
+    ProgressWindow,
+    update_flight_controller_restart_progress,
+)
 from ardupilot_methodic_configurator.frontend_tkinter_scroll_frame import ScrollFrame
 from ardupilot_methodic_configurator.plugins.data_model_motor_test import (
     DURATION_S_MAX,
@@ -491,32 +494,25 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
             return
 
         try:
-            # Create delayed progress windows that only show if operation takes more than 1 second
-            reset_progress_window = ProgressWindow(
+            # Only show the shared progress window if restarting takes more than one second.
+            progress_window = ProgressWindow(
                 self.root_window,
-                _("Resetting Flight Controller"),
-                _("Waiting for {} of {} seconds"),
+                _("Restarting Flight Controller"),
+                _("Reset command sent"),
                 only_show_when_update_progress_called=True,
-            )
-            connection_progress_window = ProgressWindow(
-                self.root_window,
-                _("Re-Connecting to Flight Controller"),
-                _("Waiting for {} of {} seconds"),
-                only_show_when_update_progress_called=True,
+                auto_close_on_complete=False,
             )
 
-            # Create delayed callback wrappers that wait 1 second before showing progress
-            reset_callback = DelayedProgressCallback(reset_progress_window.update_progress_bar, 1.0)
-            connection_callback = DelayedProgressCallback(connection_progress_window.update_progress_bar, 1.0)
+            def update_progress(current: int, total: int) -> None:
+                update_flight_controller_restart_progress(progress_window, current, total)
 
+            progress_callback = DelayedProgressCallback(update_progress, 1.0)
             self.model.update_frame_type_by_key(
                 selected_key,
-                reset_callback,
-                connection_callback,
+                progress_callback,
                 extra_sleep_time=2,
             )
-            reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
-            connection_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
+            progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
 
             # Invalidate diagram cache since frame type changed
             self._diagrams_path = ""
@@ -587,11 +583,17 @@ class MotorTestView(Frame):  # pylint: disable=too-many-instance-attributes
         )
         if new_val is not None:
             try:
-                reset_progress_window = ProgressWindow(
-                    self.root_window, _("Resetting Flight Controller"), _("Waiting for {} of {} seconds")
+                progress_window = ProgressWindow(
+                    self.root_window,
+                    _("Restarting Flight Controller"),
+                    _("Reset command sent"),
+                    auto_close_on_complete=False,
                 )
-                self.model.set_motor_spin_arm_value(new_val, reset_progress_window.update_progress_bar)
-                reset_progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
+                self.model.set_motor_spin_arm_value(
+                    new_val,
+                    lambda current, total: update_flight_controller_restart_progress(progress_window, current, total),
+                )
+                progress_window.destroy()  # for the case that we are doing a test and there is no real FC connected
             except (ParameterError, ValidationError) as e:
                 showerror(_("Error"), str(e))
 

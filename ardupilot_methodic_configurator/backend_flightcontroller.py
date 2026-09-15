@@ -276,16 +276,14 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def reset_and_reconnect(
         self,
-        reset_progress_callback: Callable[[int, int], None] | None = None,
-        connection_progress_callback: Callable[[int, int], None] | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = None,
     ) -> str:
         """
         Reset the flight controller and reconnect.
 
         Args:
-            reset_progress_callback: reset callback function
-            connection_progress_callback: connection callback function
+            progress_callback: Callback for reset and reconnect progress stages.
             extra_sleep_time (int, optional): The time in seconds to wait before reconnecting.
 
         """
@@ -299,28 +297,26 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
         self.disconnect()
 
-        current_step = 0
-
         if extra_sleep_time is None or extra_sleep_time < 0:
             extra_sleep_time = 0
 
         sleep_time = self._reboot_time + extra_sleep_time
-
-        while current_step != sleep_time:
-            # Call the progress callback with the current progress
-            if reset_progress_callback:
-                reset_progress_callback(current_step, sleep_time)
-
-            # Wait for sleep_time seconds
-            time_sleep(1)
-            current_step += 1
-
-        # Call the progress callback with the current progress
-        if reset_progress_callback:
-            reset_progress_callback(current_step, sleep_time)
+        for elapsed_seconds in range(sleep_time + 1):
+            if progress_callback:
+                # Keep the UI responsive while the controller reboots.  The reset
+                # phase occupies 10-30% of the shared restart progress indicator.
+                reset_progress = 10 + int(20 * elapsed_seconds / max(1, sleep_time))
+                progress_callback(reset_progress, 100)
+            if elapsed_seconds < sleep_time:
+                time_sleep(1)
 
         # Reconnect to the flight controller
-        return self.create_connection_with_retry(connection_progress_callback, baudrate=self.baudrate)
+        return self.create_connection_with_retry(
+            progress_callback=None,
+            baudrate=self.baudrate,
+            reconnect_progress_callback=progress_callback,
+            is_reconnect=True,
+        )
 
     def discover_connections(
         self,
@@ -412,6 +408,8 @@ class FlightController:  # pylint: disable=too-many-public-methods
         timeout: int = 5,
         baudrate: int = DEFAULT_BAUDRATE,
         log_errors: bool = True,
+        reconnect_progress_callback: Callable[[int, int], None] | None = None,
+        is_reconnect: bool = False,
     ) -> str:
         """
         Attempts to create a connection to the flight controller - delegates to connection manager.
@@ -422,17 +420,29 @@ class FlightController:  # pylint: disable=too-many-public-methods
             timeout: The timeout in seconds for each connection attempt
             baudrate: The baud rate for the connection
             log_errors: Whether to log errors
+            reconnect_progress_callback: Optional callback for reset/reconnect progress stages.
+            is_reconnect: Use reconnect retry behavior even without a UI callback.
 
         Returns:
             str: An error message if connection fails, otherwise empty string
 
         """
+        if reconnect_progress_callback is None and not is_reconnect:
+            return self._connection_manager.create_connection_with_retry(
+                progress_callback=progress_callback,
+                retries=retries,
+                timeout=timeout,
+                baudrate=baudrate,
+                log_errors=log_errors,
+            )
         return self._connection_manager.create_connection_with_retry(
             progress_callback=progress_callback,
             retries=retries,
             timeout=timeout,
             baudrate=baudrate,
             log_errors=log_errors,
+            reconnect_progress_callback=reconnect_progress_callback,
+            is_reconnect=is_reconnect,
         )
 
     @staticmethod
@@ -477,8 +487,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
 
     def reset_all_parameters_to_default_and_reconnect(
         self,
-        reset_progress_callback: Callable[[int, int], None] | None = None,
-        connection_progress_callback: Callable[[int, int], None] | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         extra_sleep_time: int | None = None,
     ) -> tuple[bool, str]:
         """Reset all parameters to defaults, then reboot and reconnect the flight controller."""
@@ -487,8 +496,7 @@ class FlightController:  # pylint: disable=too-many-public-methods
             return False, error_message
 
         reconnect_error = self.reset_and_reconnect(
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
             extra_sleep_time,
         )
         return (False, reconnect_error) if reconnect_error else (True, "")

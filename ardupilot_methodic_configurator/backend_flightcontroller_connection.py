@@ -111,6 +111,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
     CONNECTION_RETRY_COUNT: ClassVar[int] = 3
     CONNECTION_TIMEOUT: ClassVar[int] = 5
     CONNECTION_RETRY_TIMEOUT: ClassVar[int] = 2
+    CONNECTION_RETRY_DELAY: ClassVar[float] = 1.0
     HEARTBEAT_POLL_DELAY: ClassVar[float] = 0.1
     BANNER_RECEIVE_TIMEOUT: ClassVar[float] = 1.0
 
@@ -425,12 +426,15 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             progress_callback=progress_callback,
         )
 
-    def _detect_vehicles_from_heartbeats(self, timeout: int) -> dict[tuple[int, int], Any]:
+    def _detect_vehicles_from_heartbeats(
+        self, timeout: int, return_after_first_heartbeat: bool = False
+    ) -> dict[tuple[int, int], Any]:
         """
         Detect all vehicles by collecting HEARTBEAT messages within timeout period.
 
         Args:
-            timeout: Time in seconds to wait for HEARTBEAT messages
+            timeout: Time in seconds to wait for HEARTBEAT messages.
+            return_after_first_heartbeat: Stop when a supported vehicle responds.
 
         Returns:
             dict[tuple[int, int], Any]: Dictionary mapping (system_id, component_id) to HEARTBEAT message
@@ -438,7 +442,6 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         """
         start_time = time_time()
         detected_vehicles: dict[tuple[int, int], Any] = {}
-
         while time_time() - start_time < timeout:
             try:
                 m = (
@@ -462,6 +465,11 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             compid = m.get_srcComponent()
             detected_vehicles[(sysid, compid)] = m
             logging_debug(_("Detected vehicle %u:%u (autopilot=%u, type=%u)"), sysid, compid, m.autopilot, m.type)
+            if (
+                return_after_first_heartbeat
+                and m.autopilot == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+            ):
+                return detected_vehicles
 
         return detected_vehicles
 
@@ -841,13 +849,15 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
 
     # pylint: enable=duplicate-code
 
-    def create_connection_with_retry(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def create_connection_with_retry(  # noqa: PLR0915 # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals, too-many-branches, too-many-statements
         self,
         progress_callback: Callable[[int, int], None] | None,
         retries: int = 3,
         timeout: int = 5,
         baudrate: int = DEFAULT_BAUDRATE,
         log_errors: bool = True,
+        reconnect_progress_callback: Callable[[int, int], None] | None = None,
+        is_reconnect: bool = False,
     ) -> str:
         """
         Attempts to create a connection to the flight controller with retries.
@@ -860,62 +870,94 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
         Args:
             progress_callback (callable, optional): A callback function to report the progress
                                                     of the connection attempt. Default is None.
-            retries (int, optional): The number of retries before giving up. Default is 3.
+            retries (int, optional): PyMAVLink retries, or reconnect attempts when reconnecting. Default is 3.
             timeout (int, optional): The timeout in seconds for each connection attempt. Default is 5.
             baudrate (int, optional): The baud rate for the connection. Default is DEFAULT_BAUDRATE.
             log_errors (bool): log errors.
+            reconnect_progress_callback: Optional reset/reconnect UI progress callback.
+            is_reconnect: Use reconnect retry behavior even without a UI callback.
 
         Returns:
             str: An error message if the connection fails after all retries, otherwise an empty string
                 indicating a successful connection.
 
         """
-        if self.comport is None or self.comport.device == DEVICE_FC_PARAM_FROM_FILE:
+        comport = self.comport
+        if comport is None or comport.device == DEVICE_FC_PARAM_FROM_FILE:
             # will read parameters from a params.param file instead of a from a flight controller
             return ""
-        if self.comport.device.startswith("udp") or self.comport.device.startswith("tcp"):
-            logging_info(_("Will connect to %s"), self.comport.device)
+        if comport.device.startswith("udp") or comport.device.startswith("tcp"):
+            logging_info(_("Will connect to %s"), comport.device)
         else:
-            logging_info(_("Will connect to %s @ %u baud"), self.comport.device, baudrate)
-        try:
-            # Create the connection
-            self.master = self._create_mavlink_connection(
-                device=self.comport.device,
-                baudrate=baudrate,
-                timeout=timeout,
-                retries=retries,
-                progress_callback=progress_callback,
-            )
-            logging_debug(_("Waiting for MAVLink heartbeats..."))
-            if not self.master:
-                msg = f"Failed to create mavlink connect to {self.comport.device}"
-                raise ConnectionError(msg)
+            logging_info(_("Will connect to %s @ %u baud"), comport.device, baudrate)
+        reconnecting = is_reconnect or reconnect_progress_callback is not None
+        attempts = max(1, retries) if reconnecting else 1
+        attempt = 1
+        while True:
+            retryable_failure = True
+            try:
+                if attempt > 1 and (serial_number := getattr(comport, "serial_number", None)):
+                    ports = self._serial_port_discovery.get_available_ports()
+                    comport = next((port for port in ports if port.serial_number == serial_number), comport)
+                    self.comport = comport
+                if comport is None:
+                    msg = "No flight controller connection port selected."
+                    raise ConnectionError(msg)
+                if reconnect_progress_callback:
+                    attempt_progress = 30 + int((attempt - 1) * 40 / max(1, attempts - 1))
+                    reconnect_progress_callback(attempt_progress, 100)
+                self.master = self._create_mavlink_connection(
+                    device=comport.device,
+                    baudrate=baudrate,
+                    timeout=timeout,
+                    retries=1 if reconnecting else retries,
+                    progress_callback=progress_callback,
+                )
+                logging_debug(_("Waiting for MAVLink heartbeats..."))
+                if not self.master:
+                    msg = f"Failed to create mavlink connect to {comport.device}"
+                    raise ConnectionError(msg)
+                detected_vehicles = self._detect_vehicles_from_heartbeats(timeout, reconnecting)
+                if not detected_vehicles:
+                    error = self._select_supported_autopilot(detected_vehicles)
+                    raise ConnectionError(error)
+                error = self._select_supported_autopilot(detected_vehicles)
+                if error:
+                    self.disconnect()
+                    return error
+                retryable_failure = False
+                if reconnect_progress_callback:
+                    reconnect_progress_callback(90, 100)
+                error = self._retrieve_autopilot_version_and_banner(timeout)
+                if error:
+                    self.disconnect()
+                    return error
+                if reconnect_progress_callback:
+                    reconnect_progress_callback(100, 100)
+                return ""
 
-            # Detect all vehicles from HEARTBEAT messages
-            detected_vehicles = self._detect_vehicles_from_heartbeats(timeout)
-
-            # Select a supported autopilot
-            error = self._select_supported_autopilot(detected_vehicles)
-            if error:
+            except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as error:
                 self.disconnect()
-                return error
+                if reconnecting and retryable_failure and not isinstance(error, PermissionError) and attempt < attempts:
+                    logging_debug(
+                        _("Connection attempt %d/%d failed: %s. Retrying in %.1f seconds."),
+                        attempt,
+                        attempts,
+                        error,
+                        self.CONNECTION_RETRY_DELAY,
+                    )
+                    time_sleep(self.CONNECTION_RETRY_DELAY)
+                    attempt += 1
+                    continue
 
-            # Retrieve autopilot version and banner information
-            error = self._retrieve_autopilot_version_and_banner(timeout)
-            if error:
-                self.disconnect()
-            return error
-
-        except (ConnectionError, SerialException, PermissionError, ConnectionRefusedError) as e:
-            self.disconnect()
-            if log_errors:
-                logging_warning(_("Connection failed: %s"), e)
-                logging_error(_("Failed to connect after %d attempts."), retries)
-            error_message = str(e)
-            guidance = self._get_connection_error_guidance(e, self.comport.device if self.comport else "")
-            if guidance:
-                error_message = f"{error_message}\n\n{guidance}"
-            return error_message
+                if log_errors:
+                    logging_warning(_("Connection failed: %s"), error)
+                    logging_error(_("Failed to connect after %d attempts."), attempt)
+                error_message = str(error)
+                guidance = self._get_connection_error_guidance(error, self.comport.device if self.comport else "")
+                if guidance:
+                    error_message = f"{error_message}\n\n{guidance}"
+                return error_message
 
     def get_connection_tuples(self) -> list[tuple[str, str]]:
         """

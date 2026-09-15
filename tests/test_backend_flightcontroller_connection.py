@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from time import time as real_time
 from typing import TYPE_CHECKING, NoReturn, Optional
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 import serial.tools.list_ports_common
@@ -1253,6 +1253,51 @@ class TestFlightControllerConnectionLinuxSoftlink:
 class TestFlightControllerConnectionVehicleDetection:
     """Test vehicle detection methods including edge cases."""
 
+    def test_reconnect_heartbeat_detection_stops_after_first_vehicle(self) -> None:
+        """Reset reconnects do not wait out the full detection timeout after a heartbeat arrives."""
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        heartbeat = Mock()
+        heartbeat.get_srcSystem.return_value = 1
+        heartbeat.get_srcComponent.return_value = 1
+        heartbeat.autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+        heartbeat.type = mavutil.mavlink.MAV_TYPE_QUADROTOR
+        connection.master = Mock()
+        connection.master.recv_match.return_value = heartbeat
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time",
+            side_effect=[0.0, 0.0],
+        ):
+            detected = connection._detect_vehicles_from_heartbeats(5, return_after_first_heartbeat=True)
+
+        assert detected == {(1, 1): heartbeat}
+        connection.master.recv_match.assert_called_once_with(type="HEARTBEAT", blocking=False)
+
+    def test_reconnect_heartbeat_detection_skips_unsupported_components(self) -> None:
+        """Reconnect keeps polling until it receives an ArduPilot heartbeat."""
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        unsupported = Mock()
+        unsupported.get_srcSystem.return_value = 1
+        unsupported.get_srcComponent.return_value = 190
+        unsupported.autopilot = mavutil.mavlink.MAV_AUTOPILOT_INVALID
+        unsupported.type = mavutil.mavlink.MAV_TYPE_GIMBAL
+        supported = Mock()
+        supported.get_srcSystem.return_value = 1
+        supported.get_srcComponent.return_value = 1
+        supported.autopilot = mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
+        supported.type = mavutil.mavlink.MAV_TYPE_QUADROTOR
+        connection.master = Mock()
+        connection.master.recv_match.side_effect = [unsupported, supported]
+
+        with patch(
+            "ardupilot_methodic_configurator.backend_flightcontroller_connection.time_time",
+            side_effect=[0.0, 0.0, 0.0],
+        ):
+            detected = connection._detect_vehicles_from_heartbeats(5, return_after_first_heartbeat=True)
+
+        assert detected == {(1, 190): unsupported, (1, 1): supported}
+        assert connection.master.recv_match.call_count == 2
+
     def test_detect_vehicles_handles_type_error_from_pymavlink(self) -> None:
         """
         _detect_vehicles_from_heartbeats continues polling after pymavlink TypeError.
@@ -1825,6 +1870,219 @@ class TestFlightControllerConnectionProcessAutopilotVersion:
 
 class TestFlightControllerConnectionRetry:
     """Test create_connection_with_retry edge cases."""
+
+    def test_create_connection_retries_when_usb_port_is_not_ready_after_reboot(self) -> None:
+        """
+        Reconnection retries a transient serial-port-open failure.
+
+        GIVEN: A USB flight controller whose COM port is not yet available
+        WHEN: The first connection attempt fails and the second succeeds
+        THEN: The connection should succeed without reporting an error
+        """
+        master = Mock()
+
+        class DelayedPortFactory(MavlinkConnectionFactory):  # pylint: disable=too-few-public-methods, missing-class-docstring
+            def __init__(self) -> None:
+                self.calls = 0
+                self.retries: list[int] = []
+
+            def create(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+                self, device, baudrate=115200, timeout=5.0, retries=3, progress_callback=None
+            ) -> Mock:  # type: ignore[override]
+                self.calls += 1
+                self.retries.append(retries)
+                if self.calls == 1:
+                    error_message = "COM31 is temporarily unavailable"
+                    raise ConnectionError(error_message)
+                return master
+
+        factory = DelayedPortFactory()
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            mavlink_connection_factory=factory,
+        )
+        connection.comport = mavutil.SerialPort(device="COM31", description="ArduPilot MAVLink")
+        reconnect_progress = Mock()
+
+        with (
+            patch.object(connection, "_detect_vehicles_from_heartbeats", return_value={(1, 1): Mock()}),
+            patch.object(connection, "_select_supported_autopilot", return_value=""),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep") as mock_sleep,
+        ):
+            result = connection.create_connection_with_retry(
+                progress_callback=None,
+                retries=3,
+                timeout=1,
+                reconnect_progress_callback=reconnect_progress,
+            )
+
+        assert result == ""
+        assert factory.calls == 2
+        assert factory.retries == [1, 1]
+        mock_sleep.assert_called_once_with(connection.CONNECTION_RETRY_DELAY)
+        assert connection.master is master
+        assert reconnect_progress.call_args_list == [
+            call(30, 100),
+            call(50, 100),
+            call(90, 100),
+            call(100, 100),
+        ]
+
+    def test_normal_connection_keeps_pymavlink_retry_count_without_outer_retries(self) -> None:
+        """Normal connections make one factory call and leave retry handling to PyMAVLink."""
+        master = Mock()
+        factory = Mock(return_value=master)
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        connection.comport = mavutil.SerialPort(device="COM31", description="ArduPilot MAVLink")
+        connection._create_mavlink_connection = factory  # type: ignore[method-assign]
+
+        with (
+            patch.object(connection, "_detect_vehicles_from_heartbeats", return_value={(1, 1): Mock()}),
+            patch.object(connection, "_select_supported_autopilot", return_value=""),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=""),
+        ):
+            result = connection.create_connection_with_retry(progress_callback=None, retries=3, timeout=1)
+
+        assert result == ""
+        factory.assert_called_once_with(
+            device="COM31",
+            baudrate=115200,
+            timeout=1,
+            retries=3,
+            progress_callback=None,
+        )
+
+    def test_reconnect_retries_only_after_a_missing_heartbeat(self) -> None:
+        """A reset reconnect retries the next port-open attempt when the first heartbeat times out."""
+        first_master = Mock()
+        second_master = Mock()
+        factory = Mock(side_effect=[first_master, second_master])
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        connection.comport = mavutil.SerialPort(device="COM31", description="ArduPilot MAVLink")
+        connection._create_mavlink_connection = factory  # type: ignore[method-assign]
+
+        with (
+            patch.object(connection, "_detect_vehicles_from_heartbeats", side_effect=[{}, {(1, 1): Mock()}]),
+            patch.object(
+                connection,
+                "_select_supported_autopilot",
+                side_effect=["No MAVLink heartbeat received, connection failed.", ""],
+            ),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep") as mock_sleep,
+        ):
+            result = connection.create_connection_with_retry(
+                progress_callback=None,
+                retries=3,
+                timeout=1,
+                reconnect_progress_callback=Mock(),
+            )
+
+        assert result == ""
+        assert factory.call_count == 2
+        first_master.close.assert_called_once()
+        mock_sleep.assert_called_once_with(connection.CONNECTION_RETRY_DELAY)
+
+    def test_reconnect_without_progress_callback_retries_transient_port_errors(self) -> None:
+        """Headless reset reconnects retain the same retry behavior as UI reconnects."""
+        master = Mock()
+        factory = Mock(side_effect=[ConnectionError("COM31 is temporarily unavailable"), master])
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        connection.comport = mavutil.SerialPort(device="COM31", description="ArduPilot MAVLink")
+        connection._create_mavlink_connection = factory  # type: ignore[method-assign]
+
+        with (
+            patch.object(connection, "_detect_vehicles_from_heartbeats", return_value={(1, 1): Mock()}),
+            patch.object(connection, "_select_supported_autopilot", return_value=""),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep") as mock_sleep,
+        ):
+            result = connection.create_connection_with_retry(
+                progress_callback=None,
+                retries=3,
+                timeout=1,
+                is_reconnect=True,
+            )
+
+        assert result == ""
+        assert factory.call_count == 2
+        assert [call.kwargs["retries"] for call in factory.call_args_list] == [1, 1]
+        mock_sleep.assert_called_once_with(connection.CONNECTION_RETRY_DELAY)
+
+    def test_reconnect_uses_the_new_serial_device_after_usb_reenumeration(self) -> None:
+        """An auto-detected FC reconnects after Windows assigns a new COM port."""
+        old_port = serial.tools.list_ports_common.ListPortInfo("COM31")
+        old_port.serial_number = "FC123"
+        new_port = serial.tools.list_ports_common.ListPortInfo("COM42")
+        new_port.serial_number = "FC123"
+        master = Mock()
+        factory = Mock(return_value=master)
+        discovery = FakeSerialPortDiscovery()
+        discovery._ports = [new_port]  # pylint: disable=protected-access
+        connection = FlightControllerConnection(
+            info=FlightControllerInfo(),
+            serial_port_discovery=discovery,
+        )
+        connection.comport = old_port
+        connection._create_mavlink_connection = factory  # type: ignore[method-assign]
+
+        with (
+            patch.object(connection, "_detect_vehicles_from_heartbeats", side_effect=[{}, {(1, 1): Mock()}]),
+            patch.object(
+                connection,
+                "_select_supported_autopilot",
+                side_effect=["No MAVLink heartbeat received, connection failed.", ""],
+            ),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=""),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep"),
+        ):
+            result = connection.create_connection_with_retry(
+                progress_callback=None,
+                retries=3,
+                timeout=1,
+                reconnect_progress_callback=Mock(),
+            )
+
+        assert result == ""
+        assert [call.kwargs["device"] for call in factory.call_args_list] == ["COM31", "COM42"]
+
+    @pytest.mark.parametrize(
+        ("detected_vehicles", "selection_error", "version_error"),
+        [
+            ({(1, 1): Mock()}, "Unsupported autopilot", ""),
+            ({(1, 1): Mock()}, "", "No AUTOPILOT_VERSION MAVLink message received"),
+        ],
+    )
+    def test_reconnect_does_not_retry_after_a_heartbeat(
+        self,
+        detected_vehicles: dict[tuple[int, int], Mock],
+        selection_error: str,
+        version_error: str,
+    ) -> None:
+        """Unsupported controllers and failed handshakes are reported without reconnect retries."""
+        master = Mock()
+        factory = Mock(return_value=master)
+        connection = FlightControllerConnection(info=FlightControllerInfo())
+        connection.comport = mavutil.SerialPort(device="COM31", description="ArduPilot MAVLink")
+        connection._create_mavlink_connection = factory  # type: ignore[method-assign]
+
+        with (
+            patch.object(connection, "_detect_vehicles_from_heartbeats", return_value=detected_vehicles),
+            patch.object(connection, "_select_supported_autopilot", return_value=selection_error),
+            patch.object(connection, "_retrieve_autopilot_version_and_banner", return_value=version_error),
+            patch("ardupilot_methodic_configurator.backend_flightcontroller_connection.time_sleep") as mock_sleep,
+        ):
+            result = connection.create_connection_with_retry(
+                progress_callback=None,
+                retries=3,
+                timeout=1,
+                reconnect_progress_callback=Mock(),
+            )
+
+        assert result == selection_error or version_error
+        factory.assert_called_once()
+        mock_sleep.assert_not_called()
 
     def test_create_connection_udp_device_logs_without_baudrate(self) -> None:
         """
