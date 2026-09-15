@@ -1454,6 +1454,37 @@ class TestCreateNewVehicleFromBinLog:
         # Assert: extracted defaults written (target path/filename come from LocalFilesystem state after re_init)
         mock_write.assert_called_once_with(fake_defaults)
 
+    def test_user_can_override_the_automatic_empty_template_for_bin_log_import(self) -> None:
+        """A supplied template directory is used instead of looking up an empty firmware template."""
+        manager = self._make_manager()
+        fake_defaults = ParDict.from_float_dict({"PARAM_A": 1.0})
+        fake_current = ParDict.from_float_dict({"PARAM_A": 1.0})
+        custom_template_dir = "/templates/ArduCopter/Holybro_X500"
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), fake_defaults, fake_current),
+            ),
+            patch.object(manager._creator, "template_dir_for_bin_import") as automatic_template,
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(
+                manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"
+            ) as create_project,
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(ParDict(), "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param"),
+            patch.object(manager._local_filesystem, "re_init"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir=custom_template_dir)
+
+        automatic_template.assert_not_called()
+        assert create_project.call_args.args[0] == custom_template_dir
+
     def test_bin_log_defaults_are_written_to_vehicle_directory(self) -> None:
         """
         The defaults extracted from the .bin log replace the template's 00_default.param.

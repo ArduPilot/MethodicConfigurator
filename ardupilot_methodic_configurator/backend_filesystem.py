@@ -33,7 +33,7 @@ from subprocess import SubprocessError, run
 from typing import Any
 from zipfile import ZipFile
 
-from argcomplete.completers import DirectoriesCompleter
+from argcomplete.completers import DirectoriesCompleter, FilesCompleter
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.annotate_params import (
@@ -1130,6 +1130,26 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             default=os_getcwd(),
             help=_(
                 "Directory containing vehicle-specific intermediate parameter files. Default is the current working directory"
+            ),
+        ).completer = DirectoriesCompleter()  # pyright: ignore[reportAttributeAccessIssue]
+        parser.add_argument(  # type: ignore[attr-defined]
+            "--bin-log",
+            type=str,
+            default="",
+            metavar="PATH",
+            help=_(
+                "Create a vehicle project from an ArduPilot .bin log file. "
+                "The project is created in the default vehicles directory."
+            ),
+        ).completer = FilesCompleter(allowednames=(".bin", ".BIN"))  # pyright: ignore[reportAttributeAccessIssue]
+        parser.add_argument(  # type: ignore[attr-defined]
+            "--template-dir",
+            type=str,
+            default="",
+            metavar="PATH",
+            help=_(
+                "Optional template directory to use with --bin-log. "
+                "Defaults to the empty template matching the log firmware version."
             ),
         ).completer = DirectoriesCompleter()  # pyright: ignore[reportAttributeAccessIssue]
         parser.add_argument(

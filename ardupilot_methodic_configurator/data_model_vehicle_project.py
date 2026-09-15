@@ -356,20 +356,25 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self,
         bin_file: str,
         progress_callback: Callable[[int, int], None] | None = None,
+        template_dir: str | None = None,
     ) -> str:
         """
         Create a new vehicle configuration directory from an ArduPilot .bin log file.
 
         The vehicle type and firmware version are extracted from the .bin file itself.
-        The project is based on the matching empty_{major}.{minor}.x template, uses the
-        extracted current parameter values for template substitution, replaces the
-        template's 00_default.param with the extracted defaults snapshot, and exports any
-        remaining parameters missing from the AMC files into a final import file.
+        Unless a template directory is supplied, the project is based on the matching
+        empty_{major}.{minor}.x template. It uses the extracted current parameter values
+        for template substitution, replaces the template's 00_default.param with the
+        extracted defaults snapshot, and exports any remaining parameters missing from the
+        AMC files into a final import file.
 
         Args:
             bin_file: Path to the ArduPilot .bin log file
 
             progress_callback: Optional callback receiving parsing progress as (current, total)
+
+            template_dir: Optional template directory override. If omitted, use the
+                empty template matching the firmware extracted from the log.
 
         Returns:
             The created vehicle directory path
@@ -383,7 +388,8 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         )
         vehicle_type = firmware_info[0]
         fw_version = f"{firmware_info[1]}.{firmware_info[2]}.{firmware_info[3]}"
-        template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
+        if template_dir is None:
+            template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
         fc_parameters = {name: param.value for name, param in current_params.items()}
         settings = NewVehicleProjectSettings(
             blank_change_reason=True,

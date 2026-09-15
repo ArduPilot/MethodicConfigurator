@@ -48,6 +48,7 @@ from ardupilot_methodic_configurator.data_model_parameter_editor import Paramete
 from ardupilot_methodic_configurator.data_model_parameter_upgrade import upgrade_parameters_for_firmware_version
 from ardupilot_methodic_configurator.data_model_software_updates import UpdateManager, check_for_software_updates
 from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import VehicleProjectCreationError
 from ardupilot_methodic_configurator.frontend_tkinter_component_editor import ComponentEditorWindow
 from ardupilot_methodic_configurator.frontend_tkinter_connection_selection import ConnectionSelectionWindow
 from ardupilot_methodic_configurator.frontend_tkinter_flightcontroller_connection_progress import (
@@ -337,6 +338,11 @@ def initialize_flight_controller(state: ApplicationState) -> None:
         SystemExit: If there's a fatal error reading parameter files
 
     """
+    if getattr(state.args, "bin_log", ""):
+        logging_info(_("Creating a vehicle project from a .bin log without connecting to a flight controller."))
+        state.flight_controller = FlightController(reboot_time=state.args.reboot_time, baudrate=state.args.baudrate)
+        return
+
     # Connect to the flight controller and read the parameters
     state.flight_controller, state.vehicle_type = connect_to_fc_and_set_vehicle_type(state.args)
 
@@ -423,6 +429,17 @@ def vehicle_directory_selection(state: ApplicationState) -> VehicleProjectOpener
             state.param_default_values = ParDict(default_values) if default_values else ParDict()
 
     return vehicle_dir_window
+
+
+def create_vehicle_project_from_bin_log(state: ApplicationState) -> str:
+    """Create and open a vehicle project directly from the command-line .bin log."""
+    state.vehicle_project_manager = VehicleProjectManager(state.local_filesystem, state.flight_controller)
+    template_dir = getattr(state.args, "template_dir", "") or None
+    try:
+        return state.vehicle_project_manager.create_new_vehicle_from_bin_log(state.args.bin_log, template_dir=template_dir)
+    except VehicleProjectCreationError as exc:
+        logging_error("%s: %s", exc.title, exc.message)
+        raise SystemExit(1) from exc
 
 
 def create_and_configure_component_editor(
@@ -694,7 +711,10 @@ def main() -> None:
     Orchestrates the entire application startup process by calling specialized functions
     for each major step.
     """
-    args = create_argument_parser().parse_args()
+    parser = create_argument_parser()
+    args = parser.parse_args()
+    if getattr(args, "template_dir", "") and not getattr(args, "bin_log", ""):
+        parser.error("--template-dir can only be used together with --bin-log")
 
     # Register plugins early, before any UI creation
     register_plugins()
@@ -726,12 +746,15 @@ def main() -> None:
 
     initialize_filesystem(state)
 
-    # Get the list of intermediate parameter files that will be processed sequentially
-    files = list(state.local_filesystem.file_parameters.keys()) if state.local_filesystem.file_parameters else []
+    if getattr(args, "bin_log", ""):
+        create_vehicle_project_from_bin_log(state)
+    else:
+        # Get the list of intermediate parameter files that will be processed sequentially
+        files = list(state.local_filesystem.file_parameters.keys()) if state.local_filesystem.file_parameters else []
 
-    # Handle vehicle directory selection if no vehicle configuration files are present in the current working directory
-    if not files:
-        vehicle_directory_selection(state)
+        # Handle vehicle directory selection if no vehicle configuration files are present in the current working directory
+        if not files:
+            vehicle_directory_selection(state)
 
     # Validate that all configured plugins are registered after the filesystem has loaded configuration steps.
     plugin_factory.validate_configuration_steps(state.local_filesystem.configuration_steps)
