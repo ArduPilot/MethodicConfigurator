@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem_program_settings import ProgramSettings
 from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSetting,
@@ -1177,13 +1178,14 @@ class TestBinLogImportHelpers:
         THEN: Only the filename without extension or directory is returned
         """
         # Arrange
-        bin_file = "/logs/2024-04-24/my_flight.bin"
+        bin_file = "/logs/2024-04-24/my flight log.bin"
 
         # Act
         result = VehicleProjectCreator.vehicle_name_from_bin_log(bin_file)
 
         # Assert
-        assert result == "my_flight"
+        assert result == "my flight log"
+        assert ProgramSettings.valid_directory_name(VehicleProjectCreator.vehicle_name_from_bin_log(bin_file)) is True
 
     def test_next_import_filename_starts_at_one_when_no_param_files_exist(self, tmp_path) -> None:
         """
