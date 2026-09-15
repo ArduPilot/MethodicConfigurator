@@ -92,6 +92,30 @@ jobs:
           }
           del ardupilot_methodic_configurator.spec
 
+      - name: Smoke-test the frozen bin-log validator
+        shell: pwsh
+        run: |
+          $validator = Join-Path $PWD "ardupilot_methodic_configurator\dist\ardupilot_methodic_configurator\ardupilot_methodic_configurator.exe"
+          $fixture = Join-Path $PWD "tests\fixtures\backend_log_80k.bin"
+          $env:PYMAVLINK_FAST_INDEX = "1"
+          & $validator --validate-bin-log $fixture
+          if ($LASTEXITCODE -ne 0) {
+            throw "Frozen bin-log validator failed with exit code $LASTEXITCODE."
+          }
+
+          $empty_log = Join-Path $env:RUNNER_TEMP "empty.bin"
+          New-Item -ItemType File -Path $empty_log -Force | Out-Null
+          $invalid_output = & $validator --validate-bin-log $empty_log 2>&1
+          $invalid_exit_code = $LASTEXITCODE
+          $invalid_text = ($invalid_output | Out-String).Trim()
+          if ($invalid_exit_code -eq 0) {
+            throw "Frozen bin-log validator accepted an empty log."
+          }
+          if ([string]::IsNullOrWhiteSpace($invalid_text) -or $invalid_text -match "Traceback") {
+            throw "Frozen bin-log validator emitted an invalid error: $invalid_text"
+          }
+          exit 0
+
       - name: Write the git commit hash to file
         run: |
           $hash = git rev-parse HEAD

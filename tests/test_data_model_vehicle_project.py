@@ -21,7 +21,7 @@ import pytest
 
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
-from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager
+from ardupilot_methodic_configurator.data_model_vehicle_project import VehicleProjectManager, _types_match
 from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
     NewVehicleProjectSettings,
     VehicleProjectCreationError,
@@ -29,6 +29,25 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
 from ardupilot_methodic_configurator.data_model_vehicle_project_opener import VehicleProjectOpenError
 
 # pylint: disable=protected-access, too-many-lines
+
+REPO_ROOT = Path(__file__).parents[1]
+
+
+def test_bin_log_vehicle_type_documentation_describes_log_default() -> None:
+    """The CLI manual must document log-derived type selection for bin-log imports."""
+    manual = (REPO_ROOT / "USERMANUAL.md").read_text(encoding="utf-8")
+    assert "With `--bin-log`, the type is derived from the log unless `-t` is given" in manual
+
+
+@pytest.mark.parametrize(
+    ("template_type", "firmware_type", "matches"),
+    [("Rover", "ArduRover", True), ("Heli", "ArduCopter", True), ("ArduPlane", "ArduCopter", False)],
+)
+def test_bin_log_import_matches_template_and_firmware_vehicle_types(
+    template_type: str, firmware_type: str, matches: bool
+) -> None:
+    """Template matching follows AMC's vehicle-type compatibility rules."""
+    assert _types_match(template_type, firmware_type) is matches
 
 
 class TestVehicleProjectManagerInitialization:
@@ -1398,7 +1417,7 @@ class TestIntegrationScenarios:
             mock_store.assert_called_once_with("/opened/vehicle/path")
 
 
-class TestCreateNewVehicleFromBinLog:
+class TestCreateNewVehicleFromBinLog:  # pylint: disable=too-many-public-methods
     """Test the create_new_vehicle_from_bin_log orchestration method."""
 
     def _make_manager(self, with_fc: bool = False) -> "VehicleProjectManager":
@@ -1453,6 +1472,37 @@ class TestCreateNewVehicleFromBinLog:
         mock_open.assert_called_once_with("/vehicles/my_flight")
         # Assert: extracted defaults written (target path/filename come from LocalFilesystem state after re_init)
         mock_write.assert_called_once_with(fake_defaults)
+
+    def test_user_can_override_the_automatic_empty_template_for_bin_log_import(self) -> None:
+        """A supplied template directory is used instead of looking up an empty firmware template."""
+        manager = self._make_manager()
+        fake_defaults = ParDict.from_float_dict({"PARAM_A": 1.0})
+        fake_current = ParDict.from_float_dict({"PARAM_A": 1.0})
+        custom_template_dir = "/templates/ArduCopter/Holybro_X500"
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), fake_defaults, fake_current),
+            ),
+            patch.object(manager._creator, "template_dir_for_bin_import") as automatic_template,
+            patch.object(manager._creator, "vehicle_name_from_bin_log", return_value="flight"),
+            patch.object(
+                manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"
+            ) as create_project,
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "store_recently_used_template_dirs"),
+            patch.object(manager, "open_vehicle_directory"),
+            patch.object(manager._local_filesystem, "write_param_default_values_to_file"),
+            patch.object(manager._local_filesystem, "compound_params", return_value=(ParDict(), "00_default.param")),
+            patch.object(manager._local_filesystem, "export_to_param"),
+            patch.object(manager._local_filesystem, "re_init"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir=custom_template_dir)
+
+        automatic_template.assert_not_called()
+        assert create_project.call_args.args[0] == custom_template_dir
 
     def test_bin_log_defaults_are_written_to_vehicle_directory(self) -> None:
         """
@@ -1683,6 +1733,278 @@ class TestCreateNewVehicleFromBinLog:
         assert exc_info.value.title == ".bin log import"
         assert exc_info.value.message == "Corrupt log"
 
+    def test_explicit_template_vehicle_type_mismatch_is_reported_as_a_warning(self) -> None:
+        """An explicit template override remains allowed but makes a type mismatch visible."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+        template_dir = "/templates/ArduPlane/normal_plane"
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value="ArduPlane"),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.logging_warning") as log_warning,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir=template_dir)
+
+        log_warning.assert_called_once()
+        assert "ArduPlane" in log_warning.call_args.args[1]["template_vehicle_type"]
+        assert "ArduCopter" in log_warning.call_args.args[1]["vehicle_type"]
+
+    def test_explicit_template_mismatch_warning_uses_normalized_rover_type(self) -> None:
+        """Mismatch warnings use AMC's template vocabulary for Rover logs."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduRover", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value="ArduPlane"),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.logging_warning") as log_warning,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir="/templates/selected")
+
+        log_warning.assert_called_once()
+        assert log_warning.call_args.args[1]["vehicle_type"] == "Rover"
+
+    def test_bin_log_can_use_an_explicit_vehicle_directory_destination(self) -> None:
+        """An explicit destination controls both the parent directory and project name."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+        destination = "/custom/renamed-flight"
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value=destination) as mock_create,
+            patch.object(manager, "_complete_imported_vehicle_project_creation"),
+        ):
+            result = manager.create_new_vehicle_from_bin_log("/logs/flight.bin", vehicle_dir=destination)
+
+        assert result == destination
+        assert mock_create.call_args.args[1:3] == (str(Path(destination).parent), Path(destination).name)
+
+    def test_bin_log_rejects_a_current_directory_as_the_destination_project_path(self) -> None:
+        """An explicit dot destination receives a useful --vehicle-dir error."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "template_dir_for_bin_import", return_value="/tpl"),
+            patch.object(manager._creator, "create_new_vehicle_from_template") as mock_create,
+            pytest.raises(VehicleProjectCreationError, match="--vehicle-dir"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", vehicle_dir=".")
+
+        mock_create.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("log_vehicle_type", "template_vehicle_type"),
+        [("ArduRover", "Rover"), ("ArduCopter", "Heli")],
+    )
+    def test_bin_log_correct_rover_and_heli_templates_do_not_warn(
+        self, log_vehicle_type: str, template_vehicle_type: str
+    ) -> None:
+        """AMC's Rover and Heli template labels match their corresponding firmware types."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=((log_vehicle_type, 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value=template_vehicle_type),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation") as complete_import,
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.logging_warning") as log_warning,
+        ):
+            manager.create_new_vehicle_from_bin_log(
+                "/logs/flight.bin", template_dir="/templates/selected", expected_vehicle_type=template_vehicle_type
+            )
+
+        log_warning.assert_not_called()
+        assert complete_import.call_args.args[4] == template_vehicle_type
+
+    def test_bin_log_automatic_rover_import_uses_amc_template_vehicle_type(self) -> None:
+        """Automatic Rover imports look up and finalize with AMC's ``Rover`` label."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduRover", 4, 6, 2), params, params),
+            ),
+            patch.object(
+                manager._creator,
+                "template_dir_for_bin_import",
+                return_value="/templates/Rover/empty_4.6.x",
+            ) as find_template,
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation") as complete_import,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", expected_vehicle_type="Rover")
+
+        find_template.assert_called_once_with("Rover", 4, 6)
+        assert complete_import.call_args.args[4] == "Rover"
+
+    def test_bin_log_automatic_heli_import_preserves_requested_vehicle_type(self) -> None:
+        """A Heli selection uses the Copter empty template but keeps Heli semantics."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(
+                manager._creator,
+                "template_dir_for_bin_import",
+                return_value="/templates/ArduCopter/empty_4.6.x",
+            ) as find_template,
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation") as complete_import,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", expected_vehicle_type="Heli")
+
+        find_template.assert_called_once_with("ArduCopter", 4, 6)
+        assert complete_import.call_args.args[4] == "Heli"
+
+    def test_bin_log_copter_selection_accepts_a_heli_template(self) -> None:
+        """The firmware/template equivalence is symmetric for an explicit selection."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value="Heli"),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation") as complete_import,
+        ):
+            manager.create_new_vehicle_from_bin_log(
+                "/logs/flight.bin", template_dir="/templates/Heli/OMP_M4", expected_vehicle_type="ArduCopter"
+            )
+
+        assert complete_import.call_args.args[4] == "Heli"
+
+    def test_explicit_vehicle_type_rejects_a_mismatched_bin_log(self) -> None:
+        """A requested vehicle type is validated against the firmware in the log."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "template_dir_for_bin_import") as find_template,
+            pytest.raises(VehicleProjectCreationError, match=r"requested.*Rover.*ArduCopter"),
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", expected_vehicle_type="Rover")
+
+        find_template.assert_not_called()
+
+    def test_explicit_vehicle_type_rejects_a_mismatched_template(self) -> None:
+        """A requested vehicle type is validated against an explicit template."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduRover", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value="ArduPlane"),
+            patch.object(manager._creator, "create_new_vehicle_from_template") as create_project,
+            pytest.raises(VehicleProjectCreationError, match=r"template.*ArduPlane.*requested.*Rover"),
+        ):
+            manager.create_new_vehicle_from_bin_log(
+                "/logs/flight.bin", template_dir="/templates/selected", expected_vehicle_type="Rover"
+            )
+
+        create_project.assert_not_called()
+
+    def test_explicit_type_wins_when_custom_template_has_no_metadata(self) -> None:
+        """An explicit vehicle type is retained when custom metadata is absent."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value=""),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation") as complete_import,
+        ):
+            manager.create_new_vehicle_from_bin_log(
+                "/logs/flight.bin",
+                template_dir="/templates/custom",
+                expected_vehicle_type="Heli",
+            )
+
+        assert complete_import.call_args.args[4] == "Heli"
+
+    def test_bin_log_type_is_normalized_to_amc_template_vocabulary(self) -> None:
+        """A type already using AMC's Rover label is not treated as a mismatch."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("Rover", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value="Rover"),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.logging_warning") as log_warning,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir="/templates/selected")
+
+        log_warning.assert_not_called()
+
     def test_bin_log_creation_translates_system_exit(self) -> None:
         """
         A fatal exit during bin-log project finalisation is reported as a creation error.
@@ -1712,6 +2034,32 @@ class TestCreateNewVehicleFromBinLog:
             manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
 
         assert isinstance(exc_info.value.__cause__, SystemExit)
+
+    def test_bin_log_creation_reports_template_open_errors_and_cleans_up(self) -> None:
+        """A template that cannot be opened leaves no half-created vehicle project."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), params, params),
+            ),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(
+                manager,
+                "_complete_imported_vehicle_project_creation",
+                side_effect=VehicleProjectOpenError("Invalid vehicle directory", "The template is invalid."),
+            ),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.shutil_rmtree") as remove_project,
+            pytest.raises(VehicleProjectCreationError, match="The template is invalid") as exc_info,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir="/templates/custom")
+
+        assert isinstance(exc_info.value.__cause__, VehicleProjectOpenError)
+        remove_project.assert_called_once_with("/vehicles/flight", ignore_errors=True)
 
     def test_firmware_version_error_propagates_to_caller(self) -> None:
         """

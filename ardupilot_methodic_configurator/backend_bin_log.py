@@ -18,12 +18,16 @@ from __future__ import annotations
 import contextlib
 import math
 import os
+import subprocess
+import sys
+import tempfile
+import threading
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from logging import error as logging_error
 from logging import warning as logging_warning
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, BinaryIO, Protocol, cast
 
 import numpy as np
 from pymavlink import mavutil
@@ -51,24 +55,97 @@ _MULTIPLIER_TO_PREFIX = {
 
 _FIXED_POINT_FORMATS = frozenset("cCeEL")
 _EAGERLY_SCALED_FLOAT_FORMATS = frozenset("fd")
+_OPEN_LOG_LOCK = threading.Lock()
+_FAST_INDEXER_VALIDATION_TIMEOUT = 10
+_FAST_INDEXER_VALIDATION_TIMEOUT_PER_MIB = 1
+_FAST_INDEXER_ERROR_TAIL_BYTES = 8192
+_FAST_INDEXER_VALIDATION_SCRIPT = """
+import sys
+
+from pymavlink import mavutil
+
+mlog = mavutil.mavlink_connection(sys.argv[1])
+mlog.close()
+"""
 
 
-def open_log(logfile: str) -> mavutil.mavfile:
+def _fast_indexer_validation_timeout(logfile: str) -> float:
+    """Return a validation timeout that grows with the input file size."""
+    try:
+        file_size_mib = os.path.getsize(logfile) / (1024 * 1024)
+    except OSError:
+        file_size_mib = 0
+    return _FAST_INDEXER_VALIDATION_TIMEOUT + file_size_mib * _FAST_INDEXER_VALIDATION_TIMEOUT_PER_MIB
+
+
+def _fast_indexer_validation_command(logfile: str) -> list[str]:
+    """Build the command used to run the isolated pymavlink validator."""
+    if getattr(sys, "frozen", False):
+        return [sys.executable, "--validate-bin-log", logfile]
+    return [sys.executable, "-c", _FAST_INDEXER_VALIDATION_SCRIPT, logfile]
+
+
+def _last_output_line(output_file: BinaryIO) -> str:
+    """Read only the tail needed to identify the last non-empty output line."""
+    output_file.seek(0, os.SEEK_END)
+    output_file.seek(max(0, output_file.tell() - _FAST_INDEXER_ERROR_TAIL_BYTES))
+    output = output_file.read(_FAST_INDEXER_ERROR_TAIL_BYTES).decode(errors="replace").strip()
+    return output.splitlines()[-1] if output else ""
+
+
+def _validate_with_fast_indexer(logfile: str) -> None:
+    """Run pymavlink's native indexer outside this process before opening the log."""
+    environment = os.environ.copy()
+    environment["PYMAVLINK_FAST_INDEX"] = "1"
+    with tempfile.TemporaryFile() as stderr_file:
+        try:
+            result = subprocess.run(  # noqa: S603
+                _fast_indexer_validation_command(logfile),
+                stdout=subprocess.DEVNULL,
+                stderr=stderr_file,
+                check=False,
+                env=environment,
+                text=True,
+                timeout=_fast_indexer_validation_timeout(logfile),
+            )
+        except subprocess.TimeoutExpired as error:
+            raise OSError(_("Timed out while validating logfile {logfile}").format(logfile=logfile)) from error
+
+        if result.returncode < 0:
+            raise OSError(_("Logfile validator terminated by signal {signal}").format(signal=-result.returncode))
+        if result.returncode != 0:
+            details = _last_output_line(stderr_file) or _("pymavlink rejected the log")
+            raise ValueError(_("Invalid DataFlash logfile: {error}").format(error=details))
+
+
+def open_log(logfile: str, progress_callback: Callable[[int], None] | None = None) -> mavutil.mavfile:
     """
     Open an ArduPilot .bin log file.
 
     Args:
         logfile: The path to the ArduPilot .bin log file.
+        progress_callback: Optional callback passed to pymavlink while opening the log.
 
     Returns:
         A mavutil.mavfile connection object.
 
     """
-    try:
-        mlog = mavutil.mavlink_connection(logfile)
-    except (OSError, ValueError) as e:
-        msg = _("Error opening logfile {logfile}: {error}").format(logfile=logfile, error=e)
-        raise OSError(msg) from e
+    with _OPEN_LOG_LOCK:
+        previous_fast_index = os.environ.get("PYMAVLINK_FAST_INDEX")
+        # pymavlink's optional Cython indexer calls exit(1) for malformed FMT records.
+        # Validate in a child so that a native exit becomes an ordinary error here.
+        os.environ["PYMAVLINK_FAST_INDEX"] = "1"
+        try:
+            _validate_with_fast_indexer(logfile)
+            mlog = mavutil.mavlink_connection(logfile, progress_callback=progress_callback)
+        except (OSError, ValueError, SystemExit) as e:
+            msg = _("Error opening logfile {logfile}: {error}").format(logfile=logfile, error=e)
+            raise OSError(msg) from e
+        finally:
+            if previous_fast_index is None:
+                os.environ.pop("PYMAVLINK_FAST_INDEX", None)
+            else:
+                os.environ["PYMAVLINK_FAST_INDEX"] = previous_fast_index
     return mlog  # pyright: ignore[reportReturnType]  # pymavlink stubs include CSVReader which doesn't extend mavfile
 
 
@@ -866,8 +943,8 @@ def extract_log(
     Captures every message type using the log's own FMT
     schema, so new ArduPilot message types are handled automatically.
 
-    (Pymavlink uses hardcoded print statements that break once an issue is found in the log
-    so catching the error cannot be implemented yet).
+    (The log is validated with pymavlink's native indexer in an isolated process so malformed
+    input cannot terminate this process.)
 
     Args:
         logfile: Path to the .bin log file.

@@ -9,8 +9,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import os
+import struct
+import subprocess
+import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
+from typing import BinaryIO, cast  # pylint: disable=unused-import
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -98,6 +104,97 @@ def populated_log_data_with_float_field() -> LogData:
 class TestOpenLog:
     """Tests for open_log()."""
 
+    def test_validator_reports_only_the_last_stderr_line(self) -> None:
+        """User-facing validation errors do not include the child's traceback."""
+
+        def run_validator(_command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            stderr_file = cast("BinaryIO", kwargs["stderr"])
+            stderr_file.write(
+                b"Traceback (most recent call last):\n"
+                b'  File "DFReader.py", line 1102\n'
+                b"FileNotFoundError: [Errno 2] No such file or directory"
+            )
+            stderr_file.flush()
+            return subprocess.CompletedProcess(_command, 1)
+
+        with (
+            patch.object(backend_bin_log.subprocess, "run", side_effect=run_validator),
+            pytest.raises(ValueError, match="Invalid DataFlash logfile") as error,
+        ):
+            backend_bin_log._validate_with_fast_indexer("flight.bin")
+
+        assert str(error.value) == ("Invalid DataFlash logfile: FileNotFoundError: [Errno 2] No such file or directory")
+
+    def test_validator_does_not_capture_child_output_in_memory(self) -> None:
+        """Validator output is redirected away from the parent process's memory."""
+        completed: subprocess.CompletedProcess[bytes] = subprocess.CompletedProcess([], 0)
+
+        with patch.object(backend_bin_log.subprocess, "run", return_value=completed) as run:
+            backend_bin_log._validate_with_fast_indexer("flight.bin")
+
+        assert run.call_args.kwargs["stdout"] is subprocess.DEVNULL
+        assert run.call_args.kwargs["stderr"] is not subprocess.PIPE
+        assert "capture_output" not in run.call_args.kwargs
+
+    def test_validator_always_keeps_the_legacy_parser_isolated(self) -> None:
+        """Validation runs in a child process instead of exposing the legacy parser here."""
+        completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+
+        with (
+            patch.object(backend_bin_log.subprocess, "run", return_value=completed) as run,
+        ):
+            backend_bin_log._validate_with_fast_indexer("flight.bin")
+
+        run.assert_called_once()
+
+    def test_frozen_build_uses_application_validation_mode(self) -> None:
+        """A frozen application validates logs through its bundled entry point."""
+        completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+
+        with (
+            patch.object(backend_bin_log.sys, "frozen", new=True, create=True),
+            patch.object(backend_bin_log.sys, "executable", "amc.exe"),
+            patch.object(backend_bin_log.subprocess, "run", return_value=completed) as run,
+        ):
+            backend_bin_log._validate_with_fast_indexer("flight.bin")
+
+        assert run.call_args.args[0] == ["amc.exe", "--validate-bin-log", "flight.bin"]
+
+    def test_large_log_gets_a_validation_timeout_scaled_to_its_size(self) -> None:
+        """Large logs receive enough validator time to avoid false corruption errors."""
+        completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+
+        with (
+            patch.object(backend_bin_log.os.path, "getsize", return_value=100 * 1024 * 1024),
+            patch.object(backend_bin_log.subprocess, "run", return_value=completed) as run,
+        ):
+            backend_bin_log._validate_with_fast_indexer("large-flight.bin")
+
+        assert run.call_args.kwargs["timeout"] > backend_bin_log._FAST_INDEXER_VALIDATION_TIMEOUT
+
+    def test_signal_killed_validator_is_reported_as_an_operational_error(self) -> None:
+        """A validator killed by a signal is not misreported as a corrupt log."""
+        result = subprocess.CompletedProcess([], -9, stdout="", stderr="")
+
+        with (
+            patch.object(backend_bin_log.subprocess, "run", return_value=result),
+            pytest.raises(OSError, match="terminated"),
+        ):
+            backend_bin_log._validate_with_fast_indexer("flight.bin")
+
+    def test_open_log_validates_even_when_the_path_check_races_with_file_removal(self) -> None:
+        """The validator still runs when a separate isfile check observes a race."""
+        mock_connection = MagicMock()
+
+        with (
+            patch.object(backend_bin_log.os.path, "isfile", return_value=False),
+            patch.object(backend_bin_log, "_validate_with_fast_indexer") as validate,
+            patch.object(backend_bin_log.mavutil, "mavlink_connection", return_value=mock_connection),
+        ):
+            assert open_log("flight.bin") is mock_connection
+
+        validate.assert_called_once_with("flight.bin")
+
     def test_parser_does_not_reexport_data_model_types(self) -> None:
         """LogData and MessageSchema belong to the data-model module, not the backend parser API."""
         assert not hasattr(backend_bin_log, "LogData")
@@ -106,9 +203,12 @@ class TestOpenLog:
     def test_valid_bin_file_path_yields_connection(self) -> None:
         """GIVEN a valid log path, WHEN open_log is called, THEN the connection is returned."""
         mock_conn = MagicMock()
-        with patch(
-            "ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection",
-            return_value=mock_conn,
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection",
+                return_value=mock_conn,
+            ),
+            patch.object(backend_bin_log, "_validate_with_fast_indexer"),
         ):
             result = open_log("dummy.bin")
         assert result is mock_conn
@@ -120,9 +220,149 @@ class TestOpenLog:
                 "ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection",
                 side_effect=FileNotFoundError("no such file"),
             ),
+            patch.object(backend_bin_log, "_validate_with_fast_indexer"),
             pytest.raises(OSError, match=r"Error opening logfile dummy\.bin"),
         ):
             open_log("dummy.bin")
+
+    def test_corrupt_binary_log_returns_an_exception_instead_of_exiting(self, tmp_path: Path) -> None:
+        """Corrupt DataFlash input remains catchable by the caller."""
+        source = Path(__file__).parent / "fixtures" / "backend_log_80k.bin"
+        corrupted = tmp_path / "corrupted.bin"
+        data = bytearray(source.read_bytes())
+        for offset in range(200):
+            index = (offset * 997) % len(data)
+            data[index] ^= 1 << (offset % 8)
+        corrupted.write_bytes(data)
+
+        result = subprocess.run(  # noqa: S603
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import sys\n"
+                    "from ardupilot_methodic_configurator.backend_bin_log import extract_bin_log_data\n"
+                    "try:\n"
+                    "    extract_bin_log_data(sys.argv[1])\n"
+                    "except BaseException as exc:\n"
+                    "    print(type(exc).__name__)\n"
+                ),
+                str(corrupted),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip()
+
+    @pytest.mark.parametrize(
+        "name_bytes",
+        [b"PARM", b"\x00\x00\x00\x00", b"\xe4\xe5\xe6\xe7"],
+        ids=["ascii", "empty", "non_ascii"],
+    )
+    def test_zero_length_fmt_is_rejected_without_hanging(self, tmp_path: Path, name_bytes: bytes) -> None:
+        """Malformed FMT records fail promptly regardless of their name bytes."""
+        source = Path(__file__).parent / "fixtures" / "backend_log_80k.bin"
+        data = bytearray(source.read_bytes())
+        marker = b"\xa3\x95\x80"
+        for offset in range(len(data) - 8):
+            if data[offset : offset + 3] == marker and data[offset + 5 : offset + 9] == b"PARM":
+                data[offset + 4] = 0
+                data[offset + 5 : offset + 9] = name_bytes
+                break
+        else:
+            pytest.fail("The fixture does not contain a PARM FMT record")
+        malformed = tmp_path / f"zero_length_{name_bytes.hex()}.bin"
+        malformed.write_bytes(data)
+
+        result = subprocess.run(  # noqa: S603
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import sys\n"
+                    "from ardupilot_methodic_configurator.backend_bin_log import open_log\n"
+                    "try:\n"
+                    "    open_log(sys.argv[1])\n"
+                    "except BaseException as exc:\n"
+                    "    print(type(exc).__name__)\n"
+                ),
+                str(malformed),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=backend_bin_log._FAST_INDEXER_VALIDATION_TIMEOUT + 5,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip()
+
+    def test_fmt_marker_inside_payload_does_not_reject_a_valid_log(self, tmp_path: Path) -> None:
+        """A marker-like payload must not be mistaken for an FMT definition."""
+        fmt_record = b"\xa3\x95\x80" + struct.pack(
+            "<BB4s16s64s",
+            1,
+            12,
+            b"TEST",
+            b"Qb",
+            b"Value,Other",
+        )
+        payload = b"\xa3\x95\x80\x01\x00ABCD"
+        logfile = tmp_path / "marker_in_payload.bin"
+        logfile.write_bytes(fmt_record + b"\xa3\x95\x01" + payload)
+
+        mlog = open_log(str(logfile))
+        try:
+            assert mlog.recv_match(type="TEST") is not None
+        finally:
+            close_log(mlog)
+
+    def test_open_log_serializes_indexer_environment_access_and_restores_it(self) -> None:
+        """Concurrent opens cannot overlap while the process-global indexer setting is changed."""
+        active = 0
+        maximum_active = 0
+        state_lock = threading.Lock()
+        first_entered = threading.Event()
+        release_first = threading.Event()
+        indexer_values: list[str | None] = []
+        original_fast_index = os.environ.get("PYMAVLINK_FAST_INDEX")
+
+        def fake_connection(*_args: object, **_kwargs: object) -> MagicMock:
+            nonlocal active, maximum_active
+            with state_lock:
+                is_first = not first_entered.is_set()
+                first_entered.set()
+                indexer_values.append(os.environ.get("PYMAVLINK_FAST_INDEX"))
+                active += 1
+                maximum_active = max(maximum_active, active)
+            if is_first:
+                assert release_first.wait(timeout=2)
+            with state_lock:
+                active -= 1
+            return MagicMock()
+
+        with (
+            patch.dict(os.environ, {"PYMAVLINK_FAST_INDEX": "caller-value"}, clear=False),
+            patch.object(backend_bin_log, "_validate_with_fast_indexer"),
+            patch(
+                "ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection",
+                side_effect=fake_connection,
+            ),
+            ThreadPoolExecutor(max_workers=2) as executor,
+        ):
+            futures = [executor.submit(open_log, "dummy.bin") for _ in range(2)]
+            assert first_entered.wait(timeout=2)
+            release_first.set()
+            for future in futures:
+                future.result(timeout=2)
+            assert os.environ.get("PYMAVLINK_FAST_INDEX") == "caller-value"
+
+        assert maximum_active == 1
+        assert indexer_values == ["1", "1"]
+        assert os.environ.get("PYMAVLINK_FAST_INDEX") == original_fast_index
 
 
 class TestFirstPassCache:
