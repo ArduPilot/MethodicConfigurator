@@ -13,7 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Callable
 from dataclasses import MISSING, dataclass, fields
+from json import load as json_load
 from pathlib import Path
+from shutil import rmtree as shutil_rmtree
 from typing import ClassVar, NamedTuple
 
 from ardupilot_methodic_configurator import _
@@ -411,7 +413,13 @@ class VehicleProjectCreator:
         installed templates, so unsupported vehicle types are caught as late as possible.
         """
         template_name = f"empty_{major}.{minor}.x"
-        template_dir = Path(LocalFilesystem.get_templates_base_dir()) / vehicle_type / template_name
+        templates_base = Path(LocalFilesystem.get_templates_base_dir()).resolve()
+        template_dir = (templates_base / vehicle_type / template_name).resolve()
+        if not template_dir.is_relative_to(templates_base):
+            msg = _("The vehicle type {vehicle_type} selects a template outside the installed templates directory.").format(
+                vehicle_type=vehicle_type
+            )
+            raise VehicleProjectCreationError(_(".bin log import"), msg)
         if not template_dir.is_dir():
             msg = _("No template found for {vehicle_type} {template_name}.\nExpected directory: {template_dir}").format(
                 vehicle_type=vehicle_type, template_name=template_name, template_dir=template_dir
@@ -423,6 +431,19 @@ class VehicleProjectCreator:
     def vehicle_name_from_bin_log(bin_file: str) -> str:
         """Return the default vehicle directory name derived from the .bin filename."""
         return Path(bin_file).stem
+
+    @staticmethod
+    def vehicle_type_from_template(template_dir: str) -> str:
+        """Return the firmware vehicle type recorded in a template's component metadata."""
+        try:
+            with open(Path(template_dir) / "vehicle_components.json", encoding="utf-8-sig") as template_file:
+                data = json_load(template_file)
+            return str(data.get("Components", {}).get("Flight Controller", {}).get("Firmware", {}).get("Type", ""))
+        except (AttributeError, OSError, TypeError, ValueError):
+            # Template validation reports missing directories. Metadata is optional for
+            # custom templates, so an unreadable/missing metadata file cannot identify a
+            # mismatch and should not prevent the deliberate template override.
+            return ""
 
     @staticmethod
     def next_import_filename(vehicle_dir: str, source: str = "bin_log") -> str:
@@ -458,7 +479,7 @@ class VehicleProjectCreator:
 
         try:
             firmware_info, default_params, current_params = extract_bin_log_data(bin_file, progress_callback=progress_callback)
-        except (OSError, SystemExit, TypeError, ValueError) as exc:
+        except (Exception, SystemExit) as exc:
             msg = str(exc) or _("Failed to extract data from the selected .bin log file")
             raise VehicleProjectCreationError(_(".bin log import"), msg) from exc
         return firmware_info, default_params, current_params
@@ -503,18 +524,28 @@ class VehicleProjectCreator:
         # Create the new vehicle directory
         error_msg = self.local_filesystem.create_new_vehicle_dir(new_vehicle_dir)
         if error_msg:
-            raise VehicleProjectCreationError(_("New vehicle directory"), error_msg)
+            raise VehicleProjectCreationError(
+                _("New vehicle directory"),
+                _("Could not create vehicle directory {new_vehicle_dir}: {error_msg}").format(
+                    new_vehicle_dir=new_vehicle_dir, error_msg=error_msg
+                ),
+            )
 
         # Copy template files to the new directory, applying all file-level transformations in one pass
-        error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(
-            template_dir,
-            new_vehicle_dir,
-            blank_change_reason=settings.blank_change_reason,
-            copy_vehicle_image=settings.copy_vehicle_image,
-            use_fc_params=settings.use_fc_params,
-            fc_parameters=fc_parameters,
-        )
+        try:
+            error_msg = self.local_filesystem.copy_template_files_to_new_vehicle_dir(
+                template_dir,
+                new_vehicle_dir,
+                blank_change_reason=settings.blank_change_reason,
+                copy_vehicle_image=settings.copy_vehicle_image,
+                use_fc_params=settings.use_fc_params,
+                fc_parameters=fc_parameters,
+            )
+        except Exception as exc:
+            shutil_rmtree(new_vehicle_dir, ignore_errors=True)
+            raise VehicleProjectCreationError(_("Copying template files"), str(exc)) from exc
         if error_msg:
+            shutil_rmtree(new_vehicle_dir, ignore_errors=True)
             raise VehicleProjectCreationError(_("Copying template files"), error_msg)
 
         return new_vehicle_dir

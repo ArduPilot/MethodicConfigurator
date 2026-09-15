@@ -13,7 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
+from logging import warning as logging_warning
 from pathlib import Path
+from shutil import rmtree as shutil_rmtree
 from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
@@ -28,6 +30,20 @@ from ardupilot_methodic_configurator.data_model_vehicle_project_opener import Ve
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+
+
+# AMC's template metadata uses ``Rover`` while ArduPilot logs report ``ArduRover``.
+# Normalize the log type into the vocabulary used by AMC templates before comparing
+# the two. Heli is intentionally handled as a separate compatibility case below: heli
+# firmware reports ``ArduCopter``, but ``Heli`` remains the template label.
+_FIRMWARE_TYPE_TO_TEMPLATE_TYPE = {"ArduRover": "Rover"}
+_TEMPLATE_FIRMWARE_TYPE_EQUIVALENCES = {("Heli", "ArduCopter")}
+
+
+def _types_match(template_type: str, firmware_type: str) -> bool:
+    """Return whether a template label represents the firmware type from a log."""
+    normalized_firmware_type = _FIRMWARE_TYPE_TO_TEMPLATE_TYPE.get(firmware_type, firmware_type)
+    return template_type == normalized_firmware_type or (template_type, firmware_type) in _TEMPLATE_FIRMWARE_TYPE_EQUIVALENCES
 
 
 class VehicleProjectManager:  # pylint: disable=too-many-public-methods
@@ -352,24 +368,38 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self.store_recently_used_template_dirs(template_dir, new_base_dir)
         return new_path
 
-    def create_new_vehicle_from_bin_log(
+    def create_new_vehicle_from_bin_log(  # noqa: PLR0915 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-branches,too-many-locals,too-many-statements
         self,
         bin_file: str,
         progress_callback: Callable[[int, int], None] | None = None,
+        template_dir: str | None = None,
+        vehicle_dir: str | None = None,
+        expected_vehicle_type: str | None = None,
     ) -> str:
         """
         Create a new vehicle configuration directory from an ArduPilot .bin log file.
 
         The vehicle type and firmware version are extracted from the .bin file itself.
-        The project is based on the matching empty_{major}.{minor}.x template, uses the
-        extracted current parameter values for template substitution, replaces the
-        template's 00_default.param with the extracted defaults snapshot, and exports any
-        remaining parameters missing from the AMC files into a final import file.
+        Unless a template directory is supplied, the project is based on the matching
+        empty_{major}.{minor}.x template. It uses the extracted current parameter values
+        for template substitution, replaces the template's 00_default.param with the
+        extracted defaults snapshot, and exports any remaining parameters missing from the
+        AMC files into a final import file.
 
         Args:
             bin_file: Path to the ArduPilot .bin log file
 
             progress_callback: Optional callback receiving parsing progress as (current, total)
+
+            template_dir: Optional template directory override. If omitted, use the
+                empty template matching the firmware extracted from the log.
+
+            vehicle_dir: Optional complete destination directory for the new project.
+                If omitted, use the default vehicles directory and the log filename stem.
+
+            expected_vehicle_type: Optional vehicle type explicitly selected by the user.
+                When supplied, it must match both the firmware reported by the log and
+                the selected template metadata.
 
         Returns:
             The created vehicle directory path
@@ -378,12 +408,81 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             VehicleProjectCreationError: If creation, extraction, or template lookup fails
 
         """
+        destination: Path | None = None
+        if vehicle_dir:
+            destination = Path(vehicle_dir).expanduser()
+            if not destination.name or destination.name in {".", ".."}:
+                raise VehicleProjectCreationError(
+                    _(".bin log import"),
+                    _("--vehicle-dir must be the complete destination project directory."),
+                )
+
         firmware_info, default_params, current_params = self._creator.extract_bin_log_data(
             bin_file, progress_callback=progress_callback
         )
-        vehicle_type = firmware_info[0]
+        firmware_vehicle_type = firmware_info[0]
+        vehicle_type = _FIRMWARE_TYPE_TO_TEMPLATE_TYPE.get(firmware_vehicle_type, firmware_vehicle_type)
+        expected_template_type = ""
+        if expected_vehicle_type:
+            expected_template_type = _FIRMWARE_TYPE_TO_TEMPLATE_TYPE.get(expected_vehicle_type, expected_vehicle_type)
+            if not _types_match(expected_template_type, firmware_vehicle_type):
+                raise VehicleProjectCreationError(
+                    _(".bin log import"),
+                    _(
+                        "The requested vehicle type %(expected_vehicle_type)s does not match the .bin log firmware type "
+                        "%(firmware_vehicle_type)s."
+                    )
+                    % {
+                        "expected_vehicle_type": expected_template_type,
+                        "firmware_vehicle_type": firmware_vehicle_type,
+                    },
+                )
         fw_version = f"{firmware_info[1]}.{firmware_info[2]}.{firmware_info[3]}"
-        template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
+        if template_dir is None:
+            template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
+            if expected_template_type:
+                vehicle_type = expected_template_type
+        else:
+            template_vehicle_type = self._creator.vehicle_type_from_template(template_dir)
+            template_mismatches_log = template_vehicle_type and not _types_match(template_vehicle_type, firmware_vehicle_type)
+            if expected_vehicle_type and template_mismatches_log:
+                raise VehicleProjectCreationError(
+                    _(".bin log import"),
+                    _(
+                        "The selected template %(template_dir)s is for %(template_vehicle_type)s, "
+                        "but the requested vehicle type is %(expected_vehicle_type)s."
+                    )
+                    % {
+                        "template_dir": template_dir,
+                        "template_vehicle_type": template_vehicle_type,
+                        "expected_vehicle_type": expected_template_type,
+                    },
+                )
+            types_match = _types_match(template_vehicle_type, firmware_vehicle_type)
+            if expected_template_type:
+                template_is_specialization = (
+                    template_vehicle_type
+                    and (
+                        template_vehicle_type,
+                        firmware_vehicle_type,
+                    )
+                    in _TEMPLATE_FIRMWARE_TYPE_EQUIVALENCES
+                )
+                vehicle_type = template_vehicle_type if template_is_specialization else expected_template_type
+            elif types_match and template_vehicle_type:
+                vehicle_type = template_vehicle_type
+            if template_vehicle_type and not types_match:
+                logging_warning(
+                    _(
+                        "The selected template %(template_dir)s is for %(template_vehicle_type)s, "
+                        "but the .bin log is for %(vehicle_type)s. Continuing with the explicit template override."
+                    ),
+                    {
+                        "template_dir": template_dir,
+                        "template_vehicle_type": template_vehicle_type,
+                        "vehicle_type": vehicle_type,
+                    },
+                )
         fc_parameters = {name: param.value for name, param in current_params.items()}
         settings = NewVehicleProjectSettings(
             blank_change_reason=True,
@@ -391,18 +490,22 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             use_fc_params=True,
         )
 
-        new_base_dir = str(LocalFilesystem.get_vehicles_default_dir())
-        new_vehicle_name = self._creator.vehicle_name_from_bin_log(bin_file)
-        new_path = self._creator.create_new_vehicle_from_template(
-            template_dir,
-            new_base_dir,
-            new_vehicle_name,
-            settings,
-            fc_connected=False,
-            fc_parameters=fc_parameters,
-        )
-
+        if destination is not None:
+            new_base_dir = str(destination.parent)
+            new_vehicle_name = destination.name
+        else:
+            new_base_dir = str(LocalFilesystem.get_vehicles_default_dir())
+            new_vehicle_name = self._creator.vehicle_name_from_bin_log(bin_file)
+        new_path: str | None = None
         try:
+            new_path = self._creator.create_new_vehicle_from_template(
+                template_dir,
+                new_base_dir,
+                new_vehicle_name,
+                settings,
+                fc_connected=False,
+                fc_parameters=fc_parameters,
+            )
             self._complete_imported_vehicle_project_creation(
                 template_dir,
                 new_base_dir,
@@ -413,7 +516,13 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                 current_params,
                 default_params,
             )
-        except (OSError, ParamFileError, ValueError, TypeError, SystemExit) as exc:
+        except VehicleProjectCreationError:
+            if new_path is not None:
+                shutil_rmtree(new_path, ignore_errors=True)
+            raise
+        except (Exception, SystemExit) as exc:
+            if new_path is not None:
+                shutil_rmtree(new_path, ignore_errors=True)
             raise VehicleProjectCreationError(
                 _("Vehicle project creation"),
                 _("Could not finish creating the vehicle project: {error}").format(error=exc),

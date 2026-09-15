@@ -24,7 +24,6 @@ from unittest.mock import Mock, patch
 
 from pymavlink import mavutil
 
-# pylint: disable=too-many-lines
 # from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.backend_mavftp import (
     FTP_OP,
@@ -44,6 +43,8 @@ from ardupilot_methodic_configurator.backend_mavftp import (
 PARAM_HEADER_STRUCT = struct.Struct("<HHH")
 PARAM_MAGIC = 0x671B
 PARAM_MAGIC_WITH_DEFAULTS = 0x671C
+
+# pylint: disable=too-many-lines
 
 
 class TestMAVFTPPayloadDecoding(unittest.TestCase):  # pylint: disable=too-many-public-methods

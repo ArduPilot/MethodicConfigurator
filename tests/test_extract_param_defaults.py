@@ -36,6 +36,12 @@ def mock_print() -> Generator[Mock, None, None]:
         yield mock
 
 
+@pytest.fixture
+def mock_fast_indexer() -> Generator[Mock, None, None]:
+    with patch("ardupilot_methodic_configurator.backend_bin_log._validate_with_fast_indexer") as mock:
+        yield mock
+
+
 class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-class-docstring
     def test_command_line_arguments_combinations(self) -> None:
         # Check the 'format' and 'sort' default parameters
@@ -81,6 +87,7 @@ class TestArgParseParameters(unittest.TestCase):  # pylint: disable=missing-clas
         assert args.compid == 3
 
 
+@pytest.mark.usefixtures("mock_fast_indexer")
 class TestExtractParameterDefaultValues(unittest.TestCase):  # pylint: disable=missing-class-docstring
     @patch("ardupilot_methodic_configurator.backend_bin_log.mavutil.mavlink_connection")
     def test_logfile_does_not_exist(self, mock_mavlink_connection) -> None:
@@ -498,6 +505,7 @@ class TestSortParams:
         assert list(sorted_params.keys()) == ["A_PARAM", "B_PARAM", "C_PARAM"]
 
 
+@pytest.mark.usefixtures("mock_fast_indexer")
 class TestExtractParameterValues:
     """Tests for the extract_parameter_values function."""
 
