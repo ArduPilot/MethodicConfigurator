@@ -274,16 +274,20 @@ class ProgramSettings:  # pylint: disable=too-many-public-methods
           bool: True if the directory name matches the allowed pattern, False otherwise.
 
         """
-        if not dir_name or dir_name in {".", ".."}:
+        if not dir_name or dir_name != dir_name.strip() or dir_name in {".", ".."}:
             return False
         if "/" in dir_name or "\\" in dir_name:
             return False
         if IS_WINDOWS:
             if dir_name.endswith("."):
                 return False
-            if dir_name.split(".", maxsplit=1)[0].upper() in WINDOWS_RESERVED_FILENAMES:
+            if dir_name.split(".", maxsplit=1)[0].strip().upper() in WINDOWS_RESERVED_FILENAMES:
                 return False
-        pattern = r"^[\w.-]+$"
+        # Embedded spaces are valid in a directory name. In particular,
+        # .bin-log imports use the log filename stem as the new vehicle
+        # directory name. Leading/trailing whitespace is rejected above,
+        # because Windows normalizes it inconsistently.
+        pattern = r"^[\w .-]+$"
         return re_match(pattern, dir_name) is not None
 
     @staticmethod
