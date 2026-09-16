@@ -172,7 +172,7 @@ class TestFlightControllerFilesUpload:
         # Then: Upload successful
         assert success is True
         mock_mavftp.cmd_put.assert_called_once()
-        mock_mavftp.process_ftp_reply.assert_called_once_with("put", timeout=files_mgr.MAVFTP_FILE_OPERATION_TIMEOUT)
+        mock_mavftp.process_ftp_reply.assert_called_once_with("put", timeout=files_mgr.MAVFTP_UPLOAD_TIMEOUT_BASE)
         callback = mock_mavftp.cmd_put.call_args.kwargs["progress_callback"]
         callback(0.42)
         assert progress_calls == [(42, 100)]
@@ -1004,6 +1004,14 @@ class TestFlightControllerFilesConstants:
         assert FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT == 10
         assert FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT_SHORT == 5
         assert FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT_SHORT < FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT
+
+    def test_upload_timeout_increases_for_large_files(self, tmp_path: Path) -> None:
+        """Large uploads receive more time than the minimum upload deadline."""
+        files_mgr = _create_files_manager()
+        large_file = tmp_path / "large.bin"
+        large_file.write_bytes(b"x" * (1024 * 100))
+
+        assert files_mgr._upload_timeout(str(large_file)) == 40
 
 
 class TestFlightControllerFilesPropertyDelegation:

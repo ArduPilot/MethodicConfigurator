@@ -1726,9 +1726,10 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self.__terminate_session()
             return False
         self.read_total += len(op.payload)
-        if self.callback_progress is not None and self.remote_file_size:
+        if self.callback_progress is not None:
             try:
-                self.callback_progress(self.read_total / self.remote_file_size)
+                completion = self.read_total / self.remote_file_size if self.remote_file_size else 0.0
+                self.callback_progress(completion)
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 logging.error("FTP: download progress callback failed: %s", exc)
                 self.callback_failure = MAVFTPReturn("Get", FtpError.Fail)
