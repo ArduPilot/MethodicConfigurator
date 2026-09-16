@@ -4422,17 +4422,17 @@ msgstr "Il parametro %s non è nei parametri del passaggio corrente"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:362
 msgid ""
 "Parameter {parameter} value {value} is out of range but accepted from FC"
-msgstr ""
+msgstr "Il valore {value} del parametro {parameter} è fuori intervallo ma è stato accettato dal FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:369
 msgid ""
 "Parameter {parameter} could not be updated because it is forced or derived: "
 "{error}"
-msgstr ""
+msgstr "Il parametro {parameter} non può essere aggiornato perché è forzato o derivato: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:376
 msgid "Failed to update in-memory value for {parameter} after FC copy"
-msgstr ""
+msgstr "Impossibile aggiornare il valore in memoria di {parameter} dopo la copia dal FC"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:401
 msgid ""
@@ -4490,19 +4490,19 @@ msgstr "I valori FC sono stati copiati in {selected_file}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:422
 msgid "Parameters already up to date"
-msgstr ""
+msgstr "I parametri sono già aggiornati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:423
 msgid "FC values already match {selected_file}."
-msgstr ""
+msgstr "I valori del FC corrispondono già a {selected_file}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:427
 msgid "No parameters copied"
-msgstr ""
+msgstr "Nessun parametro copiato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:428
 msgid "No FC values could be copied to {selected_file}."
-msgstr ""
+msgstr "Nessun valore del FC è stato copiato in {selected_file}."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_parameter_editor.py:454
 msgid "Skip some steps?"
@@ -5579,32 +5579,32 @@ msgstr "Valore intero non valido per {paths_str}"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:260
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:418
 msgid "Vehicle project creation"
-msgstr ""
+msgstr "Creazione del progetto veicolo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:204
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:261
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:419
 msgid "Could not finish creating the vehicle project: {error}"
-msgstr ""
+msgstr "Impossibile completare la creazione del progetto veicolo: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:212
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:219
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:241
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:269
 msgid "Flight controller"
-msgstr ""
+msgstr "Controllore di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:213
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:242
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:270
 msgid "Cannot create a vehicle project: no flight controller is connected."
-msgstr ""
+msgstr "Impossibile creare un progetto veicolo: nessun controllore di volo è connesso."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:220
 msgid ""
 "Cannot create a vehicle project: no flight controller parameters are "
 "available."
-msgstr ""
+msgstr "Impossibile creare un progetto veicolo: nessun parametro del controllore di volo è disponibile."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:279
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:290
@@ -5619,13 +5619,13 @@ msgstr "Directory modello veicolo"
 msgid ""
 "Could not determine the connected flight controller's vehicle type and "
 "firmware version needed to select an empty template."
-msgstr ""
+msgstr "Impossibile determinare il tipo di veicolo e la versione del firmware del controllore di volo connesso necessari per selezionare un modello vuoto."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:302
 msgid ""
 "Could not find an empty vehicle template matching the connected flight "
 "controller's vehicle type and firmware version.\n"
-msgstr ""
+msgstr "Impossibile trovare un modello di veicolo vuoto corrispondente al tipo di veicolo e alla versione del firmware del controllore di volo connesso.\n"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_vehicle_project.py:567
 msgid ""
@@ -7983,19 +7983,19 @@ msgstr "Nome nuovo veicolo di destinazione:"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:143
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:103
 msgid "Create a vehicle project from an already configured flight controller"
-msgstr ""
+msgstr "Crea un progetto veicolo da un controllore di volo già configurato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:145
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:92
 msgid "Create a vehicle project from a template"
-msgstr ""
+msgstr "Crea un progetto veicolo da un modello"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:156
 msgid ""
 "Create a new vehicle configuration directory using the connected flight "
 "controller's\n"
 "parameters and component information."
-msgstr ""
+msgstr "Crea una nuova directory di configurazione del veicolo usando i\nparametri e le informazioni sui componenti del controllore di volo connesso."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_creator.py:161
 msgid ""
@@ -8080,7 +8080,7 @@ msgstr ""
 msgid ""
 "Create a new vehicle configuration directory using the connected flight "
 "controller's parameters and component information."
-msgstr ""
+msgstr "Crea una nuova directory di configurazione del veicolo usando i parametri e le informazioni sui componenti del controllore di volo connesso."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/frontend_tkinter_project_opener.py:123
 msgid "Importing .bin log file"
