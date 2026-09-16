@@ -57,7 +57,7 @@
             },
             "Specifications": {
                 "Chemistry": "Lipo",
-                "Volt per cell max": 4.2,
+                "Volt per cell max": 4.0,
                 "Volt per cell arm": 3.675,
                 "Volt per cell low": 3.4,
                 "Volt per cell crit": 3.3,

@@ -7,5 +7,5 @@ BATT_FS_LOW_ACT,2  # Return and land at home or rally point
 BATT_FS_VOLTSRC,1
 BATT_LOW_MAH,0  # No capacity based failsafes, too unreliable
 BATT_LOW_VOLT,13.6  # Low failsafe voltage x nr. of cells
-MOT_BAT_VOLT_MAX,16.8  # Scale the PIDs up when battery voltage is below this threshold
+MOT_BAT_VOLT_MAX,16  # Scale the PIDs up when battery voltage is below this threshold
 MOT_BAT_VOLT_MIN,13.2  # Scale the PIDs up when battery voltage is above this threshold
