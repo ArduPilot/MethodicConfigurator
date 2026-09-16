@@ -82,6 +82,38 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         assert progress_window.progress_bar["value"] == 0
         assert progress_window.progress_bar["maximum"] == 100
 
+    def test_invalid_master_is_reported_before_centering(self) -> None:
+        """Progress windows warn when their parent is not a Tk window."""
+        fake_window = MagicMock()
+        fake_window.tk.call.side_effect = ["x11", "1.0"]
+        fake_window.winfo_fpixels.return_value = 96
+        fake_frame = MagicMock()
+        fake_progress_bar = MagicMock()
+        fake_label = MagicMock()
+
+        class FakeToplevel:  # pylint: disable=too-few-public-methods
+            """Return a widget double while remaining valid for isinstance checks."""
+
+            def __new__(cls, *_args: object, **_kwargs: object) -> MagicMock:
+                return fake_window
+
+        with (
+            patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.tk.Toplevel", FakeToplevel),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.ttk.Frame", return_value=fake_frame),
+            patch(
+                "ardupilot_methodic_configurator.frontend_tkinter_progress_window.ttk.Progressbar",
+                return_value=fake_progress_bar,
+            ),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.ttk.Label", return_value=fake_label),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.BaseWindow.center_window"),
+            patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.logging_error") as log_error,
+        ):
+            ProgressWindow(object(), title="Test", only_show_when_update_progress_called=True)
+
+        log_error.assert_called_once_with(
+            "ProgressWindow: master is not a tk.Tk or tk.Toplevel instance, window centering may fail"
+        )
+
     def test_user_sees_progress_updates_during_task_execution(self, progress_window) -> None:
         """
         User sees progress updates as a task executes.
@@ -269,16 +301,15 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
         progress_window.destroy()
         assert not progress_window.progress_window.winfo_exists()
 
-    def test_user_sees_progress_window_handle_master_not_tk_instance(self, tk_root) -> None:
+    def test_user_sees_progress_window_accept_toplevel_master(self, tk_root) -> None:
         """
-        User sees progress window handle non-Tk master gracefully.
+        User sees progress window accept a Toplevel parent without a false error.
 
-        GIVEN: A progress window is created with a non-Tk master
+        GIVEN: A progress window is created with a Toplevel parent
         WHEN: The window is initialized
-        THEN: An error is logged but window creation continues
+        THEN: Window creation continues without an error
         """
-        # Create a non-Tk master (using a Toplevel instead of Tk)
-        non_tk_master = tk.Toplevel(tk_root)
+        parent = tk.Toplevel(tk_root)
 
         with (
             patch("ardupilot_methodic_configurator.frontend_tkinter_progress_window.logging_error") as mock_logging,
@@ -287,17 +318,15 @@ class TestProgressWindowUserExperience:  # pylint: disable=redefined-outer-name,
             patch("tkinter.Misc.update"),
             patch("tkinter.Misc.update_idletasks"),
         ):
-            window = ProgressWindow(non_tk_master, title="Test Progress", message="Progress: {}/{}")
+            window = ProgressWindow(parent, title="Test Progress", message="Progress: {}/{}")
 
-            # Verify error was logged
-            mock_logging.assert_called_once()
-            assert "master is not a tk.Tk instance" in mock_logging.call_args[0][0]
+            mock_logging.assert_not_called()
 
             # Window should still be created
             assert window.progress_window.winfo_exists()
 
             window.destroy()
-            non_tk_master.destroy()
+            parent.destroy()
 
     def test_user_sees_progress_window_handle_widget_update_errors(self, progress_window) -> None:
         """
