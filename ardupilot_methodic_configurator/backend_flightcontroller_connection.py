@@ -465,10 +465,7 @@ class FlightControllerConnection:  # pylint: disable=too-many-instance-attribute
             compid = m.get_srcComponent()
             detected_vehicles[(sysid, compid)] = m
             logging_debug(_("Detected vehicle %u:%u (autopilot=%u, type=%u)"), sysid, compid, m.autopilot, m.type)
-            if (
-                return_after_first_heartbeat
-                and m.autopilot == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA
-            ):
+            if return_after_first_heartbeat and m.autopilot == mavutil.mavlink.MAV_AUTOPILOT_ARDUPILOTMEGA:
                 return detected_vehicles
 
         return detected_vehicles
