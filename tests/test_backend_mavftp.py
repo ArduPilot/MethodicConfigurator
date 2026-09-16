@@ -13,11 +13,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import logging
+import socket
 import struct
 import unittest
 
 # from unittest.mock import patch
 from io import BytesIO, StringIO
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from pymavlink import mavutil
@@ -33,6 +35,7 @@ from ardupilot_methodic_configurator.backend_mavftp import (
     OP_Nack,
     OP_ReadFile,
     OP_ResetSessions,
+    create_argument_parser,
 )
 
 PARAM_HEADER_STRUCT = struct.Struct("<HHH")
@@ -95,6 +98,100 @@ class TestMAVFTPPayloadDecoding(unittest.TestCase):
 
         with patch("builtins.open", side_effect=AssertionError("callback data must not be published as a file")):
             assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
+
+    def test_completed_file_download_publishes_staging_file_without_buffering_result(self) -> None:
+        """A normal download atomically publishes its staging file without a second RAM copy."""
+        self.mav_ftp.fh = Mock()
+        self.mav_ftp.fh.tell.return_value = 4
+        self.mav_ftp.fh_owned = True
+        self.mav_ftp.temp_filename = "staging.bin"
+        self.mav_ftp.filename = "destination.bin"
+        self.mav_ftp.op_start = 1.0
+        self.mav_ftp.read_gaps = []
+        self.mav_ftp.reached_eof = True
+        self.mav_ftp.read_total = 4
+        self.mav_ftp.requested_offset = 0
+        self.mav_ftp.requested_size = 4
+        self.mav_ftp.remote_size_known = True
+
+        with (
+            patch(
+                "ardupilot_methodic_configurator.backend_mavftp.os.fstat",
+                return_value=Mock(st_size=4),
+            ),
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.chmod") as chmod,
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.umask", return_value=0o022),
+            patch("ardupilot_methodic_configurator.backend_mavftp.os.replace") as replace,
+            patch.object(self.mav_ftp, "_MAVFTP__terminate_session") as terminate,
+        ):
+            assert self.mav_ftp._MAVFTP__check_read_finished()  # pylint: disable=protected-access
+
+        self.mav_ftp.fh.read.assert_not_called()
+        self.mav_ftp.fh.close.assert_called_once()
+        chmod.assert_called_once_with("staging.bin", 0o644)
+        replace.assert_called_once_with("staging.bin", "destination.bin")
+        assert self.mav_ftp.temp_filename is None
+        assert self.mav_ftp.get_result is None
+        terminate.assert_called_once()
+        assert "Wrote 4/4 bytes to destination.bin" in self.log_stream.getvalue()
+
+    def test_console_idle_detection_default_matches_the_established_cli_value(self) -> None:
+        """The standalone MAVFTP console retains its historical idle timeout."""
+        args = create_argument_parser().parse_args(["get", "remote.bin"])
+
+        assert args.idle_detection_time == 1.2
+
+    def test_file_download_does_not_expose_a_stale_synchronous_read_result(self) -> None:
+        """Streaming downloads clear a result left by a preceding synchronous read."""
+        self.mav_ftp.get_result = b"old read result"
+
+        with patch.object(self.mav_ftp, "_MAVFTP__send"):
+            result = self.mav_ftp.cmd_get(["remote.bin"])
+
+        assert result.error_code == FtpError.Success
+        assert self.mav_ftp.get_result is None
+
+    def test_websocket_batch_uses_link_write_for_websocket_framing(self) -> None:
+        """Batched MAVLink packets must pass through the WebSocket transport wrapper."""
+        port = Mock()
+        port.type = socket.SOCK_STREAM
+        link = Mock()
+        link.port = port
+        link.write.return_value = None
+        self.mav_ftp.master = SimpleNamespace(mav=SimpleNamespace(file=link))
+        packets = iter((b"first", b"second"))
+
+        with patch.object(
+            self.mav_ftp,
+            "_MAVFTP__send",
+            side_effect=lambda _operation: self.mav_ftp.master.mav.file.write(next(packets)),
+        ):
+            self.mav_ftp._MAVFTP__send_batch([Mock(), Mock()])  # pylint: disable=protected-access
+
+        link.write.assert_called_once_with(b"firstsecond")
+        port.sendall.assert_not_called()
+
+    def test_write_payload_releases_staging_after_disk_write_failure(self) -> None:
+        """A staging-file write failure terminates the transfer and reports a recoverable error."""
+        self.mav_ftp.fh = Mock()
+        self.mav_ftp.fh.write.side_effect = OSError("disk full")
+        op = FTP_OP(
+            seq=1,
+            session=1,
+            opcode=OP_Ack,
+            size=4,
+            req_opcode=OP_ReadFile,
+            burst_complete=0,
+            offset=0,
+            payload=b"data",
+        )
+
+        with patch.object(self.mav_ftp, "_MAVFTP__terminate_session") as terminate:
+            assert not self.mav_ftp._MAVFTP__write_payload(op)  # pylint: disable=protected-access
+
+        assert self.mav_ftp.callback_failure is not None
+        assert self.mav_ftp.callback_failure.error_code == FtpError.Fail
+        terminate.assert_called_once()
 
     def test_process_ftp_reply_propagates_getparams_callback_failure(self) -> None:
         """A parameter-decoding callback failure makes the transfer fail, enabling fallback."""

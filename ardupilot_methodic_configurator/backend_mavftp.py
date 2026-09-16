@@ -627,6 +627,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         self.last_rx_deadline = 0.0
         self._rx_loss_applied = False
         self._ftp_reply_processing_depth = 0
+        # ``get_result`` is the result buffer for synchronous ``read()``.
+        # File downloads deliberately stream to a staging file and therefore
+        # do not retain a second, whole-file in-memory copy.
         self.get_result: Union[None, bytes] = None
         self.last_crc: Optional[int] = None
         self.crccmp_results: List[str] = []
@@ -953,6 +956,13 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             except OSError:
                 pass
             self.temp_filename = None
+
+    @staticmethod
+    def __default_file_mode() -> int:
+        """Return the mode a normal local file creation would use."""
+        current_umask = os.umask(0)
+        os.umask(current_umask)
+        return 0o666 & ~current_umask
 
     def __terminate_session(self) -> MAVFTPReturn:  # pylint: disable=too-many-branches,too-many-statements
         """Terminate current session."""
@@ -1369,6 +1379,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self.filename = args[1]
         else:
             self.filename = os.path.basename(fname)
+        self.get_result = None
         if callback is None or self.ftp_settings.debug > 1:
             logging.info("Getting %s to %s", fname, self.filename)
         self.op_start = time.time()
@@ -1414,7 +1425,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     self.fh = SIO()
                 else:
                     self.__release_staging()
-                    (temp_fd, self.temp_filename) = tempfile.mkstemp(prefix="mavftp_")
+                    destination_dir = os.path.dirname(os.path.abspath(self.filename))
+                    (temp_fd, self.temp_filename) = tempfile.mkstemp(prefix=".mavftp_", dir=destination_dir)
                     try:
                         self.fh = os.fdopen(temp_fd, "wb+")
                     except OSError:
@@ -1543,7 +1555,7 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     "Wrote %u/%u bytes to %s in %.2fs %.1fkByte/s",
                     self.read_total,
                     self.requested_size,
-                    self.temp_filename,
+                    self.filename,
                     dt,
                     rate,
                 )
@@ -1558,32 +1570,57 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             self.__finished_status("downloading", self.filename, ofs)
 
             assert self.fh is not None  # noqa: S101
-            self.fh.seek(0)
-            result = self.fh.read()
+            self.fh.flush()
+            actual_size = ofs
+            if self.read_to_memory or self.filename == "-":
+                self.fh.seek(0)
+                result = self.fh.read()
+                actual_size = len(result)
+            elif self.temp_filename is not None:
+                actual_size = os.fstat(self.fh.fileno()).st_size
+            else:
+                result = b""
             if self.read_to_memory:
                 self.get_result = result[: self.requested_size]
-            else:
-                if not self.remote_size_known:
-                    self.requested_size = max(0, len(result) - self.requested_offset)
-                self.get_result = result
-            assert self.get_result is not None  # noqa: S101
-            if len(self.get_result) < self.requested_size:
+            elif not self.remote_size_known:
+                self.requested_size = max(0, actual_size - self.requested_offset)
+            if self.read_to_memory and len(self.get_result) < self.requested_size:
                 logging.warning(
                     "expected %u, got %u", self.requested_size, len(self.get_result)
                 )
-            logging.info("read %u bytes", len(self.get_result))
-            self.fh.flush()
+            elif not self.read_to_memory and actual_size < self.requested_size:
+                logging.warning(
+                    "expected %u, got %u", self.requested_size, actual_size
+                )
+            if self.read_to_memory:
+                logging.info("read %u bytes", len(self.get_result))
             if self.callback_progress is not None:
                 self.callback_progress = None
             try:
-                if publish_result and self.filename and self.filename != "-":
-                    # Move the result to the final location
-                    logging.info("Moving %s to %s", self.temp_filename, self.filename)
-                    with open(self.filename, "wb") as final_file:
-                        final_file.write(self.get_result)
-            except OSError as exc:
+                if self.filename == "-":
+                    sys.stdout.buffer.write(result)
+                    sys.stdout.buffer.flush()
+                elif publish_result and self.filename and self.temp_filename:
+                    # The staging file is created beside its destination, so
+                    # replacement is atomic and does not copy the complete
+                    # download back into RAM.
+                    if self.fh_owned:
+                        self.fh.close()
+                        self.fh_owned = False
+                    logging.info(
+                        "Publishing staged download %s to %s",
+                        self.temp_filename,
+                        self.filename,
+                    )
+                    # mkstemp deliberately creates a private 0600 file.
+                    # Restore ordinary destination creation permissions before
+                    # atomically publishing it.
+                    os.chmod(self.temp_filename, self.__default_file_mode())
+                    os.replace(self.temp_filename, self.filename)
+                    self.temp_filename = None
+            except (AttributeError, OSError) as exc:
                 logging.error(
-                    "FTP: failed to write local destination %s: %s",
+                    "FTP: failed to publish local destination %s: %s",
                     self.filename,
                     exc,
                 )
@@ -1601,8 +1638,14 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         write_offset = op.offset
         if self.read_to_memory:
             write_offset -= self.requested_offset
-        self.fh.seek(write_offset)
-        self.fh.write(op.payload)
+        try:
+            self.fh.seek(write_offset)
+            self.fh.write(op.payload)
+        except OSError as exc:
+            logging.error("FTP: failed to stage downloaded data: %s", exc)
+            self.callback_failure = MAVFTPReturn("Get", FtpError.Fail)
+            self.__terminate_session()
+            return False
         self.read_total += len(op.payload)
         if self.callback_progress is not None and self.remote_file_size:
             try:
@@ -3276,7 +3319,6 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             )
             return None
         with_defaults = magic2 == magic_defaults
-        data = data[6:]
 
         # mapping of data type to type length and format
         data_types = {
@@ -3289,17 +3331,19 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         count = 0
         pad_byte = 0
         last_name = b""
+        offset = 6
+        data_length = len(data)
         while True:
-            while len(data) > 0 and data[0] == pad_byte:
-                data = data[1:]  # skip pad bytes
+            while offset < data_length and data[offset] == pad_byte:
+                offset += 1  # skip pad bytes
 
-            if len(data) == 0:
+            if offset == data_length:
                 break
-            if len(data) < 2:
+            if data_length - offset < 2:
                 logging.error("paramftp: truncated parameter header")
                 return None
 
-            ptype, plen = struct.unpack("<BB", data[0:2])
+            ptype, plen = struct.unpack_from("<BB", data, offset)
             flags = (ptype >> 4) & 0x0F
             has_default = with_defaults and (flags & 1) != 0
             ptype &= 0x0F
@@ -3315,7 +3359,8 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             common_len = plen & 0x0F
             value_len = type_len + default_len
             record_len = 2 + name_len + value_len
-            if len(data) < record_len:
+            record_end = offset + record_len
+            if record_end > data_length:
                 logging.error("paramftp: truncated parameter record")
                 return None
             if common_len > len(last_name):
@@ -3324,7 +3369,9 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     common_len,
                 )
                 return None
-            name = last_name[0:common_len] + data[2 : 2 + name_len]
+            name_start = offset + 2
+            value_start = name_start + name_len
+            name = last_name[0:common_len] + data[name_start:value_start]
             if len(name) > 16:
                 logging.error(
                     "paramftp: parameter name is too long (%u bytes)", len(name)
@@ -3335,25 +3382,21 @@ class MAVFTP:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             except UnicodeDecodeError:
                 logging.error("paramftp: parameter name is not valid UTF-8")
                 return None
-            vdata = data[2 + name_len : record_len]
             last_name = name
-            data = data[record_len:]
             if with_defaults:
                 if has_default:
-                    (
-                        v1,
-                        v2,
-                    ) = struct.unpack("<" + type_format + type_format, vdata)
+                    v1, v2 = struct.unpack_from("<" + type_format + type_format, data, value_start)
                     pdata.add_param(name, v1, ptype)
                     pdata.add_default(name, v2, ptype)
                 else:
-                    (v,) = struct.unpack("<" + type_format, vdata)
+                    (v,) = struct.unpack_from("<" + type_format, data, value_start)
                     pdata.add_param(name, v, ptype)
                     pdata.add_default(name, v, ptype)
             else:
-                (v,) = struct.unpack("<" + type_format, vdata)
+                (v,) = struct.unpack_from("<" + type_format, data, value_start)
                 pdata.add_param(name, v, ptype)
             count += 1
+            offset = record_end
 
         if count != num_params:
             logging.error("paramftp: bad count %u should be %u", count, num_params)
