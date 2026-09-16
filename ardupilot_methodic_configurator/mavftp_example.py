@@ -185,7 +185,7 @@ def remove_directory(mav_ftp: mavftp.MAVFTP, remote_directory: str) -> None:
 def upload_script(mav_ftp: mavftp.MAVFTP, remote_directory: str, local_filename: str, timeout: float) -> None:
     # Upload it from the PC to the flight controller
     mav_ftp.cmd_put([local_filename, remote_directory + "/" + local_filename])
-    ret = mav_ftp.process_ftp_reply("CreateFile", timeout=timeout)
+    ret = mav_ftp.process_ftp_reply("put", timeout=timeout)
     ret.display_message()
     debug_class_member_variable_changes(mav_ftp)
 
