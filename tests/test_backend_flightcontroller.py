@@ -33,6 +33,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink im
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_serial import (
     FakeSerialPortDiscovery,
 )
+from ardupilot_methodic_configurator.backend_flightcontroller_files import LastLogDownloadResult
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import (
     FlightControllerInfo,
 )
@@ -95,7 +96,7 @@ def _build_flight_controller_with_mocks(
 
     mock_files_mgr = MagicMock()
     mock_files_mgr.upload_file.return_value = True
-    mock_files_mgr.download_last_flight_log.return_value = True
+    mock_files_mgr.download_last_flight_log.return_value = LastLogDownloadResult.SUCCESS
 
     fc = FlightController(
         reboot_time=reboot_time,
@@ -847,10 +848,19 @@ class TestFlightControllerResetAndDelegation:
         with tempfile.NamedTemporaryFile() as tmp_file:
             destination = tmp_file.name
             assert fc.upload_file("local.txt", "@SYS/local.txt") is True
-            assert fc.download_last_flight_log(destination) is True
+            assert fc.download_last_flight_log(destination) is LastLogDownloadResult.SUCCESS
 
         mock_files_mgr.upload_file.assert_called_once_with("local.txt", "@SYS/local.txt", None)
         mock_files_mgr.download_last_flight_log.assert_called_once_with(destination, None)
+
+    def test_detailed_last_log_outcome_is_delegated_without_retrying(self) -> None:
+        """The facade preserves the file manager's specific result."""
+        fc, _conn_mgr, _params_mgr, _commands_mgr, files_mgr, _master = _build_flight_controller_with_mocks()
+        files_mgr.download_last_flight_log.return_value = LastLogDownloadResult.NO_LOGS
+
+        assert fc.download_last_flight_log("last.BIN") is LastLogDownloadResult.NO_LOGS
+
+        files_mgr.download_last_flight_log.assert_called_once_with("last.BIN", None)
 
     def test_cli_argument_helper_exposes_expected_flags(self) -> None:
         """

@@ -13,6 +13,7 @@ There are also [quick start instructions](README.md), [specific use case instruc
 
 1. [Step-by-Step Workflow](#step-by-step-workflow)
 1. [Configuring multiple similar vehicles](#configuring-multiple-similar-vehicles)
+1. [MAVFTP File Browser](USERMANUAL_MAVFTP.md)
 1. [Customizing configuration steps](https://ardupilot.github.io/MethodicConfigurator/CUSTOMIZING_CONFIGURATION_STEPS.html) (external document)
 1. [Command Line Usage](#command-line-usage)
 1. [Troubleshooting](#troubleshooting)
