@@ -66,8 +66,8 @@ class ProgressWindow:  # pylint: disable=too-many-instance-attributes
         self.progress_label = ttk.Label(main_frame, text=message.format(0, 0))
         self.progress_label.pack(side=tk.TOP, fill=tk.X, expand=False, pady=(10, 10))
 
-        if not isinstance(master, tk.Tk):
-            logging_error("ProgressWindow: master is not a tk.Tk instance, window centering will fail")
+        if not isinstance(master, (tk.Tk, tk.Toplevel)):
+            logging_error("ProgressWindow: master is not a tk.Tk or tk.Toplevel instance, window centering may fail")
 
         if not self.only_show_when_update_progress_called:
             self.progress_window.deiconify()  # needs to be done before centering, but it does flicker :(
