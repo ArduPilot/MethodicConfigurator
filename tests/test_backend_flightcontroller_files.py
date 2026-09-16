@@ -172,6 +172,7 @@ class TestFlightControllerFilesUpload:
         # Then: Upload successful
         assert success is True
         mock_mavftp.cmd_put.assert_called_once()
+        mock_mavftp.process_ftp_reply.assert_called_once_with("put", timeout=files_mgr.MAVFTP_FILE_OPERATION_TIMEOUT)
         callback = mock_mavftp.cmd_put.call_args.kwargs["progress_callback"]
         callback(0.42)
         assert progress_calls == [(42, 100)]

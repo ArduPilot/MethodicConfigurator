@@ -112,7 +112,7 @@ class FlightControllerFiles:
                 put_ret.display_message()
                 return False
 
-            ret = mavftp_instance.process_ftp_reply("CreateFile", timeout=self.MAVFTP_FILE_OPERATION_TIMEOUT)
+            ret = mavftp_instance.process_ftp_reply("put", timeout=self.MAVFTP_FILE_OPERATION_TIMEOUT)
             if ret.error_code != FtpError.Success:
                 ret.display_message()
                 return False
