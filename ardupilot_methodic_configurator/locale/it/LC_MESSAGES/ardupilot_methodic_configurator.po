@@ -969,15 +969,15 @@ msgstr "La stringa di versione FW {version_str} in {filename} non è valida"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:95
 msgid "flight-controller connection was lost before bootloader entry"
-msgstr ""
+msgstr "la connessione al controllore di volo è stata persa prima dell'accesso al bootloader"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:99
 msgid "flight controller rejected bootloader entry: {error}"
-msgstr ""
+msgstr "il controllore di volo ha rifiutato l'accesso al bootloader: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:144
 msgid "cannot resolve the flight-controller serial device: {error}"
-msgstr ""
+msgstr "impossibile risolvere il dispositivo seriale del controllore di volo: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:232
 msgid "You should uninstall ModemManager as it conflicts with ArduPilot"
@@ -995,34 +995,34 @@ msgstr "Comando di reset inviato ad ArduPilot."
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:466
 msgid ""
 "firmware upload requires an active direct serial flight-controller connection"
-msgstr ""
+msgstr "il caricamento del firmware richiede una connessione seriale diretta attiva al controllore di volo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:469
 msgid ""
 "firmware upload requires explicit confirmation before entering the bootloader"
-msgstr ""
+msgstr "il caricamento del firmware richiede una conferma esplicita prima di accedere al bootloader"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:476
 msgid "firmware upload requires the connected flight controller APJ board_id"
-msgstr ""
+msgstr "il caricamento del firmware richiede il board_id APJ del controllore di volo collegato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:510
 msgid "firmware upload requires a trusted SHA-256 for the selected APJ payload"
-msgstr ""
+msgstr "il caricamento del firmware richiede un SHA-256 affidabile per il payload APJ selezionato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:514
 msgid "firmware upload requires a stable USB serial number or USB location"
-msgstr ""
+msgstr "il caricamento del firmware richiede un numero di serie USB stabile o una posizione USB stabile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:535
 msgid "Unable to reconnect after safe firmware-upload abort: %s"
-msgstr ""
+msgstr "Impossibile riconnettersi dopo l'interruzione sicura del caricamento del firmware: %s"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:543
 msgid ""
 "firmware was written and verified, but the flight controller could not be "
 "reconnected automatically: {error}. Reconnect it manually before continuing."
-msgstr ""
+msgstr "il firmware è stato scritto e verificato, ma non è stato possibile riconnettere automaticamente il controllore di volo: {error}. Ricollegarlo manualmente prima di continuare."
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller.py:810
 msgid ""
@@ -1050,173 +1050,173 @@ msgstr "Tempo di riavvio del controller di volo. Predefinito è %(default)s"
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:254
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:256
 msgid "cannot uniquely locate the bootloader USB device"
-msgstr ""
+msgstr "impossibile individuare in modo univoco il dispositivo USB del bootloader"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:274
 msgid "unsupported firmware format {suffix}, only .apj is supported"
-msgstr ""
+msgstr "formato firmware {suffix} non supportato, è supportato solo .apj"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:278
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:283
 msgid "APJ descriptor exceeds {limit} bytes"
-msgstr ""
+msgstr "il descrittore APJ supera {limit} byte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:287
 msgid "cannot read APJ descriptor: {error}"
-msgstr ""
+msgstr "impossibile leggere il descrittore APJ: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:309
 msgid ""
 "PROG_MULTI chunk must be 4..{limit} bytes and a multiple of 4, got {size}"
-msgstr ""
+msgstr "il blocco PROG_MULTI deve essere di 4..{limit} byte e un multiplo di 4, ricevuto {size}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:326
 msgid "READ_MULTI length must be 1..{limit}, got {length}"
-msgstr ""
+msgstr "la lunghezza READ_MULTI deve essere 1..{limit}, ricevuto {length}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:333
 msgid "external flash size must be 1..4294967295 bytes, got {size}"
-msgstr ""
+msgstr "la dimensione della flash esterna deve essere 1..4294967295 byte, ricevuto {size}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:357
 msgid "short reply, expected INSYNC and status, got {reply}"
-msgstr ""
+msgstr "risposta troppo breve, previsti INSYNC e stato, ricevuto {reply}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:360
 msgid "expected INSYNC, got {byte}"
-msgstr ""
+msgstr "previsto INSYNC, ricevuto {byte}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:366
 msgid "bootloader reports INVALID OPERATION"
-msgstr ""
+msgstr "il bootloader segnala INVALID OPERATION"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:367
 msgid "bootloader reports OPERATION FAILED"
-msgstr ""
+msgstr "il bootloader segnala OPERATION FAILED"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:368
 msgid "programming not supported for this silicon revision"
-msgstr ""
+msgstr "la programmazione non è supportata per questa revisione del silicio"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:370
 msgid "unexpected status {status} instead of OK"
-msgstr ""
+msgstr "stato imprevisto {status} invece di OK"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:376
 msgid "short reply, expected 4 bytes, got {size}"
-msgstr ""
+msgstr "risposta troppo breve, previsti 4 byte, ricevuto {size}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:405
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:732
 msgid "bootloader response timeout must be positive"
-msgstr ""
+msgstr "il timeout di risposta del bootloader deve essere positivo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:440
 msgid "cannot clear bootloader serial input: {error}"
-msgstr ""
+msgstr "impossibile svuotare l'input seriale del bootloader: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:452
 msgid "bootloader transport write failed: {error}"
-msgstr ""
+msgstr "scrittura del trasporto del bootloader non riuscita: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:455
 msgid "bootloader transport wrote {written} of {expected} bytes"
-msgstr ""
+msgstr "il trasporto del bootloader ha scritto {written} byte su {expected}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:464
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:477
 msgid "timeout waiting for {expected} bootloader bytes; received {actual}"
-msgstr ""
+msgstr "timeout in attesa di {expected} byte del bootloader; ricevuti {actual}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:483
 msgid "bootloader transport read failed: {error}"
-msgstr ""
+msgstr "lettura del trasporto del bootloader non riuscita: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:501
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:375
 msgid "unsupported bootloader protocol revision {revision}"
-msgstr ""
+msgstr "revisione del protocollo del bootloader {revision} non supportata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:542
 msgid "invalid external-flash erase progress {progress}"
-msgstr ""
+msgstr "avanzamento della cancellazione della flash esterna non valido: {progress}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:545
 msgid "external-flash erase progress regressed from {previous} to {progress}"
-msgstr ""
+msgstr "l'avanzamento della cancellazione della flash esterna è regredito da {previous} a {progress}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:559
 msgid "firmware read-back verification failed"
-msgstr ""
+msgstr "verifica della rilettura del firmware non riuscita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:565
 msgid "firmware CRC verification failed"
-msgstr ""
+msgstr "verifica del CRC del firmware non riuscita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:573
 msgid "external firmware CRC verification failed"
-msgstr ""
+msgstr "verifica del CRC del firmware esterno non riuscita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:598
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:760
 msgid "firmware upload requires explicit confirmation"
-msgstr ""
+msgstr "il caricamento del firmware richiede una conferma esplicita"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:601
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:763
 msgid "firmware upload cancelled before entering the bootloader"
-msgstr ""
+msgstr "caricamento del firmware annullato prima di entrare nel bootloader"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:614
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:770
 msgid ""
 "full firmware erase is unavailable because support cannot yet be determined "
 "safely"
-msgstr ""
+msgstr "la cancellazione completa del firmware non è disponibile perché il supporto non può ancora essere determinato in modo sicuro"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:619
 msgid "firmware upload was not confirmed"
-msgstr ""
+msgstr "il caricamento del firmware non è stato confermato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:623
 msgid "firmware upload cancelled before erase"
-msgstr ""
+msgstr "caricamento del firmware annullato prima della cancellazione"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:669
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:686
 msgid ""
 "cannot reboot the held bootloader; power-cycle the flight controller before "
 "reconnecting"
-msgstr ""
+msgstr "impossibile riavviare il bootloader mantenuto; spegnere e riaccendere il flight controller prima di riconnettersi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:676
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:691
 msgid ""
 "firmware upload failed during {stage}; the firmware flash may be incomplete. "
 "power-cycle the flight controller before reconnecting"
-msgstr ""
+msgstr "caricamento del firmware non riuscito durante {stage}; la scrittura del firmware nella flash potrebbe essere incompleta. spegnere e riaccendere il flight controller prima di riconnettersi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:791
 msgid "bootloader open retries must be at least one"
-msgstr ""
+msgstr "i tentativi di apertura del bootloader devono essere almeno uno"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:797
 msgid ""
 "firmware upload was cancelled while waiting for the bootloader; power-cycle "
 "the flight controller before reconnecting"
-msgstr ""
+msgstr "il caricamento del firmware è stato annullato durante l'attesa del bootloader; spegnere e riaccendere il flight controller prima di riconnettersi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:832
 msgid ""
 "could not confirm reboot of the held bootloader; power-cycle the flight "
 "controller before reconnecting"
-msgstr ""
+msgstr "impossibile confermare il riavvio del bootloader mantenuto; spegnere e riaccendere il flight controller prima di riconnettersi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_bootloader.py:848
 msgid ""
 "cannot open the held bootloader on serial port {device}: {error}; power-"
 "cycle the flight controller before reconnecting"
-msgstr ""
+msgstr "impossibile aprire il bootloader mantenuto sulla porta seriale {device}: {error}; spegnere e riaccendere il flight controller prima di riconnettersi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/backend_flightcontroller_commands.py:138
 msgid "No flight controller connection available for command"
@@ -4457,121 +4457,121 @@ msgstr "Parametro Rinominato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:143
 msgid "bootloader flash size must be a non-negative multiple of four"
-msgstr ""
+msgstr "la dimensione della flash del bootloader deve essere un multiplo di quattro non negativo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:210
 msgid "{stage} is terminal"
-msgstr ""
+msgstr "{stage} è terminale"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:217
 msgid "cannot cancel during {stage}"
-msgstr ""
+msgstr "impossibile annullare durante {stage}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:223
 msgid "illegal transition {current} -> {target}"
-msgstr ""
+msgstr "transizione non valida {current} -> {target}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:233
 msgid "cannot parse APJ descriptor: {error}"
-msgstr ""
+msgstr "impossibile analizzare il descrittore APJ: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:236
 msgid "APJ descriptor is not a JSON object"
-msgstr ""
+msgstr "il descrittore APJ non è un oggetto JSON"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:247
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:269
 msgid "APJ descriptor is missing or has invalid metadata: {error}"
-msgstr ""
+msgstr "il descrittore APJ è mancante o ha metadati non validi: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:250
 msgid "APJ metadata values are out of range"
-msgstr ""
+msgstr "i valori dei metadati APJ sono fuori intervallo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:253
 msgid "APJ image_size does not match the decoded image"
-msgstr ""
+msgstr "APJ image_size non corrisponde all'immagine decodificata"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:258
 msgid "APJ version metadata must be text"
-msgstr ""
+msgstr "i metadati della versione APJ devono essere testo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:262
 msgid "APJ git_identity metadata must be text"
-msgstr ""
+msgstr "i metadati git_identity APJ devono essere testo"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:287
 msgid "APJ metadata integer must not be boolean or floating point"
-msgstr ""
+msgstr "l'intero nei metadati APJ non deve essere booleano o in virgola mobile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:290
 msgid "APJ metadata integer must be an integer or integer string"
-msgstr ""
+msgstr "l'intero nei metadati APJ deve essere un intero o una stringa intera"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:299
 msgid "APJ {key} is not valid base64+zlib data: expected text"
-msgstr ""
+msgstr "i dati base64+zlib di APJ {key} non sono validi: testo previsto"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:302
 msgid "APJ {key} exceeds {limit} encoded bytes"
-msgstr ""
+msgstr "APJ {key} supera {limit} byte codificati"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:308
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:315
 msgid "APJ {key} exceeds {limit} bytes"
-msgstr ""
+msgstr "APJ {key} supera {limit} byte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:318
 msgid "APJ {key} is not valid base64+zlib data: truncated stream"
-msgstr ""
+msgstr "i dati base64+zlib di APJ {key} non sono validi: flusso troncato"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:321
 msgid "APJ {key} is not valid base64+zlib data: trailing bytes"
-msgstr ""
+msgstr "i dati base64+zlib di APJ {key} non sono validi: byte finali aggiuntivi"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:324
 msgid "APJ {key} is not valid base64+zlib data: {error}"
-msgstr ""
+msgstr "i dati base64+zlib di APJ {key} non sono validi: {error}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:348
 msgid "trusted firmware SHA-256 must be 64 hexadecimal characters"
-msgstr ""
+msgstr "l'SHA-256 del firmware attendibile deve contenere 64 caratteri esadecimali"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:352
 msgid "selected firmware SHA-256 does not match the trusted digest"
-msgstr ""
+msgstr "l'SHA-256 del firmware selezionato non corrisponde al digest attendibile"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:366
 msgid ""
 "bootloader board_id {bootloader_id} differs from connected board_id "
 "{connected_id}"
-msgstr ""
+msgstr "il board_id {bootloader_id} del bootloader differisce dal board_id {connected_id} della scheda connessa"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:379
 msgid "firmware is for board_id {image_id}, board reports {board_id}"
-msgstr ""
+msgstr "il firmware è per il board_id {image_id}, la scheda riporta {board_id}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:384
 msgid "bootloader reports an invalid flash size of {flash} bytes"
-msgstr ""
+msgstr "il bootloader riporta una dimensione della flash non valida pari a {flash} byte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:387
 msgid "image of {size} bytes exceeds flash of {flash} bytes"
-msgstr ""
+msgstr "l'immagine di {size} byte supera la flash di {flash} byte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:392
 msgid "external image of {size} bytes exceeds external flash of {extf} bytes"
-msgstr ""
+msgstr "l'immagine esterna di {size} byte supera la flash esterna di {extf} byte"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:401
 msgid "reconnected flight controller did not report an APJ board_id"
-msgstr ""
+msgstr "il controller di volo ricollegato non ha riportato un board_id APJ"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_firmware_upload.py:404
 msgid ""
 "reconnected board_id {actual_id} does not match firmware board_id "
 "{expected_id}"
-msgstr ""
+msgstr "il board_id ricollegato {actual_id} non corrisponde al board_id del firmware {expected_id}"
 
 #: /home/runner/work/MethodicConfigurator/MethodicConfigurator/ardupilot_methodic_configurator/data_model_flightcontroller_info.py:90
 msgid "USB Vendor"
