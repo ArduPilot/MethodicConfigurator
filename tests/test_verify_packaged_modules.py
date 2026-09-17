@@ -12,6 +12,10 @@ import hashlib
 import importlib
 import importlib.util
 import json
+import os
+import runpy
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import patch
 from zipfile import ZipFile
@@ -19,8 +23,100 @@ from zipfile import ZipFile
 import pytest
 
 from ardupilot_methodic_configurator import __main__ as amc_main
+from scripts.pyinstaller_spec_helpers import is_unused_mavlink_dialect, selenium_manager_folder, unused_file_filter
 from scripts.verify_packaged_modules import required_modules, verify_archive
 from scripts.verify_wheel_install import verify_wheel_hash, verify_wheel_install, wheel_from_report
+
+
+@pytest.mark.parametrize(
+    ("module", "expected"),
+    [
+        ("pymavlink.dialects.v20.all", False),
+        ("pymavlink.dialects.v10.ardupilotmega", False),
+        ("pymavlink.dialects.v20.common", True),
+        ("pymavlink.dialects.v10.minimal", True),
+        ("pymavlink.dialects.v20", False),
+        ("pymavlink.mavutil", False),
+    ],
+)
+def test_spec_helpers_drop_only_unused_mavlink_dialects(module: str, expected: bool) -> None:
+    """Only dialect modules other than all and ardupilotmega are removed from the bundle."""
+    assert is_unused_mavlink_dialect(module) is expected
+
+
+@pytest.mark.parametrize(
+    ("target", "machine", "kept", "removed"),
+    [
+        ("windows", "AMD64", "windows", ["linux-x86_64", "linux-arm64", "macos"]),
+        ("macos", "arm64", "macos", ["linux-x86_64", "linux-arm64", "windows"]),
+        ("linux", "x86_64", "linux-x86_64", ["linux-arm64", "macos", "windows"]),
+        ("linux", "aarch64", "linux-arm64", ["linux-x86_64", "macos", "windows"]),
+    ],
+)
+def test_spec_helpers_keep_only_the_selenium_manager_used_by_the_target(
+    target: str, machine: str, kept: str, removed: list[str]
+) -> None:
+    """Selenium selects one selenium-manager folder at runtime; the others are dropped from the bundle."""
+    is_unused = unused_file_filter(target, machine)
+    assert selenium_manager_folder(target, machine) == kept
+    assert not is_unused((f"selenium/webdriver/common/{kept}/selenium-manager", "", "BINARY"))
+    assert all(is_unused((f"selenium/webdriver/common/{folder}/selenium-manager", "", "BINARY")) for folder in removed)
+
+
+@pytest.mark.parametrize(
+    "destination",
+    [
+        "PIL/_avif.cpython-315-x86_64-linux-gnu.so",
+        "libavif.so",
+        "libavif.so.16",
+        "libavif-c6062d5f.so.16.4.2",
+        "pillow.libs/libavif-c6062d5f.so.16.4.2",
+        "PIL/.dylibs/libavif.16.4.2.dylib",
+        "matplotlib/mpl-data/fonts/afm/cmex10.afm",
+    ],
+)
+def test_spec_helpers_drop_unused_pillow_and_matplotlib_files(destination: str) -> None:
+    """AVIF support and PostScript/PDF fonts are never used by the application."""
+    assert unused_file_filter("linux", "x86_64")((destination, "", "BINARY"))
+
+
+def test_spec_helpers_keep_files_the_application_needs() -> None:
+    """Other Pillow libraries and matplotlib fonts stay in the bundle."""
+    is_unused = unused_file_filter("macos")
+    assert not is_unused(("PIL/.dylibs/libwebp.7.dylib", "", "BINARY"))
+    assert not is_unused(("PIL/_imaging.cpython-314-darwin.so", "", "EXTENSION"))
+    assert not is_unused(("matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf", "", "DATA"))
+
+
+def test_bundle_filter_handles_a_long_non_library_path_without_stalling() -> None:
+    """GIVEN a dot-heavy non-library path WHEN filtering THEN the bundle scan completes promptly."""
+    script = (
+        "import sys; from scripts.pyinstaller_spec_helpers import unused_file_filter; "
+        "assert not unused_file_filter('linux', 'x86_64')((sys.argv[1], '', 'BINARY'))"
+    )
+    subprocess.run(  # noqa: S603 - fixed interpreter and test arguments, without a shell
+        [sys.executable, "-c", script, "libavif.so" + "." * 1000 + "/unrelated.txt"],
+        cwd=Path(__file__).resolve().parents[1],
+        check=True,
+        capture_output=True,
+        timeout=5,
+    )
+
+
+@pytest.mark.parametrize(
+    ("dialect", "expected"),
+    [(None, None), ("all", "all"), ("ardupilotmega", "ardupilotmega"), ("common", "ardupilotmega"), ("", "ardupilotmega")],
+)
+def test_frozen_runtime_hook_selects_a_bundled_mavlink_dialect(
+    monkeypatch: pytest.MonkeyPatch, dialect: str | None, expected: str | None
+) -> None:
+    """A frozen app keeps supported selections and replaces unbundled dialects before importing pymavlink."""
+    monkeypatch.delenv("MAVLINK_DIALECT", raising=False)
+    if dialect is not None:
+        monkeypatch.setenv("MAVLINK_DIALECT", dialect)
+    hook = Path(__file__).resolve().parents[1] / "scripts" / "pyinstaller_runtime_mavlink.py"
+    runpy.run_path(str(hook))
+    assert os.environ.get("MAVLINK_DIALECT") == expected
 
 
 def test_windows_frozen_log_validation_does_not_load_the_gui() -> None:
