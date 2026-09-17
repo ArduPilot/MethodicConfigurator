@@ -19,14 +19,25 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
 import re
+from contextlib import suppress
 from json import dumps as json_dumps
 from json import load as json_load
+from os import O_CREAT, O_EXCL, O_WRONLY, close, fsync
+from os import open as os_open
 from pathlib import Path
+from secrets import token_hex
+from shutil import copyfile
+from stat import S_IMODE
 
 from ardupilot_methodic_configurator import _
+from ardupilot_methodic_configurator.data_model_vehicle_project_creator import (
+    VehicleProjectCreationError,
+    VehicleProjectCreator,
+)
 
 VEHICLE_COMPONENTS_FORMAT_VERSION = 1
 _VEHICLE_COMPONENTS_JSON_FILENAME = "vehicle_components.json"
+_PACKAGE_DIR = Path(__file__).resolve().parent
 
 # ---------------------------------------------------------------------------
 # Format version 0 → 1
@@ -308,6 +319,148 @@ _FILES_TO_DELETE_V0_TO_V1: dict[str, list[str]] = {
 }
 
 # ---------------------------------------------------------------------------
+# Format version 1 → 2
+# ---------------------------------------------------------------------------
+
+_PARAM_MOVES_V1_TO_V2: dict[str, list[tuple[str, str, list[str]]]] = {
+    "all": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "14_accelerometer_calibration.param",
+            [r"INS_ACC(?:[2-5])?OFFS_[XYZ]", r"INS_ACC(?:[2-3])?SCAL_[XYZ]", r"INS_USE[2-3]?"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "03_imu_temperature_calibration_results.param",
+            [r"INS_ACC[1-3]_CALTEMP"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "15_accelerometer_level.param",
+            [r"AHRS_TRIM_[XY]"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "16_compass_calibration.param",
+            [r"COMPASS_.+"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "17_flight_modes.param",
+            [r"FLTMODE[1-6]", "INITIAL_MODE"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "07_remote_controller_controller.param",
+            [r"RC\d+_(?:MIN|MAX|TRIM)"],
+        ),
+    ],
+    "ArduCopter": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "18_servo_outputs.param",
+            [r"SERVO\d+_FUNCTION", "FRAME_CLASS"],
+        ),
+        (
+            "05_board_orientation.param",
+            "18_servo_outputs.param",
+            ["FRAME_CLASS"],
+        ),
+        (
+            "04_board_orientation.param",
+            "18_servo_outputs.param",
+            ["FRAME_CLASS"],
+        ),
+    ],
+    "ArduPlane": [],
+    "Heli": [],
+    "Rover": [],
+}
+
+# Some values remain in their historical step while also becoming part of the
+# accelerometer calibration step in the v2 configuration.
+_PARAM_COPIES_V1_TO_V2: dict[str, list[tuple[str, str, str, list[str]]]] = {
+    "all": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "03_imu_temperature_calibration_results.param",
+            "14_accelerometer_calibration.param",
+            [r"INS_ACC[1-3]_CALTEMP"],
+        ),
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            "15_accelerometer_level.param",
+            "14_accelerometer_calibration.param",
+            [r"AHRS_TRIM_[XY]"],
+        ),
+    ],
+    "ArduCopter": [],
+    "ArduPlane": [],
+    "Heli": [],
+    "Rover": [],
+}
+
+_PARAM_DELETES_V1_TO_V2: dict[str, list[tuple[str, list[str]]]] = {
+    "all": [
+        (
+            "14_mp_setup_mandatory_hardware.param",
+            [
+                "ATC_ACCEL_P_MAX",
+                "ATC_ACCEL_R_MAX",
+                "ATC_ACCEL_Y_MAX",
+                "ATC_RAT_PIT_FLTD",
+                "ATC_RAT_PIT_FLTT",
+                "ATC_RAT_RLL_FLTD",
+                "ATC_RAT_RLL_FLTT",
+                "ATC_RAT_YAW_FLTE",
+                "ATC_RAT_YAW_FLTT",
+                "FENCE_ACTION",
+                "FENCE_ALT_MAX",
+                "FENCE_ENABLE",
+                "FENCE_RADIUS",
+                "FRAME_TYPE",
+                "INS_GYRO_FILTER",
+                "MOT_BAT_VOLT_MAX",
+                "MOT_BAT_VOLT_MIN",
+                "MOT_SPIN_ARM",
+                "MOT_SPIN_MAX",
+                "MOT_SPIN_MIN",
+                "MOT_THST_EXPO",
+                "MOT_THST_HOVER",
+            ],
+        ),
+    ],
+    "ArduCopter": [],
+    "ArduPlane": [],
+    "Heli": [],
+    "Rover": [],
+}
+
+# Splits run before LocalFilesystem applies old_filenames renames. Include every
+# historical mandatory-hardware filename declared by the configuration steps.
+_MANDATORY_HARDWARE_OLD_FILENAMES = (
+    "11_mp_setup_mandatory_hardware.param",
+    "12_mp_setup_mandatory_hardware.param",
+)
+for _old_filename in _MANDATORY_HARDWARE_OLD_FILENAMES:
+    for _migration_key, _migration_moves in _PARAM_MOVES_V1_TO_V2.items():
+        _migration_moves.extend(
+            (_old_filename, destination, patterns)
+            for source, destination, patterns in tuple(_migration_moves)
+            if source == "14_mp_setup_mandatory_hardware.param"
+        )
+        _PARAM_DELETES_V1_TO_V2[_migration_key].extend(
+            (_old_filename, patterns)
+            for source, patterns in tuple(_PARAM_DELETES_V1_TO_V2[_migration_key])
+            if source == "14_mp_setup_mandatory_hardware.param"
+        )
+        _PARAM_COPIES_V1_TO_V2[_migration_key].extend(
+            (_old_filename, source_destination, destination, patterns)
+            for source, source_destination, destination, patterns in tuple(_PARAM_COPIES_V1_TO_V2[_migration_key])
+            if source == "14_mp_setup_mandatory_hardware.param"
+        )
+
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
@@ -321,10 +474,32 @@ def _read_param_file_lines(filepath: Path) -> list[str]:
         return []
 
 
+def _write_migration_file_lines(filepath: Path, lines: list[str]) -> None:
+    """Publish complete UTF-8/LF contents atomically, preserving existing permission bits."""
+    temporary_path = filepath.parent / f".migration-{filepath.name}-{token_hex(16)}.tmp"
+    existing_mode = S_IMODE(filepath.stat().st_mode) if filepath.exists() else None
+    temporary_created = False
+    try:
+        # Exclusive creation leaves an occupied temporary name untouched and applies
+        # normal umask/inherited permissions for newly created project files.
+        with open(temporary_path, "x", encoding="utf-8", newline="\n") as fh:
+            temporary_created = True
+            fh.writelines(lines)
+            fh.flush()
+            if existing_mode is not None:
+                temporary_path.chmod(existing_mode)
+            fsync(fh.fileno())
+        # All handles must be closed before replacement, including on Windows.
+        temporary_path.replace(filepath)
+    finally:
+        if temporary_created:
+            with suppress(OSError):
+                temporary_path.unlink(missing_ok=True)
+
+
 def _write_param_file_lines(filepath: Path, lines: list[str]) -> None:
-    """Write *lines* to *filepath* using Unix line endings."""
-    with open(filepath, "w", encoding="utf-8", newline="\n") as fh:
-        fh.writelines(lines)
+    """Write parameter *lines* atomically using Unix line endings."""
+    _write_migration_file_lines(filepath, lines)
 
 
 def _param_name_from_line(line: str) -> str:
@@ -366,15 +541,8 @@ def _line_matches_any(param_name: str, patterns: list[str]) -> bool:
     return False
 
 
-def _extract_params(source: Path, patterns: list[str]) -> tuple[list[str], list[str]]:
-    """
-    Partition lines of *source* by whether the parameter name matches *patterns*.
-
-    Returns ``(extracted_lines, remaining_lines)``.  Both lists preserve the
-    original line endings.  If *source* does not exist the tuple ``([], [])``
-    is returned.
-    """
-    lines = _read_param_file_lines(source)
+def _extract_param_lines(lines: list[str], patterns: list[str]) -> tuple[list[str], list[str]]:
+    """Partition *lines* by whether each parameter name matches *patterns*."""
     extracted: list[str] = []
     remaining: list[str] = []
     for line in lines:
@@ -386,12 +554,108 @@ def _extract_params(source: Path, patterns: list[str]) -> tuple[list[str], list[
     return extracted, remaining
 
 
+def _extract_params(source: Path, patterns: list[str]) -> tuple[list[str], list[str]]:
+    """
+    Partition lines of *source* by whether the parameter name matches *patterns*.
+
+    Returns ``(extracted_lines, remaining_lines)``. Both lists preserve original
+    line endings. If *source* does not exist the tuple ``([], [])`` is returned.
+    """
+    return _extract_param_lines(_read_param_file_lines(source), patterns)
+
+
+def _copy_configuration_step_file(source: Path, destination: Path) -> None:
+    """Publish a complete, byte-preserving template copy without exposing partial contents."""
+    temporary_path = destination.parent / f".migration-{token_hex(16)}.tmp"
+    # Match normal file creation: let the OS apply umask and inherited ACLs rather
+    # than publishing NamedTemporaryFile's private 0o600 permissions. Exclusive
+    # creation protects existing files and symlinks at the temporary path.
+    temporary_fd = os_open(temporary_path, O_CREAT | O_EXCL | O_WRONLY, 0o666)
+    try:
+        close(temporary_fd)
+        copyfile(source, temporary_path)
+        with temporary_path.open("r+b") as copied_file:
+            fsync(copied_file.fileno())
+        # Close every handle before replacing the destination, including on Windows.
+        temporary_path.replace(destination)
+    finally:
+        with suppress(OSError):
+            temporary_path.unlink(missing_ok=True)
+
+
+def _restore_missing_configuration_step_files(  # pylint: disable=too-many-locals
+    vehicle_path: Path,
+    vehicle_type: str,
+    firmware_version: str,
+    deleted_filenames: set[str] | None = None,
+) -> None:
+    """
+    Copy missing configuration-step files from the matching empty firmware template.
+
+    A project may be missing files introduced by a newer configuration. Restore only step files
+    that exist in both the active configuration-step definition and the matching empty template.
+    Existing project files, including empty files, are never overwritten. The v1→v2 migration
+    calls this before splitting parameters so its destination files can be seeded from the template.
+    Copies are published atomically so an interrupted restoration can be retried.
+    """
+    version_match = re.search(r"(\d+)\.(\d+)", firmware_version)
+    if not vehicle_type or not version_match:
+        logging.warning(_("Cannot restore missing configuration files: firmware type or version is unavailable."))
+        return
+
+    major, minor = (int(part) for part in version_match.groups())
+    try:
+        template_dir = Path(VehicleProjectCreator.template_dir_for_bin_import(vehicle_type, major, minor))
+    except VehicleProjectCreationError as exc:
+        logging.warning(_("Migration template directory not found, skipping missing files: %s"), exc.message)
+        return
+
+    configuration_filename = f"configuration_steps_{vehicle_type}.json"
+    configuration_path = vehicle_path / configuration_filename
+    if not configuration_path.is_file():
+        configuration_path = _PACKAGE_DIR / configuration_filename
+    try:
+        with open(configuration_path, encoding="utf-8-sig") as file:
+            configuration_data = json_load(file)
+    except (FileNotFoundError, OSError, ValueError) as exc:
+        logging.warning(_("Cannot load configuration steps %s: %s"), configuration_path, exc)
+        return
+
+    steps = configuration_data.get("steps", {}) if isinstance(configuration_data, dict) else {}
+    if not isinstance(steps, dict):
+        logging.warning(_("Configuration steps file has no valid steps dictionary: %s"), configuration_path)
+        return
+
+    for filename, step_info in steps.items():
+        if not isinstance(filename, str) or Path(filename).name != filename:
+            logging.warning(_("Skipping unsafe configuration-step filename: %r"), filename)
+            continue
+        destination = vehicle_path / filename
+        source = template_dir / filename
+        if filename in (deleted_filenames or set()) or destination.exists() or not source.is_file():
+            continue
+
+        old_filenames = step_info.get("old_filenames", []) if isinstance(step_info, dict) else []
+        if isinstance(old_filenames, list) and any(
+            isinstance(old_filename, str)
+            and Path(old_filename).name == old_filename
+            and (vehicle_path / old_filename).is_file()
+            for old_filename in old_filenames
+        ):
+            # LocalFilesystem.rename_parameter_files() will migrate this project file.
+            # Restoring the new template filename here would block that rename.
+            continue
+
+        _copy_configuration_step_file(source, destination)
+        logging.info(_("Restored missing configuration file from template: %s"), filename)
+
+
 # ---------------------------------------------------------------------------
 # Per-version migration logic
 # ---------------------------------------------------------------------------
 
 
-def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> None:  # pylint: disable=too-many-locals, too-many-branches
+def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> set[str]:  # pylint: disable=too-many-locals, too-many-branches
     """
     Apply all format-version 0 → 1 migrations inside *vehicle_path*.
 
@@ -409,6 +673,8 @@ def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> None:  # pylint:
 
     **Step 3 - deletion of obsolete files.**
     """
+    deleted_filenames: set[str] = set()
+
     # Step 1: parameter extractions
     accumulated: dict[str, list[str]] = {}  # dest filename → lines to append
 
@@ -474,7 +740,94 @@ def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> None:  # pylint:
                         remaining_params,
                     )
                 file_path.unlink()
+                deleted_filenames.add(filename)
                 logging.info(_("Deleted obsolete file: %s"), filename)
+
+    return deleted_filenames
+
+
+def _migrate_v1_to_v2(vehicle_path: Path, vehicle_type: str) -> set[str]:  # noqa: PLR0915  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    """Split mandatory hardware calibration results into dedicated ArduCopter files."""
+    deleted_filenames: set[str] = set()
+    accumulated: dict[str, list[str]] = {}
+    remaining_by_source: dict[Path, list[str]] = {}
+
+    param_move_keys = ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
+    for key in param_move_keys:
+        for src_name, dst_name, patterns in _PARAM_MOVES_V1_TO_V2[key]:
+            src_path = vehicle_path / src_name
+            if not src_path.exists():
+                logging.warning(_("Migration source file not found, skipping extraction: %s"), src_name)
+                continue
+
+            source_lines = remaining_by_source.get(src_path)
+            if source_lines is None:
+                source_lines = _read_param_file_lines(src_path)
+            extracted, remaining = _extract_param_lines(source_lines, patterns)
+            if not extracted:
+                remaining_by_source.setdefault(src_path, source_lines)
+                continue
+
+            accumulated.setdefault(dst_name, []).extend(extracted)
+            remaining_by_source[src_path] = remaining
+            logging.info(_("Extracted %d parameter line(s) from %s for %s"), len(extracted), src_name, dst_name)
+
+    param_copy_keys = ["all"] + ([vehicle_type] if vehicle_type in _PARAM_COPIES_V1_TO_V2 else [])
+    for key in param_copy_keys:
+        for _src_name, source_dst_name, dst_name, patterns in _PARAM_COPIES_V1_TO_V2[key]:
+            copied = [
+                line
+                for line in accumulated.get(source_dst_name, [])
+                if (name := _param_name_from_line(line)) and _line_matches_any(name, patterns)
+            ]
+            if copied:
+                accumulated.setdefault(dst_name, []).extend(copied)
+
+    for dst_name, lines in accumulated.items():
+        dst_path = vehicle_path / dst_name
+        existing = _read_param_file_lines(dst_path) if dst_path.exists() else []
+        moved_names = {_param_name_from_line(line) for line in lines if _param_name_from_line(line)}
+        # Values from the old project file are authoritative during migration.
+        # Keep unrelated destination values, but replace conflicting values.
+        retained_existing = [line for line in existing if _param_name_from_line(line) not in moved_names]
+        unique_moved_lines: list[str] = []
+        seen_moved_names: set[str] = set()
+        for line in reversed(lines):
+            name = _param_name_from_line(line)
+            if name and name in seen_moved_names:
+                continue
+            if name:
+                seen_moved_names.add(name)
+            unique_moved_lines.append(line)
+        unique_moved_lines.reverse()
+        _write_param_file_lines(dst_path, retained_existing + unique_moved_lines)
+        logging.info(_("%s parameter migration file: %s"), _("Updated") if existing else _("Created"), dst_name)
+
+    # Commit extracted values to destinations before trimming the source files.
+    # If interrupted between these writes, the destination-name merge is idempotent.
+    for src_path, remaining in remaining_by_source.items():
+        _write_param_file_lines(src_path, remaining)
+
+    for key in ["all"] + ([vehicle_type] if vehicle_type in _PARAM_DELETES_V1_TO_V2 else []):
+        for src_name, patterns in _PARAM_DELETES_V1_TO_V2[key]:
+            src_path = vehicle_path / src_name
+            if not src_path.exists():
+                continue
+            deleted, remaining = _extract_params(src_path, patterns)
+            if deleted:
+                logging.info(_("Deleted %d obsolete parameter line(s) from %s"), len(deleted), src_name)
+                if any(_param_name_from_line(line) for line in remaining):
+                    _write_param_file_lines(src_path, remaining)
+                else:
+                    src_path.unlink()
+                    deleted_filenames.add(src_name)
+                    logging.info(_("Deleted empty parameter file: %s"), src_name)
+            elif src_path in remaining_by_source and not any(_param_name_from_line(line) for line in remaining):
+                src_path.unlink()
+                deleted_filenames.add(src_name)
+                logging.info(_("Deleted empty parameter file: %s"), src_name)
+
+    return deleted_filenames
 
 
 # ---------------------------------------------------------------------------
@@ -482,15 +835,14 @@ def _migrate_v0_to_v1(vehicle_path: Path, vehicle_type: str) -> None:  # pylint:
 # ---------------------------------------------------------------------------
 
 
-def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:
+def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:  # pylint: disable=too-many-locals
     """
-    Migrate the vehicle project in *vehicle_dir* to the latest format version.
+    Migrate the vehicle project in *vehicle_dir* to the latest supported version.
 
-    Reads ``vehicle_components.json``, checks ``"Format version"``, and—if the
-    project is on an older format version—migrates it and updates the
-    ``"Format version"`` field.  Parameter-file splits, new-file creation, and
-    obsolete-file deletion are applied for all vehicle types (see module
-    docstring).  The JSON file is saved before returning.
+    Reads ``vehicle_components.json`` and applies supported migrations in order,
+    persisting every intermediate version before proceeding to the next stage.
+    Parameter-file splits, new-file creation, and obsolete-file deletion are
+    applied for all vehicle types (see module docstring).
 
     File renames are *not* performed here; they are handled by the
     ``old_filenames`` entries in ``ardupilot_methodic_configurator/configuration_steps_*.json`` via
@@ -517,27 +869,62 @@ def migrate_vehicle_project_if_needed(vehicle_dir: str) -> bool:
         return False
 
     format_version: int = data.get("Format version", 0)
-    if format_version >= VEHICLE_COMPONENTS_FORMAT_VERSION:
+    if format_version < 0 or format_version >= VEHICLE_COMPONENTS_FORMAT_VERSION:
         return False
 
-    vehicle_type: str = data.get("Components", {}).get("Flight Controller", {}).get("Firmware", {}).get("Type", "")
+    firmware = data.get("Components", {}).get("Flight Controller", {}).get("Firmware", {})
+    vehicle_type: str = firmware.get("Type", "")
+    firmware_version: str = firmware.get("Version", "")
 
-    logging.info(
-        _("Migrating %s vehicle project in '%s' from format version %d to %d"),
-        vehicle_type or _("unknown"),
-        vehicle_dir,
-        format_version,
-        VEHICLE_COMPONENTS_FORMAT_VERSION,
-    )
+    migrated = False
+    deleted_filenames_to_skip_restore: set[str] = set()
+    while format_version < VEHICLE_COMPONENTS_FORMAT_VERSION:
+        next_format_version = format_version + 1
+        logging.info(
+            _("Migrating %s vehicle project in '%s' from format version %d to %d"),
+            vehicle_type or _("unknown"),
+            vehicle_dir,
+            format_version,
+            next_format_version,
+        )
 
-    if format_version < 1:
-        _migrate_v0_to_v1(vehicle_path, vehicle_type)
+        if next_format_version == 1:
+            deleted_filenames = _migrate_v0_to_v1(vehicle_path, vehicle_type) or set()
+        elif next_format_version == 2:
+            # Seed v2 destinations before extracting project values. The split then overlays
+            # those values onto the empty-template defaults instead of creating empty shells
+            # that prevent the final restoration pass from copying template content.
+            v2_source_filenames = {
+                src_name
+                for migration_key in ["all"] + ([vehicle_type] if vehicle_type in _PARAM_MOVES_V1_TO_V2 else [])
+                for src_name, _dst_name, _patterns in _PARAM_MOVES_V1_TO_V2[migration_key]
+            }
+            _restore_missing_configuration_step_files(
+                vehicle_path,
+                vehicle_type,
+                firmware_version,
+                deleted_filenames_to_skip_restore | v2_source_filenames,
+            )
+            deleted_filenames = _migrate_v1_to_v2(vehicle_path, vehicle_type) or set()
+        else:
+            logging.error(_("No migration path is defined from format version %d"), format_version)
+            break
 
-    data["Format version"] = VEHICLE_COMPONENTS_FORMAT_VERSION
-    json_str = json_dumps(data, indent=4)
-    content = json_str.rstrip("\n") + "\n"
-    with open(json_path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(content)
+        deleted_filenames_to_skip_restore.update(deleted_filenames)
+        if next_format_version == VEHICLE_COMPONENTS_FORMAT_VERSION:
+            _restore_missing_configuration_step_files(
+                vehicle_path, vehicle_type, firmware_version, deleted_filenames_to_skip_restore
+            )
 
-    logging.info(_("Migration to format version %d complete"), VEHICLE_COMPONENTS_FORMAT_VERSION)
-    return True
+        # Persist every stage before running the next one. If the process stops
+        # here, the next open resumes from this version instead of replaying v0→v1.
+        data["Format version"] = next_format_version
+        json_str = json_dumps(data, indent=4)
+        content = json_str.rstrip("\n") + "\n"
+        _write_migration_file_lines(json_path, [content])
+
+        format_version = next_format_version
+        migrated = True
+        logging.info(_("Migration to format version %d complete"), format_version)
+
+    return migrated

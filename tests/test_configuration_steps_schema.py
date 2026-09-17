@@ -178,6 +178,46 @@ def test_serial_rc_receiver_derives_rcin_protocol_for_each_vehicle_type(vehicle_
     )
 
 
+def test_holybro_x500_template_derives_receiver_and_telemetry_serial_protocols() -> None:
+    """The migrated X500 template configures serial protocols from selected connections."""
+    template_dir = (
+        Path(__file__).parent.parent
+        / "ardupilot_methodic_configurator"
+        / "vehicle_templates"
+        / "ArduCopter"
+        / "Holybro_X500_mig"
+    )
+    with (template_dir / "configuration_steps_ArduCopter.json").open(encoding="utf-8") as file:
+        steps = json.load(file)["steps"]
+
+    config_steps = ConfigurationSteps("vehicle_dir", "ArduCopter")
+    receiver_file = "06_remote_controller_receiver.param"
+    receiver_step = steps[receiver_file]
+    for serial_port in range(1, 10):
+        serial_name = f"SERIAL{serial_port}"
+        receiver_variables = {
+            "vehicle_components": {"RC Receiver": {"FC Connection": {"Type": serial_name, "Protocol": "CRSF"}}},
+            "doc_dict": {"RC_PROTOCOLS": {"values": {}, "Bitmask": {9: "CRSF"}}},
+        }
+        assert config_steps.compute_parameters(receiver_file, receiver_step, "derived", receiver_variables) == ""
+        assert config_steps.derived_parameters[receiver_file][f"{serial_name}_PROTOCOL"].value == 23.0
+
+    telemetry_file = "08_telemetry.param"
+    telemetry_step = steps[telemetry_file]
+    for serial_port in range(1, 10):
+        serial_name = f"SERIAL{serial_port}"
+        telemetry_variables = {
+            "vehicle_components": {"Telemetry": {"FC Connection": {"Type": serial_name, "Protocol": "2"}}},
+            "doc_dict": {f"SERIAL{index}_PROTOCOL": {"values": {2: "2"}, "Bitmask": {}} for index in range(1, 10)},
+        }
+        assert config_steps.compute_parameters(telemetry_file, telemetry_step, "derived", telemetry_variables) == ""
+        assert config_steps.derived_parameters[telemetry_file][f"{serial_name}_PROTOCOL"].value == 2.0
+
+    assert (template_dir / "35_inflight_magnetometer_fit_setup.pdef.xml").is_file()
+    assert not (template_dir / "31_inflight_magnetometer_fit_setup.pdef.xml").exists()
+    assert "FRAME_CLASS,1" in (template_dir / "18_servo_outputs.param").read_text(encoding="utf-8")
+
+
 def test_arduplane_configuration_steps_do_not_write_copter_only_parameters() -> None:
     """ArduPlane configuration steps must use QuadPlane Q_A_, Q_M_, and Q_P_ parameter groups."""
     configuration_steps_file = (
@@ -552,3 +592,25 @@ def test_waypoint_advance_script_is_transferred_during_magfit_setup(vehicle_type
     assert {entry["source_local"] for entry in magfit_step["upload_file"]} == {
         entry["dest_local"] for entry in magfit_step["download_file"]
     }
+
+
+@pytest.mark.parametrize("step_name", ["33_quick_tune_setup.param", "35_inflight_magnetometer_fit_setup.param"])
+def test_migrated_template_scripts_can_be_downloaded_and_uploaded(step_name: str) -> None:
+    """
+    Script downloads and uploads use the supported bundled multi-file format.
+
+    GIVEN: The format-2 X500 template's script installation steps
+    WHEN: Their file transfer declarations are inspected
+    THEN: Both use nonempty lists and every upload has a corresponding download
+    """
+    template_dir = (
+        Path(__file__).parent.parent / "ardupilot_methodic_configurator/vehicle_templates/ArduCopter/Holybro_X500_mig"
+    )
+    with (template_dir / "configuration_steps_ArduCopter.json").open(encoding="utf-8") as steps_file:
+        step = json.load(steps_file)["steps"][step_name]
+
+    assert isinstance(step["download_file"], list)
+    assert isinstance(step["upload_file"], list)
+    assert step["download_file"]
+    assert step["upload_file"]
+    assert {entry["source_local"] for entry in step["upload_file"]} == {entry["dest_local"] for entry in step["download_file"]}
