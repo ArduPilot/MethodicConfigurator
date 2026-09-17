@@ -839,15 +839,15 @@ class TestBatteryMonitorParameterUpload:
 
         def simulate_upload_with_progress(parent_window, upload_callback, selected_params_arg) -> None:
             """Simulate upload_params_with_progress calling workflow with callbacks."""
-            reset_window = None
+            restart_window = None
             download_window = None
 
-            def reset_callback_getter() -> Callable[[int, int], None]:
-                nonlocal reset_window
-                reset_window = mock_ui_services.create_progress_window(
-                    parent_window, "Resetting Flight Controller", "msg", show_immediately=True
+            def restart_callback_getter() -> Callable[[int, int], None]:
+                nonlocal restart_window
+                restart_window = mock_ui_services.create_progress_window(
+                    parent_window, "Restarting Flight Controller", "msg", show_immediately=True
                 )
-                return reset_window.update_progress_bar
+                return restart_window.update_progress_bar
 
             def download_callback_getter() -> Callable[[int, int], None]:
                 nonlocal download_window
@@ -858,7 +858,7 @@ class TestBatteryMonitorParameterUpload:
 
             try:
                 # Invoke the getters to actually create the windows
-                reset_cb = reset_callback_getter()
+                restart_cb = restart_callback_getter()
                 download_cb = download_callback_getter()
 
                 # Call the workflow with the callbacks
@@ -867,19 +867,19 @@ class TestBatteryMonitorParameterUpload:
                     ask_confirmation=MagicMock(return_value=True),
                     ask_retry_cancel=MagicMock(return_value=True),
                     show_error=MagicMock(),
-                    get_reset_progress_callback=reset_callback_getter,
+                    get_connection_progress_callback=restart_callback_getter,
                     get_download_progress_callback=download_callback_getter,
                 )
 
                 # Simulate some progress updates
-                if reset_cb:
-                    reset_cb(5, 10)
+                if restart_cb:
+                    restart_cb(10, 100)
                 if download_cb:
                     download_cb(50, 100)
             finally:
                 # Simulate cleanup in finally block
-                if reset_window is not None:
-                    reset_window.destroy()
+                if restart_window is not None:
+                    restart_window.destroy()
                 if download_window is not None:
                     download_window.destroy()
 
@@ -925,16 +925,16 @@ class TestBatteryMonitorParameterUpload:
         # Assert: Verify workflow integration
         mock_ui_services.upload_params_with_progress.assert_called_once()
 
-        # Verify progress windows were created (should create 2: reset and download)
+        # Verify progress windows were created (should create 2: restart/reconnect and download)
         assert mock_ui_services.create_progress_window.call_count == 2
 
         # Verify progress window calls have correct titles
         call_args_list = mock_ui_services.create_progress_window.call_args_list
-        reset_window_call = call_args_list[0]
+        restart_window_call = call_args_list[0]
         download_window_call = call_args_list[1]
 
-        # Check reset progress window was created with correct title
-        assert "Resetting Flight Controller" in str(reset_window_call)
+        # Check restart/reconnect progress window was created with correct title
+        assert "Restarting Flight Controller" in str(restart_window_call)
         # Check download progress window was created with correct title
         assert "Re-downloading FC parameters" in str(download_window_call)
 
