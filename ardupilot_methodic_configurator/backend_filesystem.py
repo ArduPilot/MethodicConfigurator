@@ -31,6 +31,7 @@ from shutil import Error as shutil_Error
 from shutil import copy2 as shutil_copy2
 from shutil import copytree as shutil_copytree
 from shutil import rmtree as shutil_rmtree
+from shutil import which as shutil_which
 from subprocess import SubprocessError, run
 from tempfile import TemporaryDirectory
 from typing import Any, cast
@@ -62,6 +63,39 @@ from ardupilot_methodic_configurator.data_model_par_dict import MANUAL_OVERRIDE_
 
 PARAMETER_FILE_REGEXP = r"^\d{2}_.*\.param$"
 TOOLTIP_MAX_LENGTH = 105
+
+
+def _rename_file_preserving_git_history(source: Path, destination: Path) -> None:
+    """Use ``git mv`` for tracked files and a filesystem rename otherwise."""
+    git_executable = shutil_which("git")
+    if git_executable:
+        try:
+            run(  # noqa: S603
+                [git_executable, "-C", str(source.parent), "ls-files", "--error-unmatch", "--", source.name],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except (FileNotFoundError, SubprocessError):
+            pass
+        else:
+            run(  # noqa: S603
+                [
+                    git_executable,
+                    "-C",
+                    str(source.parent),
+                    "mv",
+                    "-f",
+                    "--",
+                    source.name,
+                    destination.name,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return
+    os_rename(str(source), str(destination))
 
 
 def _firmware_versions_match(left: str, right: str) -> bool:
@@ -284,24 +318,64 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
         return self.vehicle_components_fs.json_filename in file_set and any(pattern.match(f) for f in file_set)
 
     def rename_parameter_files(self) -> None:
+        """Apply filename aliases to parameter files and their step-specific documentation."""
         if self.vehicle_dir is None or self.configuration_steps is None:
             return
         # Rename parameter files if some new files got added to the vehicle directory
         for new_filename, file_info in self.configuration_steps.items():
             for old_filename in file_info.get("old_filenames", []):
-                if self.vehicle_configuration_file_exists(old_filename) and old_filename != new_filename:
-                    if self.vehicle_configuration_file_exists(new_filename):
-                        logging_error(
-                            _("File %s already exists. Will not rename file %s to %s."),
-                            new_filename,
-                            old_filename,
-                            new_filename,
-                        )
-                        continue
+                if old_filename == new_filename:
+                    continue
+                old_file_exists = self.vehicle_configuration_file_exists(old_filename) or (
+                    self.vehicle_configuration_file_size(old_filename) == 0
+                )
+                new_file_exists = self.vehicle_configuration_file_exists(new_filename) or (
+                    self.vehicle_configuration_file_size(new_filename) == 0
+                )
+                if old_file_exists:
+                    if new_file_exists:
+                        new_filename_path = os_path.join(self.vehicle_dir, new_filename)
+                        if self.vehicle_configuration_file_size(new_filename) == 0:
+                            # Preserve the prior behavior of replacing an empty placeholder
+                            # with the user's non-empty legacy step.
+                            os_remove(new_filename_path)
+                        else:
+                            logging_error(
+                                _("File %s already exists. Will not rename file %s to %s."),
+                                new_filename,
+                                old_filename,
+                                new_filename,
+                            )
+                            continue
                     new_filename_path = os_path.join(self.vehicle_dir, new_filename)
                     old_filename_path = os_path.join(self.vehicle_dir, old_filename)
-                    os_rename(old_filename_path, new_filename_path)
+                    _rename_file_preserving_git_history(Path(old_filename_path), Path(new_filename_path))
                     logging_info("Renamed %s to %s", old_filename, new_filename)
+                    self._rename_parameter_documentation_file(old_filename, new_filename)
+                elif new_file_exists:
+                    # Repair sidecars orphaned by earlier versions or an interrupted
+                    # rename, but never detach documentation from an existing old step.
+                    self._rename_parameter_documentation_file(old_filename, new_filename)
+
+    def _rename_parameter_documentation_file(self, old_filename: str, new_filename: str) -> None:
+        """Move a matching .pdef.xml sidecar without replacing destination documentation."""
+        old_documentation = old_filename.replace(".param", ".pdef.xml")
+        new_documentation = new_filename.replace(".param", ".pdef.xml")
+        old_path = os_path.join(self.vehicle_dir, old_documentation)
+        new_path = os_path.join(self.vehicle_dir, new_documentation)
+        if not os_path.isfile(old_path):
+            return
+        # Empty files, directories and dangling symlinks must also be preserved.
+        if os_path.lexists(new_path):
+            logging_error(
+                _("File %s already exists. Will not rename file %s to %s."),
+                new_documentation,
+                old_documentation,
+                new_documentation,
+            )
+            return
+        _rename_file_preserving_git_history(Path(old_path), Path(new_path))
+        logging_info("Renamed %s to %s", old_documentation, new_documentation)
 
     def _format_columns_sorted_numerically(  # pylint: disable=too-many-locals
         self, values: dict[str, Any], max_width: int = 105, max_columns: int = 4
