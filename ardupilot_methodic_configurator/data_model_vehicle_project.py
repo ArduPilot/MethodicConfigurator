@@ -13,7 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from collections.abc import Callable
+from logging import warning as logging_warning
 from pathlib import Path
+from shutil import rmtree as shutil_rmtree
 from typing import TYPE_CHECKING, Optional
 
 from ardupilot_methodic_configurator import _
@@ -352,11 +354,12 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         self.store_recently_used_template_dirs(template_dir, new_base_dir)
         return new_path
 
-    def create_new_vehicle_from_bin_log(
+    def create_new_vehicle_from_bin_log(  # pylint: disable=too-many-locals
         self,
         bin_file: str,
         progress_callback: Callable[[int, int], None] | None = None,
         template_dir: str | None = None,
+        vehicle_dir: str | None = None,
     ) -> str:
         """
         Create a new vehicle configuration directory from an ArduPilot .bin log file.
@@ -376,6 +379,9 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             template_dir: Optional template directory override. If omitted, use the
                 empty template matching the firmware extracted from the log.
 
+            vehicle_dir: Optional complete destination directory for the new project.
+                If omitted, use the default vehicles directory and the log filename stem.
+
         Returns:
             The created vehicle directory path
 
@@ -390,6 +396,20 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
         fw_version = f"{firmware_info[1]}.{firmware_info[2]}.{firmware_info[3]}"
         if template_dir is None:
             template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
+        else:
+            template_vehicle_type = self._creator.vehicle_type_from_template(template_dir)
+            if template_vehicle_type and template_vehicle_type != vehicle_type:
+                logging_warning(
+                    _(
+                        "The selected template %(template_dir)s is for %(template_vehicle_type)s, "
+                        "but the .bin log is for %(vehicle_type)s. Continuing with the explicit template override."
+                    ),
+                    {
+                        "template_dir": template_dir,
+                        "template_vehicle_type": template_vehicle_type,
+                        "vehicle_type": vehicle_type,
+                    },
+                )
         fc_parameters = {name: param.value for name, param in current_params.items()}
         settings = NewVehicleProjectSettings(
             blank_change_reason=True,
@@ -397,18 +417,23 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             use_fc_params=True,
         )
 
-        new_base_dir = str(LocalFilesystem.get_vehicles_default_dir())
-        new_vehicle_name = self._creator.vehicle_name_from_bin_log(bin_file)
-        new_path = self._creator.create_new_vehicle_from_template(
-            template_dir,
-            new_base_dir,
-            new_vehicle_name,
-            settings,
-            fc_connected=False,
-            fc_parameters=fc_parameters,
-        )
-
+        if vehicle_dir:
+            destination = Path(vehicle_dir)
+            new_base_dir = str(destination.parent)
+            new_vehicle_name = destination.name
+        else:
+            new_base_dir = str(LocalFilesystem.get_vehicles_default_dir())
+            new_vehicle_name = self._creator.vehicle_name_from_bin_log(bin_file)
+        new_path: str | None = None
         try:
+            new_path = self._creator.create_new_vehicle_from_template(
+                template_dir,
+                new_base_dir,
+                new_vehicle_name,
+                settings,
+                fc_connected=False,
+                fc_parameters=fc_parameters,
+            )
             self._complete_imported_vehicle_project_creation(
                 template_dir,
                 new_base_dir,
@@ -419,7 +444,13 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                 current_params,
                 default_params,
             )
-        except (OSError, ParamFileError, ValueError, TypeError, SystemExit) as exc:
+        except VehicleProjectCreationError:
+            if new_path is not None:
+                shutil_rmtree(new_path, ignore_errors=True)
+            raise
+        except (Exception, SystemExit) as exc:
+            if new_path is not None:
+                shutil_rmtree(new_path, ignore_errors=True)
             raise VehicleProjectCreationError(
                 _("Vehicle project creation"),
                 _("Could not finish creating the vehicle project: {error}").format(error=exc),

@@ -1714,6 +1714,50 @@ class TestCreateNewVehicleFromBinLog:
         assert exc_info.value.title == ".bin log import"
         assert exc_info.value.message == "Corrupt log"
 
+    def test_explicit_template_vehicle_type_mismatch_is_reported_as_a_warning(self) -> None:
+        """An explicit template override remains allowed but makes a type mismatch visible."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+        template_dir = "/templates/ArduPlane/normal_plane"
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "vehicle_type_from_template", return_value="ArduPlane"),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(manager, "_complete_imported_vehicle_project_creation"),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.logging_warning") as log_warning,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir=template_dir)
+
+        log_warning.assert_called_once()
+        assert "ArduPlane" in log_warning.call_args.args[1]["template_vehicle_type"]
+        assert "ArduCopter" in log_warning.call_args.args[1]["vehicle_type"]
+
+    def test_bin_log_can_use_an_explicit_vehicle_directory_destination(self) -> None:
+        """An explicit destination controls both the parent directory and project name."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+        destination = "/custom/renamed-flight"
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 2), params, params),
+            ),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value=destination) as mock_create,
+            patch.object(manager, "_complete_imported_vehicle_project_creation"),
+        ):
+            result = manager.create_new_vehicle_from_bin_log("/logs/flight.bin", vehicle_dir=destination)
+
+        assert result == destination
+        assert mock_create.call_args.args[1:3] == ("/custom", "renamed-flight")
+
     def test_bin_log_creation_translates_system_exit(self) -> None:
         """
         A fatal exit during bin-log project finalisation is reported as a creation error.
@@ -1743,6 +1787,32 @@ class TestCreateNewVehicleFromBinLog:
             manager.create_new_vehicle_from_bin_log("/logs/flight.bin")
 
         assert isinstance(exc_info.value.__cause__, SystemExit)
+
+    def test_bin_log_creation_reports_template_open_errors_and_cleans_up(self) -> None:
+        """A template that cannot be opened leaves no half-created vehicle project."""
+        manager = self._make_manager()
+        params = ParDict.from_float_dict({"PARAM_A": 1.0})
+
+        with (
+            patch.object(
+                manager._creator,
+                "extract_bin_log_data",
+                return_value=(("ArduCopter", 4, 6, 3), params, params),
+            ),
+            patch.object(manager._creator, "create_new_vehicle_from_template", return_value="/vehicles/flight"),
+            patch.object(LocalFilesystem, "get_vehicles_default_dir", return_value="/vehicles"),
+            patch.object(
+                manager,
+                "_complete_imported_vehicle_project_creation",
+                side_effect=VehicleProjectOpenError("Invalid vehicle directory", "The template is invalid."),
+            ),
+            patch("ardupilot_methodic_configurator.data_model_vehicle_project.shutil_rmtree") as remove_project,
+            pytest.raises(VehicleProjectCreationError, match="The template is invalid") as exc_info,
+        ):
+            manager.create_new_vehicle_from_bin_log("/logs/flight.bin", template_dir="/templates/custom")
+
+        assert isinstance(exc_info.value.__cause__, VehicleProjectOpenError)
+        remove_project.assert_called_once_with("/vehicles/flight", ignore_errors=True)
 
     def test_firmware_version_error_propagates_to_caller(self) -> None:
         """

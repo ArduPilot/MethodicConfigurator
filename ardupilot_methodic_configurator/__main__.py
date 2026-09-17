@@ -368,6 +368,19 @@ def initialize_filesystem(state: ApplicationState) -> None:
         SystemExit: If there's a fatal error reading parameter files
 
     """
+    # A .bin import must not inspect or modify the directory from which the command
+    # was launched. The import workflow creates its own project and re-initializes
+    # this empty filesystem after the log has been parsed.
+    if getattr(state.args, "bin_log", ""):
+        state.local_filesystem = LocalFilesystem(
+            None,  # type: ignore[arg-type]
+            state.vehicle_type,
+            state.flight_controller.info.flight_sw_version,
+            state.args.allow_editing_template_files,
+            state.args.save_component_to_system_templates,
+        )
+        return
+
     # Migrate the vehicle project to the latest format version if needed.
     # This must run before LocalFilesystem is created so that parameter files are
     # in their new locations when rename_parameter_files() runs inside re_init().
@@ -435,11 +448,27 @@ def create_vehicle_project_from_bin_log(state: ApplicationState) -> str:
     """Create and open a vehicle project directly from the command-line .bin log."""
     state.vehicle_project_manager = VehicleProjectManager(state.local_filesystem, state.flight_controller)
     template_dir = getattr(state.args, "template_dir", "") or None
+    vehicle_dir = None
+    if getattr(state.args, "vehicle_dir_explicit", False):
+        vehicle_dir = state.args.vehicle_dir
+    elif getattr(state.args, "vehicle_dir", None) and Path(state.args.vehicle_dir) != Path.cwd():
+        # Keep manually constructed Namespaces and callers compatible with the
+        # parser's historical current-working-directory default.
+        vehicle_dir = state.args.vehicle_dir
     try:
-        return state.vehicle_project_manager.create_new_vehicle_from_bin_log(state.args.bin_log, template_dir=template_dir)
+        if vehicle_dir is None:
+            new_vehicle_dir = state.vehicle_project_manager.create_new_vehicle_from_bin_log(
+                state.args.bin_log, template_dir=template_dir
+            )
+        else:
+            new_vehicle_dir = state.vehicle_project_manager.create_new_vehicle_from_bin_log(
+                state.args.bin_log, template_dir=template_dir, vehicle_dir=vehicle_dir
+            )
     except VehicleProjectCreationError as exc:
         logging_error("%s: %s", exc.title, exc.message)
         raise SystemExit(1) from exc
+    logging_info(_("Created vehicle project at %s"), new_vehicle_dir)
+    return new_vehicle_dir
 
 
 def create_and_configure_component_editor(
@@ -704,7 +733,7 @@ def parameter_editor_and_uploader(state: ApplicationState) -> None:
     window.run()
 
 
-def main() -> None:
+def main() -> None:  # pylint: disable=too-many-branches
     """
     Main application entry point.
 
@@ -714,7 +743,9 @@ def main() -> None:
     parser = create_argument_parser()
     args = parser.parse_args()
     if getattr(args, "template_dir", "") and not getattr(args, "bin_log", ""):
-        parser.error("--template-dir can only be used together with --bin-log")
+        parser.error(_("--template-dir can only be used together with --bin-log"))
+    if getattr(args, "bin_log", "") and getattr(args, "device", ""):
+        parser.error(_("--device cannot be used together with --bin-log"))
 
     # Register plugins early, before any UI creation
     register_plugins()

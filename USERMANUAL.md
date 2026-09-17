@@ -485,8 +485,11 @@ Here is a list of command line options:
 - **`--baudrate BAUDRATE`**: MAVLink serial connection baudrate to the flight controller. Default is 115200
 - **`--device`**: The MAVLink connection string to the flight controller. It defaults to autoconnection to the first available flight controller.
 - **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
-- **`--bin-log PATH`**: Create a new vehicle project from an ArduPilot `.bin` log file without connecting to a flight controller. The new project is created in the default vehicles directory.
-- **`--template-dir PATH`**: Optional template directory to use with `--bin-log`. If omitted, AMC uses the empty template matching the vehicle type and major/minor firmware version extracted from the log.
+- **`--bin-log PATH`**: Create a new vehicle project from an ArduPilot `.bin` log file without
+  connecting to a flight controller. The new project is created in the default vehicles directory.
+- **`--template-dir PATH`**: Optional template directory to use with `--bin-log`. If omitted,
+  AMC uses the empty template matching the vehicle type and major/minor firmware version extracted
+  from the log.
 - **`--n`**: Start directly on the nth intermediate parameter file (skip previous files). The default is 0.
 - **`--skip-component-editor`**: Skip the component editor window. Only use this if all components have been configured. Default is False
 - **`--loglevel`**: The logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). The default is INFO.
