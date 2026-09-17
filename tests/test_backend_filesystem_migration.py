@@ -16,14 +16,18 @@ from pathlib import Path
 
 import pytest
 
+import ardupilot_methodic_configurator.backend_filesystem_migration as migration_module
+from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_migration import (
     VEHICLE_COMPONENTS_FORMAT_VERSION,
     _line_matches_any,
     _param_name_from_line,
     migrate_vehicle_project_if_needed,
 )
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 # pylint: disable=redefined-outer-name, unused-argument
+# pylint: disable=too-many-lines
 
 
 # ---------------------------------------------------------------------------
@@ -167,10 +171,10 @@ class TestMigrationSuccess:
         self, vehicle_dir: Path, vehicle_components_v0: Path
     ) -> None:
         """
-        Migration writes the current format version back to vehicle_components.json.
+        Migration persists the latest format version after applying all supported steps.
 
         GIVEN: A vehicle directory with vehicle_components.json at format version 0
-        WHEN: migrate_vehicle_project_if_needed is called
+        WHEN: migrate_vehicle_project_if_needed is called once
         THEN: vehicle_components.json has 'Format version' equal to VEHICLE_COMPONENTS_FORMAT_VERSION
         """
         migrate_vehicle_project_if_needed(str(vehicle_dir))
@@ -195,12 +199,11 @@ class TestMigrationSuccess:
 
     def test_migration_is_idempotent(self, vehicle_dir: Path, vehicle_components_v0: Path) -> None:
         """
-        Running migration twice on the same project does not duplicate param lines.
+        Running migrations through all versions does not duplicate param lines.
 
         GIVEN: A vehicle directory at format version 0 with a param that will be extracted
-        WHEN: migrate_vehicle_project_if_needed is called twice in succession
-        THEN: The first call returns True, the second returns False, and the destination
-              param file contains no duplicate entries
+        WHEN: migrate_vehicle_project_if_needed is called until no migration remains
+        THEN: Each format transition runs once, and the destination has no duplicate entries
         """
         (vehicle_dir / "04_board_orientation.param").write_text("BRD_HEAT_TARG,45\n", encoding="utf-8")
 
@@ -233,7 +236,7 @@ class TestMigrationSuccess:
 
         GIVEN: A vehicle_components.json with no 'Format version' key
         WHEN: migrate_vehicle_project_if_needed is called
-        THEN: True is returned and the format version key is written
+        THEN: True is returned and the latest format version is written
         """
         data = {"Components": {}}
         (vehicle_dir / "vehicle_components.json").write_text(json.dumps(data), encoding="utf-8")
@@ -762,6 +765,436 @@ class TestV0ToV1ObsoleteFileDeletion:
         result = migrate_vehicle_project_if_needed(str(vehicle_dir))
 
         assert result is True
+
+
+# ---------------------------------------------------------------------------
+# V1 → V2 parameter file migrations
+# ---------------------------------------------------------------------------
+
+
+class TestV1ToV2ParameterExtractions:
+    """Tests that consecutive format migrations are persisted as separate steps."""
+
+    def test_v2_destinations_are_seeded_from_empty_template_before_parameter_splits(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        V2 template values survive while migrated project values override conflicts.
+
+        GIVEN: A format-1 project with a mandatory-hardware file and a v2 empty template
+        WHEN: The project migrates to format 2
+        THEN: Template parameters are present, duplicate migrations reach both steps, and FRAME_CLASS is only in servo outputs
+        """
+        template_dir = vehicle_dir / "templates" / "ArduCopter" / "empty_4.6.x"
+        template_dir.mkdir(parents=True)
+        template_values = {
+            "03_imu_temperature_calibration_results.param": "TEMPLATE_TEMP,1\n",
+            "14_accelerometer_calibration.param": "TEMPLATE_ACCEL,1\nINS_ACCSCAL_X,1\n",
+            "15_accelerometer_level.param": "TEMPLATE_LEVEL,1\n",
+            "16_compass_calibration.param": "TEMPLATE_COMPASS,1\n",
+            "17_flight_modes.param": "INITIAL_MODE,0\n",
+            "18_servo_outputs.param": "TEMPLATE_SERVO,1\nSERVO1_FUNCTION,0\nFRAME_CLASS,0\n",
+        }
+        for filename, content in template_values.items():
+            (template_dir / filename).write_text(content, encoding="utf-8")
+
+        (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
+            json.dumps({"steps": {filename: {} for filename in template_values} | {"05_board_orientation.param": {}}}),
+            encoding="utf-8",
+        )
+        (vehicle_dir / "vehicle_components.json").write_text(
+            json.dumps(
+                {
+                    "Format version": 1,
+                    "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "4.6.3 official"}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        mandatory_hardware = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        mandatory_hardware.write_text(
+            "INS_ACCSCAL_X,0.998941\nINS_ACC1_CALTEMP,45\nAHRS_TRIM_X,0.01\nFLTMODE1,3\nINITIAL_MODE,1\n"
+            "SERVO1_FUNCTION,33\nFRAME_CLASS,1\n",
+            encoding="utf-8",
+        )
+        board_orientation = vehicle_dir / "05_board_orientation.param"
+        board_orientation.write_text("AHRS_ORIENTATION,0\nFRAME_CLASS,1\n", encoding="utf-8")
+        monkeypatch.setattr(
+            migration_module.VehicleProjectCreator,
+            "template_dir_for_bin_import",
+            staticmethod(lambda _vehicle_type, _major, _minor: str(template_dir)),
+        )
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+        accelerometer = (vehicle_dir / "14_accelerometer_calibration.param").read_text(encoding="utf-8")
+        imu_temperature = (vehicle_dir / "03_imu_temperature_calibration_results.param").read_text(encoding="utf-8")
+        accelerometer_level = (vehicle_dir / "15_accelerometer_level.param").read_text(encoding="utf-8")
+        flight_modes = (vehicle_dir / "17_flight_modes.param").read_text(encoding="utf-8")
+        servo_outputs = (vehicle_dir / "18_servo_outputs.param").read_text(encoding="utf-8")
+
+        assert "INS_ACC1_CALTEMP,45" in accelerometer
+        assert "INS_ACC1_CALTEMP,45" in imu_temperature
+        assert "AHRS_TRIM_X,0.01" in accelerometer
+        assert "AHRS_TRIM_X,0.01" in accelerometer_level
+        assert "INS_ACCSCAL_X,0.998941" in accelerometer
+        assert "TEMPLATE_ACCEL,1" in accelerometer
+        assert "TEMPLATE_TEMP,1" in imu_temperature
+        assert "TEMPLATE_LEVEL,1" in accelerometer_level
+        assert "TEMPLATE_COMPASS,1" in (vehicle_dir / "16_compass_calibration.param").read_text(encoding="utf-8")
+        assert "INITIAL_MODE,1" in flight_modes
+        assert flight_modes.count("INITIAL_MODE,") == 1
+        assert "FLTMODE1,3" in flight_modes
+        assert "TEMPLATE_SERVO,1" in servo_outputs
+        assert "SERVO1_FUNCTION,33" in servo_outputs
+        assert "FRAME_CLASS,1" in servo_outputs
+        assert "FRAME_CLASS" not in board_orientation.read_text(encoding="utf-8")
+        assert "FRAME_CLASS" not in accelerometer
+        assert "FRAME_CLASS" not in (vehicle_dir / "05_board_orientation.param").read_text(encoding="utf-8")
+        frame_class_files = [
+            path.name
+            for path in vehicle_dir.glob("*.param")
+            if path.name != "00_default.param" and "FRAME_CLASS" in path.read_text(encoding="utf-8")
+        ]
+        assert frame_class_files == ["18_servo_outputs.param"]
+
+    @pytest.mark.parametrize("failed_destination", ["14_accelerometer_calibration.param", "15_accelerometer_level.param"])
+    def test_interrupted_split_preserves_source_values_and_can_be_retried(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch, failed_destination: str
+    ) -> None:
+        """
+        A destination write failure cannot discard the project's only copy of calibration values.
+
+        GIVEN: A format-1 source with calibration and trim values and a failing destination write
+        WHEN: Migration is interrupted and then retried with working storage
+        THEN: The source and version survive the failure, and retry produces each value exactly once
+        """
+        components = vehicle_dir / "vehicle_components.json"
+        components.write_text(
+            json.dumps({"Format version": 1, "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter"}}}}),
+            encoding="utf-8",
+        )
+        source = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        original_content = "INS_ACCSCAL_X,0.998941\nAHRS_TRIM_X,0.01\nUNRELATED_SOURCE,9\n"
+        source.write_text(original_content, encoding="utf-8")
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+        original_write = migration_module._write_param_file_lines  # pylint: disable=protected-access
+
+        def fail_destination_write(filepath: Path, lines: list[str]) -> None:
+            if filepath.name == failed_destination:
+                message = "simulated destination write failure"
+                raise OSError(message)
+            original_write(filepath, lines)
+
+        with monkeypatch.context() as failure:
+            failure.setattr(migration_module, "_write_param_file_lines", fail_destination_write)
+            with pytest.raises(OSError, match="simulated destination write failure"):
+                migrate_vehicle_project_if_needed(str(vehicle_dir))
+
+        assert source.read_text(encoding="utf-8") == original_content
+        assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == 1
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+        assert (vehicle_dir / "14_accelerometer_calibration.param").read_text(encoding="utf-8") == (
+            "INS_ACCSCAL_X,0.998941\nAHRS_TRIM_X,0.01\n"
+        )
+        assert (vehicle_dir / "15_accelerometer_level.param").read_text(encoding="utf-8") == "AHRS_TRIM_X,0.01\n"
+        assert source.read_text(encoding="utf-8") == "UNRELATED_SOURCE,9\n"
+        assert json.loads(components.read_text(encoding="utf-8"))["Format version"] == 2
+
+    def test_project_calibration_overrides_destination_defaults_without_duplicates(self, vehicle_dir: Path) -> None:
+        """
+        Project calibration values replace conflicting defaults while preserving unrelated settings.
+
+        GIVEN: A mandatory-hardware source and an existing calibration destination with conflicting values
+        WHEN: The format-2 split is applied and retried
+        THEN: The source values win once and unrelated destination values and comments survive
+        """
+        source = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        source.write_text("INS_ACCSCAL_X,0.998941 # measured\nINS_USE,1\nUNRELATED_SOURCE,9\n", encoding="utf-8")
+        destination = vehicle_dir / "14_accelerometer_calibration.param"
+        destination.write_text("# keep this comment\nINS_ACCSCAL_X,1\nINS_USE,0\nINS_ACCOFFS_X,0.25\n", encoding="utf-8")
+
+        migration_module._migrate_v1_to_v2(vehicle_dir, "ArduCopter")  # pylint: disable=protected-access
+        first_content = destination.read_text(encoding="utf-8")
+        migration_module._migrate_v1_to_v2(vehicle_dir, "ArduCopter")  # pylint: disable=protected-access
+
+        parameters = ParDict.load_param_file_into_dict(str(destination))
+        assert parameters["INS_ACCSCAL_X"].value == 0.998941
+        assert parameters["INS_USE"].value == 1
+        assert parameters["INS_ACCOFFS_X"].value == 0.25
+        assert "# keep this comment\n" in first_content
+        assert "# measured" in first_content
+        assert destination.read_text(encoding="utf-8") == first_content
+        assert source.read_text(encoding="utf-8") == "UNRELATED_SOURCE,9\n"
+
+    @pytest.mark.parametrize(
+        "source_name",
+        [
+            "11_mp_setup_mandatory_hardware.param",
+            "12_mp_setup_mandatory_hardware.param",
+            "14_mp_setup_mandatory_hardware.param",
+        ],
+    )
+    def test_legacy_mandatory_hardware_values_are_split_before_renames(
+        self, vehicle_dir: Path, vehicle_components_v0: Path, monkeypatch: pytest.MonkeyPatch, source_name: str
+    ) -> None:
+        """
+        A format-0 project's calibration values reach the dedicated format-2 steps.
+
+        GIVEN: A format-0 project with any supported mandatory-hardware filename
+        WHEN: Migration runs through format 2 before filesystem renames
+        THEN: All split values survive and the obsolete source is removed
+        """
+        source = vehicle_dir / source_name
+        source.write_text(
+            "INS_ACCSCAL_X,0.998941\nINS_ACC1_CALTEMP,45\nAHRS_TRIM_X,0.01\n"
+            "COMPASS_OFS_X,12\nFLTMODE1,0\nRC1_MIN,1100\nSERVO1_FUNCTION,33\nFRAME_CLASS,1\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+        expected = {
+            "14_accelerometer_calibration.param": ("INS_ACCSCAL_X,0.998941\nINS_ACC1_CALTEMP,45\nAHRS_TRIM_X,0.01\n"),
+            "03_imu_temperature_calibration_results.param": "INS_ACC1_CALTEMP,45\n",
+            "15_accelerometer_level.param": "AHRS_TRIM_X,0.01\n",
+            "16_compass_calibration.param": "COMPASS_OFS_X,12\n",
+            "17_flight_modes.param": "FLTMODE1,0\n",
+            "07_remote_controller_controller.param": "RC1_MIN,1100\n",
+            "18_servo_outputs.param": "SERVO1_FUNCTION,33\nFRAME_CLASS,1\n",
+        }
+        for filename, line in expected.items():
+            assert line in (vehicle_dir / filename).read_text(encoding="utf-8")
+        assert not source.exists()
+        assert json.loads(vehicle_components_v0.read_text(encoding="utf-8"))["Format version"] == 2
+
+    def test_format_zero_project_is_migrated_through_all_versions_in_one_open(
+        self, vehicle_dir: Path, vehicle_components_v0: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """
+        Each migration pass applies one version transition and persists it before the next pass.
+
+        GIVEN: A format-version 0 project containing values used by both migrations
+        WHEN: The project is migrated once
+        THEN: v0→v1 is persisted before v1→v2 begins, and the final version is 2
+        """
+        source = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        source.write_text(
+            "INS_ACCSCAL_X,1.1\n"
+            "INS_ACC2SCAL_Y,2.2\n"
+            "INS_USE,1\n"
+            "INS_USE2,1\n"
+            "INS_USE3,1\n"
+            "INS_ACC1_CALTEMP,45\n"
+            "AHRS_TRIM_X,0.01\n"
+            "COMPASS_EXTERNAL,1\n"
+            "COMPASS_OFS1_X,12\n"
+            "FLTMODE1, stabilize\n"
+            "RC1_MIN,1100\n"
+            "FRAME_CLASS,1\n"
+            "INS_ACCSCAL_X,0.998941\n"
+            "MOT_THST_HOVER,0.301157\n"
+            "SERVO1_FUNCTION,33\n"
+            "UNRELATED_TEST,1\n",
+            encoding="utf-8",
+        )
+
+        transition_versions: list[tuple[int, int]] = []
+        v1_to_v2_input: list[str] = []
+        original_v1_to_v2 = migration_module._migrate_v1_to_v2  # pylint: disable=protected-access
+
+        def run_v0_to_v1(_path: Path, _vehicle_type: str) -> None:
+            persisted_version = json.loads((vehicle_dir / "vehicle_components.json").read_text(encoding="utf-8"))[
+                "Format version"
+            ]
+            transition_versions.append((0, persisted_version))
+
+        def run_v1_to_v2(path: Path, vehicle_type: str) -> None:
+            persisted_version = json.loads((vehicle_dir / "vehicle_components.json").read_text(encoding="utf-8"))[
+                "Format version"
+            ]
+            transition_versions.append((1, persisted_version))
+            v1_to_v2_input.append(source.read_text(encoding="utf-8"))
+            original_v1_to_v2(path, vehicle_type)
+
+        monkeypatch.setattr(migration_module, "_migrate_v0_to_v1", run_v0_to_v1)
+        monkeypatch.setattr(migration_module, "_migrate_v1_to_v2", run_v1_to_v2)
+        monkeypatch.setattr(migration_module, "_restore_missing_configuration_step_files", lambda *_args: None)
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+
+        result = migrate_vehicle_project_if_needed(str(vehicle_dir))
+        final_data = json.loads((vehicle_dir / "vehicle_components.json").read_text(encoding="utf-8"))
+        transitions_during_open = transition_versions.copy()
+        second_result = migrate_vehicle_project_if_needed(str(vehicle_dir))
+
+        assert result is True
+        assert transitions_during_open == [(0, 0), (1, 1)]
+        assert final_data["Format version"] == 2
+        assert second_result is False
+        assert "FRAME_CLASS,1" in v1_to_v2_input[0]
+        assert "INS_ACCSCAL_X,0.998941" in v1_to_v2_input[0]
+        assert "MOT_THST_HOVER,0.301157" in v1_to_v2_input[0]
+        assert "UNRELATED_TEST,1" in v1_to_v2_input[0]
+
+        second_pass_content = source.read_text(encoding="utf-8")
+        assert "UNRELATED_TEST,1" in second_pass_content
+        assert "INS_ACCSCAL_X,0.998941" not in second_pass_content
+        assert "INS_ACCSCAL_X,0.998941" in (vehicle_dir / "14_accelerometer_calibration.param").read_text(encoding="utf-8")
+        assert "INS_ACC1_CALTEMP,45" in (vehicle_dir / "03_imu_temperature_calibration_results.param").read_text(
+            encoding="utf-8"
+        )
+
+    def test_restore_does_not_block_rename_from_an_old_filename(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A template step is not restored when the project has its declared old filename."""
+        template_dir = vehicle_dir / "templates" / "ArduCopter" / "empty_4.6.x"
+        template_dir.mkdir(parents=True)
+        (template_dir / "05_board_orientation.param").write_text("TEMPLATE,1\n", encoding="utf-8")
+        (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
+            json.dumps({"steps": {"05_board_orientation.param": {"old_filenames": ["04_board_orientation.param"]}}}),
+            encoding="utf-8",
+        )
+        (vehicle_dir / "vehicle_components.json").write_text(
+            json.dumps(
+                {
+                    "Format version": 0,
+                    "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "4.6.3"}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        old_step = vehicle_dir / "04_board_orientation.param"
+        old_step.write_text("AHRS_ORIENTATION,2\n", encoding="utf-8")
+        monkeypatch.setattr(
+            migration_module.VehicleProjectCreator,
+            "template_dir_for_bin_import",
+            staticmethod(lambda _vehicle_type, _major, _minor: str(template_dir)),
+        )
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+        assert old_step.read_text(encoding="utf-8") == "AHRS_ORIENTATION,2\n"
+        assert not (vehicle_dir / "05_board_orientation.param").exists()
+
+        filesystem = LocalFilesystem.__new__(LocalFilesystem)
+        filesystem.vehicle_dir = str(vehicle_dir)
+        filesystem.configuration_steps = {"05_board_orientation.param": {"old_filenames": ["04_board_orientation.param"]}}
+        filesystem.rename_parameter_files()
+
+        assert not old_step.exists()
+        assert (vehicle_dir / "05_board_orientation.param").read_text(encoding="utf-8") == "AHRS_ORIENTATION,2\n"
+
+
+class TestDeletedConfigurationStepFiles:  # pylint: disable=too-few-public-methods
+    """Tests that restoration does not undo an intentional migration deletion."""
+
+    def test_deleted_mandatory_hardware_file_is_not_restored_from_empty_template(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A step deleted by v1→v2 stays deleted even when the empty template has that file."""
+        template_dir = vehicle_dir / "templates" / "ArduCopter" / "empty_4.6.x"
+        template_dir.mkdir(parents=True)
+        (template_dir / "14_mp_setup_mandatory_hardware.param").write_text(
+            "FRAME_CLASS,0\nINS_ACCSCAL_X,1\nMOT_THST_HOVER,0.35\n", encoding="utf-8"
+        )
+        (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
+            json.dumps({"steps": {"14_mp_setup_mandatory_hardware.param": {}}}), encoding="utf-8"
+        )
+        (vehicle_dir / "vehicle_components.json").write_text(
+            json.dumps(
+                {
+                    "Format version": 1,
+                    "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "4.6.3"}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        mandatory_hardware = vehicle_dir / "14_mp_setup_mandatory_hardware.param"
+        mandatory_hardware.write_text("FRAME_CLASS,1\nINS_ACCSCAL_X,0.998941\nMOT_THST_HOVER,0.301157\n", encoding="utf-8")
+        monkeypatch.setattr(
+            migration_module.VehicleProjectCreator,
+            "template_dir_for_bin_import",
+            staticmethod(lambda _vehicle_type, _major, _minor: str(template_dir)),
+        )
+        # Exercise the v1→v2 stage while the checked-in target remains format 1.
+        monkeypatch.setattr(migration_module, "VEHICLE_COMPONENTS_FORMAT_VERSION", 2)
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+
+        assert not mandatory_hardware.exists()
+        assert "INS_ACCSCAL_X,0.998941" in (vehicle_dir / "14_accelerometer_calibration.param").read_text(encoding="utf-8")
+
+
+class TestMissingConfigurationStepFileRestore:
+    """Tests restoration of configuration-step files absent from old projects."""
+
+    @pytest.mark.parametrize("existing_content", ["", "PROJECT_VALUE,17\n"])
+    def test_restore_preserves_existing_steps_and_ignores_unlisted_template_files(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch, existing_content: str
+    ) -> None:
+        """
+        Restoring missing steps preserves deliberate project contents and deletions.
+
+        GIVEN: Existing, missing, deleted and unlisted files in a matching empty template
+        WHEN: Missing configuration steps are restored using the project's step definitions
+        THEN: Only the missing declared step is copied, including when existing files are empty
+        """
+        template_dir = vehicle_dir / "template"
+        template_dir.mkdir()
+        for filename in ["90_existing.param", "91_missing.param", "92_deleted.param", "93_unlisted.param"]:
+            (template_dir / filename).write_text("TEMPLATE_VALUE,42\n", encoding="utf-8")
+        existing = vehicle_dir / "90_existing.param"
+        existing.write_text(existing_content, encoding="utf-8")
+        (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
+            json.dumps({"steps": {name: {} for name in ["90_existing.param", "91_missing.param", "92_deleted.param"]}}),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(
+            migration_module.VehicleProjectCreator,
+            "template_dir_for_bin_import",
+            staticmethod(lambda *_args: str(template_dir)),
+        )
+
+        migration_module._restore_missing_configuration_step_files(  # pylint: disable=protected-access
+            vehicle_dir, "ArduCopter", "4.6.3", {"92_deleted.param"}
+        )
+
+        assert existing.read_text(encoding="utf-8") == existing_content
+        assert (vehicle_dir / "91_missing.param").read_text(encoding="utf-8") == "TEMPLATE_VALUE,42\n"
+        assert not (vehicle_dir / "92_deleted.param").exists()
+        assert not (vehicle_dir / "93_unlisted.param").exists()
+
+    def test_missing_step_file_is_copied_from_matching_empty_firmware_template(
+        self, vehicle_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A missing step is restored from the empty_{major}.{minor}.x template after migration."""
+        templates_dir = vehicle_dir / "templates"
+        template_dir = templates_dir / "ArduCopter" / "empty_4.6.x"
+        template_dir.mkdir(parents=True)
+        (template_dir / "99_restored.param").write_text("RESTORED_PARAM,42\n", encoding="utf-8")
+        (vehicle_dir / "configuration_steps_ArduCopter.json").write_text(
+            json.dumps({"steps": {"99_restored.param": {}}}), encoding="utf-8"
+        )
+        (vehicle_dir / "vehicle_components.json").write_text(
+            json.dumps(
+                {
+                    "Format version": 0,
+                    "Components": {"Flight Controller": {"Firmware": {"Type": "ArduCopter", "Version": "4.6.3"}}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(
+            migration_module.VehicleProjectCreator,
+            "template_dir_for_bin_import",
+            staticmethod(lambda _vehicle_type, _major, _minor: str(template_dir)),
+        )
+
+        assert migrate_vehicle_project_if_needed(str(vehicle_dir)) is True
+        assert (vehicle_dir / "99_restored.param").read_text(encoding="utf-8") == "RESTORED_PARAM,42\n"
 
 
 # ---------------------------------------------------------------------------
