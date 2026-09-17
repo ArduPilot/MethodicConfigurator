@@ -446,6 +446,33 @@ class TestMotorTestView:
         fake_model.raise_frame_error = ValidationError("invalid selection")
         motor_view._on_frame_type_change(object())
 
+    @pytest.mark.parametrize("handler", ["frame", "spin_arm"])
+    def test_progress_window_is_destroyed_when_parameter_update_fails(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        handler: str,
+        motor_view: MotorTestView,
+        fake_model: FakeMotorTestModel,
+        dialog_spies: SimpleNamespace,
+        mocker,
+    ) -> None:
+        """Failed parameter updates must not leave their progress window allocated."""
+        progress_window = MagicMock()
+        mocker.patch(
+            "ardupilot_methodic_configurator.plugins.frontend_tkinter_motor_test.ProgressWindow",
+            return_value=progress_window,
+        )
+
+        if handler == "frame":
+            motor_view.frame_type_combobox.current(0)
+            fake_model.raise_frame_error = ParameterError("frame update failed")
+            motor_view._on_frame_type_change(object())
+        else:
+            dialog_spies.askfloat.return_value = 0.2
+            fake_model.raise_spin_arm_error = ParameterError("spin-arm update failed")
+            motor_view._set_motor_spin_arm()
+
+        progress_window.destroy.assert_called_once_with()
+
     def test_throttle_change_paths(
         self, motor_view: MotorTestView, fake_model: FakeMotorTestModel, dialog_spies: SimpleNamespace
     ) -> None:
