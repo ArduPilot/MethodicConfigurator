@@ -15,9 +15,12 @@ from logging import info as logging_info
 from logging import warning as logging_warning
 from math import nan
 from pathlib import Path
+from struct import unpack_from
 from time import sleep as time_sleep
 from time import time as time_time
 from typing import TYPE_CHECKING, Any, Optional
+
+from pymavlink import mavutil
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
@@ -70,6 +73,9 @@ class FlightControllerParams:
     PARAM_FETCH_POLL_DELAY: float = 0.01
     PARAM_RESET_TIMEOUT: float = 10.0
     MAVFTP_GETPARAMS_TIMEOUT: float = 40.0
+    PARAM_ERROR_MESSAGE_ID: int = 345
+    MAV_PARAM_ERROR_DOES_NOT_EXIST: int = 1
+    PARAM_ERROR_CRC_EXTRA: int = 209
 
     def __init__(
         self,
@@ -376,6 +382,107 @@ class FlightControllerParams:
             time_sleep(self.PARAM_FETCH_POLL_DELAY)  # Small sleep to prevent busy waiting
 
         raise TimeoutError(_("Timeout waiting for parameter %s") % param_name)
+
+    @classmethod
+    def _get_param_error(cls, message: Any) -> tuple[str, int] | None:  # noqa: ANN401, PLR0911
+        """
+        Return a PARAM_ERROR's parameter name and error code, when applicable.
+
+        pymavlink 2.4.49 does not yet contain the recently-standardised
+        PARAM_ERROR message.  Such a frame is therefore exposed as
+        ``UNKNOWN_345``.  Decode and CRC-check that one small, stable message
+        here so current ArduPilot firmware works without requiring a
+        development-only pymavlink dependency.
+        """
+        message_type = message.get_type()
+        if message_type == "PARAM_ERROR":
+            return str(message.param_id).rstrip("\x00"), int(message.error)
+        if message_type != f"UNKNOWN_{cls.PARAM_ERROR_MESSAGE_ID}":
+            return None
+
+        raw_message = bytes(message.data)
+        if not raw_message:
+            return None
+        header_length = 6 if raw_message[0] == 0xFE else 10 if raw_message[0] == 0xFD else 0
+        if not header_length or len(raw_message) < header_length + 2:
+            return None
+        payload_length = raw_message[1]
+        signed = header_length == 10 and bool(raw_message[2] & 1)
+        message_length = header_length + payload_length + 2 + (13 if signed else 0)
+        if len(raw_message) != message_length or payload_length < 21:
+            return None
+        message_id = raw_message[5] if header_length == 6 else raw_message[7] | (raw_message[8] << 8) | (raw_message[9] << 16)
+        if message_id != cls.PARAM_ERROR_MESSAGE_ID:
+            return None
+
+        crc_buffer = bytearray(raw_message[1 : header_length + payload_length])
+        crc_buffer.append(cls.PARAM_ERROR_CRC_EXTRA)
+        received_crc = unpack_from("<H", raw_message, header_length + payload_length)[0]
+        if mavutil.x25crc(crc_buffer).crc != received_crc:
+            return None
+
+        payload = raw_message[header_length : header_length + payload_length]
+        param_name = payload[4:20].decode("ascii", errors="ignore").rstrip("\x00")
+        return param_name, payload[20]
+
+    def get_nonexistent_parameters(self, param_names: list[str], timeout: float = 2.0) -> set[str]:
+        """
+        Return only parameters explicitly reported absent by the FC.
+
+        A direct PARAM_REQUEST_READ returns PARAM_VALUE for a parameter that
+        exists but is hidden from the normal parameter list.  An explicit
+        PARAM_ERROR/DOES_NOT_EXIST is the sole result treated as absence;
+        timeouts and any other errors deliberately remain inconclusive.
+        """
+        if self.master is None:
+            return set()
+        if timeout <= 0:
+            msg = _("Timeout for parameter presence check is non-positive, skipping request")
+            logging_error(msg)
+            raise ValueError(msg)
+
+        pending = set(param_names)
+        for param_name in pending:
+            is_valid_name, name_error = validate_param_name(param_name)
+            if not is_valid_name:
+                logging_error(name_error)
+                raise IndexError(name_error)
+        if not pending:
+            return set()
+
+        for param_name in pending:
+            self.master.mav.param_request_read_send(
+                self.master.target_system,
+                self.master.target_component,
+                param_name.encode("utf-8"),
+                -1,
+            )
+
+        nonexistent: set[str] = set()
+        start_time = time_time()
+        response_types = ["PARAM_VALUE", "PARAM_ERROR", f"UNKNOWN_{self.PARAM_ERROR_MESSAGE_ID}"]
+        while pending and time_time() - start_time < timeout:
+            response: Any = self.master.recv_match(type=response_types, blocking=False)
+            if response is None:
+                time_sleep(self.PARAM_FETCH_POLL_DELAY)
+                continue
+
+            param_error = self._get_param_error(response)
+            if param_error is not None:
+                param_name, error_code = param_error
+                if param_name in pending:
+                    pending.remove(param_name)
+                    if error_code == self.MAV_PARAM_ERROR_DOES_NOT_EXIST:
+                        nonexistent.add(param_name)
+                continue
+
+            if response.get_type() == "PARAM_VALUE":
+                param_name = response.param_id.rstrip("\x00")
+                if param_name in pending:
+                    self.fc_parameters[param_name] = float(response.param_value)
+                    pending.remove(param_name)
+
+        return nonexistent
 
     def clear_parameters(self) -> None:
         """

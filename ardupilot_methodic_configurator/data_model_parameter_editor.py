@@ -196,6 +196,22 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """Return the latest flight-controller banner text."""
         return self._flight_controller.banner_text_buffer
 
+    def get_nonexistent_fc_parameters(self, param_names: list[str], timeout: float = 2.0) -> set[str]:
+        """
+        Return names the FC explicitly reports as not existing.
+
+        Parameters that time out are intentionally not returned: older firmware
+        cannot make the absence distinction, and hidden parameter groups must
+        remain visible when their status is inconclusive.
+        """
+        return self._flight_controller.get_nonexistent_parameters(param_names, timeout)
+
+    def rebuild_current_step_parameters_after_fc_parameter_update(
+        self,
+    ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+        """Rebuild the current step after direct FC parameter reads update the cache."""
+        return self._repopulate_configuration_step_parameters()
+
     @property
     def fc_parameters(self) -> dict[str, float]:
         return (
