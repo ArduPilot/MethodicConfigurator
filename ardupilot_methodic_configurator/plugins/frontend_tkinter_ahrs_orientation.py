@@ -73,7 +73,7 @@ class AhrsOrientationView(Frame):  # pylint: disable=too-many-instance-attribute
             padding=10,
         )
         manual_option_frame.pack(fill="x", padx=10, pady=(0, 10))
-        wraplength=800
+        wraplength = 800
         ttk.Label(
             manual_option_frame,
             text=_(

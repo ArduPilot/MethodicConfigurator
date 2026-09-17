@@ -105,7 +105,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
             "Slightly reduced accuracy. For large or heavy vehicles that are difficult to move.\n"
             "Place the vehicle level and click the button. ."
         )
-        wraplength=450
+        wraplength = 450
         ttk.Label(simple_frame, text=simple_info_text, justify="left", wraplength=wraplength).pack(
             side="left", fill="x", expand=True, anchor="w"
         )
