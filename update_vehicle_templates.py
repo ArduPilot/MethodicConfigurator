@@ -54,7 +54,8 @@ def find_template_directories() -> list[Path]:
     # Find all leaf directories (those containing no subdirectories)
     leaf_dirs = []
     for root, dirs, _files in os.walk(templates_dir):
-        if not dirs:  # This is a leaf directory
+        if not dirs and not Path(root).name.endswith("_mig"):
+            # Migration templates are expected to preserve the migration's line order.
             leaf_dirs.append(Path(root))
 
     logging.info("Found %d template directories to process", len(leaf_dirs))
