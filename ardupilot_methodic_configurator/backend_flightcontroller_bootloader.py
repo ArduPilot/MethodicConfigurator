@@ -762,6 +762,13 @@ class FlightControllerBootloaderBackend:  # pylint:disable=too-many-instance-att
         if cancellation_requested is not None and cancellation_requested():
             msg = _("firmware upload cancelled before entering the bootloader")
             raise FirmwareUploadCancelledError(msg, stage=UploadStage.ENTERING_BOOTLOADER.value)
+        if full_erase:
+            # CHIP_FULL_ERASE support cannot yet be determined safely, so refuse
+            # before rebooting into the bootloader.  Rejecting later (after
+            # _enter_bootloader has sent MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN and
+            # dropped the MAVLink link) would disrupt the board for nothing.
+            msg = _("full firmware erase is unavailable because support cannot yet be determined safely")
+            raise FirmwareCompatibilityError(msg)
         if self._enter_bootloader is not None:
             self._enter_bootloader()
         client, info = self._wait_for_bootloader(cancellation_requested)

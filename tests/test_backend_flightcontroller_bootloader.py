@@ -1196,6 +1196,33 @@ def test_full_erase_is_refused_before_any_flash_command() -> None:
     assert transport.flash == b""
 
 
+def test_backend_refuses_full_erase_before_rebooting_into_the_bootloader() -> None:
+    """
+    Full erase is rejected before the board is rebooted into the bootloader.
+
+    GIVEN: A caller requests full_erase, which cannot be supported safely yet
+    WHEN: The upload runs through the backend
+    THEN: It refuses before _enter_bootloader fires, so the flight controller is
+        never rebooted and its MAVLink link is never dropped for nothing
+    """
+    entered = False
+
+    def enter() -> None:
+        nonlocal entered
+        entered = True
+
+    def factory(*_args: object) -> bl.BootloaderTransport:
+        msg = "serial transport must not be opened when full erase is refused"
+        raise AssertionError(msg)
+
+    backend = bl.FlightControllerBootloaderBackend("COM7", 115200, enter_bootloader=enter, serial_factory=factory)
+
+    with pytest.raises(fw.FirmwareCompatibilityError, match="full firmware erase"):
+        backend.upload(fw.parse_apj(apj(b"abcd")), full_erase=True, confirmation_requested=lambda *_args: True)
+
+    assert not entered
+
+
 def test_backend_rejects_invalid_timeout_before_entering_bootloader() -> None:
     entered = False
 
