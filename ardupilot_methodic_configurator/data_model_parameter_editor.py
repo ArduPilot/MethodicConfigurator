@@ -30,6 +30,8 @@ from pathlib import Path
 from time import perf_counter, time
 from typing import Any, Literal
 
+from packaging.version import InvalidVersion, Version
+
 from ardupilot_methodic_configurator import _, data_model_parameter_export
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
@@ -198,6 +200,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         self._at_least_one_changed = False
 
         self._last_time_asked_to_save: float = 0
+        self._step_ui_messages: tuple[set[tuple[str, str]], set[tuple[str, str]]] = (set(), set())
 
     @classmethod
     def for_connected_flight_controller(
@@ -265,6 +268,66 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         """Refresh diagnostics while the modal diagnostics view owns the connection."""
         self._flight_controller.poll_status_text()
         return self._flight_controller.status_text_display_buffer
+
+    @property
+    def supports_fc_parameter_presence_check(self) -> bool:
+        """Probe N/A rows only on connected firmware 4.7+, which can report PARAM_ERROR."""
+        if not self.is_fc_connected:
+            return False
+        try:
+            return Version(self._flight_controller.info.flight_sw_version) >= Version("4.7.0")
+        except InvalidVersion:
+            return False
+
+    def get_nonexistent_fc_parameters(
+        self, param_names: list[str], timeout: float = 2.0, *, cancellation_requested: Callable[[], bool] | None = None
+    ) -> set[str]:
+        """
+        Return names the FC explicitly reports as not existing.
+
+        Parameters that time out are intentionally not returned: older firmware
+        cannot make the absence distinction, and hidden parameter groups must
+        remain visible when their status is inconclusive.
+        """
+        return self._flight_controller.get_nonexistent_parameters(
+            param_names, timeout, cancellation_requested=cancellation_requested
+        )
+
+    def get_fc_parameter_presence_candidates(self) -> set[str]:
+        """Include declared and file parameters before FC-dependent rules can remove them."""
+        names = set(self.current_step_parameters)
+        names.update(self._local_filesystem.file_parameters.get(self.current_file, {}))
+        step = self._local_filesystem.configuration_steps.get(self.current_file, {})
+        for section in ("forced_parameters", "derived_parameters", "add_parameters", "delete_parameters"):
+            names.update(step.get(section, {}))
+        return names.difference(self.fc_parameters)
+
+    def rebuild_current_step_parameters_after_fc_parameter_update(
+        self,
+    ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+        """Refresh live computations while retaining edits and showing only new messages."""
+        edited_parameters = {name: param for name, param in self.current_step_parameters.items() if param.is_dirty}
+        previous_errors, previous_infos = self._step_ui_messages
+        errors, infos = self._repopulate_configuration_step_parameters()
+        self._restore_unsaved_parameter_edits(edited_parameters)
+        self._step_ui_messages = (previous_errors | set(errors), previous_infos | set(infos))
+        return (
+            [message for message in errors if message not in previous_errors],
+            [message for message in infos if message not in previous_infos],
+        )
+
+    def _restore_unsaved_parameter_edits(self, edited_parameters: dict[str, ArduPilotParameter]) -> None:
+        """Restore copied values, reasons and manual overrides through the parameter APIs."""
+        for name, previous in edited_parameters.items():
+            parameter = self.current_step_parameters.get(name)
+            if parameter is None:
+                continue
+            if parameter.is_forced or parameter.is_derived:
+                parameter.set_manual_override(previous.is_manual_override)
+            if previous.is_editable and parameter.is_editable:
+                with contextlib.suppress(ParameterUnchangedError):
+                    parameter.set_new_value(str(previous.get_new_value()), ignore_out_of_range=True)
+                parameter.set_change_reason(previous.change_reason)
 
     @property
     def fc_parameters(self) -> dict[str, float]:
@@ -683,6 +746,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         # Process configuration step and create domain model parameters
         (ui_errors, ui_infos) = self._repopulate_configuration_step_parameters()
+        self._step_ui_messages = (set(ui_errors), set(ui_infos))
 
         for title, msg in ui_errors:
             show_error(title, msg)

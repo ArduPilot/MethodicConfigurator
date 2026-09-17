@@ -35,6 +35,7 @@ import ardupilot_methodic_configurator.frontend_tkinter_parameter_editor as para
 from ardupilot_methodic_configurator.backend_filesystem import Par
 from ardupilot_methodic_configurator.backend_flightcontroller_reconnect import FlightControllerReconnect
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import ArduPilotParameter
+from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 from ardupilot_methodic_configurator.data_model_parameter_editor import LogAnalysisInputs, ParameterEditor
 from ardupilot_methodic_configurator.data_model_vehicle_components import ComponentDataModel
 from ardupilot_methodic_configurator.data_model_vehicle_components_json_schema import VehicleComponentsJsonSchema
@@ -259,7 +260,7 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor._parameter_area_resize_running = False
     editor._inline_component_name = None
     editor._updating_inline_editor = False
-    editor._requested_action = ParameterEditorAction.FINISHED
+    editor._initialize_editor_session_state()
     editor.inline_component_container = MagicMock()
     editor.inline_component_container.winfo_reqheight.return_value = 74
     editor.inline_component_container.cget.return_value = 0
@@ -328,6 +329,12 @@ def parameter_editor() -> MagicMock:
     manager._handle_file_jump_workflow = MagicMock()
     manager.get_non_default_params = MagicMock(return_value={})
     manager.is_fc_connected = True
+    manager.supports_fc_parameter_presence_check = True
+    manager.get_nonexistent_fc_parameters.return_value = set()
+    manager.rebuild_current_step_parameters_after_fc_parameter_update.return_value = ([], [])
+    manager.get_fc_parameter_presence_candidates.side_effect = lambda: {
+        name for name, parameter in manager.current_step_parameters.items() if not parameter.has_fc_value
+    }
     manager.is_configuration_step_optional.return_value = False
     manager.get_next_non_optional_file.return_value = None
     manager.get_previous_non_optional_file.return_value = None
@@ -385,6 +392,320 @@ def monitor_bounds() -> Iterator[MagicMock]:
 def parameter_editor_window(parameter_editor: MagicMock) -> ParameterEditorWindow:
     """Create a headless parameter editor instance."""
     return _create_editor(parameter_editor)
+
+
+def _complete_presence_probe(window: ParameterEditorWindow) -> None:
+    """Wait for the worker and deliver its completion on the test's UI thread."""
+    runner = window._parameter_presence_runner  # pylint: disable=protected-access
+    assert runner.thread is not None
+    runner.thread.join(timeout=2)
+    assert not runner.thread.is_alive()
+    runner.poll()
+
+
+class TestParameterPresenceCheck:
+    """Ensure FC presence results update the model before the table is rendered."""
+
+    @pytest.mark.parametrize("choice", [True, False, "close"])
+    @pytest.mark.parametrize("hidden_in_snapshot", [False, True])
+    def test_copy_decision_and_plugin_use_values_discovered_by_direct_reads(
+        self, parameter_editor_window: ParameterEditorWindow, choice: bool | str, hidden_in_snapshot: bool
+    ) -> None:
+        """
+        Complete direct reads before offering to copy FC values and selecting the final plugin.
+
+        GIVEN: A hidden gain is missing from the bulk snapshot on an external-tool step.
+        WHEN: A direct read discovers it and the user chooses Yes, No, or Close.
+        THEN: Yes copies its live value, No preserves the file value, and Close exits;
+              continuing also selects the plugin enabled by the newly discovered gain.
+        """
+        window = parameter_editor_window
+        filename = "01_initial.param"
+        filesystem = MagicMock()
+        filesystem.file_parameters = {filename: ParDict({"KNOWN_GAIN": Par(1.0), "HIDDEN_GAIN": Par(2.0)})}
+        filesystem.configuration_steps = {}
+        filesystem.forced_parameters = {}
+        filesystem.derived_parameters = {}
+        filesystem.doc_dict = {}
+        filesystem.param_default_dict = {}
+        filesystem.get_eval_variables.return_value = {}
+        filesystem.auto_changed_by.return_value = "Autotune"
+        filesystem.get_instructions_popup.return_value = None
+        filesystem.get_plugin.return_value = {
+            "name": "test_plugin",
+            "placement": "left",
+            "if": "'HIDDEN_GAIN' in fc_parameters",
+        }
+        flight_controller = MagicMock()
+        flight_controller.info.flight_sw_version = "4.7.0"
+        flight_controller.fc_parameters = {"KNOWN_GAIN": 9.0}
+
+        def discover_hidden_value(*_args: object, **_kwargs: object) -> set[str]:
+            flight_controller.fc_parameters["HIDDEN_GAIN"] = 7.0
+            return set()
+
+        flight_controller.get_nonexistent_parameters.side_effect = discover_hidden_value
+        if hidden_in_snapshot:
+            flight_controller.fc_parameters["HIDDEN_GAIN"] = 7.0
+        model = ParameterEditor(filename, flight_controller, filesystem)
+        window.parameter_editor = model
+
+        def copy_values(selected_file: str) -> bool | str:
+            return model.handle_copy_fc_values_workflow(selected_file, MagicMock(return_value=choice), window.ui.show_info)
+
+        with (
+            patch.object(model, "_handle_file_jump_workflow", return_value=filename),
+            patch.object(model, "_download_files_for_step"),
+            patch.object(window, "write_changes_to_intermediate_parameter_file"),
+            patch.object(window, "_do_tempcal_imu"),
+            patch.object(window, "_should_upload_file_to_fc", return_value=True),
+            patch.object(window, "_update_inline_component_editor"),
+            patch.object(window, "_update_progress_bar_from_file"),
+            patch.object(window, "_update_skip_button_state"),
+            patch.object(window, "_update_previous_button_state"),
+            patch.object(window, "_should_copy_fc_values_to_file", side_effect=copy_values) as copy,
+            patch.object(window, "_update_plugin_layout") as plugin,
+            patch.object(window, "repopulate_parameter_table") as render,
+            patch.object(window, "close_connection_and_quit") as close,
+        ):
+            window.on_param_file_combobox_change(None, forced=True)
+            if not hidden_in_snapshot:
+                copy.assert_not_called()
+                plugin.assert_called_once_with(None, force_reload=True)
+                render.assert_not_called()
+                assert window.navigation_lock.locked
+                _complete_presence_probe(window)
+
+        copy.assert_called_once_with(filename)
+        if choice == "close":
+            close.assert_called_once_with()
+            render.assert_not_called()
+        else:
+            close.assert_not_called()
+            assert model.get_parameters_as_par_dict()["HIDDEN_GAIN"].value == (7.0 if choice else 2.0)
+            if hidden_in_snapshot:
+                plugin.assert_called_once_with({"name": "test_plugin", "placement": "left"}, force_reload=True)
+            else:
+                assert plugin.call_args == mock_call({"name": "test_plugin", "placement": "left"})
+            render.assert_called_once_with()
+        assert not window.navigation_lock.locked
+
+    def test_probe_owns_navigation_and_connection_until_results_are_applied(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """GIVEN an active probe, WHEN other controls are used, THEN no competing upload or navigation starts."""
+        window = parameter_editor_window
+        recovery = MagicMock()
+        release = recovery.acquire_operation.return_value
+        window._connection_recovery = recovery
+        parameter_editor.current_step_parameters = {"ABSENT": MagicMock(has_fc_value=False)}
+        parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.return_value = ([], [])
+        resume = MagicMock()
+        parameter_editor.get_nonexistent_fc_parameters.return_value = {"ABSENT"}
+        with patch.object(window, "_pause_plugin_receiver", return_value=resume):
+            assert window._queue_parameter_presence_check()
+            assert window.navigation_lock.locked
+            window.on_upload_selected_click()
+            window.on_skip_click()
+            parameter_editor.upload_selected_params_workflow.assert_not_called()
+            parameter_editor.handle_write_changes_workflow.assert_not_called()
+            release.assert_not_called()
+            resume.assert_not_called()
+            _complete_presence_probe(window)
+
+        assert not window.navigation_lock.locked
+        release.assert_called_once_with()
+        resume.assert_called_once_with()
+        assert window.confirmed_absent_fc_parameter_names == {"ABSENT"}
+        window.parameter_editor_table.repopulate_table.assert_called_once()
+
+    def test_followup_probe_retains_all_previously_confirmed_absences(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """GIVEN an absent row and a new N/A row, WHEN both probes finish, THEN absence is cumulative."""
+        window = parameter_editor_window
+        parameter_editor.current_step_parameters = {"ABSENT": MagicMock(has_fc_value=False)}
+        parameter_editor.get_nonexistent_fc_parameters.side_effect = [{"ABSENT"}, set()]
+
+        def rebuild() -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+            parameter_editor.current_step_parameters["NEW"] = MagicMock(has_fc_value=False)
+            return [], []
+
+        parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.side_effect = rebuild
+        assert window._queue_parameter_presence_check()
+        _complete_presence_probe(window)
+        assert window.navigation_lock.locked
+        window.parameter_editor_table.repopulate_table.assert_not_called()
+        _complete_presence_probe(window)
+
+        assert window.confirmed_absent_fc_parameter_names == {"ABSENT"}
+        assert parameter_editor.get_nonexistent_fc_parameters.call_args_list == [
+            mock_call(["ABSENT"], cancellation_requested=ANY),
+            mock_call(["NEW"], cancellation_requested=ANY),
+        ]
+        assert not window.navigation_lock.locked
+        window.parameter_editor_table.repopulate_table.assert_called_once()
+
+    def test_reset_without_na_rows_rejects_an_old_same_file_result(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """GIVEN a refreshed step, WHEN its cancelled result arrives, THEN it cannot hide a current value."""
+        window = parameter_editor_window
+        parameter_editor.current_step_parameters = {"NOW_PRESENT": MagicMock(has_fc_value=False)}
+        parameter_editor.get_nonexistent_fc_parameters.return_value = {"NOW_PRESENT"}
+        assert window._queue_parameter_presence_check()
+        parameter_editor.current_step_parameters["NOW_PRESENT"].has_fc_value = True
+
+        assert window._queue_parameter_presence_check()
+        _complete_presence_probe(window)
+
+        assert window.confirmed_absent_fc_parameter_names == set()
+        parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.assert_not_called()
+        window.parameter_editor_table.repopulate_table.assert_called_once()
+        assert not window.navigation_lock.locked
+
+    def test_reset_rechecks_current_candidates_without_overlapping_receivers(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """GIVEN a replaced step, WHEN a probe finishes, THEN only the current candidates are checked next."""
+        window = parameter_editor_window
+        parameter_editor.current_step_parameters = {"OLD": MagicMock(has_fc_value=False)}
+        parameter_editor.get_nonexistent_fc_parameters.side_effect = [{"OLD"}, {"CURRENT"}]
+        assert window._queue_parameter_presence_check()
+        parameter_editor.current_step_parameters = {"CURRENT": MagicMock(has_fc_value=False)}
+        assert window._queue_parameter_presence_check()
+        assert parameter_editor.get_nonexistent_fc_parameters.call_count <= 1
+        _complete_presence_probe(window)
+        assert window.navigation_lock.locked
+        assert not window.confirmed_absent_fc_parameter_names
+        _complete_presence_probe(window)
+
+        assert window.confirmed_absent_fc_parameter_names == {"CURRENT"}
+        assert parameter_editor.get_nonexistent_fc_parameters.call_args_list == [
+            mock_call(["OLD"], cancellation_requested=ANY),
+            mock_call(["CURRENT"], cancellation_requested=ANY),
+        ]
+        assert not window.navigation_lock.locked
+
+    @pytest.mark.parametrize("failure_stage", ["start", "rebuild"])
+    def test_failures_release_navigation_and_the_connection_lease(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock, failure_stage: str
+    ) -> None:
+        """GIVEN a worker-start or model error, WHEN probing fails, THEN controls and reception are released."""
+        window = parameter_editor_window
+        recovery = MagicMock()
+        window._connection_recovery = recovery
+        parameter_editor.current_step_parameters = {"ABSENT": MagicMock(has_fc_value=False)}
+        parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.side_effect = RuntimeError("rebuild failed")
+        if failure_stage == "start":
+            with (
+                patch.object(window._parameter_presence_runner, "start", side_effect=RuntimeError("start failed")),
+                pytest.raises(RuntimeError, match="start failed"),
+            ):
+                window._queue_parameter_presence_check()
+        else:
+            window._queue_parameter_presence_check()
+            with pytest.raises(RuntimeError, match="rebuild failed"):
+                _complete_presence_probe(window)
+
+        assert not window.navigation_lock.locked
+        recovery.acquire_operation.return_value.assert_called_once_with()
+
+    def test_closing_waits_for_the_probe_to_stop_before_quitting(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """GIVEN a running receiver, WHEN closing, THEN cancel it and wait without applying its late result."""
+        window = parameter_editor_window
+        started, finish = Event(), Event()
+        cancellation_seen = []
+        parameter_editor.current_step_parameters = {"ABSENT": MagicMock(has_fc_value=False)}
+
+        def probe(_names: list[str], *, cancellation_requested: Callable[[], bool]) -> set[str]:
+            started.set()
+            assert finish.wait(5)
+            cancellation_seen.append(cancellation_requested())
+            return {"ABSENT"}
+
+        parameter_editor.get_nonexistent_fc_parameters.side_effect = probe
+        with (
+            patch.object(window, "_stop_connection_monitor", return_value=True) as stop_monitor,
+            patch.object(window, "_commit_focused_edit_and_offer_save") as save,
+        ):
+            try:
+                window._queue_parameter_presence_check()
+                assert started.wait(2)
+                window.close_connection_and_quit()
+                assert window._parameter_presence_cancelled.is_set()
+                assert window.navigation_lock.locked
+                window.root.quit.assert_not_called()
+                stop_monitor.assert_not_called()
+            finally:
+                finish.set()
+                if window._parameter_presence_runner.thread is not None:
+                    window._parameter_presence_runner.thread.join(timeout=2)
+            window._parameter_presence_runner.poll()
+            window._finish_pending_close()
+
+        assert cancellation_seen == [True]
+        parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.assert_not_called()
+        save.assert_called_once_with()
+        window.root.quit.assert_called_once_with()
+        assert not window.navigation_lock.locked
+
+    @pytest.mark.parametrize("supported_firmware", [False, True])
+    def test_step_rendering_waits_for_presence_checks_only_on_supported_firmware(
+        self,
+        parameter_editor_window: ParameterEditorWindow,
+        parameter_editor: MagicMock,
+        supported_firmware: bool,
+    ) -> None:
+        """GIVEN N/A rows, WHEN opening a step, THEN only firmware 4.7+ starts a worker and defers rendering."""
+        parameter_editor.supports_fc_parameter_presence_check = supported_firmware
+        parameter_editor.current_step_parameters = {"MISSING": MagicMock(has_fc_value=False)}
+
+        parameter_editor_window.on_param_file_combobox_change(None, forced=True)
+
+        if supported_firmware:
+            assert parameter_editor_window._parameter_presence_runner.active
+            parameter_editor_window.parameter_editor_table.show_parameter_presence_check_in_progress.assert_called_once_with()
+            parameter_editor_window.parameter_editor_table.repopulate_table.assert_not_called()
+            _complete_presence_probe(parameter_editor_window)
+        else:
+            assert not parameter_editor_window._parameter_presence_runner.active
+            parameter_editor_window.parameter_editor_table.show_parameter_presence_check_in_progress.assert_not_called()
+            parameter_editor_window.parameter_editor_table.repopulate_table.assert_called_once_with(
+                parameter_editor_window.show_only_differences.get(), "normal"
+            )
+            parameter_editor.get_nonexistent_fc_parameters.assert_not_called()
+            parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.assert_not_called()
+
+    def test_presence_result_rebuilds_step_model_before_rendering_table(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """GIVEN a hidden parameter, WHEN probing completes, THEN rebuild computed rows before rendering."""
+        parameter_editor.current_step_parameters = {"HIDDEN_PARAM": MagicMock(has_fc_value=False)}
+
+        def assert_model_was_rebuilt() -> None:
+            parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.assert_called_once_with()
+
+        parameter_editor_window.repopulate_parameter_table = MagicMock(side_effect=assert_model_was_rebuilt)
+        assert parameter_editor_window._queue_parameter_presence_check()
+        _complete_presence_probe(parameter_editor_window)
+
+        parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
+
+    def test_inconclusive_probe_failure_keeps_rows_visible_and_releases_access(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """GIVEN a failed read, WHEN completion arrives, THEN retain the N/A row and unlock the editor."""
+        parameter_editor.current_step_parameters = {"UNKNOWN": MagicMock(has_fc_value=False)}
+        parameter_editor.get_nonexistent_fc_parameters.side_effect = OSError("link lost")
+        assert parameter_editor_window._queue_parameter_presence_check()
+        _complete_presence_probe(parameter_editor_window)
+
+        assert not parameter_editor_window.confirmed_absent_fc_parameter_names
+        assert not parameter_editor_window.navigation_lock.locked
+        parameter_editor_window.parameter_editor_table.repopulate_table.assert_called_once()
 
 
 @pytest.fixture
@@ -1192,6 +1513,10 @@ class TestParameterFileSelection:
         assert window.gui_complexity == "normal"
         assert window.current_plugin is None
         assert window.current_plugin_view is None
+        assert window._requested_action is ParameterEditorAction.FINISHED
+        assert window.confirmed_absent_fc_parameter_names == set()
+        assert not window._parameter_presence_runner.active
+        assert window._parameter_presence_file is None
 
     def test_window_title_and_geometry_setup(self, parameter_editor: MagicMock) -> None:
         """Window title, geometry, and protocol handlers are configured during init."""
@@ -2679,6 +3004,8 @@ class TestPluginLayoutLifecycle:
         THEN: Component changes are synced but the plugin loads only after completion or failure.
         """
         editor = parameter_editor_window
+        # This test covers dialogs in the synchronous workflow used by older firmware.
+        parameter_editor.supports_fc_parameter_presence_check = False
         editor.current_plugin = {"name": "old_plugin", "placement": "left"}
         editor.current_plugin_view = MagicMock()
         new_plugin = {"name": "new_plugin", "placement": "left"}
@@ -5370,6 +5697,28 @@ def test_recovery_refreshes_fc_cells_without_advancing_or_overwriting_edits(
                 assert str(table.view_port.grid_slaves(row=1, column=2)[0].cget("text")) == expected_text
         finally:
             table.destroy()
+
+
+def test_recovery_restores_previously_absent_parameter_to_table_and_upload(
+    monitored_editor: ParameterEditorWindow, root: tk.Tk
+) -> None:
+    """A recovered FC value makes a previously absent parameter visible and uploadable again."""
+    editor = monitored_editor
+    editor.parameter_editor.should_display_bitmask_parameter_editor_usage.return_value = False
+    parameter = ArduPilotParameter("TEST_GAIN", Par(3.0))
+    editor.parameter_editor.current_step_parameters = {parameter.name: parameter}
+    editor.parameter_editor.flight_controller.fc_parameters = {parameter.name: 0.0}
+    editor.parameter_editor.get_parameters_as_par_dict.return_value = {parameter.name: Par(3.0)}
+    editor.confirmed_absent_fc_parameter_names = {parameter.name, "STILL_ABSENT"}
+    table = ParameterEditorTable(root, editor.parameter_editor, editor)
+    editor.parameter_editor_table = table
+    try:
+        editor._finish_connection_recovery()
+        assert editor.confirmed_absent_fc_parameter_names == {"STILL_ABSENT"}
+        assert parameter.name in table._new_value_widgets
+        assert parameter.name in table.get_upload_selected_params("simple")
+    finally:
+        table.destroy()
 
 
 @pytest.mark.parametrize("platform", ["linux", "darwin"])

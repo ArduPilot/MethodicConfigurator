@@ -326,6 +326,41 @@ The system recognizes and handles different parameter categories:
 - **Safety Validation**: Check for potentially dangerous combinations
 - **Format Validation**: Ensure proper parameter naming and format
 
+#### Firmware Parameter Availability
+
+Before displaying a configuration step, the editor probes uncached parameters only when
+the connected FC reports firmware 4.7.0 or later. Older or unknown versions render
+immediately and retain N/A rows. ArduPilot introduced explicit missing-parameter
+errors in [4.7](https://ardupilot.org/dev/docs/mavlink-get-set-params.html#retrieving-a-parameter).
+
+Candidates include names from the parameter file and the step's forced, derived,
+add and delete declarations, as well as current rows. This allows direct reads to
+discover hidden parameters before cache-dependent rules remove or omit their rows.
+
+The probe owns the navigation lock and a connection-recovery operation lease, and
+pauses plugin receivers and controls until results have been applied. Reads use
+batches of ten names, with one retry halfway through each two-second batch timeout.
+This stays below the firmware's twenty-entry request queue, documented in the
+[tagged parameter implementation](https://github.com/ArduPilot/ardupilot/blob/Copter-4.6.3/libraries/GCS_MAVLink/GCS_Param.cpp#L26-L28).
+The pinned pymavlink dialect decodes and validates replies. Only the selected
+controller's replies count; PARAM_ERROR must also address this client or a broadcast
+destination and identify the requested name rather than a parameter index.
+
+Only PARAM_ERROR/DOES_NOT_EXIST hides a row and excludes it from uploads in every
+GUI complexity mode. PARAM_VALUE updates the FC cache; timeouts and other errors
+remain inconclusive. The filter applies only to current-step parameters that still
+lack FC values, so later downloads restore their rows and upload eligibility.
+Absent declarations without current rows do not prevent automatic step skipping.
+Rebuilding conditional and derived rows preserves unsaved
+values, reasons and manual overrides, and reports only new warnings. Follow-up
+probes accumulate confirmed absences. The existing `BackgroundTaskRunner` delivers
+each probe's completion on Tk; there is no separate presence-request queue or poller.
+Resetting a check cancels the active probe and rechecks candidates when it finishes;
+closing cancels the worker and waits for it to relinquish reception before exiting.
+On supported firmware, the external-tool FC-value copy prompt waits until all
+checks and rebuilds finish, so a Yes decision includes newly discovered values.
+The editor then reevaluates the plugin condition using the updated FC cache.
+
 #### Upload Process
 
 1. **Pre-Upload Validation**: Check all selected parameters

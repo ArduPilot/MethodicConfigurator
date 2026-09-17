@@ -700,8 +700,27 @@ def test_inspector_cli_and_package_publish_connection_completions() -> None:
     assert "'amc_mavlink_inspector'" in (repo / "ardupilot_methodic_configurator_command_line_completion.psm1").read_text()
 
 
+@pytest.fixture
+def editor_with_inline_container(root: tk.Tk) -> Generator[MagicMock, None, None]:
+    """Represent the editor's navigation controls and real inline widgets during exclusive inspection."""
+    editor = MagicMock(spec=ParameterEditorWindow)
+    editor._connection_recovery = None
+    editor.navigation_lock = NavigationLock()
+    editor._file_browser_window = None
+    editor.inline_component_container = frontend.ttk.Frame(root)
+    frontend.ttk.Entry(editor.inline_component_container)
+    editor.parameter_editor = MagicMock(is_fc_link_connected=True)
+    editor.root = MagicMock()
+    try:
+        yield editor
+    finally:
+        editor.inline_component_container.destroy()
+
+
 @pytest.mark.parametrize("paired", [False, True])
-def test_header_launch_pauses_plugin_and_restores_it_after_close(paired: bool) -> None:
+def test_header_launch_pauses_plugin_and_restores_it_after_close(
+    paired: bool, editor_with_inline_container: MagicMock
+) -> None:
     """
     Embed the inspector without competing with plugin receivers.
 
@@ -709,19 +728,16 @@ def test_header_launch_pauses_plugin_and_restores_it_after_close(paired: bool) -
     WHEN the header opens the inspector,
     THEN the plugin pauses and resumes around the shared-connection inspection.
     """
-    editor = MagicMock(spec=ParameterEditorWindow)
-    editor._connection_recovery = None
-    editor.navigation_lock = NavigationLock()
-    editor._file_browser_window = None
+    editor = editor_with_inline_container
     plugin = MagicMock(spec=["on_suspend", "on_resume"] if paired else ["on_activate", "on_deactivate"])
     editor.current_plugin_view = plugin
-    editor.parameter_editor = MagicMock(is_fc_link_connected=True)
-    editor.root = MagicMock()
     editor.ui = MagicMock()
     window = MagicMock()
+    inline_entry = editor.inline_component_container.winfo_children()[0]
 
     def open_window(*_args: object) -> MagicMock:
         assert editor.navigation_lock.locked
+        assert inline_entry.instate(("disabled",))
         (plugin.on_suspend if paired else plugin.on_deactivate).assert_called_once_with(
             *((PluginPauseReason.EXCLUSIVE_OPERATION,) if paired else ())
         )
@@ -737,11 +753,14 @@ def test_header_launch_pauses_plugin_and_restores_it_after_close(paired: bool) -
     editor.root.wait_window.assert_called_once_with(window.root)
     (plugin.on_resume if paired else plugin.on_activate).assert_called_once_with()
     assert not editor.navigation_lock.locked
+    assert not inline_entry.instate(("disabled",))
 
 
 @pytest.mark.parametrize("paired", [False, True])
 @pytest.mark.parametrize("failure_stage", ["pause", "open", "wait"])
-def test_inspector_failure_restores_plugin_and_navigation(paired: bool, failure_stage: str) -> None:
+def test_inspector_failure_restores_plugin_and_navigation(
+    paired: bool, failure_stage: str, editor_with_inline_container: MagicMock
+) -> None:
     """
     Keep plugin monitoring usable after an inspector launch fails.
 
@@ -749,14 +768,9 @@ def test_inspector_failure_restores_plugin_and_navigation(paired: bool, failure_
     WHEN pausing, opening the inspector or waiting for it raises,
     THEN the plugin resumes exactly once and navigation is released.
     """
-    editor = MagicMock(spec=ParameterEditorWindow)
-    editor._connection_recovery = None
-    editor.navigation_lock = NavigationLock()
-    editor._file_browser_window = None
+    editor = editor_with_inline_container
     plugin = MagicMock(spec=["on_suspend", "on_resume"] if paired else ["on_activate", "on_deactivate"])
     editor.current_plugin_view = plugin
-    editor.parameter_editor = MagicMock(is_fc_link_connected=True)
-    editor.root = MagicMock()
     pause = plugin.on_suspend if paired else plugin.on_deactivate
     resume = plugin.on_resume if paired else plugin.on_activate
     failure = RuntimeError("inspector launch failed")
@@ -777,6 +791,7 @@ def test_inspector_failure_restores_plugin_and_navigation(paired: bool, failure_
     pause.assert_called_once_with(*((PluginPauseReason.EXCLUSIVE_OPERATION,) if paired else ()))
     resume.assert_called_once_with()
     assert not editor.navigation_lock.locked
+    assert not editor.inline_component_container.winfo_children()[0].instate(("disabled",))
     if failure_stage == "pause":
         open_inspector.assert_not_called()
     if failure_stage == "wait":
@@ -786,7 +801,9 @@ def test_inspector_failure_restores_plugin_and_navigation(paired: bool, failure_
 
 
 @pytest.mark.parametrize("plugin_replaced", [False, True])
-def test_inspector_does_not_resume_a_plugin_whose_owner_is_gone(plugin_replaced: bool) -> None:
+def test_inspector_does_not_resume_a_plugin_whose_owner_is_gone(
+    plugin_replaced: bool, editor_with_inline_container: MagicMock
+) -> None:
     """
     Avoid restarting a receiver for a removed editor or plugin.
 
@@ -794,14 +811,9 @@ def test_inspector_does_not_resume_a_plugin_whose_owner_is_gone(plugin_replaced:
     WHEN its parent closes or its plugin is replaced,
     THEN closing the inspector leaves the old receiver stopped.
     """
-    editor = MagicMock(spec=ParameterEditorWindow)
-    editor._connection_recovery = None
-    editor.navigation_lock = NavigationLock()
-    editor._file_browser_window = None
+    editor = editor_with_inline_container
     plugin = MagicMock(spec=["on_suspend", "on_resume"])
     editor.current_plugin_view = plugin
-    editor.parameter_editor = MagicMock(is_fc_link_connected=True)
-    editor.root = MagicMock()
 
     def remove_owner(_root: object) -> None:
         if plugin_replaced:
@@ -818,7 +830,9 @@ def test_inspector_does_not_resume_a_plugin_whose_owner_is_gone(plugin_replaced:
 
 
 @pytest.mark.parametrize("hooks", [None, [], ["on_activate"], ["on_deactivate"]])
-def test_inspector_opens_for_plugins_without_paired_lifecycle_hooks(hooks: list[str] | None) -> None:
+def test_inspector_opens_for_plugins_without_paired_lifecycle_hooks(
+    hooks: list[str] | None, editor_with_inline_container: MagicMock
+) -> None:
     """
     Allow inspection on steps whose views have no paired lifecycle hooks.
 
@@ -826,14 +840,9 @@ def test_inspector_opens_for_plugins_without_paired_lifecycle_hooks(hooks: list[
     WHEN the inspector button is clicked,
     THEN the inspector opens and releases the navigation lock when closed.
     """
-    editor = MagicMock(spec=ParameterEditorWindow)
-    editor._connection_recovery = None
-    editor.navigation_lock = NavigationLock()
-    editor._file_browser_window = None
+    editor = editor_with_inline_container
     plugin = MagicMock(spec=hooks) if hooks is not None else None
     editor.current_plugin_view = plugin
-    editor.parameter_editor = MagicMock(is_fc_link_connected=True)
-    editor.root = MagicMock()
     window = MagicMock()
     with patch(
         "ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.open_mavlink_inspector_window",

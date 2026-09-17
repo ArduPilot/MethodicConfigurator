@@ -348,6 +348,7 @@ def _configured_upload_editor(root, tmp_path: Path, mode: str) -> tuple[Paramete
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
     editor._connection_recovery = None  # pylint: disable=protected-access
     editor.root = root
+    editor._initialize_editor_session_state()  # pylint: disable=protected-access
     editor.navigation_lock = NavigationLock()
     editor.file_upload_progress_window = None
     editor.current_plugin_view = None
@@ -453,6 +454,7 @@ def test_configured_upload_honors_close_after_transport(root, monkeypatch, mode:
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
     editor._connection_recovery = None  # pylint: disable=protected-access
     editor.root = root
+    editor._initialize_editor_session_state()  # pylint: disable=protected-access
     editor.navigation_lock = NavigationLock()
     editor.file_upload_progress_window = None
     editor._configured_upload_active = False  # pylint: disable=protected-access
@@ -497,6 +499,7 @@ def _outgoing_motor_upload(root, monkeypatch) -> Iterator[SimpleNamespace]:
     editor = ParameterEditorWindow.__new__(ParameterEditorWindow)
     editor._connection_recovery = None  # pylint: disable=protected-access
     editor.root = root
+    editor._initialize_editor_session_state()  # pylint: disable=protected-access
     host = DummyBaseWindow(root)
     editor.navigation_lock = NavigationLock()
     editor.gui_complexity = "normal"

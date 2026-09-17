@@ -13,13 +13,15 @@ SPDX-FileCopyrightText: 2024-2026 Amilcar do Carmo Lucas <amilcar.lucas@iav.de>
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from collections.abc import Callable
+from collections import deque
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from threading import Event
 from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from pymavlink.dialects.v20 import ardupilotmega as mavlink
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
@@ -489,6 +491,157 @@ class TestFlightControllerParamsFetchParameter:
             mock_time.side_effect = [0.0, 2.0]
             with pytest.raises(TimeoutError, match="NONEXISTENT"):
                 params_mgr.fetch_param("NONEXISTENT", timeout=1)
+
+
+def _presence_reply(
+    name: str, *, value: float | None = None, error: int = 1
+) -> mavlink.MAVLink_param_error_message | mavlink.MAVLink_param_value_message:
+    """Pass a real MAVLink 2 packet through the pinned dialect's CRC-checked parser."""
+    sender = mavlink.MAVLink(None, srcSystem=1, srcComponent=1)
+    message = (
+        sender.param_error_encode(255, 190, name.encode("ascii"), -1, error)
+        if value is None
+        else sender.param_value_encode(name.encode("ascii"), value, mavlink.MAV_PARAM_TYPE_REAL32, 1, 65535)
+    )
+    decoded = mavlink.MAVLink(None).parse_char(message.pack(sender))
+    assert isinstance(decoded, (mavlink.MAVLink_param_error_message, mavlink.MAVLink_param_value_message))
+    return decoded
+
+
+@pytest.fixture(name="presence_connection")
+def selected_fc_presence_connection() -> tuple[FlightControllerParams, MagicMock]:
+    """Supply a selected FC transport with explicit source and destination identities."""
+    master = MagicMock(target_system=1, target_component=1, source_system=255, source_component=190)
+    return FlightControllerParams(connection_manager=Mock(master=master)), master
+
+
+@pytest.fixture(name="presence_clock")
+def simulated_presence_clock() -> Iterator[None]:
+    """Advance protocol deadlines deterministically without waiting in timeout tests."""
+    clock = [0.0]
+
+    def sleep(duration: float) -> None:
+        clock[0] += duration
+
+    with (
+        patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_monotonic", side_effect=lambda: clock[0]),
+        patch("ardupilot_methodic_configurator.backend_flightcontroller_params.time_sleep", side_effect=sleep),
+    ):
+        yield
+
+
+class TestFlightControllerParamsParameterPresence:
+    """Test direct-read parameter presence checks with real decoded replies."""
+
+    @pytest.mark.usefixtures("presence_clock")
+    def test_only_explicit_absence_hides_a_parameter_and_hidden_values_are_cached(
+        self, presence_connection: tuple[FlightControllerParams, MagicMock]
+    ) -> None:
+        """GIVEN mixed replies, WHEN probing, THEN only DOES_NOT_EXIST is absent and timeouts stay inconclusive."""
+        manager, master = presence_connection
+        replies = deque(
+            [
+                _presence_reply("ABSENT"),
+                _presence_reply("HIDDEN", value=7.5),
+                _presence_reply("READ_FAILED", error=mavlink.MAV_PARAM_ERROR_PERMISSION_DENIED),
+            ]
+        )
+        master.recv_match.side_effect = lambda **_kwargs: replies.popleft() if replies else None
+        absent = manager.get_nonexistent_parameters(["ABSENT", "HIDDEN", "READ_FAILED", "SILENT"], timeout=1.0)
+
+        assert absent == {"ABSENT"}
+        assert manager.fc_parameters == {"HIDDEN": 7.5}
+        requests = [call.args for call in master.mav.param_request_read_send.call_args_list]
+        assert all(args[0:2] == (1, 1) and args[3] == -1 for args in requests)
+        assert {args[2] for args in requests} == {b"ABSENT", b"HIDDEN", b"READ_FAILED", b"SILENT"}
+
+    @pytest.mark.parametrize(
+        ("field", "wrong_value"),
+        [("srcSystem", 2), ("srcComponent", 2), ("target_system", 42), ("target_component", 42), ("param_index", 0)],
+    )
+    def test_unrelated_absence_cannot_hide_a_parameter_from_the_selected_controller(
+        self, presence_connection: tuple[FlightControllerParams, MagicMock], field: str, wrong_value: int
+    ) -> None:
+        """GIVEN another sender, recipient or index, WHEN its error arrives first, THEN retain the FC's value."""
+        manager, master = presence_connection
+        unrelated = _presence_reply("HIDDEN")
+        setattr(unrelated.get_header() if field.startswith("src") else unrelated, field, wrong_value)
+        master.recv_match.side_effect = [unrelated, _presence_reply("HIDDEN", value=9.0)]
+
+        assert manager.get_nonexistent_parameters(["HIDDEN"]) == set()
+        assert manager.fc_parameters == {"HIDDEN": 9.0}
+
+    def test_other_vehicles_values_do_not_enter_the_fc_cache(
+        self, presence_connection: tuple[FlightControllerParams, MagicMock]
+    ) -> None:
+        """GIVEN a foreign PARAM_VALUE, WHEN the selected FC reports absence, THEN ignore the foreign value."""
+        manager, master = presence_connection
+        foreign = _presence_reply("ABSENT", value=99.0)
+        foreign.get_header().srcSystem = 2
+        master.recv_match.side_effect = [foreign, _presence_reply("ABSENT")]
+
+        assert manager.get_nonexistent_parameters(["ABSENT"]) == {"ABSENT"}
+        assert manager.fc_parameters == {}
+
+    def test_large_steps_fit_the_firmwares_twenty_request_queue(
+        self, presence_connection: tuple[FlightControllerParams, MagicMock]
+    ) -> None:
+        """GIVEN sixty N/A rows and a twenty-slot FC queue, WHEN probing, THEN every name receives a reply."""
+        manager, master = presence_connection
+        replies = deque()
+        dropped = []
+
+        def send(_system: int, _component: int, name: bytes, _index: int) -> None:
+            if len(replies) == 20:
+                dropped.append(name)
+            else:
+                replies.append(_presence_reply(name.decode("ascii")))
+
+        master.mav.param_request_read_send.side_effect = send
+        master.recv_match.side_effect = lambda **_kwargs: replies.popleft() if replies else None
+        names = [f"PARAM_{number}" for number in range(60)]
+
+        assert manager.get_nonexistent_parameters(names) == set(names)
+        assert not dropped
+        assert master.mav.param_request_read_send.call_count == 60
+
+    @pytest.mark.usefixtures("presence_clock")
+    def test_lost_initial_requests_are_retried(self, presence_connection: tuple[FlightControllerParams, MagicMock]) -> None:
+        """GIVEN a dropped first request, WHEN probing, THEN a bounded retry can still confirm absence."""
+        manager, master = presence_connection
+        replies = deque()
+        requests = []
+
+        def send(_system: int, _component: int, name: bytes, _index: int) -> None:
+            requests.append(name)
+            if len(requests) == 2:
+                replies.append(_presence_reply("ABSENT"))
+
+        master.mav.param_request_read_send.side_effect = send
+        master.recv_match.side_effect = lambda **_kwargs: replies.popleft() if replies else None
+        assert manager.get_nonexistent_parameters(["ABSENT"], timeout=1.0) == {"ABSENT"}
+        assert requests == [b"ABSENT", b"ABSENT"]
+
+    @pytest.mark.parametrize("cancel_before_request", [False, True])
+    def test_closing_prevents_further_requests_and_cache_updates(
+        self, presence_connection: tuple[FlightControllerParams, MagicMock], cancel_before_request: bool
+    ) -> None:
+        """GIVEN shutdown before or during reception, WHEN probing, THEN cancellation leaves the cache intact."""
+        manager, master = presence_connection
+        cancelled = Event()
+        if cancel_before_request:
+            cancelled.set()
+
+        def receive(**_kwargs: object) -> mavlink.MAVLink_message:
+            cancelled.set()
+            return _presence_reply("HIDDEN", value=7.5)
+
+        master.recv_match.side_effect = receive
+        assert manager.get_nonexistent_parameters(["HIDDEN"], cancellation_requested=cancelled.is_set) == set()
+        assert manager.fc_parameters == {}
+        if cancel_before_request:
+            master.mav.param_request_read_send.assert_not_called()
+            master.recv_match.assert_not_called()
 
 
 class TestFlightControllerParamsGetParameter:

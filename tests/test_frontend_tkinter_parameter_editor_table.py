@@ -14,6 +14,7 @@ import sys
 import tkinter as tk
 from collections.abc import Callable, Generator
 from dataclasses import dataclass
+from pathlib import Path
 from tkinter import ttk
 from types import SimpleNamespace
 from typing import Any, Literal, cast
@@ -279,6 +280,7 @@ def mock_parameter_editor_window() -> MagicMock:
     """Create a mock parent window editor."""
     parent_window = MagicMock()
     parent_window.gui_complexity = "simple"
+    parent_window.confirmed_absent_fc_parameter_names = set()
     parent_window.repopulate_parameter_table = MagicMock()
     parent_window.on_skip_click = MagicMock()
     parent_window.root = MagicMock(spec=tk.Tk)
@@ -387,6 +389,128 @@ def test_init_creates_instance_with_correct_attributes(
     assert parameter_editor_table.parameter_editor.current_file == "test_file"
     assert isinstance(parameter_editor_table.upload_checkbutton_var, dict)
     assert parameter_editor_table.parameter_editor._has_unsaved_changes() is False
+
+
+def test_table_omits_only_parameters_confirmed_absent_by_flight_controller(
+    parameter_editor_table: ParameterEditorTable, mock_parameter_editor_window: MagicMock
+) -> None:
+    """A direct-read absence result hides a row without changing the step model."""
+    present_parameter = create_mock_data_model_ardupilot_parameter("PRESENT_PARAM", 1.0)
+    absent_parameter = create_mock_data_model_ardupilot_parameter("ABSENT_PARAM", 2.0)
+    parameter_editor_table.parameter_editor.current_step_parameters = {
+        "PRESENT_PARAM": present_parameter,
+        "ABSENT_PARAM": absent_parameter,
+    }
+    mock_parameter_editor_window.confirmed_absent_fc_parameter_names = {"ABSENT_PARAM"}
+    parameter_editor_table._render_table = MagicMock()
+
+    parameter_editor_table.repopulate_table(show_only_differences=False, gui_complexity="simple")
+
+    rendered_parameters = parameter_editor_table._render_table.call_args.args[0]
+    assert rendered_parameters == {"PRESENT_PARAM": present_parameter}
+    assert "ABSENT_PARAM" in parameter_editor_table.parameter_editor.current_step_parameters
+
+
+@pytest.mark.parametrize("gui_complexity", ["simple", "normal"])
+def test_absent_parameters_are_excluded_from_every_upload_mode(
+    parameter_editor_table: ParameterEditorTable,
+    mock_parameter_editor_window: MagicMock,
+    gui_complexity: str,
+) -> None:
+    """GIVEN a confirmed-absent row and stale ticks, WHEN uploading, THEN only existing parameters are selected."""
+    model = parameter_editor_table.parameter_editor
+    parameters = {"PRESENT": Par(1.0), "ABSENT": Par(2.0)}
+    model.current_step_parameters = {name: ArduPilotParameter(name, parameter) for name, parameter in parameters.items()}
+    model.get_parameters_as_par_dict.side_effect = lambda names=None: ParDict(
+        {name: parameter for name, parameter in parameters.items() if names is None or name in names}
+    )
+    mock_parameter_editor_window.confirmed_absent_fc_parameter_names = {"ABSENT"}
+    parameter_editor_table.upload_checkbutton_var = {name: tk.BooleanVar(value=True) for name in parameters}
+
+    assert parameter_editor_table.get_upload_selected_params(gui_complexity) == ParDict({"PRESENT": Par(1.0)})
+
+
+@pytest.mark.parametrize("gui_complexity", ["simple", "normal"])
+@pytest.mark.parametrize("show_only_differences", [False, True])
+def test_download_restores_previously_absent_parameter_to_table_and_upload(
+    parameter_editor_table: ParameterEditorTable,
+    mock_parameter_editor_window: MagicMock,
+    tmp_path: Path,
+    gui_complexity: str,
+    show_only_differences: bool,
+) -> None:
+    """
+    A newly downloaded value takes precedence over an earlier absence result.
+
+    GIVEN: A confirmed-absent parameter is excluded from the table and uploads.
+    WHEN: A post-upload download supplies its FC value without changing steps.
+    THEN: The parameter is visible and uploadable in every GUI complexity mode.
+    """
+    table = parameter_editor_table
+    flight_controller = MagicMock()
+    flight_controller.download_params.return_value = ({"RESTORED_GAIN": 0.0}, {})
+    model = ParameterEditor(
+        "test_file", flight_controller, table.parameter_editor._local_filesystem, parameter_download_dir=tmp_path
+    )
+    parameter = ArduPilotParameter("RESTORED_GAIN", Par(3.0))
+    model.current_step_parameters = {parameter.name: parameter}
+    table.parameter_editor = model
+    table._render_table = MagicMock()
+    mock_parameter_editor_window.confirmed_absent_fc_parameter_names = {parameter.name}
+    table.repopulate_table(show_only_differences, gui_complexity)
+    assert table._render_table.call_args.args[0] == {}
+    table.upload_checkbutton_var = {parameter.name: tk.BooleanVar(value=True)}
+    assert table.get_upload_selected_params(gui_complexity) == {}
+
+    model.download_flight_controller_parameters()
+    table.repopulate_table(show_only_differences, gui_complexity)
+
+    assert table._render_table.call_args.args[0] == {parameter.name: parameter}
+    table.upload_checkbutton_var = {parameter.name: tk.BooleanVar(value=True)}
+    selected = table.get_upload_selected_params(gui_complexity)
+    assert set(selected) == {parameter.name}
+    assert selected[parameter.name].value == 3.0
+
+
+@pytest.mark.parametrize("absent_parameter_has_row", [False, True])
+def test_only_absent_parameters_with_current_rows_prevent_automatic_step_skipping(
+    parameter_editor_table: ParameterEditorTable,
+    mock_parameter_editor_window: MagicMock,
+    absent_parameter_has_row: bool,
+) -> None:
+    """
+    Unused declarations do not stop progression through unchanged steps.
+
+    GIVEN: Every displayed parameter matches the FC and a declaration was reported absent.
+    WHEN: The differences table is populated.
+    THEN: Absence prevents automatic skipping only when that parameter belongs to the step model.
+    """
+    table = parameter_editor_table
+    table.parameter_editor.current_step_parameters = {"MATCHING": ArduPilotParameter("MATCHING", Par(1.0), fc_value=1.0)}
+    if absent_parameter_has_row:
+        table.parameter_editor.current_step_parameters["ABSENT"] = ArduPilotParameter("ABSENT", Par(2.0))
+    table.parameter_editor.get_different_parameters.return_value = {}
+    mock_parameter_editor_window.confirmed_absent_fc_parameter_names = {"ABSENT"}
+    table._render_table = MagicMock()
+
+    table.repopulate_table(show_only_differences=True, gui_complexity="simple")
+
+    assert mock_parameter_editor_window.on_skip_click.called is not absent_parameter_has_row
+
+
+def test_loading_discards_previous_upload_ticks_and_invalidates_old_render_batches(
+    parameter_editor_table: ParameterEditorTable,
+) -> None:
+    """GIVEN the previous step's rows, WHEN loading a new step, THEN stale selections and callbacks cannot remain active."""
+    table = parameter_editor_table
+    table.upload_checkbutton_var = {"OLD": tk.BooleanVar(value=True)}
+    generation = table._table_render_generation
+
+    table.show_parameter_presence_check_in_progress()
+
+    assert table.upload_checkbutton_var == {}
+    assert table._table_render_generation != generation
+    assert table._new_value_widgets == {}
 
 
 def test_init_configures_style(parameter_editor_table: ParameterEditorTable) -> None:
