@@ -315,6 +315,56 @@ def test_identify_resets_stale_bytes_before_old_bootloader_fallback() -> None:
     assert transport.reset_count == 2
 
 
+def test_discovery_recovers_from_old_bootloader_rejecting_extf_query_on_a_used_deadline() -> None:
+    """
+    Old-bootloader external-flash rejection does not poison the discovery deadline.
+
+    GIVEN: A pre-2021 bootloader rejects the optional external-flash query with a
+        short INSYNC/INVALID reply, spinning the shared identification deadline to
+        exhaustion before the query read times out
+    WHEN: Firmware is uploaded through the backend discovery path with a bounded clock
+    THEN: The fallback resync and the remaining identity queries run on a fresh
+        deadline, so identification succeeds and the board reports no external flash
+    """
+
+    class OldBootloaderDiscoveryTransport(FakeBootloaderTransport):
+        """Reject the external-flash query with a short reply, then behave normally."""
+
+        def __init__(self) -> None:
+            super().__init__(revision=5, extf_size=0)
+            self.extf_query_rejected = False
+
+        def write(self, data: bytes) -> int:
+            command, body = data[:1], data[1:-1]
+            if command == bl.GET_DEVICE and body == bl.INFO_EXTF_SIZE:
+                # Two bytes where four payload bytes are expected: _read_exact(4)
+                # then spins on empty reads until the deadline, mimicking a board
+                # whose bootloader predates PROTO_DEVICE_EXTF_SIZE.
+                self.commands.append(command)
+                self.requests.append(data)
+                self._reply.extend(bl.INSYNC + bl.INVALID)
+                self.extf_query_rejected = True
+                return len(data)
+            return super().write(data)
+
+    transport = OldBootloaderDiscoveryTransport()
+    now = [0.0]
+    backend = bl.FlightControllerBootloaderBackend(
+        "COM7",
+        115200,
+        timeout=0.1,
+        serial_factory=lambda *_args: transport,
+        clock=lambda: now[0],
+        sleep=lambda dt: now.__setitem__(0, round(now[0] + dt, 6)),
+    )
+
+    info = backend.upload(fw.parse_apj(apj(b"abcd", board_id=9)), confirmation_requested=lambda *_args: True)
+
+    assert transport.extf_query_rejected
+    assert info.protocol_revision == 5
+    assert info.extf_size == 0
+
+
 def test_uploads_and_verifies_external_flash() -> None:
     """
     External-flash erase accepts progress bytes that overlap protocol markers.
