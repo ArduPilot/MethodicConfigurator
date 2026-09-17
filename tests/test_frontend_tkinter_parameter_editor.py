@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from contextlib import contextmanager
+from queue import Queue
 from typing import TYPE_CHECKING, cast
 from unittest.mock import ANY, MagicMock, patch
 
@@ -125,6 +126,13 @@ def _create_editor(parameter_editor: MagicMock) -> ParameterEditorWindow:  # noq
     editor.inline_component_editor = None
     editor._inline_component_name = None
     editor._updating_inline_editor = False
+    editor._confirmed_absent_fc_parameter_names = set()
+    editor._checked_parameter_presence_names = set()
+    editor._parameter_presence_request_id = 0
+    editor._pending_parameter_presence_request = None
+    editor._active_parameter_presence_request = None
+    editor._parameter_presence_results = Queue()
+    editor._parameter_presence_poll_scheduled = False
     editor.inline_component_container = MagicMock()
     return editor
 
@@ -228,6 +236,58 @@ class _DummyTkRoot:  # pylint: disable=too-many-instance-attributes, too-few-pub
 def parameter_editor_window(parameter_editor: MagicMock) -> ParameterEditorWindow:
     """Create a headless parameter editor instance."""
     return _create_editor(parameter_editor)
+
+
+class TestParameterPresenceCheck:
+    """Ensure FC presence results update the model before the table is rendered."""
+
+    def test_presence_result_rebuilds_step_model_before_rendering_table(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """Hidden values can affect conditional and derived rows, so rebuild first."""
+        parameter_editor.current_file = "05_step.param"
+        parameter_editor.current_step_parameters = {}
+        parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.return_value = ([], [])
+        parameter_editor_window._parameter_presence_request_id = 1
+        parameter_editor_window._active_parameter_presence_request = (1, "05_step.param", ("HIDDEN_PARAM",))
+        parameter_editor_window._parameter_presence_results.put((1, "05_step.param", set()))
+
+        def assert_model_was_rebuilt() -> None:
+            parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.assert_called_once_with()
+
+        parameter_editor_window.repopulate_parameter_table = MagicMock(side_effect=assert_model_was_rebuilt)
+
+        parameter_editor_window._poll_parameter_presence_results()
+
+        parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
+
+    def test_presence_result_checks_new_na_rows_created_by_model_rebuild(
+        self, parameter_editor_window: ParameterEditorWindow, parameter_editor: MagicMock
+    ) -> None:
+        """New conditional rows must be probed before the table is rendered."""
+        parameter_editor.current_file = "05_step.param"
+        parameter_editor.current_step_parameters = {}
+        new_parameter = MagicMock()
+        new_parameter.has_fc_value = False
+
+        def rebuild_step_model() -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+            parameter_editor.current_step_parameters = {"NEWLY_VISIBLE": new_parameter}
+            return [], []
+
+        parameter_editor.rebuild_current_step_parameters_after_fc_parameter_update.side_effect = rebuild_step_model
+        parameter_editor_window._parameter_presence_request_id = 1
+        parameter_editor_window._active_parameter_presence_request = (1, "05_step.param", ("HIDDEN_PARAM",))
+        parameter_editor_window._parameter_presence_results.put((1, "05_step.param", set()))
+
+        with (
+            patch.object(parameter_editor_window, "repopulate_parameter_table") as repopulate_table,
+            patch("ardupilot_methodic_configurator.frontend_tkinter_parameter_editor.threading.Thread") as thread,
+        ):
+            parameter_editor_window._poll_parameter_presence_results()
+
+        parameter_editor_window.parameter_editor_table.show_parameter_presence_check_in_progress.assert_called_once_with()
+        repopulate_table.assert_not_called()
+        thread.return_value.start.assert_called_once_with()
 
 
 @pytest.fixture

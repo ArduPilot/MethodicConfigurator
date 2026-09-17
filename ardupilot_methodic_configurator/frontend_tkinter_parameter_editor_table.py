@@ -267,18 +267,32 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
         self.upload_checkbutton_var = {}
         self._new_value_widgets = {}
 
-        parameters = self.parameters if self.parameters is not None else self.parameter_editor.current_step_parameters
+        configured_hidden_parameter_names: object = getattr(
+            self.parameter_editor_window, "_confirmed_absent_fc_parameter_names", set()
+        )
+        hidden_parameter_names: set[str] = (
+            configured_hidden_parameter_names if isinstance(configured_hidden_parameter_names, set) else set()
+        )
+        parameters = self.parameters if self.parameters is not None else {
+            name: parameter
+            for name, parameter in self.parameter_editor.current_step_parameters.items()
+            if name not in hidden_parameter_names
+        }
         if show_only_differences:
             # Filter to show only different parameters
             different_params = (
-                self.parameter_editor.get_different_parameters()
+                {
+                    name: parameter
+                    for name, parameter in self.parameter_editor.get_different_parameters().items()
+                    if name not in hidden_parameter_names
+                }
                 if self.parameters is None
                 else {
                     name: param for name, param in parameters.items() if param.is_different_from_fc or not param.has_fc_value
                 }
             )
             self._render_table(different_params, self.parameter_editor_window.gui_complexity, scroll_to_bottom)
-            if not different_params and self.options.skip_when_no_differences:
+            if not different_params and self.options.skip_when_no_differences and not hidden_parameter_names:
                 info_msg = _("No different parameters found in {selected_file}. Skipping...").format(
                     selected_file=self.parameter_editor.current_file
                 )
@@ -288,6 +302,14 @@ class ParameterEditorTable(ScrollFrame):  # pylint: disable=too-many-ancestors,t
                 return
         else:
             self._render_table(parameters, self.parameter_editor_window.gui_complexity, scroll_to_bottom)
+
+    def show_parameter_presence_check_in_progress(self) -> None:
+        """Replace stale rows while direct parameter reads are in progress."""
+        for widget in self.view_port.winfo_children():
+            widget.destroy()
+        ttk.Label(self.view_port, text=_("Checking flight-controller parameter availability...")).grid(
+            row=0, column=0, sticky="w", padx=4, pady=4
+        )
 
     def _render_table(self, params: dict[str, ArduPilotParameter], gui_complexity: str, scroll_to_bottom: bool) -> None:
         """Render immediately or in UI-friendly batches according to the table options."""
