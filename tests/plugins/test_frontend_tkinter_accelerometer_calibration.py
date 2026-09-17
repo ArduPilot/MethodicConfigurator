@@ -82,7 +82,7 @@ def calibration_readback(mocker) -> SimpleNamespace:
     editor = ParameterEditor.__new__(ParameterEditor)
     values = {"INS_ACCOFFS_X": 0.1, "INS_ACC1_CALTEMP": 20.0, "INS4_ACC_CALTEMP": 21.0, "INS_ACCEL_FILTER": 42.0}
     editor._flight_controller = SimpleNamespace(fc_parameters=dict(values))
-    editor.current_file = "14_accelerometer_calibration.param"
+    editor.current_file = "16_accelerometer_calibration.param"
     editor._local_filesystem = SimpleNamespace(
         file_parameters={"temperature_only.param": ParDict({"INS_ACC1_CALTEMP": Par(20.0)})}
     )
@@ -537,7 +537,7 @@ class TestFullCalibrationPolling:
         fixture = view_with_model
         editor = ParameterEditor.__new__(ParameterEditor)
         editor._flight_controller = SimpleNamespace(fc_parameters={"INS_ACCOFFS_X": 0.1})
-        editor.current_file = "14_accelerometer_calibration.param"
+        editor.current_file = "16_accelerometer_calibration.param"
         editor._local_filesystem = SimpleNamespace(
             file_parameters={
                 "other.param": ParDict({"AHRS_TRIM_X": Par(0)}),
