@@ -13,18 +13,152 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import tempfile
 import unittest
 from argparse import ArgumentParser
+from os import devnull as os_devnull
 from os import path as os_path
 from pathlib import Path
-from subprocess import SubprocessError
+from shutil import which
+from subprocess import CalledProcessError, SubprocessError, run
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 from ardupilot_methodic_configurator.annotate_params import get_xml_dir
-from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
+from ardupilot_methodic_configurator.backend_filesystem import (
+    LocalFilesystem,
+    _rename_file_preserving_git_history,
+)
 from ardupilot_methodic_configurator.data_model_par_dict import Par, ParDict
 
 # pylint: disable=too-many-lines, protected-access
+
+
+def _run_git_in_test_project(project: Path, *arguments: str) -> str:
+    """Run Git in an isolated test repository without invoking configured commands."""
+    git_executable = which("git")
+    if git_executable is None:
+        pytest.skip("Git is unavailable")
+    return run(  # noqa: S603
+        [git_executable, "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os_devnull}", "-C", str(project), *arguments],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+
+
+@pytest.fixture(name="external_git_project")
+def fixture_external_git_project(tmp_path: Path) -> Path:
+    """Provide tracked project files outside the installation, in a repository subdirectory."""
+    project = tmp_path / "external-project"
+    steps = project / "steps"
+    steps.mkdir(parents=True)
+    (steps / "old.param").write_text("PARAM,1\n", encoding="utf-8")
+    (steps / "old.pdef.xml").write_text("<parameters />", encoding="utf-8")
+    _run_git_in_test_project(project, "init", "--quiet")
+    _run_git_in_test_project(project, "add", "--", "steps/old.param", "steps/old.pdef.xml")
+    return project
+
+
+@pytest.mark.parametrize("editing_templates", [False, True])
+def test_external_git_project_renames_tracked_parameters_and_documentation(
+    external_git_project: Path, editing_templates: bool
+) -> None:
+    """Opening a tracked external project stages both renames regardless of template-editing mode."""
+    filesystem = LocalFilesystem(
+        str(external_git_project / "steps"),
+        "ArduCopter",
+        "4.3.0",
+        allow_editing_template_files=editing_templates,
+        save_component_to_system_templates=False,
+        load_project=False,
+    )
+    filesystem.configuration_steps = {"new.param": {"old_filenames": ["old.param"]}}
+
+    filesystem.rename_parameter_files()
+
+    assert (external_git_project / "steps/new.param").read_text(encoding="utf-8") == "PARAM,1\n"
+    assert (external_git_project / "steps/new.pdef.xml").read_text(encoding="utf-8") == "<parameters />"
+    assert _run_git_in_test_project(external_git_project, "ls-files").splitlines() == [
+        "steps/new.param",
+        "steps/new.pdef.xml",
+    ]
+
+
+def test_external_git_project_with_locked_index_still_renames_files(
+    external_git_project: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """An index lock leaves the index untouched while the project and its documentation migrate."""
+    filesystem = LocalFilesystem(
+        str(external_git_project / "steps"),
+        "ArduCopter",
+        "4.3.0",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+        load_project=False,
+    )
+    filesystem.configuration_steps = {"new.param": {"old_filenames": ["old.param"]}}
+    (external_git_project / ".git/index.lock").write_text("", encoding="utf-8")
+
+    filesystem.rename_parameter_files()
+
+    assert (external_git_project / "steps/new.param").read_text(encoding="utf-8") == "PARAM,1\n"
+    assert (external_git_project / "steps/new.pdef.xml").exists()
+    assert _run_git_in_test_project(external_git_project, "ls-files").splitlines() == [
+        "steps/old.param",
+        "steps/old.pdef.xml",
+    ]
+    assert "falling back to filesystem rename" in caplog.text
+
+
+@pytest.mark.parametrize("tracked", [False, True])
+def test_external_git_project_rename_does_not_execute_fsmonitor_or_hooks(external_git_project: Path, tracked: bool) -> None:
+    """Project Git configuration cannot invoke fsmonitor or index hooks during tracked or untracked renames."""
+    monitor = external_git_project / "fsmonitor-hook.sh"
+    monitor.write_text("#!/bin/sh\nprintf 'ran' > fsmonitor-called\nprintf 'token\\000'\n", encoding="utf-8")
+    monitor.chmod(0o755)
+    hooks = external_git_project / "hooks"
+    hooks.mkdir()
+    index_hook = hooks / "post-index-change"
+    index_hook.write_text("#!/bin/sh\nprintf 'ran' > index-hook-called\n", encoding="utf-8")
+    index_hook.chmod(0o755)
+    _run_git_in_test_project(external_git_project, "config", "core.fsmonitor", monitor.as_posix())
+    _run_git_in_test_project(external_git_project, "config", "core.hooksPath", hooks.as_posix())
+    if not tracked:
+        _run_git_in_test_project(external_git_project, "rm", "--cached", "--", "steps/old.param", "steps/old.pdef.xml")
+
+    # Prove that both harmless marker scripts work before checking their suppression.
+    _run_git_in_test_project(
+        external_git_project,
+        "-c",
+        f"core.fsmonitor={monitor.as_posix()}",
+        "-c",
+        f"core.hooksPath={hooks.as_posix()}",
+        "update-index",
+        "--force-write-index",
+    )
+    monitor_marker = external_git_project / "fsmonitor-called"
+    hook_marker = external_git_project / "index-hook-called"
+    assert monitor_marker.exists()
+    assert hook_marker.exists()
+    monitor_marker.unlink()
+    hook_marker.unlink()
+    filesystem = LocalFilesystem(
+        str(external_git_project / "steps"),
+        "ArduCopter",
+        "4.3.0",
+        allow_editing_template_files=False,
+        save_component_to_system_templates=False,
+        load_project=False,
+    )
+    filesystem.configuration_steps = {"new.param": {"old_filenames": ["old.param"]}}
+
+    filesystem.rename_parameter_files()
+
+    assert (external_git_project / "steps/new.param").read_text(encoding="utf-8") == "PARAM,1\n"
+    assert (external_git_project / "steps/new.pdef.xml").exists()
+    assert not monitor_marker.exists()
+    assert not hook_marker.exists()
+    expected_paths = ["steps/new.param", "steps/new.pdef.xml"] if tracked else []
+    assert _run_git_in_test_project(external_git_project, "ls-files").splitlines() == expected_paths
 
 
 def test_standalone_metadata_uses_connected_firmware_and_normalizes_reboot_field() -> None:
@@ -525,27 +659,49 @@ class TestLocalFilesystem(unittest.TestCase):  # pylint: disable=too-many-public
             assert "dir remove failed" in ret
 
     def test_rename_parameter_files(self) -> None:
-        """Test renaming parameter files."""
+        """Project parameter renames preserve Git history when available."""
         mock_vehicle_dir = "/mock/dir"
         filesystem = LocalFilesystem(
             mock_vehicle_dir,
             "ArduCopter",
             "4.3.0",
-            allow_editing_template_files=False,
+            allow_editing_template_files=True,
             save_component_to_system_templates=False,
         )
         filesystem.configuration_steps = {"new_file.param": {"old_filenames": ["old_file.param"]}}
 
         with (
             patch.object(filesystem, "vehicle_configuration_file_exists") as mock_exists,
-            patch("ardupilot_methodic_configurator.backend_filesystem.os_rename") as mock_rename,
+            patch("ardupilot_methodic_configurator.backend_filesystem._rename_file_preserving_git_history") as mock_rename,
             patch("ardupilot_methodic_configurator.backend_filesystem.os_path.join", side_effect=os_path.join),
         ):
             mock_exists.side_effect = lambda x: x == "old_file.param"
             filesystem.rename_parameter_files()
-            expected_old = os_path.join("/mock/dir", "old_file.param")
-            expected_new = os_path.join("/mock/dir", "new_file.param")
+            expected_old = Path(os_path.join("/mock/dir", "old_file.param"))
+            expected_new = Path(os_path.join("/mock/dir", "new_file.param"))
             mock_rename.assert_called_once_with(expected_old, expected_new)
+
+    def test_git_mv_failure_logs_and_falls_back_to_filesystem_rename(self) -> None:
+        """A locked Git index must not prevent the file rename from completing."""
+        source = Path("old_file.param")
+        destination = Path("new_file.param")
+        git_error = CalledProcessError(1, ["git", "mv"])
+
+        with (
+            patch("ardupilot_methodic_configurator.backend_filesystem.shutil_which", return_value="git"),
+            patch("ardupilot_methodic_configurator.backend_filesystem.run", side_effect=[None, git_error]) as mock_run,
+            patch("ardupilot_methodic_configurator.backend_filesystem.os_rename") as mock_rename,
+            patch("ardupilot_methodic_configurator.backend_filesystem.logging_warning") as mock_warning,
+        ):
+            _rename_file_preserving_git_history(source, destination)
+
+        mock_rename.assert_called_once_with(str(source), str(destination))
+        mock_warning.assert_called_once()
+        assert mock_run.call_count == 2
+        for git_call in mock_run.call_args_list:
+            command = git_call.args[0]
+            assert "core.fsmonitor=false" in command
+            assert f"core.hooksPath={os_devnull}" in command
 
     def test_vehicle_configuration_file_exists_comprehensive(self) -> None:
         """Test checking if a specific configuration file exists with comprehensive path and size checks."""
