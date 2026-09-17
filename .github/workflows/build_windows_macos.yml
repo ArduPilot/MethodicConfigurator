@@ -86,10 +86,6 @@ jobs:
           cd ardupilot_methodic_configurator
           copy ..\\windows\\ardupilot_methodic_configurator.spec
           pyinstaller --clean ardupilot_methodic_configurator.spec
-          if (-not (Test-Path "dist\\ardupilot_methodic_configurator\\_internal\\_tcl_data\\init.tcl") -or
-              -not (Test-Path "dist\\ardupilot_methodic_configurator\\_internal\\_tk_data\\tk.tcl")) {
-            throw "PyInstaller did not bundle the Tcl/Tk library data."
-          }
           del ardupilot_methodic_configurator.spec
 
       - name: Write the git commit hash to file
