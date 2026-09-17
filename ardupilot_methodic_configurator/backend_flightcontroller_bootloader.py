@@ -506,8 +506,16 @@ class BootloaderClient:
         try:
             extf_size = decode_uint32(self._command(encode_get_device(INFO_EXTF_SIZE), 4, deadline=deadline))
         except BootloaderProtocolError:
+            # An old bootloader answers this newer optional query with INSYNC/INVALID
+            # (two bytes where four payload bytes are expected), so the read above
+            # spins the shared deadline to exhaustion before raising.  The recovery
+            # resync and the remaining identity queries must run on a fresh bounded
+            # deadline; reusing the now-expired one would reject the bootloader's
+            # valid INSYNC/OK before it is ever read.  A None deadline already gets
+            # a fresh budget per read, so leave it untouched.
             extf_size = 0
             self._reset_input_buffer()
+            deadline = None if deadline is None else self._clock() + self._timeout
             self._command(encode_get_sync(), deadline=deadline)
         return BootloaderInfo(
             protocol_revision=revision,
