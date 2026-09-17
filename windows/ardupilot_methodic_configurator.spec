@@ -4,6 +4,7 @@
 # PyInstaller spec for the Windows application bundle.
 
 import glob
+import importlib.util
 import json
 import os
 import re
@@ -13,6 +14,13 @@ from PyInstaller.utils.hooks import collect_submodules
 
 PROJECT_ROOT = os.path.abspath("..")
 PACKAGE_ROOT = os.path.abspath(".")
+
+# Loaded by path so that the scripts directory does not enter PyInstaller's module search path.
+_helpers_spec = importlib.util.spec_from_file_location(
+    "pyinstaller_spec_helpers", os.path.join(PROJECT_ROOT, "scripts", "pyinstaller_spec_helpers.py")
+)
+spec_helpers = importlib.util.module_from_spec(_helpers_spec)
+_helpers_spec.loader.exec_module(spec_helpers)
 
 # Let PyInstaller's tkinter hook discover external or embedded Tcl/Tk data.
 datas = []
@@ -62,10 +70,12 @@ git_hash_path = os.path.join(PROJECT_ROOT, "git_hash.txt")
 if os.path.isfile(git_hash_path):
     datas.append((git_hash_path, "ardupilot_methodic_configurator"))
 
+unused_mavlink_dialects = [name for name in collect_submodules("pymavlink.dialects") if spec_helpers.is_unused_mavlink_dialect(name)]
+
 hiddenimports = (
     ["packaging", "packaging.version", "packaging.specifiers"]
     + collect_submodules("ardupilot_methodic_configurator.plugins")
-    + collect_submodules("pymavlink")
+    + collect_submodules("pymavlink", filter=lambda name: not spec_helpers.is_unused_mavlink_dialect(name))
     + [entry.split(":", 1)[0] for entry in project_scripts.values()]
 )
 
@@ -73,10 +83,17 @@ analysis = Analysis(
     [os.path.join(PROJECT_ROOT, "windows", "frozen_entrypoint.py")],
     pathex=[PACKAGE_ROOT, PROJECT_ROOT],
     hiddenimports=hiddenimports,
+    # lxml is only needed by pymavlink's dialect generator and optional log-metadata parser, which the app never uses.
+    excludes=["lxml", *unused_mavlink_dialects],
     datas=datas,
     hookspath=None,
-    runtime_hooks=None,
+    runtime_hooks=[os.path.join(PROJECT_ROOT, "scripts", "pyinstaller_runtime_mavlink.py")],
 )
+
+# Remove files that the application cannot use on Windows or does not need.
+_is_unused_file = spec_helpers.unused_file_filter("windows")
+analysis.binaries = [entry for entry in analysis.binaries if not _is_unused_file(entry)]
+analysis.datas = [entry for entry in analysis.datas if not _is_unused_file(entry)]
 
 pyz = PYZ(analysis.pure)
 

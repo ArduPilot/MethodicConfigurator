@@ -200,6 +200,9 @@ jobs:
           $app = Join-Path $PWD "ardupilot_methodic_configurator/dist/ardupilot_methodic_configurator/ardupilot_methodic_configurator.exe"
           Push-Location $env:RUNNER_TEMP
           try {
+            $env:MAVLINK_DIALECT = 'common'
+            & $app --version
+            if ($LASTEXITCODE -ne 0) { throw "Frozen startup with an unbundled MAVLink dialect failed." }
             & $app --validate-plugins
             if ($LASTEXITCODE -ne 0) {
               throw "Frozen plugin registration failed with exit code $LASTEXITCODE."
