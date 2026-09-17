@@ -1,0 +1,4 @@
+BRD_SER1_RTSCTS,1  # Holybro telemetry radio has RTS/CTS pins, so use them
+SERIAL1_BAUD,57  # Holybro telemetry radio recommended datarate
+SERIAL1_OPTIONS,0
+SERIAL1_PROTOCOL,2
