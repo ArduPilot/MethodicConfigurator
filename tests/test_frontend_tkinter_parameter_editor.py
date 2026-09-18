@@ -18,6 +18,7 @@ import tkinter as tk
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, cast
 from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import call as mock_call
 
 import pytest
 
@@ -1215,18 +1216,23 @@ class TestUploadSelectedParameters:
     def test_user_sees_progress_while_resetting_all_parameters_to_defaults(
         self, parameter_editor_window: ParameterEditorWindow
     ) -> None:
-        reset_progress_window = MagicMock()
-        connection_progress_window = MagicMock()
+        reset_reconnect_progress_window = MagicMock()
+        reset_reconnect_progress_window.update_progress_bar_with_message = MagicMock()
         download_progress_window = MagicMock()
         parameter_editor_window.ui.create_progress_window = MagicMock(
-            side_effect=[reset_progress_window, connection_progress_window, download_progress_window]
+            side_effect=[reset_reconnect_progress_window, download_progress_window]
         )
         download_callback: Callable[[], Callable | None] | None = None
 
         def reset_and_download(*args: object) -> bool:
             nonlocal download_callback
-            download_callback = cast("Callable[[], Callable | None]", args[3])
+            progress_callback = cast("Callable[[int, int], None]", args[1])
+            download_callback = cast("Callable[[], Callable | None]", args[2])
             assert download_callback() == download_progress_window.update_progress_bar
+            progress_callback(10, 100)
+            progress_callback(30, 100)
+            progress_callback(90, 100)
+            progress_callback(100, 100)
             return True
 
         parameter_editor_window.parameter_editor.reset_all_parameters_to_default.side_effect = reset_and_download
@@ -1237,15 +1243,10 @@ class TestUploadSelectedParameters:
         assert result is True
         parameter_editor_window.ui.create_progress_window.assert_any_call(
             parameter_editor_window.root,
-            "Resetting Flight Controller",
-            "Waiting for {} of {} seconds",
+            "Restarting Flight Controller",
+            "Reset command sent",
             True,  # noqa: FBT003
-        )
-        parameter_editor_window.ui.create_progress_window.assert_any_call(
-            parameter_editor_window.root,
-            "Reconnecting to Flight Controller",
-            "{} of {} percent",
-            True,  # noqa: FBT003
+            auto_close_on_complete=False,
         )
         parameter_editor_window.ui.create_progress_window.assert_any_call(
             parameter_editor_window.root,
@@ -1253,25 +1254,26 @@ class TestUploadSelectedParameters:
             "Downloaded {} of {} parameters",
             False,  # noqa: FBT003
         )
-        reset_progress_window.destroy.assert_called_once_with()
-        connection_progress_window.destroy.assert_called_once_with()
+        reset_reconnect_progress_window.update_progress_bar_with_message.assert_has_calls(
+            [
+                mock_call(10, 100, "Reset command sent"),
+                mock_call(30, 100, "Reconnecting to flight controller"),
+                mock_call(90, 100, "Retrieving flight controller information"),
+                mock_call(100, 100, "Flight Controller connected"),
+            ]
+        )
+        reset_reconnect_progress_window.destroy.assert_called_once_with()
         download_progress_window.destroy.assert_called_once_with()
         reset_call = parameter_editor_window.parameter_editor.reset_all_parameters_to_default.call_args
-        assert reset_call.args[:3] == (
-            parameter_editor_window.ui.show_error,
-            reset_progress_window.update_progress_bar,
-            connection_progress_window.update_progress_bar,
-        )
-        assert reset_call.args[3] is download_callback
+        assert reset_call.args[0] is parameter_editor_window.ui.show_error
+        assert callable(reset_call.args[1])
+        assert reset_call.args[2] is download_callback
         parameter_editor_window.repopulate_parameter_table.assert_called_once_with()
 
     def test_user_sees_reset_and_download_progress_windows(self, parameter_editor_window: ParameterEditorWindow) -> None:
-        reset_window = MagicMock()
-        reset_window.update_progress_bar = MagicMock()
-        reset_window.destroy = MagicMock()
-        connection_window = MagicMock()
-        connection_window.update_progress_bar = MagicMock()
-        connection_window.destroy = MagicMock()
+        reset_reconnect_window = MagicMock()
+        reset_reconnect_window.update_progress_bar_with_message = MagicMock()
+        reset_reconnect_window.destroy = MagicMock()
         download_window = MagicMock()
         download_window.update_progress_bar = MagicMock()
         download_window.destroy = MagicMock()
@@ -1280,10 +1282,8 @@ class TestUploadSelectedParameters:
         upload_window.destroy = MagicMock()
 
         def fake_progress_window(_parent: object, title: str, *_args: object, **_kwargs: object) -> MagicMock:
-            if "Resetting" in title:
-                return reset_window
-            if "Reconnecting" in title:
-                return connection_window
+            if "Restarting" in title:
+                return reset_reconnect_window
             if "Uploading" in title:
                 return upload_window
             return download_window
@@ -1299,7 +1299,6 @@ class TestUploadSelectedParameters:
             ask_retry_cancel: Callable[[str, str], bool],
             show_error: Callable[[str, str], None],
             get_upload_progress_callback: Callable[[], Callable | None],
-            get_reset_progress_callback: Callable[[], Callable | None],
             get_connection_progress_callback: Callable[[], Callable | None],
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
@@ -1308,20 +1307,20 @@ class TestUploadSelectedParameters:
             assert ask_retry_cancel is parameter_editor_window.ui.ask_retry_cancel
             assert show_error is parameter_editor_window.ui.show_error
             upload_cb = get_upload_progress_callback()
-            reset_cb = get_reset_progress_callback()
             connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
             assert upload_cb is upload_window.update_progress_bar
-            assert reset_cb is reset_window.update_progress_bar
-            assert connection_cb is connection_window.update_progress_bar
             assert download_cb is download_window.update_progress_bar
             assert upload_cb is not None
-            assert reset_cb is not None
             assert connection_cb is not None
             assert download_cb is not None
             upload_cb(0, 1)
-            reset_cb(1, 2)
-            connection_cb(2, 3)
+            connection_cb(10, 100)
+            connection_cb(30, 100)
+            connection_cb(50, 100)
+            connection_cb(70, 100)
+            connection_cb(90, 100)
+            connection_cb(100, 100)
             download_cb(3, 4)
 
         param_editor_mock.upload_selected_params_workflow.side_effect = fake_upload_workflow
@@ -1329,8 +1328,17 @@ class TestUploadSelectedParameters:
         parameter_editor_window.upload_selected_params({"ROLL_P": 0.12})
 
         upload_window.destroy.assert_called_once()
-        reset_window.destroy.assert_called_once()
-        connection_window.destroy.assert_called_once()
+        reset_reconnect_window.update_progress_bar_with_message.assert_has_calls(
+            [
+                mock_call(10, 100, "Reset command sent"),
+                mock_call(30, 100, "Reconnecting to flight controller"),
+                mock_call(50, 100, "Reconnecting to flight controller"),
+                mock_call(70, 100, "Reconnecting to flight controller"),
+                mock_call(90, 100, "Retrieving flight controller information"),
+                mock_call(100, 100, "Flight Controller connected"),
+            ]
+        )
+        reset_reconnect_window.destroy.assert_called_once()
         download_window.destroy.assert_called_once()
         assert parameter_editor_window._reset_progress_window is None
         assert parameter_editor_window._param_download_progress_window_upload is None
@@ -1339,18 +1347,15 @@ class TestUploadSelectedParameters:
         upload_window = MagicMock()
         upload_window.update_progress_bar = MagicMock()
         upload_window.destroy = MagicMock()
-        reset_window = MagicMock()
-        reset_window.update_progress_bar = MagicMock()
-        reset_window.destroy = MagicMock()
-        connection_window = MagicMock()
-        connection_window.update_progress_bar = MagicMock()
-        connection_window.destroy = MagicMock()
+        reset_reconnect_window = MagicMock()
+        reset_reconnect_window.update_progress_bar_with_message = MagicMock()
+        reset_reconnect_window.destroy = MagicMock()
         download_window = MagicMock()
         download_window.update_progress_bar = MagicMock()
         download_window.destroy = MagicMock()
 
         parameter_editor_window.ui.create_progress_window = MagicMock(
-            side_effect=[upload_window, reset_window, connection_window, download_window]
+            side_effect=[upload_window, reset_reconnect_window, download_window]
         )
         param_editor_mock = cast("MagicMock", parameter_editor_window.parameter_editor)
 
@@ -1361,7 +1366,6 @@ class TestUploadSelectedParameters:
             ask_retry_cancel: Callable[[str, str], bool],
             show_error: Callable[[str, str], None],
             get_upload_progress_callback: Callable[[], Callable | None],
-            get_reset_progress_callback: Callable[[], Callable | None],
             get_connection_progress_callback: Callable[[], Callable | None],
             get_download_progress_callback: Callable[[], Callable | None],
         ) -> None:
@@ -1370,20 +1374,16 @@ class TestUploadSelectedParameters:
             assert ask_retry_cancel is parameter_editor_window.ui.ask_retry_cancel
             assert show_error is parameter_editor_window.ui.show_error
             upload_cb = get_upload_progress_callback()
-            reset_cb = get_reset_progress_callback()
             connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
             assert upload_cb is upload_window.update_progress_bar
-            assert reset_cb is reset_window.update_progress_bar
-            assert connection_cb is connection_window.update_progress_bar
             assert download_cb is download_window.update_progress_bar
             assert upload_cb is not None
-            assert reset_cb is not None
             assert connection_cb is not None
             assert download_cb is not None
             upload_cb(0, 0)
-            reset_cb(1, 1)
-            connection_cb(2, 2)
+            connection_cb(10, 100)
+            connection_cb(30, 100)
             download_cb(3, 3)
             msg = "boom"
             raise RuntimeError(msg)
@@ -1394,8 +1394,7 @@ class TestUploadSelectedParameters:
 
         parameter_editor_window.ui.show_error.assert_called_once()
         upload_window.destroy.assert_called_once()
-        reset_window.destroy.assert_called_once()
-        connection_window.destroy.assert_called_once()
+        reset_reconnect_window.destroy.assert_called_once()
         download_window.destroy.assert_called_once()
         assert parameter_editor_window._reset_progress_window is None
         assert parameter_editor_window._param_download_progress_window_upload is None
@@ -2156,7 +2155,7 @@ class TestParameterUploads:
         """
         User sees progress feedback during parameter uploads and windows are cleaned up.
 
-        GIVEN: The upload workflow requests reset and download callbacks
+        GIVEN: The upload workflow requests restart/reconnect and download callbacks
         WHEN: The callbacks are invoked by the workflow
         THEN: Progress windows expose update callables and are destroyed afterwards
         """
@@ -2175,18 +2174,16 @@ class TestParameterUploads:
             _selected: dict[str, float],
             *,
             get_upload_progress_callback: Callable[[], Callable],
-            get_reset_progress_callback: Callable[[], Callable],
             get_connection_progress_callback: Callable[[], Callable],
             get_download_progress_callback: Callable[[], Callable],
             **_ignored: object,
         ) -> None:
             upload_cb = get_upload_progress_callback()
-            reset_cb = get_reset_progress_callback()
             connection_cb = get_connection_progress_callback()
             download_cb = get_download_progress_callback()
             upload_cb(0, 1)
-            reset_cb(1, 2)
-            connection_cb(2, 3)
+            connection_cb(10, 100)
+            connection_cb(30, 100)
             download_cb(3, 4)
 
         parameter_editor.upload_selected_params_workflow.side_effect = _workflow
@@ -2201,7 +2198,6 @@ class TestParameterUploads:
             ask_retry_cancel=ANY,
             show_error=ANY,
             get_upload_progress_callback=ANY,
-            get_reset_progress_callback=ANY,
             get_connection_progress_callback=ANY,
             get_download_progress_callback=ANY,
         )
@@ -2271,9 +2267,9 @@ class TestParameterUploads:
 
         editor.ui.create_progress_window = MagicMock(side_effect=track_window_creation)
 
-        # Mock workflow that only uses download progress (no reset needed)
+        # Mock workflow that only uses download progress (no restart needed)
         def workflow_without_reset(_params, **kwargs) -> None:
-            # Don't call get_reset_progress_callback
+            # Don't call get_connection_progress_callback
             download_cb = kwargs["get_download_progress_callback"]()
             download_cb(50, 100)
 
@@ -2286,7 +2282,7 @@ class TestParameterUploads:
             {"PARAM1": 1.0},
         )
 
-        # Assert: Only one window created (download, not reset)
+        # Assert: Only one window created (download, not restart/reconnect)
         assert len(created_windows) == 1
 
 

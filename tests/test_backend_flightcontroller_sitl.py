@@ -54,7 +54,7 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp imp
 )
 from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavlink import SystemMavlinkConnectionFactory
 from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerFiles
-from ardupilot_methodic_configurator.backend_mavftp import ERR_FileExists
+from ardupilot_methodic_configurator.backend_mavftp import FtpError
 from ardupilot_methodic_configurator.data_model_flightcontroller_info import FlightControllerInfo
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ def _ensure_remote_logs_directory(mavftp) -> None:
         if result is None:
             continue
         error_code = getattr(result, "error_code", 0)
-        if error_code not in (0, ERR_FileExists):
+        if error_code not in (FtpError.Success, FtpError.FileExists):
             pytest.skip(f"Unable to create required directory {directory}: MAVFTP error {error_code}")
 
 
@@ -1268,13 +1268,13 @@ def test_user_can_download_synthetic_log_via_files_manager(sitl_flight_controlle
     mavftp.cmd_rm([remote_filename])
 
     mavftp.cmd_put([str(local_source), remote_filename])
-    put_reply = mavftp.process_ftp_reply("CreateFile", timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT)
+    put_reply = mavftp.process_ftp_reply("put", timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT)
     assert put_reply.error_code == 0
 
     staged_lastlog = tmp_path / "lastlog_staged.txt"
     staged_lastlog.write_text(f"{remote_log_number}\n", encoding="UTF-8")
     mavftp.cmd_put([str(staged_lastlog), lastlog_remote])
-    lastlog_reply = mavftp.process_ftp_reply("CreateFile", timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT)
+    lastlog_reply = mavftp.process_ftp_reply("put", timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT)
     assert lastlog_reply.error_code == 0
 
     downloaded_file = tmp_path / "downloaded_synthetic_log.bin"
@@ -1298,7 +1298,7 @@ def test_user_can_download_synthetic_log_via_files_manager(sitl_flight_controlle
         if lastlog_backed_up:
             mavftp.cmd_put([str(lastlog_backup), lastlog_remote])
             restore_reply = mavftp.process_ftp_reply(
-                "CreateFile",
+                "put",
                 timeout=FlightControllerFiles.MAVFTP_FILE_OPERATION_TIMEOUT,
             )
             assert restore_reply.error_code == 0

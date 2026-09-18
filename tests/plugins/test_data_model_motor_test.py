@@ -839,21 +839,18 @@ class TestMotorTestDataModelParameterManagement:
 
     def test_parameter_setting_triggers_reset_when_required(self, motor_test_model) -> None:
         """Parameters flagged as reboot-required trigger a reconnect once applied."""
-        reset_callback = MagicMock(name="reset_cb")
-        reconnect_callback = MagicMock(name="reconnect_cb")
+        progress_callback = MagicMock(name="progress_cb")
         motor_test_model.flight_controller.reset_and_reconnect = MagicMock()
 
         motor_test_model.set_parameter(
             "MOT_SPIN_ARM",
             0.2,
-            reset_progress_callback=reset_callback,
-            connection_progress_callback=reconnect_callback,
+            progress_callback=progress_callback,
             extra_sleep_time=7,
         )
 
         motor_test_model.flight_controller.reset_and_reconnect.assert_called_once_with(
-            reset_callback,
-            reconnect_callback,
+            progress_callback,
             7,
         )
 

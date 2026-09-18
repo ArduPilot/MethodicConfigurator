@@ -60,6 +60,30 @@ The above scripts will:
 * Set up pre-commit hooks for linting and formatting
 * Install GNU gettext tools for internationalization support
 
+### Running tests on Linux
+
+On Linux systems without a usable desktop display, the test suite may need the
+project virtual environment and a virtual X display. Use `xvfb-run` together
+with `.venv` so GUI-dependent fixtures can initialize correctly:
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a python -m pytest tests/ -v -m "not sitl and not integration"
+```
+
+For SITL integration tests, use the same environment with the SITL runner:
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" xvfb-run -a ./scripts/run_sitl_tests.sh test
+```
+
+The runner discovers the ArduCopter binary in `sitl/arducopter`. When invoking
+SITL tests directly, set `SITL_BINARY` explicitly:
+
+```bash
+SITL_BINARY="$PWD/sitl/arducopter" PATH="$PWD/.venv/bin:$PATH" \
+  xvfb-run -a python -m pytest -m sitl -v
+```
+
 ### Optional local code graph
 
 For faster codebase exploration with Codex, CodeGraph can be installed as an

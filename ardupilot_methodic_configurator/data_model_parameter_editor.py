@@ -26,13 +26,14 @@ from logging import exception as logging_exception
 from logging import info as logging_info
 from logging import warning as logging_warning
 from pathlib import Path
-from time import time
+from time import perf_counter, time
 from typing import Any, Literal
 
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.backend_filesystem import LocalFilesystem
 from ardupilot_methodic_configurator.backend_filesystem_configuration_steps import PhaseData
 from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
+from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
 from ardupilot_methodic_configurator.backend_internet import download_file_from_url, webbrowser_open_url
 from ardupilot_methodic_configurator.data_model_ardupilot_parameter import (
     ArduPilotParameter,
@@ -527,7 +528,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return False
 
-    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913, PLR0917
+    def handle_param_file_change_workflow(  # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals # noqa: PLR0913
         self,
         selected_file: str,
         forced: bool,
@@ -767,13 +768,12 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         return fc_parameters, param_default_values
 
-    def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
+    def upload_parameters_that_require_reset_workflow(  # pylint: disable=too-many-locals
         self,
         selected_params: dict,
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
     ) -> tuple[bool, set[str], bool]:
         """
         Upload parameters that require reset to the flight controller.
@@ -782,8 +782,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             selected_params: Dictionary of parameters to upload.
             ask_confirmation: Callback to ask user for confirmation.
             show_error: Callback to show error messages.
-            reset_progress_callback: Optional callback for reset progress updates.
-            connection_progress_callback: Optional callback for connection progress updates.
+            progress_callback: Optional callback for reset and reconnect progress updates.
             selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
         Returns:
@@ -853,8 +852,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             reset_unsure_params,
             ask_confirmation,
             show_error,
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
             selected_params,
         )
 
@@ -882,8 +880,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
     def _reset_and_reconnect_flight_controller(
         self,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
         sleep_time: int | None = None,
         selected_params: dict | None = None,
     ) -> str | None:
@@ -891,8 +888,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         Reset and reconnect to the flight controller.
 
         Args:
-            reset_progress_callback: Optional callback function for progress updates.
-            connection_progress_callback: Optional callback function for connection progress updates.
+            progress_callback: Optional callback function for reset and reconnect progress updates.
             sleep_time: Optional sleep time override. If None, calculates based on boot delay parameters.
             selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
@@ -903,22 +899,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         if sleep_time is None:
             sleep_time = self._calculate_reset_time(selected_params)
 
-        # Call reset_and_reconnect with a callback to update the reset progress bar and the progress message
-        return self._flight_controller.reset_and_reconnect(
-            reset_progress_callback, connection_progress_callback, int(sleep_time)
-        )
+        return self._flight_controller.reset_and_reconnect(progress_callback, int(sleep_time))
 
     def reset_all_parameters_to_default(
         self,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
         get_download_progress_callback: Callable[[], Callable | None] | None = None,
     ) -> bool:
         """Reset all flight-controller parameters, then reboot and reconnect."""
         success, error_message = self._flight_controller.reset_all_parameters_to_default_and_reconnect(
-            reset_progress_callback,
-            connection_progress_callback,
+            progress_callback,
         )
         if not success:
             show_error(_("ArduPilot methodic configurator"), error_message)
@@ -938,8 +929,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         fc_reset_unsure: list[str],
         ask_confirmation: AskConfirmationCallback,
         show_error: ShowErrorCallback,
-        reset_progress_callback: Callable | None = None,
-        connection_progress_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
         selected_params: dict | None = None,
     ) -> bool:
         """
@@ -955,8 +945,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             fc_reset_unsure: List of parameters that potentially require reset
             ask_confirmation: Callback to ask user for confirmation
             show_error: Callback to show error messages
-            reset_progress_callback: Optional callback for reset progress updates
-            connection_progress_callback: Optional callback for connection progress updates
+            progress_callback: Optional callback for reset and reconnect progress updates
             selected_params: Upload payload used to calculate an external BRD_BOOT_DELAY.
 
         Returns:
@@ -973,8 +962,7 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
 
         if should_reset:
             error_message = self._reset_and_reconnect_flight_controller(
-                reset_progress_callback,
-                connection_progress_callback,
+                progress_callback,
                 selected_params=selected_params,
             )
             if error_message:
@@ -1131,7 +1119,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ask_retry_cancel: AskRetryCancelCallback,
         show_error: ShowErrorCallback,
         get_upload_progress_callback: Callable[[], Callable | None] | None = None,
-        get_reset_progress_callback: Callable[[], Callable | None] | None = None,
         get_connection_progress_callback: Callable[[], Callable | None] | None = None,
         get_download_progress_callback: Callable[[], Callable | None] | None = None,
         *,
@@ -1146,8 +1133,8 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             ask_retry_cancel: Callback to ask user to retry or cancel on upload error.
             show_error: Callback to show error messages.
             get_upload_progress_callback: Optional factory function that creates and returns an upload progress callback.
-            get_reset_progress_callback: Optional factory function that creates and returns a reset progress callback.
-            get_connection_progress_callback: Optional factory function that creates and returns a connection prog. callback.
+            get_connection_progress_callback: Optional factory function that creates and returns a reset/reconnect progress
+                                              callback.
             get_download_progress_callback: Optional factory function that creates and returns a download progress callback.
             persist_project_state: Whether to write AMC step state, tuning reports, and FC-difference exports.
 
@@ -1164,15 +1151,17 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                 len(selected_params),
                 self.current_file,
             )
+            # Include the complete upload/reset/verification workflow, while
+            # using a monotonic high-resolution clock for elapsed time.
+            upload_start_time = perf_counter()
 
             # Get progress callbacks from factories if provided
             progress_callback_for_upload = get_upload_progress_callback() if get_upload_progress_callback else None
-            progress_callback_for_reset = get_reset_progress_callback() if get_reset_progress_callback else None
             progress_callback_for_connection = get_connection_progress_callback() if get_connection_progress_callback else None
             progress_callback_for_download = get_download_progress_callback() if get_download_progress_callback else None
             # Upload parameters that require reset
             reset_happened, already_uploaded_params, reset_succeeded = self.upload_parameters_that_require_reset_workflow(
-                selected_params, ask_confirmation, show_error, progress_callback_for_reset, progress_callback_for_connection
+                selected_params, ask_confirmation, show_error, progress_callback_for_connection
             )
             if not reset_succeeded:
                 self._at_least_one_changed = False
@@ -1227,6 +1216,13 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
                         continue
                     self._at_least_one_changed = False
                     return False
+                logging_info(
+                    _("Uploaded and verified %(parameter_count)d parameters in %(duration_ms)d ms"),
+                    {
+                        "parameter_count": len(selected_params),
+                        "duration_ms": int((perf_counter() - upload_start_time) * 1000),
+                    },
+                )
                 logging_info(_("All parameters uploaded to the flight controller successfully"))
 
                 if persist_project_state and self._should_export_fc_params_diff:
@@ -1244,7 +1240,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
         ask_retry_cancel: AskRetryCancelCallback,
         show_error: ShowErrorCallback,
         get_upload_progress_callback: Callable[[], Callable | None] | None = None,
-        get_reset_progress_callback: Callable[[], Callable | None] | None = None,
         get_connection_progress_callback: Callable[[], Callable | None] | None = None,
         get_download_progress_callback: Callable[[], Callable | None] | None = None,
     ) -> bool:
@@ -1255,7 +1250,6 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             ask_retry_cancel,
             show_error,
             get_upload_progress_callback,
-            get_reset_progress_callback,
             get_connection_progress_callback,
             get_download_progress_callback,
             persist_project_state=False,
@@ -1429,6 +1423,52 @@ class ParameterEditor:  # pylint: disable=too-many-public-methods, too-many-inst
             show_info(_("Success"), _("Flight log downloaded successfully to:\n%s") % filename)
         else:
             show_error(_("Error"), _("Failed to download flight log. Check the console for details."))
+
+    def get_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile] | None:
+        """Return regular files in the selected remote directory."""
+        return self._flight_controller.list_bin_log_files(remote_directory)
+
+    def get_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list[FlightControllerLogFile] | None:
+        """Return files and directories in the selected remote directory."""
+        return self._flight_controller.list_remote_files(remote_directory)
+
+    def download_last_flight_log(
+        self,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download the last flight log through the flight-controller facade."""
+        return self._flight_controller.download_last_flight_log(local_filename, progress_callback)
+
+    def upload_file_to_fc(
+        self,
+        local_filename: str,
+        remote_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Upload one local file to the flight controller."""
+        return self._flight_controller.upload_file(local_filename, remote_filename, progress_callback)
+
+    def download_remote_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> bool:
+        """Download one explicitly selected remote file."""
+        return self._flight_controller.download_remote_file(remote_path, local_filename, progress_callback)
+
+    def make_remote_directory(self, remote_directory: str) -> bool:
+        """Create one remote directory."""
+        return self._flight_controller.make_remote_directory(remote_directory)
+
+    def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool:
+        """Delete one remote file or directory."""
+        return self._flight_controller.delete_remote_path(remote_path, is_directory)
+
+    def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool:
+        """Rename one remote file or directory."""
+        return self._flight_controller.rename_remote_path(remote_path, new_remote_path)
 
     def is_configuration_step_optional(self, file_name: str | None = None, threshold_pct: int = 20) -> bool:
         """

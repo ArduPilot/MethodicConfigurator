@@ -35,6 +35,7 @@ from ardupilot_methodic_configurator.data_model_par_dict import ParDict
 
 if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller_commands import CompassCalibrationUpdate
+    from ardupilot_methodic_configurator.backend_flightcontroller_files import FlightControllerLogFile
 
 # Type alias for MAVLink connection to avoid type checker issues
 # We define MavlinkConnection as a protocol-like type to represent any MAVLink connection object
@@ -128,6 +129,8 @@ class FlightControllerConnectionProtocol(Protocol):
         timeout: int,
         baudrate: int,
         log_errors: bool,
+        reconnect_progress_callback: Callable[[int, int], None] | None = None,
+        is_reconnect: bool = False,
     ) -> str: ...
 
     def get_serial_ports(self) -> list[serial.tools.list_ports_common.ListPortInfo]:
@@ -155,7 +158,9 @@ class FlightControllerConnectionProtocol(Protocol):
     @property
     def banner_text_buffer(self) -> list[str]: ...
 
-    def _detect_vehicles_from_heartbeats(self, timeout: int) -> dict[tuple[int, int], Any]: ...
+    def _detect_vehicles_from_heartbeats(
+        self, timeout: int, return_after_first_heartbeat: bool = False
+    ) -> dict[tuple[int, int], Any]: ...
 
     def _extract_firmware_type_from_banner(self, banner_msgs: list[str], os_custom_version_index: int | None) -> str: ...
 
@@ -301,3 +306,27 @@ class FlightControllerFilesProtocol(Protocol):
     ) -> bool: ...
 
     def download_last_flight_log(self, local_filename: str, progress_callback: Callable[[int, int], None] | None) -> bool: ...
+
+    def list_bin_log_files(self, remote_directory: str = "/APM/LOGS/") -> list["FlightControllerLogFile"] | None: ...
+
+    def list_remote_files(self, remote_directory: str = "/APM/LOGS/") -> list["FlightControllerLogFile"] | None: ...
+
+    def download_bin_log_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> bool: ...
+
+    def download_remote_file(
+        self,
+        remote_path: str,
+        local_filename: str,
+        progress_callback: Callable[[int, int], None] | None,
+    ) -> bool: ...
+
+    def make_remote_directory(self, remote_directory: str) -> bool: ...
+
+    def delete_remote_path(self, remote_path: str, is_directory: bool = False) -> bool: ...
+
+    def rename_remote_path(self, remote_path: str, new_remote_path: str) -> bool: ...

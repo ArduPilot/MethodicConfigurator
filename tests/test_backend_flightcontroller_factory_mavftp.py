@@ -20,6 +20,31 @@ from ardupilot_methodic_configurator.backend_flightcontroller_factory_mavftp imp
     create_mavftp,
     create_mavftp_safe,
 )
+from ardupilot_methodic_configurator.backend_mavftp import FTP_OP, OP_Ack, OP_ResetSessions
+
+
+def _mock_master() -> MagicMock:
+    """Create a mock connection that can complete MAVFTP session reset."""
+    master = MagicMock()
+    master.source_system = 1
+    master.source_component = 1
+    reply = FTP_OP(
+        seq=1,
+        session=0,
+        opcode=OP_Ack,
+        size=0,
+        req_opcode=OP_ResetSessions,
+        burst_complete=0,
+        offset=0,
+        payload=None,
+    )
+    packet = MagicMock()
+    packet.get_type.return_value = "FILE_TRANSFER_PROTOCOL"
+    packet.target_system = 1
+    packet.target_component = 1
+    packet.payload = reply.pack()
+    master.recv_match.return_value = packet
+    return master
 
 
 class TestCreateMavftpFactory:
@@ -35,7 +60,7 @@ class TestCreateMavftpFactory:
         AND: MAVFTP should be initialized with correct target parameters
         """
         # Given: Valid MAVLink connection
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 1
         mock_master.target_component = 1
 
@@ -67,7 +92,7 @@ class TestCreateMavftpFactory:
         THEN: MAVFTP should be initialized with correct target_system
         """
         # Given: Connection with specific target system
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 42
         mock_master.target_component = 1
 
@@ -86,7 +111,7 @@ class TestCreateMavftpFactory:
         THEN: MAVFTP should be initialized with correct target_component
         """
         # Given: Connection with specific target component
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 1
         mock_master.target_component = 191  # MAV_COMP_ID_AUTOPILOT
 
@@ -110,7 +135,7 @@ class TestCreateMavftpSafeFactory:
         AND: Return value should not be None
         """
         # Given: Valid MAVLink connection
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 1
         mock_master.target_component = 1
 
@@ -147,7 +172,7 @@ class TestCreateMavftpSafeFactory:
         # Note: This test validates the safety check for MAVFTP availability
         # In normal operation, MAVFTP will be imported, but the function has
         # defensive checks for when it might not be available
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 1
         mock_master.target_component = 1
 
@@ -166,7 +191,7 @@ class TestCreateMavftpSafeFactory:
         THEN: MAVFTP should be initialized with correct target_system
         """
         # Given: Connection with specific target system
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 99
         mock_master.target_component = 1
 
@@ -185,7 +210,7 @@ class TestCreateMavftpSafeFactory:
         THEN: MAVFTP should be initialized with correct target_component
         """
         # Given: Connection with specific target component
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 1
         mock_master.target_component = 50
 
@@ -244,7 +269,7 @@ class TestCreateMavftpErrorHandling:
         THEN: The exception should not escape to the UI workflow
         AND: None should be returned so callers can fail gracefully
         """
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 1
         mock_master.target_component = 1
 
@@ -269,7 +294,7 @@ class TestCreateMavftpEdgeCases:
         THEN: MAVFTP should be created (0 is valid, though unusual)
         """
         # Given: Connection with target_system = 0
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 0
         mock_master.target_component = 1
 
@@ -288,7 +313,7 @@ class TestCreateMavftpEdgeCases:
         THEN: MAVFTP should be created successfully
         """
         # Given: Connection with maximum IDs
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 255  # Max system ID
         mock_master.target_component = 255  # Max component ID
 
@@ -325,7 +350,7 @@ class TestCreateMavftpEdgeCases:
         AND: No AttributeError should occur
         """
         # Given: Connection with required attributes (MagicMock includes mav attribute)
-        mock_master = MagicMock()
+        mock_master = _mock_master()
         mock_master.target_system = 10
         mock_master.target_component = 20
 
