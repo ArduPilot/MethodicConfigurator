@@ -64,11 +64,20 @@ def open_log(logfile: str) -> mavutil.mavfile:
         A mavutil.mavfile connection object.
 
     """
+    previous_fast_index = os.environ.get("PYMAVLINK_FAST_INDEX")
+    # pymavlink's optional Cython indexer calls exit(1) for malformed FMT records,
+    # which prevents callers from turning corrupt logs into normal import errors.
+    os.environ["PYMAVLINK_FAST_INDEX"] = "0"
     try:
         mlog = mavutil.mavlink_connection(logfile)
     except (OSError, ValueError) as e:
         msg = _("Error opening logfile {logfile}: {error}").format(logfile=logfile, error=e)
         raise OSError(msg) from e
+    finally:
+        if previous_fast_index is None:
+            os.environ.pop("PYMAVLINK_FAST_INDEX", None)
+        else:
+            os.environ["PYMAVLINK_FAST_INDEX"] = previous_fast_index
     return mlog  # pyright: ignore[reportReturnType]  # pymavlink stubs include CSVReader which doesn't extend mavfile
 
 
