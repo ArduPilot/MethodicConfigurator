@@ -14,9 +14,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 from pathlib import Path
+from struct import pack
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from pymavlink import mavutil
 
 from ardupilot_methodic_configurator.backend_flightcontroller_connection import DEVICE_FC_PARAM_FROM_FILE
 from ardupilot_methodic_configurator.backend_flightcontroller_params import FlightControllerParams
@@ -293,6 +295,57 @@ class TestFlightControllerParamsFetchParameter:
             mock_time.side_effect = [0.0, 2.0]
             with pytest.raises(TimeoutError, match="NONEXISTENT"):
                 params_mgr.fetch_param("NONEXISTENT", timeout=1)
+
+
+class TestFlightControllerParamsParameterPresence:
+    """Test direct-read parameter presence checks."""
+
+    def test_user_can_identify_parameter_explicitly_missing_from_firmware(self) -> None:
+        """PARAM_ERROR/DOES_NOT_EXIST is definitive, unlike a timeout."""
+        mock_master = MagicMock()
+        param_error = MagicMock()
+        param_error.get_type.return_value = "PARAM_ERROR"
+        param_error.param_id = "REMOVED_PARAM"
+        param_error.error = FlightControllerParams.MAV_PARAM_ERROR_DOES_NOT_EXIST
+        mock_master.recv_match.return_value = param_error
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        assert params_mgr.get_nonexistent_parameters(["REMOVED_PARAM"]) == {"REMOVED_PARAM"}
+        mock_master.mav.param_request_read_send.assert_called_once()
+
+    def test_user_keeps_hidden_parameter_when_direct_read_returns_value(self) -> None:
+        """A value from a direct read proves the parameter exists despite list omission."""
+        mock_master = MagicMock()
+        param_value = MagicMock()
+        param_value.get_type.return_value = "PARAM_VALUE"
+        param_value.param_id = "HIDDEN_PARAM"
+        param_value.param_value = 7.5
+        mock_master.recv_match.return_value = param_value
+
+        mock_conn_mgr = Mock()
+        mock_conn_mgr.master = mock_master
+        mock_conn_mgr.info = FlightControllerInfo()
+        params_mgr = FlightControllerParams(connection_manager=mock_conn_mgr)
+
+        assert params_mgr.get_nonexistent_parameters(["HIDDEN_PARAM"]) == set()
+        assert params_mgr.fc_parameters["HIDDEN_PARAM"] == 7.5
+
+    def test_user_can_decode_param_error_with_pinned_pymavlink_dialect(self) -> None:
+        """The current pinned dialect exposes PARAM_ERROR as UNKNOWN_345."""
+        payload = pack("<hBB16sB", -1, 1, 1, b"ABSENT_PARAM\x00", 1)
+        header = bytearray([0xFD, len(payload), 0, 0, 0, 1, 1, 345 & 0xFF, 345 >> 8, 0])
+        crc_buffer = bytearray(header[1:] + payload)
+        crc_buffer.append(FlightControllerParams.PARAM_ERROR_CRC_EXTRA)
+        raw_message = bytes(header + payload + pack("<H", mavutil.x25crc(crc_buffer).crc))
+        unknown_param_error = MagicMock()
+        unknown_param_error.get_type.return_value = "UNKNOWN_345"
+        unknown_param_error.data = raw_message
+
+        assert FlightControllerParams._get_param_error(unknown_param_error) == ("ABSENT_PARAM", 1)
 
 
 class TestFlightControllerParamsGetParameter:
