@@ -454,9 +454,46 @@
                 "placement": "top"
             },
             "autoimport_nondefault_regexp": [
-                "INS_ACC(?:[2-3])?SCAL_[XYZ]",
-                "INS_USE[2-3]?"
+                "AHRS_TRIM_[XYZ]",
+                "INS_ACC(?:[2-5])?OFFS_[XYZ]",
+                "INS_ACC(?:[2-5])?SCAL_[XYZ]",
+                "INS_ACC1_CALTEMP",
+                "INS_ACC2_CALTEMP",
+                "INS_ACC3_CALTEMP",
+                "INS_ACC4_CALTEMP",
+                "INS_ACC5_CALTEMP",
+                "INS_USE[2-5]?"
             ],
+            "add_parameters": {
+                "AHRS_TRIM_X": { "Change Reason": "Copied from the connected flight controller" },
+                "AHRS_TRIM_Y": { "Change Reason": "Copied from the connected flight controller" },
+                "AHRS_TRIM_Z": { "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACCOFFS_X": { "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACCOFFS_Y": { "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACCOFFS_Z": { "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC2OFFS_X": { "if": "'INS_ACC2OFFS_X' in fc_parameters", "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC2OFFS_Y": { "if": "'INS_ACC2OFFS_Y' in fc_parameters", "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC2OFFS_Z": { "if": "'INS_ACC2OFFS_Z' in fc_parameters", "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC3OFFS_X": { "if": "'INS_ACC3OFFS_X' in fc_parameters", "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC3OFFS_Y": { "if": "'INS_ACC3OFFS_Y' in fc_parameters", "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC3OFFS_Z": { "if": "'INS_ACC3OFFS_Z' in fc_parameters", "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACCSCAL_X": { "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACCSCAL_Y": { "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACCSCAL_Z": { "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC2SCAL_X": { "if": "'INS_ACC2SCAL_X' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC2SCAL_Y": { "if": "'INS_ACC2SCAL_Y' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC2SCAL_Z": { "if": "'INS_ACC2SCAL_Z' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC3SCAL_X": { "if": "'INS_ACC3SCAL_X' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC3SCAL_Y": { "if": "'INS_ACC3SCAL_Y' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC3SCAL_Z": { "if": "'INS_ACC3SCAL_Z' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC1_CALTEMP":  { "if": "'INS_ACC1_CALTEMP' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC2_CALTEMP":  { "if": "'INS_ACC2_CALTEMP' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_ACC3_CALTEMP":  { "if": "'INS_ACC3_CALTEMP' in fc_parameters" , "Change Reason": "Copied from the connected flight controller" },
+                "INS_USE2":  { "if": "'INS_USE2' in fc_parameters" },
+                "INS_USE3":  { "if": "'INS_USE3' in fc_parameters" },
+                "INS_USE4":  { "if": "'INS_USE4' in fc_parameters" },
+                "INS_USE5":  { "if": "'INS_USE5' in fc_parameters" }
+            },
             "old_filenames": []
         },
         "15_accelerometer_level.param": {
@@ -476,7 +513,11 @@
             "autoimport_nondefault_regexp": [
                 "AHRS_TRIM_[XY]"
             ],
-            "old_filenames": []
+            "add_parameters": {
+                "AHRS_TRIM_X": { "Change Reason": "Copied from the connected flight controller" },
+                "AHRS_TRIM_Y": { "Change Reason": "Copied from the connected flight controller" }
+            },
+             "old_filenames": []
         },
         "16_compass_calibration.param": {
             "why": "Compass calibration and ordering are required for reliable heading estimation.",
