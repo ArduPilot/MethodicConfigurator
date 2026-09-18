@@ -1148,7 +1148,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             action=_VehicleDirAction,
             help=_(
                 "Directory containing vehicle-specific intermediate parameter files. For --bin-log, "
-                "this is the complete destination project directory. Default is the current working directory"
+                "an explicitly supplied value is the complete destination project directory. "
+                "Default is the current working directory"
             ),
         ).completer = DirectoriesCompleter()  # pyright: ignore[reportAttributeAccessIssue]
         parser.add_argument(  # type: ignore[attr-defined]
@@ -1158,7 +1159,8 @@ class LocalFilesystem(VehicleComponents, ConfigurationSteps, ProgramSettings):  
             metavar="PATH",
             help=_(
                 "Create a vehicle project from an ArduPilot .bin log file. "
-                "The project is created in the default vehicles directory."
+                "By default, the project is created in the default vehicles directory; "
+                "an explicitly supplied --vehicle-dir is the complete destination project directory."
             ),
         ).completer = FilesCompleter(allowednames=(".bin", ".BIN"))  # pyright: ignore[reportAttributeAccessIssue]
         parser.add_argument(  # type: ignore[attr-defined]

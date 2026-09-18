@@ -32,6 +32,14 @@ if TYPE_CHECKING:
     from ardupilot_methodic_configurator.backend_flightcontroller import FlightController
 
 
+# AMC's template metadata uses ``Rover`` while ArduPilot logs report ``ArduRover``.
+# Normalize the log type into the vocabulary used by AMC templates before comparing
+# the two. Heli is intentionally handled as a separate compatibility case below: heli
+# firmware reports ``ArduCopter``, but ``Heli`` remains the template label.
+_FIRMWARE_TYPE_TO_TEMPLATE_TYPE = {"ArduRover": "Rover"}
+_TEMPLATE_FIRMWARE_TYPE_EQUIVALENCES = {("Heli", "ArduCopter")}
+
+
 class VehicleProjectManager:  # pylint: disable=too-many-public-methods
     """
     Factory/Container for vehicle project operations.
@@ -398,7 +406,12 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
             template_dir = self._creator.template_dir_for_bin_import(vehicle_type, firmware_info[1], firmware_info[2])
         else:
             template_vehicle_type = self._creator.vehicle_type_from_template(template_dir)
-            if template_vehicle_type and template_vehicle_type != vehicle_type:
+            log_template_vehicle_type = _FIRMWARE_TYPE_TO_TEMPLATE_TYPE.get(vehicle_type, vehicle_type)
+            types_match = (
+                template_vehicle_type == log_template_vehicle_type
+                or (template_vehicle_type, vehicle_type) in _TEMPLATE_FIRMWARE_TYPE_EQUIVALENCES
+            )
+            if template_vehicle_type and not types_match:
                 logging_warning(
                     _(
                         "The selected template %(template_dir)s is for %(template_vehicle_type)s, "
@@ -407,7 +420,7 @@ class VehicleProjectManager:  # pylint: disable=too-many-public-methods
                     {
                         "template_dir": template_dir,
                         "template_vehicle_type": template_vehicle_type,
-                        "vehicle_type": vehicle_type,
+                        "vehicle_type": log_template_vehicle_type,
                     },
                 )
         fc_parameters = {name: param.value for name, param in current_params.items()}

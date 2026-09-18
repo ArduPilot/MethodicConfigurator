@@ -484,9 +484,11 @@ Here is a list of command line options:
 - **`--skip-check-for-updates`**: Skip check for software updates before starting the software. Default is False.
 - **`--baudrate BAUDRATE`**: MAVLink serial connection baudrate to the flight controller. Default is 115200
 - **`--device`**: The MAVLink connection string to the flight controller. It defaults to autoconnection to the first available flight controller.
-- **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory directory.
+- **`--vehicle-dir`**: The directory containing intermediate parameter files. Defaults to the current working directory.
+  When explicitly supplied with `--bin-log`, it is the complete destination directory for the new project.
 - **`--bin-log PATH`**: Create a new vehicle project from an ArduPilot `.bin` log file without
-  connecting to a flight controller. The new project is created in the default vehicles directory.
+  connecting to a flight controller. By default, the new project is created in the default vehicles directory.
+  An explicitly supplied `--vehicle-dir` instead selects the complete destination directory.
 - **`--template-dir PATH`**: Optional template directory to use with `--bin-log`. If omitted,
   AMC uses the empty template matching the vehicle type and major/minor firmware version extracted
   from the log.
