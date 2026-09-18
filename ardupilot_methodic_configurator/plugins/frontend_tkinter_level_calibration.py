@@ -16,6 +16,7 @@ from tkinter.messagebox import showerror, showinfo
 from ardupilot_methodic_configurator import _
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugins.data_model_level_calibration import LevelCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
 from ardupilot_methodic_configurator.plugins.plugin_constants import PLUGIN_LEVEL_CALIBRATION
 from ardupilot_methodic_configurator.plugins.plugin_factory import PluginModelContext, plugin_factory
 
@@ -27,21 +28,40 @@ class LevelCalibrationView(Frame):
         super().__init__(parent)
         self.model = model
         self.base_window = base_window
-        ttk.Label(self, text=_("Accelerometer Level Calibration"), font=("TkDefaultFont", 14, "bold")).pack(pady=(0, 10))
+        main_frame = ttk.Frame(self)
+        main_frame.pack(fill="both", expand=True)
+
         ttk.Label(
-            self,
+            main_frame,
+            text=_("Accelerometer Level Calibration"),
+            font=("TkDefaultFont", 14, "bold"),
+        ).pack(pady=(0, 10))
+
+        calibration_frame = ttk.Frame(main_frame)
+        calibration_frame.pack(fill="x", pady=(0, 10))
+
+        self._level_btn = ttk.Button(
+            calibration_frame,
+            text=_("Level Calibration (Trim)"),
+            command=self._on_level_calibration,
+        )
+        self._level_btn.pack(side="left", padx=(8, 16), anchor="n")
+
+        self._level_info_label = ttk.Label(
+            calibration_frame,
             text=_(
                 "Place the calibrated vehicle on a level surface and keep it still. "
                 "This trims roll and pitch only; it does not affect yaw."
             ),
             justify="left",
             wraplength=600,
-        ).pack(pady=(0, 20))
-        ttk.Button(self, text=_("Level Calibration (Trim)"), command=self._on_level_calibration).pack(pady=10)
+        )
+        self._level_info_label.pack(side="left", fill="x", expand=True, anchor="w")
 
     def _on_level_calibration(self) -> None:
         success, message = self.model.start_level_calibration()
         if success:
+            refresh_parameter_editor_after_calibration(self.base_window)
             showinfo(_("Calibration Result"), message)
         else:
             showerror(_("Calibration Failed"), message)

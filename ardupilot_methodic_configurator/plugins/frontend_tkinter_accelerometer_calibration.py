@@ -25,6 +25,7 @@ from ardupilot_methodic_configurator.__main__ import (
 from ardupilot_methodic_configurator.common_arguments import add_common_arguments
 from ardupilot_methodic_configurator.frontend_tkinter_base_window import BaseWindow
 from ardupilot_methodic_configurator.plugins.data_model_accelerometer_calibration import AccelerometerCalibrationDataModel
+from ardupilot_methodic_configurator.plugins.frontend_tkinter_helpers import refresh_parameter_editor_after_calibration
 from ardupilot_methodic_configurator.plugins.imu_helpers import (
     ImuPollHandlers,
     poll_imu_periodically,
@@ -202,6 +203,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         """Handle Simple Calibration button."""
         success, message = self.model.start_simple_calibration()
         if success:
+            refresh_parameter_editor_after_calibration(self.base_window)
             showinfo(_("Calibration Result"), message)
         else:
             showerror(_("Calibration Failed"), message)
@@ -280,6 +282,7 @@ class AccelerometerCalibrationView(Frame):  # pylint: disable=too-many-instance-
         self._stop_polling()
         self._hide_wizard()
         if success:
+            refresh_parameter_editor_after_calibration(self.base_window)
             showinfo(_("Calibration Result"), _("Full accelerometer calibration successful!"))
         else:
             showerror(_("Calibration Failed"), _("Full accelerometer calibration failed."))
